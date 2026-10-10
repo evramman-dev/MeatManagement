@@ -3,450 +3,766 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#173c35">
+  <meta name="theme-color" content="#173c2c">
+
   <title>MeatManagement | إدارة اللحوم</title>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
-    * { box-sizing: border-box; }
+    :root {
+      --green: #173c2c;
+      --green-light: #24563e;
+      --gold: #d5b16a;
+      --background: #f4f6f3;
+      --white: #ffffff;
+      --text: #202820;
+      --muted: #68736a;
+      --border: #e0e6df;
+      --danger: #a52b2b;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
-      font-family: Tahoma, Arial, sans-serif;
-      background: #f4f7f5;
-      color: #24332e;
+      background: var(--background);
+      color: var(--text);
+      font-family: Arial, Tahoma, sans-serif;
     }
 
-    header {
-      background: #173c35;
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .header {
+      background: var(--green);
       color: white;
-      padding: 24px 18px;
-      border-radius: 0 0 24px 24px;
+      padding: 22px 18px;
+      border-bottom: 4px solid var(--gold);
     }
 
-    header h1 {
-      font-size: 22px;
-      margin: 0 0 10px;
+    .header h1 {
+      margin: 0 0 8px;
+      font-size: 23px;
     }
 
-    header p {
-      font-size: 13px;
-      line-height: 1.8;
+    .header p {
       margin: 0;
-      color: #d9e8e1;
+      font-size: 13px;
+      color: #e3eae4;
     }
 
-    main {
-      padding: 18px 14px 100px;
-      max-width: 800px;
-      margin: auto;
-    }
-
-    h2 {
-      font-size: 18px;
-      margin: 10px 0 15px;
-    }
-
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
+    .container {
+      width: min(100% - 28px, 680px);
+      margin: 20px auto 95px;
     }
 
     .card {
-      background: white;
-      border: 1px solid #e1e9e4;
+      background: var(--white);
+      border: 1px solid var(--border);
       border-radius: 16px;
-      padding: 17px 13px;
-      min-height: 110px;
-      box-shadow: 0 4px 14px #173c3508;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 3px 12px rgba(20, 45, 25, 0.04);
     }
 
-    .icon {
-      font-size: 25px;
-      margin-bottom: 12px;
+    .card h2 {
+      font-size: 19px;
+      margin: 0 0 15px;
     }
 
-    .card b {
+    .description {
+      color: var(--muted);
+      line-height: 1.8;
+      font-size: 14px;
+    }
+
+    label {
       display: block;
       font-size: 14px;
-      margin-bottom: 7px;
+      margin: 15px 0 7px;
+      font-weight: bold;
     }
 
-    .card small {
-      font-size: 11px;
-      color: #78857f;
-      line-height: 1.7;
-      overflow-wrap: anywhere;
-    }
-
-    .panel {
+    input {
+      display: block;
+      width: 100%;
+      padding: 13px;
+      border: 1px solid #ccd5cc;
+      border-radius: 10px;
       background: white;
-      padding: 17px;
-      border-radius: 16px;
-      margin-top: 20px;
-      border: 1px solid #e1e9e4;
-      line-height: 1.9;
-      overflow-wrap: anywhere;
+      outline: none;
+      direction: ltr;
+      text-align: left;
     }
 
-    .notice {
-      font-size: 12px;
-      color: #75602d;
-      background: #fff5df;
-      border-radius: 12px;
-      padding: 12px;
-      margin-top: 15px;
-      line-height: 1.9;
+    input:focus {
+      border-color: var(--green-light);
+      box-shadow: 0 0 0 3px rgba(36, 86, 62, 0.1);
+    }
+
+    .button {
+      width: 100%;
+      border: 0;
+      border-radius: 10px;
+      padding: 13px 15px;
+      margin-top: 14px;
+      background: var(--green);
+      color: white;
+      font-weight: bold;
+    }
+
+    .button:hover {
+      background: var(--green-light);
+    }
+
+    .button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    .button.secondary {
+      background: #edf1ed;
+      color: var(--green);
+      border: 1px solid var(--border);
     }
 
     .status {
-      font-size: 13px;
+      margin-top: 14px;
       padding: 12px;
       border-radius: 10px;
-      background: #f1f4f2;
-      margin-top: 12px;
+      font-size: 14px;
       line-height: 1.8;
       overflow-wrap: anywhere;
+      background: #f0f3f0;
+      color: var(--text);
     }
 
-    .action-button {
-      border: 0;
+    .status.success {
+      background: #e9f6ec;
+      color: #1c6330;
+    }
+
+    .status.error {
+      background: #fff0f0;
+      color: var(--danger);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .user-info {
+      background: #e9efe9;
       border-radius: 12px;
-      padding: 12px 16px;
-      background: #173c35;
-      color: white;
-      font-family: inherit;
+      padding: 13px;
+      margin-bottom: 15px;
+      line-height: 1.8;
       font-size: 14px;
-      cursor: pointer;
-      width: 100%;
-      margin-top: 12px;
     }
 
-    .action-button:disabled {
-      opacity: 0.6;
+    .product {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 13px;
+      margin-top: 10px;
+      background: #fff;
     }
 
-    nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: white;
-      border-top: 1px solid #e1e9e4;
-      display: flex;
-      justify-content: space-around;
-      padding: 10px 4px calc(10px + env(safe-area-inset-bottom));
-      z-index: 10;
+    .product-name {
+      font-weight: bold;
+      font-size: 16px;
+      margin-bottom: 7px;
     }
 
-    nav button {
-      border: 0;
-      background: transparent;
-      color: #65746d;
-      padding: 8px;
-      font-family: inherit;
+    .product-details {
+      font-size: 13px;
+      line-height: 1.9;
+      color: var(--muted);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      margin-top: 5px;
+      border-radius: 7px;
+      background: #edf1ed;
       font-size: 12px;
     }
 
-    nav button.active {
-      color: #173c35;
-      font-weight: bold;
-      background: #e7f2ed;
-      border-radius: 10px;
-    }
-
-    .page { display: none; }
-    .page.active { display: block; }
-
-    .product-row {
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      right: 0;
+      left: 0;
+      display: flex;
+      justify-content: space-around;
+      gap: 5px;
+      padding: 10px 8px calc(10px + env(safe-area-inset-bottom));
       background: white;
-      border: 1px solid #e1e9e4;
-      border-radius: 12px;
-      padding: 12px;
-      margin-top: 10px;
-      line-height: 1.8;
-      overflow-wrap: anywhere;
+      border-top: 1px solid var(--border);
+      box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.04);
     }
 
-    .product-row b {
-      display: block;
-      margin-bottom: 5px;
+    .nav-button {
+      flex: 1;
+      border: 0;
+      background: transparent;
+      padding: 8px 3px;
+      border-radius: 9px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .nav-button.active {
+      color: var(--green);
+      background: #edf3ed;
+      font-weight: bold;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 20px 8px;
+      color: var(--muted);
+      line-height: 1.9;
+    }
+
+    .footer-note {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.8;
+      text-align: center;
+      padding: 10px;
     }
   </style>
 </head>
 
 <body>
+  <header class="header">
+    <h1>🥩 MeatManagement</h1>
+    <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
+  </header>
 
-<header>
-  <h1>🥩 MeatManagement</h1>
-  <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
-  <p id="date"></p>
-</header>
+  <main class="container">
 
-<main>
+    <!-- تسجيل الدخول -->
+    <section id="loginSection" class="card">
+      <h2>🔐 تسجيل الدخول</h2>
 
-  <section id="home" class="page active">
-    <h2>أهلاً بيك 👋</h2>
-    <p>تابع عمليات الشركة من مكان واحد.</p>
+      <p class="description">
+        سجّل الدخول بحساب الموظف المسجّل بالفعل في النظام.
+        ستُطبّق قاعدة البيانات صلاحيات حسابك عند قراءة البيانات.
+      </p>
 
-    <div class="cards">
+      <form id="loginForm">
+        <label for="email">البريد الإلكتروني</label>
+        <input
+          id="email"
+          type="email"
+          autocomplete="username"
+          placeholder="name@example.com"
+          required
+        >
+
+        <label for="password">كلمة المرور</label>
+        <input
+          id="password"
+          type="password"
+          autocomplete="current-password"
+          placeholder="أدخل كلمة المرور"
+          required
+        >
+
+        <button id="loginButton" class="button" type="submit">
+          تسجيل الدخول
+        </button>
+      </form>
+
+      <div id="loginStatus" class="status hidden" role="status"></div>
+    </section>
+
+    <!-- الصفحة الرئيسية بعد الدخول -->
+    <section id="homeSection" class="hidden">
       <div class="card">
-        <div class="icon">🧾</div>
-        <b>المبيعات</b>
-        <small>طلبات البيع والفواتير</small>
+        <h2>🏠 الرئيسية</h2>
+
+        <div id="userInfo" class="user-info">
+          جارٍ تحميل بيانات الحساب...
+        </div>
+
+        <p class="description">
+          أهلًا بك في نظام إدارة اللحوم.
+          يمكنك الآن اختبار قراءة المنتجات المسموح لك بالوصول إليها.
+        </p>
+
+        <button id="loadProductsButton" class="button">
+          📦 عرض المنتجات من قاعدة البيانات
+        </button>
+
+        <button id="logoutButton" class="button secondary">
+          تسجيل الخروج
+        </button>
+
+        <div id="productsStatus" class="status hidden" role="status"></div>
       </div>
 
-      <div class="card">
-        <div class="icon">📦</div>
-        <b>المخزون</b>
-        <small>الأرصدة وحركات المخازن</small>
+      <div id="productsSection" class="card">
+        <h2>📦 المنتجات من قاعدة البيانات</h2>
+        <div id="productsList">
+          <div class="empty">
+            اضغط على زر «عرض المنتجات من قاعدة البيانات» للبدء.
+          </div>
+        </div>
       </div>
+    </section>
 
-      <div class="card">
-        <div class="icon">⚙️</div>
-        <b>الإنتاج</b>
-        <small>أوامر الإنتاج والكميات الفعلية</small>
-      </div>
+    <!-- المهام -->
+    <section id="tasksSection" class="card hidden">
+      <h2>📋 مهامي</h2>
+      <p class="description">
+        سنضيف مهام كل موظف وفق دوره وصلاحياته بعد إتمام اختبار تسجيل الدخول.
+      </p>
+    </section>
 
-      <div class="card">
-        <div class="icon">🚚</div>
-        <b>التوزيع</b>
-        <small>السيارات والتحميل والرحلات</small>
-      </div>
-    </div>
+    <!-- البيانات -->
+    <section id="dataSection" class="card hidden">
+      <h2>🗂️ البيانات</h2>
+      <p class="description">
+        سيجري توصيل أقسام العملاء والمخزون والإنتاج والمبيعات تدريجيًا،
+        مع الحفاظ على الصلاحيات الحالية.
+      </p>
+    </section>
 
-    <div class="panel">
-      <b>🔌 الاتصال بقاعدة البيانات</b>
-      <p>اضغط الزر لاختبار قراءة جدول المنتجات.</p>
+    <p class="footer-note">
+      الاتصال بقاعدة البيانات لا يعني إتاحة جميع الوظائف.
+      تُطبّق صلاحيات الوصول على مستوى قاعدة البيانات.
+    </p>
+  </main>
 
-      <button
-        class="action-button"
-        id="testConnection"
-        type="button"
-        onclick="loadProducts()">
-        اختبار الاتصال وعرض المنتجات
-      </button>
+  <nav id="bottomNav" class="bottom-nav hidden" aria-label="التنقل الرئيسي">
+    <button class="nav-button active" data-page="home">الرئيسية</button>
+    <button class="nav-button" data-page="tasks">مهامي</button>
+    <button class="nav-button" data-page="data">البيانات</button>
+  </nav>
 
-      <div id="connectionStatus" class="status" role="status" aria-live="polite">
-        لم يتم إجراء الاختبار بعد.
-      </div>
-    </div>
+  <script>
+    (() => {
+      "use strict";
 
-    <div class="panel">
-      <b>📦 المنتجات من قاعدة البيانات</b>
-      <div id="productsList">
-        المنتجات ستظهر هنا بعد نجاح القراءة.
-      </div>
-    </div>
+      const SUPABASE_URL =
+        "https://mklbemoisdkoyrwcrmoj.supabase.co";
 
-    <div class="notice">
-      هذه النسخة تقرأ المنتجات فقط. لا تضيف بيانات ولا تعدّلها ولا تحذفها.
-      لم يتم تنفيذ تسجيل الدخول أو ربط بقية أقسام النظام بعد.
-    </div>
-  </section>
+      const SUPABASE_PUBLISHABLE_KEY =
+        "sb_publishable_7ZjltiXgqnY4BJrZH4iZog_Jh-xfbau";
 
-  <section id="tasks" class="page">
-    <h2>مهامي</h2>
-
-    <div class="cards">
-      <div class="card">
-        <div class="icon">📝</div>
-        <b>طلبات البيع</b>
-        <small>متابعة طلبات العملاء</small>
-      </div>
-
-      <div class="card">
-        <div class="icon">🚛</div>
-        <b>تحميل السيارات</b>
-        <small>مراجعة الكميات وتأكيد التحميل</small>
-      </div>
-
-      <div class="card">
-        <div class="icon">🏭</div>
-        <b>أوامر الإنتاج</b>
-        <small>تسجيل الإنتاج المخطط والفعلي</small>
-      </div>
-
-      <div class="card">
-        <div class="icon">💰</div>
-        <b>التحصيلات</b>
-        <small>متابعة المبالغ المستحقة</small>
-      </div>
-    </div>
-  </section>
-
-  <section id="data" class="page">
-    <h2>البيانات</h2>
-
-    <div class="cards">
-      <div class="card">
-        <div class="icon">🥩</div>
-        <b>المنتجات</b>
-        <small>الأصناف والوحدات</small>
-      </div>
-
-      <div class="card">
-        <div class="icon">👥</div>
-        <b>العملاء</b>
-        <small>العملاء ومجموعاتهم</small>
-      </div>
-
-      <div class="card">
-        <div class="icon">🏷️</div>
-        <b>قوائم الأسعار</b>
-        <small>أسعار العملاء والمنتجات</small>
-      </div>
-
-      <div class="card">
-        <div class="icon">🔐</div>
-        <b>المستخدمون والصلاحيات</b>
-        <small>الأدوار وصلاحيات الدخول</small>
-      </div>
-    </div>
-  </section>
-
-</main>
-
-<nav>
-  <button class="active" onclick="showPage('home', this)">
-    ⌂<br>الرئيسية
-  </button>
-
-  <button onclick="showPage('tasks', this)">
-    ✓<br>مهامي
-  </button>
-
-  <button onclick="showPage('data', this)">
-    ▦<br>البيانات
-  </button>
-</nav>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<script>
-  const SUPABASE_URL =
-    'https://mklbemoisdkoyrwcrmoj.supabase.co';
-
-  const SUPABASE_PUBLISHABLE_KEY =
-    'sb_publishable_7ZjltiXgqnY4BJrZH4iZog_Jh-xfbau';
-
-  let supabaseClient = null;
-
-  document.getElementById('date').textContent =
-    new Date().toLocaleDateString('ar-EG', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-
-  function showPage(id, button) {
-    document.querySelectorAll('.page').forEach(function(page) {
-      page.classList.toggle('active', page.id === id);
-    });
-
-    document.querySelectorAll('nav button').forEach(function(item) {
-      item.classList.remove('active');
-    });
-
-    button.classList.add('active');
-    window.scrollTo(0, 0);
-  }
-
-  function getSupabaseClient() {
-    if (!window.supabase || !window.supabase.createClient) {
-      throw new Error('تعذر تحميل مكتبة Supabase. تحقق من الإنترنت.');
-    }
-
-    if (!supabaseClient) {
-      supabaseClient = window.supabase.createClient(
+      const client = window.supabase.createClient(
         SUPABASE_URL,
-        SUPABASE_PUBLISHABLE_KEY
+        SUPABASE_PUBLISHABLE_KEY,
+        {
+          auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true
+          }
+        }
       );
-    }
 
-    return supabaseClient;
-  }
+      const $ = (id) => document.getElementById(id);
 
-  async function loadProducts() {
-    const button = document.getElementById('testConnection');
-    const status = document.getElementById('connectionStatus');
-    const list = document.getElementById('productsList');
+      function showStatus(element, message, type = "") {
+        element.textContent = message;
+        element.className = "status";
 
-    button.disabled = true;
-    status.textContent = 'جاري الاتصال وقراءة المنتجات...';
-    list.textContent = 'جاري تحميل البيانات...';
-
-    try {
-      const client = getSupabaseClient();
-
-      const { data, error } = await client
-        .from('products')
-        .select('product_id, product_code, product_name, product_type, is_active')
-        .limit(50);
-
-      if (error) {
-        console.error('Supabase read error:', error);
-
-        status.textContent =
-          'تعذرت قراءة المنتجات. رمز الخطأ: ' +
-          (error.code || 'غير متاح') +
-          '. الرسالة: ' + error.message;
-
-        list.textContent =
-          'لم يتم عرض المنتجات. لم تُعدّل أي بيانات.';
-        return;
+        if (type) {
+          element.classList.add(type);
+        }
       }
 
-      status.textContent =
-        'نجحت قراءة جدول المنتجات. عدد السجلات المسترجعة: ' +
-        data.length + '.';
-
-      list.replaceChildren();
-
-      if (data.length === 0) {
-        list.textContent =
-          'نجح الاتصال، لكن لا توجد منتجات متاحة للقراءة بهذا الإعداد.';
-        return;
+      function hideStatus(element) {
+        element.textContent = "";
+        element.className = "status hidden";
       }
 
-      data.forEach(function(product) {
-        const row = document.createElement('div');
-        row.className = 'product-row';
+      function setBusy(button, busy, busyText, normalText) {
+        button.disabled = busy;
+        button.textContent = busy ? busyText : normalText;
+      }
 
-        const name = document.createElement('b');
-        name.textContent = product.product_name || 'منتج بدون اسم';
+      function showLogin() {
+        $("loginSection").classList.remove("hidden");
+        $("homeSection").classList.add("hidden");
+        $("tasksSection").classList.add("hidden");
+        $("dataSection").classList.add("hidden");
+        $("bottomNav").classList.add("hidden");
+      }
 
-        const code = document.createElement('div');
-        code.textContent =
-          'كود المنتج: ' + (product.product_code || 'غير محدد');
+      function showApp() {
+        $("loginSection").classList.add("hidden");
+        $("homeSection").classList.remove("hidden");
+        $("bottomNav").classList.remove("hidden");
+        showPage("home");
+      }
 
-        const type = document.createElement('div');
-        type.textContent =
-          'نوع المنتج: ' + (product.product_type || 'غير محدد');
+      function showPage(page) {
+        $("homeSection").classList.toggle("hidden", page !== "home");
+        $("tasksSection").classList.toggle("hidden", page !== "tasks");
+        $("dataSection").classList.toggle("hidden", page !== "data");
 
-        const active = document.createElement('div');
-        active.textContent =
-          'الحالة: ' +
-          (product.is_active === true ? 'نشط' :
-           product.is_active === false ? 'غير نشط' : 'غير محددة');
+        document.querySelectorAll(".nav-button").forEach((button) => {
+          button.classList.toggle(
+            "active",
+            button.dataset.page === page
+          );
+        });
+      }
 
-        row.append(name, code, type, active);
-        list.appendChild(row);
+      function friendlyError(error) {
+        const message = error && error.message
+          ? error.message
+          : "حدث خطأ غير معروف.";
+
+        const code = error && error.code
+          ? " (رمز الخطأ: " + error.code + ")"
+          : "";
+
+        return message + code;
+      }
+
+      async function loadUserInfo(user) {
+        const box = $("userInfo");
+
+        box.textContent = "تم تسجيل الدخول. جارٍ التحقق من حساب الموظف...";
+
+        const { data, error } = await client
+          .from("app_users")
+          .select("display_name, is_active, role_id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (error) {
+          box.textContent =
+            "تم تسجيل الدخول، لكن تعذّر قراءة بيانات الموظف. " +
+            friendlyError(error);
+          return;
+        }
+
+        if (!data) {
+          box.textContent =
+            "تم تسجيل الدخول، لكن لم يظهر سجل موظف مطابق لهذا الحساب. " +
+            "يرجى مراجعة ربط الحساب بجدول app_users.";
+          return;
+        }
+
+        if (!data.is_active) {
+          box.textContent =
+            "هذا الحساب غير مفعّل في جدول الموظفين. يرجى مراجعة مدير النظام.";
+          return;
+        }
+
+        box.textContent =
+          "مرحبًا " + data.display_name +
+          " — تم تسجيل الدخول بنجاح.";
+      }
+
+      async function checkProductsPermission() {
+        const { data, error } = await client.rpc("has_permission", {
+          p_permission_code: "PRODUCTS_VIEW"
+        });
+
+        if (error) {
+          return {
+            allowed: null,
+            error: error
+          };
+        }
+
+        return {
+          allowed: data === true,
+          error: null
+        };
+      }
+
+      async function loadProducts() {
+        const button = $("loadProductsButton");
+        const status = $("productsStatus");
+        const list = $("productsList");
+
+        hideStatus(status);
+
+        setBusy(
+          button,
+          true,
+          "جارٍ تحميل المنتجات...",
+          "📦 عرض المنتجات من قاعدة البيانات"
+        );
+
+        list.replaceChildren();
+
+        try {
+          const { data: sessionData, error: sessionError } =
+            await client.auth.getSession();
+
+          if (sessionError) {
+            throw sessionError;
+          }
+
+          if (!sessionData.session) {
+            showLogin();
+            showStatus(
+              $("loginStatus"),
+              "انتهت جلسة الدخول. سجّل الدخول مرة أخرى.",
+              "error"
+            );
+            return;
+          }
+
+          const permission = await checkProductsPermission();
+
+          if (permission.error) {
+            showStatus(
+              status,
+              "تعذّر التحقق من صلاحية عرض المنتجات. " +
+              friendlyError(permission.error),
+              "error"
+            );
+            return;
+          }
+
+          if (!permission.allowed) {
+            showStatus(
+              status,
+              "تم تسجيل الدخول، لكن حسابك لا يمتلك صلاحية PRODUCTS_VIEW. " +
+              "لن نغيّر الصلاحيات تلقائيًا.",
+              "error"
+            );
+            return;
+          }
+
+          const { data, error } = await client
+            .from("products")
+            .select(
+              "product_id, product_code, product_name, product_type, is_active"
+            )
+            .order("product_id", { ascending: true })
+            .limit(50);
+
+          if (error) {
+            showStatus(
+              status,
+              "تعذّرت قراءة المنتجات. " + friendlyError(error),
+              "error"
+            );
+            return;
+          }
+
+          if (!data || data.length === 0) {
+            showStatus(
+              status,
+              "تم تسجيل الدخول والتحقق من صلاحية العرض، " +
+              "لكن الاستعلام لم يُرجع منتجات مرئية لهذا الحساب. " +
+              "قد تحتاج سياسات الوصول إلى فحص إضافي.",
+              ""
+            );
+
+            list.innerHTML =
+              '<div class="empty">لا توجد منتجات متاحة للعرض حاليًا.</div>';
+
+            return;
+          }
+
+          data.forEach((product) => {
+            const card = document.createElement("article");
+            card.className = "product";
+
+            const name = document.createElement("div");
+            name.className = "product-name";
+            name.textContent = product.product_name || "منتج بدون اسم";
+
+            const details = document.createElement("div");
+            details.className = "product-details";
+            details.textContent =
+              "رقم المنتج: " + product.product_id +
+              " | الكود: " + (product.product_code || "غير محدد") +
+              " | النوع: " + (product.product_type || "غير محدد");
+
+            const badge = document.createElement("span");
+            badge.className = "badge";
+            badge.textContent = product.is_active
+              ? "منتج نشط"
+              : "منتج غير نشط";
+
+            card.append(name, details, badge);
+            list.appendChild(card);
+          });
+
+          showStatus(
+            status,
+            "نجحت قراءة " + data.length +
+            " منتجًا من قاعدة البيانات. لم يتم تعديل أي بيانات.",
+            "success"
+          );
+
+        } catch (error) {
+          showStatus(
+            status,
+            "حدث خطأ أثناء تحميل المنتجات: " + friendlyError(error),
+            "error"
+          );
+        } finally {
+          setBusy(
+            button,
+            false,
+            "",
+            "📦 عرض المنتجات من قاعدة البيانات"
+          );
+        }
+      }
+
+      $("loginForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const button = $("loginButton");
+        const email = $("email").value.trim();
+        const password = $("password").value;
+        const status = $("loginStatus");
+
+        hideStatus(status);
+
+        setBusy(
+          button,
+          true,
+          "جارٍ تسجيل الدخول...",
+          "تسجيل الدخول"
+        );
+
+        try {
+          const { data, error } = await client.auth.signInWithPassword({
+            email,
+            password
+          });
+
+          if (error) {
+            showStatus(
+              status,
+              "تعذّر تسجيل الدخول. راجع البريد الإلكتروني وكلمة المرور، " +
+              "ثم حاول مرة أخرى. " + friendlyError(error),
+              "error"
+            );
+            return;
+          }
+
+          if (!data.user || !data.session) {
+            showStatus(
+              status,
+              "لم يتم إنشاء جلسة دخول. حاول مرة أخرى.",
+              "error"
+            );
+            return;
+          }
+
+          showApp();
+          await loadUserInfo(data.user);
+          await loadProducts();
+
+        } catch (error) {
+          showStatus(
+            status,
+            "حدث خطأ أثناء تسجيل الدخول: " + friendlyError(error),
+            "error"
+          );
+        } finally {
+          setBusy(button, false, "", "تسجيل الدخول");
+        }
       });
 
-    } catch (error) {
-      console.error('Connection setup error:', error);
+      $("loadProductsButton").addEventListener("click", loadProducts);
 
-      status.textContent =
-        'تعذر تجهيز الاتصال. تحقق من الإنترنت وإعدادات المكتبة.';
+      $("logoutButton").addEventListener("click", async () => {
+        const button = $("logoutButton");
+        button.disabled = true;
 
-      list.textContent = 'لم يتم تحميل المنتجات.';
-    } finally {
-      button.disabled = false;
-    }
-  }
-</script>
+        try {
+          const { error } = await client.auth.signOut();
 
+          if (error) {
+            showStatus(
+              $("productsStatus"),
+              "تعذّر تسجيل الخروج: " + friendlyError(error),
+              "error"
+            );
+            return;
+          }
+
+          $("password").value = "";
+          $("productsList").replaceChildren();
+          hideStatus($("productsStatus"));
+          showLogin();
+
+          showStatus(
+            $("loginStatus"),
+            "تم تسجيل الخروج بنجاح.",
+            "success"
+          );
+
+        } finally {
+          button.disabled = false;
+        }
+      });
+
+      document.querySelectorAll(".nav-button").forEach((button) => {
+        button.addEventListener("click", () => {
+          showPage(button.dataset.page);
+        });
+      });
+
+      client.auth.onAuthStateChange((event, session) => {
+        if (event === "SIGNED_OUT" || !session) {
+          showLogin();
+        }
+      });
+
+      async function initialize() {
+        try {
+          const { data, error } = await client.auth.getSession();
+
+          if (error) {
+            showLogin();
+            showStatus(
+              $("loginStatus"),
+              "تعذّر التحقق من جلسة الدخول. " + friendlyError(error),
+              "error"
+            );
+            return;
+          }
+
+          if (data.session && data.session.user) {
+            showApp();
+            await loadUserInfo(data.session.user);
+            await loadProducts();
+          } else {
+            showLogin();
+          }
+
+        } catch (error) {
+          showLogin();
+          showStatus(
+            $("loginStatus"),
+            "تعذّر الاتصال بخدمة تسجيل الدخول. " + friendlyError(error),
+            "error"
+          );
+        }
+      }
+
+      initialize();
+    })();
+  </script>
 </body>
 </html>
