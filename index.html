@@ -7,9 +7,7 @@
   <title>MeatManagement | إدارة اللحوم</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -59,7 +57,7 @@
       border: 1px solid #e1e9e4;
       border-radius: 16px;
       padding: 17px 13px;
-      min-height: 115px;
+      min-height: 110px;
       box-shadow: 0 4px 14px #173c3508;
     }
 
@@ -78,6 +76,7 @@
       font-size: 11px;
       color: #78857f;
       line-height: 1.7;
+      overflow-wrap: anywhere;
     }
 
     .panel {
@@ -156,12 +155,22 @@
       border-radius: 10px;
     }
 
-    .page {
-      display: none;
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .product-row {
+      background: white;
+      border: 1px solid #e1e9e4;
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 10px;
+      line-height: 1.8;
+      overflow-wrap: anywhere;
     }
 
-    .page.active {
+    .product-row b {
       display: block;
+      margin-bottom: 5px;
     }
   </style>
 </head>
@@ -176,14 +185,11 @@
 
 <main>
 
-  <!-- الرئيسية -->
   <section id="home" class="page active">
-
     <h2>أهلاً بيك 👋</h2>
     <p>تابع عمليات الشركة من مكان واحد.</p>
 
     <div class="cards">
-
       <div class="card">
         <div class="icon">🧾</div>
         <b>المبيعات</b>
@@ -207,52 +213,42 @@
         <b>التوزيع</b>
         <small>السيارات والتحميل والرحلات</small>
       </div>
-
-    </div>
-
-    <div class="panel">
-      <b>حالة النظام</b>
-      <p>واجهة التطبيق جاهزة للمرحلة التالية.</p>
-      <p>قاعدة البيانات لم تُختبر بعد من داخل التطبيق.</p>
     </div>
 
     <div class="panel">
       <b>🔌 الاتصال بقاعدة البيانات</b>
-
-      <p>مشروع Supabase الخاص بالتطبيق.</p>
+      <p>اضغط الزر لاختبار قراءة جدول المنتجات.</p>
 
       <button
         class="action-button"
         id="testConnection"
         type="button"
-        onclick="testSupabaseConnection()">
-        اختبار الاتصال
+        onclick="loadProducts()">
+        اختبار الاتصال وعرض المنتجات
       </button>
 
-      <div
-        id="connectionStatus"
-        class="status"
-        role="status"
-        aria-live="polite">
-        لم يتم إجراء اختبار الاتصال حتى الآن.
+      <div id="connectionStatus" class="status" role="status" aria-live="polite">
+        لم يتم إجراء الاختبار بعد.
+      </div>
+    </div>
+
+    <div class="panel">
+      <b>📦 المنتجات من قاعدة البيانات</b>
+      <div id="productsList">
+        المنتجات ستظهر هنا بعد نجاح القراءة.
       </div>
     </div>
 
     <div class="notice">
-      الاختبار يطلب قراءة محدودة من جدول المنتجات فقط.
-      لا ينشئ بيانات ولا يعدّلها ولا يحذفها.
-      نجاح الاتصال لا يعني وحده اكتمال إعداد صلاحيات النظام.
+      هذه النسخة تقرأ المنتجات فقط. لا تضيف بيانات ولا تعدّلها ولا تحذفها.
+      لم يتم تنفيذ تسجيل الدخول أو ربط بقية أقسام النظام بعد.
     </div>
-
   </section>
 
-  <!-- مهامي -->
   <section id="tasks" class="page">
-
     <h2>مهامي</h2>
 
     <div class="cards">
-
       <div class="card">
         <div class="icon">📝</div>
         <b>طلبات البيع</b>
@@ -276,18 +272,13 @@
         <b>التحصيلات</b>
         <small>متابعة المبالغ المستحقة</small>
       </div>
-
     </div>
-
   </section>
 
-  <!-- البيانات -->
   <section id="data" class="page">
-
     <h2>البيانات</h2>
 
     <div class="cards">
-
       <div class="card">
         <div class="icon">🥩</div>
         <b>المنتجات</b>
@@ -311,39 +302,28 @@
         <b>المستخدمون والصلاحيات</b>
         <small>الأدوار وصلاحيات الدخول</small>
       </div>
-
     </div>
-
   </section>
 
 </main>
 
 <nav>
-  <button
-    class="active"
-    data-page="home"
-    onclick="showPage('home', this)">
+  <button class="active" onclick="showPage('home', this)">
     ⌂<br>الرئيسية
   </button>
 
-  <button
-    data-page="tasks"
-    onclick="showPage('tasks', this)">
+  <button onclick="showPage('tasks', this)">
     ✓<br>مهامي
   </button>
 
-  <button
-    data-page="data"
-    onclick="showPage('data', this)">
+  <button onclick="showPage('data', this)">
     ▦<br>البيانات
   </button>
 </nav>
 
-<!-- مكتبة Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-  // إعداد الاتصال بمشروع Supabase
   const SUPABASE_URL =
     'https://mklbemoisdkoyrwcrmoj.supabase.co';
 
@@ -352,7 +332,6 @@
 
   let supabaseClient = null;
 
-  // عرض التاريخ
   document.getElementById('date').textContent =
     new Date().toLocaleDateString('ar-EG', {
       weekday: 'long',
@@ -361,7 +340,6 @@
       day: 'numeric'
     });
 
-  // التنقل بين صفحات التطبيق
   function showPage(id, button) {
     document.querySelectorAll('.page').forEach(function(page) {
       page.classList.toggle('active', page.id === id);
@@ -375,17 +353,9 @@
     window.scrollTo(0, 0);
   }
 
-  // تجهيز عميل Supabase
-  function initializeSupabase() {
+  function getSupabaseClient() {
     if (!window.supabase || !window.supabase.createClient) {
-      throw new Error('تعذر تحميل مكتبة الاتصال. تحقق من الإنترنت.');
-    }
-
-    if (
-      !SUPABASE_PUBLISHABLE_KEY ||
-      SUPABASE_PUBLISHABLE_KEY.indexOf('sb_publishable_') !== 0
-    ) {
-      throw new Error('مفتاح النشر العام غير مضبوط.');
+      throw new Error('تعذر تحميل مكتبة Supabase. تحقق من الإنترنت.');
     }
 
     if (!supabaseClient) {
@@ -398,44 +368,80 @@
     return supabaseClient;
   }
 
-  // اختبار قراءة محدودة دون تعديل البيانات
-  async function testSupabaseConnection() {
+  async function loadProducts() {
     const button = document.getElementById('testConnection');
     const status = document.getElementById('connectionStatus');
+    const list = document.getElementById('productsList');
 
     button.disabled = true;
-    status.textContent = 'جاري اختبار الاتصال...';
+    status.textContent = 'جاري الاتصال وقراءة المنتجات...';
+    list.textContent = 'جاري تحميل البيانات...';
 
     try {
-      const client = initializeSupabase();
+      const client = getSupabaseClient();
 
       const { data, error } = await client
         .from('products')
-        .select('id')
-        .limit(1);
+        .select('product_id, product_code, product_name, product_type, is_active')
+        .limit(50);
 
       if (error) {
-        console.error('Supabase test error:', error);
+        console.error('Supabase read error:', error);
 
         status.textContent =
-          'وصلنا إلى مرحلة الاختبار، لكن تعذرت قراءة جدول المنتجات. ' +
-          'قد يكون السبب صلاحيات الوصول أو إعدادات قاعدة البيانات. ' +
-          'رمز الخطأ: ' + (error.code || 'غير متاح') +
-          '. لم يتم تعديل أي بيانات.';
+          'تعذرت قراءة المنتجات. رمز الخطأ: ' +
+          (error.code || 'غير متاح') +
+          '. الرسالة: ' + error.message;
+
+        list.textContent =
+          'لم يتم عرض المنتجات. لم تُعدّل أي بيانات.';
         return;
       }
 
       status.textContent =
-        'نجح طلب القراءة من جدول المنتجات. ' +
-        'هذا يؤكد نجاح الطلب، لكنه لا يؤكد اكتمال تسجيل الدخول ' +
-        'أو صلاحيات بقية جداول النظام.';
+        'نجحت قراءة جدول المنتجات. عدد السجلات المسترجعة: ' +
+        data.length + '.';
+
+      list.replaceChildren();
+
+      if (data.length === 0) {
+        list.textContent =
+          'نجح الاتصال، لكن لا توجد منتجات متاحة للقراءة بهذا الإعداد.';
+        return;
+      }
+
+      data.forEach(function(product) {
+        const row = document.createElement('div');
+        row.className = 'product-row';
+
+        const name = document.createElement('b');
+        name.textContent = product.product_name || 'منتج بدون اسم';
+
+        const code = document.createElement('div');
+        code.textContent =
+          'كود المنتج: ' + (product.product_code || 'غير محدد');
+
+        const type = document.createElement('div');
+        type.textContent =
+          'نوع المنتج: ' + (product.product_type || 'غير محدد');
+
+        const active = document.createElement('div');
+        active.textContent =
+          'الحالة: ' +
+          (product.is_active === true ? 'نشط' :
+           product.is_active === false ? 'غير نشط' : 'غير محددة');
+
+        row.append(name, code, type, active);
+        list.appendChild(row);
+      });
 
     } catch (error) {
       console.error('Connection setup error:', error);
 
       status.textContent =
-        'تعذر تجهيز الاتصال. تحقق من اتصال الإنترنت ' +
-        'وإعدادات المفتاح ومكتبة الاتصال. لم يتم تعديل أي بيانات.';
+        'تعذر تجهيز الاتصال. تحقق من الإنترنت وإعدادات المكتبة.';
+
+      list.textContent = 'لم يتم تحميل المنتجات.';
     } finally {
       button.disabled = false;
     }
@@ -443,4 +449,4 @@
 </script>
 
 </body>
-  </html>
+</html>
