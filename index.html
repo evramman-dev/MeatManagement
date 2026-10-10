@@ -1,0 +1,81 @@
+<!DOCTYPE html><html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#173c35">
+<title>MeatManagement | إدارة اللحوم</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Tahoma,Arial,sans-serif;background:#f4f7f5;color:#24332e}
+header{background:#173c35;color:white;padding:24px 18px;border-radius:0 0 24px 24px}
+header h1{font-size:22px;margin:0 0 10px}
+header p{font-size:13px;line-height:1.8;margin:0;color:#d9e8e1}
+main{padding:18px 14px 90px;max-width:800px;margin:auto}
+h2{font-size:18px;margin:10px 0 15px}
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.card{background:white;border:1px solid #e1e9e4;border-radius:16px;padding:17px 13px;min-height:115px;box-shadow:0 4px 14px #173c3508}
+.icon{font-size:25px;margin-bottom:12px}
+.card b{display:block;font-size:14px;margin-bottom:7px}
+.card small{font-size:11px;color:#78857f;line-height:1.7}
+.panel{background:white;padding:17px;border-radius:16px;margin-top:20px;border:1px solid #e1e9e4;line-height:1.9}
+nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #e1e9e4;display:flex;justify-content:space-around;padding:10px 4px calc(10px + env(safe-area-inset-bottom))}
+nav button{border:0;background:transparent;color:#65746d;padding:8px;font-family:inherit;font-size:12px}
+nav button.active{color:#173c35;font-weight:bold;background:#e7f2ed;border-radius:10px}
+.page{display:none}.page.active{display:block}
+.notice{font-size:12px;color:#75602d;background:#fff5df;border-radius:12px;padding:12px;margin-top:15px;line-height:1.9}
+</style>
+</head>
+<body>
+<header>
+<h1>🥩 MeatManagement</h1>
+<p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
+<p id="date"></p>
+</header>
+<main>
+<section id="home" class="page active">
+<h2>أهلاً بيك 👋</h2>
+<p>تابع عمليات الشركة من مكان واحد.</p>
+<div class="cards">
+<div class="card"><div class="icon">🧾</div><b>المبيعات</b><small>طلبات البيع والفواتير</small></div>
+<div class="card"><div class="icon">📦</div><b>المخزون</b><small>الأرصدة وحركات المخازن</small></div>
+<div class="card"><div class="icon">⚙️</div><b>الإنتاج</b><small>أوامر الإنتاج والكميات الفعلية</small></div>
+<div class="card"><div class="icon">🚚</div><b>التوزيع</b><small>السيارات والتحميل والرحلات</small></div>
+</div>
+<div class="panel"><b>حالة النظام</b><p>الواجهة الأولية جاهزة للتجربة.</p><p>البيانات الحقيقية لم تُربط بعد.</p></div>
+<div class="notice">تنبيه: الأرقام والبيانات الفعلية ستظهر بعد ربط Supabase ومراجعة الصلاحيات. لم يتم إجراء أي تعديل على قاعدة البيانات.</div>
+</section>
+<section id="tasks" class="page">
+<h2>مهامي</h2>
+<div class="cards">
+<div class="card"><div class="icon">📝</div><b>طلبات البيع</b><small>متابعة طلبات العملاء</small></div>
+<div class="card"><div class="icon">🚛</div><b>تحميل السيارات</b><small>مراجعة الكميات وتأكيد التحميل</small></div>
+<div class="card"><div class="icon">🏭</div><b>أوامر الإنتاج</b><small>تسجيل الإنتاج المخطط والفعلي</small></div>
+<div class="card"><div class="icon">💰</div><b>التحصيلات</b><small>متابعة المبالغ المستحقة</small></div>
+</div>
+</section>
+<section id="data" class="page">
+<h2>البيانات</h2>
+<div class="cards">
+<div class="card"><div class="icon">🥩</div><b>المنتجات</b><small>الأصناف والوحدات</small></div>
+<div class="card"><div class="icon">👥</div><b>العملاء</b><small>العملاء ومجموعاتهم</small></div>
+<div class="card"><div class="icon">🏷️</div><b>قوائم الأسعار</b><small>أسعار العملاء والمنتجات</small></div>
+<div class="card"><div class="icon">🔐</div><b>المستخدمون والصلاحيات</b><small>الأدوار وصلاحيات الدخول</small></div>
+</div>
+</section>
+</main>
+<nav>
+<button class="active" data-page="home" onclick="showPage('home',this)">⌂<br>الرئيسية</button>
+<button data-page="tasks" onclick="showPage('tasks',this)">✓<br>مهامي</button>
+<button data-page="data" onclick="showPage('data',this)">▦<br>البيانات</button>
+</nav>
+<script>
+document.getElementById('date').textContent=new Date().toLocaleDateString('ar-EG',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+function showPage(id,button){
+document.querySelectorAll('.page').forEach(function(p){p.classList.toggle('active',p.id===id)});
+document.querySelectorAll('nav button').forEach(function(b){b.classList.remove('active')});
+button.classList.add('active');
+window.scrollTo(0,0);
+}
+</script>
+</body>
+  </html>
