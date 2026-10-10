@@ -15,16 +15,14 @@
       --green-light: #24563e;
       --gold: #d5b16a;
       --background: #f4f6f3;
-      --white: #ffffff;
+      --white: #fff;
       --text: #202820;
       --muted: #68736a;
       --border: #e0e6df;
       --danger: #a52b2b;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -33,14 +31,9 @@
       font-family: Arial, Tahoma, sans-serif;
     }
 
-    button,
-    input {
-      font: inherit;
-    }
+    button, input { font: inherit; }
 
-    button {
-      cursor: pointer;
-    }
+    button { cursor: pointer; }
 
     .header {
       background: var(--green);
@@ -71,7 +64,7 @@
       border-radius: 16px;
       padding: 20px;
       margin-bottom: 16px;
-      box-shadow: 0 3px 12px rgba(20, 45, 25, 0.04);
+      box-shadow: 0 3px 12px rgba(20,45,25,.04);
     }
 
     .card h2 {
@@ -106,7 +99,6 @@
 
     input:focus {
       border-color: var(--green-light);
-      box-shadow: 0 0 0 3px rgba(36, 86, 62, 0.1);
     }
 
     .button {
@@ -120,12 +112,10 @@
       font-weight: bold;
     }
 
-    .button:hover {
-      background: var(--green-light);
-    }
+    .button:hover { background: var(--green-light); }
 
     .button:disabled {
-      opacity: 0.6;
+      opacity: .6;
       cursor: wait;
     }
 
@@ -133,6 +123,16 @@
       background: #edf1ed;
       color: var(--green);
       border: 1px solid var(--border);
+    }
+
+    .text-button {
+      display: block;
+      margin: 14px auto 0;
+      border: 0;
+      background: transparent;
+      color: var(--green-light);
+      text-decoration: underline;
+      padding: 8px;
     }
 
     .status {
@@ -143,7 +143,6 @@
       line-height: 1.8;
       overflow-wrap: anywhere;
       background: #f0f3f0;
-      color: var(--text);
     }
 
     .status.success {
@@ -156,9 +155,7 @@
       color: var(--danger);
     }
 
-    .hidden {
-      display: none !important;
-    }
+    .hidden { display: none !important; }
 
     .user-info {
       background: #e9efe9;
@@ -174,7 +171,7 @@
       border-radius: 12px;
       padding: 13px;
       margin-top: 10px;
-      background: #fff;
+      background: white;
     }
 
     .product-name {
@@ -209,7 +206,6 @@
       padding: 10px 8px calc(10px + env(safe-area-inset-bottom));
       background: white;
       border-top: 1px solid var(--border);
-      box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.04);
     }
 
     .nav-button {
@@ -240,529 +236,4 @@
       font-size: 12px;
       line-height: 1.8;
       text-align: center;
-      padding: 10px;
-    }
-  </style>
-</head>
-
-<body>
-  <header class="header">
-    <h1>🥩 MeatManagement</h1>
-    <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
-  </header>
-
-  <main class="container">
-
-    <!-- تسجيل الدخول -->
-    <section id="loginSection" class="card">
-      <h2>🔐 تسجيل الدخول</h2>
-
-      <p class="description">
-        سجّل الدخول بحساب الموظف المسجّل بالفعل في النظام.
-        ستُطبّق قاعدة البيانات صلاحيات حسابك عند قراءة البيانات.
-      </p>
-
-      <form id="loginForm">
-        <label for="email">البريد الإلكتروني</label>
-        <input
-          id="email"
-          type="email"
-          autocomplete="username"
-          placeholder="name@example.com"
-          required
-        >
-
-        <label for="password">كلمة المرور</label>
-        <input
-          id="password"
-          type="password"
-          autocomplete="current-password"
-          placeholder="أدخل كلمة المرور"
-          required
-        >
-
-        <button id="loginButton" class="button" type="submit">
-          تسجيل الدخول
-        </button>
-      </form>
-
-      <div id="loginStatus" class="status hidden" role="status"></div>
-    </section>
-
-    <!-- الصفحة الرئيسية بعد الدخول -->
-    <section id="homeSection" class="hidden">
-      <div class="card">
-        <h2>🏠 الرئيسية</h2>
-
-        <div id="userInfo" class="user-info">
-          جارٍ تحميل بيانات الحساب...
-        </div>
-
-        <p class="description">
-          أهلًا بك في نظام إدارة اللحوم.
-          يمكنك الآن اختبار قراءة المنتجات المسموح لك بالوصول إليها.
-        </p>
-
-        <button id="loadProductsButton" class="button">
-          📦 عرض المنتجات من قاعدة البيانات
-        </button>
-
-        <button id="logoutButton" class="button secondary">
-          تسجيل الخروج
-        </button>
-
-        <div id="productsStatus" class="status hidden" role="status"></div>
-      </div>
-
-      <div id="productsSection" class="card">
-        <h2>📦 المنتجات من قاعدة البيانات</h2>
-        <div id="productsList">
-          <div class="empty">
-            اضغط على زر «عرض المنتجات من قاعدة البيانات» للبدء.
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- المهام -->
-    <section id="tasksSection" class="card hidden">
-      <h2>📋 مهامي</h2>
-      <p class="description">
-        سنضيف مهام كل موظف وفق دوره وصلاحياته بعد إتمام اختبار تسجيل الدخول.
-      </p>
-    </section>
-
-    <!-- البيانات -->
-    <section id="dataSection" class="card hidden">
-      <h2>🗂️ البيانات</h2>
-      <p class="description">
-        سيجري توصيل أقسام العملاء والمخزون والإنتاج والمبيعات تدريجيًا،
-        مع الحفاظ على الصلاحيات الحالية.
-      </p>
-    </section>
-
-    <p class="footer-note">
-      الاتصال بقاعدة البيانات لا يعني إتاحة جميع الوظائف.
-      تُطبّق صلاحيات الوصول على مستوى قاعدة البيانات.
-    </p>
-  </main>
-
-  <nav id="bottomNav" class="bottom-nav hidden" aria-label="التنقل الرئيسي">
-    <button class="nav-button active" data-page="home">الرئيسية</button>
-    <button class="nav-button" data-page="tasks">مهامي</button>
-    <button class="nav-button" data-page="data">البيانات</button>
-  </nav>
-
-  <script>
-    (() => {
-      "use strict";
-
-      const SUPABASE_URL =
-        "https://mklbemoisdkoyrwcrmoj.supabase.co";
-
-      const SUPABASE_PUBLISHABLE_KEY =
-        "sb_publishable_7ZjltiXgqnY4BJrZH4iZog_Jh-xfbau";
-
-      const client = window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_PUBLISHABLE_KEY,
-        {
-          auth: {
-            persistSession: true,
-            autoRefreshToken: true,
-            detectSessionInUrl: true
-          }
-        }
-      );
-
-      const $ = (id) => document.getElementById(id);
-
-      function showStatus(element, message, type = "") {
-        element.textContent = message;
-        element.className = "status";
-
-        if (type) {
-          element.classList.add(type);
-        }
-      }
-
-      function hideStatus(element) {
-        element.textContent = "";
-        element.className = "status hidden";
-      }
-
-      function setBusy(button, busy, busyText, normalText) {
-        button.disabled = busy;
-        button.textContent = busy ? busyText : normalText;
-      }
-
-      function showLogin() {
-        $("loginSection").classList.remove("hidden");
-        $("homeSection").classList.add("hidden");
-        $("tasksSection").classList.add("hidden");
-        $("dataSection").classList.add("hidden");
-        $("bottomNav").classList.add("hidden");
-      }
-
-      function showApp() {
-        $("loginSection").classList.add("hidden");
-        $("homeSection").classList.remove("hidden");
-        $("bottomNav").classList.remove("hidden");
-        showPage("home");
-      }
-
-      function showPage(page) {
-        $("homeSection").classList.toggle("hidden", page !== "home");
-        $("tasksSection").classList.toggle("hidden", page !== "tasks");
-        $("dataSection").classList.toggle("hidden", page !== "data");
-
-        document.querySelectorAll(".nav-button").forEach((button) => {
-          button.classList.toggle(
-            "active",
-            button.dataset.page === page
-          );
-        });
-      }
-
-      function friendlyError(error) {
-        const message = error && error.message
-          ? error.message
-          : "حدث خطأ غير معروف.";
-
-        const code = error && error.code
-          ? " (رمز الخطأ: " + error.code + ")"
-          : "";
-
-        return message + code;
-      }
-
-      async function loadUserInfo(user) {
-        const box = $("userInfo");
-
-        box.textContent = "تم تسجيل الدخول. جارٍ التحقق من حساب الموظف...";
-
-        const { data, error } = await client
-          .from("app_users")
-          .select("display_name, is_active, role_id")
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        if (error) {
-          box.textContent =
-            "تم تسجيل الدخول، لكن تعذّر قراءة بيانات الموظف. " +
-            friendlyError(error);
-          return;
-        }
-
-        if (!data) {
-          box.textContent =
-            "تم تسجيل الدخول، لكن لم يظهر سجل موظف مطابق لهذا الحساب. " +
-            "يرجى مراجعة ربط الحساب بجدول app_users.";
-          return;
-        }
-
-        if (!data.is_active) {
-          box.textContent =
-            "هذا الحساب غير مفعّل في جدول الموظفين. يرجى مراجعة مدير النظام.";
-          return;
-        }
-
-        box.textContent =
-          "مرحبًا " + data.display_name +
-          " — تم تسجيل الدخول بنجاح.";
-      }
-
-      async function checkProductsPermission() {
-        const { data, error } = await client.rpc("has_permission", {
-          p_permission_code: "PRODUCTS_VIEW"
-        });
-
-        if (error) {
-          return {
-            allowed: null,
-            error: error
-          };
-        }
-
-        return {
-          allowed: data === true,
-          error: null
-        };
-      }
-
-      async function loadProducts() {
-        const button = $("loadProductsButton");
-        const status = $("productsStatus");
-        const list = $("productsList");
-
-        hideStatus(status);
-
-        setBusy(
-          button,
-          true,
-          "جارٍ تحميل المنتجات...",
-          "📦 عرض المنتجات من قاعدة البيانات"
-        );
-
-        list.replaceChildren();
-
-        try {
-          const { data: sessionData, error: sessionError } =
-            await client.auth.getSession();
-
-          if (sessionError) {
-            throw sessionError;
-          }
-
-          if (!sessionData.session) {
-            showLogin();
-            showStatus(
-              $("loginStatus"),
-              "انتهت جلسة الدخول. سجّل الدخول مرة أخرى.",
-              "error"
-            );
-            return;
-          }
-
-          const permission = await checkProductsPermission();
-
-          if (permission.error) {
-            showStatus(
-              status,
-              "تعذّر التحقق من صلاحية عرض المنتجات. " +
-              friendlyError(permission.error),
-              "error"
-            );
-            return;
-          }
-
-          if (!permission.allowed) {
-            showStatus(
-              status,
-              "تم تسجيل الدخول، لكن حسابك لا يمتلك صلاحية PRODUCTS_VIEW. " +
-              "لن نغيّر الصلاحيات تلقائيًا.",
-              "error"
-            );
-            return;
-          }
-
-          const { data, error } = await client
-            .from("products")
-            .select(
-              "product_id, product_code, product_name, product_type, is_active"
-            )
-            .order("product_id", { ascending: true })
-            .limit(50);
-
-          if (error) {
-            showStatus(
-              status,
-              "تعذّرت قراءة المنتجات. " + friendlyError(error),
-              "error"
-            );
-            return;
-          }
-
-          if (!data || data.length === 0) {
-            showStatus(
-              status,
-              "تم تسجيل الدخول والتحقق من صلاحية العرض، " +
-              "لكن الاستعلام لم يُرجع منتجات مرئية لهذا الحساب. " +
-              "قد تحتاج سياسات الوصول إلى فحص إضافي.",
-              ""
-            );
-
-            list.innerHTML =
-              '<div class="empty">لا توجد منتجات متاحة للعرض حاليًا.</div>';
-
-            return;
-          }
-
-          data.forEach((product) => {
-            const card = document.createElement("article");
-            card.className = "product";
-
-            const name = document.createElement("div");
-            name.className = "product-name";
-            name.textContent = product.product_name || "منتج بدون اسم";
-
-            const details = document.createElement("div");
-            details.className = "product-details";
-            details.textContent =
-              "رقم المنتج: " + product.product_id +
-              " | الكود: " + (product.product_code || "غير محدد") +
-              " | النوع: " + (product.product_type || "غير محدد");
-
-            const badge = document.createElement("span");
-            badge.className = "badge";
-            badge.textContent = product.is_active
-              ? "منتج نشط"
-              : "منتج غير نشط";
-
-            card.append(name, details, badge);
-            list.appendChild(card);
-          });
-
-          showStatus(
-            status,
-            "نجحت قراءة " + data.length +
-            " منتجًا من قاعدة البيانات. لم يتم تعديل أي بيانات.",
-            "success"
-          );
-
-        } catch (error) {
-          showStatus(
-            status,
-            "حدث خطأ أثناء تحميل المنتجات: " + friendlyError(error),
-            "error"
-          );
-        } finally {
-          setBusy(
-            button,
-            false,
-            "",
-            "📦 عرض المنتجات من قاعدة البيانات"
-          );
-        }
-      }
-
-      $("loginForm").addEventListener("submit", async (event) => {
-        event.preventDefault();
-
-        const button = $("loginButton");
-        const email = $("email").value.trim();
-        const password = $("password").value;
-        const status = $("loginStatus");
-
-        hideStatus(status);
-
-        setBusy(
-          button,
-          true,
-          "جارٍ تسجيل الدخول...",
-          "تسجيل الدخول"
-        );
-
-        try {
-          const { data, error } = await client.auth.signInWithPassword({
-            email,
-            password
-          });
-
-          if (error) {
-            showStatus(
-              status,
-              "تعذّر تسجيل الدخول. راجع البريد الإلكتروني وكلمة المرور، " +
-              "ثم حاول مرة أخرى. " + friendlyError(error),
-              "error"
-            );
-            return;
-          }
-
-          if (!data.user || !data.session) {
-            showStatus(
-              status,
-              "لم يتم إنشاء جلسة دخول. حاول مرة أخرى.",
-              "error"
-            );
-            return;
-          }
-
-          showApp();
-          await loadUserInfo(data.user);
-          await loadProducts();
-
-        } catch (error) {
-          showStatus(
-            status,
-            "حدث خطأ أثناء تسجيل الدخول: " + friendlyError(error),
-            "error"
-          );
-        } finally {
-          setBusy(button, false, "", "تسجيل الدخول");
-        }
-      });
-
-      $("loadProductsButton").addEventListener("click", loadProducts);
-
-      $("logoutButton").addEventListener("click", async () => {
-        const button = $("logoutButton");
-        button.disabled = true;
-
-        try {
-          const { error } = await client.auth.signOut();
-
-          if (error) {
-            showStatus(
-              $("productsStatus"),
-              "تعذّر تسجيل الخروج: " + friendlyError(error),
-              "error"
-            );
-            return;
-          }
-
-          $("password").value = "";
-          $("productsList").replaceChildren();
-          hideStatus($("productsStatus"));
-          showLogin();
-
-          showStatus(
-            $("loginStatus"),
-            "تم تسجيل الخروج بنجاح.",
-            "success"
-          );
-
-        } finally {
-          button.disabled = false;
-        }
-      });
-
-      document.querySelectorAll(".nav-button").forEach((button) => {
-        button.addEventListener("click", () => {
-          showPage(button.dataset.page);
-        });
-      });
-
-      client.auth.onAuthStateChange((event, session) => {
-        if (event === "SIGNED_OUT" || !session) {
-          showLogin();
-        }
-      });
-
-      async function initialize() {
-        try {
-          const { data, error } = await client.auth.getSession();
-
-          if (error) {
-            showLogin();
-            showStatus(
-              $("loginStatus"),
-              "تعذّر التحقق من جلسة الدخول. " + friendlyError(error),
-              "error"
-            );
-            return;
-          }
-
-          if (data.session && data.session.user) {
-            showApp();
-            await loadUserInfo(data.session.user);
-            await loadProducts();
-          } else {
-            showLogin();
-          }
-
-        } catch (error) {
-          showLogin();
-          showStatus(
-            $("loginStatus"),
-            "تعذّر الاتصال بخدمة تسجيل الدخول. " + friendlyError(error),
-            "error"
-          );
-        }
-      }
-
-      initialize();
-    })();
-  </script>
-</body>
-</html>
+      padding: 10
