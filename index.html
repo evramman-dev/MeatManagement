@@ -236,4 +236,678 @@
       font-size: 12px;
       line-height: 1.8;
       text-align: center;
-      padding: 10
+      padding: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <header class="header">
+    <h1>🥩 MeatManagement</h1>
+    <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
+  </header>
+
+  <main class="container">
+
+    <!-- تسجيل الدخول -->
+    <section id="loginSection" class="card">
+      <h2>🔐 تسجيل الدخول</h2>
+
+      <p class="description">
+        سجّل الدخول بحساب الموظف الموجود بالفعل في النظام.
+      </p>
+
+      <form id="loginForm">
+        <label for="email">البريد الإلكتروني</label>
+        <input id="email" type="email"
+               autocomplete="username" required>
+
+        <label for="password">كلمة المرور</label>
+        <input id="password" type="password"
+               autocomplete="current-password" required>
+
+        <button id="loginButton" class="button" type="submit">
+          تسجيل الدخول
+        </button>
+      </form>
+
+      <button id="forgotButton" class="text-button" type="button">
+        نسيت كلمة المرور؟
+      </button>
+
+      <div id="loginStatus" class="status hidden" role="status"></div>
+    </section>
+
+    <!-- طلب رابط الاستعادة -->
+    <section id="recoveryRequestSection" class="card hidden">
+      <h2>📧 استعادة كلمة المرور</h2>
+
+      <p class="description">
+        أدخل البريد الإلكتروني لحسابك. سنرسل لك رابطًا لتعيين كلمة مرور جديدة.
+      </p>
+
+      <form id="recoveryRequestForm">
+        <label for="recoveryEmail">البريد الإلكتروني</label>
+        <input id="recoveryEmail" type="email"
+               autocomplete="email" required>
+
+        <button id="recoveryRequestButton" class="button" type="submit">
+          إرسال رابط الاستعادة
+        </button>
+      </form>
+
+      <button id="backToLoginButton" class="text-button" type="button">
+        الرجوع إلى تسجيل الدخول
+      </button>
+
+      <div id="recoveryRequestStatus"
+           class="status hidden" role="status"></div>
+    </section>
+
+    <!-- تعيين كلمة مرور جديدة -->
+    <section id="newPasswordSection" class="card hidden">
+      <h2>🔑 تعيين كلمة مرور جديدة</h2>
+
+      <p class="description">
+        أدخل كلمة المرور الجديدة مرتين للتأكد من صحتها.
+      </p>
+
+      <form id="newPasswordForm">
+        <label for="newPassword">كلمة المرور الجديدة</label>
+        <input id="newPassword" type="password"
+               autocomplete="new-password"
+               minlength="8" required>
+
+        <label for="confirmPassword">تأكيد كلمة المرور</label>
+        <input id="confirmPassword" type="password"
+               autocomplete="new-password"
+               minlength="8" required>
+
+        <button id="savePasswordButton" class="button" type="submit">
+          حفظ كلمة المرور الجديدة
+        </button>
+      </form>
+
+      <div id="newPasswordStatus"
+           class="status hidden" role="status"></div>
+    </section>
+
+    <!-- التطبيق بعد تسجيل الدخول -->
+    <section id="homeSection" class="hidden">
+      <div class="card">
+        <h2>🏠 الرئيسية</h2>
+
+        <div id="userInfo" class="user-info">
+          جارٍ تحميل بيانات الحساب...
+        </div>
+
+        <button id="loadProductsButton" class="button">
+          📦 عرض المنتجات من قاعدة البيانات
+        </button>
+
+        <button id="logoutButton" class="button secondary">
+          تسجيل الخروج
+        </button>
+
+        <div id="productsStatus"
+             class="status hidden" role="status"></div>
+      </div>
+
+      <div class="card">
+        <h2>📦 المنتجات من قاعدة البيانات</h2>
+        <div id="productsList">
+          <div class="empty">
+            اضغط على زر عرض المنتجات للبدء.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tasksSection" class="card hidden">
+      <h2>📋 مهامي</h2>
+      <p class="description">
+        سيتم توصيل مهام الموظفين حسب أدوارهم في المراحل التالية.
+      </p>
+    </section>
+
+    <section id="dataSection" class="card hidden">
+      <h2>🗂️ البيانات</h2>
+      <p class="description">
+        سيتم توصيل أقسام العملاء والمخزون والإنتاج والمبيعات تدريجيًا.
+      </p>
+    </section>
+
+    <p class="footer-note">
+      يتم التحقق من الصلاحيات على مستوى قاعدة البيانات.
+      هذه النسخة لا تضيف أو تعدّل أو تحذف بيانات العمل.
+    </p>
+  </main>
+
+  <nav id="bottomNav" class="bottom-nav hidden">
+    <button class="nav-button active" data-page="home">الرئيسية</button>
+    <button class="nav-button" data-page="tasks">مهامي</button>
+    <button class="nav-button" data-page="data">البيانات</button>
+  </nav>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const SUPABASE_URL =
+        "https://mklbemoisdkoyrwcrmoj.supabase.co";
+
+      const SUPABASE_PUBLISHABLE_KEY =
+        "sb_publishable_7ZjltiXgqnY4BJrZH4iZog_Jh-xfbau";
+
+      const APP_URL =
+        "https://evramman-dev.github.io/MeatManagement/";
+
+      const client = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_PUBLISHABLE_KEY,
+        {
+          auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true,
+            flowType: "implicit"
+          }
+        }
+      );
+
+      const $ = id => document.getElementById(id);
+
+      let recoveryMode = false;
+      let initializationFinished = false;
+
+      function status(element, message, type = "") {
+        element.textContent = message;
+        element.className = "status";
+        if (type) element.classList.add(type);
+      }
+
+      function clearStatus(element) {
+        element.textContent = "";
+        element.className = "status hidden";
+      }
+
+      function errorText(error) {
+        if (!error) return "حدث خطأ غير معروف.";
+
+        const code = error.code ? " — الرمز: " + error.code : "";
+        return (error.message || "حدث خطأ.") + code;
+      }
+
+      function busy(button, isBusy, busyText, normalText) {
+        button.disabled = isBusy;
+        button.textContent = isBusy ? busyText : normalText;
+      }
+
+      function hideAllSections() {
+        [
+          "loginSection",
+          "recoveryRequestSection",
+          "newPasswordSection",
+          "homeSection",
+          "tasksSection",
+          "dataSection",
+          "bottomNav"
+        ].forEach(id => $(id).classList.add("hidden"));
+      }
+
+      function showLogin() {
+        hideAllSections();
+        $("loginSection").classList.remove("hidden");
+      }
+
+      function showRecoveryRequest() {
+        hideAllSections();
+        $("recoveryRequestSection").classList.remove("hidden");
+
+        if ($("email").value.trim()) {
+          $("recoveryEmail").value = $("email").value.trim();
+        }
+
+        clearStatus($("recoveryRequestStatus"));
+      }
+
+      function showNewPassword() {
+        hideAllSections();
+        $("newPasswordSection").classList.remove("hidden");
+        recoveryMode = true;
+        clearStatus($("newPasswordStatus"));
+      }
+
+      function showApp() {
+        hideAllSections();
+        $("homeSection").classList.remove("hidden");
+        $("bottomNav").classList.remove("hidden");
+        showPage("home");
+      }
+
+      function showPage(page) {
+        $("homeSection").classList.toggle("hidden", page !== "home");
+        $("tasksSection").classList.toggle("hidden", page !== "tasks");
+        $("dataSection").classList.toggle("hidden", page !== "data");
+
+        document.querySelectorAll(".nav-button").forEach(button => {
+          button.classList.toggle(
+            "active",
+            button.dataset.page === page
+          );
+        });
+      }
+
+      async function loadUserInfo(user) {
+        const box = $("userInfo");
+        box.textContent = "تم تسجيل الدخول. جارٍ التحقق من حساب الموظف...";
+
+        const { data, error } = await client
+          .from("app_users")
+          .select("display_name, is_active")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (error) {
+          box.textContent =
+            "تم تسجيل الدخول، لكن تعذرت قراءة بيانات الموظف: " +
+            errorText(error);
+          return;
+        }
+
+        if (!data) {
+          box.textContent =
+            "لا يوجد سجل موظف مطابق لهذا الحساب. راجع ربط الحساب في النظام.";
+          return;
+        }
+
+        if (!data.is_active) {
+          box.textContent =
+            "حساب الموظف غير مفعّل. يرجى مراجعة مدير النظام.";
+          return;
+        }
+
+        box.textContent = "مرحبًا " + data.display_name;
+      }
+
+      async function loadProducts() {
+        const button = $("loadProductsButton");
+        const result = $("productsStatus");
+        const list = $("productsList");
+
+        clearStatus(result);
+        busy(button, true, "جارٍ تحميل المنتجات...", "📦 عرض المنتجات من قاعدة البيانات");
+        list.replaceChildren();
+
+        try {
+          const { data: sessionData, error: sessionError } =
+            await client.auth.getSession();
+
+          if (sessionError) throw sessionError;
+
+          if (!sessionData.session) {
+            showLogin();
+            status(
+              $("loginStatus"),
+              "انتهت جلسة الدخول. سجّل الدخول مرة أخرى.",
+              "error"
+            );
+            return;
+          }
+
+          const { data: allowed, error: permissionError } =
+            await client.rpc("has_permission", {
+              p_permission_code: "PRODUCTS_VIEW"
+            });
+
+          if (permissionError) {
+            status(
+              result,
+              "تعذّر التحقق من صلاحية عرض المنتجات: " +
+              errorText(permissionError),
+              "error"
+            );
+            return;
+          }
+
+          if (allowed !== true) {
+            status(
+              result,
+              "هذا الحساب لا يمتلك صلاحية PRODUCTS_VIEW.",
+              "error"
+            );
+            return;
+          }
+
+          const { data, error } = await client
+            .from("products")
+            .select(
+              "product_id, product_code, product_name, product_type, is_active"
+            )
+            .order("product_id", { ascending: true })
+            .limit(50);
+
+          if (error) {
+            status(result, "تعذّرت قراءة المنتجات: " + errorText(error), "error");
+            return;
+          }
+
+          if (!data || data.length === 0) {
+            status(
+              result,
+              "تم التحقق من الصلاحية، لكن لا توجد منتجات متاحة للقراءة.",
+              ""
+            );
+            list.innerHTML =
+              '<div class="empty">لا توجد منتجات متاحة للعرض.</div>';
+            return;
+          }
+
+          data.forEach(product => {
+            const card = document.createElement("article");
+            card.className = "product";
+
+            const name = document.createElement("div");
+            name.className = "product-name";
+            name.textContent = product.product_name || "منتج بدون اسم";
+
+            const details = document.createElement("div");
+            details.className = "product-details";
+            details.textContent =
+              "رقم المنتج: " + product.product_id +
+              " | الكود: " + (product.product_code || "غير محدد") +
+              " | النوع: " + (product.product_type || "غير محدد");
+
+            const badge = document.createElement("span");
+            badge.className = "badge";
+            badge.textContent = product.is_active ? "منتج نشط" : "غير نشط";
+
+            card.append(name, details, badge);
+            list.appendChild(card);
+          });
+
+          status(
+            result,
+            "نجحت قراءة " + data.length +
+            " منتجًا. لم يتم تعديل أي بيانات.",
+            "success"
+          );
+
+        } catch (error) {
+          status(result, "حدث خطأ: " + errorText(error), "error");
+        } finally {
+          busy(
+            button,
+            false,
+            "",
+            "📦 عرض المنتجات من قاعدة البيانات"
+          );
+        }
+      }
+
+      $("loginForm").addEventListener("submit", async event => {
+        event.preventDefault();
+
+        const button = $("loginButton");
+        clearStatus($("loginStatus"));
+
+        busy(button, true, "جارٍ تسجيل الدخول...", "تسجيل الدخول");
+
+        try {
+          const { data, error } = await client.auth.signInWithPassword({
+            email: $("email").value.trim(),
+            password: $("password").value
+          });
+
+          if (error) {
+            status(
+              $("loginStatus"),
+              "تعذّر تسجيل الدخول. راجع البريد الإلكتروني وكلمة المرور. " +
+              errorText(error),
+              "error"
+            );
+            return;
+          }
+
+          if (!data.session || !data.user) {
+            status(
+              $("loginStatus"),
+              "لم يتم إنشاء جلسة دخول. حاول مرة أخرى.",
+              "error"
+            );
+            return;
+          }
+
+          showApp();
+          await loadUserInfo(data.user);
+          await loadProducts();
+
+        } catch (error) {
+          status($("loginStatus"), errorText(error), "error");
+        } finally {
+          busy(button, false, "", "تسجيل الدخول");
+        }
+      });
+
+      // طلب رسالة استعادة كلمة المرور
+      $("forgotButton").addEventListener("click", showRecoveryRequest);
+
+      $("backToLoginButton").addEventListener("click", showLogin);
+
+      $("recoveryRequestForm").addEventListener("submit", async event => {
+        event.preventDefault();
+
+        const button = $("recoveryRequestButton");
+        const email = $("recoveryEmail").value.trim();
+
+        clearStatus($("recoveryRequestStatus"));
+        busy(button, true, "جارٍ إرسال الرابط...", "إرسال رابط الاستعادة");
+
+        try {
+          const { error } = await client.auth.resetPasswordForEmail(email, {
+            redirectTo: APP_URL
+          });
+
+          if (error) {
+            status(
+              $("recoveryRequestStatus"),
+              "تعذّر إرسال رسالة الاستعادة: " + errorText(error),
+              "error"
+            );
+            return;
+          }
+
+          status(
+            $("recoveryRequestStatus"),
+            "إذا كان البريد مسجلًا، فستصلك رسالة استعادة. افتح الرسالة على جهازك، ثم اضغط الرابط.",
+            "success"
+          );
+
+        } catch (error) {
+          status(
+            $("recoveryRequestStatus"),
+            "حدث خطأ: " + errorText(error),
+            "error"
+          );
+        } finally {
+          busy(button, false, "", "إرسال رابط الاستعادة");
+        }
+      });
+
+      // حفظ كلمة المرور الجديدة
+      $("newPasswordForm").addEventListener("submit", async event => {
+        event.preventDefault();
+
+        const button = $("savePasswordButton");
+        const password = $("newPassword").value;
+        const confirmation = $("confirmPassword").value;
+
+        clearStatus($("newPasswordStatus"));
+
+        if (password.length < 8) {
+          status(
+            $("newPasswordStatus"),
+            "استخدم كلمة مرور من 8 أحرف على الأقل.",
+            "error"
+          );
+          return;
+        }
+
+        if (password !== confirmation) {
+          status(
+            $("newPasswordStatus"),
+            "كلمتا المرور غير متطابقتين.",
+            "error"
+          );
+          return;
+        }
+
+        busy(button, true, "جارٍ حفظ كلمة المرور...", "حفظ كلمة المرور الجديدة");
+
+        try {
+          const { data: sessionData, error: sessionError } =
+            await client.auth.getSession();
+
+          if (sessionError) throw sessionError;
+
+          if (!sessionData.session) {
+            status(
+              $("newPasswordStatus"),
+              "جلسة الاستعادة غير موجودة أو انتهت صلاحيتها. اطلب رابط استعادة جديدًا.",
+              "error"
+            );
+            return;
+          }
+
+          const { error } = await client.auth.updateUser({
+            password: password
+          });
+
+          if (error) {
+            status(
+              $("newPasswordStatus"),
+              "تعذّر تغيير كلمة المرور: " + errorText(error),
+              "error"
+            );
+            return;
+          }
+
+          recoveryMode = false;
+          $("password").value = "";
+          $("newPassword").value = "";
+          $("confirmPassword").value = "";
+
+          await client.auth.signOut();
+
+          showLogin();
+
+          status(
+            $("loginStatus"),
+            "تم تغيير كلمة المرور بنجاح. سجّل الدخول الآن بكلمة المرور الجديدة.",
+            "success"
+          );
+
+        } catch (error) {
+          status(
+            $("newPasswordStatus"),
+            "حدث خطأ أثناء تغيير كلمة المرور: " + errorText(error),
+            "error"
+          );
+        } finally {
+          busy(
+            button,
+            false,
+            "",
+            "حفظ كلمة المرور الجديدة"
+          );
+        }
+      });
+
+      $("loadProductsButton").addEventListener("click", loadProducts);
+
+      $("logoutButton").addEventListener("click", async () => {
+        const { error } = await client.auth.signOut();
+
+        if (error) {
+          status(
+            $("productsStatus"),
+            "تعذّر تسجيل الخروج: " + errorText(error),
+            "error"
+          );
+          return;
+        }
+
+        $("password").value = "";
+        showLogin();
+        status($("loginStatus"), "تم تسجيل الخروج بنجاح.", "success");
+      });
+
+      document.querySelectorAll(".nav-button").forEach(button => {
+        button.addEventListener("click", () => {
+          showPage(button.dataset.page);
+        });
+      });
+
+      // التعامل مع رابط الاستعادة الذي يرجع من البريد الإلكتروني
+      client.auth.onAuthStateChange((event, session) => {
+        if (event === "PASSWORD_RECOVERY") {
+          recoveryMode = true;
+          showNewPassword();
+          return;
+        }
+
+        if (event === "SIGNED_OUT" && !recoveryMode) {
+          showLogin();
+        }
+      });
+
+      async function initialize() {
+        try {
+          // لو فتح المستخدم الرابط وفيه خطأ في عملية الاستعادة
+          const params = new URLSearchParams(window.location.search);
+          const hash = window.location.hash || "";
+
+          if (
+            params.has("error") ||
+            params.has("error_description") ||
+            hash.includes("error=")
+          ) {
+            showLogin();
+            status(
+              $("loginStatus"),
+              "رابط الاستعادة قد يكون منتهي الصلاحية أو غير صالح. اطلب رسالة جديدة.",
+              "error"
+            );
+            initializationFinished = true;
+            return;
+          }
+
+          const { data, error } = await client.auth.getSession();
+
+          if (error) throw error;
+
+          if (data.session && data.session.user) {
+            showApp();
+            await loadUserInfo(data.session.user);
+            await loadProducts();
+          } else {
+            showLogin();
+          }
+
+        } catch (error) {
+          showLogin();
+          status(
+            $("loginStatus"),
+            "تعذّر التحقق من جلسة الدخول: " + errorText(error),
+            "error"
+          );
+        } finally {
+          initializationFinished = true;
+        }
+      }
+
+      initialize();
+    })();
+  </script>
+</body>
+</html>
