@@ -66,10 +66,10 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 <main>
 <section id="login" class="card">
 <h2>🔐 تسجيل الدخول</h2>
-<p class="desc">سجّل الدخول بحساب الموظف الموجود بالفعل في النظام.</p>
+<p class="desc">سجّل الدخول باستخدام اسم المستخدم أو البريد الإلكتروني وكلمة المرور.</p>
 <form id="loginForm">
-<label for="email">البريد الإلكتروني</label>
-<input id="email" type="email" autocomplete="username" required>
+<label for="email">اسم المستخدم أو البريد الإلكتروني</label>
+<input id="email" type="text" maxlength="254" autocomplete="username" autocapitalize="none" spellcheck="false" required>
 <label for="password">كلمة المرور</label>
 <input id="password" type="password" autocomplete="current-password" required>
 <button id="loginBtn" class="btn" type="submit">تسجيل الدخول</button>
@@ -118,11 +118,10 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 
 <section id="data" class="hidden">
 
-<!-- إدارة حسابات الموظفين -->
 <div id="userManagementCard" class="card hidden">
 <h2>👥 إدارة المستخدمين</h2>
 <p class="desc">
-إنشاء حسابات الموظفين وربط كل حساب بدوره الوظيفي.
+إنشاء حسابات الموظفين وربط كل حساب بدوره الوظيفي واسم المستخدم.
 هذه الواجهة مخصصة لمدير النظام، ولا تسمح بإنشاء حساب مدير نظام جديد.
 </p>
 
@@ -132,6 +131,10 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 
 <label for="newUserEmail">البريد الإلكتروني *</label>
 <input id="newUserEmail" type="email" maxlength="254" autocomplete="off" required>
+
+<label for="newUserUsername">اسم المستخدم للدخول *</label>
+<input id="newUserUsername" type="text" minlength="3" maxlength="32" pattern="[A-Za-z0-9._-]{3,32}" autocomplete="off" autocapitalize="none" spellcheck="false" required>
+<p class="desc">من 3 إلى 32 حرفًا، باستخدام الحروف الإنجليزية أو الأرقام أو النقطة أو الشرطة أو الشرطة السفلية.</p>
 
 <label for="newUserPassword">كلمة المرور المؤقتة *</label>
 <input id="newUserPassword" type="password" minlength="12" maxlength="128" autocomplete="new-password" required>
@@ -155,7 +158,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 </form>
 </div>
 
-<!-- إدارة المنتجات -->
 <div class="card">
 <div class="row" style="justify-content:space-between">
 <h2>📦 إدارة المنتجات</h2>
@@ -237,6 +239,8 @@ const URL="https://mklbemoisdkoyrwcrmoj.supabase.co";
 const KEY="sb_publishable_7ZjltiXgqnY4BJrZH4iZog_Jh-xfbau";
 const APP_URL="https://evramman-dev.github.io/MeatManagement/";
 const MANAGE_USERS_URL=URL+"/functions/v1/Manage-users";
+const USERNAME_LOGIN_URL=URL+"/functions/v1/username-login";
+const SET_USERNAME_URL=URL+"/functions/v1/set-username";
 
 const db=window.supabase.createClient(URL,KEY,{
   auth:{
@@ -505,16 +509,13 @@ $("userCreateForm").addEventListener("submit",async e=>{
   const btn=$("createUserBtn");
 
   if(!isSystemAdmin){
-    msg(
-      $("userCreateMsg"),
-      "هذه العملية متاحة لمدير النظام فقط.",
-      "error"
-    );
+    msg($("userCreateMsg"),"هذه العملية متاحة لمدير النظام فقط.","error");
     return;
   }
 
   const name=$("newUserName").value.trim();
   const email=$("newUserEmail").value.trim();
+  const username=$("newUserUsername").value.trim();
   const password=$("newUserPassword").value;
   const roleId=$("newUserRole").value;
   const salesRepId=$("newUserSalesRep").value;
@@ -526,39 +527,36 @@ $("userCreateForm").addEventListener("submit",async e=>{
     roleCode=roleMap[String(roleId)]||null;
   }catch(_){}
 
-  if(!name||!email||!roleId||!roleCode){
+  if(!name||!email||!username||!roleId||!roleCode){
     msg(
       $("userCreateMsg"),
-      "أكمل اسم الموظف والبريد الإلكتروني واختر دورًا وظيفيًا صالحًا.",
+      "أكمل اسم الموظف والبريد الإلكتروني واسم المستخدم واختر الدور الوظيفي.",
+      "error"
+    );
+    return;
+  }
+
+  if(!/^[A-Za-z0-9._-]{3,32}$/.test(username)){
+    msg(
+      $("userCreateMsg"),
+      "اسم المستخدم يجب أن يكون من 3 إلى 32 حرفًا، باستخدام الإنجليزية أو الأرقام أو . أو _ أو - فقط.",
       "error"
     );
     return;
   }
 
   if(!Object.prototype.hasOwnProperty.call(allowedRoles,roleCode)){
-    msg(
-      $("userCreateMsg"),
-      "هذا الدور غير مسموح بإنشائه من هذه الواجهة.",
-      "error"
-    );
+    msg($("userCreateMsg"),"هذا الدور غير مسموح بإنشائه من هذه الواجهة.","error");
     return;
   }
 
   if(password.length<12||password.length>128){
-    msg(
-      $("userCreateMsg"),
-      "كلمة المرور يجب أن تتراوح بين 12 و128 حرفًا.",
-      "error"
-    );
+    msg($("userCreateMsg"),"كلمة المرور يجب أن تتراوح بين 12 و128 حرفًا.","error");
     return;
   }
 
   if(roleCode==="SALES_REP"&&!salesRepId){
-    msg(
-      $("userCreateMsg"),
-      "يجب اختيار سجل المندوب الذي سيرتبط بالحساب.",
-      "error"
-    );
+    msg($("userCreateMsg"),"يجب اختيار سجل المندوب الذي سيرتبط بالحساب.","error");
     return;
   }
 
@@ -573,6 +571,8 @@ $("userCreateForm").addEventListener("submit",async e=>{
 
   busy(btn,true,"جارٍ إنشاء الحساب...","إنشاء حساب الموظف");
 
+  let accountCreated=false;
+
   try{
     const {data:sessionData,error:sessionError}=await db.auth.getSession();
 
@@ -584,6 +584,7 @@ $("userCreateForm").addEventListener("submit",async e=>{
       throw new Error("انتهت جلسة الدخول. سجّل الدخول مرة أخرى.");
     }
 
+    // الخطوة الأولى: إنشاء الحساب باستخدام الدالة الموجودة.
     const response=await fetch(MANAGE_USERS_URL,{
       method:"POST",
       headers:{
@@ -606,9 +607,7 @@ $("userCreateForm").addEventListener("submit",async e=>{
 
     try{
       result=await response.json();
-    }catch(_){
-      result={};
-    }
+    }catch(_){}
 
     if(!response.ok||result.success!==true){
       throw new Error(
@@ -618,21 +617,91 @@ $("userCreateForm").addEventListener("submit",async e=>{
       );
     }
 
-    msg(
-      $("userCreateMsg"),
-      result.message||"تم إنشاء حساب الموظف بنجاح.",
-      "success"
-    );
+    accountCreated=true;
 
+    // قراءة معرّف المستخدم من الاستجابة المحتملة للدالة.
+    const userId=
+      result.user_id||
+      result.user?.id||
+      result.user?.user_id||
+      result.data?.user?.id||
+      result.data?.user?.user_id||
+      result.data?.user_id||
+      null;
+
+    // لا نعيد إنشاء الحساب لو فشل حفظ اسم المستخدم.
     $("userCreateForm").reset();
     updateSalesRepField();
+
+    if(!userId){
+      msg(
+        $("userCreateMsg"),
+        "تم إنشاء حساب الموظف، لكن استجابة Manage-users لم تتضمن معرّف المستخدم. لم يتم حفظ اسم المستخدم. لا تعاود إنشاء الحساب؛ يلزم التحقق من استجابة الدالة.",
+        "error"
+      );
+
+      await loadUserManagementLookups();
+      return;
+    }
+
+    // الخطوة الثانية: حفظ اسم المستخدم باستخدام الدالة الموجودة.
+    let usernameSaved=false;
+    let usernameError="";
+
+    try{
+      const usernameResponse=await fetch(SET_USERNAME_URL,{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          "apikey":KEY,
+          "Authorization":"Bearer "+session.access_token
+        },
+        body:JSON.stringify({
+          user_id:userId,
+          username
+        })
+      });
+
+      let usernameResult={};
+
+      try{
+        usernameResult=await usernameResponse.json();
+      }catch(_){}
+
+      if(!usernameResponse.ok||usernameResult.success!==true){
+        usernameError=
+          usernameResult.error||
+          usernameResult.message||
+          "تعذر حفظ اسم المستخدم. رمز الاستجابة: "+usernameResponse.status;
+      }else{
+        usernameSaved=true;
+      }
+    }catch(e){
+      usernameError=err(e);
+    }
+
+    if(usernameSaved){
+      msg(
+        $("userCreateMsg"),
+        "تم إنشاء حساب الموظف وحفظ اسم المستخدم بنجاح.",
+        "success"
+      );
+    }else{
+      msg(
+        $("userCreateMsg"),
+        "تم إنشاء الحساب بنجاح، لكن لم يتم حفظ اسم المستخدم. لا تعاود إنشاء الحساب. سبب المشكلة: "+usernameError,
+        "error"
+      );
+    }
 
     await loadUserManagementLookups();
 
   }catch(e){
     msg(
       $("userCreateMsg"),
-      "لم يتم إنشاء الحساب: "+err(e),
+      accountCreated
+        ?"تم إنشاء الحساب، لكن تعذر إكمال الخطوات التالية. لا تعاود إنشاء الحساب."
+        :"لم يتم تأكيد إنشاء الحساب: "+err(e),
       "error"
     );
   }finally{
@@ -1064,18 +1133,64 @@ $("loginForm").addEventListener("submit",async e=>{
   e.preventDefault();
   clear($("loginMsg"));
 
+  const loginValue=$("email").value.trim();
+  const password=$("password").value;
+
   busy($("loginBtn"),true,"جارٍ تسجيل الدخول...","تسجيل الدخول");
 
   try{
-    const {data,error}=await db.auth.signInWithPassword({
-      email:$("email").value.trim(),
-      password:$("password").value
-    });
+    let user;
 
-    if(error)throw error;
+    if(loginValue.includes("@")){
+      // الدخول بالبريد الإلكتروني.
+      const {data,error}=await db.auth.signInWithPassword({
+        email:loginValue,
+        password
+      });
+
+      if(error)throw error;
+      user=data.user;
+    }else{
+      // الدخول باسم المستخدم من خلال Edge Function الموجودة.
+      const response=await fetch(USERNAME_LOGIN_URL,{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          "apikey":KEY
+        },
+        body:JSON.stringify({
+          username:loginValue,
+          password
+        })
+      });
+
+      let result={};
+
+      try{
+        result=await response.json();
+      }catch(_){}
+
+      if(!response.ok||result.success!==true||!result.session){
+        throw new Error(
+          result.error||"تعذر تسجيل الدخول باسم المستخدم."
+        );
+      }
+
+      const {data,error}=await db.auth.setSession({
+        access_token:result.session.access_token,
+        refresh_token:result.session.refresh_token
+      });
+
+      if(error)throw error;
+      user=data.user;
+    }
+
+    if(!user){
+      throw new Error("لم يتم استرجاع بيانات المستخدم.");
+    }
 
     showApp();
-    await userInfo(data.user);
+    await userInfo(user);
     await loadLookups();
     await loadProducts();
 
@@ -1093,7 +1208,13 @@ $("loginForm").addEventListener("submit",async e=>{
 $("forgotBtn").onclick=()=>{
   hideSections();
   $("recovery").classList.remove("hidden");
-  $("recoveryEmail").value=$("email").value.trim();
+
+  const loginValue=$("email").value.trim();
+
+  // استعادة كلمة المرور تتطلب البريد الإلكتروني وليس اسم المستخدم.
+  $("recoveryEmail").value=
+    loginValue.includes("@")?loginValue:"";
+
   clear($("recoveryMsg"));
 };
 
