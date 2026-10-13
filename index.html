@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -80,7 +79,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 
 <section id="recovery" class="card hidden">
 <h2>📧 استعادة كلمة المرور</h2>
-<p class="desc">أدخل البريد الإلكتروني لحسابك لإرسال رابط الاستعادة.</p>
+<p class="desc">أدخل البريد الإلكتروني المرتبط بحسابك لإرسال رابط الاستعادة. إذا كان حساب الموظف يستخدم بريدًا داخليًا تقنيًا، فلن يكون هذا الخيار متاحًا له إلا بعد توفير وسيلة استعادة مناسبة.</p>
 <form id="recoveryForm">
 <label for="recoveryEmail">البريد الإلكتروني</label>
 <input id="recoveryEmail" type="email" required>
@@ -122,15 +121,13 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 <h2>👥 إدارة المستخدمين</h2>
 <p class="desc">
 إنشاء حسابات الموظفين وربط كل حساب بدوره الوظيفي واسم المستخدم.
+لا يلزم إدخال بريد إلكتروني شخصي للموظف في هذا النموذج.
 هذه الواجهة مخصصة لمدير النظام، ولا تسمح بإنشاء حساب مدير نظام جديد.
 </p>
 
 <form id="userCreateForm">
 <label for="newUserName">اسم الموظف *</label>
 <input id="newUserName" type="text" maxlength="150" autocomplete="name" required>
-
-<label for="newUserEmail">البريد الإلكتروني *</label>
-<input id="newUserEmail" type="email" maxlength="254" autocomplete="off" required>
 
 <label for="newUserUsername">اسم المستخدم للدخول *</label>
 <input id="newUserUsername" type="text" minlength="3" maxlength="32" pattern="[A-Za-z0-9._-]{3,32}" autocomplete="off" autocapitalize="none" spellcheck="false" required>
@@ -237,10 +234,19 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 
 const URL="https://mklbemoisdkoyrwcrmoj.supabase.co";
 const KEY="sb_publishable_7ZjltiXgqnY4BJrZH4iZog_Jh-xfbau";
-const APP_URL="https://evramman-dev.github.io/MeatManagement/";
+const APP_URL="https://evram-dev.github.io/MeatManagement/";
 const MANAGE_USERS_URL=URL+"/functions/v1/Manage-users";
 const USERNAME_LOGIN_URL=URL+"/functions/v1/username-login";
 const SET_USERNAME_URL=URL+"/functions/v1/set-username";
+
+/*
+  ملاحظة:
+  إنشاء الموظف يستخدم بريدًا داخليًا تقنيًا مشتقًا من اسم المستخدم،
+  لأن Manage-users الحالية تستقبل email.
+  هذا ليس بريدًا شخصيًا للموظف، ولا يصلح لاستعادة كلمة المرور بالبريد.
+*/
+
+const INTERNAL_EMAIL_DOMAIN="accounts.meatmanagement.invalid";
 
 const db=window.supabase.createClient(URL,KEY,{
   auth:{
@@ -514,7 +520,6 @@ $("userCreateForm").addEventListener("submit",async e=>{
   }
 
   const name=$("newUserName").value.trim();
-  const email=$("newUserEmail").value.trim();
   const username=$("newUserUsername").value.trim();
   const password=$("newUserPassword").value;
   const roleId=$("newUserRole").value;
@@ -527,10 +532,10 @@ $("userCreateForm").addEventListener("submit",async e=>{
     roleCode=roleMap[String(roleId)]||null;
   }catch(_){}
 
-  if(!name||!email||!username||!roleId||!roleCode){
+  if(!name||!username||!roleId||!roleCode){
     msg(
       $("userCreateMsg"),
-      "أكمل اسم الموظف والبريد الإلكتروني واسم المستخدم واختر الدور الوظيفي.",
+      "أكمل اسم الموظف واسم المستخدم واختر الدور الوظيفي.",
       "error"
     );
     return;
@@ -569,9 +574,15 @@ $("userCreateForm").addEventListener("submit",async e=>{
     return;
   }
 
+  /*
+    فحص مبدئي لاسم المستخدم قبل إنشاء حساب Auth.
+    الفحص النهائي يجب أن يتم داخل set-username أو Manage-users
+    لضمان عدم تكرار اسم المستخدم حتى لو حدث طلبان في الوقت نفسه.
+  */
   busy(btn,true,"جارٍ إنشاء الحساب...","إنشاء حساب الموظف");
 
   let accountCreated=false;
+  let usernameSaved=false;
 
   try{
     const {data:sessionData,error:sessionError}=await db.auth.getSession();
@@ -584,7 +595,33 @@ $("userCreateForm").addEventListener("submit",async e=>{
       throw new Error("انتهت جلسة الدخول. سجّل الدخول مرة أخرى.");
     }
 
-    // الخطوة الأولى: إنشاء الحساب باستخدام الدالة الموجودة.
+    /*
+      بريد تقني داخلي وليس بريدًا شخصيًا.
+      نستخدم اسم المستخدم نفسه لضمان ثبات البريد عند إعادة المحاولة.
+    */
+    const internalEmail=username.toLowerCase()+"@"+INTERNAL_EMAIL_DOMAIN;
+
+    /*
+      منع إنشاء حساب جديد إذا كان اسم المستخدم مسجلًا بالفعل.
+      يعتمد هذا الفحص على إتاحة قراءة username لمدير النظام.
+    */
+    const {data:existingUser,error:existingUserError}=await db
+      .from("app_users")
+      .select("user_id")
+      .ilike("username",username)
+      .limit(1);
+
+    if(existingUserError){
+      throw new Error(
+        "تعذر التحقق من توافر اسم المستخدم قبل الإنشاء: "+
+        err(existingUserError)
+      );
+    }
+
+    if(existingUser&&existingUser.length){
+      throw new Error("اسم المستخدم مستخدم بالفعل. اختر اسمًا آخر.");
+    }
+
     const response=await fetch(MANAGE_USERS_URL,{
       method:"POST",
       headers:{
@@ -593,7 +630,7 @@ $("userCreateForm").addEventListener("submit",async e=>{
         "Authorization":"Bearer "+session.access_token
       },
       body:JSON.stringify({
-        email,
+        email:internalEmail,
         password,
         display_name:name,
         role_id:Number(roleId),
@@ -619,7 +656,6 @@ $("userCreateForm").addEventListener("submit",async e=>{
 
     accountCreated=true;
 
-    // قراءة معرّف المستخدم من الاستجابة المحتملة للدالة.
     const userId=
       result.user_id||
       result.user?.id||
@@ -629,14 +665,13 @@ $("userCreateForm").addEventListener("submit",async e=>{
       result.data?.user_id||
       null;
 
-    // لا نعيد إنشاء الحساب لو فشل حفظ اسم المستخدم.
     $("userCreateForm").reset();
     updateSalesRepField();
 
     if(!userId){
       msg(
         $("userCreateMsg"),
-        "تم إنشاء حساب الموظف، لكن استجابة Manage-users لم تتضمن معرّف المستخدم. لم يتم حفظ اسم المستخدم. لا تعاود إنشاء الحساب؛ يلزم التحقق من استجابة الدالة.",
+        "تم إنشاء حساب الموظف، لكن استجابة Manage-users لم تتضمن معرّف المستخدم. لا تعاود إنشاء الحساب. يلزم التحقق من استجابة الدالة.",
         "error"
       );
 
@@ -644,63 +679,60 @@ $("userCreateForm").addEventListener("submit",async e=>{
       return;
     }
 
-    // الخطوة الثانية: حفظ اسم المستخدم باستخدام الدالة الموجودة.
-    let usernameSaved=false;
-    let usernameError="";
+    /*
+      حفظ اسم المستخدم بعد إنشاء الحساب.
+      هذه هي طريقة التوافق مع دالة set-username الحالية.
+    */
+    const usernameResponse=await fetch(SET_USERNAME_URL,{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "apikey":KEY,
+        "Authorization":"Bearer "+session.access_token
+      },
+      body:JSON.stringify({
+        user_id:userId,
+        username
+      })
+    });
+
+    let usernameResult={};
 
     try{
-      const usernameResponse=await fetch(SET_USERNAME_URL,{
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json",
-          "apikey":KEY,
-          "Authorization":"Bearer "+session.access_token
-        },
-        body:JSON.stringify({
-          user_id:userId,
-          username
-        })
-      });
+      usernameResult=await usernameResponse.json();
+    }catch(_){}
 
-      let usernameResult={};
+    if(!usernameResponse.ok||usernameResult.success!==true){
+      const usernameError=
+        usernameResult.error||
+        usernameResult.message||
+        "تعذر حفظ اسم المستخدم. رمز الاستجابة: "+usernameResponse.status;
 
-      try{
-        usernameResult=await usernameResponse.json();
-      }catch(_){}
-
-      if(!usernameResponse.ok||usernameResult.success!==true){
-        usernameError=
-          usernameResult.error||
-          usernameResult.message||
-          "تعذر حفظ اسم المستخدم. رمز الاستجابة: "+usernameResponse.status;
-      }else{
-        usernameSaved=true;
-      }
-    }catch(e){
-      usernameError=err(e);
-    }
-
-    if(usernameSaved){
       msg(
         $("userCreateMsg"),
-        "تم إنشاء حساب الموظف وحفظ اسم المستخدم بنجاح.",
-        "success"
-      );
-    }else{
-      msg(
-        $("userCreateMsg"),
-        "تم إنشاء الحساب بنجاح، لكن لم يتم حفظ اسم المستخدم. لا تعاود إنشاء الحساب. سبب المشكلة: "+usernameError,
+        "تم إنشاء الحساب، لكن تعذر حفظ اسم المستخدم. لا تعاود إنشاء الحساب. السبب: "+usernameError,
         "error"
       );
+
+      await loadUserManagementLookups();
+      return;
     }
+
+    usernameSaved=true;
+
+    msg(
+      $("userCreateMsg"),
+      "تم إنشاء حساب الموظف وحفظ اسم المستخدم بنجاح: "+username,
+      "success"
+    );
 
     await loadUserManagementLookups();
 
   }catch(e){
     msg(
       $("userCreateMsg"),
-      accountCreated
-        ?"تم إنشاء الحساب، لكن تعذر إكمال الخطوات التالية. لا تعاود إنشاء الحساب."
+      accountCreated&&!usernameSaved
+        ?"تم إنشاء الحساب، لكن تعذر إكمال حفظ اسم المستخدم. لا تعاود إنشاء الحساب. "+err(e)
         :"لم يتم تأكيد إنشاء الحساب: "+err(e),
       "error"
     );
@@ -1142,7 +1174,6 @@ $("loginForm").addEventListener("submit",async e=>{
     let user;
 
     if(loginValue.includes("@")){
-      // الدخول بالبريد الإلكتروني.
       const {data,error}=await db.auth.signInWithPassword({
         email:loginValue,
         password
@@ -1151,7 +1182,6 @@ $("loginForm").addEventListener("submit",async e=>{
       if(error)throw error;
       user=data.user;
     }else{
-      // الدخول باسم المستخدم من خلال Edge Function الموجودة.
       const response=await fetch(USERNAME_LOGIN_URL,{
         method:"POST",
         headers:{
@@ -1211,7 +1241,6 @@ $("forgotBtn").onclick=()=>{
 
   const loginValue=$("email").value.trim();
 
-  // استعادة كلمة المرور تتطلب البريد الإلكتروني وليس اسم المستخدم.
   $("recoveryEmail").value=
     loginValue.includes("@")?loginValue:"";
 
