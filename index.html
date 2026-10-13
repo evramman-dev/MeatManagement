@@ -234,19 +234,9 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 
 const URL="https://mklbemoisdkoyrwcrmoj.supabase.co";
 const KEY="sb_publishable_7ZjltiXgqnY4BJrZH4iZog_Jh-xfbau";
-const APP_URL="https://evram-dev.github.io/MeatManagement/";
+const APP_URL="https://evramman-dev.github.io/MeatManagement/";
 const MANAGE_USERS_URL=URL+"/functions/v1/Manage-users";
 const USERNAME_LOGIN_URL=URL+"/functions/v1/username-login";
-const SET_USERNAME_URL=URL+"/functions/v1/set-username";
-
-/*
-  ملاحظة:
-  إنشاء الموظف يستخدم بريدًا داخليًا تقنيًا مشتقًا من اسم المستخدم،
-  لأن Manage-users الحالية تستقبل email.
-  هذا ليس بريدًا شخصيًا للموظف، ولا يصلح لاستعادة كلمة المرور بالبريد.
-*/
-
-const INTERNAL_EMAIL_DOMAIN="accounts.meatmanagement.invalid";
 
 const db=window.supabase.createClient(URL,KEY,{
   auth:{
@@ -574,15 +564,9 @@ $("userCreateForm").addEventListener("submit",async e=>{
     return;
   }
 
-  /*
-    فحص مبدئي لاسم المستخدم قبل إنشاء حساب Auth.
-    الفحص النهائي يجب أن يتم داخل set-username أو Manage-users
-    لضمان عدم تكرار اسم المستخدم حتى لو حدث طلبان في الوقت نفسه.
-  */
   busy(btn,true,"جارٍ إنشاء الحساب...","إنشاء حساب الموظف");
 
   let accountCreated=false;
-  let usernameSaved=false;
 
   try{
     const {data:sessionData,error:sessionError}=await db.auth.getSession();
@@ -596,32 +580,11 @@ $("userCreateForm").addEventListener("submit",async e=>{
     }
 
     /*
-      بريد تقني داخلي وليس بريدًا شخصيًا.
-      نستخدم اسم المستخدم نفسه لضمان ثبات البريد عند إعادة المحاولة.
+      التصحيح الأساسي:
+      نرسل اسم المستخدم مباشرة إلى Manage-users.
+      الدالة تنشئ حساب Auth وتحفظ username في app_users.
+      لا نُنشئ بريدًا داخليًا من المتصفح، ولا نستدعي set-username.
     */
-    const internalEmail=username.toLowerCase()+"@"+INTERNAL_EMAIL_DOMAIN;
-
-    /*
-      منع إنشاء حساب جديد إذا كان اسم المستخدم مسجلًا بالفعل.
-      يعتمد هذا الفحص على إتاحة قراءة username لمدير النظام.
-    */
-    const {data:existingUser,error:existingUserError}=await db
-      .from("app_users")
-      .select("user_id")
-      .ilike("username",username)
-      .limit(1);
-
-    if(existingUserError){
-      throw new Error(
-        "تعذر التحقق من توافر اسم المستخدم قبل الإنشاء: "+
-        err(existingUserError)
-      );
-    }
-
-    if(existingUser&&existingUser.length){
-      throw new Error("اسم المستخدم مستخدم بالفعل. اختر اسمًا آخر.");
-    }
-
     const response=await fetch(MANAGE_USERS_URL,{
       method:"POST",
       headers:{
@@ -630,7 +593,7 @@ $("userCreateForm").addEventListener("submit",async e=>{
         "Authorization":"Bearer "+session.access_token
       },
       body:JSON.stringify({
-        email:internalEmail,
+        username,
         password,
         display_name:name,
         role_id:Number(roleId),
@@ -656,73 +619,28 @@ $("userCreateForm").addEventListener("submit",async e=>{
 
     accountCreated=true;
 
-    const userId=
+    const createdUser=
+      result.user||
+      result.data?.user||
+      result.data||
+      result;
+
+    const returnedUserId=
+      createdUser?.user_id||
+      createdUser?.id||
       result.user_id||
-      result.user?.id||
-      result.user?.user_id||
-      result.data?.user?.id||
-      result.data?.user?.user_id||
       result.data?.user_id||
       null;
+
+    const returnedUsername=createdUser?.username||username;
 
     $("userCreateForm").reset();
     updateSalesRepField();
 
-    if(!userId){
-      msg(
-        $("userCreateMsg"),
-        "تم إنشاء حساب الموظف، لكن استجابة Manage-users لم تتضمن معرّف المستخدم. لا تعاود إنشاء الحساب. يلزم التحقق من استجابة الدالة.",
-        "error"
-      );
-
-      await loadUserManagementLookups();
-      return;
-    }
-
-    /*
-      حفظ اسم المستخدم بعد إنشاء الحساب.
-      هذه هي طريقة التوافق مع دالة set-username الحالية.
-    */
-    const usernameResponse=await fetch(SET_USERNAME_URL,{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "apikey":KEY,
-        "Authorization":"Bearer "+session.access_token
-      },
-      body:JSON.stringify({
-        user_id:userId,
-        username
-      })
-    });
-
-    let usernameResult={};
-
-    try{
-      usernameResult=await usernameResponse.json();
-    }catch(_){}
-
-    if(!usernameResponse.ok||usernameResult.success!==true){
-      const usernameError=
-        usernameResult.error||
-        usernameResult.message||
-        "تعذر حفظ اسم المستخدم. رمز الاستجابة: "+usernameResponse.status;
-
-      msg(
-        $("userCreateMsg"),
-        "تم إنشاء الحساب، لكن تعذر حفظ اسم المستخدم. لا تعاود إنشاء الحساب. السبب: "+usernameError,
-        "error"
-      );
-
-      await loadUserManagementLookups();
-      return;
-    }
-
-    usernameSaved=true;
-
     msg(
       $("userCreateMsg"),
-      "تم إنشاء حساب الموظف وحفظ اسم المستخدم بنجاح: "+username,
+      "تم إنشاء حساب الموظف وحفظ اسم المستخدم بنجاح: "+returnedUsername+
+      (returnedUserId?" — رقم الحساب: "+returnedUserId:""),
       "success"
     );
 
@@ -731,8 +649,8 @@ $("userCreateForm").addEventListener("submit",async e=>{
   }catch(e){
     msg(
       $("userCreateMsg"),
-      accountCreated&&!usernameSaved
-        ?"تم إنشاء الحساب، لكن تعذر إكمال حفظ اسم المستخدم. لا تعاود إنشاء الحساب. "+err(e)
+      accountCreated
+        ?"تم إنشاء الحساب، لكن تعذر تحديث قائمة الأدوار والمندوبين. لا تعاود إنشاء الحساب. "+err(e)
         :"لم يتم تأكيد إنشاء الحساب: "+err(e),
       "error"
     );
