@@ -199,6 +199,46 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 </div>
 </div>
 
+<div id="stockCard" class="card hidden">
+<div class="row" style="justify-content:space-between">
+<h2>📊 أرصدة المخزون</h2>
+<button id="adjustStockBtn" class="btn hidden" type="button">＋ تسوية رصيد</button>
+</div>
+<p class="desc">رصيد كل منتج في كل موقع. التسوية تسجل حركة وتحفظ الرصيد الجديد.</p>
+<div class="row">
+<select id="stockLocationFilter"><option value="">كل المواقع</option></select>
+<input id="stockSearch" type="search" placeholder="ابحث باسم المنتج أو الكود...">
+<button id="refreshStockBtn" class="btn secondary" type="button">تحديث</button>
+</div>
+<div id="stockMsg" class="status hidden" role="status" aria-live="polite"></div>
+<div id="stockList"><div class="empty">جارٍ تحميل الأرصدة...</div></div>
+
+<div id="stockFormCard" class="hidden">
+<hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+<h2 id="stockFormTitle">تسوية رصيد مخزون</h2>
+<form id="stockForm">
+<label for="stockLocation">الموقع *</label>
+<select id="stockLocation" required><option value="">اختر الموقع</option></select>
+
+<label for="stockProduct">المنتج *</label>
+<select id="stockProduct" required><option value="">اختر المنتج</option></select>
+
+<label>الرصيد الحالي</label>
+<div id="stockCurrentDisplay" class="info">اختر الموقع والمنتج لعرض الرصيد الحالي.</div>
+
+<label for="stockNewQty">الرصيد الجديد *</label>
+<input id="stockNewQty" type="number" min="0" step="0.0001" required>
+
+<label for="stockNotes">ملاحظات (سبب التسوية)</label>
+<textarea id="stockNotes" rows="2"></textarea>
+
+<button id="saveStockBtn" class="btn" type="submit">حفظ التسوية</button>
+<button id="cancelStockBtn" class="btn secondary" type="button">إلغاء</button>
+<div id="stockFormMsg" class="status hidden" role="status" aria-live="polite"></div>
+</form>
+</div>
+</div>
+
 <div class="card">
 <div class="row" style="justify-content:space-between">
 <h2>📦 إدارة المنتجات</h2>
@@ -263,7 +303,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 </div>
 </section>
 
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. لا يوجد حذف مباشر للمنتجات في هذه النسخة.</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. لا يوجد حذف مباشر في هذه النسخة.</p>
 </main>
 
 <nav id="nav" class="hidden">
@@ -298,10 +338,14 @@ let canManage=false;
 let isSystemAdmin=false;
 let canViewLocations=false;
 let canManageLocations=false;
+let canViewStock=false;
+let canManageStock=false;
 let productsCache=[];
 let categories=[];
 let units=[];
 let userLookupsLoading=false;
+let locationsCache=[];
+let stockCache=[];
 
 const allowedRoles={
   SALES_MANAGER:"مدير المبيعات",
@@ -361,6 +405,7 @@ function page(name){
   if(name==="data"){
     loadProducts();
     if(canViewLocations)loadLocations();
+    if(canViewStock)loadStock();
   }
 }
 
@@ -640,9 +685,7 @@ $("userCreateForm").addEventListener("submit",async e=>{
         password,
         display_name:name,
         role_id:Number(roleId),
-        sales_rep_id:roleCode==="SALES_REP"
-          ?Number(salesRepId)
-          :null
+        sales_rep_id:roleCode==="SALES_REP"?Number(salesRepId):null
       })
     });
 
@@ -654,27 +697,15 @@ $("userCreateForm").addEventListener("submit",async e=>{
 
     if(!response.ok||result.success!==true){
       throw new Error(
-        result.error||
-        result.message||
+        result.error||result.message||
         "فشل إنشاء الحساب. رمز الاستجابة: "+response.status
       );
     }
 
     accountCreated=true;
 
-    const createdUser=
-      result.user||
-      result.data?.user||
-      result.data||
-      result;
-
-    const returnedUserId=
-      createdUser?.user_id||
-      createdUser?.id||
-      result.user_id||
-      result.data?.user_id||
-      null;
-
+    const createdUser=result.user||result.data?.user||result.data||result;
+    const returnedUserId=createdUser?.user_id||createdUser?.id||result.user_id||result.data?.user_id||null;
     const returnedUsername=createdUser?.username||username;
 
     $("userCreateForm").reset();
@@ -682,7 +713,7 @@ $("userCreateForm").addEventListener("submit",async e=>{
 
     msg(
       $("userCreateMsg"),
-      "تم إنشاء حساب الموظف وحفظ اسم المستخدم بنجاح: "+returnedUsername+
+      "تم إنشاء حساب الموظف بنجاح: "+returnedUsername+
       (returnedUserId?" — رقم الحساب: "+returnedUserId:""),
       "success"
     );
@@ -693,7 +724,7 @@ $("userCreateForm").addEventListener("submit",async e=>{
     msg(
       $("userCreateMsg"),
       accountCreated
-        ?"تم إنشاء الحساب، لكن تعذر تحديث قائمة الأدوار والمندوبين. لا تعاود إنشاء الحساب. "+err(e)
+        ?"تم إنشاء الحساب، لكن تعذر تحديث قائمة الأدوار. لا تعاود الإنشاء. "+err(e)
         :"لم يتم تأكيد إنشاء الحساب: "+err(e),
       "error"
     );
@@ -743,12 +774,24 @@ async function userInfo(user){
   try{
     canViewLocations=await permission("LOCATIONS_VIEW");
     canManageLocations=await permission("LOCATIONS_MANAGE");
-
     $("locationsCard").classList.toggle("hidden",!canViewLocations);
     $("addLocationBtn").classList.toggle("hidden",!canManageLocations);
   }catch(e){
     $("locationsCard").classList.add("hidden");
     console.error("Locations permissions:",e);
+  }
+
+  canViewStock=false;
+  canManageStock=false;
+
+  try{
+    canViewStock=await permission("STOCK_VIEW");
+    canManageStock=await permission("STOCK_MANAGE");
+    $("stockCard").classList.toggle("hidden",!canViewStock);
+    $("adjustStockBtn").classList.toggle("hidden",!canManageStock);
+  }catch(e){
+    $("stockCard").classList.add("hidden");
+    console.error("Stock permissions:",e);
   }
 
   if(isSystemAdmin){
@@ -769,8 +812,6 @@ const locationTypes={
   FACTORY:"مصنع",
   SHOWROOM:"معرض"
 };
-
-let locationsCache=[];
 
 function locationTypeName(value){
   return locationTypes[value]||value||"غير محدد";
@@ -793,15 +834,12 @@ async function loadLocations(){
 
   try{
     const {data:sessionData,error:sessionError}=await db.auth.getSession();
-
     if(sessionError)throw sessionError;
-
     if(!sessionData.session){
       throw new Error("انتهت جلسة الدخول. سجّل الدخول مرة أخرى.");
     }
 
     const allowed=await permission("LOCATIONS_VIEW");
-
     if(!allowed){
       canViewLocations=false;
       $("locationsCard").classList.add("hidden");
@@ -819,14 +857,9 @@ async function loadLocations(){
     locationsCache=data||[];
     renderLocations();
 
-    msg(
-      $("locationsMsg"),
-      "تم تحميل "+locationsCache.length+" موقع.",
-      "success"
-    );
+    msg($("locationsMsg"),"تم تحميل "+locationsCache.length+" موقع.","success");
   }catch(e){
     msg($("locationsMsg"),"تعذر تحميل المواقع: "+err(e),"error");
-
     const d=document.createElement("div");
     d.className="empty";
     d.textContent="راجع رسالة الخطأ أعلاه وصلاحيات قاعدة البيانات.";
@@ -901,7 +934,6 @@ function renderLocations(){
       toggle.type="button";
       toggle.className="btn "+(location.is_active?"danger":"secondary");
       toggle.textContent=location.is_active?"إيقاف الموقع":"تفعيل الموقع";
-
       toggle.addEventListener("click",()=>toggleLocation(location));
 
       actions.append(edit,toggle);
@@ -981,47 +1013,27 @@ $("locationForm").addEventListener("submit",async event=>{
     let result;
 
     if(id){
-      result=await db
-        .from("locations")
-        .update(payload)
-        .eq("location_id",Number(id))
-        .select("location_id");
+      result=await db.from("locations").update(payload)
+        .eq("location_id",Number(id)).select("location_id");
     }else{
       const {data:s,error:se}=await db.auth.getSession();
-
       if(se)throw se;
       if(!s.session)throw new Error("انتهت جلسة الدخول.");
-
       payload.created_by=s.session.user.id;
-
-      result=await db
-        .from("locations")
-        .insert(payload)
-        .select("location_id");
+      result=await db.from("locations").insert(payload).select("location_id");
     }
 
     if(result.error)throw result.error;
 
     if(!result.data||result.data.length!==1){
-      throw new Error(
-        "لم يتم تأكيد حفظ سجل واحد. حدّث القائمة قبل إعادة المحاولة لتجنب التكرار."
-      );
+      throw new Error("لم يتم تأكيد حفظ سجل واحد. حدّث القائمة قبل إعادة المحاولة.");
     }
 
-    msg(
-      $("locationsMsg"),
-      id?"تم تأكيد تعديل الموقع.":"تم تأكيد إضافة الموقع.",
-      "success"
-    );
-
+    msg($("locationsMsg"),id?"تم تأكيد تعديل الموقع.":"تم تأكيد إضافة الموقع.","success");
     resetLocationForm();
     await loadLocations();
   }catch(e){
-    msg(
-      $("locationFormMsg"),
-      "تعذر تأكيد حفظ الموقع. التفاصيل: "+err(e),
-      "error"
-    );
+    msg($("locationFormMsg"),"تعذر تأكيد حفظ الموقع. التفاصيل: "+err(e),"error");
   }finally{
     busy(button,false,"","حفظ الموقع");
     if($("locationEditId").value){
@@ -1040,9 +1052,7 @@ async function toggleLocation(location){
 
   const action=location.is_active?"إيقاف":"تفعيل";
 
-  if(!confirm("هل تريد "+action+" الموقع: "+location.location_name+"؟")){
-    return;
-  }
+  if(!confirm("هل تريد "+action+" الموقع: "+location.location_name+"؟"))return;
 
   try{
     if(!await permission("LOCATIONS_MANAGE")){
@@ -1052,19 +1062,14 @@ async function toggleLocation(location){
 
     const {data,error}=await db
       .from("locations")
-      .update({
-        is_active:!location.is_active,
-        updated_at:new Date().toISOString()
-      })
+      .update({is_active:!location.is_active,updated_at:new Date().toISOString()})
       .eq("location_id",location.location_id)
       .select("location_id");
 
     if(error)throw error;
 
     if(!data||data.length!==1){
-      throw new Error(
-        "لم يتم تأكيد تغيير الحالة. حدّث القائمة قبل إعادة المحاولة."
-      );
+      throw new Error("لم يتم تأكيد تغيير الحالة. حدّث القائمة قبل إعادة المحاولة.");
     }
 
     msg($("locationsMsg"),"تم تأكيد تغيير حالة الموقع.","success");
@@ -1073,6 +1078,304 @@ async function toggleLocation(location){
     msg($("locationsMsg"),"تعذر تأكيد تغيير الحالة: "+err(e),"error");
   }
 }
+
+/* =========================
+   أرصدة المخزون
+   ========================= */
+
+function fillLocationsFilter(){
+  const el=$("stockLocationFilter");
+  const cur=el.value;
+  el.replaceChildren();
+
+  const all=document.createElement("option");
+  all.value="";
+  all.textContent="كل المواقع";
+  el.appendChild(all);
+
+  locationsCache.filter(l=>l.is_active).forEach(l=>{
+    const op=document.createElement("option");
+    op.value=String(l.location_id);
+    op.textContent=l.location_name;
+    el.appendChild(op);
+  });
+
+  el.value=cur;
+}
+
+function fillStockFormSelects(){
+  const locEl=$("stockLocation");
+  const curLoc=locEl.value;
+  locEl.replaceChildren();
+
+  const first=document.createElement("option");
+  first.value="";
+  first.textContent="اختر الموقع";
+  locEl.appendChild(first);
+
+  locationsCache.filter(l=>l.is_active).forEach(l=>{
+    const op=document.createElement("option");
+    op.value=String(l.location_id);
+    op.textContent=l.location_name+" ("+l.location_code+")";
+    locEl.appendChild(op);
+  });
+
+  locEl.value=curLoc;
+
+  const prodEl=$("stockProduct");
+  const curProd=prodEl.value;
+  prodEl.replaceChildren();
+
+  const firstP=document.createElement("option");
+  firstP.value="";
+  firstP.textContent="اختر المنتج";
+  prodEl.appendChild(firstP);
+
+  productsCache.filter(p=>p.is_active).forEach(p=>{
+    const op=document.createElement("option");
+    op.value=String(p.product_id);
+    op.textContent=p.product_name+" ("+p.product_code+")";
+    prodEl.appendChild(op);
+  });
+
+  prodEl.value=curProd;
+}
+
+async function loadStock(){
+  if(!canViewStock)return;
+
+  clear($("stockMsg"));
+  $("stockList").replaceChildren();
+
+  try{
+    const {data:sessionData,error:sessionError}=await db.auth.getSession();
+    if(sessionError)throw sessionError;
+    if(!sessionData.session){
+      throw new Error("انتهت جلسة الدخول. سجّل الدخول مرة أخرى.");
+    }
+
+    const allowed=await permission("STOCK_VIEW");
+    if(!allowed){
+      canViewStock=false;
+      $("stockCard").classList.add("hidden");
+      throw new Error("حسابك لا يمتلك صلاحية عرض المخزون.");
+    }
+
+    const filterLoc=$("stockLocationFilter").value;
+
+    let query=db
+      .from("stock_balances")
+      .select("balance_id,location_id,product_id,quantity,updated_at")
+      .order("updated_at",{ascending:false})
+      .limit(500);
+
+    if(filterLoc){
+      query=query.eq("location_id",Number(filterLoc));
+    }
+
+    const {data,error}=await query;
+    if(error)throw error;
+
+    stockCache=data||[];
+    fillLocationsFilter();
+    renderStock();
+
+    msg($("stockMsg"),"تم تحميل "+stockCache.length+" رصيد مخزون.","success");
+  }catch(e){
+    msg($("stockMsg"),"تعذر تحميل الأرصدة: "+err(e),"error");
+    const d=document.createElement("div");
+    d.className="empty";
+    d.textContent="راجع رسالة الخطأ أعلاه.";
+    $("stockList").replaceChildren(d);
+  }
+}
+
+function renderStock(){
+  const box=$("stockList");
+  box.replaceChildren();
+
+  const q=$("stockSearch").value.trim().toLowerCase();
+
+  const found=stockCache.filter(b=>{
+    const p=productsCache.find(x=>String(x.product_id)===String(b.product_id));
+    const l=locationsCache.find(x=>String(x.location_id)===String(b.location_id));
+    const searchText=[
+      p?.product_name,p?.product_code,l?.location_name,l?.location_code
+    ].map(v=>String(v||"").toLowerCase()).join(" ");
+    return searchText.includes(q);
+  });
+
+  if(!found.length){
+    const d=document.createElement("div");
+    d.className="empty";
+    d.textContent=q?"لا توجد أرصدة مطابقة للبحث.":"لا توجد أرصدة مخزون مسجلة بعد. اضغط تسوية رصيد لإضافة رصيد افتتاحي.";
+    box.appendChild(d);
+    return;
+  }
+
+  found.forEach(b=>{
+    const p=productsCache.find(x=>String(x.product_id)===String(b.product_id));
+    const l=locationsCache.find(x=>String(x.location_id)===String(b.location_id));
+
+    const card=document.createElement("div");
+    card.className="product";
+
+    const title=document.createElement("div");
+    title.className="pname";
+    title.textContent=p?.product_name||("منتج رقم "+b.product_id);
+
+    const details=document.createElement("div");
+    details.className="details";
+    details.textContent=
+      "الكود: "+(p?.product_code||"—")+
+      " | الموقع: "+(l?.location_name||"—")+
+      " | الوحدة: "+unitName(p?.base_unit_id);
+
+    const qty=document.createElement("span");
+    qty.className="badge";
+    qty.textContent="الرصيد: "+Number(b.quantity).toLocaleString("ar-EG")+" "+unitName(p?.base_unit_id);
+
+    const date=document.createElement("span");
+    date.className="badge";
+    date.textContent="آخر تحديث: "+new Date(b.updated_at).toLocaleDateString("ar-EG");
+
+    card.append(title,details,qty,date);
+
+    if(canManageStock){
+      const actions=document.createElement("div");
+      actions.className="actions";
+
+      const adj=document.createElement("button");
+      adj.type="button";
+      adj.className="btn secondary";
+      adj.textContent="تعديل الرصيد";
+      adj.addEventListener("click",()=>openStockForm(b.location_id,b.product_id));
+      actions.appendChild(adj);
+      card.appendChild(actions);
+    }
+
+    box.appendChild(card);
+  });
+}
+
+function resetStockForm(){
+  $("stockForm").reset();
+  $("stockCurrentDisplay").textContent="اختر الموقع والمنتج لعرض الرصيد الحالي.";
+  $("stockFormCard").classList.add("hidden");
+  clear($("stockFormMsg"));
+}
+
+async function openStockForm(locationId=null,productId=null){
+  if(!canManageStock)return;
+
+  try{
+    if(!locationsCache.length)await loadLocations();
+    if(!productsCache.length)await loadProducts();
+
+    fillStockFormSelects();
+
+    if(locationId)$("stockLocation").value=String(locationId);
+    if(productId)$("stockProduct").value=String(productId);
+
+    $("stockFormCard").classList.remove("hidden");
+    clear($("stockFormMsg"));
+
+    await refreshCurrentStockDisplay();
+
+    $("stockFormCard").scrollIntoView({behavior:"smooth",block:"start"});
+  }catch(e){
+    msg($("stockMsg"),"تعذر فتح نموذج التسوية: "+err(e),"error");
+  }
+}
+
+async function refreshCurrentStockDisplay(){
+  const locId=$("stockLocation").value;
+  const prodId=$("stockProduct").value;
+
+  if(!locId||!prodId){
+    $("stockCurrentDisplay").textContent="اختر الموقع والمنتج لعرض الرصيد الحالي.";
+    $("stockNewQty").value="";
+    return;
+  }
+
+  try{
+    const {data,error}=await db
+      .from("stock_balances")
+      .select("quantity")
+      .eq("location_id",Number(locId))
+      .eq("product_id",Number(prodId))
+      .maybeSingle();
+
+    if(error)throw error;
+
+    const q=Number(data?.quantity||0);
+    const p=productsCache.find(x=>String(x.product_id)===String(prodId));
+    const u=unitName(p?.base_unit_id);
+
+    $("stockCurrentDisplay").textContent=
+      "الرصيد الحالي: "+q.toLocaleString("ar-EG")+" "+u;
+    $("stockNewQty").value=q;
+  }catch(e){
+    $("stockCurrentDisplay").textContent="تعذر قراءة الرصيد الحالي: "+err(e);
+  }
+}
+
+$("stockLocation").addEventListener("change",refreshCurrentStockDisplay);
+$("stockProduct").addEventListener("change",refreshCurrentStockDisplay);
+
+$("adjustStockBtn").addEventListener("click",()=>openStockForm());
+$("cancelStockBtn").addEventListener("click",resetStockForm);
+$("refreshStockBtn").addEventListener("click",loadStock);
+$("stockSearch").addEventListener("input",renderStock);
+$("stockLocationFilter").addEventListener("change",loadStock);
+
+$("stockForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  clear($("stockFormMsg"));
+
+  if(!canManageStock){
+    msg($("stockFormMsg"),"لا تملك صلاحية تسوية المخزون.","error");
+    return;
+  }
+
+  const locId=$("stockLocation").value;
+  const prodId=$("stockProduct").value;
+  const newQty=$("stockNewQty").value.trim();
+  const notes=$("stockNotes").value.trim();
+
+  if(!locId||!prodId||newQty===""){
+    msg($("stockFormMsg"),"اختر الموقع والمنتج وأدخل الرصيد الجديد.","error");
+    return;
+  }
+
+  const qty=Number(newQty);
+  if(isNaN(qty)||qty<0){
+    msg($("stockFormMsg"),"الرصيد الجديد يجب أن يكون رقمًا غير سالب.","error");
+    return;
+  }
+
+  const button=$("saveStockBtn");
+  busy(button,true,"جارٍ الحفظ...","حفظ التسوية");
+
+  try{
+    const {error}=await db.rpc("set_stock_balance",{
+      p_location_id:Number(locId),
+      p_product_id:Number(prodId),
+      p_new_quantity:qty,
+      p_notes:notes||null
+    });
+
+    if(error)throw error;
+
+    msg($("stockFormMsg"),"تم حفظ التسوية بنجاح.","success");
+    resetStockForm();
+    await loadStock();
+  }catch(e){
+    msg($("stockFormMsg"),"تعذر حفظ التسوية: "+err(e),"error");
+  }finally{
+    busy(button,false,"","حفظ التسوية");
+  }
+});
 
 /* =========================
    إدارة المنتجات
@@ -1084,7 +1387,6 @@ async function loadProducts(){
 
   try{
     const {data:s,error:se}=await db.auth.getSession();
-
     if(se)throw se;
 
     if(!s.session){
@@ -1107,14 +1409,11 @@ async function loadProducts(){
     productsCache=data||[];
     renderProducts();
 
-    msg(
-      $("listMsg"),
-      "تم تحميل "+productsCache.length+" منتج. العرض لا يغيّر البيانات.",
-      "success"
-    );
+    msg($("listMsg"),"تم تحميل "+productsCache.length+" منتج. العرض لا يغيّر البيانات.","success");
+
+    fillStockFormSelects();
   }catch(e){
     msg($("listMsg"),"تعذر تحميل المنتجات: "+err(e),"error");
-
     const d=document.createElement("div");
     d.className="empty";
     d.textContent="راجع رسالة الخطأ أعلاه.";
@@ -1362,44 +1661,24 @@ $("productForm").addEventListener("submit",async e=>{
 
     const id=$("editId").value;
 
-    busy(
-      btn,
-      true,
-      "جارٍ الحفظ...",
-      id?"حفظ التعديلات":"حفظ المنتج"
-    );
+    busy(btn,true,"جارٍ الحفظ...",id?"حفظ التعديلات":"حفظ المنتج");
 
     let result;
 
     if(id){
-      result=await db.from("products")
-        .update(p)
-        .eq("product_id",Number(id))
-        .select("product_id")
-        .single();
+      result=await db.from("products").update(p)
+        .eq("product_id",Number(id)).select("product_id").single();
     }else{
       const {data:s,error:se}=await db.auth.getSession();
-
       if(se)throw se;
       if(!s.session)throw Error("انتهت جلسة الدخول.");
-
       p.created_by=s.session.user.id;
-
-      result=await db.from("products")
-        .insert(p)
-        .select("product_id")
-        .single();
+      result=await db.from("products").insert(p).select("product_id").single();
     }
 
     if(result.error)throw result.error;
 
-    msg(
-      $("formMsg"),
-      id
-        ?"تم حفظ تعديلات المنتج."
-        :"تمت إضافة المنتج بنجاح. رقم المنتج: "+result.data.product_id,
-      "success"
-    );
+    msg($("formMsg"),id?"تم حفظ تعديلات المنتج.":"تمت إضافة المنتج بنجاح. رقم المنتج: "+result.data.product_id,"success");
 
     await loadProducts();
 
@@ -1411,20 +1690,14 @@ $("productForm").addEventListener("submit",async e=>{
   }catch(e){
     msg($("formMsg"),"لم يتم الحفظ: "+err(e),"error");
   }finally{
-    busy(
-      btn,
-      false,
-      "",
-      $("editId").value?"حفظ التعديلات":"حفظ المنتج"
-    );
+    busy(btn,false,"",$("editId").value?"حفظ التعديلات":"حفظ المنتج");
   }
 });
 
 async function toggleActive(p){
   if(!canManage)return;
 
-  if(!confirm("هل تريد "+(p.is_active?"إيقاف":"تفعيل")+
-    " المنتج «"+p.product_name+"»؟"))return;
+  if(!confirm("هل تريد "+(p.is_active?"إيقاف":"تفعيل")+" المنتج «"+p.product_name+"»؟"))return;
 
   try{
     if(!await permission("PRODUCTS_MANAGE")){
@@ -1432,17 +1705,13 @@ async function toggleActive(p){
     }
 
     const {error}=await db.from("products")
-      .update({
-        is_active:!p.is_active,
-        updated_at:new Date().toISOString()
-      })
+      .update({is_active:!p.is_active,updated_at:new Date().toISOString()})
       .eq("product_id",p.product_id);
 
     if(error)throw error;
 
     msg($("listMsg"),"تم تغيير حالة المنتج بنجاح.","success");
     await loadProducts();
-
   }catch(e){
     msg($("listMsg"),"تعذر تغيير الحالة: "+err(e),"error");
   }
@@ -1466,42 +1735,28 @@ $("loginForm").addEventListener("submit",async e=>{
 
     if(loginValue.includes("@")){
       const {data,error}=await db.auth.signInWithPassword({
-        email:loginValue,
-        password
+        email:loginValue,password
       });
-
       if(error)throw error;
       user=data.user;
     }else{
       const response=await fetch(USERNAME_LOGIN_URL,{
         method:"POST",
-        headers:{
-          "Content-Type":"application/json",
-          "apikey":KEY
-        },
-        body:JSON.stringify({
-          username:loginValue,
-          password
-        })
+        headers:{"Content-Type":"application/json","apikey":KEY},
+        body:JSON.stringify({username:loginValue,password})
       });
 
       let result={};
-
-      try{
-        result=await response.json();
-      }catch(_){}
+      try{result=await response.json();}catch(_){}
 
       if(!response.ok||result.success!==true||!result.session){
-        throw new Error(
-          result.error||"تعذر تسجيل الدخول باسم المستخدم."
-        );
+        throw new Error(result.error||"تعذر تسجيل الدخول باسم المستخدم.");
       }
 
       const {data,error}=await db.auth.setSession({
         access_token:result.session.access_token,
         refresh_token:result.session.refresh_token
       });
-
       if(error)throw error;
       user=data.user;
     }
@@ -1515,13 +1770,11 @@ $("loginForm").addEventListener("submit",async e=>{
     await loadLookups();
     await loadProducts();
     if(canViewLocations)await loadLocations();
+    fillLocationsFilter();
+    if(canViewStock)await loadStock();
 
   }catch(e){
-    msg(
-      $("loginMsg"),
-      "تعذر تسجيل الدخول أو تجهيز البيانات: "+err(e),
-      "error"
-    );
+    msg($("loginMsg"),"تعذر تسجيل الدخول أو تجهيز البيانات: "+err(e),"error");
   }finally{
     busy($("loginBtn"),false,"","تسجيل الدخول");
   }
@@ -1530,12 +1783,8 @@ $("loginForm").addEventListener("submit",async e=>{
 $("forgotBtn").onclick=()=>{
   hideSections();
   $("recovery").classList.remove("hidden");
-
   const loginValue=$("email").value.trim();
-
-  $("recoveryEmail").value=
-    loginValue.includes("@")?loginValue:"";
-
+  $("recoveryEmail").value=loginValue.includes("@")?loginValue:"";
   clear($("recoveryMsg"));
 };
 
@@ -1545,36 +1794,19 @@ $("recoveryForm").addEventListener("submit",async e=>{
   e.preventDefault();
   clear($("recoveryMsg"));
 
-  busy(
-    $("recoveryBtn"),
-    true,
-    "جارٍ إرسال الرابط...",
-    "إرسال رابط الاستعادة"
-  );
+  busy($("recoveryBtn"),true,"جارٍ إرسال الرابط...","إرسال رابط الاستعادة");
 
   try{
     const {error}=await db.auth.resetPasswordForEmail(
       $("recoveryEmail").value.trim(),
       {redirectTo:APP_URL}
     );
-
     if(error)throw error;
-
-    msg(
-      $("recoveryMsg"),
-      "إذا كان البريد مسجلًا، فستصلك رسالة استعادة. افتح الرسالة واضغط الرابط.",
-      "success"
-    );
-
+    msg($("recoveryMsg"),"إذا كان البريد مسجلًا، فستصلك رسالة استعادة. افتح الرسالة واضغط الرابط.","success");
   }catch(e){
     msg($("recoveryMsg"),"تعذر إرسال الرسالة: "+err(e),"error");
   }finally{
-    busy(
-      $("recoveryBtn"),
-      false,
-      "",
-      "إرسال رابط الاستعادة"
-    );
+    busy($("recoveryBtn"),false,"","إرسال رابط الاستعادة");
   }
 });
 
@@ -1585,11 +1817,7 @@ $("newPassForm").addEventListener("submit",async e=>{
   const p=$("newPassword").value;
 
   if(p.length<8){
-    msg(
-      $("newPassMsg"),
-      "كلمة المرور يجب أن تكون 8 أحرف على الأقل.",
-      "error"
-    );
+    msg($("newPassMsg"),"كلمة المرور يجب أن تكون 8 أحرف على الأقل.","error");
     return;
   }
 
@@ -1598,45 +1826,27 @@ $("newPassForm").addEventListener("submit",async e=>{
     return;
   }
 
-  busy(
-    $("savePassBtn"),
-    true,
-    "جارٍ الحفظ...",
-    "حفظ كلمة المرور الجديدة"
-  );
+  busy($("savePassBtn"),true,"جارٍ الحفظ...","حفظ كلمة المرور الجديدة");
 
   try{
     const {data,error:se}=await db.auth.getSession();
-
     if(se)throw se;
-
     if(!data.session){
       throw Error("جلسة الاستعادة غير موجودة أو انتهت. اطلب رابطًا جديدًا.");
     }
 
     const {error}=await db.auth.updateUser({password:p});
-
     if(error)throw error;
 
     recoveryMode=false;
     await db.auth.signOut();
     showLogin();
 
-    msg(
-      $("loginMsg"),
-      "تم تغيير كلمة المرور بنجاح. سجّل الدخول بالكلمة الجديدة.",
-      "success"
-    );
-
+    msg($("loginMsg"),"تم تغيير كلمة المرور بنجاح. سجّل الدخول بالكلمة الجديدة.","success");
   }catch(e){
     msg($("newPassMsg"),"تعذر تغيير كلمة المرور: "+err(e),"error");
   }finally{
-    busy(
-      $("savePassBtn"),
-      false,
-      "",
-      "حفظ كلمة المرور الجديدة"
-    );
+    busy($("savePassBtn"),false,"","حفظ كلمة المرور الجديدة");
   }
 });
 
@@ -1662,9 +1872,14 @@ $("logoutBtn").onclick=async()=>{
   isSystemAdmin=false;
   canViewLocations=false;
   canManageLocations=false;
+  canViewStock=false;
+  canManageStock=false;
+  locationsCache=[];
+  stockCache=[];
   $("password").value="";
   $("userManagementCard").classList.add("hidden");
   $("locationsCard").classList.add("hidden");
+  $("stockCard").classList.add("hidden");
 
   showLogin();
   msg($("loginMsg"),"تم تسجيل الخروج.","success");
@@ -1686,8 +1901,13 @@ db.auth.onAuthStateChange(event=>{
     isSystemAdmin=false;
     canViewLocations=false;
     canManageLocations=false;
+    canViewStock=false;
+    canManageStock=false;
+    locationsCache=[];
+    stockCache=[];
     $("userManagementCard").classList.add("hidden");
     $("locationsCard").classList.add("hidden");
+    $("stockCard").classList.add("hidden");
     showLogin();
   }
 });
@@ -1707,16 +1927,11 @@ async function init(){
       hash.includes("error=")
     ){
       showLogin();
-      msg(
-        $("loginMsg"),
-        "رابط الاستعادة قد يكون منتهي الصلاحية. اطلب رابطًا جديدًا.",
-        "error"
-      );
+      msg($("loginMsg"),"رابط الاستعادة قد يكون منتهي الصلاحية. اطلب رابطًا جديدًا.","error");
       return;
     }
 
     const {data,error}=await db.auth.getSession();
-
     if(error)throw error;
 
     if(data.session){
@@ -1725,17 +1940,14 @@ async function init(){
       await loadLookups();
       await loadProducts();
       if(canViewLocations)await loadLocations();
+      fillLocationsFilter();
+      if(canViewStock)await loadStock();
     }else{
       showLogin();
     }
-
   }catch(e){
     showLogin();
-    msg(
-      $("loginMsg"),
-      "تعذر التحقق من الجلسة: "+err(e),
-      "error"
-    );
+    msg($("loginMsg"),"تعذر التحقق من الجلسة: "+err(e),"error");
   }
 }
 
