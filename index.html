@@ -155,6 +155,50 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 </form>
 </div>
 
+<div id="locationsCard" class="card hidden">
+<div class="row" style="justify-content:space-between">
+<h2>🏭 إدارة المواقع والمخازن</h2>
+<button id="addLocationBtn" class="btn hidden" type="button">＋ إضافة موقع</button>
+</div>
+<p class="desc">إدارة المخازن والثلاجات والمصنع والسيارات والمعارض. لا يوجد حذف للمواقع.</p>
+<div class="row">
+<input id="locationSearch" type="search" placeholder="ابحث بكود الموقع أو اسمه...">
+<button id="refreshLocationsBtn" class="btn secondary" type="button">تحديث</button>
+</div>
+<div id="locationsMsg" class="status hidden" role="status" aria-live="polite"></div>
+<div id="locationsList"><div class="empty">جارٍ تحميل المواقع...</div></div>
+
+<div id="locationFormCard" class="hidden">
+<hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+<h2 id="locationFormTitle">إضافة موقع جديد</h2>
+<form id="locationForm">
+<input id="locationEditId" type="hidden">
+
+<label for="locationCode">كود الموقع *</label>
+<input id="locationCode" maxlength="100" required dir="ltr">
+
+<label for="locationName">اسم الموقع *</label>
+<input id="locationName" maxlength="200" required>
+
+<label for="locationType">نوع الموقع *</label>
+<select id="locationType" required>
+<option value="MAIN_WAREHOUSE">مخزن رئيسي</option>
+<option value="FRIDGE">ثلاجة</option>
+<option value="VEHICLE">سيارة</option>
+<option value="FACTORY">مصنع</option>
+<option value="SHOWROOM">معرض</option>
+</select>
+
+<label for="locationNotes">ملاحظات</label>
+<textarea id="locationNotes" rows="3"></textarea>
+
+<button id="saveLocationBtn" class="btn" type="submit">حفظ الموقع</button>
+<button id="cancelLocationBtn" class="btn secondary" type="button">إلغاء</button>
+<div id="locationFormMsg" class="status hidden" role="status" aria-live="polite"></div>
+</form>
+</div>
+</div>
+
 <div class="card">
 <div class="row" style="justify-content:space-between">
 <h2>📦 إدارة المنتجات</h2>
@@ -252,6 +296,8 @@ const $=id=>document.getElementById(id);
 let recoveryMode=false;
 let canManage=false;
 let isSystemAdmin=false;
+let canViewLocations=false;
+let canManageLocations=false;
 let productsCache=[];
 let categories=[];
 let units=[];
@@ -312,7 +358,10 @@ function page(name){
     b.classList.toggle("active",b.dataset.page===name);
   });
 
-  if(name==="data")loadProducts();
+  if(name==="data"){
+    loadProducts();
+    if(canViewLocations)loadLocations();
+  }
 }
 
 async function permission(code){
@@ -579,12 +628,6 @@ $("userCreateForm").addEventListener("submit",async e=>{
       throw new Error("انتهت جلسة الدخول. سجّل الدخول مرة أخرى.");
     }
 
-    /*
-      التصحيح الأساسي:
-      نرسل اسم المستخدم مباشرة إلى Manage-users.
-      الدالة تنشئ حساب Auth وتحفظ username في app_users.
-      لا نُنشئ بريدًا داخليًا من المتصفح، ولا نستدعي set-username.
-    */
     const response=await fetch(MANAGE_USERS_URL,{
       method:"POST",
       headers:{
@@ -694,10 +737,340 @@ async function userInfo(user){
   canManage=await permission("PRODUCTS_MANAGE");
   $("addBtn").classList.toggle("hidden",!canManage);
 
+  canViewLocations=false;
+  canManageLocations=false;
+
+  try{
+    canViewLocations=await permission("LOCATIONS_VIEW");
+    canManageLocations=await permission("LOCATIONS_MANAGE");
+
+    $("locationsCard").classList.toggle("hidden",!canViewLocations);
+    $("addLocationBtn").classList.toggle("hidden",!canManageLocations);
+  }catch(e){
+    $("locationsCard").classList.add("hidden");
+    console.error("Locations permissions:",e);
+  }
+
   if(isSystemAdmin){
     await loadUserManagementLookups();
   }else{
     $("userManagementCard").classList.add("hidden");
+  }
+}
+
+/* =========================
+   إدارة المواقع والمخازن
+   ========================= */
+
+const locationTypes={
+  MAIN_WAREHOUSE:"مخزن رئيسي",
+  FRIDGE:"ثلاجة",
+  VEHICLE:"سيارة",
+  FACTORY:"مصنع",
+  SHOWROOM:"معرض"
+};
+
+let locationsCache=[];
+
+function locationTypeName(value){
+  return locationTypes[value]||value||"غير محدد";
+}
+
+function resetLocationForm(){
+  $("locationForm").reset();
+  $("locationEditId").value="";
+  $("locationFormTitle").textContent="إضافة موقع جديد";
+  $("saveLocationBtn").textContent="حفظ الموقع";
+  $("locationFormCard").classList.add("hidden");
+  clear($("locationFormMsg"));
+}
+
+async function loadLocations(){
+  if(!canViewLocations)return;
+
+  clear($("locationsMsg"));
+  $("locationsList").replaceChildren();
+
+  try{
+    const {data:sessionData,error:sessionError}=await db.auth.getSession();
+
+    if(sessionError)throw sessionError;
+
+    if(!sessionData.session){
+      throw new Error("انتهت جلسة الدخول. سجّل الدخول مرة أخرى.");
+    }
+
+    const allowed=await permission("LOCATIONS_VIEW");
+
+    if(!allowed){
+      canViewLocations=false;
+      $("locationsCard").classList.add("hidden");
+      throw new Error("حسابك لا يمتلك صلاحية عرض المواقع.");
+    }
+
+    const {data,error}=await db
+      .from("locations")
+      .select("location_id,location_code,location_name,location_type,is_active,notes")
+      .order("location_id")
+      .limit(200);
+
+    if(error)throw error;
+
+    locationsCache=data||[];
+    renderLocations();
+
+    msg(
+      $("locationsMsg"),
+      "تم تحميل "+locationsCache.length+" موقع.",
+      "success"
+    );
+  }catch(e){
+    msg($("locationsMsg"),"تعذر تحميل المواقع: "+err(e),"error");
+
+    const d=document.createElement("div");
+    d.className="empty";
+    d.textContent="راجع رسالة الخطأ أعلاه وصلاحيات قاعدة البيانات.";
+    $("locationsList").replaceChildren(d);
+  }
+}
+
+function renderLocations(){
+  const box=$("locationsList");
+  box.replaceChildren();
+
+  const q=$("locationSearch").value.trim().toLowerCase();
+
+  const found=locationsCache.filter(location=>
+    [
+      location.location_code,
+      location.location_name,
+      location.location_type
+    ].some(value=>String(value||"").toLowerCase().includes(q))
+  );
+
+  if(!found.length){
+    const d=document.createElement("div");
+    d.className="empty";
+    d.textContent=q?"لا توجد مواقع مطابقة للبحث.":"لا توجد مواقع متاحة.";
+    box.appendChild(d);
+    return;
+  }
+
+  found.forEach(location=>{
+    const card=document.createElement("div");
+    card.className="product";
+
+    const title=document.createElement("div");
+    title.className="pname";
+    title.textContent=location.location_name||"موقع بلا اسم";
+
+    const details=document.createElement("div");
+    details.className="details";
+    details.textContent=
+      "الكود: "+(location.location_code||"—")+
+      " | النوع: "+locationTypeName(location.location_type);
+
+    const status=document.createElement("span");
+    status.className="badge"+(location.is_active?"":" off");
+    status.textContent=location.is_active?"نشط":"متوقف";
+
+    const idBadge=document.createElement("span");
+    idBadge.className="badge";
+    idBadge.textContent="رقم الموقع: "+location.location_id;
+
+    card.append(title,details,status,idBadge);
+
+    if(location.notes){
+      const notes=document.createElement("div");
+      notes.className="details";
+      notes.textContent="ملاحظات: "+location.notes;
+      card.appendChild(notes);
+    }
+
+    if(canManageLocations){
+      const actions=document.createElement("div");
+      actions.className="actions";
+
+      const edit=document.createElement("button");
+      edit.type="button";
+      edit.className="btn secondary";
+      edit.textContent="تعديل البيانات";
+      edit.addEventListener("click",()=>editLocation(location));
+
+      const toggle=document.createElement("button");
+      toggle.type="button";
+      toggle.className="btn "+(location.is_active?"danger":"secondary");
+      toggle.textContent=location.is_active?"إيقاف الموقع":"تفعيل الموقع";
+
+      toggle.addEventListener("click",()=>toggleLocation(location));
+
+      actions.append(edit,toggle);
+      card.appendChild(actions);
+    }
+
+    box.appendChild(card);
+  });
+}
+
+function editLocation(location){
+  if(!canManageLocations){
+    msg($("locationsMsg"),"لا تملك صلاحية تعديل المواقع.","error");
+    return;
+  }
+
+  $("locationEditId").value=String(location.location_id);
+  $("locationCode").value=location.location_code||"";
+  $("locationName").value=location.location_name||"";
+  $("locationType").value=location.location_type||"MAIN_WAREHOUSE";
+  $("locationNotes").value=location.notes||"";
+  $("locationFormTitle").textContent="تعديل الموقع: "+location.location_name;
+  $("saveLocationBtn").textContent="حفظ التعديلات";
+  $("locationFormCard").classList.remove("hidden");
+  clear($("locationFormMsg"));
+  $("locationFormCard").scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+$("addLocationBtn").addEventListener("click",()=>{
+  if(!canManageLocations)return;
+  resetLocationForm();
+  $("locationFormCard").classList.remove("hidden");
+  $("locationFormCard").scrollIntoView({behavior:"smooth",block:"start"});
+});
+
+$("cancelLocationBtn").addEventListener("click",resetLocationForm);
+$("refreshLocationsBtn").addEventListener("click",loadLocations);
+$("locationSearch").addEventListener("input",renderLocations);
+
+$("locationForm").addEventListener("submit",async event=>{
+  event.preventDefault();
+  clear($("locationFormMsg"));
+
+  if(!canManageLocations){
+    msg($("locationFormMsg"),"لا تملك صلاحية إدارة المواقع.","error");
+    return;
+  }
+
+  const id=$("locationEditId").value;
+  const code=$("locationCode").value.trim();
+  const name=$("locationName").value.trim();
+  const type=$("locationType").value;
+  const notes=$("locationNotes").value.trim();
+
+  if(!code||!name||!Object.prototype.hasOwnProperty.call(locationTypes,type)){
+    msg($("locationFormMsg"),"أكمل الكود والاسم واختر نوعًا صحيحًا للموقع.","error");
+    return;
+  }
+
+  const button=$("saveLocationBtn");
+  busy(button,true,"جارٍ الحفظ...",id?"حفظ التعديلات":"حفظ الموقع");
+
+  try{
+    if(!await permission("LOCATIONS_MANAGE")){
+      canManageLocations=false;
+      throw new Error("لا تملك صلاحية إدارة المواقع.");
+    }
+
+    const payload={
+      location_code:code,
+      location_name:name,
+      location_type:type,
+      notes:notes||null,
+      updated_at:new Date().toISOString()
+    };
+
+    let result;
+
+    if(id){
+      result=await db
+        .from("locations")
+        .update(payload)
+        .eq("location_id",Number(id))
+        .select("location_id");
+    }else{
+      const {data:s,error:se}=await db.auth.getSession();
+
+      if(se)throw se;
+      if(!s.session)throw new Error("انتهت جلسة الدخول.");
+
+      payload.created_by=s.session.user.id;
+
+      result=await db
+        .from("locations")
+        .insert(payload)
+        .select("location_id");
+    }
+
+    if(result.error)throw result.error;
+
+    if(!result.data||result.data.length!==1){
+      throw new Error(
+        "لم يتم تأكيد حفظ سجل واحد. حدّث القائمة قبل إعادة المحاولة لتجنب التكرار."
+      );
+    }
+
+    msg(
+      $("locationsMsg"),
+      id?"تم تأكيد تعديل الموقع.":"تم تأكيد إضافة الموقع.",
+      "success"
+    );
+
+    resetLocationForm();
+    await loadLocations();
+  }catch(e){
+    msg(
+      $("locationFormMsg"),
+      "تعذر تأكيد حفظ الموقع. التفاصيل: "+err(e),
+      "error"
+    );
+  }finally{
+    busy(button,false,"","حفظ الموقع");
+    if($("locationEditId").value){
+      $("saveLocationBtn").textContent="حفظ التعديلات";
+    }else{
+      $("saveLocationBtn").textContent="حفظ الموقع";
+    }
+  }
+});
+
+async function toggleLocation(location){
+  if(!canManageLocations){
+    msg($("locationsMsg"),"لا تملك صلاحية تفعيل أو إيقاف المواقع.","error");
+    return;
+  }
+
+  const action=location.is_active?"إيقاف":"تفعيل";
+
+  if(!confirm("هل تريد "+action+" الموقع: "+location.location_name+"؟")){
+    return;
+  }
+
+  try{
+    if(!await permission("LOCATIONS_MANAGE")){
+      canManageLocations=false;
+      throw new Error("لا تملك صلاحية إدارة المواقع.");
+    }
+
+    const {data,error}=await db
+      .from("locations")
+      .update({
+        is_active:!location.is_active,
+        updated_at:new Date().toISOString()
+      })
+      .eq("location_id",location.location_id)
+      .select("location_id");
+
+    if(error)throw error;
+
+    if(!data||data.length!==1){
+      throw new Error(
+        "لم يتم تأكيد تغيير الحالة. حدّث القائمة قبل إعادة المحاولة."
+      );
+    }
+
+    msg($("locationsMsg"),"تم تأكيد تغيير حالة الموقع.","success");
+    await loadLocations();
+  }catch(e){
+    msg($("locationsMsg"),"تعذر تأكيد تغيير الحالة: "+err(e),"error");
   }
 }
 
@@ -1141,6 +1514,7 @@ $("loginForm").addEventListener("submit",async e=>{
     await userInfo(user);
     await loadLookups();
     await loadProducts();
+    if(canViewLocations)await loadLocations();
 
   }catch(e){
     msg(
@@ -1286,8 +1660,11 @@ $("logoutBtn").onclick=async()=>{
 
   canManage=false;
   isSystemAdmin=false;
+  canViewLocations=false;
+  canManageLocations=false;
   $("password").value="";
   $("userManagementCard").classList.add("hidden");
+  $("locationsCard").classList.add("hidden");
 
   showLogin();
   msg($("loginMsg"),"تم تسجيل الخروج.","success");
@@ -1307,7 +1684,10 @@ db.auth.onAuthStateChange(event=>{
   if(event==="SIGNED_OUT"&&!recoveryMode){
     canManage=false;
     isSystemAdmin=false;
+    canViewLocations=false;
+    canManageLocations=false;
     $("userManagementCard").classList.add("hidden");
+    $("locationsCard").classList.add("hidden");
     showLogin();
   }
 });
@@ -1344,6 +1724,7 @@ async function init(){
       await userInfo(data.session.user);
       await loadLookups();
       await loadProducts();
+      if(canViewLocations)await loadLocations();
     }else{
       showLogin();
     }
