@@ -446,8 +446,7 @@ function clear(el){
 }
 
 function err(e){
-  return(e?.message||"حدث خطأ غير معروف.")+
-    (e?.code?" — الرمز: "+e.code:"");
+  return(e?.message||"حدث خطأ غير معروف.")+(e?.code?" — الرمز: "+e.code:"");
 }
 
 function busy(btn,on,onText,offText){
@@ -504,9 +503,7 @@ function page(name){
 }
 
 async function permission(code){
-  const {data,error}=await db.rpc("has_permission",{
-    p_permission_code:code
-  });
+  const {data,error}=await db.rpc("has_permission",{p_permission_code:code});
   if(error)throw error;
   return data===true;
 }
@@ -629,10 +626,6 @@ async function loadUserManagementLookups(){
     });
 
     updateSalesRepField();
-
-    if(!usableRoles.length){
-      msg($("userCreateMsg"),"لا توجد أدوار وظيفية مسموح بها ونشطة. راجع جدول app_roles.","error");
-    }
   }catch(e){
     msg($("userCreateMsg"),"تعذر تحميل الأدوار أو المندوبين: "+err(e),"error");
   }finally{
@@ -687,10 +680,6 @@ $("userCreateForm").addEventListener("submit",async e=>{
     msg($("userCreateMsg"),"يجب اختيار سجل المندوب الذي سيرتبط بالحساب.","error");
     return;
   }
-  if(roleCode!=="SALES_REP"&&salesRepId){
-    msg($("userCreateMsg"),"اختيار المندوب مطلوب فقط عند إنشاء حساب مندوب مبيعات.","error");
-    return;
-  }
 
   busy(btn,true,"جارٍ إنشاء الحساب...","إنشاء حساب الموظف");
   let accountCreated=false;
@@ -699,7 +688,7 @@ $("userCreateForm").addEventListener("submit",async e=>{
     const {data:sessionData,error:sessionError}=await db.auth.getSession();
     if(sessionError)throw sessionError;
     const session=sessionData?.session;
-    if(!session?.access_token)throw new Error("انتهت جلسة الدخول. سجّل الدخول مرة أخرى.");
+    if(!session?.access_token)throw new Error("انتهت جلسة الدخول.");
 
     const response=await fetch(MANAGE_USERS_URL,{
       method:"POST",
@@ -720,20 +709,19 @@ $("userCreateForm").addEventListener("submit",async e=>{
     try{result=await response.json();}catch(_){}
 
     if(!response.ok||result.success!==true){
-      throw new Error(result.error||result.message||"فشل إنشاء الحساب. رمز الاستجابة: "+response.status);
+      throw new Error(result.error||result.message||"فشل إنشاء الحساب.");
     }
 
     accountCreated=true;
     const createdUser=result.user||result.data?.user||result.data||result;
-    const returnedUserId=createdUser?.user_id||createdUser?.id||result.user_id||result.data?.user_id||null;
     const returnedUsername=createdUser?.username||username;
 
     $("userCreateForm").reset();
     updateSalesRepField();
-    msg($("userCreateMsg"),"تم إنشاء حساب الموظف بنجاح: "+returnedUsername+(returnedUserId?" — رقم الحساب: "+returnedUserId:""),"success");
+    msg($("userCreateMsg"),"تم إنشاء حساب الموظف بنجاح: "+returnedUsername,"success");
     await loadUserManagementLookups();
   }catch(e){
-    msg($("userCreateMsg"),accountCreated?"تم إنشاء الحساب، لكن تعذر تحديث قائمة الأدوار. لا تعاود الإنشاء. "+err(e):"لم يتم تأكيد إنشاء الحساب: "+err(e),"error");
+    msg($("userCreateMsg"),accountCreated?"تم إنشاء الحساب، لكن تعذر تحديث القائمة. لا تعاود الإنشاء. "+err(e):"لم يتم تأكيد إنشاء الحساب: "+err(e),"error");
   }finally{
     busy(btn,false,"","إنشاء حساب الموظف");
   }
@@ -742,7 +730,7 @@ $("userCreateForm").addEventListener("submit",async e=>{
 /* ============ التحقق من حساب الموظف ============ */
 
 async function userInfo(user){
-  $("userInfo").textContent="تم تسجيل الدخول. جارٍ التحقق من حساب الموظف...";
+  $("userInfo").textContent="تم تسجيل الدخول. جارٍ التحقق...";
 
   const {data,error}=await db
     .from("app_users").select("display_name,is_active,role_id")
@@ -875,7 +863,7 @@ function renderLocations(){
   if(!found.length){
     const d=document.createElement("div");
     d.className="empty";
-    d.textContent=q?"لا توجد مواقع مطابقة للبحث.":"لا توجد مواقع متاحة.";
+    d.textContent=q?"لا توجد مواقع مطابقة.":"لا توجد مواقع متاحة.";
     box.appendChild(d);
     return;
   }
@@ -1516,7 +1504,7 @@ async function toggleCustomer(c){
 /* ============ فواتير البيع ============ */
 
 function paymentTypeName(v){
-  return({CASH:"نقدي",CREDIT:"آجل"})[v]||v||"غير محدد";
+  return({CASH:"نقدي",CREDIT:"آجل",BANK_TRANSFER:"تحويل بنكي",CHEQUE:"شيك",MIXED:"مختلط"})[v]||v||"غير محدد";
 }
 
 function fillInvoiceCustomerSelect(){
@@ -1573,6 +1561,7 @@ function addInvoiceItemRow(){
     op.value=String(p.product_id);
     op.textContent=p.product_name+" ("+p.product_code+")";
     if(p.target_selling_price!=null)op.dataset.price=String(p.target_selling_price);
+    op.dataset.unit=String(p.base_unit_id||"");
     prodSel.appendChild(op);
   });
 
@@ -1679,8 +1668,8 @@ async function loadSales(){
     }
 
     const {data,error}=await db.from("sales_invoices")
-      .select("invoice_id,invoice_number,customer_id,invoice_date,payment_type,subtotal,discount,total,status,created_at")
-      .order("invoice_id",{ascending:false}).limit(200);
+      .select("sales_invoice_id,invoice_number,customer_id,invoice_date,payment_method,subtotal,discount_amount,net_total,status,created_at")
+      .order("sales_invoice_id",{ascending:false}).limit(200);
     if(error)throw error;
 
     salesCache=data||[];
@@ -1702,7 +1691,7 @@ function renderSales(){
 
   const found=salesCache.filter(inv=>{
     const cn=customerName(inv.customer_id);
-    return [inv.invoice_number,cn,String(inv.total)]
+    return [inv.invoice_number,cn,String(inv.net_total)]
       .some(v=>String(v||"").toLowerCase().includes(q));
   });
 
@@ -1726,21 +1715,24 @@ function renderSales(){
     details.className="details";
     details.textContent="العميل: "+customerName(inv.customer_id)+
       " | التاريخ: "+new Date(inv.invoice_date).toLocaleDateString("ar-EG")+
-      " | النوع: "+paymentTypeName(inv.payment_type);
+      " | النوع: "+paymentTypeName(inv.payment_method);
 
     const total=document.createElement("span");
     total.className="badge";
-    total.textContent="الإجمالي: "+fmt(inv.total);
+    total.textContent="الإجمالي: "+fmt(inv.net_total);
 
-    const discount=document.createElement("span");
-    discount.className="badge";
-    discount.textContent="الخصم: "+fmt(inv.discount);
+    if(inv.discount_amount&&Number(inv.discount_amount)!==0){
+      const disc=document.createElement("span");
+      disc.className="badge";
+      disc.textContent="الخصم: "+fmt(inv.discount_amount);
+      card.appendChild(disc);
+    }
 
     const status=document.createElement("span");
     status.className="badge"+(inv.status==="POSTED"?"":" off");
-    status.textContent=inv.status==="POSTED"?"مرحّلة":"ملغاة";
+    status.textContent=inv.status==="POSTED"?"مرحّلة":(inv.status==="PAID"?"مدفوعة":(inv.status==="PARTIAL"?"جزئية":(inv.status==="CANCELLED"?"ملغاة":inv.status)));
 
-    card.append(title,details,total,discount,status);
+    card.append(title,details,total,status);
     box.appendChild(card);
   });
 }
@@ -1795,11 +1787,13 @@ $("invoiceForm").addEventListener("submit",async e=>{
   let valid=true;
 
   document.querySelectorAll("#invoiceItems .item-row").forEach(row=>{
-    const productId=row.querySelector(".item-product")?.value;
+    const sel=row.querySelector(".item-product");
+    const productId=sel?.value;
+    const unitId=Number(sel?.selectedOptions[0]?.dataset?.unit||0);
     const qty=Number(row.querySelector(".item-qty")?.value||0);
     const price=Number(row.querySelector(".item-price")?.value||0);
 
-    if(!productId||qty<=0){
+    if(!productId||qty<=0||!unitId){
       valid=false;
       return;
     }
@@ -1810,6 +1804,7 @@ $("invoiceForm").addEventListener("submit",async e=>{
 
     items.push({
       product_id:Number(productId),
+      unit_id:unitId,
       quantity:qty,
       unit_price:price
     });
@@ -2021,9 +2016,6 @@ function validate(p){
   }
   const a=[p.min_selling_price,p.target_selling_price,p.max_selling_price];
   if(a.some(x=>x!==null&&x<0))throw Error("أسعار البيع لا يمكن أن تكون سالبة.");
-  if(p.min_selling_price!==null&&p.max_selling_price!==null&&p.min_selling_price>p.max_selling_price){
-    throw Error("أقل سعر بيع أكبر من أعلى سعر.");
-  }
 }
 
 $("productForm").addEventListener("submit",async e=>{
@@ -2062,7 +2054,7 @@ $("productForm").addEventListener("submit",async e=>{
 
   try{
     validate(p);
-    if(!await permission("PRODUCTS_MANAGE"))throw Error("قاعدة البيانات لا تمنح صلاحية إدارة المنتجات.");
+    if(!await permission("PRODUCTS_MANAGE"))throw Error("لا تملك صلاحية إدارة المنتجات.");
 
     const id=$("editId").value;
     busy($("saveBtn"),true,"جارٍ الحفظ...",id?"حفظ التعديلات":"حفظ المنتج");
