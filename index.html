@@ -267,7 +267,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 <h2>🧾 فواتير البيع</h2>
 <button id="addInvoiceBtn" class="btn hidden" type="button">＋ فاتورة جديدة</button>
 </div>
-<p class="desc">فواتير البيع للعملاء. المرحلة الحالية: الحفظ فقط من غير خصم من المخزون.</p>
+<p class="desc">فواتير البيع للعملاء. الحفظ يخصم الكميات تلقائيًا من رصيد الموقع المختار.</p>
 <div class="row">
 <input id="salesSearch" type="search" placeholder="ابحث برقم الفاتورة أو اسم العميل...">
 <button id="refreshSalesBtn" class="btn secondary" type="button">تحديث</button>
@@ -282,6 +282,8 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 <div class="grid">
 <div><label for="invoiceCustomer">العميل *</label>
 <select id="invoiceCustomer" required><option value="">اختر العميل</option></select></div>
+<div><label for="invoiceLocation">الموقع (مصدر البضاعة) *</label>
+<select id="invoiceLocation" required><option value="">اختر الموقع</option></select></div>
 <div><label for="invoiceDate">التاريخ *</label>
 <input id="invoiceDate" type="date" required></div>
 <div><label for="invoicePaymentType">نوع البيع *</label>
@@ -289,9 +291,10 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 <option value="CASH">نقدي</option>
 <option value="CREDIT">آجل</option>
 </select></div>
-<div><label for="invoiceDiscount">الخصم</label>
-<input id="invoiceDiscount" type="number" min="0" step="0.01" value="0"></div>
 </div>
+
+<label for="invoiceDiscount">الخصم</label>
+<input id="invoiceDiscount" type="number" min="0" step="0.01" value="0">
 
 <label style="margin-top:16px">الأصناف *</label>
 <div id="invoiceItems"></div>
@@ -522,6 +525,10 @@ function unitName(id){
 
 function customerName(id){
   return customersCache.find(x=>String(x.customer_id)===String(id))?.customer_name||"غير محدد";
+}
+
+function locationName(id){
+  return locationsCache.find(x=>String(x.location_id)===String(id))?.location_name||"غير محدد";
 }
 
 function fillSelect(el,items,idkey,namekey,placeholder){
@@ -841,6 +848,8 @@ async function loadLocations(){
 
     locationsCache=data||[];
     renderLocations();
+    fillLocationsFilter();
+    fillInvoiceLocationSelect();
     msg($("locationsMsg"),"تم تحميل "+locationsCache.length+" موقع.","success");
   }catch(e){
     msg($("locationsMsg"),"تعذر تحميل المواقع: "+err(e),"error");
@@ -1524,6 +1533,24 @@ function fillInvoiceCustomerSelect(){
   el.value=cur;
 }
 
+function fillInvoiceLocationSelect(){
+  const el=$("invoiceLocation");
+  if(!el)return;
+  const cur=el.value;
+  el.replaceChildren();
+  const first=document.createElement("option");
+  first.value="";
+  first.textContent="اختر الموقع";
+  el.appendChild(first);
+  locationsCache.filter(l=>l.is_active).forEach(l=>{
+    const op=document.createElement("option");
+    op.value=String(l.location_id);
+    op.textContent=l.location_name+" ("+l.location_code+")";
+    el.appendChild(op);
+  });
+  el.value=cur;
+}
+
 function resetInvoiceForm(){
   $("invoiceForm").reset();
   $("invoiceDate").value=todayISO();
@@ -1535,6 +1562,8 @@ function resetInvoiceForm(){
   updateInvoiceTotals();
   $("invoiceFormCard").classList.add("hidden");
   clear($("invoiceFormMsg"));
+  fillInvoiceCustomerSelect();
+  fillInvoiceLocationSelect();
 }
 
 function addInvoiceItemRow(){
@@ -1668,7 +1697,7 @@ async function loadSales(){
     }
 
     const {data,error}=await db.from("sales_invoices")
-      .select("sales_invoice_id,invoice_number,customer_id,invoice_date,payment_method,subtotal,discount_amount,net_total,status,created_at")
+      .select("sales_invoice_id,invoice_number,customer_id,location_id,invoice_date,payment_method,subtotal,discount_amount,net_total,status,created_at")
       .order("sales_invoice_id",{ascending:false}).limit(200);
     if(error)throw error;
 
@@ -1715,7 +1744,8 @@ function renderSales(){
     details.className="details";
     details.textContent="العميل: "+customerName(inv.customer_id)+
       " | التاريخ: "+new Date(inv.invoice_date).toLocaleDateString("ar-EG")+
-      " | النوع: "+paymentTypeName(inv.payment_method);
+      " | النوع: "+paymentTypeName(inv.payment_method)+
+      (inv.location_id?" | الموقع: "+locationName(inv.location_id):"");
 
     const total=document.createElement("span");
     total.className="badge";
@@ -1741,7 +1771,9 @@ $("addInvoiceBtn").addEventListener("click",async()=>{
   if(!canManageSales)return;
   if(!customersCache.length)await loadCustomers();
   if(!productsCache.length)await loadProducts();
+  if(!locationsCache.length)await loadLocations();
   fillInvoiceCustomerSelect();
+  fillInvoiceLocationSelect();
   resetInvoiceForm();
   $("invoiceFormCard").classList.remove("hidden");
   $("invoiceFormCard").scrollIntoView({behavior:"smooth",block:"start"});
@@ -1765,6 +1797,7 @@ $("invoiceForm").addEventListener("submit",async e=>{
   }
 
   const customerId=$("invoiceCustomer").value;
+  const locationId=$("invoiceLocation").value;
   const date=$("invoiceDate").value;
   const paymentType=$("invoicePaymentType").value;
   const discount=Number($("invoiceDiscount").value||0);
@@ -1772,6 +1805,10 @@ $("invoiceForm").addEventListener("submit",async e=>{
 
   if(!customerId){
     msg($("invoiceFormMsg"),"اختر العميل.","error");
+    return;
+  }
+  if(!locationId){
+    msg($("invoiceFormMsg"),"اختر الموقع اللي البضاعة هتخرج منه.","error");
     return;
   }
   if(!date){
@@ -1821,6 +1858,7 @@ $("invoiceForm").addEventListener("submit",async e=>{
   try{
     const {data:invoiceId,error}=await db.rpc("create_sales_invoice",{
       p_customer_id:Number(customerId),
+      p_location_id:Number(locationId),
       p_invoice_date:date,
       p_payment_type:paymentType,
       p_discount:discount,
@@ -1833,6 +1871,7 @@ $("invoiceForm").addEventListener("submit",async e=>{
     msg($("invoiceFormMsg"),"تم حفظ الفاتورة بنجاح. رقم الفاتورة: "+invoiceId,"success");
     resetInvoiceForm();
     await loadSales();
+    if(canViewStock)await loadStock();
 
     setTimeout(()=>{
       $("invoiceFormCard").classList.add("hidden");
