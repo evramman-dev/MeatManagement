@@ -239,6 +239,56 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 </div>
 </div>
 
+<div id="customersCard" class="card hidden">
+<div class="row" style="justify-content:space-between">
+<h2>👥 إدارة العملاء</h2>
+<button id="addCustomerBtn" class="btn hidden" type="button">＋ إضافة عميل</button>
+</div>
+<p class="desc">بيانات العملاء وأنواعهم وحدود الائتمان. لا يوجد حذف للعملاء.</p>
+<div class="row">
+<input id="customerSearch" type="search" placeholder="ابحث بكود العميل أو الاسم أو الموبايل...">
+<button id="refreshCustomersBtn" class="btn secondary" type="button">تحديث</button>
+</div>
+<div id="customersMsg" class="status hidden" role="status" aria-live="polite"></div>
+<div id="customersList"><div class="empty">جارٍ تحميل العملاء...</div></div>
+
+<div id="customerFormCard" class="hidden">
+<hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+<h2 id="customerFormTitle">إضافة عميل جديد</h2>
+<form id="customerForm">
+<input id="customerEditId" type="hidden">
+
+<div class="grid">
+<div><label for="customerCode">كود العميل *</label><input id="customerCode" maxlength="100" dir="ltr" required></div>
+<div><label for="customerName">اسم العميل *</label><input id="customerName" maxlength="200" required></div>
+<div><label for="customerPhone">رقم الموبايل</label><input id="customerPhone" maxlength="30" dir="ltr"></div>
+<div><label for="customerWhatsapp">رقم الواتساب</label><input id="customerWhatsapp" maxlength="30" dir="ltr"></div>
+<div><label for="customerType">نوع العميل *</label>
+<select id="customerType" required>
+<option value="CASH">نقدي</option>
+<option value="CREDIT">آجل</option>
+<option value="WHOLESALE">جملة</option>
+<option value="RETAIL">تجزئة</option>
+</select></div>
+<div><label for="customerCreditLimit">حد الائتمان</label><input id="customerCreditLimit" type="number" min="0" step="0.01"></div>
+<div><label for="customerOpeningBalance">الرصيد الافتتاحي (مدين)</label><input id="customerOpeningBalance" type="number" min="0" step="0.01" value="0"></div>
+</div>
+
+<label for="customerAddress">العنوان</label>
+<textarea id="customerAddress" rows="2"></textarea>
+
+<label for="customerNotes">ملاحظات</label>
+<textarea id="customerNotes" rows="2"></textarea>
+
+<label class="check"><input id="customerActive" type="checkbox" checked>العميل نشط</label>
+
+<button id="saveCustomerBtn" class="btn" type="submit">حفظ العميل</button>
+<button id="cancelCustomerBtn" class="btn secondary" type="button">إلغاء</button>
+<div id="customerFormMsg" class="status hidden" role="status" aria-live="polite"></div>
+</form>
+</div>
+</div>
+
 <div class="card">
 <div class="row" style="justify-content:space-between">
 <h2>📦 إدارة المنتجات</h2>
@@ -340,12 +390,15 @@ let canViewLocations=false;
 let canManageLocations=false;
 let canViewStock=false;
 let canManageStock=false;
+let canViewCustomers=false;
+let canManageCustomers=false;
 let productsCache=[];
 let categories=[];
 let units=[];
 let userLookupsLoading=false;
 let locationsCache=[];
 let stockCache=[];
+let customersCache=[];
 
 const allowedRoles={
   SALES_MANAGER:"مدير المبيعات",
@@ -406,6 +459,7 @@ function page(name){
     loadProducts();
     if(canViewLocations)loadLocations();
     if(canViewStock)loadStock();
+    if(canViewCustomers)loadCustomers();
   }
 }
 
@@ -570,18 +624,10 @@ async function loadUserManagementLookups(){
     updateSalesRepField();
 
     if(!usableRoles.length){
-      msg(
-        $("userCreateMsg"),
-        "لا توجد أدوار وظيفية مسموح بها ونشطة. راجع جدول app_roles.",
-        "error"
-      );
+      msg($("userCreateMsg"),"لا توجد أدوار وظيفية مسموح بها ونشطة. راجع جدول app_roles.","error");
     }
   }catch(e){
-    msg(
-      $("userCreateMsg"),
-      "تعذر تحميل الأدوار أو المندوبين: "+err(e),
-      "error"
-    );
+    msg($("userCreateMsg"),"تعذر تحميل الأدوار أو المندوبين: "+err(e),"error");
   }finally{
     userLookupsLoading=false;
   }
@@ -617,20 +663,12 @@ $("userCreateForm").addEventListener("submit",async e=>{
   }catch(_){}
 
   if(!name||!username||!roleId||!roleCode){
-    msg(
-      $("userCreateMsg"),
-      "أكمل اسم الموظف واسم المستخدم واختر الدور الوظيفي.",
-      "error"
-    );
+    msg($("userCreateMsg"),"أكمل اسم الموظف واسم المستخدم واختر الدور الوظيفي.","error");
     return;
   }
 
   if(!/^[A-Za-z0-9._-]{3,32}$/.test(username)){
-    msg(
-      $("userCreateMsg"),
-      "اسم المستخدم يجب أن يكون من 3 إلى 32 حرفًا، باستخدام الإنجليزية أو الأرقام أو . أو _ أو - فقط.",
-      "error"
-    );
+    msg($("userCreateMsg"),"اسم المستخدم يجب أن يكون من 3 إلى 32 حرفًا، باستخدام الإنجليزية أو الأرقام أو . أو _ أو - فقط.","error");
     return;
   }
 
@@ -650,11 +688,7 @@ $("userCreateForm").addEventListener("submit",async e=>{
   }
 
   if(roleCode!=="SALES_REP"&&salesRepId){
-    msg(
-      $("userCreateMsg"),
-      "اختيار المندوب مطلوب فقط عند إنشاء حساب مندوب مبيعات.",
-      "error"
-    );
+    msg($("userCreateMsg"),"اختيار المندوب مطلوب فقط عند إنشاء حساب مندوب مبيعات.","error");
     return;
   }
 
@@ -664,11 +698,9 @@ $("userCreateForm").addEventListener("submit",async e=>{
 
   try{
     const {data:sessionData,error:sessionError}=await db.auth.getSession();
-
     if(sessionError)throw sessionError;
 
     const session=sessionData?.session;
-
     if(!session?.access_token){
       throw new Error("انتهت جلسة الدخول. سجّل الدخول مرة أخرى.");
     }
@@ -690,16 +722,10 @@ $("userCreateForm").addEventListener("submit",async e=>{
     });
 
     let result={};
-
-    try{
-      result=await response.json();
-    }catch(_){}
+    try{result=await response.json();}catch(_){}
 
     if(!response.ok||result.success!==true){
-      throw new Error(
-        result.error||result.message||
-        "فشل إنشاء الحساب. رمز الاستجابة: "+response.status
-      );
+      throw new Error(result.error||result.message||"فشل إنشاء الحساب. رمز الاستجابة: "+response.status);
     }
 
     accountCreated=true;
@@ -711,23 +737,11 @@ $("userCreateForm").addEventListener("submit",async e=>{
     $("userCreateForm").reset();
     updateSalesRepField();
 
-    msg(
-      $("userCreateMsg"),
-      "تم إنشاء حساب الموظف بنجاح: "+returnedUsername+
-      (returnedUserId?" — رقم الحساب: "+returnedUserId:""),
-      "success"
-    );
+    msg($("userCreateMsg"),"تم إنشاء حساب الموظف بنجاح: "+returnedUsername+(returnedUserId?" — رقم الحساب: "+returnedUserId:""),"success");
 
     await loadUserManagementLookups();
-
   }catch(e){
-    msg(
-      $("userCreateMsg"),
-      accountCreated
-        ?"تم إنشاء الحساب، لكن تعذر تحديث قائمة الأدوار. لا تعاود الإنشاء. "+err(e)
-        :"لم يتم تأكيد إنشاء الحساب: "+err(e),
-      "error"
-    );
+    msg($("userCreateMsg"),accountCreated?"تم إنشاء الحساب، لكن تعذر تحديث قائمة الأدوار. لا تعاود الإنشاء. "+err(e):"لم يتم تأكيد إنشاء الحساب: "+err(e),"error");
   }finally{
     busy(btn,false,"","إنشاء حساب الموظف");
   }
@@ -770,7 +784,6 @@ async function userInfo(user){
 
   canViewLocations=false;
   canManageLocations=false;
-
   try{
     canViewLocations=await permission("LOCATIONS_VIEW");
     canManageLocations=await permission("LOCATIONS_MANAGE");
@@ -783,7 +796,6 @@ async function userInfo(user){
 
   canViewStock=false;
   canManageStock=false;
-
   try{
     canViewStock=await permission("STOCK_VIEW");
     canManageStock=await permission("STOCK_MANAGE");
@@ -794,6 +806,18 @@ async function userInfo(user){
     console.error("Stock permissions:",e);
   }
 
+  canViewCustomers=false;
+  canManageCustomers=false;
+  try{
+    canViewCustomers=await permission("CUSTOMERS_VIEW");
+    canManageCustomers=await permission("CUSTOMERS_MANAGE");
+    $("customersCard").classList.toggle("hidden",!canViewCustomers);
+    $("addCustomerBtn").classList.toggle("hidden",!canManageCustomers);
+  }catch(e){
+    $("customersCard").classList.add("hidden");
+    console.error("Customers permissions:",e);
+  }
+
   if(isSystemAdmin){
     await loadUserManagementLookups();
   }else{
@@ -802,7 +826,7 @@ async function userInfo(user){
 }
 
 /* =========================
-   إدارة المواقع والمخازن
+   إدارة المواقع
    ========================= */
 
 const locationTypes={
@@ -835,9 +859,7 @@ async function loadLocations(){
   try{
     const {data:sessionData,error:sessionError}=await db.auth.getSession();
     if(sessionError)throw sessionError;
-    if(!sessionData.session){
-      throw new Error("انتهت جلسة الدخول. سجّل الدخول مرة أخرى.");
-    }
+    if(!sessionData.session)throw new Error("انتهت جلسة الدخول. سجّل الدخول مرة أخرى.");
 
     const allowed=await permission("LOCATIONS_VIEW");
     if(!allowed){
@@ -874,11 +896,8 @@ function renderLocations(){
   const q=$("locationSearch").value.trim().toLowerCase();
 
   const found=locationsCache.filter(location=>
-    [
-      location.location_code,
-      location.location_name,
-      location.location_type
-    ].some(value=>String(value||"").toLowerCase().includes(q))
+    [location.location_code,location.location_name,location.location_type]
+      .some(value=>String(value||"").toLowerCase().includes(q))
   );
 
   if(!found.length){
@@ -899,9 +918,7 @@ function renderLocations(){
 
     const details=document.createElement("div");
     details.className="details";
-    details.textContent=
-      "الكود: "+(location.location_code||"—")+
-      " | النوع: "+locationTypeName(location.location_type);
+    details.textContent="الكود: "+(location.location_code||"—")+" | النوع: "+locationTypeName(location.location_type);
 
     const status=document.createElement("span");
     status.className="badge"+(location.is_active?"":" off");
@@ -1013,8 +1030,7 @@ $("locationForm").addEventListener("submit",async event=>{
     let result;
 
     if(id){
-      result=await db.from("locations").update(payload)
-        .eq("location_id",Number(id)).select("location_id");
+      result=await db.from("locations").update(payload).eq("location_id",Number(id)).select("location_id");
     }else{
       const {data:s,error:se}=await db.auth.getSession();
       if(se)throw se;
@@ -1024,7 +1040,6 @@ $("locationForm").addEventListener("submit",async event=>{
     }
 
     if(result.error)throw result.error;
-
     if(!result.data||result.data.length!==1){
       throw new Error("لم يتم تأكيد حفظ سجل واحد. حدّث القائمة قبل إعادة المحاولة.");
     }
@@ -1036,11 +1051,7 @@ $("locationForm").addEventListener("submit",async event=>{
     msg($("locationFormMsg"),"تعذر تأكيد حفظ الموقع. التفاصيل: "+err(e),"error");
   }finally{
     busy(button,false,"","حفظ الموقع");
-    if($("locationEditId").value){
-      $("saveLocationBtn").textContent="حفظ التعديلات";
-    }else{
-      $("saveLocationBtn").textContent="حفظ الموقع";
-    }
+    $("saveLocationBtn").textContent=$("locationEditId").value?"حفظ التعديلات":"حفظ الموقع";
   }
 });
 
@@ -1051,7 +1062,6 @@ async function toggleLocation(location){
   }
 
   const action=location.is_active?"إيقاف":"تفعيل";
-
   if(!confirm("هل تريد "+action+" الموقع: "+location.location_name+"؟"))return;
 
   try{
@@ -1067,10 +1077,7 @@ async function toggleLocation(location){
       .select("location_id");
 
     if(error)throw error;
-
-    if(!data||data.length!==1){
-      throw new Error("لم يتم تأكيد تغيير الحالة. حدّث القائمة قبل إعادة المحاولة.");
-    }
+    if(!data||data.length!==1)throw new Error("لم يتم تأكيد تغيير الحالة. حدّث القائمة قبل إعادة المحاولة.");
 
     msg($("locationsMsg"),"تم تأكيد تغيير حالة الموقع.","success");
     await loadLocations();
@@ -1150,9 +1157,7 @@ async function loadStock(){
   try{
     const {data:sessionData,error:sessionError}=await db.auth.getSession();
     if(sessionError)throw sessionError;
-    if(!sessionData.session){
-      throw new Error("انتهت جلسة الدخول. سجّل الدخول مرة أخرى.");
-    }
+    if(!sessionData.session)throw new Error("انتهت جلسة الدخول. سجّل الدخول مرة أخرى.");
 
     const allowed=await permission("STOCK_VIEW");
     if(!allowed){
@@ -1169,9 +1174,7 @@ async function loadStock(){
       .order("updated_at",{ascending:false})
       .limit(500);
 
-    if(filterLoc){
-      query=query.eq("location_id",Number(filterLoc));
-    }
+    if(filterLoc)query=query.eq("location_id",Number(filterLoc));
 
     const {data,error}=await query;
     if(error)throw error;
@@ -1199,9 +1202,8 @@ function renderStock(){
   const found=stockCache.filter(b=>{
     const p=productsCache.find(x=>String(x.product_id)===String(b.product_id));
     const l=locationsCache.find(x=>String(x.location_id)===String(b.location_id));
-    const searchText=[
-      p?.product_name,p?.product_code,l?.location_name,l?.location_code
-    ].map(v=>String(v||"").toLowerCase()).join(" ");
+    const searchText=[p?.product_name,p?.product_code,l?.location_name,l?.location_code]
+      .map(v=>String(v||"").toLowerCase()).join(" ");
     return searchText.includes(q);
   });
 
@@ -1226,10 +1228,7 @@ function renderStock(){
 
     const details=document.createElement("div");
     details.className="details";
-    details.textContent=
-      "الكود: "+(p?.product_code||"—")+
-      " | الموقع: "+(l?.location_name||"—")+
-      " | الوحدة: "+unitName(p?.base_unit_id);
+    details.textContent="الكود: "+(p?.product_code||"—")+" | الموقع: "+(l?.location_name||"—")+" | الوحدة: "+unitName(p?.base_unit_id);
 
     const qty=document.createElement("span");
     qty.className="badge";
@@ -1281,7 +1280,6 @@ async function openStockForm(locationId=null,productId=null){
     clear($("stockFormMsg"));
 
     await refreshCurrentStockDisplay();
-
     $("stockFormCard").scrollIntoView({behavior:"smooth",block:"start"});
   }catch(e){
     msg($("stockMsg"),"تعذر فتح نموذج التسوية: "+err(e),"error");
@@ -1312,8 +1310,7 @@ async function refreshCurrentStockDisplay(){
     const p=productsCache.find(x=>String(x.product_id)===String(prodId));
     const u=unitName(p?.base_unit_id);
 
-    $("stockCurrentDisplay").textContent=
-      "الرصيد الحالي: "+q.toLocaleString("ar-EG")+" "+u;
+    $("stockCurrentDisplay").textContent="الرصيد الحالي: "+q.toLocaleString("ar-EG")+" "+u;
     $("stockNewQty").value=q;
   }catch(e){
     $("stockCurrentDisplay").textContent="تعذر قراءة الرصيد الحالي: "+err(e);
@@ -1322,7 +1319,6 @@ async function refreshCurrentStockDisplay(){
 
 $("stockLocation").addEventListener("change",refreshCurrentStockDisplay);
 $("stockProduct").addEventListener("change",refreshCurrentStockDisplay);
-
 $("adjustStockBtn").addEventListener("click",()=>openStockForm());
 $("cancelStockBtn").addEventListener("click",resetStockForm);
 $("refreshStockBtn").addEventListener("click",loadStock);
@@ -1376,6 +1372,328 @@ $("stockForm").addEventListener("submit",async e=>{
     busy(button,false,"","حفظ التسوية");
   }
 });
+
+/* =========================
+   إدارة العملاء
+   ========================= */
+
+const customerTypes={
+  CASH:"نقدي",
+  CREDIT:"آجل",
+  WHOLESALE:"جملة",
+  RETAIL:"تجزئة"
+};
+
+function customerTypeName(value){
+  return customerTypes[value]||value||"غير محدد";
+}
+
+function resetCustomerForm(){
+  $("customerForm").reset();
+  $("customerEditId").value="";
+  $("customerOpeningBalance").value="0";
+  $("customerActive").checked=true;
+  $("customerFormTitle").textContent="إضافة عميل جديد";
+  $("saveCustomerBtn").textContent="حفظ العميل";
+  $("customerFormCard").classList.add("hidden");
+  clear($("customerFormMsg"));
+}
+
+async function loadCustomers(){
+  if(!canViewCustomers)return;
+
+  clear($("customersMsg"));
+  $("customersList").replaceChildren();
+
+  try{
+    const {data:sessionData,error:sessionError}=await db.auth.getSession();
+    if(sessionError)throw sessionError;
+    if(!sessionData.session)throw new Error("انتهت جلسة الدخول. سجّل الدخول مرة أخرى.");
+
+    const allowed=await permission("CUSTOMERS_VIEW");
+    if(!allowed){
+      canViewCustomers=false;
+      $("customersCard").classList.add("hidden");
+      throw new Error("حسابك لا يمتلك صلاحية عرض العملاء.");
+    }
+
+    const {data,error}=await db
+      .from("customers")
+      .select("customer_id,customer_code,customer_name,phone,whatsapp,address,customer_type,credit_limit,opening_balance,is_active,notes")
+      .order("customer_id")
+      .limit(500);
+
+    if(error)throw error;
+
+    customersCache=data||[];
+    renderCustomers();
+
+    msg($("customersMsg"),"تم تحميل "+customersCache.length+" عميل.","success");
+  }catch(e){
+    msg($("customersMsg"),"تعذر تحميل العملاء: "+err(e),"error");
+    const d=document.createElement("div");
+    d.className="empty";
+    d.textContent="راجع رسالة الخطأ أعلاه وصلاحيات قاعدة البيانات.";
+    $("customersList").replaceChildren(d);
+  }
+}
+
+function renderCustomers(){
+  const box=$("customersList");
+  box.replaceChildren();
+
+  const q=$("customerSearch").value.trim().toLowerCase();
+
+  const found=customersCache.filter(c=>
+    [c.customer_code,c.customer_name,c.phone,c.whatsapp]
+      .some(v=>String(v||"").toLowerCase().includes(q))
+  );
+
+  if(!found.length){
+    const d=document.createElement("div");
+    d.className="empty";
+    d.textContent=q?"لا يوجد عملاء مطابقون للبحث.":"لا يوجد عملاء مسجلون بعد.";
+    box.appendChild(d);
+    return;
+  }
+
+  found.forEach(c=>{
+    const card=document.createElement("div");
+    card.className="product";
+
+    const title=document.createElement("div");
+    title.className="pname";
+    title.textContent=c.customer_name||"عميل بلا اسم";
+
+    const details=document.createElement("div");
+    details.className="details";
+    details.textContent="الكود: "+(c.customer_code||"—")+
+      " | النوع: "+customerTypeName(c.customer_type)+
+      (c.phone?" | موبايل: "+c.phone:"");
+
+    const status=document.createElement("span");
+    status.className="badge"+(c.is_active?"":" off");
+    status.textContent=c.is_active?"نشط":"متوقف";
+
+    const idBadge=document.createElement("span");
+    idBadge.className="badge";
+    idBadge.textContent="رقم العميل: "+c.customer_id;
+
+    card.append(title,details,status,idBadge);
+
+    if(c.opening_balance&&Number(c.opening_balance)!==0){
+      const bal=document.createElement("span");
+      bal.className="badge";
+      bal.textContent="رصيد افتتاحي: "+Number(c.opening_balance).toLocaleString("ar-EG");
+      card.appendChild(bal);
+    }
+
+    if(c.credit_limit){
+      const cl=document.createElement("span");
+      cl.className="badge";
+      cl.textContent="حد الائتمان: "+Number(c.credit_limit).toLocaleString("ar-EG");
+      card.appendChild(cl);
+    }
+
+    if(c.address){
+      const addr=document.createElement("div");
+      addr.className="details";
+      addr.textContent="العنوان: "+c.address;
+      card.appendChild(addr);
+    }
+
+    if(c.notes){
+      const notes=document.createElement("div");
+      notes.className="details";
+      notes.textContent="ملاحظات: "+c.notes;
+      card.appendChild(notes);
+    }
+
+    if(canManageCustomers){
+      const actions=document.createElement("div");
+      actions.className="actions";
+
+      const edit=document.createElement("button");
+      edit.type="button";
+      edit.className="btn secondary";
+      edit.textContent="تعديل البيانات";
+      edit.addEventListener("click",()=>editCustomer(c));
+
+      const toggle=document.createElement("button");
+      toggle.type="button";
+      toggle.className="btn "+(c.is_active?"danger":"secondary");
+      toggle.textContent=c.is_active?"إيقاف العميل":"تفعيل العميل";
+      toggle.addEventListener("click",()=>toggleCustomer(c));
+
+      actions.append(edit,toggle);
+      card.appendChild(actions);
+    }
+
+    box.appendChild(card);
+  });
+}
+
+function editCustomer(c){
+  if(!canManageCustomers){
+    msg($("customersMsg"),"لا تملك صلاحية تعديل العملاء.","error");
+    return;
+  }
+
+  $("customerEditId").value=String(c.customer_id);
+  $("customerCode").value=c.customer_code||"";
+  $("customerName").value=c.customer_name||"";
+  $("customerPhone").value=c.phone||"";
+  $("customerWhatsapp").value=c.whatsapp||"";
+  $("customerType").value=c.customer_type||"CASH";
+  $("customerCreditLimit").value=c.credit_limit==null?"":String(c.credit_limit);
+  $("customerOpeningBalance").value=c.opening_balance==null?"0":String(c.opening_balance);
+  $("customerAddress").value=c.address||"";
+  $("customerNotes").value=c.notes||"";
+  $("customerActive").checked=c.is_active===true;
+
+  $("customerFormTitle").textContent="تعديل العميل: "+c.customer_name;
+  $("saveCustomerBtn").textContent="حفظ التعديلات";
+  $("customerFormCard").classList.remove("hidden");
+  clear($("customerFormMsg"));
+  $("customerFormCard").scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+$("addCustomerBtn").addEventListener("click",()=>{
+  if(!canManageCustomers)return;
+  resetCustomerForm();
+  $("customerFormCard").classList.remove("hidden");
+  $("customerFormCard").scrollIntoView({behavior:"smooth",block:"start"});
+});
+
+$("cancelCustomerBtn").addEventListener("click",resetCustomerForm);
+$("refreshCustomersBtn").addEventListener("click",loadCustomers);
+$("customerSearch").addEventListener("input",renderCustomers);
+
+$("customerForm").addEventListener("submit",async event=>{
+  event.preventDefault();
+  clear($("customerFormMsg"));
+
+  if(!canManageCustomers){
+    msg($("customerFormMsg"),"لا تملك صلاحية إدارة العملاء.","error");
+    return;
+  }
+
+  const id=$("customerEditId").value;
+  const code=$("customerCode").value.trim();
+  const name=$("customerName").value.trim();
+  const phone=$("customerPhone").value.trim();
+  const whatsapp=$("customerWhatsapp").value.trim();
+  const type=$("customerType").value;
+  const creditLimitRaw=$("customerCreditLimit").value.trim();
+  const openingRaw=$("customerOpeningBalance").value.trim();
+  const address=$("customerAddress").value.trim();
+  const notes=$("customerNotes").value.trim();
+  const active=$("customerActive").checked;
+
+  if(!code||!name){
+    msg($("customerFormMsg"),"أكمل كود العميل والاسم.","error");
+    return;
+  }
+
+  if(!Object.prototype.hasOwnProperty.call(customerTypes,type)){
+    msg($("customerFormMsg"),"اختر نوع عميل صحيحًا.","error");
+    return;
+  }
+
+  const creditLimit=creditLimitRaw===""?null:Number(creditLimitRaw);
+  const opening=openingRaw===""?0:Number(openingRaw);
+
+  if(creditLimit!==null&&(isNaN(creditLimit)||creditLimit<0)){
+    msg($("customerFormMsg"),"حد الائتمان يجب أن يكون رقمًا غير سالب.","error");
+    return;
+  }
+
+  if(isNaN(opening)||opening<0){
+    msg($("customerFormMsg"),"الرصيد الافتتاحي يجب أن يكون رقمًا غير سالب.","error");
+    return;
+  }
+
+  const button=$("saveCustomerBtn");
+  busy(button,true,"جارٍ الحفظ...",id?"حفظ التعديلات":"حفظ العميل");
+
+  try{
+    if(!await permission("CUSTOMERS_MANAGE")){
+      canManageCustomers=false;
+      throw new Error("لا تملك صلاحية إدارة العملاء.");
+    }
+
+    const payload={
+      customer_code:code,
+      customer_name:name,
+      phone:phone||null,
+      whatsapp:whatsapp||null,
+      address:address||null,
+      customer_type:type,
+      credit_limit:creditLimit,
+      opening_balance:opening,
+      is_active:active,
+      notes:notes||null,
+      updated_at:new Date().toISOString()
+    };
+
+    let result;
+
+    if(id){
+      result=await db.from("customers").update(payload).eq("customer_id",Number(id)).select("customer_id");
+    }else{
+      const {data:s,error:se}=await db.auth.getSession();
+      if(se)throw se;
+      if(!s.session)throw new Error("انتهت جلسة الدخول.");
+      payload.created_by=s.session.user.id;
+      result=await db.from("customers").insert(payload).select("customer_id");
+    }
+
+    if(result.error)throw result.error;
+    if(!result.data||result.data.length!==1){
+      throw new Error("لم يتم تأكيد حفظ سجل واحد. حدّث القائمة قبل إعادة المحاولة.");
+    }
+
+    msg($("customersMsg"),id?"تم تأكيد تعديل العميل.":"تم تأكيد إضافة العميل.","success");
+    resetCustomerForm();
+    await loadCustomers();
+  }catch(e){
+    msg($("customerFormMsg"),"تعذر تأكيد حفظ العميل. التفاصيل: "+err(e),"error");
+  }finally{
+    busy(button,false,"","حفظ العميل");
+    $("saveCustomerBtn").textContent=$("customerEditId").value?"حفظ التعديلات":"حفظ العميل";
+  }
+});
+
+async function toggleCustomer(c){
+  if(!canManageCustomers){
+    msg($("customersMsg"),"لا تملك صلاحية تفعيل أو إيقاف العملاء.","error");
+    return;
+  }
+
+  const action=c.is_active?"إيقاف":"تفعيل";
+  if(!confirm("هل تريد "+action+" العميل: "+c.customer_name+"؟"))return;
+
+  try{
+    if(!await permission("CUSTOMERS_MANAGE")){
+      canManageCustomers=false;
+      throw new Error("لا تملك صلاحية إدارة العملاء.");
+    }
+
+    const {data,error}=await db
+      .from("customers")
+      .update({is_active:!c.is_active,updated_at:new Date().toISOString()})
+      .eq("customer_id",c.customer_id)
+      .select("customer_id");
+
+    if(error)throw error;
+    if(!data||data.length!==1)throw new Error("لم يتم تأكيد تغيير الحالة. حدّث القائمة قبل إعادة المحاولة.");
+
+    msg($("customersMsg"),"تم تأكيد تغيير حالة العميل.","success");
+    await loadCustomers();
+  }catch(e){
+    msg($("customersMsg"),"تعذر تأكيد تغيير الحالة: "+err(e),"error");
+  }
+}
 
 /* =========================
    إدارة المنتجات
@@ -1570,8 +1888,7 @@ function validate(p){
     throw Error("أكمل اسم المنتج والكود والتصنيف والوحدة الأساسية.");
   }
 
-  if(p.minimum_stock<0||p.target_stock<0||
-    (p.maximum_stock!==null&&p.maximum_stock<0)){
+  if(p.minimum_stock<0||p.target_stock<0||(p.maximum_stock!==null&&p.maximum_stock<0)){
     throw Error("قيم المخزون لا يمكن أن تكون سالبة.");
   }
 
@@ -1579,36 +1896,27 @@ function validate(p){
     throw Error("الحد الأدنى للمخزون لا يمكن أن يتجاوز الحد الأقصى.");
   }
 
-  if(p.target_stock<p.minimum_stock||
-    (p.maximum_stock!==null&&p.target_stock>p.maximum_stock)){
+  if(p.target_stock<p.minimum_stock||(p.maximum_stock!==null&&p.target_stock>p.maximum_stock)){
     throw Error("المخزون المستهدف يجب أن يكون بين الحد الأدنى والحد الأقصى.");
   }
 
   const a=[p.min_selling_price,p.target_selling_price,p.max_selling_price];
+  if(a.some(x=>x!==null&&x<0))throw Error("أسعار البيع لا يمكن أن تكون سالبة.");
 
-  if(a.some(x=>x!==null&&x<0)){
-    throw Error("أسعار البيع لا يمكن أن تكون سالبة.");
-  }
-
-  if(p.min_selling_price!==null&&p.max_selling_price!==null&&
-    p.min_selling_price>p.max_selling_price){
+  if(p.min_selling_price!==null&&p.max_selling_price!==null&&p.min_selling_price>p.max_selling_price){
     throw Error("أقل سعر بيع أكبر من أعلى سعر.");
   }
 
-  if(p.target_selling_price!==null&&p.min_selling_price!==null&&
-    p.target_selling_price<p.min_selling_price){
+  if(p.target_selling_price!==null&&p.min_selling_price!==null&&p.target_selling_price<p.min_selling_price){
     throw Error("السعر المستهدف أقل من الحد الأدنى.");
   }
 
-  if(p.target_selling_price!==null&&p.max_selling_price!==null&&
-    p.target_selling_price>p.max_selling_price){
+  if(p.target_selling_price!==null&&p.max_selling_price!==null&&p.target_selling_price>p.max_selling_price){
     throw Error("السعر المستهدف أعلى من الحد الأقصى.");
   }
 
   for(const k of ["unit_weight_kg","units_per_carton","carton_weight_kg"]){
-    if(p[k]!==null&&p[k]<0){
-      throw Error("الأوزان والكميات لا يمكن أن تكون سالبة.");
-    }
+    if(p[k]!==null&&p[k]<0)throw Error("الأوزان والكميات لا يمكن أن تكون سالبة.");
   }
 }
 
@@ -1660,14 +1968,12 @@ $("productForm").addEventListener("submit",async e=>{
     }
 
     const id=$("editId").value;
-
     busy(btn,true,"جارٍ الحفظ...",id?"حفظ التعديلات":"حفظ المنتج");
 
     let result;
 
     if(id){
-      result=await db.from("products").update(p)
-        .eq("product_id",Number(id)).select("product_id").single();
+      result=await db.from("products").update(p).eq("product_id",Number(id)).select("product_id").single();
     }else{
       const {data:s,error:se}=await db.auth.getSession();
       if(se)throw se;
@@ -1686,7 +1992,6 @@ $("productForm").addEventListener("submit",async e=>{
       $("formCard").classList.add("hidden");
       resetForm();
     },1000);
-
   }catch(e){
     msg($("formMsg"),"لم يتم الحفظ: "+err(e),"error");
   }finally{
@@ -1700,9 +2005,7 @@ async function toggleActive(p){
   if(!confirm("هل تريد "+(p.is_active?"إيقاف":"تفعيل")+" المنتج «"+p.product_name+"»؟"))return;
 
   try{
-    if(!await permission("PRODUCTS_MANAGE")){
-      throw Error("لا توجد صلاحية.");
-    }
+    if(!await permission("PRODUCTS_MANAGE"))throw Error("لا توجد صلاحية.");
 
     const {error}=await db.from("products")
       .update({is_active:!p.is_active,updated_at:new Date().toISOString()})
@@ -1734,9 +2037,7 @@ $("loginForm").addEventListener("submit",async e=>{
     let user;
 
     if(loginValue.includes("@")){
-      const {data,error}=await db.auth.signInWithPassword({
-        email:loginValue,password
-      });
+      const {data,error}=await db.auth.signInWithPassword({email:loginValue,password});
       if(error)throw error;
       user=data.user;
     }else{
@@ -1761,9 +2062,7 @@ $("loginForm").addEventListener("submit",async e=>{
       user=data.user;
     }
 
-    if(!user){
-      throw new Error("لم يتم استرجاع بيانات المستخدم.");
-    }
+    if(!user)throw new Error("لم يتم استرجاع بيانات المستخدم.");
 
     showApp();
     await userInfo(user);
@@ -1772,7 +2071,7 @@ $("loginForm").addEventListener("submit",async e=>{
     if(canViewLocations)await loadLocations();
     fillLocationsFilter();
     if(canViewStock)await loadStock();
-
+    if(canViewCustomers)await loadCustomers();
   }catch(e){
     msg($("loginMsg"),"تعذر تسجيل الدخول أو تجهيز البيانات: "+err(e),"error");
   }finally{
@@ -1797,10 +2096,7 @@ $("recoveryForm").addEventListener("submit",async e=>{
   busy($("recoveryBtn"),true,"جارٍ إرسال الرابط...","إرسال رابط الاستعادة");
 
   try{
-    const {error}=await db.auth.resetPasswordForEmail(
-      $("recoveryEmail").value.trim(),
-      {redirectTo:APP_URL}
-    );
+    const {error}=await db.auth.resetPasswordForEmail($("recoveryEmail").value.trim(),{redirectTo:APP_URL});
     if(error)throw error;
     msg($("recoveryMsg"),"إذا كان البريد مسجلًا، فستصلك رسالة استعادة. افتح الرسالة واضغط الرابط.","success");
   }catch(e){
@@ -1831,9 +2127,7 @@ $("newPassForm").addEventListener("submit",async e=>{
   try{
     const {data,error:se}=await db.auth.getSession();
     if(se)throw se;
-    if(!data.session){
-      throw Error("جلسة الاستعادة غير موجودة أو انتهت. اطلب رابطًا جديدًا.");
-    }
+    if(!data.session)throw Error("جلسة الاستعادة غير موجودة أو انتهت. اطلب رابطًا جديدًا.");
 
     const {error}=await db.auth.updateUser({password:p});
     if(error)throw error;
@@ -1851,7 +2145,6 @@ $("newPassForm").addEventListener("submit",async e=>{
 });
 
 $("addBtn").onclick=()=>openForm();
-
 $("cancelBtn").onclick=()=>{
   $("formCard").classList.add("hidden");
   resetForm();
@@ -1874,12 +2167,16 @@ $("logoutBtn").onclick=async()=>{
   canManageLocations=false;
   canViewStock=false;
   canManageStock=false;
+  canViewCustomers=false;
+  canManageCustomers=false;
   locationsCache=[];
   stockCache=[];
+  customersCache=[];
   $("password").value="";
   $("userManagementCard").classList.add("hidden");
   $("locationsCard").classList.add("hidden");
   $("stockCard").classList.add("hidden");
+  $("customersCard").classList.add("hidden");
 
   showLogin();
   msg($("loginMsg"),"تم تسجيل الخروج.","success");
@@ -1903,11 +2200,15 @@ db.auth.onAuthStateChange(event=>{
     canManageLocations=false;
     canViewStock=false;
     canManageStock=false;
+    canViewCustomers=false;
+    canManageCustomers=false;
     locationsCache=[];
     stockCache=[];
+    customersCache=[];
     $("userManagementCard").classList.add("hidden");
     $("locationsCard").classList.add("hidden");
     $("stockCard").classList.add("hidden");
+    $("customersCard").classList.add("hidden");
     showLogin();
   }
 });
@@ -1921,11 +2222,7 @@ async function init(){
     const params=new URLSearchParams(location.search);
     const hash=location.hash;
 
-    if(
-      params.has("error")||
-      params.has("error_description")||
-      hash.includes("error=")
-    ){
+    if(params.has("error")||params.has("error_description")||hash.includes("error=")){
       showLogin();
       msg($("loginMsg"),"رابط الاستعادة قد يكون منتهي الصلاحية. اطلب رابطًا جديدًا.","error");
       return;
@@ -1942,6 +2239,7 @@ async function init(){
       if(canViewLocations)await loadLocations();
       fillLocationsFilter();
       if(canViewStock)await loadStock();
+      if(canViewCustomers)await loadCustomers();
     }else{
       showLogin();
     }
