@@ -44,6 +44,7 @@ input[type=number]{direction:ltr;text-align:left}
 .actions{display:flex;gap:8px}
 .actions .btn{flex:1;padding:9px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 10px}
 .checks{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .check{display:flex;align-items:center;background:#f7f9f6;border:1px solid var(--line);border-radius:9px;padding:10px;font-size:13px}
 .check input{width:20px;height:20px;margin:0 8px 0 0}
@@ -53,12 +54,12 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 .navbtn{flex:1;border:0;background:transparent;padding:9px 3px;border-radius:9px;color:var(--muted);font-size:13px}
 .navbtn.active{color:var(--g);background:#edf3ed;font-weight:bold}
 .item-row{border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:8px;background:#f9fbf9}
-.item-row .row{margin-top:6px}
 .item-line-total{font-weight:bold;color:var(--g);margin-top:8px;text-align:left;direction:ltr}
+.item-hint{font-size:12px;color:var(--muted);margin-top:4px}
 .total-box{background:#e9efe9;border-radius:12px;padding:12px;margin-top:12px}
 .total-box .line{display:flex;justify-content:space-between;padding:4px 0;font-size:14px}
 .total-box .grand{font-weight:bold;font-size:17px;border-top:1px solid #c9d5c9;margin-top:6px;padding-top:8px;color:var(--g)}
-@media(max-width:480px){.grid{grid-template-columns:1fr}.card{padding:14px}.actions{flex-direction:column}}
+@media(max-width:480px){.grid,.grid3{grid-template-columns:1fr}.card{padding:14px}.actions{flex-direction:column}}
 </style>
 </head>
 <body>
@@ -422,6 +423,7 @@ let canManageSales=false;
 let productsCache=[];
 let categories=[];
 let units=[];
+let cartonUnitId=null;
 let userLookupsLoading=false;
 let locationsCache=[];
 let stockCache=[];
@@ -548,12 +550,13 @@ function fillSelect(el,items,idkey,namekey,placeholder){
 async function loadLookups(){
   const [c,u]=await Promise.all([
     db.from("product_categories").select("category_id,category_name").order("category_id"),
-    db.from("units").select("unit_id,unit_name").order("unit_id")
+    db.from("units").select("unit_id,unit_name,is_package_unit").order("unit_id")
   ]);
   if(c.error)throw c.error;
   if(u.error)throw u.error;
   categories=c.data||[];
   units=u.data||[];
+  cartonUnitId=units.find(x=>x.is_package_unit===true)?.unit_id||null;
   fillSelect($("category"),categories,"category_id","category_name","اختر التصنيف");
   fillSelect($("baseUnit"),units,"unit_id","unit_name","اختر الوحدة الأساسية");
   fillSelect($("purchaseUnit"),units,"unit_id","unit_name","بدون تحديد");
@@ -1590,15 +1593,23 @@ function addInvoiceItemRow(){
     op.value=String(p.product_id);
     op.textContent=p.product_name+" ("+p.product_code+")";
     if(p.target_selling_price!=null)op.dataset.price=String(p.target_selling_price);
-    op.dataset.unit=String(p.base_unit_id||"");
+    op.dataset.baseUnit=String(p.base_unit_id||"");
+    op.dataset.unitsCarton=String(p.units_per_carton||"");
     prodSel.appendChild(op);
   });
 
-  const row=document.createElement("div");
-  row.className="row";
+  const grid3=document.createElement("div");
+  grid3.className="grid3";
+
+  const unitWrap=document.createElement("div");
+  const unitLabel=document.createElement("label");
+  unitLabel.textContent="وحدة البيع *";
+  const unitSel=document.createElement("select");
+  unitSel.className="item-unit";
+  unitSel.required=true;
+  unitWrap.append(unitLabel,unitSel);
 
   const qtyWrap=document.createElement("div");
-  qtyWrap.style.flex="1";
   const qtyLabel=document.createElement("label");
   qtyLabel.textContent="الكمية *";
   const qty=document.createElement("input");
@@ -1610,7 +1621,6 @@ function addInvoiceItemRow(){
   qtyWrap.append(qtyLabel,qty);
 
   const priceWrap=document.createElement("div");
-  priceWrap.style.flex="1";
   const priceLabel=document.createElement("label");
   priceLabel.textContent="سعر الوحدة *";
   const price=document.createElement("input");
@@ -1621,11 +1631,15 @@ function addInvoiceItemRow(){
   price.required=true;
   priceWrap.append(priceLabel,price);
 
-  row.append(qtyWrap,priceWrap);
+  grid3.append(unitWrap,qtyWrap,priceWrap);
 
   const lineTotal=document.createElement("div");
   lineTotal.className="item-line-total";
   lineTotal.textContent="الإجمالي: 0";
+
+  const hint=document.createElement("div");
+  hint.className="item-hint";
+  hint.textContent="";
 
   const removeBtn=document.createElement("button");
   removeBtn.type="button";
@@ -1637,7 +1651,7 @@ function addInvoiceItemRow(){
     if(!$("invoiceItems").children.length)addInvoiceItemRow();
   });
 
-  wrap.append(prodLabel,prodSel,row,lineTotal,removeBtn);
+  wrap.append(prodLabel,prodSel,grid3,lineTotal,hint,removeBtn);
   $("invoiceItems").appendChild(wrap);
 
   const recalc=()=>{
@@ -1645,7 +1659,55 @@ function addInvoiceItemRow(){
     const p=Number(price.value||0);
     const t=q*p;
     lineTotal.textContent="الإجمالي: "+fmt(t);
+
+    const unitId=Number(unitSel.value||0);
+    const opt=prodSel.selectedOptions[0];
+    const baseUnitId=Number(opt?.dataset?.baseUnit||0);
+    const unitsCarton=Number(opt?.dataset?.unitsCarton||0);
+
+    if(unitId&&baseUnitId&&q>0){
+      if(unitId===baseUnitId){
+        hint.textContent="يخصم من المخزون: "+q.toLocaleString("ar-EG")+" "+unitName(baseUnitId);
+      }else if(unitId===cartonUnitId&&unitsCarton>0){
+        const baseQty=q*unitsCarton;
+        hint.textContent="يخصم من المخزون: "+baseQty.toLocaleString("ar-EG")+" "+unitName(baseUnitId)+" ("+q+" كرتونة × "+unitsCarton+")";
+      }else{
+        hint.textContent="";
+      }
+    }else{
+      hint.textContent="";
+    }
+
     updateInvoiceTotals();
+  };
+
+  const populateUnits=()=>{
+    const opt=prodSel.selectedOptions[0];
+    const baseUnitId=opt?.dataset?.baseUnit||"";
+    const unitsCarton=Number(opt?.dataset?.unitsCarton||0);
+
+    unitSel.replaceChildren();
+    const firstU=document.createElement("option");
+    firstU.value="";
+    firstU.textContent="اختر الوحدة";
+    unitSel.appendChild(firstU);
+
+    if(baseUnitId){
+      const op=document.createElement("option");
+      op.value=baseUnitId;
+      op.textContent=unitName(baseUnitId);
+      unitSel.appendChild(op);
+    }
+
+    if(unitsCarton>0&&cartonUnitId){
+      const op=document.createElement("option");
+      op.value=String(cartonUnitId);
+      op.textContent="كرتونة ("+unitsCarton+" "+unitName(baseUnitId)+")";
+      unitSel.appendChild(op);
+    }
+
+    if(baseUnitId)unitSel.value=baseUnitId;
+    recalc();
   };
 
   prodSel.addEventListener("change",()=>{
@@ -1653,10 +1715,14 @@ function addInvoiceItemRow(){
     if(opt?.dataset.price&&!price.value){
       price.value=opt.dataset.price;
     }
-    recalc();
+    populateUnits();
   });
+
+  unitSel.addEventListener("change",recalc);
   qty.addEventListener("input",recalc);
   price.addEventListener("input",recalc);
+
+  populateUnits();
 }
 
 function updateInvoiceTotals(){
@@ -1824,13 +1890,14 @@ $("invoiceForm").addEventListener("submit",async e=>{
   let valid=true;
 
   document.querySelectorAll("#invoiceItems .item-row").forEach(row=>{
-    const sel=row.querySelector(".item-product");
-    const productId=sel?.value;
-    const unitId=Number(sel?.selectedOptions[0]?.dataset?.unit||0);
+    const prodSel=row.querySelector(".item-product");
+    const unitSel=row.querySelector(".item-unit");
+    const productId=prodSel?.value;
+    const saleUnitId=Number(unitSel?.value||0);
     const qty=Number(row.querySelector(".item-qty")?.value||0);
     const price=Number(row.querySelector(".item-price")?.value||0);
 
-    if(!productId||qty<=0||!unitId){
+    if(!productId||!saleUnitId||qty<=0){
       valid=false;
       return;
     }
@@ -1841,14 +1908,14 @@ $("invoiceForm").addEventListener("submit",async e=>{
 
     items.push({
       product_id:Number(productId),
-      unit_id:unitId,
+      sale_unit_id:saleUnitId,
       quantity:qty,
       unit_price:price
     });
   });
 
   if(!items.length||!valid){
-    msg($("invoiceFormMsg"),"أكمل بيانات كل الأصناف (منتج، كمية أكبر من صفر، سعر صحيح).","error");
+    msg($("invoiceFormMsg"),"أكمل بيانات كل الأصناف (منتج، وحدة، كمية، سعر).","error");
     return;
   }
 
