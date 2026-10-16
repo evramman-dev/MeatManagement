@@ -1817,6 +1817,8 @@ function renderSales(){
     total.className="badge";
     total.textContent="الإجمالي: "+fmt(inv.net_total);
 
+    card.append(title,details,total);
+
     if(inv.discount_amount&&Number(inv.discount_amount)!==0){
       const disc=document.createElement("span");
       disc.className="badge";
@@ -1827,10 +1829,46 @@ function renderSales(){
     const status=document.createElement("span");
     status.className="badge"+(inv.status==="POSTED"?"":" off");
     status.textContent=inv.status==="POSTED"?"مرحّلة":(inv.status==="PAID"?"مدفوعة":(inv.status==="PARTIAL"?"جزئية":(inv.status==="CANCELLED"?"ملغاة":inv.status)));
+    card.appendChild(status);
 
-    card.append(title,details,total,status);
+    if(canManageSales && inv.status==="POSTED"){
+      const actions=document.createElement("div");
+      actions.className="actions";
+      const cancel=document.createElement("button");
+      cancel.type="button";
+      cancel.className="btn danger";
+      cancel.textContent="إلغاء الفاتورة";
+      cancel.addEventListener("click",()=>cancelInvoice(inv));
+      actions.appendChild(cancel);
+      card.appendChild(actions);
+    }
+
     box.appendChild(card);
   });
+}
+
+async function cancelInvoice(inv){
+  if(!canManageSales){
+    msg($("salesMsg"),"لا تملك صلاحية إلغاء الفواتير.","error");
+    return;
+  }
+
+  if(!confirm("هل أنت متأكد من إلغاء الفاتورة "+inv.invoice_number+"؟\nسيتم إرجاع الكميات إلى رصيد المخزون ولا يمكن التراجع."))return;
+
+  try{
+    if(!await permission("SALES_MANAGE"))throw new Error("لا تملك صلاحية إلغاء الفواتير.");
+
+    const {error}=await db.rpc("cancel_sales_invoice",{
+      p_invoice_id:inv.sales_invoice_id
+    });
+    if(error)throw error;
+
+    msg($("salesMsg"),"تم إلغاء الفاتورة "+inv.invoice_number+" وإرجاع الكميات للمخزون.","success");
+    await loadSales();
+    if(canViewStock)await loadStock();
+  }catch(e){
+    msg($("salesMsg"),"تعذر إلغاء الفاتورة: "+err(e),"error");
+  }
 }
 
 $("addInvoiceBtn").addEventListener("click",async()=>{
