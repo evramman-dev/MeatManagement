@@ -76,6 +76,33 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 .print-table th,.print-table td{border:1px solid var(--line);padding:8px;text-align:right;}
 .print-table th{background:#f4f6f3;font-weight:bold;}
 
+/* ===== حل مشكلة الطباعة على الموبايل ===== */
+@media print {
+  body { background: white; margin: 0; padding: 0; }
+  /* إخفاء كل شيء في الصفحة */
+  header, main, nav, .navbtn, script { display: none !important; }
+  
+  /* إظهار الفاتورة فقط */
+  #invoiceDetailsModal { 
+    display: block !important; 
+    position: static !important; 
+    background: white !important; 
+    padding: 0 !important; 
+    margin: 0 !important;
+  }
+  .modal-content { 
+    box-shadow: none !important; 
+    border: none !important; 
+    margin: 0 !important; 
+    padding: 0 !important; 
+    max-width: 100% !important; 
+    max-height: none !important; 
+  }
+  .modal-header, .no-print { display: none !important; }
+  .modal-body { padding: 0 !important; }
+  .invoice-print-area { padding: 0 !important; }
+}
+
 @media(max-width:480px){.grid,.grid3{grid-template-columns:1fr}.card{padding:14px}.actions{flex-direction:column}}
 </style>
 </head>
@@ -488,7 +515,8 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
       </div>
 
       <div class="no-print" style="margin-top:20px; display:flex; gap:10px;">
-        <button class="btn" onclick="printInvoice()" style="background:var(--gold); color:var(--g); flex:1;">🖨️ طباعة</button>
+        <!-- التغيير هنا: استخدام window.print مباشرة -->
+        <button class="btn" onclick="window.print()" style="background:var(--gold); color:var(--g); flex:1;">🖨️ طباعة</button>
         <button class="btn" id="shareWhatsappBtn" style="background:#25D366; flex:1;">💬 واتساب</button>
       </div>
     </div>
@@ -1906,57 +1934,8 @@ async function viewInvoice(inv) {
   }
 }
 
-// دالة الطباعة الجديدة (Iframe Method)
-function printInvoice() {
-  const content = document.getElementById("invoicePrintArea").innerHTML;
-  
-  const iframe = document.createElement('iframe');
-  iframe.style.position = 'fixed';
-  iframe.style.right = '0';
-  iframe.style.bottom = '0';
-  iframe.style.width = '0';
-  iframe.style.height = '0';
-  iframe.style.border = '0';
-  document.body.appendChild(iframe);
-  
-  const doc = iframe.contentWindow.document;
-  doc.open();
-  doc.write(`
-    <html dir="rtl">
-    <head>
-      <title>طباعة فاتورة</title>
-      <style>
-        body { font-family: Arial, sans-serif; padding: 10px; color: #000; background: #fff; }
-        .print-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
-        .print-table th, .print-table td { border: 1px solid #444; padding: 8px; text-align: right; }
-        .print-table th { background: #f0f0f0; }
-        .total-box { margin-top: 20px; text-align: left; width: 60%; margin-left: auto; }
-        .total-box .line { display: flex; justify-content: space-between; padding: 5px 0; }
-        .total-box .grand { font-weight: bold; font-size: 18px; border-top: 2px solid #000; margin-top: 5px; padding-top: 5px; }
-        h2 { margin: 0; color: #173c2c; }
-        p { margin: 5px 0; font-size: 14px; color: #555; }
-        hr { border: 1px solid #173c2c; }
-      </style>
-    </head>
-    <body>
-      ${content}
-    </body>
-    </html>
-  `);
-  doc.close();
-  
-  setTimeout(() => {
-    try {
-      iframe.contentWindow.focus();
-      iframe.contentWindow.print();
-    } catch (e) {
-      console.error("Print error", e);
-    }
-    setTimeout(() => {
-      document.body.removeChild(iframe);
-    }, 2000);
-  }, 500);
-}
+// دالة الطباعة الجديدة (تستخدم window.print مباشرة)
+// تم استخدام window.print() في زر الطباعة في الـ HTML
 
 async function cancelInvoice(inv){
   if(!canManageSales){msg($("salesMsg"),"لا تملك صلاحية إلغاء الفواتير.","error");return;}
