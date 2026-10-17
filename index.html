@@ -168,26 +168,25 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     <h2>🗂️ مركز البيانات</h2>
     <p class="desc">اختر القسم الذي تريد الدخول إليه.</p>
     <div class="dashboard-grid" id="dashGrid">
-      <!-- These will be shown/hidden based on permissions -->
-      <div class="dash-item hidden" id="menuProducts" onclick="openSection('products')">
+      <div class="dash-item hidden" id="menuProducts" onclick="window.openSection('products')">
         <div class="dash-icon">📦</div><div class="dash-title">المنتجات</div>
       </div>
-      <div class="dash-item hidden" id="menuLocations" onclick="openSection('locations')">
+      <div class="dash-item hidden" id="menuLocations" onclick="window.openSection('locations')">
         <div class="dash-icon">🏭</div><div class="dash-title">المواقع والمخازن</div>
       </div>
-      <div class="dash-item hidden" id="menuStock" onclick="openSection('stock')">
+      <div class="dash-item hidden" id="menuStock" onclick="window.openSection('stock')">
         <div class="dash-icon">📊</div><div class="dash-title">أرصدة المخزون</div>
       </div>
-      <div class="dash-item hidden" id="menuCustomers" onclick="openSection('customers')">
+      <div class="dash-item hidden" id="menuCustomers" onclick="window.openSection('customers')">
         <div class="dash-icon">👥</div><div class="dash-title">العملاء</div>
       </div>
-      <div class="dash-item hidden" id="menuSales" onclick="openSection('sales')">
+      <div class="dash-item hidden" id="menuSales" onclick="window.openSection('sales')">
         <div class="dash-icon">🧾</div><div class="dash-title">فواتير البيع</div>
       </div>
-      <div class="dash-item hidden" id="menuCollections" onclick="openSection('collections')">
+      <div class="dash-item hidden" id="menuCollections" onclick="window.openSection('collections')">
         <div class="dash-icon">💰</div><div class="dash-title">التحصيلات</div>
       </div>
-      <div class="dash-item hidden" id="menuUsers" onclick="openSection('users')">
+      <div class="dash-item hidden" id="menuUsers" onclick="window.openSection('users')">
         <div class="dash-icon">👤</div><div class="dash-title">المستخدمون</div>
       </div>
     </div>
@@ -197,7 +196,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
   
   <!-- Users Section -->
   <div id="sectionUsers" class="sub-section hidden">
-    <button class="btn secondary" onclick="closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
+    <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="userManagementCard" class="card hidden">
       <h2>👥 إدارة المستخدمين</h2>
       <p class="desc">إنشاء حسابات الموظفين وربط كل حساب بدوره الوظيفي واسم المستخدم.</p>
@@ -217,7 +216,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 
   <!-- Locations Section -->
   <div id="sectionLocations" class="sub-section hidden">
-    <button class="btn secondary" onclick="closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
+    <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="locationsCard" class="card hidden">
       <div class="row" style="justify-content:space-between">
         <h2>🏭 إدارة المواقع والمخازن</h2>
@@ -256,7 +255,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 
   <!-- Stock Section -->
   <div id="sectionStock" class="sub-section hidden">
-    <button class="btn secondary" onclick="closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
+    <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="stockCard" class="card hidden">
       <div class="row" style="justify-content:space-between">
         <h2>📊 أرصدة المخزون</h2>
@@ -289,7 +288,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 
   <!-- Customers Section -->
   <div id="sectionCustomers" class="sub-section hidden">
-    <button class="btn secondary" onclick="closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
+    <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="customersCard" class="card hidden">
       <div class="row" style="justify-content:space-between">
         <h2>👥 إدارة العملاء</h2>
@@ -329,7 +328,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 
   <!-- Sales Section -->
   <div id="sectionSales" class="sub-section hidden">
-    <button class="btn secondary" onclick="closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
+    <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="salesCard" class="card hidden">
       <div class="row" style="justify-content:space-between">
         <h2>🧾 فواتير البيع</h2>
@@ -372,7 +371,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 
   <!-- Collections Section -->
   <div id="sectionCollections" class="sub-section hidden">
-    <button class="btn secondary" onclick="closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
+    <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="collectionsCard" class="card hidden">
       <div class="row" style="justify-content:space-between">
         <h2>💰 تحصيلات العملاء</h2>
@@ -410,7 +409,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 
   <!-- Products Section -->
   <div id="sectionProducts" class="sub-section hidden">
-    <button class="btn secondary" onclick="closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
+    <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div class="card">
       <div class="row" style="justify-content:space-between">
         <h2>📦 إدارة المنتجات</h2>
@@ -548,15 +547,17 @@ function hideSections(){ ["login","recovery","newPass","home","tasks","data","na
 function showLogin(){ hideSections(); $("login").classList.remove("hidden"); }
 function showApp(){ hideSections(); $("nav").classList.remove("hidden"); page("home"); }
 
-// Dashboard Navigation Logic
-function openSection(name) {
+// Dashboard Navigation Logic (Global Scope for Inline HTML)
+window.openSection = function(name) {
   $("dataDashboard").classList.add("hidden");
   document.querySelectorAll(".sub-section").forEach(el => el.classList.add("hidden"));
   $(`section${name.charAt(0).toUpperCase() + name.slice(1)}`).classList.remove("hidden");
+  window.scrollTo(0, 0); // Scroll to top when opening a section
 }
-function closeSection() {
+window.closeSection = function() {
   document.querySelectorAll(".sub-section").forEach(el => el.classList.add("hidden"));
   $("dataDashboard").classList.remove("hidden");
+  window.scrollTo(0, 0);
 }
 
 function page(name){
@@ -565,7 +566,7 @@ function page(name){
   $("data").classList.toggle("hidden",name!=="data");
   document.querySelectorAll(".navbtn").forEach(b=>{ b.classList.toggle("active",b.dataset.page===name); });
   if(name==="data"){
-    closeSection(); // Always return to dashboard menu on tab click
+    window.closeSection(); // Always return to dashboard menu on tab click
     loadProducts();
     if(canViewLocations)loadLocations();
     if(canViewStock)loadStock();
@@ -706,8 +707,8 @@ async function userInfo(user){
   }
 }
 
-/* ... (بقية الدوال الخاصة بالمواقع، المخزون، العملاء، الفواتير، التحصيلات، المنتجات، تسجيل الدخول والخروج تفضل زي ما هي بالظبط) ... */
-/* تم دمج باقي الكود من الرسالة السابقة هنا لضمان عمل الملف بالكامل */
+/* ... (بقية الدوال الخاصة بالمواقع، المخزون، العملاء، الفواتير، التحصيلات، المنتجات، تسجيل الدخول والخروج) ... */
+/* لقد تم دمج باقي الكود لضمان عمل الملف بالكامل */
 
 const locationTypes={ MAIN_WAREHOUSE:"مخزن رئيسي",FRIDGE:"ثلاجة",VEHICLE:"سيارة",FACTORY:"مصنع",SHOWROOM:"معرض" };
 function locationTypeName(value){ return locationTypes[value]||value||"غير محدد"; }
