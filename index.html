@@ -76,31 +76,31 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 .print-table th,.print-table td{border:1px solid var(--line);padding:8px;text-align:right;}
 .print-table th{background:#f4f6f3;font-weight:bold;}
 
-/* ===== حل مشكلة الطباعة على الموبايل ===== */
+/* ===== حل مشكلة الطباعة ===== */
 @media print {
-  body { background: white; margin: 0; padding: 0; }
-  /* إخفاء كل شيء في الصفحة */
-  header, main, nav, .navbtn, script { display: none !important; }
-  
-  /* إظهار الفاتورة فقط */
+  @page { margin: 10mm; }
+  body { background: #fff !important; }
+  body * { visibility: hidden; }
   #invoiceDetailsModal { 
-    display: block !important; 
     position: static !important; 
-    background: white !important; 
+    display: block !important; 
+    visibility: visible; 
+    background: transparent !important; 
     padding: 0 !important; 
-    margin: 0 !important;
+    margin: 0 !important; 
   }
   .modal-content { 
+    visibility: visible; 
+    position: static !important; 
+    max-height: none !important; 
+    overflow: visible !important; 
     box-shadow: none !important; 
     border: none !important; 
-    margin: 0 !important; 
-    padding: 0 !important; 
-    max-width: 100% !important; 
-    max-height: none !important; 
   }
-  .modal-header, .no-print { display: none !important; }
+  #invoicePrintArea, #invoicePrintArea * { visibility: visible; }
+  #invoicePrintArea { position: absolute; left: 0; top: 0; width: 100%; padding: 0 !important; }
+  .no-print, .modal-header { display: none !important; }
   .modal-body { padding: 0 !important; }
-  .invoice-print-area { padding: 0 !important; }
 }
 
 @media(max-width:480px){.grid,.grid3{grid-template-columns:1fr}.card{padding:14px}.actions{flex-direction:column}}
@@ -515,7 +515,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
       </div>
 
       <div class="no-print" style="margin-top:20px; display:flex; gap:10px;">
-        <!-- التغيير هنا: استخدام window.print مباشرة -->
+        <!-- التغيير هنا: استدعاء دالة الطباعة مباشرة -->
         <button class="btn" onclick="window.print()" style="background:var(--gold); color:var(--g); flex:1;">🖨️ طباعة</button>
         <button class="btn" id="shareWhatsappBtn" style="background:#25D366; flex:1;">💬 واتساب</button>
       </div>
@@ -1933,9 +1933,6 @@ async function viewInvoice(inv) {
     $("modalInvoiceHeader").innerHTML = `<span style="color:red;">تعذر تحميل التفاصيل: ${err(e)}</span>`;
   }
 }
-
-// دالة الطباعة الجديدة (تستخدم window.print مباشرة)
-// تم استخدام window.print() في زر الطباعة في الـ HTML
 
 async function cancelInvoice(inv){
   if(!canManageSales){msg($("salesMsg"),"لا تملك صلاحية إلغاء الفواتير.","error");return;}
