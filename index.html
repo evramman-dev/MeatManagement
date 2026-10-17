@@ -44,8 +44,8 @@ input[type=number]{direction:ltr;text-align:left}
 .badge-partial{background:#fff4d6;color:#8a6d1a}
 .badge-cancel{background:#fff0f0;color:var(--red)}
 .off{background:#fff0f0;color:var(--red)}
-.actions{display:flex;gap:8px}
-.actions .btn{flex:1;padding:9px}
+.actions{display:flex;gap:8px;margin-top:10px}
+.actions .btn{flex:1;padding:9px;margin:0}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 10px}
 .checks{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -63,6 +63,28 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 .total-box .line{display:flex;justify-content:space-between;padding:4px 0;font-size:14px}
 .total-box .grand{font-weight:bold;font-size:17px;border-top:1px solid #c9d5c9;margin-top:6px;padding-top:8px;color:var(--g)}
 .invoice-info{background:#f9fbf9;border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:8px;font-size:13px;line-height:1.9}
+
+/* Modal Styles */
+.modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;}
+.modal-content{background:white;border-radius:16px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;position:relative;box-shadow:0 5px 20px rgba(0,0,0,0.2);}
+.modal-header{background:var(--g);color:white;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;border-radius:16px 16px 0 0;position:sticky;top:0;z-index:10;}
+.modal-header h3{margin:0;font-size:18px;}
+.close-btn{background:none;border:none;color:white;font-size:24px;cursor:pointer;padding:0;line-height:1;}
+.modal-body{padding:20px;}
+.invoice-print-area{padding:10px;}
+.print-table{width:100%;border-collapse:collapse;margin-top:15px;font-size:13px;}
+.print-table th,.print-table td{border:1px solid var(--line);padding:8px;text-align:right;}
+.print-table th{background:#f4f6f3;font-weight:bold;}
+
+@media print {
+  body *{visibility:hidden;}
+  .modal{position:absolute;left:0;top:0;width:100%;height:auto;background:white;padding:0;display:block;}
+  .modal-content{box-shadow:none;border-radius:0;max-height:none;max-width:100%;}
+  .modal-header,.no-print{display:none!important;}
+  .invoice-print-area,.invoice-print-area *{visibility:visible;}
+  .invoice-print-area{position:absolute;left:0;top:0;width:100%;padding:0;}
+}
+
 @media(max-width:480px){.grid,.grid3{grid-template-columns:1fr}.card{padding:14px}.actions{flex-direction:column}}
 </style>
 </head>
@@ -272,7 +294,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 <h2>🧾 فواتير البيع</h2>
 <button id="addInvoiceBtn" class="btn hidden" type="button">＋ فاتورة جديدة</button>
 </div>
-<p class="desc">فواتير البيع للعملاء. الحفظ يخصم الكميات تلقائيًا من رصيد الموقع المختار.</p>
+<p class="desc">فواتير البيع للعملاء. اضغط على الفاتورة لعرض التفاصيل والطباعة.</p>
 <div class="row">
 <input id="salesSearch" type="search" placeholder="ابحث برقم الفاتورة أو اسم العميل...">
 <button id="refreshSalesBtn" class="btn secondary" type="button">تحديث</button>
@@ -442,6 +464,46 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 <button class="navbtn" data-page="data" type="button">🗂️ البيانات</button>
 </nav>
 
+<!-- Invoice Details Modal -->
+<div id="invoiceDetailsModal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>تفاصيل الفاتورة</h3>
+      <button class="close-btn" onclick="document.getElementById('invoiceDetailsModal').classList.add('hidden')">&times;</button>
+    </div>
+    <div class="modal-body">
+      
+      <div id="invoicePrintArea" class="invoice-print-area">
+        <!-- Header for print -->
+        <div style="text-align:center; margin-bottom:20px;">
+          <h2 style="margin:0; color:#173c2c;">🥩 MeatManagement</h2>
+          <p style="margin:5px 0; font-size:14px; color:#555;">نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
+          <hr style="border:1px solid #173c2c;">
+        </div>
+
+        <div id="modalInvoiceHeader" style="font-size:14px; line-height:1.8; margin-bottom:15px;">
+          <!-- Header details injected here -->
+        </div>
+
+        <table class="print-table" id="modalInvoiceItems">
+          <!-- Items injected here -->
+        </table>
+
+        <div id="modalInvoiceTotals" class="total-box" style="background:none; border-top:1px solid #eee; border-radius:0; margin-top:10px;">
+          <!-- Totals injected here -->
+        </div>
+        
+        <div id="modalInvoiceNotes" style="font-size:13px; color:#666; margin-top:15px;"></div>
+      </div>
+
+      <div class="no-print" style="margin-top:20px; display:flex; gap:10px;">
+        <button class="btn" onclick="window.print()" style="background:var(--gold); color:var(--g); flex:1;">🖨️ طباعة</button>
+        <button class="btn" id="shareWhatsappBtn" style="background:#25D366; flex:1;">💬 واتساب</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 (() => {
 "use strict";
@@ -585,6 +647,10 @@ function unitName(id){
 
 function customerName(id){
   return customersCache.find(x=>String(x.customer_id)===String(id))?.customer_name||"غير محدد";
+}
+
+function customerPhone(id){
+  return customersCache.find(x=>String(x.customer_id)===String(id))?.phone||"";
 }
 
 function locationName(id){
@@ -1643,7 +1709,7 @@ async function loadSales(){
     if(!allowed){canViewSales=false;$("salesCard").classList.add("hidden");throw new Error("لا تملك صلاحية عرض فواتير البيع.");}
 
     const {data,error}=await db.from("sales_invoices")
-      .select("sales_invoice_id,invoice_number,customer_id,location_id,invoice_date,payment_method,subtotal,discount_amount,net_total,paid_amount,remaining_amount,status,created_at")
+      .select("sales_invoice_id,invoice_number,customer_id,location_id,invoice_date,payment_method,subtotal,discount_amount,net_total,paid_amount,remaining_amount,status,created_at,notes")
       .order("sales_invoice_id",{ascending:false}).limit(200);
     if(error)throw error;
 
@@ -1709,16 +1775,144 @@ function renderSales(){
     status.textContent=invoiceStatusName(inv.status);
     card.appendChild(status);
 
+    const actions=document.createElement("div");actions.className="actions";
+    
+    const viewBtn=document.createElement("button");viewBtn.type="button";
+    viewBtn.className="btn secondary";viewBtn.textContent="عرض التفاصيل";
+    viewBtn.addEventListener("click",()=>viewInvoice(inv));
+    actions.appendChild(viewBtn);
+
     if(canManageSales && inv.status!=="CANCELLED"){
-      const actions=document.createElement("div");actions.className="actions";
       const cancel=document.createElement("button");cancel.type="button";
       cancel.className="btn danger";cancel.textContent="إلغاء الفاتورة";
       cancel.addEventListener("click",()=>cancelInvoice(inv));
-      actions.appendChild(cancel);card.appendChild(actions);
+      actions.appendChild(cancel);
     }
-
+    
+    card.appendChild(actions);
     box.appendChild(card);
   });
+}
+
+async function viewInvoice(inv) {
+  const modal = $("invoiceDetailsModal");
+  const printArea = $("invoicePrintArea");
+  
+  // Show loading state
+  $("modalInvoiceHeader").innerHTML = "جارٍ تحميل البيانات...";
+  $("modalInvoiceItems").innerHTML = "";
+  $("modalInvoiceTotals").innerHTML = "";
+  $("modalInvoiceNotes").innerHTML = "";
+  modal.classList.remove("hidden");
+
+  try {
+    const { data: items, error } = await db.from("sales_invoice_items")
+      .select("product_id, quantity, unit_id, unit_price, line_total")
+      .eq("sales_invoice_id", inv.sales_invoice_id)
+      .order("sequence_no", { ascending: true });
+
+    if (error) throw error;
+
+    // 1. Header
+    let headerHtml = `
+      <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+        <span><strong>رقم الفاتورة:</strong> ${inv.invoice_number}</span>
+        <span><strong>التاريخ:</strong> ${new Date(inv.invoice_date).toLocaleDateString("ar-EG")}</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+        <span><strong>العميل:</strong> ${customerName(inv.customer_id)}</span>
+        <span><strong>الموقع:</strong> ${locationName(inv.location_id)}</span>
+      </div>
+      <div style="display:flex; justify-content:space-between;">
+        <span><strong>طريقة الدفع:</strong> ${paymentTypeName(inv.payment_method)}</span>
+        <span><strong>الحالة:</strong> ${invoiceStatusName(inv.status)}</span>
+      </div>
+    `;
+    $("modalInvoiceHeader").innerHTML = headerHtml;
+
+    // 2. Items Table
+    let itemsHtml = `
+      <thead>
+        <tr>
+          <th>الصنف</th>
+          <th>الكمية</th>
+          <th>السعر</th>
+          <th>الإجمالي</th>
+        </tr>
+      </thead>
+      <tbody>
+    `;
+    
+    (items || []).forEach(item => {
+      const p = productsCache.find(x => String(x.product_id) === String(item.product_id));
+      const pName = p ? p.product_name : "منتج غير معروف";
+      const uName = unitName(item.unit_id);
+      
+      itemsHtml += `
+        <tr>
+          <td>${pName}</td>
+          <td>${Number(item.quantity).toLocaleString("ar-EG")} ${uName}</td>
+          <td>${fmt(item.unit_price)}</td>
+          <td>${fmt(item.line_total)}</td>
+        </tr>
+      `;
+    });
+    itemsHtml += `</tbody>`;
+    $("modalInvoiceItems").innerHTML = itemsHtml;
+
+    // 3. Totals
+    let totalsHtml = `
+      <div class="line"><span>الإجمالي:</span><span>${fmt(inv.subtotal)}</span></div>
+      <div class="line"><span>الخصم:</span><span>${fmt(inv.discount_amount)}</span></div>
+      <div class="line grand"><span>الصافي:</span><span>${fmt(inv.net_total)}</span></div>
+      <div class="line" style="margin-top:10px; border-top:1px dashed #ccc; padding-top:5px;"><span>المدفوع:</span><span style="color:green;">${fmt(inv.paid_amount)}</span></div>
+      <div class="line"><span>المتبقي:</span><span style="color:red;">${fmt(inv.remaining_amount)}</span></div>
+    `;
+    $("modalInvoiceTotals").innerHTML = totalsHtml;
+
+    // 4. Notes
+    if (inv.notes) {
+      $("modalInvoiceNotes").innerHTML = `<strong>ملاحظات:</strong> ${inv.notes}`;
+    } else {
+      $("modalInvoiceNotes").innerHTML = "";
+    }
+
+    // 5. WhatsApp Button Logic
+    const phone = customerPhone(inv.customer_id);
+    const waBtn = $("shareWhatsappBtn");
+    
+    // Build WA Message
+    let waText = `*مؤسسة اللحوم*\n`;
+    waText += `فاتورة رقم: ${inv.invoice_number}\n`;
+    waText += `التاريخ: ${new Date(inv.invoice_date).toLocaleDateString("ar-EG")}\n`;
+    waText += `العميل: ${customerName(inv.customer_id)}\n`;
+    waText += `------------------------\n`;
+    (items || []).forEach(item => {
+      const p = productsCache.find(x => String(x.product_id) === String(item.product_id));
+      waText += `▪️ ${p?.product_name || 'منتج'} - ${item.quantity} ${unitName(item.unit_id)} × ${fmt(item.unit_price)}\n`;
+    });
+    waText += `------------------------\n`;
+    waText += `الإجمالي: ${fmt(inv.net_total)}\n`;
+    waText += `المدفوع: ${fmt(inv.paid_amount)}\n`;
+    waText += `المتبقي: ${fmt(inv.remaining_amount)}\n\n`;
+    waText += `شكراً لتعاملكم معنا!`;
+
+    waBtn.onclick = () => {
+      let url;
+      if (phone) {
+        // Clean phone number (remove spaces, ensure country code if missing, though this is complex. We'll assume they saved it with 20...)
+        let cleanPhone = phone.replace(/\D/g, '');
+        if (cleanPhone.startsWith('0')) cleanPhone = '2' + cleanPhone; // Assuming Egypt
+        url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(waText)}`;
+      } else {
+        url = `https://wa.me/?text=${encodeURIComponent(waText)}`;
+      }
+      window.open(url, '_blank');
+    };
+
+  } catch (e) {
+    $("modalInvoiceHeader").innerHTML = `<span style="color:red;">تعذر تحميل التفاصيل: ${err(e)}</span>`;
+  }
 }
 
 async function cancelInvoice(inv){
