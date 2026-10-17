@@ -171,11 +171,8 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
       <div class="dash-item hidden" id="menuCustomers" onclick="window.openSection('customers')"><div class="dash-icon">👥</div><div class="dash-title">العملاء</div></div>
       <div class="dash-item hidden" id="menuSales" onclick="window.openSection('sales')"><div class="dash-icon">🧾</div><div class="dash-title">فواتير البيع</div></div>
       <div class="dash-item hidden" id="menuCollections" onclick="window.openSection('collections')"><div class="dash-icon">💰</div><div class="dash-title">التحصيلات</div></div>
-      
-      <!-- المشتريات والموردين -->
       <div class="dash-item hidden" id="menuSuppliers" onclick="window.openSection('suppliers')"><div class="dash-icon">🚚</div><div class="dash-title">الموردين</div></div>
       <div class="dash-item hidden" id="menuPurchases" onclick="window.openSection('purchases')"><div class="dash-icon">🛒</div><div class="dash-title">فواتير المشتريات</div></div>
-
       <div class="dash-item hidden" id="menuUsers" onclick="window.openSection('users')"><div class="dash-icon">👤</div><div class="dash-title">المستخدمون</div></div>
     </div>
   </div>
@@ -499,6 +496,19 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
   </div>
 </div>
 
+<div id="stockMovementsModal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header"><h3>سجل حركات المخزون (كارت الصنف)</h3><button class="close-btn" onclick="document.getElementById('stockMovementsModal').classList.add('hidden')">&times;</button></div>
+    <div class="modal-body">
+      <div id="movementProductInfo" style="font-weight:bold; margin-bottom:15px; font-size:15px; color:var(--g);"></div>
+      <table class="print-table" id="movementsTable">
+        <thead><tr><th>التاريخ</th><th>الحركة</th><th>التغيير</th><th>الرصيد بعدها</th><th>البيان</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <script>
 (() => {
 "use strict";
@@ -692,7 +702,71 @@ async function toggleLocation(location){ if(!canManageLocations)return; const ac
 function fillLocationsFilter(){ const el=$("stockLocationFilter");const cur=el.value;el.replaceChildren(); const all=document.createElement("option");all.value="";all.textContent="كل المواقع";el.appendChild(all); locationsCache.filter(l=>l.is_active).forEach(l=>{ const op=document.createElement("option");op.value=String(l.location_id);op.textContent=l.location_name;el.appendChild(op); }); el.value=cur; }
 function fillStockFormSelects(){ const locEl=$("stockLocation");const curLoc=locEl.value;locEl.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر الموقع";locEl.appendChild(first); locationsCache.filter(l=>l.is_active).forEach(l=>{ const op=document.createElement("option");op.value=String(l.location_id);op.textContent=l.location_name+" ("+l.location_code+")";locEl.appendChild(op); }); locEl.value=curLoc; const prodEl=$("stockProduct");const curProd=prodEl.value;prodEl.replaceChildren(); const firstP=document.createElement("option");firstP.value="";firstP.textContent="اختر المنتج";prodEl.appendChild(firstP); productsCache.filter(p=>p.is_active).forEach(p=>{ const op=document.createElement("option");op.value=String(p.product_id);op.textContent=p.product_name+" ("+p.product_code+")";prodEl.appendChild(op); }); prodEl.value=curProd; }
 async function loadStock(){ if(!canViewStock)return; clear($("stockMsg")); $("stockList").replaceChildren(); try{ const {data:sessionData,error:sessionError}=await db.auth.getSession(); if(sessionError)throw sessionError; if(!sessionData.session)throw new Error("انتهت جلسة الدخول."); const allowed=await permission("STOCK_VIEW"); if(!allowed){canViewStock=false;$("menuStock").classList.add("hidden");$("stockCard").classList.add("hidden");throw new Error("لا تملك صلاحية عرض المخزون.");} const filterLoc=$("stockLocationFilter").value; let query=db.from("stock_balances").select("balance_id,location_id,product_id,quantity,updated_at").order("updated_at",{ascending:false}).limit(500); if(filterLoc)query=query.eq("location_id",Number(filterLoc)); const {data,error}=await query; if(error)throw error; stockCache=data||[]; fillLocationsFilter(); renderStock(); msg($("stockMsg"),"تم تحميل "+stockCache.length+" رصيد مخزون.","success"); }catch(e){ msg($("stockMsg"),"تعذر تحميل الأرصدة: "+err(e),"error"); const d=document.createElement("div");d.className="empty";d.textContent="راجع رسالة الخطأ أعلاه.";$("stockList").replaceChildren(d); } }
-function renderStock(){ const box=$("stockList");box.replaceChildren(); const q=$("stockSearch").value.trim().toLowerCase(); const found=stockCache.filter(b=>{ const p=productsCache.find(x=>String(x.product_id)===String(b.product_id)); const l=locationsCache.find(x=>String(x.location_id)===String(b.location_id)); const t=[p?.product_name,p?.product_code,l?.location_name,l?.location_code].map(v=>String(v||"").toLowerCase()).join(" "); return t.includes(q); }); if(!found.length){ const d=document.createElement("div");d.className="empty";d.textContent=q?"لا توجد أرصدة مطابقة.":"لا توجد أرصدة مخزون مسجلة بعد.";box.appendChild(d);return; } found.forEach(b=>{ const p=productsCache.find(x=>String(x.product_id)===String(b.product_id)); const l=locationsCache.find(x=>String(x.location_id)===String(b.location_id)); const card=document.createElement("div");card.className="product"; const title=document.createElement("div");title.className="pname";title.textContent=p?.product_name||("منتج رقم "+b.product_id); const details=document.createElement("div");details.className="details";details.textContent="الكود: "+(p?.product_code||"—")+" | الموقع: "+(l?.location_name||"—")+" | الوحدة: "+unitName(p?.base_unit_id); const qty=document.createElement("span");qty.className="badge";qty.textContent="الرصيد: "+Number(b.quantity).toLocaleString("ar-EG")+" "+unitName(p?.base_unit_id); const date=document.createElement("span");date.className="badge";date.textContent="آخر تحديث: "+new Date(b.updated_at).toLocaleDateString("ar-EG"); card.append(title,details,qty,date); if(canManageStock){ const actions=document.createElement("div");actions.className="actions"; const adj=document.createElement("button");adj.type="button";adj.className="btn secondary";adj.textContent="تعديل الرصيد";adj.addEventListener("click",()=>openStockForm(b.location_id,b.product_id)); actions.appendChild(adj);card.appendChild(actions); } box.appendChild(card); }); }
+function renderStock(){ const box=$("stockList");box.replaceChildren(); const q=$("stockSearch").value.trim().toLowerCase(); const found=stockCache.filter(b=>{ const p=productsCache.find(x=>String(x.product_id)===String(b.product_id)); const l=locationsCache.find(x=>String(x.location_id)===String(b.location_id)); const t=[p?.product_name,p?.product_code,l?.location_name,l?.location_code].map(v=>String(v||"").toLowerCase()).join(" "); return t.includes(q); }); if(!found.length){ const d=document.createElement("div");d.className="empty";d.textContent=q?"لا توجد أرصدة مطابقة.":"لا توجد أرصدة مخزون مسجلة بعد.";box.appendChild(d);return; } found.forEach(b=>{ const p=productsCache.find(x=>String(x.product_id)===String(b.product_id)); const l=locationsCache.find(x=>String(x.location_id)===String(b.location_id)); const card=document.createElement("div");card.className="product"; const title=document.createElement("div");title.className="pname";title.textContent=p?.product_name||("منتج رقم "+b.product_id); const details=document.createElement("div");details.className="details";details.textContent="الكود: "+(p?.product_code||"—")+" | الموقع: "+(l?.location_name||"—")+" | الوحدة: "+unitName(p?.base_unit_id); const qty=document.createElement("span");qty.className="badge";qty.textContent="الرصيد: "+Number(b.quantity).toLocaleString("ar-EG")+" "+unitName(p?.base_unit_id); const date=document.createElement("span");date.className="badge";date.textContent="آخر تحديث: "+new Date(b.updated_at).toLocaleDateString("ar-EG"); card.append(title,details,qty,date); 
+
+    const actions=document.createElement("div");actions.className="actions"; 
+    const historyBtn=document.createElement("button");historyBtn.type="button";historyBtn.className="btn secondary";historyBtn.textContent="📜 سجل الحركات";
+    historyBtn.onclick=()=>viewStockMovements(b.product_id, b.location_id);
+    actions.appendChild(historyBtn);
+    
+    if(canManageStock){ 
+      const adj=document.createElement("button");adj.type="button";adj.className="btn secondary";adj.textContent="تعديل الرصيد";
+      adj.addEventListener("click",()=>openStockForm(b.location_id,b.product_id));
+      actions.appendChild(adj);
+    } 
+    card.appendChild(actions); 
+    box.appendChild(card); }); }
+
+async function viewStockMovements(productId, locationId) {
+  const p = productsCache.find(x => String(x.product_id) === String(productId));
+  const l = locationsCache.find(x => String(x.location_id) === String(locationId));
+  $("movementProductInfo").textContent = `المنتج: ${p?.product_name} | الموقع: ${l?.location_name}`;
+  
+  const tbody = $("movementsTable").querySelector("tbody");
+  tbody.innerHTML = "<tr><td colspan='5'>جارٍ التحميل...</td></tr>";
+  $("stockMovementsModal").classList.remove("hidden");
+  
+  try {
+    const { data, error } = await db.from("stock_movements")
+      .select("movement_id, movement_type, quantity_change, quantity_after, notes, created_at")
+      .eq("product_id", Number(productId))
+      .eq("location_id", Number(locationId))
+      .order("movement_id", { ascending: true });
+      
+    if (error) throw error;
+    
+    if (!data || data.length === 0) {
+       tbody.innerHTML = "<tr><td colspan='5'>لا توجد حركات مسجلة.</td></tr>";
+       return;
+    }
+    
+    let html = "";
+    data.forEach(m => {
+      let typeName = m.movement_type;
+      if (m.movement_type === 'ADJUST') typeName = 'تسوية';
+      if (m.movement_type === 'RECEIVE') typeName = 'استلام (شراء)';
+      if (m.movement_type === 'ISSUE') typeName = 'صرف (بيع)';
+      if (m.movement_type === 'RETURN') typeName = 'مرتجع';
+      
+      const change = Number(m.quantity_change);
+      const changeStr = (change > 0 ? '+' : '') + change.toLocaleString("ar-EG");
+      
+      html += `
+        <tr>
+          <td>${new Date(m.created_at).toLocaleString("ar-EG")}</td>
+          <td>${typeName}</td>
+          <td style="color:${change > 0 ? 'green' : 'red'}; font-weight:bold;">${changeStr}</td>
+          <td>${Number(m.quantity_after).toLocaleString("ar-EG")}</td>
+          <td>${m.notes || '-'}</td>
+        </tr>
+      `;
+    });
+    tbody.innerHTML = html;
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan='5' style="color:red;">خطأ: ${err(e)}</td></tr>`;
+  }
+}
+
 function resetStockForm(){ $("stockForm").reset(); $("stockCurrentDisplay").textContent="اختر الموقع والمنتج لعرض الرصيد الحالي."; $("stockFormCard").classList.add("hidden"); clear($("stockFormMsg")); }
 async function openStockForm(locationId=null,productId=null){ if(!canManageStock)return; try{ if(!locationsCache.length)await loadLocations(); if(!productsCache.length)await loadProducts(); fillStockFormSelects(); if(locationId)$("stockLocation").value=String(locationId); if(productId)$("stockProduct").value=String(productId); $("stockFormCard").classList.remove("hidden"); clear($("stockFormMsg")); await refreshCurrentStockDisplay(); $("stockFormCard").scrollIntoView({behavior:"smooth",block:"start"}); }catch(e){ msg($("stockMsg"),"تعذر فتح نموذج التسوية: "+err(e),"error"); } }
 async function refreshCurrentStockDisplay(){ const locId=$("stockLocation").value; const prodId=$("stockProduct").value; if(!locId||!prodId){ $("stockCurrentDisplay").textContent="اختر الموقع والمنتج لعرض الرصيد الحالي."; $("stockNewQty").value="";return; } try{ const {data,error}=await db.from("stock_balances").select("quantity").eq("location_id",Number(locId)).eq("product_id",Number(prodId)).maybeSingle(); if(error)throw error; const q=Number(data?.quantity||0); const p=productsCache.find(x=>String(x.product_id)===String(prodId)); const u=unitName(p?.base_unit_id); $("stockCurrentDisplay").textContent="الرصيد الحالي: "+q.toLocaleString("ar-EG")+" "+u; $("stockNewQty").value=q; }catch(e){ $("stockCurrentDisplay").textContent="تعذر قراءة الرصيد الحالي: "+err(e); } }
