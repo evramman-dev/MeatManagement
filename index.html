@@ -836,8 +836,30 @@ async function toggleActive(p){ if(!canManage)return; if(!confirm("هل تريد
 function resetRecipeForm(){ $("recipeForm").reset(); $("recipeEditId").value=""; $("recipeActive").checked=true; $("recipeFormTitle").textContent="إضافة وصفة جديدة"; $("saveRecipeBtn").textContent="حفظ الوصفة"; $("recipeItems").replaceChildren(); recipeItemCounter=0; addRecipeItemRow(); $("recipeFormCard").classList.add("hidden"); clear($("recipeFormMsg")); }
 async function loadRecipes(){ if(!canViewRecipes)return; clear($("recipesMsg")); $("recipesList").replaceChildren(); try{ const {data:sessionData,error:sessionError}=await db.auth.getSession(); if(sessionError)throw sessionError; if(!sessionData.session)throw new Error("انتهت جلسة الدخول."); const allowed=await permission("RECIPES_VIEW"); if(!allowed){canViewRecipes=false;$("menuRecipes").classList.add("hidden");$("recipesCard").classList.add("hidden");throw new Error("لا تملك صلاحية عرض الوصفات.");} const {data,error}=await db.from("recipes").select("recipe_id,recipe_name,product_id,output_quantity,unit_id,is_active").order("recipe_id").limit(200); if(error)throw error; recipesCache=data||[]; renderRecipes(); msg($("recipesMsg"),"تم تحميل "+recipesCache.length+" وصفة.","success"); }catch(e){ msg($("recipesMsg"),"تعذر تحميل الوصفات: "+err(e),"error"); const d=document.createElement("div");d.className="empty";d.textContent="راجع رسالة الخطأ أعلاه.";$("recipesList").replaceChildren(d); } }
 function renderRecipes(){ const box=$("recipesList");box.replaceChildren(); const q=$("recipeSearch").value.trim().toLowerCase(); const found=recipesCache.filter(r=>{ const pn=productName(r.product_id); return [r.recipe_name,pn].some(v=>String(v||"").toLowerCase().includes(q)); }); if(!found.length){ const d=document.createElement("div");d.className="empty";d.textContent=q?"لا توجد وصفات مطابقة.":"لا توجد وصفات مسجلة بعد.";box.appendChild(d);return; } found.forEach(r=>{ const card=document.createElement("div");card.className="product"; const title=document.createElement("div");title.className="pname";title.textContent=r.recipe_name; const details=document.createElement("div");details.className="details";details.textContent="المنتج الناتج: "+productName(r.product_id)+" | الكمية: "+Number(r.output_quantity).toLocaleString("ar-EG")+" "+unitName(r.unit_id); const status=document.createElement("span");status.className="badge"+(r.is_active?"":" off");status.textContent=r.is_active?"نشطة":"موقوفة"; const idBadge=document.createElement("span");idBadge.className="badge";idBadge.textContent="رقم الوصفة: "+r.recipe_id; card.append(title,details,status,idBadge); if(canManageRecipes){ const actions=document.createElement("div");actions.className="actions"; const edit=document.createElement("button");edit.type="button";edit.className="btn secondary";edit.textContent="تعديل";edit.addEventListener("click",()=>editRecipe(r)); const toggle=document.createElement("button");toggle.type="button";toggle.className="btn "+(r.is_active?"danger":"secondary");toggle.textContent=r.is_active?"إيقاف":"تفعيل";toggle.addEventListener("click",()=>toggleRecipe(r)); actions.append(edit,toggle);card.appendChild(actions); } box.appendChild(card); }); }
-async function editRecipe(r){ if(!canManageRecipes)return; try{ const {data:items,error}=await db.from("recipe_items").select("*").eq("recipe_id",r.recipe_id); if(error)throw error; $("recipeEditId").value=String(r.recipe_id); $("recipeName").value=r.recipe_name; $("recipeOutputProduct").value=r.product_id; $("recipeOutputQty").value=r.output_quantity; $("recipeOutputUnit").value=r.unit_id; $("recipeNotes").value=r.notes||""; $("recipeActive").checked=r.is_active; $("recipeFormTitle").textContent="تعديل الوصفة: "+r.recipe_name; $("saveRecipeBtn").textContent="حفظ التعديلات"; $("recipeItems").replaceChildren(); recipeItemCounter=0; (items||[]).forEach(i=>{ addRecipeItemRow(i.raw_product_id, i.quantity, i.unit_id); }); if(!items || items.length===0) addRecipeItemRow(); $("recipeFormCard").classList.remove("hidden"); clear($("recipeFormMsg")); $("recipeFormCard").scrollIntoView({behavior:"smooth",block:"start"}); }catch(e){ msg($("recipesMsg"),"تعذر تحميل تفاصيل الوصفة: "+err(e),"error"); } }
-$("addRecipeBtn").addEventListener("click",()=>{ if(!canManageRecipes)return; resetRecipeForm(); fillRecipeOutputSelects(); $("recipeFormCard").classList.remove("hidden"); $("recipeFormCard").scrollIntoView({behavior:"smooth",block:"start"}); });
+async function editRecipe(r){ if(!canManageRecipes)return; try{ 
+  if(!productsCache.length) await loadProducts();
+  if(!units.length) await loadLookups();
+  const {data:items,error}=await db.from("recipe_items").select("*").eq("recipe_id",r.recipe_id); 
+  if(error)throw error; 
+  fillRecipeOutputSelects();
+  $("recipeEditId").value=String(r.recipe_id); 
+  $("recipeName").value=r.recipe_name; 
+  $("recipeOutputProduct").value=r.product_id; 
+  $("recipeOutputQty").value=r.output_quantity; 
+  $("recipeOutputUnit").value=r.unit_id; 
+  $("recipeNotes").value=r.notes||""; 
+  $("recipeActive").checked=r.is_active; 
+  $("recipeFormTitle").textContent="تعديل الوصفة: "+r.recipe_name; 
+  $("saveRecipeBtn").textContent="حفظ التعديلات"; 
+  $("recipeItems").replaceChildren(); 
+  recipeItemCounter=0; 
+  (items||[]).forEach(i=>{ addRecipeItemRow(i.raw_product_id, i.quantity, i.unit_id); }); 
+  if(!items || items.length===0) addRecipeItemRow(); 
+  $("recipeFormCard").classList.remove("hidden"); 
+  clear($("recipeFormMsg")); 
+  $("recipeFormCard").scrollIntoView({behavior:"smooth",block:"start"}); 
+}catch(e){ msg($("recipesMsg"),"تعذر تحميل تفاصيل الوصفة: "+err(e),"error"); } }
+$("addRecipeBtn").addEventListener("click",async()=>{ if(!canManageRecipes)return; if(!productsCache.length)await loadProducts(); if(!units.length)await loadLookups(); resetRecipeForm(); fillRecipeOutputSelects(); $("recipeFormCard").classList.remove("hidden"); $("recipeFormCard").scrollIntoView({behavior:"smooth",block:"start"}); });
 $("cancelRecipeBtn").addEventListener("click",resetRecipeForm); $("refreshRecipesBtn").addEventListener("click",loadRecipes); $("recipeSearch").addEventListener("input",renderRecipes);
 
 function fillRecipeOutputSelects(){
