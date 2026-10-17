@@ -83,7 +83,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 .print-table th,.print-table td{border:1px solid var(--line);padding:6px;text-align:right;}
 .print-table th{background:#f4f6f3;font-weight:bold;}
 
-/* ===== حل مشكلة الطباعة ===== */
 @media print {
   @page { margin: 10mm; size: A4 portrait; }
   body { background: #fff !important; }
@@ -160,56 +159,40 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 <p class="desc">سيتم توصيل مهام الموظفين حسب أدوارهم في المراحل التالية.</p>
 </section>
 
-<!-- Data Section (Dashboard + Sub-sections) -->
 <section id="data" class="hidden">
   
-  <!-- 1. Dashboard Menu -->
   <div id="dataDashboard" class="card">
     <h2>🗂️ مركز البيانات</h2>
     <p class="desc">اختر القسم الذي تريد الدخول إليه.</p>
     <div class="dashboard-grid" id="dashGrid">
-      <div class="dash-item hidden" id="menuProducts" onclick="window.openSection('products')">
-        <div class="dash-icon">📦</div><div class="dash-title">المنتجات</div>
-      </div>
-      <div class="dash-item hidden" id="menuLocations" onclick="window.openSection('locations')">
-        <div class="dash-icon">🏭</div><div class="dash-title">المواقع والمخازن</div>
-      </div>
-      <div class="dash-item hidden" id="menuStock" onclick="window.openSection('stock')">
-        <div class="dash-icon">📊</div><div class="dash-title">أرصدة المخزون</div>
-      </div>
-      <div class="dash-item hidden" id="menuCustomers" onclick="window.openSection('customers')">
-        <div class="dash-icon">👥</div><div class="dash-title">العملاء</div>
-      </div>
-      <div class="dash-item hidden" id="menuSales" onclick="window.openSection('sales')">
-        <div class="dash-icon">🧾</div><div class="dash-title">فواتير البيع</div>
-      </div>
-      <div class="dash-item hidden" id="menuCollections" onclick="window.openSection('collections')">
-        <div class="dash-icon">💰</div><div class="dash-title">التحصيلات</div>
-      </div>
-      <div class="dash-item hidden" id="menuUsers" onclick="window.openSection('users')">
-        <div class="dash-icon">👤</div><div class="dash-title">المستخدمون</div>
-      </div>
+      <div class="dash-item hidden" id="menuProducts" onclick="window.openSection('products')"><div class="dash-icon">📦</div><div class="dash-title">المنتجات</div></div>
+      <div class="dash-item hidden" id="menuLocations" onclick="window.openSection('locations')"><div class="dash-icon">🏭</div><div class="dash-title">المواقع والمخازن</div></div>
+      <div class="dash-item hidden" id="menuStock" onclick="window.openSection('stock')"><div class="dash-icon">📊</div><div class="dash-title">أرصدة المخزون</div></div>
+      <div class="dash-item hidden" id="menuCustomers" onclick="window.openSection('customers')"><div class="dash-icon">👥</div><div class="dash-title">العملاء</div></div>
+      <div class="dash-item hidden" id="menuSales" onclick="window.openSection('sales')"><div class="dash-icon">🧾</div><div class="dash-title">فواتير البيع</div></div>
+      <div class="dash-item hidden" id="menuCollections" onclick="window.openSection('collections')"><div class="dash-icon">💰</div><div class="dash-title">التحصيلات</div></div>
+      
+      <!-- المشتريات والموردين -->
+      <div class="dash-item hidden" id="menuSuppliers" onclick="window.openSection('suppliers')"><div class="dash-icon">🚚</div><div class="dash-title">الموردين</div></div>
+      <div class="dash-item hidden" id="menuPurchases" onclick="window.openSection('purchases')"><div class="dash-icon">🛒</div><div class="dash-title">فواتير المشتريات</div></div>
+
+      <div class="dash-item hidden" id="menuUsers" onclick="window.openSection('users')"><div class="dash-icon">👤</div><div class="dash-title">المستخدمون</div></div>
     </div>
   </div>
 
-  <!-- 2. Sub-sections (Hidden by default) -->
-  
   <!-- Users Section -->
   <div id="sectionUsers" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="userManagementCard" class="card hidden">
       <h2>👥 إدارة المستخدمين</h2>
-      <p class="desc">إنشاء حسابات الموظفين وربط كل حساب بدوره الوظيفي واسم المستخدم.</p>
       <form id="userCreateForm">
-        <label for="newUserName">اسم الموظف *</label><input id="newUserName" type="text" maxlength="150" autocomplete="name" required>
-        <label for="newUserUsername">اسم المستخدم للدخول *</label><input id="newUserUsername" type="text" minlength="3" maxlength="32" pattern="[A-Za-z0-9._-]{3,32}" autocomplete="off" autocapitalize="none" spellcheck="false" required>
-        <p class="desc">من 3 إلى 32 حرفًا، باستخدام الحروف الإنجليزية أو الأرقام أو النقطة أو الشرطة أو الشرطة السفلية.</p>
-        <label for="newUserPassword">كلمة المرور المؤقتة *</label><input id="newUserPassword" type="password" minlength="12" maxlength="128" autocomplete="new-password" required>
-        <p class="desc">يجب أن تتكون كلمة المرور من 12 حرفًا على الأقل.</p>
+        <label for="newUserName">اسم الموظف *</label><input id="newUserName" type="text" maxlength="150" required>
+        <label for="newUserUsername">اسم المستخدم للدخول *</label><input id="newUserUsername" type="text" minlength="3" maxlength="32" pattern="[A-Za-z0-9._-]{3,32}" required>
+        <label for="newUserPassword">كلمة المرور المؤقتة *</label><input id="newUserPassword" type="password" minlength="12" maxlength="128" required>
         <label for="newUserRole">الدور الوظيفي *</label><select id="newUserRole" required><option value="">جارٍ تحميل الأدوار...</option></select>
         <div id="salesRepWrap" class="hidden"><label for="newUserSalesRep">ربط بحساب مندوب المبيعات *</label><select id="newUserSalesRep"><option value="">اختر المندوب</option></select></div>
         <button id="createUserBtn" class="btn" type="submit">إنشاء حساب الموظف</button>
-        <div id="userCreateMsg" class="status hidden" role="status" aria-live="polite"></div>
+        <div id="userCreateMsg" class="status hidden"></div>
       </form>
     </div>
   </div>
@@ -219,35 +202,22 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="locationsCard" class="card hidden">
       <div class="row" style="justify-content:space-between">
-        <h2>🏭 إدارة المواقع والمخازن</h2>
-        <button id="addLocationBtn" class="btn hidden" type="button">＋ إضافة موقع</button>
+        <h2>🏭 إدارة المواقع</h2><button id="addLocationBtn" class="btn hidden" type="button">＋ إضافة</button>
       </div>
-      <p class="desc">إدارة المخازن والثلاجات والمصنع والسيارات والمعارض.</p>
-      <div class="row">
-        <input id="locationSearch" type="search" placeholder="ابحث بكود الموقع أو اسمه...">
-        <button id="refreshLocationsBtn" class="btn secondary" type="button">تحديث</button>
-      </div>
-      <div id="locationsMsg" class="status hidden" role="status" aria-live="polite"></div>
+      <div class="row"><input id="locationSearch" type="search" placeholder="ابحث..."><button id="refreshLocationsBtn" class="btn secondary" type="button">تحديث</button></div>
+      <div id="locationsMsg" class="status hidden"></div>
       <div id="locationsList"><div class="empty">جارٍ تحميل المواقع...</div></div>
       <div id="locationFormCard" class="hidden">
         <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
         <h2 id="locationFormTitle">إضافة موقع جديد</h2>
         <form id="locationForm">
           <input id="locationEditId" type="hidden">
-          <label for="locationCode">كود الموقع *</label><input id="locationCode" maxlength="100" required dir="ltr">
-          <label for="locationName">اسم الموقع *</label><input id="locationName" maxlength="200" required>
-          <label for="locationType">نوع الموقع *</label>
-          <select id="locationType" required>
-            <option value="MAIN_WAREHOUSE">مخزن رئيسي</option>
-            <option value="FRIDGE">ثلاجة</option>
-            <option value="VEHICLE">سيارة</option>
-            <option value="FACTORY">مصنع</option>
-            <option value="SHOWROOM">معرض</option>
-          </select>
-          <label for="locationNotes">ملاحظات</label><textarea id="locationNotes" rows="3"></textarea>
-          <button id="saveLocationBtn" class="btn" type="submit">حفظ الموقع</button>
-          <button id="cancelLocationBtn" class="btn secondary" type="button">إلغاء</button>
-          <div id="locationFormMsg" class="status hidden" role="status" aria-live="polite"></div>
+          <label for="locationCode">كود الموقع *</label><input id="locationCode" required dir="ltr">
+          <label for="locationName">اسم الموقع *</label><input id="locationName" required>
+          <label for="locationType">نوع الموقع *</label><select id="locationType" required><option value="MAIN_WAREHOUSE">مخزن رئيسي</option><option value="FRIDGE">ثلاجة</option><option value="VEHICLE">سيارة</option><option value="FACTORY">مصنع</option><option value="SHOWROOM">معرض</option></select>
+          <label for="locationNotes">ملاحظات</label><textarea id="locationNotes" rows="2"></textarea>
+          <button id="saveLocationBtn" class="btn" type="submit">حفظ</button><button id="cancelLocationBtn" class="btn secondary" type="button">إلغاء</button>
+          <div id="locationFormMsg" class="status hidden"></div>
         </form>
       </div>
     </div>
@@ -257,30 +227,21 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
   <div id="sectionStock" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="stockCard" class="card hidden">
-      <div class="row" style="justify-content:space-between">
-        <h2>📊 أرصدة المخزون</h2>
-        <button id="adjustStockBtn" class="btn hidden" type="button">＋ تسوية رصيد</button>
-      </div>
-      <p class="desc">رصيد كل منتج في كل موقع.</p>
-      <div class="row">
-        <select id="stockLocationFilter"><option value="">كل المواقع</option></select>
-        <input id="stockSearch" type="search" placeholder="ابحث باسم المنتج أو الكود...">
-        <button id="refreshStockBtn" class="btn secondary" type="button">تحديث</button>
-      </div>
-      <div id="stockMsg" class="status hidden" role="status" aria-live="polite"></div>
+      <div class="row" style="justify-content:space-between"><h2>📊 أرصدة المخزون</h2><button id="adjustStockBtn" class="btn hidden" type="button">＋ تسوية</button></div>
+      <div class="row"><select id="stockLocationFilter"><option value="">كل المواقع</option></select><input id="stockSearch" type="search" placeholder="ابحث..."><button id="refreshStockBtn" class="btn secondary" type="button">تحديث</button></div>
+      <div id="stockMsg" class="status hidden"></div>
       <div id="stockList"><div class="empty">جارٍ تحميل الأرصدة...</div></div>
       <div id="stockFormCard" class="hidden">
         <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
-        <h2 id="stockFormTitle">تسوية رصيد مخزون</h2>
+        <h2 id="stockFormTitle">تسوية رصيد</h2>
         <form id="stockForm">
           <label for="stockLocation">الموقع *</label><select id="stockLocation" required><option value="">اختر الموقع</option></select>
           <label for="stockProduct">المنتج *</label><select id="stockProduct" required><option value="">اختر المنتج</option></select>
-          <label>الرصيد الحالي</label><div id="stockCurrentDisplay" class="info">اختر الموقع والمنتج لعرض الرصيد الحالي.</div>
+          <div id="stockCurrentDisplay" class="info">اختر الموقع والمنتج.</div>
           <label for="stockNewQty">الرصيد الجديد *</label><input id="stockNewQty" type="number" min="0" step="0.0001" required>
-          <label for="stockNotes">ملاحظات (سبب التسوية)</label><textarea id="stockNotes" rows="2"></textarea>
-          <button id="saveStockBtn" class="btn" type="submit">حفظ التسوية</button>
-          <button id="cancelStockBtn" class="btn secondary" type="button">إلغاء</button>
-          <div id="stockFormMsg" class="status hidden" role="status" aria-live="polite"></div>
+          <label for="stockNotes">ملاحظات</label><textarea id="stockNotes" rows="2"></textarea>
+          <button id="saveStockBtn" class="btn" type="submit">حفظ</button><button id="cancelStockBtn" class="btn secondary" type="button">إلغاء</button>
+          <div id="stockFormMsg" class="status hidden"></div>
         </form>
       </div>
     </div>
@@ -290,16 +251,9 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
   <div id="sectionCustomers" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="customersCard" class="card hidden">
-      <div class="row" style="justify-content:space-between">
-        <h2>👥 إدارة العملاء</h2>
-        <button id="addCustomerBtn" class="btn hidden" type="button">＋ إضافة عميل</button>
-      </div>
-      <p class="desc">بيانات العملاء وأنواعهم وحدود الائتمان.</p>
-      <div class="row">
-        <input id="customerSearch" type="search" placeholder="ابحث بكود العميل أو الاسم أو الموبايل...">
-        <button id="refreshCustomersBtn" class="btn secondary" type="button">تحديث</button>
-      </div>
-      <div id="customersMsg" class="status hidden" role="status" aria-live="polite"></div>
+      <div class="row" style="justify-content:space-between"><h2>👥 إدارة العملاء</h2><button id="addCustomerBtn" class="btn hidden" type="button">＋ إضافة عميل</button></div>
+      <div class="row"><input id="customerSearch" type="search" placeholder="ابحث..."><button id="refreshCustomersBtn" class="btn secondary" type="button">تحديث</button></div>
+      <div id="customersMsg" class="status hidden"></div>
       <div id="customersList"><div class="empty">جارٍ تحميل العملاء...</div></div>
       <div id="customerFormCard" class="hidden">
         <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
@@ -307,20 +261,47 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
         <form id="customerForm">
           <input id="customerEditId" type="hidden">
           <div class="grid">
-            <div><label for="customerCode">كود العميل *</label><input id="customerCode" maxlength="100" dir="ltr" required></div>
-            <div><label for="customerName">اسم العميل *</label><input id="customerName" maxlength="200" required></div>
-            <div><label for="customerPhone">رقم الموبايل</label><input id="customerPhone" maxlength="30" dir="ltr"></div>
-            <div><label for="customerWhatsapp">رقم الواتساب</label><input id="customerWhatsapp" maxlength="30" dir="ltr"></div>
-            <div><label for="customerType">نوع العميل *</label><select id="customerType" required><option value="CASH">نقدي</option><option value="CREDIT">آجل</option><option value="WHOLESALE">جملة</option><option value="RETAIL">تجزئة</option></select></div>
+            <div><label for="customerCode">الكود *</label><input id="customerCode" required dir="ltr"></div>
+            <div><label for="customerName">الاسم *</label><input id="customerName" required></div>
+            <div><label for="customerPhone">الموبايل</label><input id="customerPhone" dir="ltr"></div>
+            <div><label for="customerWhatsapp">الواتساب</label><input id="customerWhatsapp" dir="ltr"></div>
+            <div><label for="customerType">النوع *</label><select id="customerType" required><option value="CASH">نقدي</option><option value="CREDIT">آجل</option><option value="WHOLESALE">جملة</option><option value="RETAIL">تجزئة</option></select></div>
             <div><label for="customerCreditLimit">حد الائتمان</label><input id="customerCreditLimit" type="number" min="0" step="0.01"></div>
-            <div><label for="customerOpeningBalance">الرصيد الافتتاحي (مدين)</label><input id="customerOpeningBalance" type="number" min="0" step="0.01" value="0"></div>
+            <div><label for="customerOpeningBalance">رصيد افتتاحي</label><input id="customerOpeningBalance" type="number" min="0" step="0.01" value="0"></div>
           </div>
           <label for="customerAddress">العنوان</label><textarea id="customerAddress" rows="2"></textarea>
           <label for="customerNotes">ملاحظات</label><textarea id="customerNotes" rows="2"></textarea>
           <label class="check"><input id="customerActive" type="checkbox" checked>العميل نشط</label>
-          <button id="saveCustomerBtn" class="btn" type="submit">حفظ العميل</button>
-          <button id="cancelCustomerBtn" class="btn secondary" type="button">إلغاء</button>
-          <div id="customerFormMsg" class="status hidden" role="status" aria-live="polite"></div>
+          <button id="saveCustomerBtn" class="btn" type="submit">حفظ</button><button id="cancelCustomerBtn" class="btn secondary" type="button">إلغاء</button>
+          <div id="customerFormMsg" class="status hidden"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Suppliers Section -->
+  <div id="sectionSuppliers" class="sub-section hidden">
+    <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
+    <div id="suppliersCard" class="card hidden">
+      <div class="row" style="justify-content:space-between"><h2>🚚 إدارة الموردين</h2><button id="addSupplierBtn" class="btn hidden" type="button">＋ إضافة مورد</button></div>
+      <div class="row"><input id="supplierSearch" type="search" placeholder="ابحث..."><button id="refreshSuppliersBtn" class="btn secondary" type="button">تحديث</button></div>
+      <div id="suppliersMsg" class="status hidden"></div>
+      <div id="suppliersList"><div class="empty">جارٍ تحميل الموردين...</div></div>
+      <div id="supplierFormCard" class="hidden">
+        <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+        <h2 id="supplierFormTitle">إضافة مورد جديد</h2>
+        <form id="supplierForm">
+          <input id="supplierEditId" type="hidden">
+          <div class="grid">
+            <div><label for="supplierCode">الكود *</label><input id="supplierCode" required dir="ltr"></div>
+            <div><label for="supplierName">الاسم *</label><input id="supplierName" required></div>
+            <div><label for="supplierPhone">الموبايل</label><input id="supplierPhone" dir="ltr"></div>
+          </div>
+          <label for="supplierAddress">العنوان</label><textarea id="supplierAddress" rows="2"></textarea>
+          <label for="supplierNotes">ملاحظات</label><textarea id="supplierNotes" rows="2"></textarea>
+          <label class="check"><input id="supplierActive" type="checkbox" checked>المورد نشط</label>
+          <button id="saveSupplierBtn" class="btn" type="submit">حفظ</button><button id="cancelSupplierBtn" class="btn secondary" type="button">إلغاء</button>
+          <div id="supplierFormMsg" class="status hidden"></div>
         </form>
       </div>
     </div>
@@ -330,40 +311,66 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
   <div id="sectionSales" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="salesCard" class="card hidden">
-      <div class="row" style="justify-content:space-between">
-        <h2>🧾 فواتير البيع</h2>
-        <button id="addInvoiceBtn" class="btn hidden" type="button">＋ فاتورة جديدة</button>
-      </div>
-      <p class="desc">فواتير البيع للعملاء. اضغط على الفاتورة لعرض التفاصيل والطباعة.</p>
-      <div class="row">
-        <input id="salesSearch" type="search" placeholder="ابحث برقم الفاتورة أو اسم العميل...">
-        <button id="refreshSalesBtn" class="btn secondary" type="button">تحديث</button>
-      </div>
-      <div id="salesMsg" class="status hidden" role="status" aria-live="polite"></div>
+      <div class="row" style="justify-content:space-between"><h2>🧾 فواتير البيع</h2><button id="addInvoiceBtn" class="btn hidden" type="button">＋ فاتورة جديدة</button></div>
+      <div class="row"><input id="salesSearch" type="search" placeholder="ابحث..."><button id="refreshSalesBtn" class="btn secondary" type="button">تحديث</button></div>
+      <div id="salesMsg" class="status hidden"></div>
       <div id="salesList"><div class="empty">جارٍ تحميل الفواتير...</div></div>
       <div id="invoiceFormCard" class="hidden">
         <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
-        <h2>إنشاء فاتورة بيع جديدة</h2>
+        <h2>إنشاء فاتورة بيع</h2>
         <form id="invoiceForm">
           <div class="grid">
             <div><label for="invoiceCustomer">العميل *</label><select id="invoiceCustomer" required><option value="">اختر العميل</option></select></div>
-            <div><label for="invoiceLocation">الموقع (مصدر البضاعة) *</label><select id="invoiceLocation" required><option value="">اختر الموقع</option></select></div>
+            <div><label for="invoiceLocation">الموقع *</label><select id="invoiceLocation" required><option value="">اختر الموقع</option></select></div>
             <div><label for="invoiceDate">التاريخ *</label><input id="invoiceDate" type="date" required></div>
-            <div><label for="invoicePaymentType">نوع البيع *</label><select id="invoicePaymentType" required><option value="CASH">نقدي</option><option value="CREDIT">آجل</option></select></div>
+            <div><label for="invoicePaymentType">النوع *</label><select id="invoicePaymentType" required><option value="CASH">نقدي</option><option value="CREDIT">آجل</option></select></div>
           </div>
           <label for="invoiceDiscount">الخصم</label><input id="invoiceDiscount" type="number" min="0" step="0.01" value="0">
           <label style="margin-top:16px">الأصناف *</label>
           <div id="invoiceItems"></div>
           <button id="addInvoiceItemBtn" class="btn secondary" type="button" style="margin-top:8px">＋ إضافة صنف</button>
           <div class="total-box">
-            <div class="line"><span>الإجمالي قبل الخصم:</span><span id="invoiceSubtotal">0</span></div>
+            <div class="line"><span>الإجمالي:</span><span id="invoiceSubtotal">0</span></div>
             <div class="line"><span>الخصم:</span><span id="invoiceDiscountDisplay">0</span></div>
-            <div class="line grand"><span>الإجمالي النهائي:</span><span id="invoiceTotal">0</span></div>
+            <div class="line grand"><span>الصافي:</span><span id="invoiceTotal">0</span></div>
           </div>
           <label for="invoiceNotes">ملاحظات</label><textarea id="invoiceNotes" rows="2"></textarea>
-          <button id="saveInvoiceBtn" class="btn" type="submit">حفظ الفاتورة</button>
-          <button id="cancelInvoiceBtn" class="btn secondary" type="button">إلغاء</button>
-          <div id="invoiceFormMsg" class="status hidden" role="status" aria-live="polite"></div>
+          <button id="saveInvoiceBtn" class="btn" type="submit">حفظ الفاتورة</button><button id="cancelInvoiceBtn" class="btn secondary" type="button">إلغاء</button>
+          <div id="invoiceFormMsg" class="status hidden"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Purchases Section -->
+  <div id="sectionPurchases" class="sub-section hidden">
+    <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
+    <div id="purchasesCard" class="card hidden">
+      <div class="row" style="justify-content:space-between"><h2>🛒 فواتير المشتريات</h2><button id="addPurchaseBtn" class="btn hidden" type="button">＋ فاتورة مشتريات</button></div>
+      <div class="row"><input id="purchasesSearch" type="search" placeholder="ابحث..."><button id="refreshPurchasesBtn" class="btn secondary" type="button">تحديث</button></div>
+      <div id="purchasesMsg" class="status hidden"></div>
+      <div id="purchasesList"><div class="empty">جارٍ تحميل فواتير المشتريات...</div></div>
+      <div id="purchaseFormCard" class="hidden">
+        <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+        <h2>إنشاء فاتورة مشتريات</h2>
+        <form id="purchaseForm">
+          <div class="grid">
+            <div><label for="purchaseSupplier">المورد *</label><select id="purchaseSupplier" required><option value="">اختر المورد</option></select></div>
+            <div><label for="purchaseLocation">الموقع (المستلم) *</label><select id="purchaseLocation" required><option value="">اختر الموقع</option></select></div>
+            <div><label for="purchaseDate">التاريخ *</label><input id="purchaseDate" type="date" required></div>
+            <div><label for="purchaseDiscount">الخصم</label><input id="purchaseDiscount" type="number" min="0" step="0.01" value="0"></div>
+          </div>
+          <label style="margin-top:16px">الأصناف *</label>
+          <div id="purchaseItems"></div>
+          <button id="addPurchaseItemBtn" class="btn secondary" type="button" style="margin-top:8px">＋ إضافة صنف</button>
+          <div class="total-box">
+            <div class="line"><span>الإجمالي:</span><span id="purchaseSubtotal">0</span></div>
+            <div class="line"><span>الخصم:</span><span id="purchaseDiscountDisplay">0</span></div>
+            <div class="line grand"><span>الصافي:</span><span id="purchaseTotal">0</span></div>
+          </div>
+          <label for="purchaseNotes">ملاحظات</label><textarea id="purchaseNotes" rows="2"></textarea>
+          <button id="savePurchaseBtn" class="btn" type="submit">حفظ الفاتورة</button><button id="cancelPurchaseBtn" class="btn secondary" type="button">إلغاء</button>
+          <div id="purchaseFormMsg" class="status hidden"></div>
         </form>
       </div>
     </div>
@@ -373,35 +380,27 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
   <div id="sectionCollections" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="collectionsCard" class="card hidden">
-      <div class="row" style="justify-content:space-between">
-        <h2>💰 تحصيلات العملاء</h2>
-        <button id="addCollectionBtn" class="btn hidden" type="button">＋ تسجيل تحصيل</button>
-      </div>
-      <p class="desc">تسجيل دفعات العملاء وربطها بالفواتير. الدفعة تحدّث رصيد الفاتورة تلقائيًا.</p>
-      <div class="row">
-        <input id="collectionsSearch" type="search" placeholder="ابحث برقم التحصيل أو اسم العميل...">
-        <button id="refreshCollectionsBtn" class="btn secondary" type="button">تحديث</button>
-      </div>
-      <div id="collectionsMsg" class="status hidden" role="status" aria-live="polite"></div>
+      <div class="row" style="justify-content:space-between"><h2>💰 التحصيلات</h2><button id="addCollectionBtn" class="btn hidden" type="button">＋ تسجيل تحصيل</button></div>
+      <div class="row"><input id="collectionsSearch" type="search" placeholder="ابحث..."><button id="refreshCollectionsBtn" class="btn secondary" type="button">تحديث</button></div>
+      <div id="collectionsMsg" class="status hidden"></div>
       <div id="collectionsList"><div class="empty">جارٍ تحميل التحصيلات...</div></div>
       <div id="collectionFormCard" class="hidden">
         <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
-        <h2>تسجيل تحصيل جديد</h2>
+        <h2>تسجيل تحصيل</h2>
         <form id="collectionForm">
           <div class="grid">
             <div><label for="collectionCustomer">العميل *</label><select id="collectionCustomer" required><option value="">اختر العميل</option></select></div>
-            <div><label for="collectionDate">تاريخ التحصيل *</label><input id="collectionDate" type="date" required></div>
+            <div><label for="collectionDate">التاريخ *</label><input id="collectionDate" type="date" required></div>
           </div>
-          <label for="collectionInvoice">ربط بفاتورة (اختياري)</label><select id="collectionInvoice"><option value="">بدون ربط بفاتورة</option></select>
+          <label for="collectionInvoice">الفاتورة (اختياري)</label><select id="collectionInvoice"><option value="">بدون ربط</option></select>
           <div id="collectionInvoiceInfo" class="invoice-info hidden"></div>
           <div class="grid">
             <div><label for="collectionAmount">المبلغ *</label><input id="collectionAmount" type="number" min="0.01" step="0.01" required></div>
             <div><label for="collectionPaymentMethod">طريقة الدفع *</label><select id="collectionPaymentMethod" required><option value="CASH">نقدي</option><option value="BANK_TRANSFER">تحويل بنكي</option><option value="CHEQUE">شيك</option><option value="MIXED">مختلط</option></select></div>
           </div>
           <label for="collectionNotes">ملاحظات</label><textarea id="collectionNotes" rows="2"></textarea>
-          <button id="saveCollectionBtn" class="btn" type="submit">حفظ التحصيل</button>
-          <button id="cancelCollectionBtn" class="btn secondary" type="button">إلغاء</button>
-          <div id="collectionFormMsg" class="status hidden" role="status" aria-live="polite"></div>
+          <button id="saveCollectionBtn" class="btn" type="submit">حفظ</button><button id="cancelCollectionBtn" class="btn secondary" type="button">إلغاء</button>
+          <div id="collectionFormMsg" class="status hidden"></div>
         </form>
       </div>
     </div>
@@ -411,41 +410,33 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
   <div id="sectionProducts" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div class="card">
-      <div class="row" style="justify-content:space-between">
-        <h2>📦 إدارة المنتجات</h2>
-        <button id="addBtn" class="btn hidden" type="button">＋ إضافة منتج</button>
-      </div>
-      <p class="desc">ابحث بالاسم أو كود المنتج. التعديل والإضافة حسب صلاحيات حسابك.</p>
-      <div class="row">
-        <input id="search" type="search" placeholder="ابحث باسم المنتج أو الكود...">
-        <button id="refreshBtn" class="btn secondary" type="button">تحديث</button>
-      </div>
-      <div id="listMsg" class="status hidden" role="status" aria-live="polite"></div>
+      <div class="row" style="justify-content:space-between"><h2>📦 إدارة المنتجات</h2><button id="addBtn" class="btn hidden" type="button">＋ إضافة منتج</button></div>
+      <div class="row"><input id="search" type="search" placeholder="ابحث..."><button id="refreshBtn" class="btn secondary" type="button">تحديث</button></div>
+      <div id="listMsg" class="status hidden"></div>
       <div id="products"><div class="empty">جارٍ تحميل المنتجات...</div></div>
     </div>
     <div id="formCard" class="card hidden">
       <h2 id="formTitle">إضافة منتج جديد</h2>
-      <p class="desc">رقم المنتج ينشأ تلقائيًا. الحقول ذات علامة * مطلوبة.</p>
       <form id="productForm">
         <input id="editId" type="hidden">
         <div class="grid">
-          <div><label for="pname">اسم المنتج *</label><input id="pname" maxlength="200" required></div>
-          <div><label for="pcode">كود المنتج *</label><input id="pcode" maxlength="100" dir="ltr" required></div>
-          <div><label for="barcode">الباركود</label><input id="barcode" maxlength="100" dir="ltr"></div>
-          <div><label for="ptype">نوع المنتج *</label><select id="ptype" required><option value="RAW">خام</option><option value="SEMI_FINISHED">نصف مصنع</option><option value="FINISHED">منتج تام</option></select></div>
+          <div><label for="pname">اسم المنتج *</label><input id="pname" required></div>
+          <div><label for="pcode">كود المنتج *</label><input id="pcode" required dir="ltr"></div>
+          <div><label for="barcode">الباركود</label><input id="barcode" dir="ltr"></div>
+          <div><label for="ptype">النوع *</label><select id="ptype" required><option value="RAW">خام</option><option value="SEMI_FINISHED">نصف مصنع</option><option value="FINISHED">منتج تام</option></select></div>
           <div><label for="category">التصنيف *</label><select id="category" required><option value="">جارٍ التحميل...</option></select></div>
           <div><label for="baseUnit">الوحدة الأساسية *</label><select id="baseUnit" required><option value="">جارٍ التحميل...</option></select></div>
           <div><label for="purchaseUnit">وحدة الشراء</label><select id="purchaseUnit"><option value="">بدون تحديد</option></select></div>
           <div><label for="salesUnit">وحدة البيع</label><select id="salesUnit"><option value="">بدون تحديد</option></select></div>
-          <div><label for="weight">وزن الوحدة بالكيلوجرام</label><input id="weight" type="number" min="0" step="0.0001"></div>
-          <div><label for="unitsCarton">عدد الوحدات بالكرتونة</label><input id="unitsCarton" type="number" min="0" step="0.0001"></div>
-          <div><label for="cartonWeight">وزن الكرتونة بالكيلوجرام</label><input id="cartonWeight" type="number" min="0" step="0.0001"></div>
-          <div><label for="minStock">الحد الأدنى للمخزون</label><input id="minStock" type="number" min="0" step="0.0001" value="0"></div>
-          <div><label for="targetStock">المخزون المستهدف</label><input id="targetStock" type="number" min="0" step="0.0001" value="0"></div>
-          <div><label for="maxStock">الحد الأقصى للمخزون</label><input id="maxStock" type="number" min="0" step="0.0001"></div>
-          <div><label for="minPrice">أقل سعر بيع</label><input id="minPrice" type="number" min="0" step="0.01"></div>
+          <div><label for="weight">وزن الوحدة (كجم)</label><input id="weight" type="number" min="0" step="0.0001"></div>
+          <div><label for="unitsCarton">وحدات بالكرتونة</label><input id="unitsCarton" type="number" min="0" step="0.0001"></div>
+          <div><label for="cartonWeight">وزن الكرتونة (كجم)</label><input id="cartonWeight" type="number" min="0" step="0.0001"></div>
+          <div><label for="minStock">الحد الأدنى</label><input id="minStock" type="number" min="0" step="0.0001" value="0"></div>
+          <div><label for="targetStock">المستهدف</label><input id="targetStock" type="number" min="0" step="0.0001" value="0"></div>
+          <div><label for="maxStock">الحد الأقصى</label><input id="maxStock" type="number" min="0" step="0.0001"></div>
+          <div><label for="minPrice">أقل سعر</label><input id="minPrice" type="number" min="0" step="0.01"></div>
           <div><label for="targetPrice">السعر المستهدف</label><input id="targetPrice" type="number" min="0" step="0.01"></div>
-          <div><label for="maxPrice">أعلى سعر بيع</label><input id="maxPrice" type="number" min="0" step="0.01"></div>
+          <div><label for="maxPrice">أعلى سعر</label><input id="maxPrice" type="number" min="0" step="0.01"></div>
         </div>
         <label>استخدامات المنتج</label>
         <div class="checks">
@@ -454,20 +445,19 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
           <label class="check"><input id="canSell" type="checkbox">يمكن بيعه</label>
           <label class="check"><input id="canLoad" type="checkbox">يمكن تحميله</label>
           <label class="check"><input id="canReserve" type="checkbox">يمكن حجزه</label>
-          <label class="check"><input id="hasRecipe" type="checkbox">له وصفة إنتاج</label>
+          <label class="check"><input id="hasRecipe" type="checkbox">له وصفة</label>
         </div>
-        <label for="notes">ملاحظات</label><textarea id="notes" rows="3"></textarea>
+        <label for="notes">ملاحظات</label><textarea id="notes" rows="2"></textarea>
         <label class="check"><input id="active" type="checkbox" checked>المنتج نشط</label>
-        <button id="saveBtn" class="btn" type="submit">حفظ المنتج</button>
-        <button id="cancelBtn" class="btn secondary" type="button">إلغاء</button>
-        <div id="formMsg" class="status hidden" role="status" aria-live="polite"></div>
+        <button id="saveBtn" class="btn" type="submit">حفظ</button><button id="cancelBtn" class="btn secondary" type="button">إلغاء</button>
+        <div id="formMsg" class="status hidden"></div>
       </form>
     </div>
   </div>
 
 </section>
 
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. لا يوجد حذف مباشر في هذه النسخة.</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا.</p>
 </main>
 
 <nav id="nav" class="hidden">
@@ -476,7 +466,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 <button class="navbtn" data-page="data" type="button">🗂️ البيانات</button>
 </nav>
 
-<!-- Invoice Details Modal -->
+<!-- Modals -->
 <div id="invoiceDetailsModal" class="modal hidden">
   <div class="modal-content">
     <div class="modal-header"><h3>تفاصيل الفاتورة</h3><button class="close-btn" onclick="document.getElementById('invoiceDetailsModal').classList.add('hidden')">&times;</button></div>
@@ -494,7 +484,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
   </div>
 </div>
 
-<!-- Customer Statement Modal -->
 <div id="customerStatementModal" class="modal hidden">
   <div class="modal-content">
     <div class="modal-header"><h3>كشف حساب عميل</h3><button class="close-btn" onclick="document.getElementById('customerStatementModal').classList.add('hidden')">&times;</button></div>
@@ -529,10 +518,12 @@ let canViewStock=false, canManageStock=false;
 let canViewCustomers=false, canManageCustomers=false;
 let canViewSales=false, canManageSales=false;
 let canViewCollections=false, canManageCollections=false;
+let canViewSuppliers=false, canManageSuppliers=false;
+let canViewPurchases=false, canManagePurchases=false;
 
 let productsCache=[], categories=[], units=[], cartonUnitId=null;
-let userLookupsLoading=false, locationsCache=[], stockCache=[], customersCache=[], salesCache=[], collectionsCache=[];
-let invoiceItemCounter=0;
+let userLookupsLoading=false, locationsCache=[], stockCache=[], customersCache=[], salesCache=[], collectionsCache=[], suppliersCache=[], purchasesCache=[];
+let invoiceItemCounter=0, purchaseItemCounter=0;
 
 const allowedRoles={ SALES_MANAGER:"مدير المبيعات", SALES_REP:"مندوب المبيعات", WAREHOUSE_KEEPER:"أمين المخزن", PRODUCTION_MANAGER:"مسؤول الإنتاج", ACCOUNTANT:"المحاسب", GENERAL_MANAGER:"المدير العام" };
 
@@ -547,12 +538,11 @@ function hideSections(){ ["login","recovery","newPass","home","tasks","data","na
 function showLogin(){ hideSections(); $("login").classList.remove("hidden"); }
 function showApp(){ hideSections(); $("nav").classList.remove("hidden"); page("home"); }
 
-// Dashboard Navigation Logic (Global Scope for Inline HTML)
 window.openSection = function(name) {
   $("dataDashboard").classList.add("hidden");
   document.querySelectorAll(".sub-section").forEach(el => el.classList.add("hidden"));
   $(`section${name.charAt(0).toUpperCase() + name.slice(1)}`).classList.remove("hidden");
-  window.scrollTo(0, 0); // Scroll to top when opening a section
+  window.scrollTo(0, 0);
 }
 window.closeSection = function() {
   document.querySelectorAll(".sub-section").forEach(el => el.classList.add("hidden"));
@@ -566,13 +556,15 @@ function page(name){
   $("data").classList.toggle("hidden",name!=="data");
   document.querySelectorAll(".navbtn").forEach(b=>{ b.classList.toggle("active",b.dataset.page===name); });
   if(name==="data"){
-    window.closeSection(); // Always return to dashboard menu on tab click
+    window.closeSection();
     loadProducts();
     if(canViewLocations)loadLocations();
     if(canViewStock)loadStock();
     if(canViewCustomers)loadCustomers();
     if(canViewSales)loadSales();
     if(canViewCollections)loadCollections();
+    if(canViewSuppliers)loadSuppliers();
+    if(canViewPurchases)loadPurchases();
   }
 }
 
@@ -589,6 +581,7 @@ function customerName(id){ return customersCache.find(x=>String(x.customer_id)==
 function customerPhone(id){ return customersCache.find(x=>String(x.customer_id)===String(id))?.phone||""; }
 function locationName(id){ return locationsCache.find(x=>String(x.location_id)===String(id))?.location_name||"غير محدد"; }
 function invoiceNumber(id){ return salesCache.find(x=>String(x.sales_invoice_id)===String(id))?.invoice_number||"—"; }
+function supplierName(id){ return suppliersCache.find(x=>String(x.supplier_id)===String(id))?.supplier_name||"غير محدد"; }
 
 function fillSelect(el,items,idkey,namekey,placeholder){
   el.replaceChildren();
@@ -608,7 +601,6 @@ async function loadLookups(){
 }
 
 /* ============ إدارة المستخدمين ============ */
-
 function updateSalesRepField(){
   const roleId=$("newUserRole").value;
   let roleCode=null;
@@ -618,7 +610,6 @@ function updateSalesRepField(){
   $("newUserSalesRep").required=needsRep;
   if(!needsRep)$("newUserSalesRep").value="";
 }
-
 async function loadUserManagementLookups(){
   if(!isSystemAdmin){ $("userManagementCard").classList.add("hidden"); return; }
   if(userLookupsLoading)return;
@@ -631,7 +622,6 @@ async function loadUserManagementLookups(){
     const roleMap={};
     usableRoles.forEach(r=>{ const op=document.createElement("option"); op.value=String(r.role_id); op.textContent=allowedRoles[r.role_code]; roleSelect.appendChild(op); roleMap[String(r.role_id)]=r.role_code; });
     roleSelect.dataset.roleCodes=JSON.stringify(roleMap);
-
     const {data:reps,error:repsError}=await db.from("sales_reps").select("sales_rep_id,is_active,auth_user_id").eq("is_active",true).is("auth_user_id",null).order("sales_rep_id"); if(repsError)throw repsError;
     const repSelect=$("newUserSalesRep"); repSelect.replaceChildren();
     const firstRep=document.createElement("option"); firstRep.value=""; firstRep.textContent="اختر المندوب"; repSelect.appendChild(firstRep);
@@ -639,9 +629,7 @@ async function loadUserManagementLookups(){
     updateSalesRepField();
   }catch(e){ msg($("userCreateMsg"),"تعذر تحميل الأدوار أو المندوبين: "+err(e),"error"); }finally{ userLookupsLoading=false; }
 }
-
 $("newUserRole").addEventListener("change",()=>{ updateSalesRepField(); clear($("userCreateMsg")); });
-
 $("userCreateForm").addEventListener("submit",async e=>{
   e.preventDefault(); clear($("userCreateMsg")); const btn=$("createUserBtn");
   if(!isSystemAdmin){ msg($("userCreateMsg"),"هذه العملية متاحة لمدير النظام فقط.","error"); return; }
@@ -653,7 +641,6 @@ $("userCreateForm").addEventListener("submit",async e=>{
   if(!Object.prototype.hasOwnProperty.call(allowedRoles,roleCode)){ msg($("userCreateMsg"),"هذا الدور غير مسموح بإنشائه.","error"); return; }
   if(password.length<12||password.length>128){ msg($("userCreateMsg"),"كلمة المرور يجب أن تتراوح بين 12 و128 حرفًا.","error"); return; }
   if(roleCode==="SALES_REP"&&!salesRepId){ msg($("userCreateMsg"),"يجب اختيار سجل المندوب.","error"); return; }
-
   busy(btn,true,"جارٍ إنشاء الحساب...","إنشاء حساب الموظف");
   let accountCreated=false;
   try{
@@ -669,7 +656,6 @@ $("userCreateForm").addEventListener("submit",async e=>{
 });
 
 /* ============ التحقق من حساب الموظف والصلاحيات ============ */
-
 async function userInfo(user){
   $("userInfo").textContent="تم تسجيل الدخول. جارٍ التحقق...";
   const {data,error}=await db.from("app_users").select("display_name,is_active,role_id").eq("user_id",user.id).maybeSingle();
@@ -678,42 +664,23 @@ async function userInfo(user){
   if(roleError)throw roleError; if(!role||!role.is_active)throw new Error("الدور الوظيفي لحسابك غير موجود أو غير مفعّل.");
   isSystemAdmin=role.role_code==="SYSTEM_ADMIN"; $("userInfo").textContent="مرحبًا "+(data.display_name||"بك");
 
-  // Dashboard Icons permissions mapping
-  canManage=await permission("PRODUCTS_MANAGE");
-  $("menuProducts").classList.toggle("hidden", !canManage);
-  $("addBtn").classList.toggle("hidden",!canManage);
-
-  canViewLocations=false;canManageLocations=false;
+  canManage=await permission("PRODUCTS_MANAGE"); $("menuProducts").classList.toggle("hidden", !canManage); $("addBtn").classList.toggle("hidden",!canManage);
   try{ canViewLocations=await permission("LOCATIONS_VIEW"); canManageLocations=await permission("LOCATIONS_MANAGE"); $("menuLocations").classList.toggle("hidden",!canViewLocations); $("locationsCard").classList.toggle("hidden",!canViewLocations); $("addLocationBtn").classList.toggle("hidden",!canManageLocations); }catch(e){$("menuLocations").classList.add("hidden");}
-
-  canViewStock=false;canManageStock=false;
   try{ canViewStock=await permission("STOCK_VIEW"); canManageStock=await permission("STOCK_MANAGE"); $("menuStock").classList.toggle("hidden",!canViewStock); $("stockCard").classList.toggle("hidden",!canViewStock); $("adjustStockBtn").classList.toggle("hidden",!canManageStock); }catch(e){$("menuStock").classList.add("hidden");}
-
-  canViewCustomers=false;canManageCustomers=false;
   try{ canViewCustomers=await permission("CUSTOMERS_VIEW"); canManageCustomers=await permission("CUSTOMERS_MANAGE"); $("menuCustomers").classList.toggle("hidden",!canViewCustomers); $("customersCard").classList.toggle("hidden",!canViewCustomers); $("addCustomerBtn").classList.toggle("hidden",!canManageCustomers); }catch(e){$("menuCustomers").classList.add("hidden");}
-
-  canViewSales=false;canManageSales=false;
   try{ canViewSales=await permission("SALES_VIEW"); canManageSales=await permission("SALES_MANAGE"); $("menuSales").classList.toggle("hidden",!canViewSales); $("salesCard").classList.toggle("hidden",!canViewSales); $("addInvoiceBtn").classList.toggle("hidden",!canManageSales); }catch(e){$("menuSales").classList.add("hidden");}
-
-  canViewCollections=false;canManageCollections=false;
   try{ canViewCollections=await permission("COLLECTIONS_VIEW"); canManageCollections=await permission("COLLECTIONS_MANAGE"); $("menuCollections").classList.toggle("hidden",!canViewCollections); $("collectionsCard").classList.toggle("hidden",!canViewCollections); $("addCollectionBtn").classList.toggle("hidden",!canManageCollections); }catch(e){$("menuCollections").classList.add("hidden");}
+  try{ canViewSuppliers=await permission("SUPPLIERS_VIEW"); canManageSuppliers=await permission("SUPPLIERS_MANAGE"); $("menuSuppliers").classList.toggle("hidden",!canViewSuppliers); $("suppliersCard").classList.toggle("hidden",!canViewSuppliers); $("addSupplierBtn").classList.toggle("hidden",!canManageSuppliers); }catch(e){$("menuSuppliers").classList.add("hidden");}
+  try{ canViewPurchases=await permission("PURCHASES_VIEW"); canManagePurchases=await permission("PURCHASES_MANAGE"); $("menuPurchases").classList.toggle("hidden",!canViewPurchases); $("purchasesCard").classList.toggle("hidden",!canViewPurchases); $("addPurchaseBtn").classList.toggle("hidden",!canManagePurchases); }catch(e){$("menuPurchases").classList.add("hidden");}
 
-  if(isSystemAdmin){
-    $("menuUsers").classList.remove("hidden");
-    await loadUserManagementLookups();
-  }else{
-    $("menuUsers").classList.add("hidden");
-    $("userManagementCard").classList.add("hidden");
-  }
+  if(isSystemAdmin){ $("menuUsers").classList.remove("hidden"); await loadUserManagementLookups(); }else{ $("menuUsers").classList.add("hidden"); $("userManagementCard").classList.add("hidden"); }
 }
 
-/* ... (بقية الدوال الخاصة بالمواقع، المخزون، العملاء، الفواتير، التحصيلات، المنتجات، تسجيل الدخول والخروج) ... */
-/* لقد تم دمج باقي الكود لضمان عمل الملف بالكامل */
-
+/* ============ إدارة المواقع ============ */
 const locationTypes={ MAIN_WAREHOUSE:"مخزن رئيسي",FRIDGE:"ثلاجة",VEHICLE:"سيارة",FACTORY:"مصنع",SHOWROOM:"معرض" };
 function locationTypeName(value){ return locationTypes[value]||value||"غير محدد"; }
 function resetLocationForm(){ $("locationForm").reset(); $("locationEditId").value=""; $("locationFormTitle").textContent="إضافة موقع جديد"; $("saveLocationBtn").textContent="حفظ الموقع"; $("locationFormCard").classList.add("hidden"); clear($("locationFormMsg")); }
-async function loadLocations(){ if(!canViewLocations)return; clear($("locationsMsg")); $("locationsList").replaceChildren(); try{ const {data:sessionData,error:sessionError}=await db.auth.getSession(); if(sessionError)throw sessionError; if(!sessionData.session)throw new Error("انتهت جلسة الدخول."); const allowed=await permission("LOCATIONS_VIEW"); if(!allowed){canViewLocations=false;$("menuLocations").classList.add("hidden");$("locationsCard").classList.add("hidden");throw new Error("لا تملك صلاحية عرض المواقع.");} const {data,error}=await db.from("locations").select("location_id,location_code,location_name,location_type,is_active,notes").order("location_id").limit(200); if(error)throw error; locationsCache=data||[]; renderLocations(); fillLocationsFilter(); fillInvoiceLocationSelect(); msg($("locationsMsg"),"تم تحميل "+locationsCache.length+" موقع.","success"); }catch(e){ msg($("locationsMsg"),"تعذر تحميل المواقع: "+err(e),"error"); const d=document.createElement("div");d.className="empty";d.textContent="راجع رسالة الخطأ أعلاه.";$("locationsList").replaceChildren(d); } }
+async function loadLocations(){ if(!canViewLocations)return; clear($("locationsMsg")); $("locationsList").replaceChildren(); try{ const {data:sessionData,error:sessionError}=await db.auth.getSession(); if(sessionError)throw sessionError; if(!sessionData.session)throw new Error("انتهت جلسة الدخول."); const allowed=await permission("LOCATIONS_VIEW"); if(!allowed){canViewLocations=false;$("menuLocations").classList.add("hidden");$("locationsCard").classList.add("hidden");throw new Error("لا تملك صلاحية عرض المواقع.");} const {data,error}=await db.from("locations").select("location_id,location_code,location_name,location_type,is_active,notes").order("location_id").limit(200); if(error)throw error; locationsCache=data||[]; renderLocations(); fillLocationsFilter(); fillInvoiceLocationSelect(); fillPurchaseLocationSelect(); msg($("locationsMsg"),"تم تحميل "+locationsCache.length+" موقع.","success"); }catch(e){ msg($("locationsMsg"),"تعذر تحميل المواقع: "+err(e),"error"); const d=document.createElement("div");d.className="empty";d.textContent="راجع رسالة الخطأ أعلاه.";$("locationsList").replaceChildren(d); } }
 function renderLocations(){ const box=$("locationsList");box.replaceChildren(); const q=$("locationSearch").value.trim().toLowerCase(); const found=locationsCache.filter(l=> [l.location_code,l.location_name,l.location_type].some(v=>String(v||"").toLowerCase().includes(q)) ); if(!found.length){ const d=document.createElement("div");d.className="empty";d.textContent=q?"لا توجد مواقع مطابقة.":"لا توجد مواقع متاحة.";box.appendChild(d);return; } found.forEach(location=>{ const card=document.createElement("div");card.className="product"; const title=document.createElement("div");title.className="pname";title.textContent=location.location_name||"موقع بلا اسم"; const details=document.createElement("div");details.className="details";details.textContent="الكود: "+(location.location_code||"—")+" | النوع: "+locationTypeName(location.location_type); const status=document.createElement("span");status.className="badge"+(location.is_active?"":" off");status.textContent=location.is_active?"نشط":"متوقف"; const idBadge=document.createElement("span");idBadge.className="badge";idBadge.textContent="رقم الموقع: "+location.location_id; card.append(title,details,status,idBadge); if(location.notes){ const notes=document.createElement("div");notes.className="details";notes.textContent="ملاحظات: "+location.notes;card.appendChild(notes); } if(canManageLocations){ const actions=document.createElement("div");actions.className="actions"; const edit=document.createElement("button");edit.type="button";edit.className="btn secondary";edit.textContent="تعديل البيانات";edit.addEventListener("click",()=>editLocation(location)); const toggle=document.createElement("button");toggle.type="button";toggle.className="btn "+(location.is_active?"danger":"secondary");toggle.textContent=location.is_active?"إيقاف الموقع":"تفعيل الموقع";toggle.addEventListener("click",()=>toggleLocation(location)); actions.append(edit,toggle);card.appendChild(actions); } box.appendChild(card); }); }
 function editLocation(location){ if(!canManageLocations)return; $("locationEditId").value=String(location.location_id); $("locationCode").value=location.location_code||""; $("locationName").value=location.location_name||""; $("locationType").value=location.location_type||"MAIN_WAREHOUSE"; $("locationNotes").value=location.notes||""; $("locationFormTitle").textContent="تعديل الموقع: "+location.location_name; $("saveLocationBtn").textContent="حفظ التعديلات"; $("locationFormCard").classList.remove("hidden"); clear($("locationFormMsg")); $("locationFormCard").scrollIntoView({behavior:"smooth",block:"start"}); }
 $("addLocationBtn").addEventListener("click",()=>{ if(!canManageLocations)return; resetLocationForm(); $("locationFormCard").classList.remove("hidden"); $("locationFormCard").scrollIntoView({behavior:"smooth",block:"start"}); });
@@ -721,6 +688,7 @@ $("cancelLocationBtn").addEventListener("click",resetLocationForm); $("refreshLo
 $("locationForm").addEventListener("submit",async event=>{ event.preventDefault(); clear($("locationFormMsg")); if(!canManageLocations)return; const id=$("locationEditId").value; const code=$("locationCode").value.trim(); const name=$("locationName").value.trim(); const type=$("locationType").value; const notes=$("locationNotes").value.trim(); if(!code||!name||!Object.prototype.hasOwnProperty.call(locationTypes,type)){ msg($("locationFormMsg"),"أكمل الكود والاسم واختر نوعًا صحيحًا.","error");return; } const button=$("saveLocationBtn"); busy(button,true,"جارٍ الحفظ...",id?"حفظ التعديلات":"حفظ الموقع"); try{ if(!await permission("LOCATIONS_MANAGE"))throw new Error("لا تملك صلاحية إدارة المواقع."); const payload={location_code:code,location_name:name,location_type:type,notes:notes||null,updated_at:new Date().toISOString()}; let result; if(id){ result=await db.from("locations").update(payload).eq("location_id",Number(id)).select("location_id"); } else{ const {data:s,error:se}=await db.auth.getSession(); if(se)throw se; if(!s.session)throw new Error("انتهت جلسة الدخول."); payload.created_by=s.session.user.id; result=await db.from("locations").insert(payload).select("location_id"); } if(result.error)throw result.error; if(!result.data||result.data.length!==1)throw new Error("لم يتم تأكيد حفظ سجل واحد."); msg($("locationsMsg"),id?"تم تأكيد تعديل الموقع.":"تم تأكيد إضافة الموقع.","success"); resetLocationForm(); await loadLocations(); }catch(e){ msg($("locationFormMsg"),"تعذر تأكيد حفظ الموقع. "+err(e),"error"); }finally{ busy(button,false,"","حفظ الموقع"); $("saveLocationBtn").textContent=$("locationEditId").value?"حفظ التعديلات":"حفظ الموقع"; } });
 async function toggleLocation(location){ if(!canManageLocations)return; const action=location.is_active?"إيقاف":"تفعيل"; if(!confirm("هل تريد "+action+" الموقع: "+location.location_name+"؟"))return; try{ if(!await permission("LOCATIONS_MANAGE"))throw new Error("لا تملك صلاحية إدارة المواقع."); const {data,error}=await db.from("locations").update({is_active:!location.is_active,updated_at:new Date().toISOString()}).eq("location_id",location.location_id).select("location_id"); if(error)throw error; if(!data||data.length!==1)throw new Error("لم يتم تأكيد تغيير الحالة."); msg($("locationsMsg"),"تم تأكيد تغيير حالة الموقع.","success"); await loadLocations(); }catch(e){ msg($("locationsMsg"),"تعذر تأكيد تغيير الحالة: "+err(e),"error"); } }
 
+/* ============ أرصدة المخزون ============ */
 function fillLocationsFilter(){ const el=$("stockLocationFilter");const cur=el.value;el.replaceChildren(); const all=document.createElement("option");all.value="";all.textContent="كل المواقع";el.appendChild(all); locationsCache.filter(l=>l.is_active).forEach(l=>{ const op=document.createElement("option");op.value=String(l.location_id);op.textContent=l.location_name;el.appendChild(op); }); el.value=cur; }
 function fillStockFormSelects(){ const locEl=$("stockLocation");const curLoc=locEl.value;locEl.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر الموقع";locEl.appendChild(first); locationsCache.filter(l=>l.is_active).forEach(l=>{ const op=document.createElement("option");op.value=String(l.location_id);op.textContent=l.location_name+" ("+l.location_code+")";locEl.appendChild(op); }); locEl.value=curLoc; const prodEl=$("stockProduct");const curProd=prodEl.value;prodEl.replaceChildren(); const firstP=document.createElement("option");firstP.value="";firstP.textContent="اختر المنتج";prodEl.appendChild(firstP); productsCache.filter(p=>p.is_active).forEach(p=>{ const op=document.createElement("option");op.value=String(p.product_id);op.textContent=p.product_name+" ("+p.product_code+")";prodEl.appendChild(op); }); prodEl.value=curProd; }
 async function loadStock(){ if(!canViewStock)return; clear($("stockMsg")); $("stockList").replaceChildren(); try{ const {data:sessionData,error:sessionError}=await db.auth.getSession(); if(sessionError)throw sessionError; if(!sessionData.session)throw new Error("انتهت جلسة الدخول."); const allowed=await permission("STOCK_VIEW"); if(!allowed){canViewStock=false;$("menuStock").classList.add("hidden");$("stockCard").classList.add("hidden");throw new Error("لا تملك صلاحية عرض المخزون.");} const filterLoc=$("stockLocationFilter").value; let query=db.from("stock_balances").select("balance_id,location_id,product_id,quantity,updated_at").order("updated_at",{ascending:false}).limit(500); if(filterLoc)query=query.eq("location_id",Number(filterLoc)); const {data,error}=await query; if(error)throw error; stockCache=data||[]; fillLocationsFilter(); renderStock(); msg($("stockMsg"),"تم تحميل "+stockCache.length+" رصيد مخزون.","success"); }catch(e){ msg($("stockMsg"),"تعذر تحميل الأرصدة: "+err(e),"error"); const d=document.createElement("div");d.className="empty";d.textContent="راجع رسالة الخطأ أعلاه.";$("stockList").replaceChildren(d); } }
@@ -731,6 +699,7 @@ async function refreshCurrentStockDisplay(){ const locId=$("stockLocation").valu
 $("stockLocation").addEventListener("change",refreshCurrentStockDisplay); $("stockProduct").addEventListener("change",refreshCurrentStockDisplay); $("adjustStockBtn").addEventListener("click",()=>openStockForm()); $("cancelStockBtn").addEventListener("click",resetStockForm); $("refreshStockBtn").addEventListener("click",loadStock); $("stockSearch").addEventListener("input",renderStock); $("stockLocationFilter").addEventListener("change",loadStock);
 $("stockForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("stockFormMsg")); if(!canManageStock)return; const locId=$("stockLocation").value; const prodId=$("stockProduct").value; const newQty=$("stockNewQty").value.trim(); const notes=$("stockNotes").value.trim(); if(!locId||!prodId||newQty===""){ msg($("stockFormMsg"),"اختر الموقع والمنتج وأدخل الرصيد الجديد.","error");return; } const qty=Number(newQty); if(isNaN(qty)||qty<0){ msg($("stockFormMsg"),"الرصيد الجديد يجب أن يكون رقمًا غير سالب.","error");return; } const button=$("saveStockBtn"); busy(button,true,"جارٍ الحفظ...","حفظ التسوية"); try{ const {error}=await db.rpc("set_stock_balance",{ p_location_id:Number(locId),p_product_id:Number(prodId), p_new_quantity:qty,p_notes:notes||null }); if(error)throw error; msg($("stockFormMsg"),"تم حفظ التسوية بنجاح.","success"); resetStockForm(); await loadStock(); }catch(e){ msg($("stockFormMsg"),"تعذر حفظ التسوية: "+err(e),"error"); }finally{ busy(button,false,"","حفظ التسوية"); } });
 
+/* ============ إدارة العملاء ============ */
 const customerTypes={CASH:"نقدي",CREDIT:"آجل",WHOLESALE:"جملة",RETAIL:"تجزئة"};
 function customerTypeName(value){ return customerTypes[value]||value||"غير محدد"; }
 function resetCustomerForm(){ $("customerForm").reset(); $("customerEditId").value=""; $("customerOpeningBalance").value="0"; $("customerActive").checked=true; $("customerFormTitle").textContent="إضافة عميل جديد"; $("saveCustomerBtn").textContent="حفظ العميل"; $("customerFormCard").classList.add("hidden"); clear($("customerFormMsg")); }
@@ -741,9 +710,19 @@ $("addCustomerBtn").addEventListener("click",()=>{ if(!canManageCustomers)return
 $("cancelCustomerBtn").addEventListener("click",resetCustomerForm); $("refreshCustomersBtn").addEventListener("click",loadCustomers); $("customerSearch").addEventListener("input",renderCustomers);
 $("customerForm").addEventListener("submit",async event=>{ event.preventDefault(); clear($("customerFormMsg")); if(!canManageCustomers)return; const id=$("customerEditId").value; const code=$("customerCode").value.trim(); const name=$("customerName").value.trim(); const phone=$("customerPhone").value.trim(); const whatsapp=$("customerWhatsapp").value.trim(); const type=$("customerType").value; const creditLimitRaw=$("customerCreditLimit").value.trim(); const openingRaw=$("customerOpeningBalance").value.trim(); const address=$("customerAddress").value.trim(); const notes=$("customerNotes").value.trim(); const active=$("customerActive").checked; if(!code||!name){ msg($("customerFormMsg"),"أكمل كود العميل والاسم.","error");return; } if(!Object.prototype.hasOwnProperty.call(customerTypes,type)){ msg($("customerFormMsg"),"اختر نوع عميل صحيحًا.","error");return; } const creditLimit=creditLimitRaw===""?null:Number(creditLimitRaw); const opening=openingRaw===""?0:Number(openingRaw); if(creditLimit!==null&&(isNaN(creditLimit)||creditLimit<0)){ msg($("customerFormMsg"),"حد الائتمان يجب أن يكون رقمًا غير سالب.","error");return; } if(isNaN(opening)||opening<0){ msg($("customerFormMsg"),"الرصيد الافتتاحي يجب أن يكون رقمًا غير سالب.","error");return; } const button=$("saveCustomerBtn"); busy(button,true,"جارٍ الحفظ...",id?"حفظ التعديلات":"حفظ العميل"); try{ if(!await permission("CUSTOMERS_MANAGE"))throw new Error("لا تملك صلاحية إدارة العملاء."); const payload={ customer_code:code,customer_name:name,phone:phone||null,whatsapp:whatsapp||null, address:address||null,customer_type:type,credit_limit:creditLimit, opening_balance:opening,is_active:active,notes:notes||null, updated_at:new Date().toISOString() }; let result; if(id){ result=await db.from("customers").update(payload).eq("customer_id",Number(id)).select("customer_id"); } else{ const {data:s,error:se}=await db.auth.getSession(); if(se)throw se; if(!s.session)throw new Error("انتهت جلسة الدخول."); payload.created_by=s.session.user.id; result=await db.from("customers").insert(payload).select("customer_id"); } if(result.error)throw result.error; if(!result.data||result.data.length!==1)throw new Error("لم يتم تأكيد حفظ سجل واحد."); msg($("customersMsg"),id?"تم تأكيد تعديل العميل.":"تم تأكيد إضافة العميل.","success"); resetCustomerForm(); await loadCustomers(); }catch(e){ msg($("customerFormMsg"),"تعذر تأكيد حفظ العميل. "+err(e),"error"); }finally{ busy(button,false,"","حفظ العميل"); $("saveCustomerBtn").textContent=$("customerEditId").value?"حفظ التعديلات":"حفظ العميل"; } });
 async function toggleCustomer(c){ if(!canManageCustomers)return; const action=c.is_active?"إيقاف":"تفعيل"; if(!confirm("هل تريد "+action+" العميل: "+c.customer_name+"؟"))return; try{ if(!await permission("CUSTOMERS_MANAGE"))throw new Error("لا تملك صلاحية إدارة العملاء."); const {data,error}=await db.from("customers").update({is_active:!c.is_active,updated_at:new Date().toISOString()}).eq("customer_id",c.customer_id).select("customer_id"); if(error)throw error; if(!data||data.length!==1)throw new Error("لم يتم تأكيد تغيير الحالة."); msg($("customersMsg"),"تم تأكيد تغيير حالة العميل.","success"); await loadCustomers(); }catch(e){ msg($("customersMsg"),"تعذر تأكيد تغيير الحالة: "+err(e),"error"); } }
-
 async function viewCustomerStatement(c) { const modal = $("customerStatementModal"); $("modalStatementHeader").innerHTML = "جارٍ تحميل البيانات..."; $("modalStatementItems").innerHTML = ""; $("modalStatementSummary").innerHTML = ""; modal.classList.remove("hidden"); try { const { data: invoices, error: invErr } = await db.from("sales_invoices").select("sales_invoice_id, invoice_number, invoice_date, net_total, paid_amount, remaining_amount, status").eq("customer_id", c.customer_id).neq("status", "CANCELLED").order("invoice_date", { ascending: true }); if (invErr) throw invErr; const { data: collections, error: colErr } = await db.from("customer_collections").select("collection_id, collection_number, collection_date, amount, payment_method, status").eq("customer_id", c.customer_id).eq("status", "POSTED").order("collection_date", { ascending: true }); if (colErr) throw colErr; const timeline = []; let totalInvoiced = 0; let totalPaid = 0; (invoices || []).forEach(inv => { timeline.push({ date: inv.invoice_date, type: 'invoice', ref: inv.invoice_number, desc: "فاتورة بيع", debit: Number(inv.net_total), credit: 0 }); totalInvoiced += Number(inv.net_total); }); (collections || []).forEach(col => { timeline.push({ date: col.collection_date, type: 'collection', ref: col.collection_number, desc: "تحصيل نقدية (" + paymentTypeName(col.payment_method) + ")", debit: 0, credit: Number(col.amount) }); totalPaid += Number(col.amount); }); timeline.sort((a, b) => new Date(a.date) - new Date(b.date) || (a.type === 'invoice' ? -1 : 1)); let runningBalance = Number(c.opening_balance) || 0; let rowsHtml = `<thead><tr><th>التاريخ</th><th>المستند</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead><tbody><tr><td colspan="3"><strong>رصيد افتتاحي</strong></td><td>-</td><td>-</td><td><strong>${fmt(runningBalance)}</strong></td></tr>`; timeline.forEach(t => { runningBalance += t.debit - t.credit; rowsHtml += `<tr><td>${new Date(t.date).toLocaleDateString("ar-EG")}</td><td dir="ltr" style="text-align:right;">${t.ref}</td><td>${t.desc}</td><td>${t.debit > 0 ? fmt(t.debit) : "-"}</td><td>${t.credit > 0 ? fmt(t.credit) : "-"}</td><td style="font-weight:bold;">${fmt(runningBalance)}</td></tr>`; }); rowsHtml += `</tbody>`; $("modalStatementItems").innerHTML = rowsHtml; $("modalStatementHeader").innerHTML = `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span><strong>اسم العميل:</strong> ${c.customer_name}</span><span><strong>كود:</strong> ${c.customer_code}</span></div><div style="display:flex; justify-content:space-between;"><span><strong>موبايل:</strong> ${c.phone || "غير مسجل"}</span><span><strong>تاريخ الكشف:</strong> ${new Date().toLocaleDateString("ar-EG")}</span></div>`; $("modalStatementSummary").innerHTML = `<div class="line"><span>إجمالي المبيعات (فواتير):</span><span>${fmt(totalInvoiced)}</span></div><div class="line"><span>إجمالي المدفوع (تحصيلات):</span><span style="color:green;">${fmt(totalPaid)}</span></div><div class="line grand" style="border-top:2px solid #333; padding-top:5px;"><span>الرصيد النهائي (متبقي):</span><span style="color:red;">${fmt(runningBalance)}</span></div>`; const waBtn = $("shareStatementWhatsappBtn"); waBtn.onclick = () => { let waText = `*كشف حساب عميل*\nالعميل: ${c.customer_name}\nالتاريخ: ${new Date().toLocaleDateString("ar-EG")}\n------------------------\nإجمالي المبيعات: ${fmt(totalInvoiced)}\nإجمالي المدفوع: ${fmt(totalPaid)}\n------------------------\n*الرصيد المتبقي: ${fmt(runningBalance)}*\n\nشكراً لتعاملكم معنا!`; let phone = c.phone ? c.phone.replace(/\D/g, '') : ""; if (phone.startsWith('0')) phone = '2' + phone; const url = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(waText)}` : `https://wa.me/?text=${encodeURIComponent(waText)}`; window.open(url, '_blank'); }; } catch (e) { $("modalStatementHeader").innerHTML = `<span style="color:red;">تعذر تحميل كشف الحساب: ${err(e)}</span>`; } }
 
+/* ============ إدارة الموردين ============ */
+function resetSupplierForm(){ $("supplierForm").reset(); $("supplierEditId").value=""; $("supplierActive").checked=true; $("supplierFormTitle").textContent="إضافة مورد جديد"; $("saveSupplierBtn").textContent="حفظ المورد"; $("supplierFormCard").classList.add("hidden"); clear($("supplierFormMsg")); }
+async function loadSuppliers(){ if(!canViewSuppliers)return; clear($("suppliersMsg")); $("suppliersList").replaceChildren(); try{ const {data:sessionData,error:sessionError}=await db.auth.getSession(); if(sessionError)throw sessionError; if(!sessionData.session)throw new Error("انتهت جلسة الدخول."); const allowed=await permission("SUPPLIERS_VIEW"); if(!allowed){canViewSuppliers=false;$("menuSuppliers").classList.add("hidden");$("suppliersCard").classList.add("hidden");throw new Error("لا تملك صلاحية عرض الموردين.");} const {data,error}=await db.from("suppliers").select("supplier_id,supplier_code,supplier_name,phone,address,is_active,notes").order("supplier_id").limit(500); if(error)throw error; suppliersCache=data||[]; renderSuppliers(); fillPurchaseSupplierSelect(); msg($("suppliersMsg"),"تم تحميل "+suppliersCache.length+" مورد.","success"); }catch(e){ msg($("suppliersMsg"),"تعذر تحميل الموردين: "+err(e),"error"); const d=document.createElement("div");d.className="empty";d.textContent="راجع رسالة الخطأ أعلاه.";$("suppliersList").replaceChildren(d); } }
+function renderSuppliers(){ const box=$("suppliersList");box.replaceChildren(); const q=$("supplierSearch").value.trim().toLowerCase(); const found=suppliersCache.filter(c=> [c.supplier_code,c.supplier_name,c.phone].some(v=>String(v||"").toLowerCase().includes(q)) ); if(!found.length){ const d=document.createElement("div");d.className="empty";d.textContent=q?"لا يوجد موردين مطابقون للبحث.":"لا يوجد موردين مسجلين بعد.";box.appendChild(d);return; } found.forEach(c=>{ const card=document.createElement("div");card.className="product"; const title=document.createElement("div");title.className="pname";title.textContent=c.supplier_name||"مورد بلا اسم"; const details=document.createElement("div");details.className="details";details.textContent="الكود: "+(c.supplier_code||"—")+(c.phone?" | موبايل: "+c.phone:""); const status=document.createElement("span");status.className="badge"+(c.is_active?"":" off");status.textContent=c.is_active?"نشط":"متوقف"; const idBadge=document.createElement("span");idBadge.className="badge";idBadge.textContent="رقم المورد: "+c.supplier_id; card.append(title,details,status,idBadge); if(canManageSuppliers){ const actions=document.createElement("div");actions.className="actions"; const edit=document.createElement("button");edit.type="button";edit.className="btn secondary";edit.textContent="تعديل";edit.addEventListener("click",()=>editSupplier(c)); const toggle=document.createElement("button");toggle.type="button";toggle.className="btn "+(c.is_active?"danger":"secondary");toggle.textContent=c.is_active?"إيقاف":"تفعيل";toggle.addEventListener("click",()=>toggleSupplier(c)); actions.append(edit,toggle);card.appendChild(actions); } box.appendChild(card); }); }
+function editSupplier(c){ if(!canManageSuppliers)return; $("supplierEditId").value=String(c.supplier_id); $("supplierCode").value=c.supplier_code||""; $("supplierName").value=c.supplier_name||""; $("supplierPhone").value=c.phone||""; $("supplierAddress").value=c.address||""; $("supplierNotes").value=c.notes||""; $("supplierActive").checked=c.is_active===true; $("supplierFormTitle").textContent="تعديل المورد: "+c.supplier_name; $("saveSupplierBtn").textContent="حفظ التعديلات"; $("supplierFormCard").classList.remove("hidden"); clear($("supplierFormMsg")); $("supplierFormCard").scrollIntoView({behavior:"smooth",block:"start"}); }
+$("addSupplierBtn").addEventListener("click",()=>{ if(!canManageSuppliers)return; resetSupplierForm(); $("supplierFormCard").classList.remove("hidden"); $("supplierFormCard").scrollIntoView({behavior:"smooth",block:"start"}); });
+$("cancelSupplierBtn").addEventListener("click",resetSupplierForm); $("refreshSuppliersBtn").addEventListener("click",loadSuppliers); $("supplierSearch").addEventListener("input",renderSuppliers);
+$("supplierForm").addEventListener("submit",async event=>{ event.preventDefault(); clear($("supplierFormMsg")); if(!canManageSuppliers)return; const id=$("supplierEditId").value; const code=$("supplierCode").value.trim(); const name=$("supplierName").value.trim(); const phone=$("supplierPhone").value.trim(); const address=$("supplierAddress").value.trim(); const notes=$("supplierNotes").value.trim(); const active=$("supplierActive").checked; if(!code||!name){ msg($("supplierFormMsg"),"أكمل كود المورد والاسم.","error");return; } const button=$("saveSupplierBtn"); busy(button,true,"جارٍ الحفظ...",id?"حفظ التعديلات":"حفظ المورد"); try{ if(!await permission("SUPPLIERS_MANAGE"))throw new Error("لا تملك صلاحية إدارة الموردين."); const payload={ supplier_code:code,supplier_name:name,phone:phone||null,address:address||null,is_active:active,notes:notes||null,updated_at:new Date().toISOString() }; let result; if(id){ result=await db.from("suppliers").update(payload).eq("supplier_id",Number(id)).select("supplier_id"); } else{ result=await db.from("suppliers").insert(payload).select("supplier_id"); } if(result.error)throw result.error; if(!result.data||result.data.length!==1)throw new Error("لم يتم تأكيد حفظ سجل واحد."); msg($("suppliersMsg"),id?"تم تأكيد تعديل المورد.":"تم تأكيد إضافة المورد.","success"); resetSupplierForm(); await loadSuppliers(); }catch(e){ msg($("supplierFormMsg"),"تعذر تأكيد حفظ المورد. "+err(e),"error"); }finally{ busy(button,false,"","حفظ المورد"); $("saveSupplierBtn").textContent=$("supplierEditId").value?"حفظ التعديلات":"حفظ المورد"; } });
+async function toggleSupplier(c){ if(!canManageSuppliers)return; const action=c.is_active?"إيقاف":"تفعيل"; if(!confirm("هل تريد "+action+" المورد: "+c.supplier_name+"؟"))return; try{ if(!await permission("SUPPLIERS_MANAGE"))throw new Error("لا تملك صلاحية إدارة الموردين."); const {data,error}=await db.from("suppliers").update({is_active:!c.is_active,updated_at:new Date().toISOString()}).eq("supplier_id",c.supplier_id).select("supplier_id"); if(error)throw error; if(!data||data.length!==1)throw new Error("لم يتم تأكيد تغيير الحالة."); msg($("suppliersMsg"),"تم تأكيد تغيير حالة المورد.","success"); await loadSuppliers(); }catch(e){ msg($("suppliersMsg"),"تعذر تأكيد تغيير الحالة: "+err(e),"error"); } }
+
+/* ============ فواتير البيع ============ */
 function paymentTypeName(v){ return({CASH:"نقدي",CREDIT:"آجل",BANK_TRANSFER:"تحويل بنكي",CHEQUE:"شيك",MIXED:"مختلط"})[v]||v||"غير محدد"; }
 function invoiceStatusName(v){ return({POSTED:"مرحّلة",PAID:"مدفوعة",PARTIAL:"جزئية",CANCELLED:"ملغاة",DRAFT:"مسودة"})[v]||v||"—"; }
 function fillInvoiceCustomerSelect(){ const el=$("invoiceCustomer");const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر العميل";el.appendChild(first); customersCache.filter(c=>c.is_active).forEach(c=>{ const op=document.createElement("option");op.value=String(c.customer_id);op.textContent=c.customer_name+" ("+c.customer_code+")";el.appendChild(op); }); el.value=cur; }
@@ -760,6 +739,20 @@ $("addInvoiceBtn").addEventListener("click",async()=>{ if(!canManageSales)return
 $("cancelInvoiceBtn").addEventListener("click",()=>{ $("invoiceFormCard").classList.add("hidden"); resetInvoiceForm(); }); $("refreshSalesBtn").addEventListener("click",loadSales); $("salesSearch").addEventListener("input",renderSales);
 $("invoiceForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("invoiceFormMsg")); if(!canManageSales){msg($("invoiceFormMsg"),"لا تملك صلاحية إنشاء فواتير.","error");return;} const customerId=$("invoiceCustomer").value; const locationId=$("invoiceLocation").value; const date=$("invoiceDate").value; const paymentType=$("invoicePaymentType").value; const discount=Number($("invoiceDiscount").value||0); const notes=$("invoiceNotes").value.trim(); if(!customerId){msg($("invoiceFormMsg"),"اختر العميل.","error");return;} if(!locationId){msg($("invoiceFormMsg"),"اختر الموقع اللي البضاعة هتخرج منه.","error");return;} if(!date){msg($("invoiceFormMsg"),"اختر تاريخ الفاتورة.","error");return;} if(isNaN(discount)||discount<0){msg($("invoiceFormMsg"),"الخصم لا يمكن أن يكون سالبًا.","error");return;} const items=[];let valid=true; document.querySelectorAll("#invoiceItems .item-row").forEach(row=>{ const prodSel=row.querySelector(".item-product"); const unitSel=row.querySelector(".item-unit"); const productId=prodSel?.value; const saleUnitId=Number(unitSel?.value||0); const qty=Number(row.querySelector(".item-qty")?.value||0); const price=Number(row.querySelector(".item-price")?.value||0); if(!productId||!saleUnitId||qty<=0){valid=false;return;} if(isNaN(price)||price<0){valid=false;return;} items.push({product_id:Number(productId),sale_unit_id:saleUnitId,quantity:qty,unit_price:price}); }); if(!items.length||!valid){ msg($("invoiceFormMsg"),"أكمل بيانات كل الأصناف (منتج، وحدة، كمية، سعر).","error");return; } const button=$("saveInvoiceBtn"); busy(button,true,"جارٍ حفظ الفاتورة...","حفظ الفاتورة"); try{ const {data:invoiceId,error}=await db.rpc("create_sales_invoice",{ p_customer_id:Number(customerId), p_location_id:Number(locationId), p_invoice_date:date, p_payment_type:paymentType, p_discount:discount, p_notes:notes||null, p_items:items }); if(error)throw error; msg($("invoiceFormMsg"),"تم حفظ الفاتورة بنجاح. رقم الفاتورة: "+invoiceId,"success"); resetInvoiceForm(); await loadSales(); if(canViewStock)await loadStock(); setTimeout(()=>{$("invoiceFormCard").classList.add("hidden");},1500); }catch(e){ msg($("invoiceFormMsg"),"تعذر حفظ الفاتورة: "+err(e),"error"); }finally{ busy(button,false,"","حفظ الفاتورة"); } });
 
+/* ============ فواتير المشتريات ============ */
+function fillPurchaseSupplierSelect(){ const el=$("purchaseSupplier");if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر المورد";el.appendChild(first); suppliersCache.filter(c=>c.is_active).forEach(c=>{ const op=document.createElement("option");op.value=String(c.supplier_id);op.textContent=c.supplier_name+" ("+c.supplier_code+")";el.appendChild(op); }); el.value=cur; }
+function fillPurchaseLocationSelect(){ const el=$("purchaseLocation");if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر الموقع";el.appendChild(first); locationsCache.filter(l=>l.is_active).forEach(l=>{ const op=document.createElement("option");op.value=String(l.location_id);op.textContent=l.location_name+" ("+l.location_code+")";el.appendChild(op); }); el.value=cur; }
+function resetPurchaseForm(){ $("purchaseForm").reset(); $("purchaseDate").value=todayISO(); $("purchaseDiscount").value="0"; $("purchaseItems").replaceChildren(); purchaseItemCounter=0; addPurchaseItemRow(); updatePurchaseTotals(); $("purchaseFormCard").classList.add("hidden"); clear($("purchaseFormMsg")); fillPurchaseSupplierSelect(); fillPurchaseLocationSelect(); }
+function addPurchaseItemRow(){ purchaseItemCounter++; const id="pItem_"+purchaseItemCounter; const wrap=document.createElement("div");wrap.className="item-row";wrap.dataset.itemId=id; const prodLabel=document.createElement("label");prodLabel.textContent="المنتج *"; const prodSel=document.createElement("select");prodSel.className="item-product";prodSel.required=true; const first=document.createElement("option");first.value="";first.textContent="اختر المنتج";prodSel.appendChild(first); productsCache.filter(p=>p.is_active&&p.can_be_purchased).forEach(p=>{ const op=document.createElement("option");op.value=String(p.product_id);op.textContent=p.product_name+" ("+p.product_code+")"; if(p.target_selling_price!=null)op.dataset.price=String(p.target_selling_price); op.dataset.baseUnit=String(p.base_unit_id||""); op.dataset.unitsCarton=String(p.units_per_carton||""); prodSel.appendChild(op); }); const grid3=document.createElement("div");grid3.className="grid3"; const unitWrap=document.createElement("div"); const unitLabel=document.createElement("label");unitLabel.textContent="وحدة الشراء *"; const unitSel=document.createElement("select");unitSel.className="item-unit";unitSel.required=true; unitWrap.append(unitLabel,unitSel); const qtyWrap=document.createElement("div"); const qtyLabel=document.createElement("label");qtyLabel.textContent="الكمية *"; const qty=document.createElement("input");qty.type="number";qty.className="item-qty";qty.min="0.0001";qty.step="0.0001";qty.required=true; qtyWrap.append(qtyLabel,qty); const priceWrap=document.createElement("div"); const priceLabel=document.createElement("label");priceLabel.textContent="سعر الوحدة *"; const price=document.createElement("input");price.type="number";price.className="item-price";price.min="0";price.step="0.01";price.required=true; priceWrap.append(priceLabel,price); grid3.append(unitWrap,qtyWrap,priceWrap); const lineTotal=document.createElement("div");lineTotal.className="item-line-total";lineTotal.textContent="الإجمالي: 0"; const hint=document.createElement("div");hint.className="item-hint";hint.textContent=""; const removeBtn=document.createElement("button");removeBtn.type="button";removeBtn.className="btn danger";removeBtn.textContent="حذف الصنف";removeBtn.addEventListener("click",()=>{ wrap.remove();updatePurchaseTotals(); if(!$("purchaseItems").children.length)addPurchaseItemRow(); }); wrap.append(prodLabel,prodSel,grid3,lineTotal,hint,removeBtn); $("purchaseItems").appendChild(wrap); const recalc=()=>{ const q=Number(qty.value||0);const p=Number(price.value||0);const t=q*p; lineTotal.textContent="الإجمالي: "+fmt(t); const unitId=Number(unitSel.value||0); const opt=prodSel.selectedOptions[0]; const baseUnitId=Number(opt?.dataset?.baseUnit||0); const unitsCarton=Number(opt?.dataset?.unitsCarton||0); if(unitId&&baseUnitId&&q>0){ if(unitId===baseUnitId){ hint.textContent="يدخل للمخزون: "+q.toLocaleString("ar-EG")+" "+unitName(baseUnitId); }else if(unitId===cartonUnitId&&unitsCarton>0){ const baseQty=q*unitsCarton; hint.textContent="يدخل للمخزون: "+baseQty.toLocaleString("ar-EG")+" "+unitName(baseUnitId)+" ("+q+" كرتونة × "+unitsCarton+")"; }else{hint.textContent="";} }else{hint.textContent="";} updatePurchaseTotals(); }; const populateUnits=()=>{ const opt=prodSel.selectedOptions[0]; const baseUnitId=opt?.dataset?.baseUnit||""; const unitsCarton=Number(opt?.dataset?.unitsCarton||0); unitSel.replaceChildren(); const firstU=document.createElement("option");firstU.value="";firstU.textContent="اختر الوحدة";unitSel.appendChild(firstU); if(baseUnitId){ const op=document.createElement("option");op.value=baseUnitId;op.textContent=unitName(baseUnitId);unitSel.appendChild(op); } if(unitsCarton>0&&cartonUnitId){ const op=document.createElement("option");op.value=String(cartonUnitId);op.textContent="كرتونة ("+unitsCarton+" "+unitName(baseUnitId)+")";unitSel.appendChild(op); } if(baseUnitId)unitSel.value=baseUnitId; recalc(); }; prodSel.addEventListener("change",()=>{ populateUnits(); }); unitSel.addEventListener("change",recalc); qty.addEventListener("input",recalc); price.addEventListener("input",recalc); populateUnits(); }
+function updatePurchaseTotals(){ let subtotal=0; document.querySelectorAll("#purchaseItems .item-row").forEach(row=>{ const q=Number(row.querySelector(".item-qty")?.value||0); const p=Number(row.querySelector(".item-price")?.value||0); subtotal+=q*p; }); const discount=Number($("purchaseDiscount").value||0); let total=subtotal-discount;if(total<0)total=0; $("purchaseSubtotal").textContent=fmt(subtotal); $("purchaseDiscountDisplay").textContent=fmt(discount); $("purchaseTotal").textContent=fmt(total); }
+$("purchaseDiscount").addEventListener("input",updatePurchaseTotals); $("addPurchaseItemBtn").addEventListener("click",()=>addPurchaseItemRow());
+async function loadPurchases(){ if(!canViewPurchases)return; clear($("purchasesMsg")); $("purchasesList").replaceChildren(); try{ const {data:sessionData,error:sessionError}=await db.auth.getSession(); if(sessionError)throw sessionError; if(!sessionData.session)throw new Error("انتهت جلسة الدخول."); const allowed=await permission("PURCHASES_VIEW"); if(!allowed){canViewPurchases=false;$("menuPurchases").classList.add("hidden");$("purchasesCard").classList.add("hidden");throw new Error("لا تملك صلاحية عرض المشتريات.");} const {data,error}=await db.from("purchase_invoices").select("purchase_invoice_id,invoice_number,supplier_id,location_id,invoice_date,subtotal,discount,net_total,status,created_at").order("purchase_invoice_id",{ascending:false}).limit(200); if(error)throw error; purchasesCache=data||[]; renderPurchases(); msg($("purchasesMsg"),"تم تحميل "+purchasesCache.length+" فاتورة.","success"); }catch(e){ msg($("purchasesMsg"),"تعذر تحميل الفواتير: "+err(e),"error"); const d=document.createElement("div");d.className="empty";d.textContent="راجع رسالة الخطأ أعلاه.";$("purchasesList").replaceChildren(d); } }
+function renderPurchases(){ const box=$("purchasesList");box.replaceChildren(); const q=$("purchasesSearch").value.trim().toLowerCase(); const found=purchasesCache.filter(inv=>{ const sn=supplierName(inv.supplier_id); return [inv.invoice_number,sn,String(inv.net_total)].some(v=>String(v||"").toLowerCase().includes(q)); }); if(!found.length){ const d=document.createElement("div");d.className="empty";d.textContent=q?"لا توجد فواتير مطابقة.":"لا توجد فواتير مسجلة بعد.";box.appendChild(d);return; } found.forEach(inv=>{ const card=document.createElement("div");card.className="product"; const title=document.createElement("div");title.className="pname";title.textContent="🛒 "+inv.invoice_number; const details=document.createElement("div");details.className="details";details.textContent="المورد: "+supplierName(inv.supplier_id)+" | التاريخ: "+new Date(inv.invoice_date).toLocaleDateString("ar-EG")+(inv.location_id?" | الموقع: "+locationName(inv.location_id):""); const total=document.createElement("span");total.className="badge";total.textContent="الإجمالي: "+fmt(inv.net_total); card.append(title,details,total); if(inv.discount&&Number(inv.discount)!==0){ const disc=document.createElement("span");disc.className="badge";disc.textContent="الخصم: "+fmt(inv.discount);card.appendChild(disc); } const status=document.createElement("span");status.className="badge"+(inv.status==="POSTED"?"":" badge-cancel");status.textContent=inv.status==="POSTED"?"مرحّلة":"ملغاة";card.appendChild(status); box.appendChild(card); }); }
+$("addPurchaseBtn").addEventListener("click",async()=>{ if(!canManagePurchases)return; if(!suppliersCache.length)await loadSuppliers(); if(!productsCache.length)await loadProducts(); if(!locationsCache.length)await loadLocations(); fillPurchaseSupplierSelect(); fillPurchaseLocationSelect(); resetPurchaseForm(); $("purchaseFormCard").classList.remove("hidden"); $("purchaseFormCard").scrollIntoView({behavior:"smooth",block:"start"}); });
+$("cancelPurchaseBtn").addEventListener("click",()=>{ $("purchaseFormCard").classList.add("hidden"); resetPurchaseForm(); }); $("refreshPurchasesBtn").addEventListener("click",loadPurchases); $("purchasesSearch").addEventListener("input",renderPurchases);
+$("purchaseForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("purchaseFormMsg")); if(!canManagePurchases){msg($("purchaseFormMsg"),"لا تملك صلاحية إنشاء فواتير.","error");return;} const supplierId=$("purchaseSupplier").value; const locationId=$("purchaseLocation").value; const date=$("purchaseDate").value; const discount=Number($("purchaseDiscount").value||0); const notes=$("purchaseNotes").value.trim(); if(!supplierId){msg($("purchaseFormMsg"),"اختر المورد.","error");return;} if(!locationId){msg($("purchaseFormMsg"),"اختر الموقع.","error");return;} if(!date){msg($("purchaseFormMsg"),"اختر تاريخ الفاتورة.","error");return;} if(isNaN(discount)||discount<0){msg($("purchaseFormMsg"),"الخصم لا يمكن أن يكون سالبًا.","error");return;} const items=[];let valid=true; document.querySelectorAll("#purchaseItems .item-row").forEach(row=>{ const prodSel=row.querySelector(".item-product"); const unitSel=row.querySelector(".item-unit"); const productId=prodSel?.value; const unitId=Number(unitSel?.value||0); const qty=Number(row.querySelector(".item-qty")?.value||0); const price=Number(row.querySelector(".item-price")?.value||0); if(!productId||!unitId||qty<=0){valid=false;return;} if(isNaN(price)||price<0){valid=false;return;} items.push({product_id:Number(productId),unit_id:unitId,quantity:qty,unit_price:price}); }); if(!items.length||!valid){ msg($("purchaseFormMsg"),"أكمل بيانات كل الأصناف.","error");return; } const button=$("savePurchaseBtn"); busy(button,true,"جارٍ الحفظ...","حفظ الفاتورة"); try{ const {data:invoiceId,error}=await db.rpc("create_purchase_invoice",{ p_supplier_id:Number(supplierId), p_location_id:Number(locationId), p_invoice_date:date, p_discount:discount, p_notes:notes||null, p_items:items }); if(error)throw error; msg($("purchaseFormMsg"),"تم حفظ الفاتورة بنجاح. رقم الفاتورة: "+invoiceId,"success"); resetPurchaseForm(); await loadPurchases(); if(canViewStock)await loadStock(); setTimeout(()=>{$("purchaseFormCard").classList.add("hidden");},1500); }catch(e){ msg($("purchaseFormMsg"),"تعذر حفظ الفاتورة: "+err(e),"error"); }finally{ busy(button,false,"","حفظ الفاتورة"); } });
+
+/* ============ التحصيلات ============ */
 function fillCollectionCustomerSelect(){ const el=$("collectionCustomer");if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر العميل";el.appendChild(first); customersCache.filter(c=>c.is_active).forEach(c=>{ const op=document.createElement("option");op.value=String(c.customer_id);op.textContent=c.customer_name+" ("+c.customer_code+")";el.appendChild(op); }); el.value=cur; }
 function fillCollectionInvoiceSelect(){ const el=$("collectionInvoice");if(!el)return; const cur=el.value; const custId=$("collectionCustomer").value; el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="بدون ربط بفاتورة";el.appendChild(first); if(custId){ salesCache.filter(inv=>String(inv.customer_id)===String(custId) && inv.status!=="CANCELLED" && Number(inv.remaining_amount||0)>0).forEach(inv=>{ const op=document.createElement("option");op.value=String(inv.sales_invoice_id);op.textContent=inv.invoice_number+" — متبقي: "+fmt(inv.remaining_amount);el.appendChild(op); }); } el.value=cur; }
 function resetCollectionForm(){ $("collectionForm").reset(); $("collectionDate").value=todayISO(); $("collectionPaymentMethod").value="CASH"; $("collectionInvoiceInfo").classList.add("hidden"); $("collectionInvoiceInfo").textContent=""; $("collectionFormCard").classList.add("hidden"); clear($("collectionFormMsg")); fillCollectionCustomerSelect(); fillCollectionInvoiceSelect(); }
@@ -772,6 +765,7 @@ $("collectionCustomer").addEventListener("change",()=>{ fillCollectionInvoiceSel
 function updateCollectionInvoiceInfo(){ const invId=$("collectionInvoice").value; const info=$("collectionInvoiceInfo"); if(!invId){ info.classList.add("hidden"); info.textContent=""; return; } const inv=salesCache.find(x=>String(x.sales_invoice_id)===String(invId)); if(!inv){info.classList.add("hidden");return;} info.textContent="إجمالي الفاتورة: "+fmt(inv.net_total)+" | مدفوع: "+fmt(inv.paid_amount)+" | متبقي: "+fmt(inv.remaining_amount); info.classList.remove("hidden"); }
 $("collectionForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("collectionFormMsg")); if(!canManageCollections){msg($("collectionFormMsg"),"لا تملك صلاحية تسجيل التحصيلات.","error");return;} const customerId=$("collectionCustomer").value; const invoiceId=$("collectionInvoice").value; const amount=Number($("collectionAmount").value||0); const paymentMethod=$("collectionPaymentMethod").value; const date=$("collectionDate").value; const notes=$("collectionNotes").value.trim(); if(!customerId){msg($("collectionFormMsg"),"اختر العميل.","error");return;} if(!date){msg($("collectionFormMsg"),"اختر تاريخ التحصيل.","error");return;} if(isNaN(amount)||amount<=0){msg($("collectionFormMsg"),"المبلغ يجب أن يكون أكبر من صفر.","error");return;} const button=$("saveCollectionBtn"); busy(button,true,"جارٍ الحفظ...","حفظ التحصيل"); try{ const {data:collectionId,error}=await db.rpc("create_collection",{ p_customer_id:Number(customerId), p_sales_invoice_id:invoiceId?Number(invoiceId):null, p_amount:amount, p_payment_method:paymentMethod, p_collection_date:date, p_notes:notes||null }); if(error)throw error; msg($("collectionFormMsg"),"تم تسجيل التحصيل بنجاح. رقم التحصيل: "+collectionId,"success"); resetCollectionForm(); await loadCollections(); await loadSales(); setTimeout(()=>{$("collectionFormCard").classList.add("hidden");},1500); }catch(e){ msg($("collectionFormMsg"),"تعذر تسجيل التحصيل: "+err(e),"error"); }finally{ busy(button,false,"","حفظ التحصيل"); } });
 
+/* ============ إدارة المنتجات ============ */
 async function loadProducts(){ clear($("listMsg")); $("products").replaceChildren(); try{ const {data:s,error:se}=await db.auth.getSession(); if(se)throw se; if(!s.session){showLogin();msg($("loginMsg"),"انتهت جلسة الدخول.","error");return;} if(!await permission("PRODUCTS_VIEW"))throw new Error("هذا الحساب لا يمتلك صلاحية عرض المنتجات."); const {data,error}=await db.from("products").select("product_id,product_code,barcode,product_name,category_id,product_type,base_unit_id,sales_unit_id,purchase_unit_id,unit_weight_kg,units_per_carton,carton_weight_kg,can_be_purchased,can_be_produced,can_be_sold,can_be_loaded,can_be_reserved,has_recipe,minimum_stock,target_stock,maximum_stock,min_selling_price,target_selling_price,max_selling_price,is_active,notes").order("product_id").limit(200); if(error)throw error; productsCache=data||[]; renderProducts(); msg($("listMsg"),"تم تحميل "+productsCache.length+" منتج.","success"); fillStockFormSelects(); }catch(e){ msg($("listMsg"),"تعذر تحميل المنتجات: "+err(e),"error"); const d=document.createElement("div");d.className="empty";d.textContent="راجع رسالة الخطأ أعلاه.";$("products").replaceChildren(d); } }
 function renderProducts(){ const box=$("products");box.replaceChildren(); const q=$("search").value.trim().toLowerCase(); const found=productsCache.filter(p=> [p.product_name,p.product_code,p.barcode].some(v=>String(v||"").toLowerCase().includes(q)) ); if(!found.length){ const d=document.createElement("div");d.className="empty";d.textContent=q?"لا توجد نتائج مطابقة.":"لا توجد منتجات متاحة.";box.appendChild(d);return; } found.forEach(p=>{ const card=document.createElement("article");card.className="product"; const name=document.createElement("div");name.className="pname";name.textContent=p.product_name; const details=document.createElement("div");details.className="details";details.textContent="الكود: "+p.product_code+" | النوع: "+typeName(p.product_type)+" | التصنيف: "+catName(p.category_id)+" | الوحدة: "+unitName(p.base_unit_id); const b=document.createElement("span");b.className="badge"+(p.is_active?"":" off");b.textContent=p.is_active?"نشط":"غير نشط"; const id=document.createElement("span");id.className="badge";id.textContent="رقم المنتج: "+p.product_id; card.append(name,details,b,id); if(canManage){ const actions=document.createElement("div");actions.className="actions"; const edit=document.createElement("button");edit.type="button";edit.className="btn secondary";edit.textContent="تعديل البيانات";edit.onclick=()=>openForm(p); const toggle=document.createElement("button");toggle.type="button";toggle.className="btn "+(p.is_active?"danger":"secondary");toggle.textContent=p.is_active?"إيقاف المنتج":"تفعيل المنتج";toggle.onclick=()=>toggleActive(p); actions.append(edit,toggle);card.appendChild(actions); } box.appendChild(card); }); }
 function val(id,v){$(id).value=v==null?"":String(v);} function check(id,v){$(id).checked=v===true;}
@@ -782,15 +776,16 @@ function validate(p){ if(!p.product_name||!p.product_code||!p.category_id||!p.ba
 $("productForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("formMsg")); if(!canManage)return; const p={ product_name:$("pname").value.trim(), product_code:$("pcode").value.trim(), barcode:$("barcode").value.trim()||null, product_type:$("ptype").value, category_id:Number($("category").value), base_unit_id:Number($("baseUnit").value), purchase_unit_id:$("purchaseUnit").value?Number($("purchaseUnit").value):null, sales_unit_id:$("salesUnit").value?Number($("salesUnit").value):null, unit_weight_kg:num("weight"), units_per_carton:num("unitsCarton"), carton_weight_kg:num("cartonWeight"), minimum_stock:Number($("minStock").value||0), target_stock:Number($("targetStock").value||0), maximum_stock:num("maxStock"), min_selling_price:num("minPrice"), target_selling_price:num("targetPrice"), max_selling_price:num("maxPrice"), can_be_purchased:$("canPurchase").checked, can_be_produced:$("canProduce").checked, can_be_sold:$("canSell").checked, can_be_loaded:$("canLoad").checked, can_be_reserved:$("canReserve").checked, has_recipe:$("hasRecipe").checked, is_active:$("active").checked, notes:$("notes").value.trim()||null, updated_at:new Date().toISOString() }; try{ validate(p); if(!await permission("PRODUCTS_MANAGE"))throw Error("لا تملك صلاحية إدارة المنتجات."); const id=$("editId").value; busy($("saveBtn"),true,"جارٍ الحفظ...",id?"حفظ التعديلات":"حفظ المنتج"); let result; if(id){ result=await db.from("products").update(p).eq("product_id",Number(id)).select("product_id").single(); } else{ const {data:s,error:se}=await db.auth.getSession(); if(se)throw se; if(!s.session)throw Error("انتهت جلسة الدخول."); p.created_by=s.session.user.id; result=await db.from("products").insert(p).select("product_id").single(); } if(result.error)throw result.error; msg($("formMsg"),id?"تم حفظ تعديلات المنتج.":"تمت إضافة المنتج بنجاح.","success"); await loadProducts(); setTimeout(()=>{$("formCard").classList.add("hidden");resetForm();},1000); }catch(e){ msg($("formMsg"),"لم يتم الحفظ: "+err(e),"error"); }finally{ busy($("saveBtn"),false,"",$("editId").value?"حفظ التعديلات":"حفظ المنتج"); } });
 async function toggleActive(p){ if(!canManage)return; if(!confirm("هل تريد "+(p.is_active?"إيقاف":"تفعيل")+" المنتج «"+p.product_name+"»؟"))return; try{ if(!await permission("PRODUCTS_MANAGE"))throw Error("لا توجد صلاحية."); const {error}=await db.from("products").update({is_active:!p.is_active,updated_at:new Date().toISOString()}).eq("product_id",p.product_id); if(error)throw error; msg($("listMsg"),"تم تغيير حالة المنتج بنجاح.","success"); await loadProducts(); }catch(e){ msg($("listMsg"),"تعذر تغيير الحالة: "+err(e),"error"); } }
 
-$("loginForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("loginMsg")); const loginValue=$("email").value.trim(); const password=$("password").value; busy($("loginBtn"),true,"جارٍ تسجيل الدخول...","تسجيل الدخول"); try{ let user; if(loginValue.includes("@")){ const {data,error}=await db.auth.signInWithPassword({email:loginValue,password}); if(error)throw error; user=data.user; } else{ const response=await fetch(USERNAME_LOGIN_URL,{ method:"POST", headers:{"Content-Type":"application/json","apikey":KEY}, body:JSON.stringify({username:loginValue,password}) }); let result={}; try{result=await response.json();}catch(_){} if(!response.ok||result.success!==true||!result.session)throw new Error(result.error||"تعذر تسجيل الدخول باسم المستخدم."); const {data,error}=await db.auth.setSession({ access_token:result.session.access_token, refresh_token:result.session.refresh_token }); if(error)throw error; user=data.user; } if(!user)throw new Error("لم يتم استرجاع بيانات المستخدم."); showApp(); await userInfo(user); await loadLookups(); await loadProducts(); if(canViewLocations)await loadLocations(); fillLocationsFilter(); if(canViewStock)await loadStock(); if(canViewCustomers)await loadCustomers(); if(canViewSales)await loadSales(); if(canViewCollections)await loadCollections(); }catch(e){ msg($("loginMsg"),"تعذر تسجيل الدخول أو تجهيز البيانات: "+err(e),"error"); }finally{ busy($("loginBtn"),false,"","تسجيل الدخول"); } });
+/* ============ Auth & Init ============ */
+$("loginForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("loginMsg")); const loginValue=$("email").value.trim(); const password=$("password").value; busy($("loginBtn"),true,"جارٍ تسجيل الدخول...","تسجيل الدخول"); try{ let user; if(loginValue.includes("@")){ const {data,error}=await db.auth.signInWithPassword({email:loginValue,password}); if(error)throw error; user=data.user; } else{ const response=await fetch(USERNAME_LOGIN_URL,{ method:"POST", headers:{"Content-Type":"application/json","apikey":KEY}, body:JSON.stringify({username:loginValue,password}) }); let result={}; try{result=await response.json();}catch(_){} if(!response.ok||result.success!==true||!result.session)throw new Error(result.error||"تعذر تسجيل الدخول باسم المستخدم."); const {data,error}=await db.auth.setSession({ access_token:result.session.access_token, refresh_token:result.session.refresh_token }); if(error)throw error; user=data.user; } if(!user)throw new Error("لم يتم استرجاع بيانات المستخدم."); showApp(); await userInfo(user); await loadLookups(); await loadProducts(); if(canViewLocations)await loadLocations(); fillLocationsFilter(); if(canViewStock)await loadStock(); if(canViewCustomers)await loadCustomers(); if(canViewSales)await loadSales(); if(canViewCollections)await loadCollections(); if(canViewSuppliers)await loadSuppliers(); if(canViewPurchases)await loadPurchases(); }catch(e){ msg($("loginMsg"),"تعذر تسجيل الدخول أو تجهيز البيانات: "+err(e),"error"); }finally{ busy($("loginBtn"),false,"","تسجيل الدخول"); } });
 $("forgotBtn").onclick=()=>{ hideSections(); $("recovery").classList.remove("hidden"); const loginValue=$("email").value.trim(); $("recoveryEmail").value=loginValue.includes("@")?loginValue:""; clear($("recoveryMsg")); }; $("backBtn").onclick=showLogin;
 $("recoveryForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("recoveryMsg")); busy($("recoveryBtn"),true,"جارٍ إرسال الرابط...","إرسال رابط الاستعادة"); try{ const {error}=await db.auth.resetPasswordForEmail($("recoveryEmail").value.trim(),{redirectTo:APP_URL}); if(error)throw error; msg($("recoveryMsg"),"إذا كان البريد مسجلًا، فستصلك رسالة استعادة.","success"); }catch(e){ msg($("recoveryMsg"),"تعذر إرسال الرسالة: "+err(e),"error"); }finally{ busy($("recoveryBtn"),false,"","إرسال رابط الاستعادة"); } });
 $("newPassForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("newPassMsg")); const p=$("newPassword").value; if(p.length<8){msg($("newPassMsg"),"كلمة المرور يجب أن تكون 8 أحرف على الأقل.","error");return;} if(p!==$("confirmPassword").value){msg($("newPassMsg"),"كلمتا المرور غير متطابقتين.","error");return;} busy($("savePassBtn"),true,"جارٍ الحفظ...","حفظ كلمة المرور الجديدة"); try{ const {data,error:se}=await db.auth.getSession(); if(se)throw se; if(!data.session)throw Error("جلسة الاستعادة غير موجودة."); const {error}=await db.auth.updateUser({password:p}); if(error)throw error; recoveryMode=false; await db.auth.signOut(); showLogin(); msg($("loginMsg"),"تم تغيير كلمة المرور بنجاح.","success"); }catch(e){ msg($("newPassMsg"),"تعذر تغيير كلمة المرور: "+err(e),"error"); }finally{ busy($("savePassBtn"),false,"","حفظ كلمة المرور الجديدة"); } });
 $("addBtn").onclick=()=>openForm(); $("cancelBtn").onclick=()=>{ $("formCard").classList.add("hidden"); resetForm(); }; $("refreshBtn").onclick=loadProducts; $("search").addEventListener("input",renderProducts);
-$("logoutBtn").onclick=async()=>{ const {error}=await db.auth.signOut(); if(error){msg($("listMsg"),"تعذر تسجيل الخروج: "+err(error),"error");return;} canManage=false;isSystemAdmin=false; canViewLocations=false;canManageLocations=false; canViewStock=false;canManageStock=false; canViewCustomers=false;canManageCustomers=false; canViewSales=false;canManageSales=false; canViewCollections=false;canManageCollections=false; locationsCache=[];stockCache=[];customersCache=[];salesCache=[];collectionsCache=[]; $("password").value=""; $("userManagementCard").classList.add("hidden"); $("locationsCard").classList.add("hidden"); $("stockCard").classList.add("hidden"); $("customersCard").classList.add("hidden"); $("salesCard").classList.add("hidden"); $("collectionsCard").classList.add("hidden"); showLogin(); msg($("loginMsg"),"تم تسجيل الخروج.","success"); };
+$("logoutBtn").onclick=async()=>{ const {error}=await db.auth.signOut(); if(error){msg($("listMsg"),"تعذر تسجيل الخروج: "+err(error),"error");return;} canManage=false;isSystemAdmin=false; canViewLocations=false;canManageLocations=false; canViewStock=false;canManageStock=false; canViewCustomers=false;canManageCustomers=false; canViewSales=false;canManageSales=false; canViewCollections=false;canManageCollections=false; canViewSuppliers=false;canManageSuppliers=false; canViewPurchases=false;canManagePurchases=false; locationsCache=[];stockCache=[];customersCache=[];salesCache=[];collectionsCache=[];suppliersCache=[];purchasesCache=[]; $("password").value=""; document.querySelectorAll(".card").forEach(c=>c.classList.add("hidden")); showLogin(); msg($("loginMsg"),"تم تسجيل الخروج.","success"); };
 document.querySelectorAll(".navbtn").forEach(b=>{ b.onclick=()=>page(b.dataset.page); });
-db.auth.onAuthStateChange(event=>{ if(event==="PASSWORD_RECOVERY"){ recoveryMode=true; hideSections(); $("newPass").classList.remove("hidden"); } if(event==="SIGNED_OUT"&&!recoveryMode){ canManage=false;isSystemAdmin=false; canViewLocations=false;canManageLocations=false; canViewStock=false;canManageStock=false; canViewCustomers=false;canManageCustomers=false; canViewSales=false;canManageSales=false; canViewCollections=false;canManageCollections=false; locationsCache=[];stockCache=[];customersCache=[];salesCache=[];collectionsCache=[]; $("userManagementCard").classList.add("hidden"); $("locationsCard").classList.add("hidden"); $("stockCard").classList.add("hidden"); $("customersCard").classList.add("hidden"); $("salesCard").classList.add("hidden"); $("collectionsCard").classList.add("hidden"); showLogin(); } });
-async function init(){ try{ const params=new URLSearchParams(location.search); const hash=location.hash; if(params.has("error")||params.has("error_description")||hash.includes("error=")){ showLogin(); msg($("loginMsg"),"رابط الاستعادة قد يكون منتهي الصلاحية.","error"); return; } const {data,error}=await db.auth.getSession(); if(error)throw error; if(data.session){ showApp(); await userInfo(data.session.user); await loadLookups(); await loadProducts(); if(canViewLocations)await loadLocations(); fillLocationsFilter(); if(canViewStock)await loadStock(); if(canViewCustomers)await loadCustomers(); if(canViewSales)await loadSales(); if(canViewCollections)await loadCollections(); } else{ showLogin(); } }catch(e){ showLogin(); msg($("loginMsg"),"تعذر التحقق من الجلسة: "+err(e),"error"); } }
+db.auth.onAuthStateChange(event=>{ if(event==="PASSWORD_RECOVERY"){ recoveryMode=true; hideSections(); $("newPass").classList.remove("hidden"); } if(event==="SIGNED_OUT"&&!recoveryMode){ canManage=false;isSystemAdmin=false; canViewLocations=false;canManageLocations=false; canViewStock=false;canManageStock=false; canViewCustomers=false;canManageCustomers=false; canViewSales=false;canManageSales=false; canViewCollections=false;canManageCollections=false; canViewSuppliers=false;canManageSuppliers=false; canViewPurchases=false;canManagePurchases=false; locationsCache=[];stockCache=[];customersCache=[];salesCache=[];collectionsCache=[];suppliersCache=[];purchasesCache=[]; document.querySelectorAll(".card").forEach(c=>c.classList.add("hidden")); showLogin(); } });
+async function init(){ try{ const params=new URLSearchParams(location.search); const hash=location.hash; if(params.has("error")||params.has("error_description")||hash.includes("error=")){ showLogin(); msg($("loginMsg"),"رابط الاستعادة قد يكون منتهي الصلاحية.","error"); return; } const {data,error}=await db.auth.getSession(); if(error)throw error; if(data.session){ showApp(); await userInfo(data.session.user); await loadLookups(); await loadProducts(); if(canViewLocations)await loadLocations(); fillLocationsFilter(); if(canViewStock)await loadStock(); if(canViewCustomers)await loadCustomers(); if(canViewSales)await loadSales(); if(canViewCollections)await loadCollections(); if(canViewSuppliers)await loadSuppliers(); if(canViewPurchases)await loadPurchases(); } else{ showLogin(); } }catch(e){ showLogin(); msg($("loginMsg"),"تعذر التحقق من الجلسة: "+err(e),"error"); } }
 init();
 })();
 </script>
