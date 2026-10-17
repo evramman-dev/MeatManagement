@@ -64,14 +64,12 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 .total-box .grand{font-weight:bold;font-size:17px;border-top:1px solid #c9d5c9;margin-top:6px;padding-top:8px;color:var(--g)}
 .invoice-info{background:#f9fbf9;border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:8px;font-size:13px;line-height:1.9}
 
-/* Dashboard Icons */
 .dashboard-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(100px, 1fr));gap:12px;margin-top:10px;}
 .dash-item{display:flex;flex-direction:column;align-items:center;justify-content:center;background:white;border:1px solid var(--line);border-radius:14px;padding:16px 10px;cursor:pointer;box-shadow:0 2px 8px #142d1905;transition:transform .1s;}
 .dash-item:active{transform:scale(0.95);}
 .dash-icon{font-size:28px;margin-bottom:8px;}
 .dash-title{font-size:13px;font-weight:bold;color:var(--g);text-align:center;}
 
-/* Modal Styles */
 .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;}
 .modal-content{background:white;border-radius:16px;width:100%;max-width:650px;max-height:90vh;overflow-y:auto;position:relative;box-shadow:0 5px 20px rgba(0,0,0,0.2);}
 .modal-header{background:var(--g);color:white;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;border-radius:16px 16px 0 0;position:sticky;top:0;z-index:10;}
@@ -170,10 +168,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
       <div class="dash-item hidden" id="menuStock" onclick="window.openSection('stock')"><div class="dash-icon">📊</div><div class="dash-title">أرصدة المخزون</div></div>
       <div class="dash-item hidden" id="menuRecipes" onclick="window.openSection('recipes')"><div class="dash-icon">📝</div><div class="dash-title">الوصفات</div></div>
       <div class="dash-item hidden" id="menuProduction" onclick="window.openSection('production')"><div class="dash-icon">🏭</div><div class="dash-title">أوامر التشغيل</div></div>
-      
-      <!-- Trips Icon -->
       <div class="dash-item hidden" id="menuTrips" onclick="window.openSection('trips')"><div class="dash-icon">🚐</div><div class="dash-title">الجولات والتوزيع</div></div>
-
       <div class="dash-item hidden" id="menuCustomers" onclick="window.openSection('customers')"><div class="dash-icon">👥</div><div class="dash-title">العملاء</div></div>
       <div class="dash-item hidden" id="menuSales" onclick="window.openSection('sales')"><div class="dash-icon">🧾</div><div class="dash-title">فواتير البيع</div></div>
       <div class="dash-item hidden" id="menuCollections" onclick="window.openSection('collections')"><div class="dash-icon">💰</div><div class="dash-title">التحصيلات</div></div>
@@ -183,7 +178,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     </div>
   </div>
 
-  <!-- Users Section -->
   <div id="sectionUsers" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="userManagementCard" class="card hidden">
@@ -200,7 +194,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     </div>
   </div>
 
-  <!-- Locations Section -->
   <div id="sectionLocations" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="locationsCard" class="card hidden">
@@ -226,7 +219,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     </div>
   </div>
 
-  <!-- Stock Section -->
   <div id="sectionStock" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="stockCard" class="card hidden">
@@ -250,7 +242,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     </div>
   </div>
 
-  <!-- Recipes Section -->
   <div id="sectionRecipes" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="recipesCard" class="card hidden">
@@ -285,7 +276,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     </div>
   </div>
 
-  <!-- Production Orders Section -->
   <div id="sectionProduction" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="productionCard" class="card hidden">
@@ -322,7 +312,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     </div>
   </div>
 
-  <!-- Trips Section -->
   <div id="sectionTrips" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="tripsCard" class="card hidden">
@@ -338,6 +327,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
           <div class="grid">
             <div><label for="tripRepName">اسم المندوب *</label><input id="tripRepName" placeholder="مثال: محمد أحمد" required></div>
             <div><label for="tripVehicle">السيارة *</label><select id="tripVehicle" required><option value="">اختر السيارة</option></select></div>
+            <div><label for="tripDate">تاريخ الجولة *</label><input id="tripDate" type="date" required></div>
           </div>
           <label for="tripNotes">ملاحظات</label><textarea id="tripNotes" rows="2"></textarea>
 
@@ -349,7 +339,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     </div>
   </div>
 
-  <!-- Customers Section -->
   <div id="sectionCustomers" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="customersCard" class="card hidden">
@@ -381,7 +370,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     </div>
   </div>
 
-  <!-- Suppliers Section -->
   <div id="sectionSuppliers" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="suppliersCard" class="card hidden">
@@ -409,7 +397,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     </div>
   </div>
 
-  <!-- Sales Section -->
   <div id="sectionSales" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="salesCard" class="card hidden">
@@ -444,7 +431,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     </div>
   </div>
 
-  <!-- Purchases Section -->
   <div id="sectionPurchases" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="purchasesCard" class="card hidden">
@@ -478,7 +464,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     </div>
   </div>
 
-  <!-- Collections Section -->
   <div id="sectionCollections" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="collectionsCard" class="card hidden">
@@ -508,7 +493,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     </div>
   </div>
 
-  <!-- Products Section -->
   <div id="sectionProducts" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div class="card">
@@ -558,7 +542,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
   </div>
 
 </section>
-
 <p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا.</p>
 </main>
 
@@ -877,8 +860,7 @@ $("addSupplierBtn").addEventListener("click",()=>{ if(!canManageSuppliers)return
 $("cancelSupplierBtn").addEventListener("click",resetSupplierForm); $("refreshSuppliersBtn").addEventListener("click",loadSuppliers); $("supplierSearch").addEventListener("input",renderSuppliers);
 $("supplierForm").addEventListener("submit",async event=>{ event.preventDefault(); clear($("supplierFormMsg")); if(!canManageSuppliers)return; const id=$("supplierEditId").value; const code=$("supplierCode").value.trim(); const name=$("supplierName").value.trim(); const phone=$("supplierPhone").value.trim(); const address=$("supplierAddress").value.trim(); const notes=$("supplierNotes").value.trim(); const active=$("supplierActive").checked; if(!code||!name){ msg($("supplierFormMsg"),"أكمل كود المورد والاسم.","error");return; } const button=$("saveSupplierBtn"); busy(button,true,"جارٍ الحفظ...",id?"حفظ التعديلات":"حفظ المورد"); try{ if(!await permission("SUPPLIERS_MANAGE"))throw new Error("لا تملك صلاحية إدارة الموردين."); const payload={ supplier_code:code,supplier_name:name,phone:phone||null,address:address||null,is_active:active,notes:notes||null,updated_at:new Date().toISOString() }; let result; if(id){ result=await db.from("suppliers").update(payload).eq("supplier_id",Number(id)).select("supplier_id"); } else{ result=await db.from("suppliers").insert(payload).select("supplier_id"); } if(result.error)throw result.error; if(!result.data||result.data.length!==1)throw new Error("لم يتم تأكيد حفظ سجل واحد."); msg($("suppliersMsg"),id?"تم تأكيد تعديل المورد.":"تم تأكيد إضافة المورد.","success"); resetSupplierForm(); await loadSuppliers(); }catch(e){ msg($("supplierFormMsg"),"تعذر تأكيد حفظ المورد. "+err(e),"error"); }finally{ busy(button,false,"","حفظ المورد"); $("saveSupplierBtn").textContent=$("supplierEditId").value?"حفظ التعديلات":"حفظ المورد"; } });
 async function toggleSupplier(c){ if(!canManageSuppliers)return; const action=c.is_active?"إيقاف":"تفعيل"; if(!confirm("هل تريد "+action+" المورد: "+c.supplier_name+"؟"))return; try{ if(!await permission("SUPPLIERS_MANAGE"))throw new Error("لا تملك صلاحية إدارة الموردين."); const {data,error}=await db.from("suppliers").update({is_active:!c.is_active,updated_at:new Date().toISOString()}).eq("supplier_id",c.supplier_id).select("supplier_id"); if(error)throw error; if(!data||data.length!==1)throw new Error("لم يتم تأكيد تغيير الحالة."); msg($("suppliersMsg"),"تم تأكيد تغيير حالة المورد.","success"); await loadSuppliers(); }catch(e){ msg($("suppliersMsg"),"تعذر تأكيد تغيير الحالة: "+err(e),"error"); } }
-
-/* ============ فواتير البيع ============ */
+  /* ============ فواتير البيع ============ */
 function paymentTypeName(v){ return({CASH:"نقدي",CREDIT:"آجل",BANK_TRANSFER:"تحويل بنكي",CHEQUE:"شيك",MIXED:"مختلط"})[v]||v||"غير محدد"; }
 function invoiceStatusName(v){ return({POSTED:"مرحّلة",PAID:"مدفوعة",PARTIAL:"جزئية",CANCELLED:"ملغاة",DRAFT:"مسودة"})[v]||v||"—"; }
 function fillInvoiceCustomerSelect(){ const el=$("invoiceCustomer");const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر العميل";el.appendChild(first); customersCache.filter(c=>c.is_active).forEach(c=>{ const op=document.createElement("option");op.value=String(c.customer_id);op.textContent=c.customer_name+" ("+c.customer_code+")";el.appendChild(op); }); el.value=cur; }
@@ -931,7 +913,6 @@ function num(id){ const v=$(id).value.trim(); return v===""?null:Number(v); }
 function validate(p){ if(!p.product_name||!p.product_code||!p.category_id||!p.base_unit_id){ throw Error("أكمل اسم المنتج والكود والتصنيف والوحدة الأساسية."); } if(p.minimum_stock<0||p.target_stock<0||(p.maximum_stock!==null&&p.maximum_stock<0)){ throw Error("قيم المخزون لا يمكن أن تكون سالبة."); } if(p.maximum_stock!==null&&p.minimum_stock>p.maximum_stock){ throw Error("الحد الأدنى للمخزون لا يمكن أن يتجاوز الحد الأقصى."); } if(p.target_stock<p.minimum_stock||(p.maximum_stock!==null&&p.target_stock>p.maximum_stock)){ throw Error("المخزون المستهدف يجب أن يكون بين الحد الأدنى والحد الأقصى."); } const a=[p.min_selling_price,p.target_selling_price,p.max_selling_price]; if(a.some(x=>x!==null&&x<0))throw Error("أسعار البيع لا يمكن أن تكون سالبة."); }
 $("productForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("formMsg")); if(!canManage)return; const p={ product_name:$("pname").value.trim(), product_code:$("pcode").value.trim(), barcode:$("barcode").value.trim()||null, product_type:$("ptype").value, category_id:Number($("category").value), base_unit_id:Number($("baseUnit").value), purchase_unit_id:$("purchaseUnit").value?Number($("purchaseUnit").value):null, sales_unit_id:$("salesUnit").value?Number($("salesUnit").value):null, unit_weight_kg:num("weight"), units_per_carton:num("unitsCarton"), carton_weight_kg:num("cartonWeight"), minimum_stock:Number($("minStock").value||0), target_stock:Number($("targetStock").value||0), maximum_stock:num("maxStock"), min_selling_price:num("minPrice"), target_selling_price:num("targetPrice"), max_selling_price:num("maxPrice"), can_be_purchased:$("canPurchase").checked, can_be_produced:$("canProduce").checked, can_be_sold:$("canSell").checked, can_be_loaded:$("canLoad").checked, can_be_reserved:$("canReserve").checked, has_recipe:$("hasRecipe").checked, is_active:$("active").checked, notes:$("notes").value.trim()||null, updated_at:new Date().toISOString() }; try{ validate(p); if(!await permission("PRODUCTS_MANAGE"))throw Error("لا تملك صلاحية إدارة المنتجات."); const id=$("editId").value; busy($("saveBtn"),true,"جارٍ الحفظ...",id?"حفظ التعديلات":"حفظ المنتج"); let result; if(id){ result=await db.from("products").update(p).eq("product_id",Number(id)).select("product_id").single(); } else{ const {data:s,error:se}=await db.auth.getSession(); if(se)throw se; if(!s.session)throw Error("انتهت جلسة الدخول."); p.created_by=s.session.user.id; result=await db.from("products").insert(p).select("product_id").single(); } if(result.error)throw result.error; msg($("formMsg"),id?"تم حفظ تعديلات المنتج.":"تمت إضافة المنتج بنجاح.","success"); await loadProducts(); setTimeout(()=>{$("formCard").classList.add("hidden");resetForm();},1000); }catch(e){ msg($("formMsg"),"لم يتم الحفظ: "+err(e),"error"); }finally{ busy($("saveBtn"),false,"",$("editId").value?"حفظ التعديلات":"حفظ المنتج"); } });
 async function toggleActive(p){ if(!canManage)return; if(!confirm("هل تريد "+(p.is_active?"إيقاف":"تفعيل")+" المنتج «"+p.product_name+"»؟"))return; try{ if(!await permission("PRODUCTS_MANAGE"))throw Error("لا توجد صلاحية."); const {error}=await db.from("products").update({is_active:!p.is_active,updated_at:new Date().toISOString()}).eq("product_id",p.product_id); if(error)throw error; msg($("listMsg"),"تم تغيير حالة المنتج بنجاح.","success"); await loadProducts(); }catch(e){ msg($("listMsg"),"تعذر تغيير الحالة: "+err(e),"error"); } }
-
 /* ============ إدارة الوصفات ============ */
 function resetRecipeForm(){ $("recipeForm").reset(); $("recipeEditId").value=""; $("recipeActive").checked=true; $("recipeFormTitle").textContent="إضافة وصفة جديدة"; $("saveRecipeBtn").textContent="حفظ الوصفة"; $("recipeItems").replaceChildren(); recipeItemCounter=0; addRecipeItemRow(); $("recipeFormCard").classList.add("hidden"); clear($("recipeFormMsg")); }
 async function loadRecipes(){ if(!canViewRecipes)return; clear($("recipesMsg")); $("recipesList").replaceChildren(); try{ const {data:sessionData,error:sessionError}=await db.auth.getSession(); if(sessionError)throw sessionError; if(!sessionData.session)throw new Error("انتهت جلسة الدخول."); const allowed=await permission("RECIPES_VIEW"); if(!allowed){canViewRecipes=false;$("menuRecipes").classList.add("hidden");$("recipesCard").classList.add("hidden");throw new Error("لا تملك صلاحية عرض الوصفات.");} const {data,error}=await db.from("recipes").select("recipe_id,recipe_name,product_id,output_quantity,unit_id,is_active").order("recipe_id").limit(200); if(error)throw error; recipesCache=data||[]; renderRecipes(); msg($("recipesMsg"),"تم تحميل "+recipesCache.length+" وصفة.","success"); }catch(e){ msg($("recipesMsg"),"تعذر تحميل الوصفات: "+err(e),"error"); const d=document.createElement("div");d.className="empty";d.textContent="راجع رسالة الخطأ أعلاه.";$("recipesList").replaceChildren(d); } }
@@ -1288,6 +1269,7 @@ function fillLoadProductSelect(){
 
 function resetTripForm(){
   $("tripForm").reset();
+  $("tripDate").value = todayISO();
   $("tripFormCard").classList.add("hidden");
   clear($("tripFormMsg"));
 }
@@ -1416,6 +1398,7 @@ $("tripForm").addEventListener("submit", async e=>{
       trip_number: tripNumber,
       sales_rep_id: repId,
       vehicle_location_id: Number(vehicleLoc),
+      start_date: $("tripDate").value,
       notes: notes || null,
       status: 'DRAFT'
     });
@@ -1489,7 +1472,6 @@ async function settleTrip(trip) {
   if(!canManageTrips) return;
   if(!confirm("هل أنت متأكد من تسوية الجولة " + trip.trip_number + "؟\nسيتم إرجاع البضاعة المتبقية للثلاجة وإغلاق الجولة.")) return;
 
-  // We need a target warehouse to return stock. Let's use the main warehouse (or first active non-vehicle location).
   const targetLoc = locationsCache.find(l => l.location_type === 'MAIN_WAREHOUSE' || l.location_type === 'FRIDGE');
   if(!targetLoc) {
      alert("لا يوجد مخزن رئيسي أو ثلاجة لإرجاع البضاعة إليها.");
