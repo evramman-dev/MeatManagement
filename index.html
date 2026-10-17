@@ -168,6 +168,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
       <div class="dash-item hidden" id="menuProducts" onclick="window.openSection('products')"><div class="dash-icon">📦</div><div class="dash-title">المنتجات</div></div>
       <div class="dash-item hidden" id="menuLocations" onclick="window.openSection('locations')"><div class="dash-icon">🏭</div><div class="dash-title">المواقع والمخازن</div></div>
       <div class="dash-item hidden" id="menuStock" onclick="window.openSection('stock')"><div class="dash-icon">📊</div><div class="dash-title">أرصدة المخزون</div></div>
+      <div class="dash-item hidden" id="menuRecipes" onclick="window.openSection('recipes')"><div class="dash-icon">📝</div><div class="dash-title">الوصفات</div></div>
       <div class="dash-item hidden" id="menuCustomers" onclick="window.openSection('customers')"><div class="dash-icon">👥</div><div class="dash-title">العملاء</div></div>
       <div class="dash-item hidden" id="menuSales" onclick="window.openSection('sales')"><div class="dash-icon">🧾</div><div class="dash-title">فواتير البيع</div></div>
       <div class="dash-item hidden" id="menuCollections" onclick="window.openSection('collections')"><div class="dash-icon">💰</div><div class="dash-title">التحصيلات</div></div>
@@ -239,6 +240,41 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
           <label for="stockNotes">ملاحظات</label><textarea id="stockNotes" rows="2"></textarea>
           <button id="saveStockBtn" class="btn" type="submit">حفظ</button><button id="cancelStockBtn" class="btn secondary" type="button">إلغاء</button>
           <div id="stockFormMsg" class="status hidden"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recipes Section -->
+  <div id="sectionRecipes" class="sub-section hidden">
+    <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
+    <div id="recipesCard" class="card hidden">
+      <div class="row" style="justify-content:space-between"><h2>📝 إدارة الوصفات</h2><button id="addRecipeBtn" class="btn hidden" type="button">＋ إضافة وصفة</button></div>
+      <div class="row"><input id="recipeSearch" type="search" placeholder="ابحث باسم الوصفة أو المنتج..."><button id="refreshRecipesBtn" class="btn secondary" type="button">تحديث</button></div>
+      <div id="recipesMsg" class="status hidden"></div>
+      <div id="recipesList"><div class="empty">جارٍ تحميل الوصفات...</div></div>
+      
+      <div id="recipeFormCard" class="hidden">
+        <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+        <h2 id="recipeFormTitle">إضافة وصفة جديدة</h2>
+        <form id="recipeForm">
+          <input id="recipeEditId" type="hidden">
+          <div class="grid">
+            <div><label for="recipeName">اسم الوصفة *</label><input id="recipeName" required placeholder="مثال: عجينة كفتة"></div>
+            <div><label for="recipeOutputProduct">المنتج الناتج *</label><select id="recipeOutputProduct" required><option value="">اختر المنتج</option></select></div>
+            <div><label for="recipeOutputQty">الكمية الناتجة *</label><input id="recipeOutputQty" type="number" min="0.0001" step="0.0001" required></div>
+            <div><label for="recipeOutputUnit">الوحدة *</label><select id="recipeOutputUnit" required><option value="">اختر الوحدة</option></select></div>
+          </div>
+          
+          <label style="margin-top:16px">المكونات (الخامات) *</label>
+          <div id="recipeItems"></div>
+          <button id="addRecipeItemBtn" class="btn secondary" type="button" style="margin-top:8px">＋ إضافة مكون</button>
+
+          <label for="recipeNotes">ملاحظات</label><textarea id="recipeNotes" rows="2"></textarea>
+          <label class="check"><input id="recipeActive" type="checkbox" checked>الوصفة نشطة</label>
+          <button id="saveRecipeBtn" class="btn" type="submit">حفظ الوصفة</button>
+          <button id="cancelRecipeBtn" class="btn secondary" type="button">إلغاء</button>
+          <div id="recipeFormMsg" class="status hidden"></div>
         </form>
       </div>
     </div>
@@ -525,6 +561,7 @@ const $=id=>document.getElementById(id);
 let recoveryMode=false, canManage=false, isSystemAdmin=false;
 let canViewLocations=false, canManageLocations=false;
 let canViewStock=false, canManageStock=false;
+let canViewRecipes=false, canManageRecipes=false;
 let canViewCustomers=false, canManageCustomers=false;
 let canViewSales=false, canManageSales=false;
 let canViewCollections=false, canManageCollections=false;
@@ -532,8 +569,8 @@ let canViewSuppliers=false, canManageSuppliers=false;
 let canViewPurchases=false, canManagePurchases=false;
 
 let productsCache=[], categories=[], units=[], cartonUnitId=null;
-let userLookupsLoading=false, locationsCache=[], stockCache=[], customersCache=[], salesCache=[], collectionsCache=[], suppliersCache=[], purchasesCache=[];
-let invoiceItemCounter=0, purchaseItemCounter=0;
+let userLookupsLoading=false, locationsCache=[], stockCache=[], customersCache=[], salesCache=[], collectionsCache=[], suppliersCache=[], purchasesCache=[], recipesCache=[];
+let invoiceItemCounter=0, purchaseItemCounter=0, recipeItemCounter=0;
 
 const allowedRoles={ SALES_MANAGER:"مدير المبيعات", SALES_REP:"مندوب المبيعات", WAREHOUSE_KEEPER:"أمين المخزن", PRODUCTION_MANAGER:"مسؤول الإنتاج", ACCOUNTANT:"المحاسب", GENERAL_MANAGER:"المدير العام" };
 
@@ -570,6 +607,7 @@ function page(name){
     loadProducts();
     if(canViewLocations)loadLocations();
     if(canViewStock)loadStock();
+    if(canViewRecipes)loadRecipes();
     if(canViewCustomers)loadCustomers();
     if(canViewSales)loadSales();
     if(canViewCollections)loadCollections();
@@ -592,6 +630,7 @@ function customerPhone(id){ return customersCache.find(x=>String(x.customer_id)=
 function locationName(id){ return locationsCache.find(x=>String(x.location_id)===String(id))?.location_name||"غير محدد"; }
 function invoiceNumber(id){ return salesCache.find(x=>String(x.sales_invoice_id)===String(id))?.invoice_number||"—"; }
 function supplierName(id){ return suppliersCache.find(x=>String(x.supplier_id)===String(id))?.supplier_name||"غير محدد"; }
+function productName(id){ return productsCache.find(x=>String(x.product_id)===String(id))?.product_name||"غير محدد"; }
 
 function fillSelect(el,items,idkey,namekey,placeholder){
   el.replaceChildren();
@@ -608,6 +647,7 @@ async function loadLookups(){
   fillSelect($("baseUnit"),units,"unit_id","unit_name","اختر الوحدة الأساسية");
   fillSelect($("purchaseUnit"),units,"unit_id","unit_name","بدون تحديد");
   fillSelect($("salesUnit"),units,"unit_id","unit_name","بدون تحديد");
+  fillSelect($("recipeOutputUnit"),units,"unit_id","unit_name","اختر الوحدة");
 }
 
 /* ============ إدارة المستخدمين ============ */
@@ -677,6 +717,7 @@ async function userInfo(user){
   canManage=await permission("PRODUCTS_MANAGE"); $("menuProducts").classList.toggle("hidden", !canManage); $("addBtn").classList.toggle("hidden",!canManage);
   try{ canViewLocations=await permission("LOCATIONS_VIEW"); canManageLocations=await permission("LOCATIONS_MANAGE"); $("menuLocations").classList.toggle("hidden",!canViewLocations); $("locationsCard").classList.toggle("hidden",!canViewLocations); $("addLocationBtn").classList.toggle("hidden",!canManageLocations); }catch(e){$("menuLocations").classList.add("hidden");}
   try{ canViewStock=await permission("STOCK_VIEW"); canManageStock=await permission("STOCK_MANAGE"); $("menuStock").classList.toggle("hidden",!canViewStock); $("stockCard").classList.toggle("hidden",!canViewStock); $("adjustStockBtn").classList.toggle("hidden",!canManageStock); }catch(e){$("menuStock").classList.add("hidden");}
+  try{ canViewRecipes=await permission("RECIPES_VIEW"); canManageRecipes=await permission("RECIPES_MANAGE"); $("menuRecipes").classList.toggle("hidden",!canViewRecipes); $("recipesCard").classList.toggle("hidden",!canViewRecipes); $("addRecipeBtn").classList.toggle("hidden",!canManageRecipes); }catch(e){$("menuRecipes").classList.add("hidden");}
   try{ canViewCustomers=await permission("CUSTOMERS_VIEW"); canManageCustomers=await permission("CUSTOMERS_MANAGE"); $("menuCustomers").classList.toggle("hidden",!canViewCustomers); $("customersCard").classList.toggle("hidden",!canViewCustomers); $("addCustomerBtn").classList.toggle("hidden",!canManageCustomers); }catch(e){$("menuCustomers").classList.add("hidden");}
   try{ canViewSales=await permission("SALES_VIEW"); canManageSales=await permission("SALES_MANAGE"); $("menuSales").classList.toggle("hidden",!canViewSales); $("salesCard").classList.toggle("hidden",!canViewSales); $("addInvoiceBtn").classList.toggle("hidden",!canManageSales); }catch(e){$("menuSales").classList.add("hidden");}
   try{ canViewCollections=await permission("COLLECTIONS_VIEW"); canManageCollections=await permission("COLLECTIONS_MANAGE"); $("menuCollections").classList.toggle("hidden",!canViewCollections); $("collectionsCard").classList.toggle("hidden",!canViewCollections); $("addCollectionBtn").classList.toggle("hidden",!canManageCollections); }catch(e){$("menuCollections").classList.add("hidden");}
@@ -703,70 +744,11 @@ function fillLocationsFilter(){ const el=$("stockLocationFilter");const cur=el.v
 function fillStockFormSelects(){ const locEl=$("stockLocation");const curLoc=locEl.value;locEl.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر الموقع";locEl.appendChild(first); locationsCache.filter(l=>l.is_active).forEach(l=>{ const op=document.createElement("option");op.value=String(l.location_id);op.textContent=l.location_name+" ("+l.location_code+")";locEl.appendChild(op); }); locEl.value=curLoc; const prodEl=$("stockProduct");const curProd=prodEl.value;prodEl.replaceChildren(); const firstP=document.createElement("option");firstP.value="";firstP.textContent="اختر المنتج";prodEl.appendChild(firstP); productsCache.filter(p=>p.is_active).forEach(p=>{ const op=document.createElement("option");op.value=String(p.product_id);op.textContent=p.product_name+" ("+p.product_code+")";prodEl.appendChild(op); }); prodEl.value=curProd; }
 async function loadStock(){ if(!canViewStock)return; clear($("stockMsg")); $("stockList").replaceChildren(); try{ const {data:sessionData,error:sessionError}=await db.auth.getSession(); if(sessionError)throw sessionError; if(!sessionData.session)throw new Error("انتهت جلسة الدخول."); const allowed=await permission("STOCK_VIEW"); if(!allowed){canViewStock=false;$("menuStock").classList.add("hidden");$("stockCard").classList.add("hidden");throw new Error("لا تملك صلاحية عرض المخزون.");} const filterLoc=$("stockLocationFilter").value; let query=db.from("stock_balances").select("balance_id,location_id,product_id,quantity,updated_at").order("updated_at",{ascending:false}).limit(500); if(filterLoc)query=query.eq("location_id",Number(filterLoc)); const {data,error}=await query; if(error)throw error; stockCache=data||[]; fillLocationsFilter(); renderStock(); msg($("stockMsg"),"تم تحميل "+stockCache.length+" رصيد مخزون.","success"); }catch(e){ msg($("stockMsg"),"تعذر تحميل الأرصدة: "+err(e),"error"); const d=document.createElement("div");d.className="empty";d.textContent="راجع رسالة الخطأ أعلاه.";$("stockList").replaceChildren(d); } }
 function renderStock(){ const box=$("stockList");box.replaceChildren(); const q=$("stockSearch").value.trim().toLowerCase(); const found=stockCache.filter(b=>{ const p=productsCache.find(x=>String(x.product_id)===String(b.product_id)); const l=locationsCache.find(x=>String(x.location_id)===String(b.location_id)); const t=[p?.product_name,p?.product_code,l?.location_name,l?.location_code].map(v=>String(v||"").toLowerCase()).join(" "); return t.includes(q); }); if(!found.length){ const d=document.createElement("div");d.className="empty";d.textContent=q?"لا توجد أرصدة مطابقة.":"لا توجد أرصدة مخزون مسجلة بعد.";box.appendChild(d);return; } found.forEach(b=>{ const p=productsCache.find(x=>String(x.product_id)===String(b.product_id)); const l=locationsCache.find(x=>String(x.location_id)===String(b.location_id)); const card=document.createElement("div");card.className="product"; const title=document.createElement("div");title.className="pname";title.textContent=p?.product_name||("منتج رقم "+b.product_id); const details=document.createElement("div");details.className="details";details.textContent="الكود: "+(p?.product_code||"—")+" | الموقع: "+(l?.location_name||"—")+" | الوحدة: "+unitName(p?.base_unit_id); const qty=document.createElement("span");qty.className="badge";qty.textContent="الرصيد: "+Number(b.quantity).toLocaleString("ar-EG")+" "+unitName(p?.base_unit_id); const date=document.createElement("span");date.className="badge";date.textContent="آخر تحديث: "+new Date(b.updated_at).toLocaleDateString("ar-EG"); card.append(title,details,qty,date); 
-
-    const actions=document.createElement("div");actions.className="actions"; 
-    const historyBtn=document.createElement("button");historyBtn.type="button";historyBtn.className="btn secondary";historyBtn.textContent="📜 سجل الحركات";
-    historyBtn.onclick=()=>viewStockMovements(b.product_id, b.location_id);
-    actions.appendChild(historyBtn);
-    
-    if(canManageStock){ 
-      const adj=document.createElement("button");adj.type="button";adj.className="btn secondary";adj.textContent="تعديل الرصيد";
-      adj.addEventListener("click",()=>openStockForm(b.location_id,b.product_id));
-      actions.appendChild(adj);
-    } 
-    card.appendChild(actions); 
-    box.appendChild(card); }); }
-
-async function viewStockMovements(productId, locationId) {
-  const p = productsCache.find(x => String(x.product_id) === String(productId));
-  const l = locationsCache.find(x => String(x.location_id) === String(locationId));
-  $("movementProductInfo").textContent = `المنتج: ${p?.product_name} | الموقع: ${l?.location_name}`;
-  
-  const tbody = $("movementsTable").querySelector("tbody");
-  tbody.innerHTML = "<tr><td colspan='5'>جارٍ التحميل...</td></tr>";
-  $("stockMovementsModal").classList.remove("hidden");
-  
-  try {
-    const { data, error } = await db.from("stock_movements")
-      .select("movement_id, movement_type, quantity_change, quantity_after, notes, created_at")
-      .eq("product_id", Number(productId))
-      .eq("location_id", Number(locationId))
-      .order("movement_id", { ascending: true });
-      
-    if (error) throw error;
-    
-    if (!data || data.length === 0) {
-       tbody.innerHTML = "<tr><td colspan='5'>لا توجد حركات مسجلة.</td></tr>";
-       return;
-    }
-    
-    let html = "";
-    data.forEach(m => {
-      let typeName = m.movement_type;
-      if (m.movement_type === 'ADJUST') typeName = 'تسوية';
-      if (m.movement_type === 'RECEIVE') typeName = 'استلام (شراء)';
-      if (m.movement_type === 'ISSUE') typeName = 'صرف (بيع)';
-      if (m.movement_type === 'RETURN') typeName = 'مرتجع';
-      
-      const change = Number(m.quantity_change);
-      const changeStr = (change > 0 ? '+' : '') + change.toLocaleString("ar-EG");
-      
-      html += `
-        <tr>
-          <td>${new Date(m.created_at).toLocaleString("ar-EG")}</td>
-          <td>${typeName}</td>
-          <td style="color:${change > 0 ? 'green' : 'red'}; font-weight:bold;">${changeStr}</td>
-          <td>${Number(m.quantity_after).toLocaleString("ar-EG")}</td>
-          <td>${m.notes || '-'}</td>
-        </tr>
-      `;
-    });
-    tbody.innerHTML = html;
-  } catch(e) {
-    tbody.innerHTML = `<tr><td colspan='5' style="color:red;">خطأ: ${err(e)}</td></tr>`;
-  }
-}
-
+const actions=document.createElement("div");actions.className="actions"; 
+const historyBtn=document.createElement("button");historyBtn.type="button";historyBtn.className="btn secondary";historyBtn.textContent="📜 سجل الحركات";historyBtn.onclick=()=>viewStockMovements(b.product_id, b.location_id);actions.appendChild(historyBtn);
+if(canManageStock){ const adj=document.createElement("button");adj.type="button";adj.className="btn secondary";adj.textContent="تعديل الرصيد";adj.addEventListener("click",()=>openStockForm(b.location_id,b.product_id)); actions.appendChild(adj); } 
+card.appendChild(actions); box.appendChild(card); }); }
+async function viewStockMovements(productId, locationId) { const p = productsCache.find(x => String(x.product_id) === String(productId)); const l = locationsCache.find(x => String(x.location_id) === String(locationId)); $("movementProductInfo").textContent = `المنتج: ${p?.product_name} | الموقع: ${l?.location_name}`; const tbody = $("movementsTable").querySelector("tbody"); tbody.innerHTML = "<tr><td colspan='5'>جارٍ التحميل...</td></tr>"; $("stockMovementsModal").classList.remove("hidden"); try { const { data, error } = await db.from("stock_movements").select("movement_id, movement_type, quantity_change, quantity_after, notes, created_at").eq("product_id", Number(productId)).eq("location_id", Number(locationId)).order("movement_id", { ascending: true }); if (error) throw error; if (!data || data.length === 0) { tbody.innerHTML = "<tr><td colspan='5'>لا توجد حركات مسجلة.</td></tr>"; return; } let html = ""; data.forEach(m => { let typeName = m.movement_type; if (m.movement_type === 'ADJUST') typeName = 'تسوية'; if (m.movement_type === 'RECEIVE') typeName = 'استلام (شراء)'; if (m.movement_type === 'ISSUE') typeName = 'صرف (بيع)'; if (m.movement_type === 'RETURN') typeName = 'مرتجع'; const change = Number(m.quantity_change); const changeStr = (change > 0 ? '+' : '') + change.toLocaleString("ar-EG"); html += `<tr><td>${new Date(m.created_at).toLocaleString("ar-EG")}</td><td>${typeName}</td><td style="color:${change > 0 ? 'green' : 'red'}; font-weight:bold;">${changeStr}</td><td>${Number(m.quantity_after).toLocaleString("ar-EG")}</td><td>${m.notes || '-'}</td></tr>`; }); tbody.innerHTML = html; } catch(e) { tbody.innerHTML = `<tr><td colspan='5' style="color:red;">خطأ: ${err(e)}</td></tr>`; } }
 function resetStockForm(){ $("stockForm").reset(); $("stockCurrentDisplay").textContent="اختر الموقع والمنتج لعرض الرصيد الحالي."; $("stockFormCard").classList.add("hidden"); clear($("stockFormMsg")); }
 async function openStockForm(locationId=null,productId=null){ if(!canManageStock)return; try{ if(!locationsCache.length)await loadLocations(); if(!productsCache.length)await loadProducts(); fillStockFormSelects(); if(locationId)$("stockLocation").value=String(locationId); if(productId)$("stockProduct").value=String(productId); $("stockFormCard").classList.remove("hidden"); clear($("stockFormMsg")); await refreshCurrentStockDisplay(); $("stockFormCard").scrollIntoView({behavior:"smooth",block:"start"}); }catch(e){ msg($("stockMsg"),"تعذر فتح نموذج التسوية: "+err(e),"error"); } }
 async function refreshCurrentStockDisplay(){ const locId=$("stockLocation").value; const prodId=$("stockProduct").value; if(!locId||!prodId){ $("stockCurrentDisplay").textContent="اختر الموقع والمنتج لعرض الرصيد الحالي."; $("stockNewQty").value="";return; } try{ const {data,error}=await db.from("stock_balances").select("quantity").eq("location_id",Number(locId)).eq("product_id",Number(prodId)).maybeSingle(); if(error)throw error; const q=Number(data?.quantity||0); const p=productsCache.find(x=>String(x.product_id)===String(prodId)); const u=unitName(p?.base_unit_id); $("stockCurrentDisplay").textContent="الرصيد الحالي: "+q.toLocaleString("ar-EG")+" "+u; $("stockNewQty").value=q; }catch(e){ $("stockCurrentDisplay").textContent="تعذر قراءة الرصيد الحالي: "+err(e); } }
@@ -850,16 +832,119 @@ function validate(p){ if(!p.product_name||!p.product_code||!p.category_id||!p.ba
 $("productForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("formMsg")); if(!canManage)return; const p={ product_name:$("pname").value.trim(), product_code:$("pcode").value.trim(), barcode:$("barcode").value.trim()||null, product_type:$("ptype").value, category_id:Number($("category").value), base_unit_id:Number($("baseUnit").value), purchase_unit_id:$("purchaseUnit").value?Number($("purchaseUnit").value):null, sales_unit_id:$("salesUnit").value?Number($("salesUnit").value):null, unit_weight_kg:num("weight"), units_per_carton:num("unitsCarton"), carton_weight_kg:num("cartonWeight"), minimum_stock:Number($("minStock").value||0), target_stock:Number($("targetStock").value||0), maximum_stock:num("maxStock"), min_selling_price:num("minPrice"), target_selling_price:num("targetPrice"), max_selling_price:num("maxPrice"), can_be_purchased:$("canPurchase").checked, can_be_produced:$("canProduce").checked, can_be_sold:$("canSell").checked, can_be_loaded:$("canLoad").checked, can_be_reserved:$("canReserve").checked, has_recipe:$("hasRecipe").checked, is_active:$("active").checked, notes:$("notes").value.trim()||null, updated_at:new Date().toISOString() }; try{ validate(p); if(!await permission("PRODUCTS_MANAGE"))throw Error("لا تملك صلاحية إدارة المنتجات."); const id=$("editId").value; busy($("saveBtn"),true,"جارٍ الحفظ...",id?"حفظ التعديلات":"حفظ المنتج"); let result; if(id){ result=await db.from("products").update(p).eq("product_id",Number(id)).select("product_id").single(); } else{ const {data:s,error:se}=await db.auth.getSession(); if(se)throw se; if(!s.session)throw Error("انتهت جلسة الدخول."); p.created_by=s.session.user.id; result=await db.from("products").insert(p).select("product_id").single(); } if(result.error)throw result.error; msg($("formMsg"),id?"تم حفظ تعديلات المنتج.":"تمت إضافة المنتج بنجاح.","success"); await loadProducts(); setTimeout(()=>{$("formCard").classList.add("hidden");resetForm();},1000); }catch(e){ msg($("formMsg"),"لم يتم الحفظ: "+err(e),"error"); }finally{ busy($("saveBtn"),false,"",$("editId").value?"حفظ التعديلات":"حفظ المنتج"); } });
 async function toggleActive(p){ if(!canManage)return; if(!confirm("هل تريد "+(p.is_active?"إيقاف":"تفعيل")+" المنتج «"+p.product_name+"»؟"))return; try{ if(!await permission("PRODUCTS_MANAGE"))throw Error("لا توجد صلاحية."); const {error}=await db.from("products").update({is_active:!p.is_active,updated_at:new Date().toISOString()}).eq("product_id",p.product_id); if(error)throw error; msg($("listMsg"),"تم تغيير حالة المنتج بنجاح.","success"); await loadProducts(); }catch(e){ msg($("listMsg"),"تعذر تغيير الحالة: "+err(e),"error"); } }
 
+/* ============ إدارة الوصفات ============ */
+function resetRecipeForm(){ $("recipeForm").reset(); $("recipeEditId").value=""; $("recipeActive").checked=true; $("recipeFormTitle").textContent="إضافة وصفة جديدة"; $("saveRecipeBtn").textContent="حفظ الوصفة"; $("recipeItems").replaceChildren(); recipeItemCounter=0; addRecipeItemRow(); $("recipeFormCard").classList.add("hidden"); clear($("recipeFormMsg")); }
+async function loadRecipes(){ if(!canViewRecipes)return; clear($("recipesMsg")); $("recipesList").replaceChildren(); try{ const {data:sessionData,error:sessionError}=await db.auth.getSession(); if(sessionError)throw sessionError; if(!sessionData.session)throw new Error("انتهت جلسة الدخول."); const allowed=await permission("RECIPES_VIEW"); if(!allowed){canViewRecipes=false;$("menuRecipes").classList.add("hidden");$("recipesCard").classList.add("hidden");throw new Error("لا تملك صلاحية عرض الوصفات.");} const {data,error}=await db.from("recipes").select("recipe_id,recipe_name,product_id,output_quantity,unit_id,is_active").order("recipe_id").limit(200); if(error)throw error; recipesCache=data||[]; renderRecipes(); msg($("recipesMsg"),"تم تحميل "+recipesCache.length+" وصفة.","success"); }catch(e){ msg($("recipesMsg"),"تعذر تحميل الوصفات: "+err(e),"error"); const d=document.createElement("div");d.className="empty";d.textContent="راجع رسالة الخطأ أعلاه.";$("recipesList").replaceChildren(d); } }
+function renderRecipes(){ const box=$("recipesList");box.replaceChildren(); const q=$("recipeSearch").value.trim().toLowerCase(); const found=recipesCache.filter(r=>{ const pn=productName(r.product_id); return [r.recipe_name,pn].some(v=>String(v||"").toLowerCase().includes(q)); }); if(!found.length){ const d=document.createElement("div");d.className="empty";d.textContent=q?"لا توجد وصفات مطابقة.":"لا توجد وصفات مسجلة بعد.";box.appendChild(d);return; } found.forEach(r=>{ const card=document.createElement("div");card.className="product"; const title=document.createElement("div");title.className="pname";title.textContent=r.recipe_name; const details=document.createElement("div");details.className="details";details.textContent="المنتج الناتج: "+productName(r.product_id)+" | الكمية: "+Number(r.output_quantity).toLocaleString("ar-EG")+" "+unitName(r.unit_id); const status=document.createElement("span");status.className="badge"+(r.is_active?"":" off");status.textContent=r.is_active?"نشطة":"موقوفة"; const idBadge=document.createElement("span");idBadge.className="badge";idBadge.textContent="رقم الوصفة: "+r.recipe_id; card.append(title,details,status,idBadge); if(canManageRecipes){ const actions=document.createElement("div");actions.className="actions"; const edit=document.createElement("button");edit.type="button";edit.className="btn secondary";edit.textContent="تعديل";edit.addEventListener("click",()=>editRecipe(r)); const toggle=document.createElement("button");toggle.type="button";toggle.className="btn "+(r.is_active?"danger":"secondary");toggle.textContent=r.is_active?"إيقاف":"تفعيل";toggle.addEventListener("click",()=>toggleRecipe(r)); actions.append(edit,toggle);card.appendChild(actions); } box.appendChild(card); }); }
+async function editRecipe(r){ if(!canManageRecipes)return; try{ const {data:items,error}=await db.from("recipe_items").select("*").eq("recipe_id",r.recipe_id); if(error)throw error; $("recipeEditId").value=String(r.recipe_id); $("recipeName").value=r.recipe_name; $("recipeOutputProduct").value=r.product_id; $("recipeOutputQty").value=r.output_quantity; $("recipeOutputUnit").value=r.unit_id; $("recipeNotes").value=r.notes||""; $("recipeActive").checked=r.is_active; $("recipeFormTitle").textContent="تعديل الوصفة: "+r.recipe_name; $("saveRecipeBtn").textContent="حفظ التعديلات"; $("recipeItems").replaceChildren(); recipeItemCounter=0; (items||[]).forEach(i=>{ addRecipeItemRow(i.raw_product_id, i.quantity, i.unit_id); }); if(!items || items.length===0) addRecipeItemRow(); $("recipeFormCard").classList.remove("hidden"); clear($("recipeFormMsg")); $("recipeFormCard").scrollIntoView({behavior:"smooth",block:"start"}); }catch(e){ msg($("recipesMsg"),"تعذر تحميل تفاصيل الوصفة: "+err(e),"error"); } }
+$("addRecipeBtn").addEventListener("click",()=>{ if(!canManageRecipes)return; resetRecipeForm(); fillRecipeOutputSelects(); $("recipeFormCard").classList.remove("hidden"); $("recipeFormCard").scrollIntoView({behavior:"smooth",block:"start"}); });
+$("cancelRecipeBtn").addEventListener("click",resetRecipeForm); $("refreshRecipesBtn").addEventListener("click",loadRecipes); $("recipeSearch").addEventListener("input",renderRecipes);
+
+function fillRecipeOutputSelects(){
+  const el=$("recipeOutputProduct"); const cur=el.value; el.replaceChildren();
+  const first=document.createElement("option"); first.value=""; first.textContent="اختر المنتج"; el.appendChild(first);
+  productsCache.filter(p=>p.can_be_produced || p.product_type==="FINISHED" || p.product_type==="SEMI_FINISHED").forEach(p=>{ const op=document.createElement("option"); op.value=String(p.product_id); op.textContent=p.product_name+" ("+p.product_code+")"; op.dataset.unitId=p.base_unit_id; el.appendChild(op); });
+  el.value=cur;
+}
+
+function addRecipeItemRow(rawProductId=null, qty=null, unitId=null){
+  recipeItemCounter++; const id="rItem_"+recipeItemCounter; const wrap=document.createElement("div");wrap.className="item-row";wrap.dataset.itemId=id;
+  const prodLabel=document.createElement("label");prodLabel.textContent="الخامة *"; const prodSel=document.createElement("select");prodSel.className="item-product";prodSel.required=true;
+  const first=document.createElement("option");first.value="";first.textContent="اختر الخامة";prodSel.appendChild(first);
+  productsCache.filter(p=>p.is_active && (p.product_type==="RAW" || p.can_be_purchased)).forEach(p=>{ const op=document.createElement("option");op.value=String(p.product_id);op.textContent=p.product_name+" ("+p.product_code+")"; op.dataset.unitId=p.base_unit_id; prodSel.appendChild(op); });
+  if(rawProductId) prodSel.value=String(rawProductId);
+  
+  const grid3=document.createElement("div");grid3.className="grid3";
+  const qtyWrap=document.createElement("div"); const qtyLabel=document.createElement("label");qtyLabel.textContent="الكمية *"; const qtyInp=document.createElement("input");qtyInp.type="number";qtyInp.className="item-qty";qtyInp.min="0.0001";qtyInp.step="0.0001";qtyInp.required=true; if(qty)qtyInp.value=qty; qtyWrap.append(qtyLabel,qtyInp);
+  const unitWrap=document.createElement("div"); const unitLabel=document.createElement("label");unitLabel.textContent="الوحدة *"; const unitSel=document.createElement("select");unitSel.className="item-unit";unitSel.required=true; unitWrap.append(unitLabel,unitSel);
+  
+  grid3.append(qtyWrap,unitWrap);
+  const removeBtn=document.createElement("button");removeBtn.type="button";removeBtn.className="btn danger";removeBtn.textContent="حذف المكون";
+  removeBtn.addEventListener("click",()=>{ wrap.remove(); if(!$("recipeItems").children.length)addRecipeItemRow(); });
+  wrap.append(prodLabel,prodSel,grid3,removeBtn); $("recipeItems").appendChild(wrap);
+
+  const populateUnits=()=>{ const opt=prodSel.selectedOptions[0]; const baseUnitId=opt?.dataset?.unitId||""; unitSel.replaceChildren(); const firstU=document.createElement("option");firstU.value="";firstU.textContent="اختر الوحدة";unitSel.appendChild(firstU); if(baseUnitId){ const op=document.createElement("option");op.value=baseUnitId;op.textContent=unitName(baseUnitId);unitSel.appendChild(op); unitSel.value=baseUnitId; } };
+  
+  prodSel.addEventListener("change",populateUnits);
+  
+  populateUnits();
+  if(unitId) unitSel.value=String(unitId);
+}
+
+$("recipeOutputProduct").addEventListener("change",(e)=>{
+  const opt=e.target.selectedOptions[0];
+  if(opt && opt.dataset.unitId){
+    $("recipeOutputUnit").value=opt.dataset.unitId;
+  }
+});
+
+$("addRecipeItemBtn").addEventListener("click",()=>addRecipeItemRow());
+
+$("recipeForm").addEventListener("submit",async e=>{
+  e.preventDefault(); clear($("recipeFormMsg")); if(!canManageRecipes){msg($("recipeFormMsg"),"لا تملك صلاحية إدارة الوصفات.","error");return;}
+  const id=$("recipeEditId").value;
+  const name=$("recipeName").value.trim(); const productId=$("recipeOutputProduct").value; const qty=$("recipeOutputQty").value.trim(); const unitId=$("recipeOutputUnit").value; const notes=$("recipeNotes").value.trim(); const active=$("recipeActive").checked;
+  
+  if(!name||!productId||!qty||!unitId){ msg($("recipeFormMsg"),"أكمل بيانات الوصفة الأساسية.","error");return; }
+  const outQty=Number(qty); if(isNaN(outQty)||outQty<=0){ msg($("recipeFormMsg"),"الكمية الناتجة يجب أن تكون أكبر من صفر.","error");return; }
+
+  const items=[];
+  let valid=true;
+  document.querySelectorAll("#recipeItems .item-row").forEach(row=>{
+    const pId=row.querySelector(".item-product").value;
+    const q=Number(row.querySelector(".item-qty").value);
+    const uId=Number(row.querySelector(".item-unit").value);
+    if(!pId||!q||!uId||q<=0){ valid=false; return; }
+    items.push({raw_product_id:Number(pId), quantity:q, unit_id:uId});
+  });
+  if(!items.length||!valid){ msg($("recipeFormMsg"),"أكمل بيانات كل المكونات (الخامة، الكمية، الوحدة).","error");return; }
+
+  const button=$("saveRecipeBtn"); busy(button,true,"جارٍ الحفظ...",id?"حفظ التعديلات":"حفظ الوصفة");
+  try{
+    if(!await permission("RECIPES_MANAGE"))throw new Error("لا تملك صلاحية إدارة الوصفات.");
+    
+    const {data:sessionData,error:sessionError}=await db.auth.getSession(); if(sessionError)throw sessionError;
+    const session=sessionData?.session; if(!session)throw new Error("انتهت الجلسة.");
+
+    let recipeId;
+    if(id){
+      // Update header
+      const {error:updErr}=await db.from("recipes").update({recipe_name:name, product_id:Number(productId), output_quantity:outQty, unit_id:Number(unitId), notes:notes||null, is_active:active, updated_at:new Date().toISOString()}).eq("recipe_id",Number(id));
+      if(updErr)throw updErr;
+      recipeId = Number(id);
+      // Delete old items
+      const {error:delErr}=await db.from("recipe_items").delete().eq("recipe_id",recipeId);
+      if(delErr)throw delErr;
+    } else {
+      // Insert new header
+      const {data:res,error:insErr}=await db.from("recipes").insert({recipe_name:name, product_id:Number(productId), output_quantity:outQty, unit_id:Number(unitId), notes:notes||null, is_active:active, created_by:session.user.id}).select("recipe_id").single();
+      if(insErr)throw insErr;
+      recipeId = res.recipe_id;
+    }
+
+    // Insert new items
+    const itemsPayload = items.map(i=>({...i, recipe_id: recipeId}));
+    const {error:itemsErr}=await db.from("recipe_items").insert(itemsPayload);
+    if(itemsErr)throw itemsErr;
+
+    msg($("recipesMsg"),id?"تم تأكيد تعديل الوصفة.":"تم تأكيد إضافة الوصفة.","success");
+    resetRecipeForm(); await loadRecipes();
+  }catch(e){ msg($("recipeFormMsg"),"تعذر حفظ الوصفة: "+err(e),"error"); }finally{ busy(button,false,"","حفظ الوصفة"); $("saveRecipeBtn").textContent=$("recipeEditId").value?"حفظ التعديلات":"حفظ الوصفة"; }
+});
+
+async function toggleRecipe(r){ if(!canManageRecipes)return; const action=r.is_active?"إيقاف":"تفعيل"; if(!confirm("هل تريد "+action+" الوصفة: "+r.recipe_name+"؟"))return; try{ if(!await permission("RECIPES_MANAGE"))throw new Error("لا تملك صلاحية إدارة الوصفات."); const {error}=await db.from("recipes").update({is_active:!r.is_active,updated_at:new Date().toISOString()}).eq("recipe_id",r.recipe_id); if(error)throw error; msg($("recipesMsg"),"تم تأكيد تغيير حالة الوصفة.","success"); await loadRecipes(); }catch(e){ msg($("recipesMsg"),"تعذر تأكيد تغيير الحالة: "+err(e),"error"); } }
+
+
 /* ============ Auth & Init ============ */
-$("loginForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("loginMsg")); const loginValue=$("email").value.trim(); const password=$("password").value; busy($("loginBtn"),true,"جارٍ تسجيل الدخول...","تسجيل الدخول"); try{ let user; if(loginValue.includes("@")){ const {data,error}=await db.auth.signInWithPassword({email:loginValue,password}); if(error)throw error; user=data.user; } else{ const response=await fetch(USERNAME_LOGIN_URL,{ method:"POST", headers:{"Content-Type":"application/json","apikey":KEY}, body:JSON.stringify({username:loginValue,password}) }); let result={}; try{result=await response.json();}catch(_){} if(!response.ok||result.success!==true||!result.session)throw new Error(result.error||"تعذر تسجيل الدخول باسم المستخدم."); const {data,error}=await db.auth.setSession({ access_token:result.session.access_token, refresh_token:result.session.refresh_token }); if(error)throw error; user=data.user; } if(!user)throw new Error("لم يتم استرجاع بيانات المستخدم."); showApp(); await userInfo(user); await loadLookups(); await loadProducts(); if(canViewLocations)await loadLocations(); fillLocationsFilter(); if(canViewStock)await loadStock(); if(canViewCustomers)await loadCustomers(); if(canViewSales)await loadSales(); if(canViewCollections)await loadCollections(); if(canViewSuppliers)await loadSuppliers(); if(canViewPurchases)await loadPurchases(); }catch(e){ msg($("loginMsg"),"تعذر تسجيل الدخول أو تجهيز البيانات: "+err(e),"error"); }finally{ busy($("loginBtn"),false,"","تسجيل الدخول"); } });
+$("loginForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("loginMsg")); const loginValue=$("email").value.trim(); const password=$("password").value; busy($("loginBtn"),true,"جارٍ تسجيل الدخول...","تسجيل الدخول"); try{ let user; if(loginValue.includes("@")){ const {data,error}=await db.auth.signInWithPassword({email:loginValue,password}); if(error)throw error; user=data.user; } else{ const response=await fetch(USERNAME_LOGIN_URL,{ method:"POST", headers:{"Content-Type":"application/json","apikey":KEY}, body:JSON.stringify({username:loginValue,password}) }); let result={}; try{result=await response.json();}catch(_){} if(!response.ok||result.success!==true||!result.session)throw new Error(result.error||"تعذر تسجيل الدخول باسم المستخدم."); const {data,error}=await db.auth.setSession({ access_token:result.session.access_token, refresh_token:result.session.refresh_token }); if(error)throw error; user=data.user; } if(!user)throw new Error("لم يتم استرجاع بيانات المستخدم."); showApp(); await userInfo(user); await loadLookups(); await loadProducts(); if(canViewLocations)await loadLocations(); fillLocationsFilter(); if(canViewStock)await loadStock(); if(canViewRecipes)await loadRecipes(); if(canViewCustomers)await loadCustomers(); if(canViewSales)await loadSales(); if(canViewCollections)await loadCollections(); if(canViewSuppliers)await loadSuppliers(); if(canViewPurchases)await loadPurchases(); }catch(e){ msg($("loginMsg"),"تعذر تسجيل الدخول أو تجهيز البيانات: "+err(e),"error"); }finally{ busy($("loginBtn"),false,"","تسجيل الدخول"); } });
 $("forgotBtn").onclick=()=>{ hideSections(); $("recovery").classList.remove("hidden"); const loginValue=$("email").value.trim(); $("recoveryEmail").value=loginValue.includes("@")?loginValue:""; clear($("recoveryMsg")); }; $("backBtn").onclick=showLogin;
 $("recoveryForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("recoveryMsg")); busy($("recoveryBtn"),true,"جارٍ إرسال الرابط...","إرسال رابط الاستعادة"); try{ const {error}=await db.auth.resetPasswordForEmail($("recoveryEmail").value.trim(),{redirectTo:APP_URL}); if(error)throw error; msg($("recoveryMsg"),"إذا كان البريد مسجلًا، فستصلك رسالة استعادة.","success"); }catch(e){ msg($("recoveryMsg"),"تعذر إرسال الرسالة: "+err(e),"error"); }finally{ busy($("recoveryBtn"),false,"","إرسال رابط الاستعادة"); } });
 $("newPassForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("newPassMsg")); const p=$("newPassword").value; if(p.length<8){msg($("newPassMsg"),"كلمة المرور يجب أن تكون 8 أحرف على الأقل.","error");return;} if(p!==$("confirmPassword").value){msg($("newPassMsg"),"كلمتا المرور غير متطابقتين.","error");return;} busy($("savePassBtn"),true,"جارٍ الحفظ...","حفظ كلمة المرور الجديدة"); try{ const {data,error:se}=await db.auth.getSession(); if(se)throw se; if(!data.session)throw Error("جلسة الاستعادة غير موجودة."); const {error}=await db.auth.updateUser({password:p}); if(error)throw error; recoveryMode=false; await db.auth.signOut(); showLogin(); msg($("loginMsg"),"تم تغيير كلمة المرور بنجاح.","success"); }catch(e){ msg($("newPassMsg"),"تعذر تغيير كلمة المرور: "+err(e),"error"); }finally{ busy($("savePassBtn"),false,"","حفظ كلمة المرور الجديدة"); } });
 $("addBtn").onclick=()=>openForm(); $("cancelBtn").onclick=()=>{ $("formCard").classList.add("hidden"); resetForm(); }; $("refreshBtn").onclick=loadProducts; $("search").addEventListener("input",renderProducts);
-$("logoutBtn").onclick=async()=>{ const {error}=await db.auth.signOut(); if(error){msg($("listMsg"),"تعذر تسجيل الخروج: "+err(error),"error");return;} canManage=false;isSystemAdmin=false; canViewLocations=false;canManageLocations=false; canViewStock=false;canManageStock=false; canViewCustomers=false;canManageCustomers=false; canViewSales=false;canManageSales=false; canViewCollections=false;canManageCollections=false; canViewSuppliers=false;canManageSuppliers=false; canViewPurchases=false;canManagePurchases=false; locationsCache=[];stockCache=[];customersCache=[];salesCache=[];collectionsCache=[];suppliersCache=[];purchasesCache=[]; $("password").value=""; document.querySelectorAll(".card").forEach(c=>c.classList.add("hidden")); showLogin(); msg($("loginMsg"),"تم تسجيل الخروج.","success"); };
+$("logoutBtn").onclick=async()=>{ const {error}=await db.auth.signOut(); if(error){msg($("listMsg"),"تعذر تسجيل الخروج: "+err(error),"error");return;} canManage=false;isSystemAdmin=false; canViewLocations=false;canManageLocations=false; canViewStock=false;canManageStock=false; canViewRecipes=false;canManageRecipes=false; canViewCustomers=false;canManageCustomers=false; canViewSales=false;canManageSales=false; canViewCollections=false;canManageCollections=false; canViewSuppliers=false;canManageSuppliers=false; canViewPurchases=false;canManagePurchases=false; locationsCache=[];stockCache=[];customersCache=[];salesCache=[];collectionsCache=[];suppliersCache=[];purchasesCache=[];recipesCache=[]; $("password").value=""; document.querySelectorAll(".card").forEach(c=>c.classList.add("hidden")); showLogin(); msg($("loginMsg"),"تم تسجيل الخروج.","success"); };
 document.querySelectorAll(".navbtn").forEach(b=>{ b.onclick=()=>page(b.dataset.page); });
-db.auth.onAuthStateChange(event=>{ if(event==="PASSWORD_RECOVERY"){ recoveryMode=true; hideSections(); $("newPass").classList.remove("hidden"); } if(event==="SIGNED_OUT"&&!recoveryMode){ canManage=false;isSystemAdmin=false; canViewLocations=false;canManageLocations=false; canViewStock=false;canManageStock=false; canViewCustomers=false;canManageCustomers=false; canViewSales=false;canManageSales=false; canViewCollections=false;canManageCollections=false; canViewSuppliers=false;canManageSuppliers=false; canViewPurchases=false;canManagePurchases=false; locationsCache=[];stockCache=[];customersCache=[];salesCache=[];collectionsCache=[];suppliersCache=[];purchasesCache=[]; document.querySelectorAll(".card").forEach(c=>c.classList.add("hidden")); showLogin(); } });
-async function init(){ try{ const params=new URLSearchParams(location.search); const hash=location.hash; if(params.has("error")||params.has("error_description")||hash.includes("error=")){ showLogin(); msg($("loginMsg"),"رابط الاستعادة قد يكون منتهي الصلاحية.","error"); return; } const {data,error}=await db.auth.getSession(); if(error)throw error; if(data.session){ showApp(); await userInfo(data.session.user); await loadLookups(); await loadProducts(); if(canViewLocations)await loadLocations(); fillLocationsFilter(); if(canViewStock)await loadStock(); if(canViewCustomers)await loadCustomers(); if(canViewSales)await loadSales(); if(canViewCollections)await loadCollections(); if(canViewSuppliers)await loadSuppliers(); if(canViewPurchases)await loadPurchases(); } else{ showLogin(); } }catch(e){ showLogin(); msg($("loginMsg"),"تعذر التحقق من الجلسة: "+err(e),"error"); } }
+db.auth.onAuthStateChange(event=>{ if(event==="PASSWORD_RECOVERY"){ recoveryMode=true; hideSections(); $("newPass").classList.remove("hidden"); } if(event==="SIGNED_OUT"&&!recoveryMode){ canManage=false;isSystemAdmin=false; canViewLocations=false;canManageLocations=false; canViewStock=false;canManageStock=false; canViewRecipes=false;canManageRecipes=false; canViewCustomers=false;canManageCustomers=false; canViewSales=false;canManageSales=false; canViewCollections=false;canManageCollections=false; canViewSuppliers=false;canManageSuppliers=false; canViewPurchases=false;canManagePurchases=false; locationsCache=[];stockCache=[];customersCache=[];salesCache=[];collectionsCache=[];suppliersCache=[];purchasesCache=[];recipesCache=[]; document.querySelectorAll(".card").forEach(c=>c.classList.add("hidden")); showLogin(); } });
+async function init(){ try{ const params=new URLSearchParams(location.search); const hash=location.hash; if(params.has("error")||params.has("error_description")||hash.includes("error=")){ showLogin(); msg($("loginMsg"),"رابط الاستعادة قد يكون منتهي الصلاحية.","error"); return; } const {data,error}=await db.auth.getSession(); if(error)throw error; if(data.session){ showApp(); await userInfo(data.session.user); await loadLookups(); await loadProducts(); if(canViewLocations)await loadLocations(); fillLocationsFilter(); if(canViewStock)await loadStock(); if(canViewRecipes)await loadRecipes(); if(canViewCustomers)await loadCustomers(); if(canViewSales)await loadSales(); if(canViewCollections)await loadCollections(); if(canViewSuppliers)await loadSuppliers(); if(canViewPurchases)await loadPurchases(); } else{ showLogin(); } }catch(e){ showLogin(); msg($("loginMsg"),"تعذر التحقق من الجلسة: "+err(e),"error"); } }
 init();
 })();
 </script>
