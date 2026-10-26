@@ -351,6 +351,10 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 </div>
 
 <script>
+window.onerror = function(msg, url, line, col, error) {
+    alert("حدث خطأ برمجي:\n" + msg + "\nفي السطر رقم: " + line);
+    return false;
+};
 (() => {
 "use strict";
 
