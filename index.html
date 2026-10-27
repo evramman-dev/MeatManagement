@@ -1505,7 +1505,7 @@ $("invoiceForm").addEventListener("submit",async e=>{
   const button=$("saveInvoiceBtn"); busy(button,true,"جارٍ حفظ الفاتورة...","حفظ الفاتورة"); 
   try{ 
     // تمرير المبلغ المدفوع للدالة من خلال إعدادات الجلسة
-    await db.rpc('set_config', { setting: 'request.jwt.claims', value: JSON.stringify({ paid_amount: finalPaid }), is_local: true });
+    await db.rpc('set_config', { setting: 'request.jwt.claims', value: JSON.stringify({ paid_amount: finalPaid, trip_id: tripId ? Number(tripId) : null }), is_local: true });
     
     const {data:invoiceId,error}=await db.rpc("create_sales_invoice",{ p_customer_id:Number(customerId), p_location_id:Number(locationId), p_invoice_date:date, p_payment_type:paymentType, p_discount:discountAmount, p_notes:notes||null, p_items:items, p_trip_id: tripId ? Number(tripId) : null }); 
     if(error)throw error; 
