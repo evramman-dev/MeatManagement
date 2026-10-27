@@ -1451,7 +1451,6 @@ async function viewInvoice(inv) {
 async function cancelInvoice(inv){ if(!canManageSales){msg($("salesMsg"),"لا تملك صلاحية إلغاء الفواتير.","error");return;} if(!confirm("هل أنت متأكد من إلغاء الفاتورة "+inv.invoice_number+"؟\nسيتم إرجاع الكميات إلى رصيد المخزون ولا يمكن التراجع."))return; try{ if(!await permission("SALES_MANAGE"))throw new Error("لا تملك صلاحية إلغاء الفواتير."); const {error}=await db.rpc("cancel_sales_invoice",{p_invoice_id:inv.sales_invoice_id}); if(error)throw error; msg($("salesMsg"),"تم إلغاء الفاتورة "+inv.invoice_number+" وإرجاع الكميات للمخزون.","success"); await loadSales(); if(canViewStock)await loadStock(); if(canViewCollections)await loadCollections(); }catch(e){ msg($("salesMsg"),"تعذر إلغاء الفاتورة: "+err(e),"error"); } }
 $("addInvoiceBtn").addEventListener("click",async()=>{ if(!canManageSales)return; if(!customersCache.length)await loadCustomers(); if(!productsCache.length)await loadProducts(); if(!locationsCache.length)await loadLocations(); if(!treasuriesCache.length)await loadTreasuries(); fillInvoiceCustomerSelect(); fillInvoiceLocationSelect(); resetInvoiceForm(); fillTreasurySelects(); $("invoiceFormCard").classList.remove("hidden"); $("invoiceFormCard").scrollIntoView({behavior:"smooth",block:"start"}); });
 $("cancelInvoiceBtn").addEventListener("click",()=>{ $("invoiceFormCard").classList.add("hidden"); resetInvoiceForm(); }); $("refreshSalesBtn").addEventListener("click",loadSales); $("salesSearch").addEventListener("input",renderSales);
-
 $("invoiceForm").addEventListener("submit",async e=>{ 
   e.preventDefault(); clear($("invoiceFormMsg")); 
   if(!canManageSales){msg($("invoiceFormMsg"),"لا تملك صلاحية إنشاء فواتير.","error");return;} 
@@ -1500,6 +1499,10 @@ $("invoiceForm").addEventListener("submit",async e=>{
       finalPaid = Math.min(paidAmountInput, netTotal);
       finalRemaining = netTotal - finalPaid;
       finalStatus = finalPaid > 0 ? 'PARTIAL' : 'POSTED';
+  }
+  
+  const button=$("saveInvoiceBtn"); busy(button,true,"جارٍ حفظ الفاتورة...","حفظ الفاتورة"); 
+  try{ 
     const {data:invoiceId,error}=await db.rpc("create_sales_invoice",{ p_customer_id:Number(customerId), p_location_id:Number(locationId), p_invoice_date:date, p_payment_type:paymentType, p_discount:discountAmount, p_notes:notes||null, p_items:items, p_trip_id: tripId ? Number(tripId) : null, p_paid_amount: finalPaid }); 
     if(error)throw error; 
     
@@ -1514,6 +1517,7 @@ $("invoiceForm").addEventListener("submit",async e=>{
     setTimeout(()=>{$("invoiceFormCard").classList.add("hidden");},1500); 
   }catch(e){ msg($("invoiceFormMsg"),"تعذر حفظ الفاتورة: "+err(e),"error"); }finally{ busy(button,false,"","حفظ الفاتورة"); } 
 });
+
 
 /* ============ فواتير المشتريات ============ */
 function fillPurchaseSupplierSelect(){ const el=$("purchaseSupplier");if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر المورد";el.appendChild(first); suppliersCache.filter(c=>c.is_active).forEach(c=>{ const op=document.createElement("option");op.value=String(c.supplier_id);op.textContent=c.supplier_name+" ("+c.supplier_code+")";el.appendChild(op); }); el.value=cur; }
