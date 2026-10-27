@@ -2037,15 +2037,14 @@ $("tripForm").addEventListener("submit", async e=>{
 
     const tripNumber = "TRP-" + new Date().getTime().toString().slice(-6);
     
-    const {error: tripErr} = await db.from("trips").insert({
-      trip_number: tripNumber,
-      sales_rep_id: repId,
-      vehicle_location_id: Number(vehicleLoc),
-      start_date: $("tripDate").value,
-      notes: notes || null,
-      status: 'DRAFT',
-      initial_cash: initialCash
-    });
+    const {data: newTripId, error: tripErr} = await db.rpc("create_trip_with_custody", {
+  p_trip_number: tripNumber,
+  p_sales_rep_id: repId,
+  p_vehicle_location_id: Number(vehicleLoc),
+  p_start_date: $("tripDate").value,
+  p_notes: notes || null,
+  p_initial_cash: initialCash
+});
 
     if(tripErr) throw tripErr;
 
