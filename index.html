@@ -575,7 +575,12 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
   <div id="sectionSales" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="salesCard" class="card hidden">
-      <div class="row" style="justify-content:space-between"><h2>🧾 فواتير البيع</h2><button id="addInvoiceBtn" class="btn hidden" type="button">＋ فاتورة جديدة</button></div>
+      <div class="row" style="justify-content:space-between"><h2>🧾 فواتير البيع</h2>
+        <div style="display:flex; gap:8px;">
+          <button id="addInvoiceBtn" class="btn hidden" type="button" style="margin:0; width:auto;">＋ فاتورة جديدة</button>
+          <button id="addReturnBtn" class="btn hidden" type="button" style="margin:0; width:auto; background:#a52b2b;">↩️ مرتجع بيع</button>
+        </div>
+      </div>
       <div class="row"><input id="salesSearch" type="search" placeholder="ابحث..."><button id="refreshSalesBtn" class="btn secondary" type="button">تحديث</button></div>
       <div id="salesMsg" class="status hidden"></div>
       <div id="salesList"><div class="empty">جارٍ تحميل الفواتير...</div></div>
@@ -608,8 +613,41 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
           <div id="invoiceFormMsg" class="status hidden"></div>
         </form>
       </div>
-    </div>
-  </div>
+      <div id="returnFormCard" class="card hidden" style="margin-top:20px;">
+        <h2>↩️ تسجيل مرتجع بيع</h2>
+        <form id="returnForm">
+          <div class="grid">
+            <div><label for="returnCustomer">العميل *</label><select id="returnCustomer" required><option value="">اختر العميل</option></select></div>
+            <div><label for="returnTrip">الجولة *</label><select id="returnTrip" required><option value="">اختر الجولة</option></select></div>
+            <div><label for="returnInvoice">الفاتورة الأصلية (اختياري)</label><select id="returnInvoice"><option value="">بدون ربط</option></select></div>
+            <div><label for="returnType">نوع المرتجع *</label>
+              <select id="returnType" required onchange="document.getElementById('exchangeSection').classList.toggle('hidden', this.value !== 'EXCHANGE')">
+                <option value="RETURN">مرتجع فقط (بدون استبدال)</option>
+                <option value="EXCHANGE">استبدال (بضاعة جديدة)</option>
+              </select>
+            </div>
+            <div><label for="returnCashAction">حركة الفلوس *</label>
+              <select id="returnCashAction" required>
+                <option value="NONE">بدون حركة فلوس</option>
+                <option value="CUSTOMER_PAYS_CASH">العميل يدفع فرق كاش</option>
+                <option value="CUSTOMER_PAYS_CREDIT">العميل يضيف فرق آجل</option>
+                <option value="DEDUCT_DEBT">خصم من المديونية</option>
+                <option value="CASH_BACK">إرجاع كاش للعميل</option>
+                <option value="CREDIT_BALANCE">رصيد دائن للعميل</option>
+              </select>
+            </div>
+            <div><label for="returnTreasury">الخزنة (لو فيه حركة كاش) *</label><select id="returnTreasury"><option value="">بدون خزنة</option></select></div>
+          </div>
+
+          <label style="margin-top:16px">البضاعة المرتجعة *</label>
+          <div id="returnItems"></div>
+          <button id="addReturnItemBtn" class="btn secondary" type="button" style="margin-top:8px">＋ إضافة صنف مرتجع</button>
+
+          <div id="exchangeSection" class="hidden">
+            <label style="margin-top:16px">البضاعة الجديدة (الاستبدال) *</label>
+            <div id="exchangeItems"></div>
+            <button id="addExchangeItemBtn" class="btn secondary" type="button" style="margin-top:8px">＋ إضافة صنف جديد</button>
+          </div>
     <div id="sectionPurchases" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="purchasesCard" class="card hidden">
@@ -811,8 +849,22 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 <script>
 (() => {
 "use strict";
+  
+          <div class="total-box">
+            <div class="line"><span>قيمة المرتجع:</span><span id="returnTotalDisplay">0</span></div>
+            <div class="line"><span>قيمة الاستبدال:</span><span id="exchangeTotalDisplay">0</span></div>
+            <div class="line grand"><span>الفرق:</span><span id="diffDisplay">0</span></div>
+          </div>
 
-const URL="https://mklbemoisdkoyrwcrmoj.supabase.co";
+          <label for="returnNotes">ملاحظات</label><textarea id="returnNotes" rows="2"></textarea>
+          <button id="saveReturnBtn" class="btn" type="submit">حفظ المرتجع</button>
+          <button id="cancelReturnBtn" class="btn secondary" type="button">إلغاء</button>
+          <div id="returnFormMsg" class="status hidden"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+  const URL="https://mklbemoisdkoyrwcrmoj.supabase.co";
 const KEY="sb_publishable_7ZjltiXgqnY4BJrZH4iZog_Jh-xfbau";
 const APP_URL="https://evramman-dev.github.io/MeatManagement/";
 const MANAGE_USERS_URL=URL+"/functions/v1/Manage-users";
@@ -835,10 +887,11 @@ let canViewSales=false, canManageSales=false;
 let canViewCollections=false, canManageCollections=false;
 let canViewSuppliers=false, canManageSuppliers=false;
 let canViewPurchases=false, canManagePurchases=false;
+let canViewReturns=false, canManageReturns=false;
 
 let productsCache=[], categories=[], units=[], cartonUnitId=null;
 let locationsCache=[], treasuriesCache=[], stockCache=[], customersCache=[], salesCache=[], collectionsCache=[], suppliersCache=[], purchasesCache=[], recipesCache=[], productionCache=[], tripsCache=[], partnersCache=[];
-let invoiceItemCounter=0, purchaseItemCounter=0, recipeItemCounter=0;
+let invoiceItemCounter=0, purchaseItemCounter=0, recipeItemCounter=0, returnItemCounter=0, exchangeItemCounter=0;
 
 const allowedRoles={ SALES_MANAGER:"مدير المبيعات", SALES_REP:"مندوب المبيعات", WAREHOUSE_KEEPER:"أمين المخزن", PRODUCTION_MANAGER:"مسؤول الإنتاج", ACCOUNTANT:"المحاسب", GENERAL_MANAGER:"المدير العام" };
 
@@ -989,7 +1042,6 @@ async function loadUsersList() {
     const { data: roles } = await db.from("app_roles").select("*");
     const roleMap = {};
     if(roles) roles.forEach(r => roleMap[r.role_id] = r.role_name);
-
     if(!users || users.length === 0) { box.innerHTML = "<div class='empty'>لا يوجد مستخدمون.</div>"; return; }
     let html = "";
     users.forEach(u => {
@@ -999,9 +1051,7 @@ async function loadUsersList() {
       html += `<div class="product"><div class="pname">${u.display_name || 'بدون اسم'} (${u.username || ''})</div><div class="details">الدور: ${roleName} | آخر دخول: ${lastLogin}</div>${status}</div>`;
     });
     box.innerHTML = html;
-  } catch(e) {
-    box.innerHTML = `<div class='empty error'>خطأ: ${e.message}</div>`;
-  }
+  } catch(e) { box.innerHTML = `<div class='empty error'>خطأ: ${e.message}</div>`; }
 }
 
 /* ============ التحقق من حساب الموظف والصلاحيات ============ */
@@ -1012,7 +1062,6 @@ async function userInfo(user){
   const {data:role,error:roleError}=await db.from("app_roles").select("role_code,is_active").eq("role_id",data.role_id).maybeSingle();
   if(roleError)throw roleError; if(!role||!role.is_active)throw new Error("الدور الوظيفي لحسابك غير موجود أو غير مفعّل.");
   isSystemAdmin=role.role_code==="SYSTEM_ADMIN"; $("userInfo").textContent="مرحبًا "+(data.display_name||"بك");
-
   await db.from("app_users").update({ last_login: new Date().toISOString() }).eq("user_id", user.id);
 
   canManage=await permission("PRODUCTS_MANAGE"); $("menuProducts").classList.toggle("hidden", !canManage); $("addBtn").classList.toggle("hidden",!canManage);
@@ -1025,11 +1074,10 @@ async function userInfo(user){
   try{ canViewProduction=await permission("PRODUCTION_VIEW"); canManageProduction=await permission("PRODUCTION_MANAGE"); $("menuProduction").classList.toggle("hidden",!canViewProduction); $("productionCard").classList.toggle("hidden",!canViewProduction); $("addProductionBtn").classList.toggle("hidden",!canManageProduction); }catch(e){$("menuProduction").classList.add("hidden");}
   try{ canViewTrips=await permission("TRIPS_VIEW"); canManageTrips=await permission("TRIPS_MANAGE"); $("menuTrips").classList.toggle("hidden",!canViewTrips); $("tripsCard").classList.toggle("hidden",!canViewTrips); $("addTripBtn").classList.toggle("hidden",!canManageTrips); }catch(e){$("menuTrips").classList.add("hidden");}
   try{ canViewCustomers=await permission("CUSTOMERS_VIEW"); canManageCustomers=await permission("CUSTOMERS_MANAGE"); $("menuCustomers").classList.toggle("hidden",!canViewCustomers); $("customersCard").classList.toggle("hidden",!canViewCustomers); $("addCustomerBtn").classList.toggle("hidden",!canManageCustomers); }catch(e){$("menuCustomers").classList.add("hidden");}
-  try{ canViewSales=await permission("SALES_VIEW"); canManageSales=await permission("SALES_MANAGE"); $("menuSales").classList.toggle("hidden",!canViewSales); $("salesCard").classList.toggle("hidden",!canViewSales); $("addInvoiceBtn").classList.toggle("hidden",!canManageSales); }catch(e){$("menuSales").classList.add("hidden");}
+  try{ canViewSales=await permission("SALES_VIEW"); canManageSales=await permission("SALES_MANAGE"); $("menuSales").classList.toggle("hidden",!canViewSales); $("salesCard").classList.toggle("hidden",!canViewSales); $("addInvoiceBtn").classList.toggle("hidden",!canManageSales); $("addReturnBtn").classList.toggle("hidden",!canManageSales); canViewReturns=await permission("RETURNS_VIEW") || isSystemAdmin; canManageReturns=await permission("RETURNS_MANAGE") || isSystemAdmin; }catch(e){$("menuSales").classList.add("hidden");}
   try{ canViewCollections=await permission("COLLECTIONS_VIEW"); canManageCollections=await permission("COLLECTIONS_MANAGE"); $("menuCollections").classList.toggle("hidden",!canViewCollections); $("collectionsCard").classList.toggle("hidden",!canViewCollections); $("addCollectionBtn").classList.toggle("hidden",!canManageCollections); }catch(e){$("menuCollections").classList.add("hidden");}
   try{ canViewSuppliers=await permission("SUPPLIERS_VIEW"); canManageSuppliers=await permission("SUPPLIERS_MANAGE"); $("menuSuppliers").classList.toggle("hidden",!canViewSuppliers); $("suppliersCard").classList.toggle("hidden",!canViewSuppliers); $("addSupplierBtn").classList.toggle("hidden",!canManageSuppliers); }catch(e){$("menuSuppliers").classList.add("hidden");}
   try{ canViewPurchases=await permission("PURCHASES_VIEW"); canManagePurchases=await permission("PURCHASES_MANAGE"); $("menuPurchases").classList.toggle("hidden",!canViewPurchases); $("purchasesCard").classList.toggle("hidden",!canViewPurchases); $("addPurchaseBtn").classList.toggle("hidden",!canManagePurchases); }catch(e){$("menuPurchases").classList.add("hidden");}
-
   if(isSystemAdmin){ $("menuUsers").classList.remove("hidden"); $("menuAccounting").classList.remove("hidden"); $("accountingCard").classList.remove("hidden"); await loadUserManagementLookups(); }else{ $("menuUsers").classList.add("hidden"); $("userManagementCard").classList.add("hidden"); }
 }
 
@@ -1070,31 +1118,23 @@ async function viewTreasuryStatement(t) {
   try {
     const { data, error } = await db.from("treasury_transactions").select("*").eq("treasury_id", t.treasury_id).order("created_at", { ascending: true });
     if (error) throw error;
-    if (!data || data.length === 0) {
-      tbody.innerHTML = "<tr><td colspan='5' style='text-align:center;'>لا توجد حركات مسجلة.</td></tr>";
-      return;
-    }
+    if (!data || data.length === 0) { tbody.innerHTML = "<tr><td colspan='5' style='text-align:center;'>لا توجد حركات مسجلة.</td></tr>"; return; }
     let html = "";
     let runningBalance = t.opening_balance ? Number(t.opening_balance) : 0;
     html += `<tr style="background:#f4f6f3; font-weight:bold;"><td colspan="4">الرصيد الافتتاحي</td><td>${fmt(runningBalance)}</td></tr>`;
     data.forEach(tr => {
       let typeName = tr.transaction_type;
       let deposit = 0; let withdraw = 0;
-      if (tr.transaction_type === 'DEPOSIT' || tr.transaction_type === 'TRANSFER_IN') {
-        deposit = Number(tr.amount); runningBalance += deposit;
-      } else if (tr.transaction_type === 'WITHDRAW' || tr.transaction_type === 'TRANSFER_OUT') {
-        withdraw = Number(tr.amount); runningBalance -= withdraw;
-      }
+      if (tr.transaction_type === 'DEPOSIT' || tr.transaction_type === 'TRANSFER_IN') { deposit = Number(tr.amount); runningBalance += deposit; } 
+      else if (tr.transaction_type === 'WITHDRAW' || tr.transaction_type === 'TRANSFER_OUT') { withdraw = Number(tr.amount); runningBalance -= withdraw; }
       html += `<tr><td>${new Date(tr.created_at).toLocaleString("ar-EG")}</td><td>${tr.notes || typeName}</td><td style="color:green;">${deposit > 0 ? fmt(deposit) : "-"}</td><td style="color:red;">${withdraw > 0 ? fmt(withdraw) : "-"}</td><td style="font-weight:bold;">${fmt(runningBalance)}</td></tr>`;
     });
     tbody.innerHTML = html;
-  } catch (e) {
-    tbody.innerHTML = `<tr><td colspan='5' style="color:red;">خطأ: ${err(e)}</td></tr>`;
-  }
+  } catch (e) { tbody.innerHTML = `<tr><td colspan='5' style="color:red;">خطأ: ${err(e)}</td></tr>`; }
 }
 
 function fillTreasurySelects() {
-  const selects = ["expenseTreasury", "invoiceTreasury", "purchaseTreasury", "collectionTreasury"];
+  const selects = ["expenseTreasury", "invoiceTreasury", "purchaseTreasury", "collectionTreasury", "returnTreasury"];
   selects.forEach(id => {
     const el = $(id);
     if (!el) return;
@@ -1102,10 +1142,7 @@ function fillTreasurySelects() {
     el.replaceChildren();
     const first = document.createElement("option"); first.value = ""; first.textContent = "اختر الخزنة"; el.appendChild(first);
     treasuriesCache.filter(t => t.is_active).forEach(t => {
-      const op = document.createElement("option"); 
-      op.value = String(t.treasury_id); 
-      op.textContent = t.treasury_name + " (" + fmt(t.current_balance) + ")"; 
-      el.appendChild(op);
+      const op = document.createElement("option"); op.value = String(t.treasury_id); op.textContent = t.treasury_name + " (" + fmt(t.current_balance) + ")"; el.appendChild(op);
     });
     el.value = cur;
   });
@@ -1113,16 +1150,12 @@ function fillTreasurySelects() {
 
 /* ============ إدارة المصروفات ============ */
 function fillExpenseTripSelect() {
-  const el = $("expenseTrip"); if(!el) return;
-  const cur = el.value;
-  el.replaceChildren();
+  const el = $("expenseTrip"); if(!el) return; const cur = el.value; el.replaceChildren();
   const first = document.createElement("option"); first.value = ""; first.textContent = "بدون ربط"; el.appendChild(first);
-  tripsCache.filter(t => t.status !== 'COMPLETED').forEach(t => {
-    const op = document.createElement("option"); op.value = String(t.trip_id); op.textContent = t.trip_number + " (" + t.rep_name + ")"; el.appendChild(op);
-  });
+  tripsCache.filter(t => t.status !== 'COMPLETED').forEach(t => { const op = document.createElement("option"); op.value = String(t.trip_id); op.textContent = t.trip_number + " (" + t.rep_name + ")"; el.appendChild(op); });
   el.value = cur;
 }
-  function resetExpenseForm(){ $("expenseForm").reset(); $("expenseDate").value=todayISO(); $("expenseFormCard").classList.add("hidden"); clear($("expenseFormMsg")); fillTreasurySelects(); fillExpenseTripSelect(); }
+function resetExpenseForm(){ $("expenseForm").reset(); $("expenseDate").value=todayISO(); $("expenseFormCard").classList.add("hidden"); clear($("expenseFormMsg")); fillTreasurySelects(); fillExpenseTripSelect(); }
 async function loadExpenses(){ if(!canViewExpenses)return; clear($("expensesMsg")); $("expensesList").replaceChildren(); try{ const {data:sessionData,error:sessionError}=await db.auth.getSession(); if(sessionError)throw sessionError; if(!sessionData.session)throw new Error("انتهت جلسة الدخول."); const allowed=await permission("EXPENSES_VIEW") || isSystemAdmin; if(!allowed){canViewExpenses=false;$("menuExpenses").classList.add("hidden");$("expensesCard").classList.add("hidden");throw new Error("لا تملك صلاحية عرض المصروفات.");} const {data,error}=await db.from("expenses").select("expense_id,expense_type,amount,treasury_id,expense_date,notes").order("expense_id",{ascending:false}).limit(200); if(error)throw error; renderExpenses(data||[]); msg($("expensesMsg"),"تم تحميل "+ (data||[]).length +" مصروف.","success"); }catch(e){ msg($("expensesMsg"),"تعذر تحميل المصروفات: "+err(e),"error"); const d=document.createElement("div");d.className="empty";d.textContent="راجع رسالة الخطأ أعلاه.";$("expensesList").replaceChildren(d); } }
 function renderExpenses(data){ const box=$("expensesList");box.replaceChildren(); const q=$("expensesSearch").value.trim().toLowerCase(); const typeMap={FUEL:"وقود",MAINTENANCE:"صيانة",RENT:"إيجارات",SALARY:"رواتب",OTHER:"أخرى"}; const found=data.filter(e=> [typeMap[e.expense_type],e.notes,String(e.amount)].some(v=>String(v||"").toLowerCase().includes(q)) ); if(!found.length){ const d=document.createElement("div");d.className="empty";d.textContent=q?"لا توجد مصروفات مطابقة.":"لا توجد مصروفات مسجلة بعد.";box.appendChild(d);return; } found.forEach(e=>{ const card=document.createElement("div");card.className="product"; const title=document.createElement("div");title.className="pname";title.textContent="🧾 "+(typeMap[e.expense_type]||e.expense_type); const details=document.createElement("div");details.className="details";details.textContent="التاريخ: "+new Date(e.expense_date).toLocaleDateString("ar-EG")+" | الخزنة: "+treasuryName(e.treasury_id)+(e.notes?" | "+e.notes:""); const amt=document.createElement("span");amt.className="badge badge-cancel";amt.textContent="المبلغ: "+fmt(e.amount); card.append(title,details,amt); box.appendChild(card); }); }
 $("addExpenseBtn").addEventListener("click",async()=>{ if(!canManageExpenses)return; if(!treasuriesCache.length)await loadTreasuries(); if(!tripsCache.length)await loadTrips(); resetExpenseForm(); $("expenseFormCard").classList.remove("hidden"); $("expenseFormCard").scrollIntoView({behavior:"smooth",block:"start"}); });
@@ -1140,7 +1173,6 @@ $("addPartnerBtn").addEventListener("click",()=>{ if(!canManagePartners)return; 
 $("cancelPartnerBtn").addEventListener("click",resetPartnerForm); $("refreshPartnersBtn").addEventListener("click",loadPartners); $("partnerSearch").addEventListener("input",()=>loadPartners());
 $("partnerForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("partnerFormMsg")); if(!canManagePartners)return; const name=$("partnerName").value.trim(); const phone=$("partnerPhone").value.trim(); const share=$("partnerShare").value; const notes=$("partnerNotes").value.trim(); const active=$("partnerActive").checked; if(!name){ msg($("partnerFormMsg"),"أكمل اسم الشريك.","error");return; } const button=$("savePartnerBtn"); busy(button,true,"جارٍ الحفظ...","حفظ"); try{ if(!await permission("PARTNERS_MANAGE") && !isSystemAdmin)throw new Error("لا تملك صلاحية إدارة الشركاء."); const payload = { partner_name: name, phone: phone || null, share_percentage: share ? Number(share) : null, notes: notes || null, is_active: active }; const {error}=await db.from("partners").insert(payload); if(error)throw error; msg($("partnersMsg"),"تم إضافة الشريك بنجاح.","success"); resetPartnerForm(); await loadPartners(); }catch(e){ msg($("partnerFormMsg"),"تعذر حفظ الشريك: "+err(e),"error"); }finally{ busy(button,false,"","حفظ"); } });
 
-/* ============ إدارة حركات الشركاء ============ */
 async function loadPartnerTransactions(){
   if(!canViewPartners)return; clear($("partnerTransactionsMsg")); $("partnerTransactionsList").replaceChildren();
   try{
@@ -1193,65 +1225,27 @@ window.switchAccTab = function(tabId) {
   if(tabId === 'accTrial') buttons[1].classList.add('active');
   if(tabId === 'accJournal') buttons[2].classList.add('active');
 }
-
 async function loadFinancialSummary() {
   if (!isSystemAdmin) return;
   $("accountingLoader").classList.remove("hidden");
   try {
     const from = $("accFromDate").value || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
     const to = $("accToDate").value || new Date().toISOString().split('T')[0];
-    
-    const { data: periodData, error: periodError } = await db.rpc("get_period_summary", { p_from: from, p_to: to });
-    if (periodError) throw periodError;
-    
-    const { data: trialData, error: trialError } = await db.rpc("get_trial_balance", { p_from: from, p_to: to });
-    if (trialError) throw trialError;
-    
-    const { data: journalData, error: journalError } = await db.rpc("get_journal_entries", { p_from: from, p_to: to });
-    if (journalError) throw journalError;
-
-    $("accRevPeriod").textContent = fmt(periodData.rev);
-    $("accPurchPeriod").textContent = fmt(periodData.purch);
-    $("accExpPeriod").textContent = fmt(periodData.exp);
-    $("accProfitPeriod").textContent = fmt(periodData.profit);
-    $("accCash").textContent = fmt(periodData.cash);
-    $("accAR").textContent = fmt(periodData.ar);
-    $("accAP").textContent = fmt(periodData.ap);
-    
+    const { data: periodData, error: periodError } = await db.rpc("get_period_summary", { p_from: from, p_to: to }); if (periodError) throw periodError;
+    const { data: trialData, error: trialError } = await db.rpc("get_trial_balance", { p_from: from, p_to: to }); if (trialError) throw trialError;
+    const { data: journalData, error: journalError } = await db.rpc("get_journal_entries", { p_from: from, p_to: to }); if (journalError) throw journalError;
+    $("accRevPeriod").textContent = fmt(periodData.rev); $("accPurchPeriod").textContent = fmt(periodData.purch); $("accExpPeriod").textContent = fmt(periodData.exp); $("accProfitPeriod").textContent = fmt(periodData.profit);
+    $("accCash").textContent = fmt(periodData.cash); $("accAR").textContent = fmt(periodData.ar); $("accAP").textContent = fmt(periodData.ap);
     $("accProfitPeriod").style.color = periodData.profit < 0 ? "#ff6b6b" : "var(--gold)";
-    
-    const tbodyTrial = $("trialBalanceTable").querySelector("tbody");
-    tbodyTrial.innerHTML = "";
-    if(trialData && trialData.length > 0) {
-      trialData.forEach(row => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${row.account_name} (${row.account_code})</td><td>${fmt(row.total_debit)}</td><td>${fmt(row.total_credit)}</td>`;
-        tbodyTrial.appendChild(tr);
-      });
-    } else {
-      tbodyTrial.innerHTML = "<tr><td colspan='3' style='text-align:center;'>لا توجد قيود في هذه الفترة</td></tr>";
-    }
-
-    const tbodyJournal = $("journalTable").querySelector("tbody");
-    tbodyJournal.innerHTML = "";
-    if(journalData && journalData.length > 0) {
-      journalData.forEach(row => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${new Date(row.entry_date).toLocaleDateString("ar-EG")}</td><td>${row.description}</td><td>${row.account_name}</td><td>${fmt(row.debit)}</td><td>${fmt(row.credit)}</td>`;
-        tbodyJournal.appendChild(tr);
-      });
-    } else {
-      tbodyJournal.innerHTML = "<tr><td colspan='5' style='text-align:center;'>لا توجد قيود في هذه الفترة</td></tr>";
-    }
-
+    const tbodyTrial = $("trialBalanceTable").querySelector("tbody"); tbodyTrial.innerHTML = "";
+    if(trialData && trialData.length > 0) { trialData.forEach(row => { const tr = document.createElement("tr"); tr.innerHTML = `<td>${row.account_name} (${row.account_code})</td><td>${fmt(row.total_debit)}</td><td>${fmt(row.total_credit)}</td>`; tbodyTrial.appendChild(tr); }); } else { tbodyTrial.innerHTML = "<tr><td colspan='3' style='text-align:center;'>لا توجد قيود في هذه الفترة</td></tr>"; }
+    const tbodyJournal = $("journalTable").querySelector("tbody"); tbodyJournal.innerHTML = "";
+    if(journalData && journalData.length > 0) { journalData.forEach(row => { const tr = document.createElement("tr"); tr.innerHTML = `<td>${new Date(row.entry_date).toLocaleDateString("ar-EG")}</td><td>${row.description}</td><td>${row.account_name}</td><td>${fmt(row.debit)}</td><td>${fmt(row.credit)}</td>`; tbodyJournal.appendChild(tr); }); } else { tbodyJournal.innerHTML = "<tr><td colspan='5' style='text-align:center;'>لا توجد قيود في هذه الفترة</td></tr>"; }
     $("accountingLoader").classList.add("hidden");
-  } catch(e) {
-    $("accountingLoader").textContent = "تعذر تحميل البيانات: " + err(e);
-  }
+  } catch(e) { $("accountingLoader").textContent = "تعذر تحميل البيانات: " + err(e); }
 }
-
 $("btnAccFilter").addEventListener("click", loadFinancialSummary);
-  
+
 /* ============ أرصدة المخزون ============ */
 function fillLocationsFilter(){ const el=$("stockLocationFilter");const cur=el.value;el.replaceChildren(); const all=document.createElement("option");all.value="";all.textContent="كل المواقع";el.appendChild(all); locationsCache.filter(l=>l.is_active).forEach(l=>{ const op=document.createElement("option");op.value=String(l.location_id);op.textContent=l.location_name;el.appendChild(op); }); el.value=cur; }
 function fillStockFormSelects(){ const locEl=$("stockLocation");const curLoc=locEl.value;locEl.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر الموقع";locEl.appendChild(first); locationsCache.filter(l=>l.is_active).forEach(l=>{ const op=document.createElement("option");op.value=String(l.location_id);op.textContent=l.location_name+" ("+l.location_code+")";locEl.appendChild(op); }); locEl.value=curLoc; const prodEl=$("stockProduct");const curProd=prodEl.value;prodEl.replaceChildren(); const firstP=document.createElement("option");firstP.value="";firstP.textContent="اختر المنتج";prodEl.appendChild(firstP); productsCache.filter(p=>p.is_active).forEach(p=>{ const op=document.createElement("option");op.value=String(p.product_id);op.textContent=p.product_name+" ("+p.product_code+")";prodEl.appendChild(op); }); prodEl.value=curProd; }
@@ -1304,44 +1298,17 @@ async function viewSupplierStatement(c) {
   try { 
     const { data: invoices, error: invErr } = await db.from("purchase_invoices").select("purchase_invoice_id, invoice_number, invoice_date, net_total, status, treasury_id").eq("supplier_id", c.supplier_id).neq("status", "CANCELLED").order("invoice_date", { ascending: true }); 
     if (invErr) throw invErr; 
-    
-    const timeline = []; 
-    let totalInvoiced = 0; 
-    let totalPaid = 0; 
-    
-    (invoices || []).forEach(inv => { 
-      timeline.push({ date: inv.invoice_date, type: 'invoice', ref: inv.invoice_number, desc: "فاتورة مشتريات", debit: 0, credit: Number(inv.net_total) }); 
-      totalInvoiced += Number(inv.net_total); 
-      if (inv.treasury_id) { 
-        timeline.push({ date: inv.invoice_date, type: 'payment', ref: inv.invoice_number, desc: "سداد نقدي للفاتورة", debit: Number(inv.net_total), credit: 0 }); 
-        totalPaid += Number(inv.net_total);
-      }
-    }); 
-    
+    const timeline = []; let totalInvoiced = 0; let totalPaid = 0; 
+    (invoices || []).forEach(inv => { timeline.push({ date: inv.invoice_date, type: 'invoice', ref: inv.invoice_number, desc: "فاتورة مشتريات", debit: 0, credit: Number(inv.net_total) }); totalInvoiced += Number(inv.net_total); if (inv.treasury_id) { timeline.push({ date: inv.invoice_date, type: 'payment', ref: inv.invoice_number, desc: "سداد نقدي للفاتورة", debit: Number(inv.net_total), credit: 0 }); totalPaid += Number(inv.net_total); } }); 
     timeline.sort((a, b) => new Date(a.date) - new Date(b.date)); 
-    let runningBalance = 0; 
-    let rowsHtml = `<thead><tr><th>التاريخ</th><th>المستند</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead><tbody>`; 
-    timeline.forEach(t => { 
-      runningBalance = runningBalance - t.credit + t.debit; 
-      rowsHtml += `<tr><td>${new Date(t.date).toLocaleDateString("ar-EG")}</td><td dir="ltr" style="text-align:right;">${t.ref}</td><td>${t.desc}</td><td>${t.debit > 0 ? fmt(t.debit) : "-"}</td><td>${t.credit > 0 ? fmt(t.credit) : "-"}</td><td style="font-weight:bold;">${fmt(runningBalance)}</td></tr>`; 
-    }); 
-    rowsHtml += `</tbody>`; 
-    $("modalStatementItems").innerHTML = rowsHtml; 
-    
+    let runningBalance = 0; let rowsHtml = `<thead><tr><th>التاريخ</th><th>المستند</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead><tbody>`; 
+    timeline.forEach(t => { runningBalance = runningBalance - t.credit + t.debit; rowsHtml += `<tr><td>${new Date(t.date).toLocaleDateString("ar-EG")}</td><td dir="ltr" style="text-align:right;">${t.ref}</td><td>${t.desc}</td><td>${t.debit > 0 ? fmt(t.debit) : "-"}</td><td>${t.credit > 0 ? fmt(t.credit) : "-"}</td><td style="font-weight:bold;">${fmt(runningBalance)}</td></tr>`; }); 
+    rowsHtml += `</tbody>`; $("modalStatementItems").innerHTML = rowsHtml; 
     $("modalStatementHeader").innerHTML = `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span><strong>اسم المورد:</strong> ${c.supplier_name}</span><span><strong>كود:</strong> ${c.supplier_code}</span></div><div style="display:flex; justify-content:space-between;"><span><strong>موبايل:</strong> ${c.phone || "غير مسجل"}</span><span><strong>تاريخ الكشف:</strong> ${new Date().toLocaleDateString("ar-EG")}</span></div>`; 
     $("modalStatementSummary").innerHTML = `<div class="line"><span>إجمالي المشتريات (فواتير):</span><span>${fmt(totalInvoiced)}</span></div><div class="line"><span>إجمالي المدفوع (سداد):</span><span style="color:green;">${fmt(totalPaid)}</span></div><div class="line grand" style="border-top:2px solid #333; padding-top:5px;"><span>الرصيد النهائي (مستحق للمورد):</span><span style="color:red;">${fmt(Math.abs(runningBalance))}</span></div>`; 
-    
     const waBtn = $("shareStatementWhatsappBtn"); 
-    waBtn.onclick = () => { 
-      let waText = `*كشف حساب مورد*\nالمورد: ${c.supplier_name}\nالتاريخ: ${new Date().toLocaleDateString("ar-EG")}\n------------------------\nإجمالي المشتريات: ${fmt(totalInvoiced)}\nإجمالي المدفوع: ${fmt(totalPaid)}\n------------------------\n*الرصيد المتبقي: ${fmt(Math.abs(runningBalance))}*\n\nشكراً لتعاملكم معنا!`; 
-      let phone = c.phone ? c.phone.replace(/\D/g, '') : ""; 
-      if (phone.startsWith('0')) phone = '2' + phone; 
-      const url = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(waText)}` : `https://wa.me/?text=${encodeURIComponent(waText)}`; 
-      window.open(url, '_blank'); 
-    }; 
-  } catch (e) { 
-    $("modalStatementHeader").innerHTML = `<span style="color:red;">تعذر تحميل كشف الحساب: ${err(e)}</span>`; 
-  } 
+    waBtn.onclick = () => { let waText = `*كشف حساب مورد*\nالمورد: ${c.supplier_name}\nالتاريخ: ${new Date().toLocaleDateString("ar-EG")}\n------------------------\nإجمالي المشتريات: ${fmt(totalInvoiced)}\nإجمالي المدفوع: ${fmt(totalPaid)}\n------------------------\n*الرصيد المتبقي: ${fmt(Math.abs(runningBalance))}*\n\nشكراً لتعاملكم معنا!`; let phone = c.phone ? c.phone.replace(/\D/g, '') : ""; if (phone.startsWith('0')) phone = '2' + phone; const url = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(waText)}` : `https://wa.me/?text=${encodeURIComponent(waText)}`; window.open(url, '_blank'); }; 
+  } catch (e) { $("modalStatementHeader").innerHTML = `<span style="color:red;">تعذر تحميل كشف الحساب: ${err(e)}</span>`; } 
 }
 
 /* ============ فواتير البيع ============ */
@@ -1349,28 +1316,8 @@ function paymentTypeName(v){ return({CASH:"نقدي",CREDIT:"آجل",BANK_TRANSF
 function invoiceStatusName(v){ return({POSTED:"مرحّلة",PAID:"مدفوعة",PARTIAL:"جزئية",CANCELLED:"ملغاة",DRAFT:"مسودة"})[v]||v||"—"; }
 function fillInvoiceCustomerSelect(){ const el=$("invoiceCustomer");const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر العميل";el.appendChild(first); customersCache.filter(c=>c.is_active).forEach(c=>{ const op=document.createElement("option");op.value=String(c.customer_id);op.textContent=c.customer_name+" ("+c.customer_code+")";el.appendChild(op); }); el.value=cur; }
 function fillInvoiceLocationSelect(){ const el=$("invoiceLocation");if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر الموقع";el.appendChild(first); locationsCache.filter(l=>l.is_active).forEach(l=>{ const op=document.createElement("option");op.value=String(l.location_id);op.textContent=l.location_name+" ("+l.location_code+")";el.appendChild(op); }); el.value=cur; }
-
-function fillInvoiceTripSelect() {
-  const el = $("invoiceTrip"); if(!el) return;
-  const cur = el.value;
-  el.replaceChildren();
-  const first = document.createElement("option"); first.value = ""; first.textContent = "بدون ربط"; el.appendChild(first);
-  tripsCache.filter(t => t.status !== 'COMPLETED').forEach(t => {
-    const op = document.createElement("option"); op.value = String(t.trip_id); op.textContent = t.trip_number + " (" + t.rep_name + ")"; el.appendChild(op);
-  });
-  el.value = cur;
-}
-
-function fillCollectionTripSelect() {
-  const el = $("collectionTrip"); if(!el) return;
-  const cur = el.value;
-  el.replaceChildren();
-  const first = document.createElement("option"); first.value = ""; first.textContent = "بدون ربط"; el.appendChild(first);
-  tripsCache.filter(t => t.status !== 'COMPLETED').forEach(t => {
-    const op = document.createElement("option"); op.value = String(t.trip_id); op.textContent = t.trip_number + " (" + t.rep_name + ")"; el.appendChild(op);
-  });
-  el.value = cur;
-}
+function fillInvoiceTripSelect() { const el = $("invoiceTrip"); if(!el) return; const cur = el.value; el.replaceChildren(); const first = document.createElement("option"); first.value = ""; first.textContent = "بدون ربط"; el.appendChild(first); tripsCache.filter(t => t.status !== 'COMPLETED').forEach(t => { const op = document.createElement("option"); op.value = String(t.trip_id); op.textContent = t.trip_number + " (" + t.rep_name + ")"; el.appendChild(op); }); el.value = cur; }
+function fillCollectionTripSelect() { const el = $("collectionTrip"); if(!el) return; const cur = el.value; el.replaceChildren(); const first = document.createElement("option"); first.value = ""; first.textContent = "بدون ربط"; el.appendChild(first); tripsCache.filter(t => t.status !== 'COMPLETED').forEach(t => { const op = document.createElement("option"); op.value = String(t.trip_id); op.textContent = t.trip_number + " (" + t.rep_name + ")"; el.appendChild(op); }); el.value = cur; }
 
 function resetInvoiceForm(){ $("invoiceForm").reset(); $("invoiceDate").value=todayISO(); $("invoicePaymentType").value="CASH"; $("invoiceDiscount").value="0"; $("invoicePaidAmount").value="0"; $("invoicePaidAmountWrap").classList.add("hidden"); $("invoiceItems").replaceChildren(); invoiceItemCounter=0; addInvoiceItemRow(); updateInvoiceTotals(); $("invoiceFormCard").classList.add("hidden"); clear($("invoiceFormMsg")); fillInvoiceCustomerSelect(); fillInvoiceLocationSelect(); fillTreasurySelects(); fillInvoiceTripSelect(); }
 
@@ -1378,93 +1325,29 @@ function addInvoiceItemRow(){
   invoiceItemCounter++; const id="item_"+invoiceItemCounter; const wrap=document.createElement("div");wrap.className="item-row";wrap.dataset.itemId=id;
   const prodLabel=document.createElement("label");prodLabel.textContent="المنتج *"; const prodSel=document.createElement("select");prodSel.className="item-product";prodSel.required=true;
   const first=document.createElement("option");first.value="";first.textContent="اختر المنتج";prodSel.appendChild(first);
-  
-  productsCache.filter(p=>p.is_active&&p.can_be_sold).forEach(p=>{
-    const op=document.createElement("option");
-    op.value=String(p.product_id);op.textContent=p.product_name+" ("+p.product_code+")";
-    if(p.target_selling_price!=null)op.dataset.price=String(p.target_selling_price);
-    op.dataset.minPrice = p.min_selling_price != null ? String(p.min_selling_price) : "";
-    op.dataset.maxPrice = p.max_selling_price != null ? String(p.max_selling_price) : "";
-    op.dataset.baseUnit=String(p.base_unit_id||""); op.dataset.unitsCarton=String(p.units_per_carton||"");
-    prodSel.appendChild(op);
-  });
-
+  productsCache.filter(p=>p.is_active&&p.can_be_sold).forEach(p=>{ const op=document.createElement("option"); op.value=String(p.product_id);op.textContent=p.product_name+" ("+p.product_code+")"; if(p.target_selling_price!=null)op.dataset.price=String(p.target_selling_price); op.dataset.minPrice = p.min_selling_price != null ? String(p.min_selling_price) : ""; op.dataset.maxPrice = p.max_selling_price != null ? String(p.max_selling_price) : ""; op.dataset.baseUnit=String(p.base_unit_id||""); op.dataset.unitsCarton=String(p.units_per_carton||""); prodSel.appendChild(op); });
   const grid3=document.createElement("div");grid3.className="grid3";
   const unitWrap=document.createElement("div"); const unitLabel=document.createElement("label");unitLabel.textContent="وحدة البيع *"; const unitSel=document.createElement("select");unitSel.className="item-unit";unitSel.required=true; unitWrap.append(unitLabel,unitSel);
   const qtyWrap=document.createElement("div"); const qtyLabel=document.createElement("label");qtyLabel.textContent="الكمية *"; const qty=document.createElement("input");qty.type="number";qty.className="item-qty";qty.min="0.0001";qty.step="0.0001";qty.required=true; qtyWrap.append(qtyLabel,qty);
   const priceWrap=document.createElement("div"); const priceLabel=document.createElement("label");priceLabel.textContent="سعر الوحدة *"; const price=document.createElement("input");price.type="number";price.className="item-price";price.min="0";price.step="0.01";price.required=true; priceWrap.append(priceLabel,price);
-  
-  const hintDiv = document.createElement("div"); hintDiv.className = "price-hint";
-  const errDiv = document.createElement("div"); errDiv.className = "error-text";
-  
+  const hintDiv = document.createElement("div"); hintDiv.className = "price-hint"; const errDiv = document.createElement("div"); errDiv.className = "error-text";
   grid3.append(unitWrap,qtyWrap,priceWrap);
   const lineTotal=document.createElement("div");lineTotal.className="item-line-total";lineTotal.textContent="الإجمالي: 0";
   const stockHint=document.createElement("div");stockHint.className="item-hint";stockHint.textContent="";
-  
   const removeBtn=document.createElement("button");removeBtn.type="button";removeBtn.className="btn danger";removeBtn.textContent="حذف الصنف";
   removeBtn.addEventListener("click",()=>{ wrap.remove();updateInvoiceTotals(); if(!$("invoiceItems").children.length)addInvoiceItemRow(); });
-  
   wrap.append(prodLabel,prodSel,grid3,hintDiv,errDiv,lineTotal,stockHint,removeBtn); $("invoiceItems").appendChild(wrap);
-
-  const recalc=()=>{
-    const q=Number(qty.value||0); const p=Number(price.value||0); const t=q*p;
-    lineTotal.textContent="الإجمالي: "+fmt(t);
-    
-    const opt=prodSel.selectedOptions[0];
-    const minP = opt?.dataset?.minPrice ? Number(opt.dataset.minPrice) : 0;
-    const maxP = opt?.dataset?.maxPrice ? Number(opt.dataset.maxPrice) : Infinity;
-    
-    if(p > 0 && (p < minP || p > maxP)) {
-        errDiv.style.display = "block";
-        errDiv.textContent = `السعر غير مسموح! يجب أن يكون بين ${minP} و ${maxP}`;
-        price.style.borderColor = "var(--red)";
-    } else {
-        errDiv.style.display = "none";
-        price.style.borderColor = "#ccd5cc";
-    }
-
-    const unitId=Number(unitSel.value||0);
-    const baseUnitId=Number(opt?.dataset?.baseUnit||0); const unitsCarton=Number(opt?.dataset?.unitsCarton||0);
-    if(unitId&&baseUnitId&&q>0){
-      if(unitId===baseUnitId){ stockHint.textContent="يخصم من المخزون: "+q.toLocaleString("ar-EG")+" "+unitName(baseUnitId); }
-      else if(unitId===cartonUnitId&&unitsCarton>0){ const baseQty=q*unitsCarton; stockHint.textContent="يخصم من المخزون: "+baseQty.toLocaleString("ar-EG")+" "+unitName(baseUnitId)+" ("+q+" كرتونة × "+unitsCarton+")"; }
-      else{stockHint.textContent="";}
-    }else{stockHint.textContent="";}
-    updateInvoiceTotals();
-  };
-
-  const populateUnits=()=>{
-    const opt=prodSel.selectedOptions[0]; const baseUnitId=opt?.dataset?.baseUnit||""; const unitsCarton=Number(opt?.dataset?.unitsCarton||0);
-    const minP = opt?.dataset?.minPrice; const maxP = opt?.dataset?.maxPrice; const targetP = opt?.dataset?.price;
-    
-    if(minP || maxP || targetP) {
-        hintDiv.textContent = `الحد الأدنى: ${minP || 0} | المستهدف: ${targetP || '-'} | الحد الأقصى: ${maxP || '-'}`;
-    } else {
-        hintDiv.textContent = "";
-    }
-
-    unitSel.replaceChildren(); const firstU=document.createElement("option");firstU.value="";firstU.textContent="اختر الوحدة";unitSel.appendChild(firstU);
-    if(baseUnitId){ const op=document.createElement("option");op.value=baseUnitId;op.textContent=unitName(baseUnitId);unitSel.appendChild(op); }
-    if(unitsCarton>0&&cartonUnitId){ const op=document.createElement("option");op.value=String(cartonUnitId);op.textContent="كرتونة ("+unitsCarton+" "+unitName(baseUnitId)+")";unitSel.appendChild(op); }
-    if(baseUnitId)unitSel.value=baseUnitId;
-    recalc();
-  };
-
-  prodSel.addEventListener("change",()=>{ const opt=prodSel.selectedOptions[0]; if(opt?.dataset.price&&!price.value)price.value=opt.dataset.price; populateUnits(); });
-  unitSel.addEventListener("change",recalc); qty.addEventListener("input",recalc); price.addEventListener("input",recalc); populateUnits();
+  const recalc=()=>{ const q=Number(qty.value||0); const p=Number(price.value||0); const t=q*p; lineTotal.textContent="الإجمالي: "+fmt(t); const opt=prodSel.selectedOptions[0]; const minP = opt?.dataset?.minPrice ? Number(opt.dataset.minPrice) : 0; const maxP = opt?.dataset?.maxPrice ? Number(opt.dataset.maxPrice) : Infinity; if(p > 0 && (p < minP || p > maxP)) { errDiv.style.display = "block"; errDiv.textContent = `السعر غير مسموح! يجب أن يكون بين ${minP} و ${maxP}`; price.style.borderColor = "var(--red)"; } else { errDiv.style.display = "none"; price.style.borderColor = "#ccd5cc"; } const unitId=Number(unitSel.value||0); const baseUnitId=Number(opt?.dataset?.baseUnit||0); const unitsCarton=Number(opt?.dataset?.unitsCarton||0); if(unitId&&baseUnitId&&q>0){ if(unitId===baseUnitId){ stockHint.textContent="يخصم من المخزون: "+q.toLocaleString("ar-EG")+" "+unitName(baseUnitId); } else if(unitId===cartonUnitId&&unitsCarton>0){ const baseQty=q*unitsCarton; stockHint.textContent="يخصم من المخزون: "+baseQty.toLocaleString("ar-EG")+" "+unitName(baseUnitId)+" ("+q+" كرتونة × "+unitsCarton+")"; } else{stockHint.textContent="";} }else{stockHint.textContent="";} updateInvoiceTotals(); };
+  const populateUnits=()=>{ const opt=prodSel.selectedOptions[0]; const baseUnitId=opt?.dataset?.baseUnit||""; const unitsCarton=Number(opt?.dataset?.unitsCarton||0); const minP = opt?.dataset?.minPrice; const maxP = opt?.dataset?.maxPrice; const targetP = opt?.dataset?.price; if(minP || maxP || targetP) { hintDiv.textContent = `الحد الأدنى: ${minP || 0} | المستهدف: ${targetP || '-'} | الحد الأقصى: ${maxP || '-'}`; } else { hintDiv.textContent = ""; } unitSel.replaceChildren(); const firstU=document.createElement("option");firstU.value="";firstU.textContent="اختر الوحدة";unitSel.appendChild(firstU); if(baseUnitId){ const op=document.createElement("option");op.value=baseUnitId;op.textContent=unitName(baseUnitId);unitSel.appendChild(op); } if(unitsCarton>0&&cartonUnitId){ const op=document.createElement("option");op.value=String(cartonUnitId);op.textContent="كرتونة ("+unitsCarton+" "+unitName(baseUnitId)+")";unitSel.appendChild(op); } if(baseUnitId)unitSel.value=baseUnitId; recalc(); };
+  prodSel.addEventListener("change",()=>{ const opt=prodSel.selectedOptions[0]; if(opt?.dataset.price&&!price.value)price.value=opt.dataset.price; populateUnits(); }); unitSel.addEventListener("change",recalc); qty.addEventListener("input",recalc); price.addEventListener("input",recalc); populateUnits();
 }
 
 function updateInvoiceTotals(){
   let subtotal=0;
   document.querySelectorAll("#invoiceItems .item-row").forEach(row=>{ const q=Number(row.querySelector(".item-qty")?.value||0); const p=Number(row.querySelector(".item-price")?.value||0); subtotal+=q*p; });
-  
-  const discountPercent = Number($("invoiceDiscount").value||0);
-  const discountAmount = subtotal * (discountPercent / 100);
-  
+  const discountPercent = Number($("invoiceDiscount").value||0); const discountAmount = subtotal * (discountPercent / 100);
   let total=subtotal-discountAmount; if(total<0)total=0;
-  $("invoiceSubtotal").textContent=fmt(subtotal);
-  $("invoiceDiscountDisplay").textContent=fmt(discountAmount);
-  $("invoiceTotal").textContent=fmt(total);
+  $("invoiceSubtotal").textContent=fmt(subtotal); $("invoiceDiscountDisplay").textContent=fmt(discountAmount); $("invoiceTotal").textContent=fmt(total);
 }
 
 $("invoiceDiscount").addEventListener("input",updateInvoiceTotals); $("addInvoiceItemBtn").addEventListener("click",()=>addInvoiceItemRow());
@@ -1485,117 +1368,146 @@ async function viewInvoice(inv) {
     let headerHtml = `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span><strong>رقم الفاتورة:</strong> ${inv.invoice_number}</span><span><strong>التاريخ:</strong> ${new Date(inv.invoice_date).toLocaleDateString("ar-EG")}</span></div><div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span><strong>العميل:</strong> ${customerName(inv.customer_id)}</span><span><strong>الموقع:</strong> ${locationName(inv.location_id)}</span></div><div style="display:flex; justify-content:space-between;"><span><strong>طريقة الدفع:</strong> ${paymentTypeName(inv.payment_method)}</span><span><strong>الحالة:</strong> ${invoiceStatusName(inv.status)}</span></div>`;
     $("modalInvoiceHeader").innerHTML = headerHtml;
     let itemsHtml = `<thead><tr><th>الصنف</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr></thead><tbody>`;
-    (items || []).forEach(item => {
-      const p = productsCache.find(x => String(x.product_id) === String(item.product_id));
-      itemsHtml += `<tr><td>${p ? p.product_name : "منتج"}</td><td>${Number(item.quantity).toLocaleString("ar-EG")} ${unitName(item.unit_id)}</td><td>${fmt(item.unit_price)}</td><td>${fmt(item.line_total)}</td></tr>`;
-    });
+    (items || []).forEach(item => { const p = productsCache.find(x => String(x.product_id) === String(item.product_id)); itemsHtml += `<tr><td>${p ? p.product_name : "منتج"}</td><td>${Number(item.quantity).toLocaleString("ar-EG")} ${unitName(item.unit_id)}</td><td>${fmt(item.unit_price)}</td><td>${fmt(item.line_total)}</td></tr>`; });
     itemsHtml += `</tbody>`;
     $("modalInvoiceItems").innerHTML = itemsHtml;
-    
-    const subtotal = Number(inv.subtotal);
-    const discount = Number(inv.discount_amount);
-    
-    $("modalInvoiceTotals").innerHTML = `
-      <div class="line"><span>الإجمالي قبل الخصم:</span><span>${fmt(subtotal)}</span></div>
-      <div class="line"><span>الخصم (${subtotal > 0 ? ((discount / subtotal) * 100).toFixed(2) : 0}%):</span><span style="color:red;">-${fmt(discount)}</span></div>
-      <div class="line" style="border-top:1px dashed #ccc; padding-top:5px;"><span>إجمالي الفاتورة بعد الخصم:</span><span style="font-weight:bold;">${fmt(inv.net_total)}</span></div>
-      <div class="line"><span>مدفوع من الفاتورة:</span><span style="color:green;">${fmt(inv.paid_amount)}</span></div>
-      <div class="line grand"><span>متبقي من الفاتورة:</span><span style="color:red;">${fmt(inv.remaining_amount)}</span></div>
-    `;
-    
-    let totalCustInv = 0, totalCustPaid = 0;
-    salesCache.filter(i => i.customer_id === inv.customer_id && i.status !== 'CANCELLED').forEach(i => { totalCustInv += Number(i.net_total); totalCustPaid += Number(i.paid_amount); });
-    let totalCustRemaining = totalCustInv - totalCustPaid;
-    let prevBalance = totalCustRemaining - Number(inv.remaining_amount);
+    const subtotal = Number(inv.subtotal); const discount = Number(inv.discount_amount);
+    $("modalInvoiceTotals").innerHTML = `<div class="line"><span>الإجمالي قبل الخصم:</span><span>${fmt(subtotal)}</span></div><div class="line"><span>الخصم (${subtotal > 0 ? ((discount / subtotal) * 100).toFixed(2) : 0}%):</span><span style="color:red;">-${fmt(discount)}</span></div><div class="line" style="border-top:1px dashed #ccc; padding-top:5px;"><span>إجمالي الفاتورة بعد الخصم:</span><span style="font-weight:bold;">${fmt(inv.net_total)}</span></div><div class="line"><span>مدفوع من الفاتورة:</span><span style="color:green;">${fmt(inv.paid_amount)}</span></div><div class="line grand"><span>متبقي من الفاتورة:</span><span style="color:red;">${fmt(inv.remaining_amount)}</span></div>`;
+    let totalCustInv = 0, totalCustPaid = 0; salesCache.filter(i => i.customer_id === inv.customer_id && i.status !== 'CANCELLED').forEach(i => { totalCustInv += Number(i.net_total); totalCustPaid += Number(i.paid_amount); });
+    let totalCustRemaining = totalCustInv - totalCustPaid; let prevBalance = totalCustRemaining - Number(inv.remaining_amount);
     $("modalInvoiceAccountSummary").innerHTML = `<div style="background:#e9f6ec; padding:10px; border-radius:8px; margin-top:10px; border:1px solid #c9d5c9;"><h4 style="margin:0 0 8px; color:#173c2c; text-align:center;">ملخص حساب العميل</h4><div class="line"><span>الرصيد السابق (قبل الفاتورة):</span><span>${fmt(prevBalance)}</span></div><div class="line"><span>إجمالي حساب العميل (كل الفواتير):</span><span>${fmt(totalCustInv)}</span></div><div class="line"><span>إجمالي المدفوع (كل التحصيلات):</span><span style="color:green;">${fmt(totalCustPaid)}</span></div><div class="line grand" style="color:#173c2c;"><span>إجمالي المتبقي (الرصيد الحالي):</span><span>${fmt(totalCustRemaining)}</span></div></div>`;
-    
     if (inv.notes) $("modalInvoiceNotes").innerHTML = `<strong>ملاحظات:</strong> ${inv.notes}`; else $("modalInvoiceNotes").innerHTML = "";
-    
-    const phone = customerPhone(inv.customer_id);
-    const waBtn = $("shareWhatsappBtn");
+    const phone = customerPhone(inv.customer_id); const waBtn = $("shareWhatsappBtn");
     let waText = `*MeatManagement*\nفاتورة رقم: ${inv.invoice_number}\nالتاريخ: ${new Date(inv.invoice_date).toLocaleDateString("ar-EG")}\nالعميل: ${customerName(inv.customer_id)}\n------------------------\n`;
-    (items || []).forEach(item => {
-      const p = productsCache.find(x => String(x.product_id) === String(item.product_id));
-      waText += `▪️ ${p?.product_name || 'منتج'} - ${item.quantity} ${unitName(item.unit_id)} × ${fmt(item.unit_price)}\n`;
-    });
+    (items || []).forEach(item => { const p = productsCache.find(x => String(x.product_id) === String(item.product_id)); waText += `▪️ ${p?.product_name || 'منتج'} - ${item.quantity} ${unitName(item.unit_id)} × ${fmt(item.unit_price)}\n`; });
     waText += `------------------------\nالإجمالي قبل الخصم: ${fmt(subtotal)}\nالخصم: ${fmt(discount)}\nإجمالي الفاتورة: ${fmt(inv.net_total)}\nمدفوع: ${fmt(inv.paid_amount)}\nمتبقي: ${fmt(inv.remaining_amount)}\n\n`;
     waText += `*ملخص الحساب:*\nالرصيد السابق: ${fmt(prevBalance)}\nإجمالي المتبقي (رصيدك الحالي): ${fmt(totalCustRemaining)}\n\nشكراً لتعاملكم معنا!`;
     waBtn.onclick = () => { let url = phone ? `https://wa.me/${phone.replace(/\D/g, '').replace(/^0/, '2')}?text=${encodeURIComponent(waText)}` : `https://wa.me/?text=${encodeURIComponent(waText)}`; window.open(url, '_blank'); };
-  } catch (e) {
-    $("modalInvoiceHeader").innerHTML = `<span style="color:red;">تعذر تحميل التفاصيل: ${err(e)}</span>`;
-  }
+  } catch (e) { $("modalInvoiceHeader").innerHTML = `<span style="color:red;">تعذر تحميل التفاصيل: ${err(e)}</span>`; }
 }
 
 async function cancelInvoice(inv){ if(!canManageSales){msg($("salesMsg"),"لا تملك صلاحية إلغاء الفواتير.","error");return;} if(!confirm("هل أنت متأكد من إلغاء الفاتورة "+inv.invoice_number+"؟\nسيتم إرجاع الكميات إلى رصيد المخزون ولا يمكن التراجع."))return; try{ if(!await permission("SALES_MANAGE"))throw new Error("لا تملك صلاحية إلغاء الفواتير."); const {error}=await db.rpc("cancel_sales_invoice",{p_invoice_id:inv.sales_invoice_id}); if(error)throw error; msg($("salesMsg"),"تم إلغاء الفاتورة "+inv.invoice_number+" وإرجاع الكميات للمخزون.","success"); await loadSales(); if(canViewStock)await loadStock(); if(canViewCollections)await loadCollections(); }catch(e){ msg($("salesMsg"),"تعذر إلغاء الفاتورة: "+err(e),"error"); } }
 $("addInvoiceBtn").addEventListener("click",async()=>{ if(!canManageSales)return; if(!customersCache.length)await loadCustomers(); if(!productsCache.length)await loadProducts(); if(!locationsCache.length)await loadLocations(); if(!treasuriesCache.length)await loadTreasuries(); fillInvoiceCustomerSelect(); fillInvoiceLocationSelect(); resetInvoiceForm(); fillTreasurySelects(); $("invoiceFormCard").classList.remove("hidden"); $("invoiceFormCard").scrollIntoView({behavior:"smooth",block:"start"}); });
 $("cancelInvoiceBtn").addEventListener("click",()=>{ $("invoiceFormCard").classList.add("hidden"); resetInvoiceForm(); }); $("refreshSalesBtn").addEventListener("click",loadSales); $("salesSearch").addEventListener("input",renderSales);
+
 $("invoiceForm").addEventListener("submit",async e=>{ 
   e.preventDefault(); clear($("invoiceFormMsg")); 
   if(!canManageSales){msg($("invoiceFormMsg"),"لا تملك صلاحية إنشاء فواتير.","error");return;} 
   const customerId=$("invoiceCustomer").value; const locationId=$("invoiceLocation").value; const date=$("invoiceDate").value; const paymentType=$("invoicePaymentType").value; 
   const discountPercent=Number($("invoiceDiscount").value||0); const notes=$("invoiceNotes").value.trim(); const treasuryId=$("invoiceTreasury").value; const tripId=$("invoiceTrip").value; 
   const paidAmountInput = Number($("invoicePaidAmount").value || 0);
-  
   if(!customerId){msg($("invoiceFormMsg"),"اختر العميل.","error");return;} 
   if(!locationId){msg($("invoiceFormMsg"),"اختر الموقع اللي البضاعة هتخرج منه.","error");return;} 
   if(!date){msg($("invoiceFormMsg"),"اختر تاريخ الفاتورة.","error");return;} 
   if(isNaN(discountPercent)||discountPercent<0 || discountPercent > 3){msg($("invoiceFormMsg"),"الخصم المسموح به هو 3% فقط.","error");return;} 
   if(paymentType==="CASH" && !treasuryId){msg($("invoiceFormMsg"),"اختر الخزنة اللي الفلوس هتتسجل فيها.","error");return;} 
-  
   const items=[];let valid=true; let hasPriceError = false; 
   document.querySelectorAll("#invoiceItems .item-row").forEach(row=>{ 
     const prodSel=row.querySelector(".item-product"); const unitSel=row.querySelector(".item-unit"); 
     const productId=prodSel?.value; const saleUnitId=Number(unitSel?.value||0); 
     const qty=Number(row.querySelector(".item-qty")?.value||0); const price=Number(row.querySelector(".item-price")?.value||0); 
-    const opt = prodSel.selectedOptions[0];
-    const minP = opt?.dataset?.minPrice ? Number(opt.dataset.minPrice) : 0;
-    const maxP = opt?.dataset?.maxPrice ? Number(opt.dataset.maxPrice) : Infinity;
-    
+    const opt = prodSel.selectedOptions[0]; const minP = opt?.dataset?.minPrice ? Number(opt.dataset.minPrice) : 0; const maxP = opt?.dataset?.maxPrice ? Number(opt.dataset.maxPrice) : Infinity;
     if(price < minP || price > maxP) hasPriceError = true;
-    
     if(!productId||!saleUnitId||qty<=0){valid=false;return;} 
     if(isNaN(price)||price<0){valid=false;return;} 
     items.push({product_id:Number(productId),sale_unit_id:saleUnitId,quantity:qty,unit_price:price}); 
   }); 
-  
   if(hasPriceError) { msg($("invoiceFormMsg"), "يوجد أصناف بأسعار غير مسموح بها (أقل من الحد الأدنى أو أعلى من الحد الأقصى).", "error"); return; }
   if(!items.length||!valid){ msg($("invoiceFormMsg"),"أكمل بيانات كل الأصناف (منتج، وحدة، كمية، سعر).","error");return; } 
-  
-  let subTotal = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
-  let discountAmount = subTotal * (discountPercent / 100);
-  let netTotal = subTotal - discountAmount;
-  
-  let finalPaid = 0;
-  let finalRemaining = netTotal;
-  let finalStatus = 'POSTED';
-
-  if (paymentType === "CASH") {
-      finalPaid = netTotal;
-      finalRemaining = 0;
-      finalStatus = 'PAID';
-  } else {
-      finalPaid = Math.min(paidAmountInput, netTotal);
-      finalRemaining = netTotal - finalPaid;
-      finalStatus = finalPaid > 0 ? 'PARTIAL' : 'POSTED';
-  }
-  
+  let subTotal = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0); let discountAmount = subTotal * (discountPercent / 100); let netTotal = subTotal - discountAmount;
+  let finalPaid = 0; let finalRemaining = netTotal; let finalStatus = 'POSTED';
+  if (paymentType === "CASH") { finalPaid = netTotal; finalRemaining = 0; finalStatus = 'PAID'; } else { finalPaid = Math.min(paidAmountInput, netTotal); finalRemaining = netTotal - finalPaid; finalStatus = finalPaid > 0 ? 'PARTIAL' : 'POSTED'; }
   const button=$("saveInvoiceBtn"); busy(button,true,"جارٍ حفظ الفاتورة...","حفظ الفاتورة"); 
   try{ 
     const {data:invoiceId,error}=await db.rpc("create_sales_invoice",{ p_customer_id:Number(customerId), p_location_id:Number(locationId), p_invoice_date:date, p_payment_type:paymentType, p_discount:discountAmount, p_notes:notes||null, p_items:items, p_trip_id: tripId ? Number(tripId) : null, p_paid_amount: finalPaid }); 
     if(error)throw error; 
-    
     await db.from("sales_invoices").update({ treasury_id: Number(treasuryId) || null, paid_amount: finalPaid, remaining_amount: finalRemaining, status: finalStatus }).eq("sales_invoice_id", invoiceId); 
-    
-    if (finalPaid > 0 && paymentType !== 'CASH') {
-        await db.rpc("adjust_treasury_balance", { p_treasury_id: Number(treasuryId), p_amount: finalPaid, p_notes: 'فاتورة بيع ' + invoiceId }); 
-    }
-
+    if (finalPaid > 0 && paymentType !== 'CASH') { await db.rpc("adjust_treasury_balance", { p_treasury_id: Number(treasuryId), p_amount: finalPaid, p_notes: 'فاتورة بيع ' + invoiceId }); }
     msg($("invoiceFormMsg"),"تم حفظ الفاتورة بنجاح. رقم الفاتورة: "+invoiceId,"success"); 
     resetInvoiceForm(); await loadSales(); if(canViewStock)await loadStock(); if(canViewTreasuries)await loadTreasuries(); 
     setTimeout(()=>{$("invoiceFormCard").classList.add("hidden");},1500); 
   }catch(e){ msg($("invoiceFormMsg"),"تعذر حفظ الفاتورة: "+err(e),"error"); }finally{ busy(button,false,"","حفظ الفاتورة"); } 
 });
 
+/* ============ إدارة المرتجعات ============ */
+let returnItemCounter=0, exchangeItemCounter=0;
+function fillReturnCustomerSelect(){ const el=$("returnCustomer");if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر العميل";el.appendChild(first); customersCache.filter(c=>c.is_active).forEach(c=>{ const op=document.createElement("option");op.value=String(c.customer_id);op.textContent=c.customer_name+" ("+c.customer_code+")";el.appendChild(op); }); el.value=cur; }
+function fillReturnTripSelect(){ const el=$("returnTrip");if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر الجولة";el.appendChild(first); tripsCache.filter(t=>t.status==='DRAFT').forEach(t=>{ const op=document.createElement("option");op.value=String(t.trip_id);op.textContent=t.trip_number+" ("+t.rep_name+")";el.appendChild(op); }); el.value=cur; }
+function fillReturnInvoiceSelect(){ const el=$("returnInvoice");if(!el)return; const cur=el.value; const custId=$("returnCustomer").value; el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="بدون ربط";el.appendChild(first); if(custId){ salesCache.filter(inv=>String(inv.customer_id)===String(custId) && inv.status!=="CANCELLED").forEach(inv=>{ const op=document.createElement("option");op.value=String(inv.sales_invoice_id);op.textContent=inv.invoice_number+" — إجمالي: "+fmt(inv.net_total);el.appendChild(op); }); } el.value=cur; }
+function fillReturnTreasurySelect(){ const el=$("returnTreasury");if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="بدون خزنة";el.appendChild(first); treasuriesCache.filter(t=>t.is_active).forEach(t=>{ const op=document.createElement("option");op.value=String(t.treasury_id);op.textContent=t.treasury_name+" ("+fmt(t.current_balance)+")";el.appendChild(op); }); el.value=cur; }
+function resetReturnForm(){ $("returnForm").reset(); $("returnType").value="RETURN"; $("returnCashAction").value="NONE"; $("returnItems").replaceChildren(); $("exchangeItems").replaceChildren(); returnItemCounter=0; exchangeItemCounter=0; addReturnItemRow(); addExchangeItemRow(); updateReturnTotals(); $("returnFormCard").classList.add("hidden"); $("exchangeSection").classList.add("hidden"); clear($("returnFormMsg")); fillReturnCustomerSelect(); fillReturnTripSelect(); fillReturnInvoiceSelect(); fillReturnTreasurySelect(); }
+
+function addReturnItemRow(){
+  returnItemCounter++; const wrap=document.createElement("div");wrap.className="item-row";
+  const prodLabel=document.createElement("label");prodLabel.textContent="المنتج *"; const prodSel=document.createElement("select");prodSel.className="item-product";prodSel.required=true;
+  const first=document.createElement("option");first.value="";first.textContent="اختر المنتج";prodSel.appendChild(first);
+  productsCache.filter(p=>p.is_active).forEach(p=>{ const op=document.createElement("option");op.value=String(p.product_id);op.textContent=p.product_name+" ("+p.product_code+")"; op.dataset.baseUnit=String(p.base_unit_id||""); op.dataset.unitsCarton=String(p.units_per_carton||""); prodSel.appendChild(op); });
+  const grid3=document.createElement("div");grid3.className="grid3";
+  const unitWrap=document.createElement("div"); const unitLabel=document.createElement("label");unitLabel.textContent="الوحدة *"; const unitSel=document.createElement("select");unitSel.className="item-unit";unitSel.required=true; unitWrap.append(unitLabel,unitSel);
+  const qtyWrap=document.createElement("div"); const qtyLabel=document.createElement("label");qtyLabel.textContent="الكمية *"; const qty=document.createElement("input");qty.type="number";qty.className="item-qty";qty.min="0.0001";qty.step="0.0001";qty.required=true; qtyWrap.append(qtyLabel,qty);
+  const priceWrap=document.createElement("div"); const priceLabel=document.createElement("label");priceLabel.textContent="سعر الوحدة *"; const price=document.createElement("input");price.type="number";price.className="item-price";price.min="0";price.step="0.01";price.required=true; priceWrap.append(priceLabel,price);
+  grid3.append(unitWrap,qtyWrap,priceWrap);
+  const lineTotal=document.createElement("div");lineTotal.className="item-line-total";lineTotal.textContent="الإجمالي: 0";
+  const removeBtn=document.createElement("button");removeBtn.type="button";removeBtn.className="btn danger";removeBtn.textContent="حذف";
+  removeBtn.addEventListener("click",()=>{ wrap.remove();updateReturnTotals(); });
+  wrap.append(prodLabel,prodSel,grid3,lineTotal,removeBtn); $("returnItems").appendChild(wrap);
+  const recalc=()=>{ const q=Number(qty.value||0);const p=Number(price.value||0);lineTotal.textContent="الإجمالي: "+fmt(q*p); updateReturnTotals(); };
+  const populateUnits=()=>{ const opt=prodSel.selectedOptions[0]; const baseUnitId=opt?.dataset?.baseUnit||""; const unitsCarton=Number(opt?.dataset?.unitsCarton||0); unitSel.replaceChildren(); const firstU=document.createElement("option");firstU.value="";firstU.textContent="اختر الوحدة";unitSel.appendChild(firstU); if(baseUnitId){ const op=document.createElement("option");op.value=baseUnitId;op.textContent=unitName(baseUnitId);unitSel.appendChild(op); } if(unitsCarton>0&&cartonUnitId){ const op=document.createElement("option");op.value=String(cartonUnitId);op.textContent="كرتونة ("+unitsCarton+")";unitSel.appendChild(op); } if(baseUnitId)unitSel.value=baseUnitId; recalc(); };
+  prodSel.addEventListener("change",populateUnits); unitSel.addEventListener("change",recalc); qty.addEventListener("input",recalc); price.addEventListener("input",recalc); populateUnits();
+}
+
+function addExchangeItemRow(){
+  exchangeItemCounter++; const wrap=document.createElement("div");wrap.className="item-row";
+  const prodLabel=document.createElement("label");prodLabel.textContent="المنتج *"; const prodSel=document.createElement("select");prodSel.className="item-product";prodSel.required=true;
+  const first=document.createElement("option");first.value="";first.textContent="اختر المنتج";prodSel.appendChild(first);
+  productsCache.filter(p=>p.is_active&&p.can_be_sold).forEach(p=>{ const op=document.createElement("option");op.value=String(p.product_id);op.textContent=p.product_name+" ("+p.product_code+")"; op.dataset.baseUnit=String(p.base_unit_id||""); op.dataset.unitsCarton=String(p.units_per_carton||""); if(p.target_selling_price!=null)op.dataset.price=String(p.target_selling_price); prodSel.appendChild(op); });
+  const grid3=document.createElement("div");grid3.className="grid3";
+  const unitWrap=document.createElement("div"); const unitLabel=document.createElement("label");unitLabel.textContent="الوحدة *"; const unitSel=document.createElement("select");unitSel.className="item-unit";unitSel.required=true; unitWrap.append(unitLabel,unitSel);
+  const qtyWrap=document.createElement("div"); const qtyLabel=document.createElement("label");qtyLabel.textContent="الكمية *"; const qty=document.createElement("input");qty.type="number";qty.className="item-qty";qty.min="0.0001";qty.step="0.0001";qty.required=true; qtyWrap.append(qtyLabel,qty);
+  const priceWrap=document.createElement("div"); const priceLabel=document.createElement("label");priceLabel.textContent="سعر الوحدة *"; const price=document.createElement("input");price.type="number";price.className="item-price";price.min="0";price.step="0.01";price.required=true; priceWrap.append(priceLabel,price);
+  grid3.append(unitWrap,qtyWrap,priceWrap);
+  const lineTotal=document.createElement("div");lineTotal.className="item-line-total";lineTotal.textContent="الإجمالي: 0";
+  const removeBtn=document.createElement("button");removeBtn.type="button";removeBtn.className="btn danger";removeBtn.textContent="حذف";
+  removeBtn.addEventListener("click",()=>{ wrap.remove();updateReturnTotals(); });
+  wrap.append(prodLabel,prodSel,grid3,lineTotal,removeBtn); $("exchangeItems").appendChild(wrap);
+  const recalc=()=>{ const q=Number(qty.value||0);const p=Number(price.value||0);lineTotal.textContent="الإجمالي: "+fmt(q*p); updateReturnTotals(); };
+  const populateUnits=()=>{ const opt=prodSel.selectedOptions[0]; const baseUnitId=opt?.dataset?.baseUnit||""; const unitsCarton=Number(opt?.dataset?.unitsCarton||0); unitSel.replaceChildren(); const firstU=document.createElement("option");firstU.value="";firstU.textContent="اختر الوحدة";unitSel.appendChild(firstU); if(baseUnitId){ const op=document.createElement("option");op.value=baseUnitId;op.textContent=unitName(baseUnitId);unitSel.appendChild(op); } if(unitsCarton>0&&cartonUnitId){ const op=document.createElement("option");op.value=String(cartonUnitId);op.textContent="كرتونة ("+unitsCarton+")";unitSel.appendChild(op); } if(baseUnitId)unitSel.value=baseUnitId; recalc(); };
+  prodSel.addEventListener("change",()=>{ const opt=prodSel.selectedOptions[0]; if(opt?.dataset.price&&!price.value)price.value=opt.dataset.price; populateUnits(); }); unitSel.addEventListener("change",recalc); qty.addEventListener("input",recalc); price.addEventListener("input",recalc); populateUnits();
+}
+
+function updateReturnTotals(){
+  let totalReturn=0; document.querySelectorAll("#returnItems .item-row").forEach(row=>{ const q=Number(row.querySelector(".item-qty")?.value||0); const p=Number(row.querySelector(".item-price")?.value||0); totalReturn+=q*p; });
+  let totalExchange=0; document.querySelectorAll("#exchangeItems .item-row").forEach(row=>{ const q=Number(row.querySelector(".item-qty")?.value||0); const p=Number(row.querySelector(".item-price")?.value||0); totalExchange+=q*p; });
+  const diff = totalExchange - totalReturn;
+  $("returnTotalDisplay").textContent=fmt(totalReturn); $("exchangeTotalDisplay").textContent=fmt(totalExchange); $("diffDisplay").textContent=fmt(diff);
+}
+
+$("addReturnBtn").addEventListener("click",async()=>{ if(!canManageSales)return; if(!customersCache.length)await loadCustomers(); if(!productsCache.length)await loadProducts(); if(!tripsCache.length)await loadTrips(); if(!treasuriesCache.length)await loadTreasuries(); resetReturnForm(); addReturnItemRow(); $("returnFormCard").classList.remove("hidden"); $("returnFormCard").scrollIntoView({behavior:"smooth",block:"start"}); });
+$("cancelReturnBtn").addEventListener("click",resetReturnForm);
+$("addReturnItemBtn").addEventListener("click",addReturnItemRow);
+$("addExchangeItemBtn").addEventListener("click",addExchangeItemRow);
+$("returnCustomer").addEventListener("change",fillReturnInvoiceSelect);
+
+$("returnForm").addEventListener("submit",async e=>{
+  e.preventDefault(); clear($("returnFormMsg")); if(!canManageSales)return;
+  const customerId=$("returnCustomer").value; const tripId=$("returnTrip").value; const invoiceId=$("returnInvoice").value;
+  const returnType=$("returnType").value; const cashAction=$("returnCashAction").value; const treasuryId=$("returnTreasury").value; const notes=$("returnNotes").value.trim();
+  if(!customerId){msg($("returnFormMsg"),"اختر العميل.","error");return;}
+  if(!tripId){msg($("returnFormMsg"),"اختر الجولة.","error");return;}
+  const returnItems=[];
+  document.querySelectorAll("#returnItems .item-row").forEach(row=>{ const prodSel=row.querySelector(".item-product"); const unitSel=row.querySelector(".item-unit"); const productId=prodSel?.value; const unitId=Number(unitSel?.value||0); const qty=Number(row.querySelector(".item-qty")?.value||0); const price=Number(row.querySelector(".item-price")?.value||0); if(productId&&unitId&&qty>0){ returnItems.push({product_id:Number(productId),unit_id:unitId,quantity:qty,unit_price:price}); } });
+  if(!returnItems.length){msg($("returnFormMsg"),"أضف صنف مرتجع واحد على الأقل.","error");return;}
+  const exchangeItems=[];
+  if(returnType==='EXCHANGE'){ document.querySelectorAll("#exchangeItems .item-row").forEach(row=>{ const prodSel=row.querySelector(".item-product"); const unitSel=row.querySelector(".item-unit"); const productId=prodSel?.value; const unitId=Number(unitSel?.value||0); const qty=Number(row.querySelector(".item-qty")?.value||0); const price=Number(row.querySelector(".item-price")?.value||0); if(productId&&unitId&&qty>0){ exchangeItems.push({product_id:Number(productId),unit_id:unitId,quantity:qty,unit_price:price}); } }); if(!exchangeItems.length){msg($("returnFormMsg"),"أضف صنف استبدال واحد على الأقل.","error");return;} }
+  const button=$("saveReturnBtn"); busy(button,true,"جارٍ الحفظ...","حفظ المرتجع");
+  try{
+    const {data:returnId, error}=await db.rpc("process_sales_return",{ p_customer_id:Number(customerId), p_trip_id:Number(tripId), p_sales_invoice_id:invoiceId?Number(invoiceId):null, p_return_type:returnType, p_return_items:returnItems, p_exchange_items: exchangeItems, p_cash_action:cashAction, p_treasury_id:treasuryId?Number(treasuryId):null, p_notes:notes||null });
+    if(error)throw error;
+    msg($("salesMsg"),"تم تسجيل المرتجع بنجاح. رقم المرتجع: "+returnId,"success");
+    resetReturnForm(); await loadSales(); if(canViewStock)await loadStock(); if(canViewTreasuries)await loadTreasuries(); if(canViewTrips)await loadTrips();
+    setTimeout(()=>{$("returnFormCard").classList.add("hidden");},1500);
+  }catch(e){ msg($("returnFormMsg"),"تعذر حفظ المرتجع: "+err(e),"error"); }finally{ busy(button,false,"","حفظ المرتجع"); }
+});
 
 /* ============ فواتير المشتريات ============ */
 function fillPurchaseSupplierSelect(){ const el=$("purchaseSupplier");if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر المورد";el.appendChild(first); suppliersCache.filter(c=>c.is_active).forEach(c=>{ const op=document.createElement("option");op.value=String(c.supplier_id);op.textContent=c.supplier_name+" ("+c.supplier_code+")";el.appendChild(op); }); el.value=cur; }
@@ -1641,653 +1553,40 @@ function renderRecipes(){ const box=$("recipesList");box.replaceChildren(); cons
 async function editRecipe(r){ if(!canManageRecipes)return; try{ if(!productsCache.length) await loadProducts(); if(!units.length) await loadLookups(); const {data:items,error}=await db.from("recipe_items").select("*").eq("recipe_id",r.recipe_id); if(error)throw error; fillRecipeOutputSelects(); $("recipeEditId").value=String(r.recipe_id); $("recipeName").value=r.recipe_name; $("recipeOutputProduct").value=r.product_id; $("recipeOutputQty").value=r.output_quantity; $("recipeOutputUnit").value=r.unit_id; $("recipeNotes").value=r.notes||""; $("recipeActive").checked=r.is_active; $("recipeFormTitle").textContent="تعديل الوصفة: "+r.recipe_name; $("saveRecipeBtn").textContent="حفظ التعديلات"; $("recipeItems").replaceChildren(); recipeItemCounter=0; (items||[]).forEach(i=>{ addRecipeItemRow(i.raw_product_id, i.quantity, i.unit_id); }); if(!items || items.length===0) addRecipeItemRow(); $("recipeFormCard").classList.remove("hidden"); clear($("recipeFormMsg")); $("recipeFormCard").scrollIntoView({behavior:"smooth",block:"start"}); }catch(e){ msg($("recipesMsg"),"تعذر تحميل تفاصيل الوصفة: "+err(e),"error"); } }
 $("addRecipeBtn").addEventListener("click",async()=>{ if(!canManageRecipes)return; if(!productsCache.length)await loadProducts(); if(!units.length)await loadLookups(); resetRecipeForm(); fillRecipeOutputSelects(); $("recipeFormCard").classList.remove("hidden"); $("recipeFormCard").scrollIntoView({behavior:"smooth",block:"start"}); });
 $("cancelRecipeBtn").addEventListener("click",resetRecipeForm); $("refreshRecipesBtn").addEventListener("click",loadRecipes); $("recipeSearch").addEventListener("input",renderRecipes);
-
-function fillRecipeOutputSelects(){
-  const el=$("recipeOutputProduct"); const cur=el.value; el.replaceChildren();
-  const first=document.createElement("option"); first.value=""; first.textContent="اختر المنتج"; el.appendChild(first);
-  productsCache.filter(p=>p.can_be_produced || p.product_type==="FINISHED" || p.product_type==="SEMI_FINISHED").forEach(p=>{ const op=document.createElement("option"); op.value=String(p.product_id); op.textContent=p.product_name+" ("+p.product_code+")"; op.dataset.unitId=p.base_unit_id; el.appendChild(op); });
-  el.value=cur;
-}
-
-function addRecipeItemRow(rawProductId=null, qty=null, unitId=null){
-  recipeItemCounter++; const id="rItem_"+recipeItemCounter; const wrap=document.createElement("div");wrap.className="item-row";wrap.dataset.itemId=id;
-  const prodLabel=document.createElement("label");prodLabel.textContent="الخامة *"; const prodSel=document.createElement("select");prodSel.className="item-product";prodSel.required=true;
-  const first=document.createElement("option");first.value="";first.textContent="اختر الخامة";prodSel.appendChild(first);
-  productsCache.filter(p=>p.is_active && (p.product_type==="RAW" || p.can_be_purchased)).forEach(p=>{ const op=document.createElement("option");op.value=String(p.product_id);op.textContent=p.product_name+" ("+p.product_code+")"; op.dataset.unitId=p.base_unit_id; prodSel.appendChild(op); });
-  if(rawProductId) prodSel.value=String(rawProductId);
-  
-  const grid3=document.createElement("div");grid3.className="grid3";
-  const qtyWrap=document.createElement("div"); const qtyLabel=document.createElement("label");qtyLabel.textContent="الكمية *"; const qtyInp=document.createElement("input");qtyInp.type="number";qtyInp.className="item-qty";qtyInp.min="0.0001";qtyInp.step="0.0001";qtyInp.required=true; if(qty)qtyInp.value=qty; qtyWrap.append(qtyLabel,qtyInp);
-  const unitWrap=document.createElement("div"); const unitLabel=document.createElement("label");unitLabel.textContent="الوحدة *"; const unitSel=document.createElement("select");unitSel.className="item-unit";unitSel.required=true; unitWrap.append(unitLabel,unitSel);
-  
-  grid3.append(qtyWrap,unitWrap);
-  const removeBtn=document.createElement("button");removeBtn.type="button";removeBtn.className="btn danger";removeBtn.textContent="حذف المكون";
-  removeBtn.addEventListener("click",()=>{ wrap.remove(); if(!$("recipeItems").children.length)addRecipeItemRow(); });
-  wrap.append(prodLabel,prodSel,grid3,removeBtn); $("recipeItems").appendChild(wrap);
-
-  const populateUnits=()=>{ const opt=prodSel.selectedOptions[0]; const baseUnitId=opt?.dataset?.unitId||""; unitSel.replaceChildren(); const firstU=document.createElement("option");firstU.value="";firstU.textContent="اختر الوحدة";unitSel.appendChild(firstU); if(baseUnitId){ const op=document.createElement("option");op.value=baseUnitId;op.textContent=unitName(baseUnitId);unitSel.appendChild(op); unitSel.value=baseUnitId; } };
-  
-  prodSel.addEventListener("change",populateUnits);
-  
-  populateUnits();
-  if(unitId) unitSel.value=String(unitId);
-}
-
-$("recipeOutputProduct").addEventListener("change",(e)=>{
-  const opt=e.target.selectedOptions[0];
-  if(opt && opt.dataset.unitId){
-    $("recipeOutputUnit").value=opt.dataset.unitId;
-  }
-});
-
+function fillRecipeOutputSelects(){ const el=$("recipeOutputProduct"); const cur=el.value; el.replaceChildren(); const first=document.createElement("option"); first.value=""; first.textContent="اختر المنتج"; el.appendChild(first); productsCache.filter(p=>p.can_be_produced || p.product_type==="FINISHED" || p.product_type==="SEMI_FINISHED").forEach(p=>{ const op=document.createElement("option"); op.value=String(p.product_id); op.textContent=p.product_name+" ("+p.product_code+")"; op.dataset.unitId=p.base_unit_id; el.appendChild(op); }); el.value=cur; }
+function addRecipeItemRow(rawProductId=null, qty=null, unitId=null){ recipeItemCounter++; const id="rItem_"+recipeItemCounter; const wrap=document.createElement("div");wrap.className="item-row";wrap.dataset.itemId=id; const prodLabel=document.createElement("label");prodLabel.textContent="الخامة *"; const prodSel=document.createElement("select");prodSel.className="item-product";prodSel.required=true; const first=document.createElement("option");first.value="";first.textContent="اختر الخامة";prodSel.appendChild(first); productsCache.filter(p=>p.is_active && (p.product_type==="RAW" || p.can_be_purchased)).forEach(p=>{ const op=document.createElement("option");op.value=String(p.product_id);op.textContent=p.product_name+" ("+p.product_code+")"; op.dataset.unitId=p.base_unit_id; prodSel.appendChild(op); }); if(rawProductId) prodSel.value=String(rawProductId); const grid3=document.createElement("div");grid3.className="grid3"; const qtyWrap=document.createElement("div"); const qtyLabel=document.createElement("label");qtyLabel.textContent="الكمية *"; const qtyInp=document.createElement("input");qtyInp.type="number";qtyInp.className="item-qty";qtyInp.min="0.0001";qtyInp.step="0.0001";qtyInp.required=true; if(qty)qtyInp.value=qty; qtyWrap.append(qtyLabel,qtyInp); const unitWrap=document.createElement("div"); const unitLabel=document.createElement("label");unitLabel.textContent="الوحدة *"; const unitSel=document.createElement("select");unitSel.className="item-unit";unitSel.required=true; unitWrap.append(unitLabel,unitSel); grid3.append(qtyWrap,unitWrap); const removeBtn=document.createElement("button");removeBtn.type="button";removeBtn.className="btn danger";removeBtn.textContent="حذف المكون"; removeBtn.addEventListener("click",()=>{ wrap.remove(); if(!$("recipeItems").children.length)addRecipeItemRow(); }); wrap.append(prodLabel,prodSel,grid3,removeBtn); $("recipeItems").appendChild(wrap); const populateUnits=()=>{ const opt=prodSel.selectedOptions[0]; const baseUnitId=opt?.dataset?.unitId||""; unitSel.replaceChildren(); const firstU=document.createElement("option");firstU.value="";firstU.textContent="اختر الوحدة";unitSel.appendChild(firstU); if(baseUnitId){ const op=document.createElement("option");op.value=baseUnitId;op.textContent=unitName(baseUnitId);unitSel.appendChild(op); unitSel.value=baseUnitId; } }; prodSel.addEventListener("change",populateUnits); populateUnits(); if(unitId) unitSel.value=String(unitId); }
+$("recipeOutputProduct").addEventListener("change",(e)=>{ const opt=e.target.selectedOptions[0]; if(opt && opt.dataset.unitId){ $("recipeOutputUnit").value=opt.dataset.unitId; } });
 $("addRecipeItemBtn").addEventListener("click",()=>addRecipeItemRow());
-
-$("recipeForm").addEventListener("submit",async e=>{
-  e.preventDefault(); clear($("recipeFormMsg")); if(!canManageRecipes){msg($("recipeFormMsg"),"لا تملك صلاحية إدارة الوصفات.","error");return;}
-  const id=$("recipeEditId").value;
-  const name=$("recipeName").value.trim(); const productId=$("recipeOutputProduct").value; const qty=$("recipeOutputQty").value.trim(); const unitId=$("recipeOutputUnit").value; const notes=$("recipeNotes").value.trim(); const active=$("recipeActive").checked;
-  
-  if(!name||!productId||!qty||!unitId){ msg($("recipeFormMsg"),"أكمل بيانات الوصفة الأساسية.","error");return; }
-  const outQty=Number(qty); if(isNaN(outQty)||outQty<=0){ msg($("recipeFormMsg"),"الكمية الناتجة يجب أن تكون أكبر من صفر.","error");return; }
-
-  const items=[];
-  let valid=true;
-  document.querySelectorAll("#recipeItems .item-row").forEach(row=>{
-    const pId=row.querySelector(".item-product").value;
-    const q=Number(row.querySelector(".item-qty").value);
-    const uId=Number(row.querySelector(".item-unit").value);
-    if(!pId||!q||!uId||q<=0){ valid=false; return; }
-    items.push({raw_product_id:Number(pId), quantity:q, unit_id:uId});
-  });
-  if(!items.length||!valid){ msg($("recipeFormMsg"),"أكمل بيانات كل المكونات (الخامة، الكمية، الوحدة).","error");return; }
-
-  const button=$("saveRecipeBtn"); busy(button,true,"جارٍ الحفظ...",id?"حفظ التعديلات":"حفظ الوصفة");
-  try{
-    if(!await permission("RECIPES_MANAGE"))throw new Error("لا تملك صلاحية إدارة الوصفات.");
-    
-    const {data:sessionData,error:sessionError}=await db.auth.getSession(); if(sessionError)throw sessionError;
-    const session=sessionData?.session; if(!session)throw new Error("انتهت الجلسة.");
-
-    let recipeId;
-    if(id){
-      const {error:updErr}=await db.from("recipes").update({recipe_name:name, product_id:Number(productId), output_quantity:outQty, unit_id:Number(unitId), notes:notes||null, is_active:active, updated_at:new Date().toISOString()}).eq("recipe_id",Number(id));
-      if(updErr)throw updErr;
-      recipeId = Number(id);
-      const {error:delErr}=await db.from("recipe_items").delete().eq("recipe_id",recipeId);
-      if(delErr)throw delErr;
-    } else {
-      const {data:res,error:insErr}=await db.from("recipes").insert({recipe_name:name, product_id:Number(productId), output_quantity:outQty, unit_id:Number(unitId), notes:notes||null, is_active:active, created_by:session.user.id}).select("recipe_id").single();
-      if(insErr)throw insErr;
-      recipeId = res.recipe_id;
-    }
-
-    const itemsPayload = items.map(i=>({...i, recipe_id: recipeId}));
-    const {error:itemsErr}=await db.from("recipe_items").insert(itemsPayload);
-    if(itemsErr)throw itemsErr;
-
-    msg($("recipesMsg"),id?"تم تأكيد تعديل الوصفة.":"تم تأكيد إضافة الوصفة.","success");
-    resetRecipeForm(); await loadRecipes();
-  }catch(e){ msg($("recipeFormMsg"),"تعذر حفظ الوصفة: "+err(e),"error"); }finally{ busy(button,false,"","حفظ الوصفة"); $("saveRecipeBtn").textContent=$("recipeEditId").value?"حفظ التعديلات":"حفظ الوصفة"; }
-});
-
+$("recipeForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("recipeFormMsg")); if(!canManageRecipes){msg($("recipeFormMsg"),"لا تملك صلاحية إدارة الوصفات.","error");return;} const id=$("recipeEditId").value; const name=$("recipeName").value.trim(); const productId=$("recipeOutputProduct").value; const qty=$("recipeOutputQty").value.trim(); const unitId=$("recipeOutputUnit").value; const notes=$("recipeNotes").value.trim(); const active=$("recipeActive").checked; if(!name||!productId||!qty||!unitId){ msg($("recipeFormMsg"),"أكمل بيانات الوصفة الأساسية.","error");return; } const outQty=Number(qty); if(isNaN(outQty)||outQty<=0){ msg($("recipeFormMsg"),"الكمية الناتجة يجب أن تكون أكبر من صفر.","error");return; } const items=[]; let valid=true; document.querySelectorAll("#recipeItems .item-row").forEach(row=>{ const pId=row.querySelector(".item-product").value; const q=Number(row.querySelector(".item-qty").value); const uId=Number(row.querySelector(".item-unit").value); if(!pId||!q||!uId||q<=0){ valid=false; return; } items.push({raw_product_id:Number(pId), quantity:q, unit_id:uId}); }); if(!items.length||!valid){ msg($("recipeFormMsg"),"أكمل بيانات كل المكونات (الخامة، الكمية، الوحدة).","error");return; } const button=$("saveRecipeBtn"); busy(button,true,"جارٍ الحفظ...",id?"حفظ التعديلات":"حفظ الوصفة"); try{ if(!await permission("RECIPES_MANAGE"))throw new Error("لا تملك صلاحية إدارة الوصفات."); const {data:sessionData,error:sessionError}=await db.auth.getSession(); if(sessionError)throw sessionError; const session=sessionData?.session; if(!session)throw new Error("انتهت الجلسة."); let recipeId; if(id){ const {error:updErr}=await db.from("recipes").update({recipe_name:name, product_id:Number(productId), output_quantity:outQty, unit_id:Number(unitId), notes:notes||null, is_active:active, updated_at:new Date().toISOString()}).eq("recipe_id",Number(id)); if(updErr)throw updErr; recipeId = Number(id); const {error:delErr}=await db.from("recipe_items").delete().eq("recipe_id",recipeId); if(delErr)throw delErr; } else { const {data:res,error:insErr}=await db.from("recipes").insert({recipe_name:name, product_id:Number(productId), output_quantity:outQty, unit_id:Number(unitId), notes:notes||null, is_active:active, created_by:session.user.id}).select("recipe_id").single(); if(insErr)throw insErr; recipeId = res.recipe_id; } const itemsPayload = items.map(i=>({...i, recipe_id: recipeId})); const {error:itemsErr}=await db.from("recipe_items").insert(itemsPayload); if(itemsErr)throw itemsErr; msg($("recipesMsg"),id?"تم تأكيد تعديل الوصفة.":"تم تأكيد إضافة الوصفة.","success"); resetRecipeForm(); await loadRecipes(); }catch(e){ msg($("recipeFormMsg"),"تعذر حفظ الوصفة: "+err(e),"error"); }finally{ busy(button,false,"","حفظ الوصفة"); $("saveRecipeBtn").textContent=$("recipeEditId").value?"حفظ التعديلات":"حفظ الوصفة"; } });
 async function toggleRecipe(r){ if(!canManageRecipes)return; const action=r.is_active?"إيقاف":"تفعيل"; if(!confirm("هل تريد "+action+" الوصفة: "+r.recipe_name+"؟"))return; try{ if(!await permission("RECIPES_MANAGE"))throw new Error("لا تملك صلاحية إدارة الوصفات."); const {error}=await db.from("recipes").update({is_active:!r.is_active,updated_at:new Date().toISOString()}).eq("recipe_id",r.recipe_id); if(error)throw error; msg($("recipesMsg"),"تم تأكيد تغيير حالة الوصفة.","success"); await loadRecipes(); }catch(e){ msg($("recipesMsg"),"تعذر تأكيد تغيير الحالة: "+err(e),"error"); } }
 
 /* ============ أوامر التشغيل ============ */
 function fillProductionLocationSelect(){ const el=$("productionLocation");if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر الموقع";el.appendChild(first); locationsCache.filter(l=>l.is_active).forEach(l=>{ const op=document.createElement("option");op.value=String(l.location_id);op.textContent=l.location_name+" ("+l.location_code+")";el.appendChild(op); }); el.value=cur; }
-
-function fillProductionRecipeSelect(){
-  const el=$("productionRecipe"); const cur=el.value; el.replaceChildren();
-  const first=document.createElement("option"); first.value=""; first.textContent="اختر الوصفة"; el.appendChild(first);
-  recipesCache.filter(r=>r.is_active).forEach(r=>{ 
-    const op=document.createElement("option"); 
-    op.value=String(r.recipe_id); 
-    op.textContent=r.recipe_name + " (" + productName(r.product_id) + ")"; 
-    op.dataset.product=r.product_id;
-    op.dataset.qty=r.output_quantity;
-    op.dataset.unit=r.unit_id;
-    el.appendChild(op); 
-  });
-  el.value=cur;
-}
-
-function resetProductionForm(){
-  $("productionForm").reset();
-  $("productionFormCard").classList.add("hidden");
-  clear($("productionFormMsg"));
-  $("productionMaterialsPreview").innerHTML="اختر الوصفة والكمية لحساب الخامات المطلوبة.";
-  $("productionOutputInfo").textContent="المنتج الناتج: - | الوحدة: -";
-}
-
-async function loadProduction(){
-  if(!canViewProduction)return; clear($("productionMsg")); $("productionList").replaceChildren();
-  try{
-    const {data:sessionData,error:sessionError}=await db.auth.getSession(); if(sessionError)throw sessionError;
-    if(!sessionData.session)throw new Error("انتهت الجلسة.");
-    const allowed=await permission("PRODUCTION_VIEW"); 
-    if(!allowed){canViewProduction=false;$("menuProduction").classList.add("hidden");$("productionCard").classList.add("hidden");throw new Error("لا تملك صلاحية عرض أوامر التشغيل.");}
-    
-    const {data,error}=await db.from("production_orders").select("order_id,order_number,recipe_id,target_quantity,factory_location_id,status,created_at").order("order_id",{ascending:false}).limit(200); 
-    if(error)throw error; 
-    productionCache=data||[]; 
-    renderProduction(); 
-    msg($("productionMsg"),"تم تحميل "+productionCache.length+" أمر تشغيل.","success"); 
-  }catch(e){ 
-    msg($("productionMsg"),"تعذر تحميل أوامر التشغيل: "+err(e),"error"); 
-    const d=document.createElement("div");d.className="empty";d.textContent="راجع رسالة الخطأ أعلاه.";$("productionList").replaceChildren(d); 
-  }
-}
-
-function renderProduction(){
-  const box=$("productionList");box.replaceChildren(); 
-  const q=$("productionSearch").value.trim().toLowerCase();
-  
-  const found=productionCache.filter(o=>{
-    const r = recipesCache.find(x=>String(x.recipe_id)===String(o.recipe_id));
-    const rn = r ? r.recipe_name : "";
-    return [o.order_number, rn].some(v=>String(v||"").toLowerCase().includes(q));
-  });
-  
-  if(!found.length){ 
-    const d=document.createElement("div");d.className="empty";d.textContent=q?"لا توجد أوامر مطابقة.":"لا توجد أوامر تشغيل مسجلة بعد.";box.appendChild(d);return; 
-  }
-  
-  found.forEach(o=>{
-    const r = recipesCache.find(x=>String(x.recipe_id)===String(o.recipe_id));
-    const card=document.createElement("div");card.className="product";
-    const title=document.createElement("div");title.className="pname";title.textContent="🏭 "+o.order_number;
-    
-    let statusText = o.status === 'DRAFT' ? 'مسودة' : (o.status === 'COMPLETED' ? 'مكتمل' : 'ملغى');
-    let statusClass = o.status === 'DRAFT' ? 'badge-partial' : (o.status === 'COMPLETED' ? 'badge-paid' : 'badge-cancel');
-    
-    const details=document.createElement("div");details.className="details";
-    details.textContent="الوصفة: "+(r ? r.recipe_name : "-")+" | الكمية: "+Number(o.target_quantity).toLocaleString("ar-EG")+" | الموقع: "+locationName(o.factory_location_id);
-    
-    const status=document.createElement("span");status.className="badge "+statusClass;status.textContent=statusText;
-    const idBadge=document.createElement("span");idBadge.className="badge";idBadge.textContent="رقم الأمر: "+o.order_id;
-    
-    card.append(title,details,status,idBadge); 
-
-    if(canManageProduction && o.status === 'DRAFT'){
-      const actions=document.createElement("div");actions.className="actions"; 
-      const execBtn=document.createElement("button");execBtn.type="button";execBtn.className="btn";execBtn.textContent="▶️ تنفيذ الأمر";execBtn.onclick=()=>executeProductionOrder(o);actions.appendChild(execBtn);
-      card.appendChild(actions);
-    }
-
-    box.appendChild(card);
-  });
-}
-
-async function executeProductionOrder(o){
-  if(!canManageProduction)return;
-  if(!confirm("هل أنت متأكد من تنفيذ أمر التشغيل "+o.order_number+"؟\nسيتم خصم الخامات من المخزن وإضافة المنتج النهائي.")) return;
-
-  try {
-    const {error}=await db.rpc("execute_production_order", { p_order_id: o.order_id });
-    if(error) throw error;
-
-    msg($("productionMsg"), "تم تنفيذ أمر التشغيل "+o.order_number+" بنجاح.", "success");
-    await loadProduction();
-    if(canViewStock) await loadStock();
-  } catch (e) {
-    msg($("productionMsg"), "تعذر تنفيذ الأمر: " + err(e), "error");
-  }
-}
-
-$("addProductionBtn").addEventListener("click",async()=>{ 
-  if(!canManageProduction)return; 
-  if(!recipesCache.length)await loadRecipes(); 
-  if(!locationsCache.length)await loadLocations(); 
-  resetProductionForm(); 
-  fillProductionRecipeSelect(); 
-  fillProductionLocationSelect();
-  $("productionFormCard").classList.remove("hidden"); 
-  $("productionFormCard").scrollIntoView({behavior:"smooth",block:"start"}); 
-});
-
-$("cancelProductionBtn").addEventListener("click",resetProductionForm); 
-$("refreshProductionBtn").addEventListener("click",loadProduction); 
-$("productionSearch").addEventListener("input",renderProduction);
-
-const updateProductionPreview = async () => {
-  const recipeId = $("productionRecipe").value;
-  const targetQty = Number($("productionTargetQty").value);
-  
-  if(!recipeId) {
-    $("productionMaterialsPreview").innerHTML = "اختر الوصفة والكمية لحساب الخامات المطلوبة.";
-    $("productionOutputInfo").textContent = "المنتج الناتج: - | الوحدة: -";
-    return;
-  }
-  
-  const r = recipesCache.find(x => String(x.recipe_id) === String(recipeId));
-  if(!r) return;
-  
-  $("productionOutputInfo").textContent = "المنتج الناتج: " + productName(r.product_id) + " | الوحدة: " + unitName(r.unit_id);
-
-  if(isNaN(targetQty) || targetQty <= 0) {
-    $("productionMaterialsPreview").innerHTML = "أدخل كمية أكبر من صفر لحساب الخامات.";
-    return;
-  }
-
-  try {
-    const {data:items, error} = await db.from("recipe_items").select("*").eq("recipe_id", recipeId);
-    if(error) throw error;
-    
-    if(!items || items.length === 0) {
-      $("productionMaterialsPreview").innerHTML = "هذه الوصفة لا تحتوي على مكونات مسجلة.";
-      return;
-    }
-
-    const factor = targetQty / Number(r.output_quantity);
-    let html = "<ul style='margin:0; padding-right:20px;'>";
-    
-    items.forEach(i => {
-      const reqQty = Number(i.quantity) * factor;
-      html += `<li><b>${productName(i.raw_product_id)}</b>: ${reqQty.toLocaleString("ar-EG", {maximumFractionDigits:3})} ${unitName(i.unit_id)}</li>`;
-    });
-    
-    html += "</ul>";
-    $("productionMaterialsPreview").innerHTML = html;
-
-  } catch (e) {
-    $("productionMaterialsPreview").innerHTML = "<span style='color:red'>خطأ في جلب المكونات: " + err(e) + "</span>";
-  }
-};
-
-$("productionRecipe").addEventListener("change", updateProductionPreview);
-$("productionTargetQty").addEventListener("input", updateProductionPreview);
-
-$("productionForm").addEventListener("submit", async e => {
-  e.preventDefault();
-  clear($("productionFormMsg"));
-  if(!canManageProduction) return;
-
-  const recipeId = $("productionRecipe").value;
-  const targetQty = Number($("productionTargetQty").value);
-  const locationId = $("productionLocation").value;
-  const notes = $("productionNotes").value.trim();
-
-  if(!recipeId || !locationId || isNaN(targetQty) || targetQty <= 0) {
-    msg($("productionFormMsg"), "أكمل بيانات الوصفة والكمية والموقع بشكل صحيح.", "error");
-    return;
-  }
-
-  const button = $("saveProductionBtn");
-  busy(button, true, "جارٍ الحفظ...", "حفظ أمر التشغيل");
-
-  try {
-    if(!await permission("PRODUCTION_MANAGE")) throw new Error("لا تملك صلاحية إنشاء أوامر تشغيل.");
-    
-    const orderNumber = "PO-" + new Date().getTime().toString().slice(-6); 
-    
-    const { data: recipeItems, error: itemsErr } = await db.from("recipe_items").select("*").eq("recipe_id", recipeId);
-    if(itemsErr) throw itemsErr;
-    
-    const r = recipesCache.find(x => String(x.recipe_id) === String(recipeId));
-    const factor = targetQty / Number(r.output_quantity);
-
-    const { data: orderData, error: orderErr } = await db.from("production_orders").insert({
-      order_number: orderNumber,
-      recipe_id: Number(recipeId),
-      target_quantity: targetQty,
-      factory_location_id: Number(locationId),
-      notes: notes || null,
-      status: 'DRAFT'
-    }).select("order_id").single();
-    
-    if(orderErr) throw orderErr;
-
-    const materialsPayload = recipeItems.map(i => ({
-      order_id: orderData.order_id,
-      raw_product_id: i.raw_product_id,
-      required_quantity: Number(i.quantity) * factor,
-      unit_id: i.unit_id
-    }));
-
-    const { error: matErr } = await db.from("production_order_materials").insert(materialsPayload);
-    if(matErr) throw matErr;
-
-    msg($("productionMsg"), "تم حفظ أمر التشغيل بنجاح. رقم الأمر: " + orderNumber, "success");
-    resetProductionForm();
-    await loadProduction();
-    setTimeout(()=>{ $("productionFormCard").classList.add("hidden"); }, 1500);
-
-  } catch (e) {
-    msg($("productionFormMsg"), "تعذر حفظ أمر التشغيل: " + err(e), "error");
-  } finally {
-    busy(button, false, "", "حفظ أمر التشغيل");
-  }
-});
+function fillProductionRecipeSelect(){ const el=$("productionRecipe"); const cur=el.value; el.replaceChildren(); const first=document.createElement("option"); first.value=""; first.textContent="اختر الوصفة"; el.appendChild(first); recipesCache.filter(r=>r.is_active).forEach(r=>{ const op=document.createElement("option"); op.value=String(r.recipe_id); op.textContent=r.recipe_name + " (" + productName(r.product_id) + ")"; op.dataset.product=r.product_id; op.dataset.qty=r.output_quantity; op.dataset.unit=r.unit_id; el.appendChild(op); }); el.value=cur; }
+function resetProductionForm(){ $("productionForm").reset(); $("productionFormCard").classList.add("hidden"); clear($("productionFormMsg")); $("productionMaterialsPreview").innerHTML="اختر الوصفة والكمية لحساب الخامات المطلوبة."; $("productionOutputInfo").textContent="المنتج الناتج: - | الوحدة: -"; }
+async function loadProduction(){ if(!canViewProduction)return; clear($("productionMsg")); $("productionList").replaceChildren(); try{ const {data:sessionData,error:sessionError}=await db.auth.getSession(); if(sessionError)throw sessionError; if(!sessionData.session)throw new Error("انتهت الجلسة."); const allowed=await permission("PRODUCTION_VIEW"); if(!allowed){canViewProduction=false;$("menuProduction").classList.add("hidden");$("productionCard").classList.add("hidden");throw new Error("لا تملك صلاحية عرض أوامر التشغيل.");} const {data,error}=await db.from("production_orders").select("order_id,order_number,recipe_id,target_quantity,factory_location_id,status,created_at").order("order_id",{ascending:false}).limit(200); if(error)throw error; productionCache=data||[]; renderProduction(); msg($("productionMsg"),"تم تحميل "+productionCache.length+" أمر تشغيل.","success"); }catch(e){ msg($("productionMsg"),"تعذر تحميل أوامر التشغيل: "+err(e),"error"); const d=document.createElement("div");d.className="empty";d.textContent="راجع رسالة الخطأ أعلاه.";$("productionList").replaceChildren(d); } }
+function renderProduction(){ const box=$("productionList");box.replaceChildren(); const q=$("productionSearch").value.trim().toLowerCase(); const found=productionCache.filter(o=>{ const r = recipesCache.find(x=>String(x.recipe_id)===String(o.recipe_id)); const rn = r ? r.recipe_name : ""; return [o.order_number, rn].some(v=>String(v||"").toLowerCase().includes(q)); }); if(!found.length){ const d=document.createElement("div");d.className="empty";d.textContent=q?"لا توجد أوامر مطابقة.":"لا توجد أوامر تشغيل مسجلة بعد.";box.appendChild(d);return; } found.forEach(o=>{ const r = recipesCache.find(x=>String(x.recipe_id)===String(o.recipe_id)); const card=document.createElement("div");card.className="product"; const title=document.createElement("div");title.className="pname";title.textContent="🏭 "+o.order_number; let statusText = o.status === 'DRAFT' ? 'مسودة' : (o.status === 'COMPLETED' ? 'مكتمل' : 'ملغى'); let statusClass = o.status === 'DRAFT' ? 'badge-partial' : (o.status === 'COMPLETED' ? 'badge-paid' : 'badge-cancel'); const details=document.createElement("div");details.className="details";details.textContent="الوصفة: "+(r ? r.recipe_name : "-")+" | الكمية: "+Number(o.target_quantity).toLocaleString("ar-EG")+" | الموقع: "+locationName(o.factory_location_id); const status=document.createElement("span");status.className="badge "+statusClass;status.textContent=statusText; const idBadge=document.createElement("span");idBadge.className="badge";idBadge.textContent="رقم الأمر: "+o.order_id; card.append(title,details,status,idBadge); if(canManageProduction && o.status === 'DRAFT'){ const actions=document.createElement("div");actions.className="actions"; const execBtn=document.createElement("button");execBtn.type="button";execBtn.className="btn";execBtn.textContent="▶️ تنفيذ الأمر";execBtn.onclick=()=>executeProductionOrder(o);actions.appendChild(execBtn); card.appendChild(actions); } box.appendChild(card); }); }
+async function executeProductionOrder(o){ if(!canManageProduction)return; if(!confirm("هل أنت متأكد من تنفيذ أمر التشغيل "+o.order_number+"؟\nسيتم خصم الخامات من المخزن وإضافة المنتج النهائي.")) return; try { const {error}=await db.rpc("execute_production_order", { p_order_id: o.order_id }); if(error) throw error; msg($("productionMsg"), "تم تنفيذ أمر التشغيل "+o.order_number+" بنجاح.", "success"); await loadProduction(); if(canViewStock) await loadStock(); } catch (e) { msg($("productionMsg"), "تعذر تنفيذ الأمر: " + err(e), "error"); } }
+$("addProductionBtn").addEventListener("click",async()=>{ if(!canManageProduction)return; if(!recipesCache.length)await loadRecipes(); if(!locationsCache.length)await loadLocations(); resetProductionForm(); fillProductionRecipeSelect(); fillProductionLocationSelect(); $("productionFormCard").classList.remove("hidden"); $("productionFormCard").scrollIntoView({behavior:"smooth",block:"start"}); });
+$("cancelProductionBtn").addEventListener("click",resetProductionForm); $("refreshProductionBtn").addEventListener("click",loadProduction); $("productionSearch").addEventListener("input",renderProduction);
+const updateProductionPreview = async () => { const recipeId = $("productionRecipe").value; const targetQty = Number($("productionTargetQty").value); if(!recipeId) { $("productionMaterialsPreview").innerHTML = "اختر الوصفة والكمية لحساب الخامات المطلوبة."; $("productionOutputInfo").textContent = "المنتج الناتج: - | الوحدة: -"; return; } const r = recipesCache.find(x => String(x.recipe_id) === String(recipeId)); if(!r) return; $("productionOutputInfo").textContent = "المنتج الناتج: " + productName(r.product_id) + " | الوحدة: " + unitName(r.unit_id); if(isNaN(targetQty) || targetQty <= 0) { $("productionMaterialsPreview").innerHTML = "أدخل كمية أكبر من صفر لحساب الخامات."; return; } try { const {data:items, error} = await db.from("recipe_items").select("*").eq("recipe_id", recipeId); if(error) throw error; if(!items || items.length === 0) { $("productionMaterialsPreview").innerHTML = "هذه الوصفة لا تحتوي على مكونات مسجلة."; return; } const factor = targetQty / Number(r.output_quantity); let html = "<ul style='margin:0; padding-right:20px;'>"; items.forEach(i => { const reqQty = Number(i.quantity) * factor; html += `<li><b>${productName(i.raw_product_id)}</b>: ${reqQty.toLocaleString("ar-EG", {maximumFractionDigits:3})} ${unitName(i.unit_id)}</li>`; }); html += "</ul>"; $("productionMaterialsPreview").innerHTML = html; } catch (e) { $("productionMaterialsPreview").innerHTML = "<span style='color:red'>خطأ في جلب المكونات: " + err(e) + "</span>"; } };
+$("productionRecipe").addEventListener("change", updateProductionPreview); $("productionTargetQty").addEventListener("input", updateProductionPreview);
+$("productionForm").addEventListener("submit", async e => { e.preventDefault(); clear($("productionFormMsg")); if(!canManageProduction) return; const recipeId = $("productionRecipe").value; const targetQty = Number($("productionTargetQty").value); const locationId = $("productionLocation").value; const notes = $("productionNotes").value.trim(); if(!recipeId || !locationId || isNaN(targetQty) || targetQty <= 0) { msg($("productionFormMsg"), "أكمل بيانات الوصفة والكمية والموقع بشكل صحيح.", "error"); return; } const button = $("saveProductionBtn"); busy(button, true, "جارٍ الحفظ...", "حفظ أمر التشغيل"); try { if(!await permission("PRODUCTION_MANAGE")) throw new Error("لا تملك صلاحية إنشاء أوامر تشغيل."); const orderNumber = "PO-" + new Date().getTime().toString().slice(-6); const { data: recipeItems, error: itemsErr } = await db.from("recipe_items").select("*").eq("recipe_id", recipeId); if(itemsErr) throw itemsErr; const r = recipesCache.find(x => String(x.recipe_id) === String(recipeId)); const factor = targetQty / Number(r.output_quantity); const { data: orderData, error: orderErr } = await db.from("production_orders").insert({ order_number: orderNumber, recipe_id: Number(recipeId), target_quantity: targetQty, factory_location_id: Number(locationId), notes: notes || null, status: 'DRAFT' }).select("order_id").single(); if(orderErr) throw orderErr; const materialsPayload = recipeItems.map(i => ({ order_id: orderData.order_id, raw_product_id: i.raw_product_id, required_quantity: Number(i.quantity) * factor, unit_id: i.unit_id })); const { error: matErr } = await db.from("production_order_materials").insert(materialsPayload); if(matErr) throw matErr; msg($("productionMsg"), "تم حفظ أمر التشغيل بنجاح. رقم الأمر: " + orderNumber, "success"); resetProductionForm(); await loadProduction(); setTimeout(()=>{ $("productionFormCard").classList.add("hidden"); }, 1500); } catch (e) { msg($("productionFormMsg"), "تعذر حفظ أمر التشغيل: " + err(e), "error"); } finally { busy(button, false, "", "حفظ أمر التشغيل"); } });
 
 /* ============ الجولات والتوزيع ============ */
-function fillTripVehicleSelect(){
-  const el=$("tripVehicle"); if(!el) return; const cur=el.value; el.replaceChildren();
-  const first=document.createElement("option"); first.value=""; first.textContent="اختر السيارة"; el.appendChild(first);
-  locationsCache.filter(l=>l.is_active && l.location_type==="VEHICLE").forEach(l=>{
-    const op=document.createElement("option"); op.value=String(l.location_id); op.textContent=l.location_name+" ("+l.location_code+")"; el.appendChild(op);
-  });
-  el.value=cur;
-}
-
-function fillLoadSourceLocSelect(){
-  const el=$("loadSourceLoc"); if(!el) return; const cur=el.value; el.replaceChildren();
-  const first=document.createElement("option"); first.value=""; first.textContent="اختر الموقع المصدر"; el.appendChild(first);
-  locationsCache.filter(l=>l.is_active && l.location_type!=="VEHICLE").forEach(l=>{
-    const op=document.createElement("option"); op.value=String(l.location_id); op.textContent=l.location_name+" ("+l.location_code+")"; el.appendChild(op);
-  });
-  el.value=cur;
-}
-
-function fillLoadProductSelect(){
-  const el=$("loadProduct"); if(!el) return; const cur=el.value; el.replaceChildren();
-  const first=document.createElement("option"); first.value=""; first.textContent="اختر المنتج"; el.appendChild(first);
-  productsCache.filter(p=>p.is_active).forEach(p=>{
-    const op=document.createElement("option"); op.value=String(p.product_id); op.textContent=p.product_name+" ("+p.product_code+")"; el.appendChild(op);
-  });
-  el.value=cur;
-}
-
-function resetTripForm(){
-  $("tripForm").reset();
-  $("tripDate").value = todayISO();
-  $("tripFormCard").classList.add("hidden");
-  clear($("tripFormMsg"));
-}
-
-async function loadTrips(){
-  if(!canViewTrips)return; clear($("tripsMsg")); $("tripsList").replaceChildren();
-  try{
-    const {data:sessionData,error:sessionError}=await db.auth.getSession(); if(sessionError)throw sessionError;
-    if(!sessionData.session)throw new Error("انتهت الجلسة.");
-    const allowed=await permission("TRIPS_VIEW");
-    if(!allowed){canViewTrips=false;$("menuTrips").classList.add("hidden");$("tripsCard").classList.add("hidden");throw new Error("لا تملك صلاحية عرض الجولات.");}
-    
-    const {data,error}=await db.from("trips").select("trip_id,trip_number,sales_rep_id,vehicle_location_id,status,start_date,end_date,created_at,initial_cash").order("trip_id",{ascending:false}).limit(200);
-    if(error)throw error;
-    
-    if(data && data.length > 0) {
-       const repIds = [...new Set(data.map(t => t.sales_rep_id))];
-       const {data:reps} = await db.from("sales_reps").select("sales_rep_id,name").in("sales_rep_id", repIds);
-       if(reps) {
-          reps.forEach(r => {
-             const trip = data.find(t => t.sales_rep_id === r.sales_rep_id);
-             if(trip) trip.rep_name = r.name || "مندوب " + r.sales_rep_id;
-          });
-       }
-    }
-
-    tripsCache=data||[];
-    renderTrips();
-    msg($("tripsMsg"),"تم تحميل "+tripsCache.length+" جولة.","success");
-  }catch(e){
-    msg($("tripsMsg"),"تعذر تحميل الجولات: "+err(e),"error");
-    const d=document.createElement("div");d.className="empty";d.textContent="راجع رسالة الخطأ أعلاه.";$("tripsList").replaceChildren(d);
-  }
-}
-
-function renderTrips(){
-  const box=$("tripsList");box.replaceChildren();
-  const q=$("tripSearch").value.trim().toLowerCase();
-  
-  const found=tripsCache.filter(t=>{
-    const vn = locationName(t.vehicle_location_id);
-    return [t.trip_number, t.rep_name, vn].some(v=>String(v||"").toLowerCase().includes(q));
-  });
-  
-  if(!found.length){
-    const d=document.createElement("div");d.className="empty";d.textContent=q?"لا توجد جولات مطابقة.":"لا توجد جولات مسجلة بعد.";box.appendChild(d);return;
-  }
-  
-  found.forEach(t=>{
-    const card=document.createElement("div");card.className="product";
-    const title=document.createElement("div");title.className="pname";title.textContent="🚐 "+t.trip_number;
-    
-    let statusText = t.status === 'DRAFT' ? 'مسودة' : (t.status === 'COMPLETED' ? 'مكتملة' : (t.status === 'ACTIVE' ? 'نشطة' : 'ملغاة'));
-    let statusClass = t.status === 'DRAFT' ? 'badge-partial' : (t.status === 'COMPLETED' ? 'badge-paid' : 'badge-cancel');
-    
-    const details=document.createElement("div");details.className="details";
-    details.textContent = "المندوب: " + (t.rep_name || "-") + " | السيارة: " + locationName(t.vehicle_location_id) + " | التاريخ: " + new Date(t.start_date).toLocaleDateString("ar-EG");
-    
-    const status=document.createElement("span");status.className="badge "+statusClass;status.textContent=statusText;
-    const idBadge=document.createElement("span");idBadge.className="badge";idBadge.textContent="رقم الجولة: "+t.trip_id;
-    
-    card.append(title,details,status,idBadge);
-
-    const actions=document.createElement("div");actions.className="actions";
-    
-    if(canManageTrips && t.status === 'DRAFT'){
-       const loadBtn = document.createElement("button"); loadBtn.type="button"; loadBtn.className="btn"; loadBtn.textContent="📦 تحميل بضاعة";
-       loadBtn.onclick = () => openTripLoadModal(t);
-       actions.appendChild(loadBtn);
-
-       const settleBtn = document.createElement("button"); settleBtn.type="button"; settleBtn.className="btn danger"; settleBtn.textContent="✅ تسوية وإغلاق";
-       settleBtn.onclick = () => settleTrip(t);
-       actions.appendChild(settleBtn);
-    }
-    
-    const summaryBtn = document.createElement("button"); summaryBtn.type="button"; summaryBtn.className="btn secondary"; summaryBtn.textContent="📊 كشف حركة الجولة";
-    summaryBtn.onclick = () => viewTripSummary(t);
-    actions.appendChild(summaryBtn);
-
-    if(actions.children.length) card.appendChild(actions);
-    box.appendChild(card);
-  });
-}
-
-$("addTripBtn").addEventListener("click",async()=>{
-  if(!canManageTrips)return;
-  if(!locationsCache.length)await loadLocations();
-  resetTripForm();
-  fillTripVehicleSelect();
-  $("tripFormCard").classList.remove("hidden");
-  $("tripFormCard").scrollIntoView({behavior:"smooth",block:"start"});
-});
-
-$("cancelTripBtn").addEventListener("click",resetTripForm);
-$("refreshTripsBtn").addEventListener("click",loadTrips);
-$("tripSearch").addEventListener("input",renderTrips);
-
-$("tripForm").addEventListener("submit", async e=>{
-  e.preventDefault(); clear($("tripFormMsg")); if(!canManageTrips)return;
-
-  const repName = $("tripRepName").value.trim();
-  const vehicleLoc = $("tripVehicle").value;
-  const notes = $("tripNotes").value.trim();
-  const initialCash = Number($("tripInitialCash").value || 0);
-
-  if(!repName || !vehicleLoc){ msg($("tripFormMsg"), "أكمل اسم المندوب واختر السيارة.", "error"); return; }
-
-  const button = $("saveTripBtn");
-  busy(button, true, "جارٍ الحفظ...", "حفظ الجولة");
-
-  try {
-    if(!await permission("TRIPS_MANAGE")) throw new Error("لا تملك صلاحية إدارة الجولات.");
-    
-    let repId;
-    const {data: existingRep} = await db.from("sales_reps").select("sales_rep_id").eq("name", repName).maybeSingle();
-    
-    if(existingRep) {
-      repId = existingRep.sales_rep_id;
-    } else {
-      const {data: newRep, error: repErr} = await db.from("sales_reps").insert({name: repName, is_active: true}).select("sales_rep_id").single();
-      if(repErr) throw repErr;
-      repId = newRep.sales_rep_id;
-    }
-
-    const tripNumber = "TRP-" + new Date().getTime().toString().slice(-6);
-    
-    const {data: newTripId, error: tripErr} = await db.rpc("create_trip_with_custody", {
-      p_trip_number: tripNumber,
-      p_sales_rep_id: repId,
-      p_vehicle_location_id: Number(vehicleLoc),
-      p_start_date: $("tripDate").value,
-      p_notes: notes || null,
-      p_initial_cash: initialCash
-    });
-
-    if(tripErr) throw tripErr;
-
-    msg($("tripsMsg"), "تم إنشاء الجولة بنجاح. رقم الجولة: " + tripNumber, "success");
-    resetTripForm();
-    await loadTrips();
-    setTimeout(()=>{ $("tripFormCard").classList.add("hidden"); }, 1500);
-
-  } catch(e) {
-    msg($("tripFormMsg"), "تعذر إنشاء الجولة: " + err(e), "error");
-  } finally {
-    busy(button, false, "", "حفظ الجولة");
-  }
-});
-
-function openTripLoadModal(trip) {
-  $("loadTripId").value = trip.trip_id;
-  $("loadTripInfo").textContent = "الجولة: " + trip.trip_number + " | السيارة: " + locationName(trip.vehicle_location_id);
-  
-  if(!locationsCache.length) loadLocations();
-  if(!productsCache.length) loadProducts();
-  
-  fillLoadSourceLocSelect();
-  fillLoadProductSelect();
-  
-  clear($("loadMsg"));
-  $("tripLoadModal").classList.remove("hidden");
-}
-
-$("tripLoadForm").addEventListener("submit", async e => {
-  e.preventDefault(); clear($("loadMsg"));
-  const tripId = $("loadTripId").value;
-  const sourceLoc = $("loadSourceLoc").value;
-  const prodId = $("loadProduct").value;
-  const qty = Number($("loadQty").value);
-
-  if(!tripId || !sourceLoc || !prodId || isNaN(qty) || qty <= 0) {
-     msg($("loadMsg"), "أكمل البيانات بشكل صحيح.", "error"); return;
-  }
-
-  const btn = $("saveLoadBtn"); busy(btn, true, "جارٍ التحميل...", "تحميل للسيارة");
-
-  try {
-     const {error} = await db.rpc("load_trip_stock", {
-        p_trip_id: Number(tripId),
-        p_source_location_id: Number(sourceLoc),
-        p_product_id: Number(prodId),
-        p_quantity: qty
-     });
-     if(error) throw error;
-
-     msg($("loadMsg"), "تم التحميل بنجاح.", "success");
-     if(canViewStock) loadStock();
-     
-     setTimeout(() => {
-        $("tripLoadModal").classList.add("hidden");
-        resetTripForm();
-     }, 1500);
-
-  } catch(e) {
-     msg($("loadMsg"), "تعذر التحميل: " + err(e), "error");
-  } finally {
-     busy(btn, false, "", "تحميل للسيارة");
-  }
-});
-
-async function settleTrip(trip) {
-  if(!canManageTrips) return;
-  if(!confirm("هل أنت متأكد من تسوية الجولة " + trip.trip_number + "؟\nسيتم إرجاع البضاعة المتبقية للثلاجة وإغلاق الجولة.")) return;
-
-  const targetLoc = locationsCache.find(l => l.location_type === 'MAIN_WAREHOUSE' || l.location_type === 'FRIDGE');
-  if(!targetLoc) {
-     alert("لا يوجد مخزن رئيسي أو ثلاجة لإرجاع البضاعة إليها.");
-     return;
-  }
-
-  try {
-     const {error} = await db.rpc("settle_trip", {
-        p_trip_id: trip.trip_id,
-        p_target_location_id: targetLoc.location_id
-     });
-     if(error) throw error;
-
-     msg($("tripsMsg"), "تم تسوية الجولة " + trip.trip_number + " بنجاح.", "success");
-     await loadTrips();
-     if(canViewStock) loadStock();
-     if(canViewTreasuries) loadTreasuries();
-
-  } catch (e) {
-     msg($("tripsMsg"), "تعذر تسوية الجولة: " + err(e), "error");
-  }
-}
-
-async function viewTripSummary(trip) {
-  const modal = $("tripSummaryModal");
-  $("tripSummaryBody").innerHTML = "جارٍ تحميل البيانات...";
-  modal.classList.remove("hidden");
-  
-  try {
-    const { data, error } = await db.rpc("get_trip_summary", { p_trip_id: trip.trip_id });
-    if (error) throw error;
-    
-    let html = `
-      <div class="summary-box">
-        <div class="summary-title">بيانات الجولة</div>
-        <div class="line"><span>رقم الجولة:</span><span>${data.trip_number}</span></div>
-        <div class="line"><span>المندوب:</span><span>${data.rep_name}</span></div>
-        <div class="line"><span>السيارة:</span><span>${data.vehicle_name}</span></div>
-        <div class="line"><span>الحالة:</span><span>${data.status === 'DRAFT' ? 'مسودة' : 'مكتملة'}</span></div>
-      </div>
-      
-      <div class="summary-box">
-        <div class="summary-title">الحركة المالية (العهدة)</div>
-        <div class="line"><span>العهدة الافتتاحية:</span><span>${fmt(data.initial_cash)}</span></div>
-        <div class="line"><span>إجمالي التحصيلات:</span><span style="color:green;">+ ${fmt(data.total_collections)}</span></div>
-        <div class="line"><span>إجمالي المصروفات:</span><span style="color:red;">- ${fmt(data.total_expenses)}</span></div>
-        <div class="line grand"><span>صافي النقدية المطلوبة (مع المندوب):</span><span>${fmt(data.remaining_cash)}</span></div>
-      </div>
-      
-      <div class="summary-box">
-        <div class="summary-title">البضاعة المحملة</div>
-        <table class="print-table" style="margin-top:0;">
-          <thead><tr><th>الصنف</th><th>الكمية</th></tr></thead>
-          <tbody>
-    `;
-    if(data.loaded_items && data.loaded_items.length > 0) {
-      data.loaded_items.forEach(i => { html += `<tr><td>${i.product_name}</td><td>${Number(i.qty).toLocaleString("ar-EG")} ${i.unit_name}</td></tr>`; });
-    } else {
-      html += `<tr><td colspan="2" style="text-align:center;">لا توجد بضاعة محملة</td></tr>`;
-    }
-    html += `</tbody></table></div>`;
-
-    html += `
-      <div class="summary-box">
-        <div class="summary-title">البضاعة المباعة</div>
-        <table class="print-table" style="margin-top:0;">
-          <thead><tr><th>الصنف</th><th>الكمية</th></tr></thead>
-          <tbody>
-    `;
-    if(data.sold_items && data.sold_items.length > 0) {
-      data.sold_items.forEach(i => { html += `<tr><td>${i.product_name}</td><td>${Number(i.qty).toLocaleString("ar-EG")} ${i.unit_name}</td></tr>`; });
-    } else {
-      html += `<tr><td colspan="2" style="text-align:center;">لا توجد مبيعات</td></tr>`;
-    }
-    html += `</tbody></table></div>`;
-
-    html += `
-      <div class="summary-box">
-        <div class="summary-title">البضاعة المتبقية في السيارة حالياً</div>
-        <table class="print-table" style="margin-top:0;">
-          <thead><tr><th>الصنف</th><th>الكمية</th></tr></thead>
-          <tbody>
-    `;
-    if(data.remaining_items && data.remaining_items.length > 0) {
-      data.remaining_items.forEach(i => { html += `<tr><td>${i.product_name}</td><td>${Number(i.qty).toLocaleString("ar-EG")} ${i.unit_name}</td></tr>`; });
-    } else {
-      html += `<tr><td colspan="2" style="text-align:center;">السيارة فارغة</td></tr>`;
-    }
-    html += `</tbody></table></div>`;
-
-    $("tripSummaryBody").innerHTML = html;
-  } catch (e) {
-    $("tripSummaryBody").innerHTML = `<div style="color:red;">تعذر تحميل البيانات: ${err(e)}</div>`;
-  }
-}
+function fillTripVehicleSelect(){ const el=$("tripVehicle"); if(!el) return; const cur=el.value; el.replaceChildren(); const first=document.createElement("option"); first.value=""; first.textContent="اختر السيارة"; el.appendChild(first); locationsCache.filter(l=>l.is_active && l.location_type==="VEHICLE").forEach(l=>{ const op=document.createElement("option"); op.value=String(l.location_id); op.textContent=l.location_name+" ("+l.location_code+")"; el.appendChild(op); }); el.value=cur; }
+function fillLoadSourceLocSelect(){ const el=$("loadSourceLoc"); if(!el) return; const cur=el.value; el.replaceChildren(); const first=document.createElement("option"); first.value=""; first.textContent="اختر الموقع المصدر"; el.appendChild(first); locationsCache.filter(l=>l.is_active && l.location_type!=="VEHICLE").forEach(l=>{ const op=document.createElement("option"); op.value=String(l.location_id); op.textContent=l.location_name+" ("+l.location_code+")"; el.appendChild(op); }); el.value=cur; }
+function fillLoadProductSelect(){ const el=$("loadProduct"); if(!el) return; const cur=el.value; el.replaceChildren(); const first=document.createElement("option"); first.value=""; first.textContent="اختر المنتج"; el.appendChild(first); productsCache.filter(p=>p.is_active).forEach(p=>{ const op=document.createElement("option"); op.value=String(p.product_id); op.textContent=p.product_name+" ("+p.product_code+")"; el.appendChild(op); }); el.value=cur; }
+function resetTripForm(){ $("tripForm").reset(); $("tripDate").value = todayISO(); $("tripFormCard").classList.add("hidden"); clear($("tripFormMsg")); }
+async function loadTrips(){ if(!canViewTrips)return; clear($("tripsMsg")); $("tripsList").replaceChildren(); try{ const {data:sessionData,error:sessionError}=await db.auth.getSession(); if(sessionError)throw sessionError; if(!sessionData.session)throw new Error("انتهت الجلسة."); const allowed=await permission("TRIPS_VIEW"); if(!allowed){canViewTrips=false;$("menuTrips").classList.add("hidden");$("tripsCard").classList.add("hidden");throw new Error("لا تملك صلاحية عرض الجولات.");} const {data,error}=await db.from("trips").select("trip_id,trip_number,sales_rep_id,vehicle_location_id,status,start_date,end_date,created_at,initial_cash").order("trip_id",{ascending:false}).limit(200); if(error)throw error; if(data && data.length > 0) { const repIds = [...new Set(data.map(t => t.sales_rep_id))]; const {data:reps} = await db.from("sales_reps").select("sales_rep_id,name").in("sales_rep_id", repIds); if(reps) { reps.forEach(r => { const trip = data.find(t => t.sales_rep_id === r.sales_rep_id); if(trip) trip.rep_name = r.name || "مندوب " + r.sales_rep_id; }); } } tripsCache=data||[]; renderTrips(); msg($("tripsMsg"),"تم تحميل "+tripsCache.length+" جولة.","success"); }catch(e){ msg($("tripsMsg"),"تعذر تحميل الجولات: "+err(e),"error"); const d=document.createElement("div");d.className="empty";d.textContent="راجع رسالة الخطأ أعلاه.";$("tripsList").replaceChildren(d); } }
+function renderTrips(){ const box=$("tripsList");box.replaceChildren(); const q=$("tripSearch").value.trim().toLowerCase(); const found=tripsCache.filter(t=>{ const vn = locationName(t.vehicle_location_id); return [t.trip_number, t.rep_name, vn].some(v=>String(v||"").toLowerCase().includes(q)); }); if(!found.length){ const d=document.createElement("div");d.className="empty";d.textContent=q?"لا توجد جولات مطابقة.":"لا توجد جولات مسجلة بعد.";box.appendChild(d);return; } found.forEach(t=>{ const card=document.createElement("div");card.className="product"; const title=document.createElement("div");title.className="pname";title.textContent="🚐 "+t.trip_number; let statusText = t.status === 'DRAFT' ? 'مسودة' : (t.status === 'COMPLETED' ? 'مكتملة' : (t.status === 'ACTIVE' ? 'نشطة' : 'ملغاة')); let statusClass = t.status === 'DRAFT' ? 'badge-partial' : (t.status === 'COMPLETED' ? 'badge-paid' : 'badge-cancel'); const details=document.createElement("div");details.className="details";details.textContent = "المندوب: " + (t.rep_name || "-") + " | السيارة: " + locationName(t.vehicle_location_id) + " | التاريخ: " + new Date(t.start_date).toLocaleDateString("ar-EG"); const status=document.createElement("span");status.className="badge "+statusClass;status.textContent=statusText; const idBadge=document.createElement("span");idBadge.className="badge";idBadge.textContent="رقم الجولة: "+t.trip_id; card.append(title,details,status,idBadge); const actions=document.createElement("div");actions.className="actions"; if(canManageTrips && t.status === 'DRAFT'){ const loadBtn = document.createElement("button"); loadBtn.type="button"; loadBtn.className="btn"; loadBtn.textContent="📦 تحميل بضاعة"; loadBtn.onclick = () => openTripLoadModal(t); actions.appendChild(loadBtn); const settleBtn = document.createElement("button"); settleBtn.type="button"; settleBtn.className="btn danger"; settleBtn.textContent="✅ تسوية وإغلاق"; settleBtn.onclick = () => settleTrip(t); actions.appendChild(settleBtn); } const summaryBtn = document.createElement("button"); summaryBtn.type="button"; summaryBtn.className="btn secondary"; summaryBtn.textContent="📊 كشف حركة الجولة"; summaryBtn.onclick = () => viewTripSummary(t); actions.appendChild(summaryBtn); if(actions.children.length) card.appendChild(actions); box.appendChild(card); }); }
+$("addTripBtn").addEventListener("click",async()=>{ if(!canManageTrips)return; if(!locationsCache.length)await loadLocations(); resetTripForm(); fillTripVehicleSelect(); $("tripFormCard").classList.remove("hidden"); $("tripFormCard").scrollIntoView({behavior:"smooth",block:"start"}); });
+$("cancelTripBtn").addEventListener("click",resetTripForm); $("refreshTripsBtn").addEventListener("click",loadTrips); $("tripSearch").addEventListener("input",renderTrips);
+$("tripForm").addEventListener("submit", async e=>{ e.preventDefault(); clear($("tripFormMsg")); if(!canManageTrips)return; const repName = $("tripRepName").value.trim(); const vehicleLoc = $("tripVehicle").value; const notes = $("tripNotes").value.trim(); const initialCash = Number($("tripInitialCash").value || 0); if(!repName || !vehicleLoc){ msg($("tripFormMsg"), "أكمل اسم المندوب واختر السيارة.", "error"); return; } const button = $("saveTripBtn"); busy(button, true, "جارٍ الحفظ...", "حفظ الجولة"); try { if(!await permission("TRIPS_MANAGE")) throw new Error("لا تملك صلاحية إدارة الجولات."); let repId; const {data: existingRep} = await db.from("sales_reps").select("sales_rep_id").eq("name", repName).maybeSingle(); if(existingRep) { repId = existingRep.sales_rep_id; } else { const {data: newRep, error: repErr} = await db.from("sales_reps").insert({name: repName, is_active: true}).select("sales_rep_id").single(); if(repErr) throw repErr; repId = newRep.sales_rep_id; } const tripNumber = "TRP-" + new Date().getTime().toString().slice(-6); const {data: newTripId, error: tripErr} = await db.rpc("create_trip_with_custody", { p_trip_number: tripNumber, p_sales_rep_id: repId, p_vehicle_location_id: Number(vehicleLoc), p_start_date: $("tripDate").value, p_notes: notes || null, p_initial_cash: initialCash }); if(tripErr) throw tripErr; msg($("tripsMsg"), "تم إنشاء الجولة بنجاح. رقم الجولة: " + tripNumber, "success"); resetTripForm(); await loadTrips(); setTimeout(()=>{ $("tripFormCard").classList.add("hidden"); }, 1500); } catch(e) { msg($("tripFormMsg"), "تعذر إنشاء الجولة: " + err(e), "error"); } finally { busy(button, false, "", "حفظ الجولة"); } });
+function openTripLoadModal(trip) { $("loadTripId").value = trip.trip_id; $("loadTripInfo").textContent = "الجولة: " + trip.trip_number + " | السيارة: " + locationName(trip.vehicle_location_id); if(!locationsCache.length) loadLocations(); if(!productsCache.length) loadProducts(); fillLoadSourceLocSelect(); fillLoadProductSelect(); clear($("loadMsg")); $("tripLoadModal").classList.remove("hidden"); }
+$("tripLoadForm").addEventListener("submit", async e => { e.preventDefault(); clear($("loadMsg")); const tripId = $("loadTripId").value; const sourceLoc = $("loadSourceLoc").value; const prodId = $("loadProduct").value; const qty = Number($("loadQty").value); if(!tripId || !sourceLoc || !prodId || isNaN(qty) || qty <= 0) { msg($("loadMsg"), "أكمل البيانات بشكل صحيح.", "error"); return; } const btn = $("saveLoadBtn"); busy(btn, true, "جارٍ التحميل...", "تحميل للسيارة"); try { const {error} = await db.rpc("load_trip_stock", { p_trip_id: Number(tripId), p_source_location_id: Number(sourceLoc), p_product_id: Number(prodId), p_quantity: qty }); if(error) throw error; msg($("loadMsg"), "تم التحميل بنجاح.", "success"); if(canViewStock) loadStock(); setTimeout(() => { $("tripLoadModal").classList.add("hidden"); resetTripForm(); }, 1500); } catch(e) { msg($("loadMsg"), "تعذر التحميل: " + err(e), "error"); } finally { busy(btn, false, "", "تحميل للسيارة"); } });
+async function settleTrip(trip) { if(!canManageTrips) return; if(!confirm("هل أنت متأكد من تسوية الجولة " + trip.trip_number + "؟\nسيتم إرجاع البضاعة المتبقية للثلاجة وإغلاق الجولة.")) return; const targetLoc = locationsCache.find(l => l.location_type === 'MAIN_WAREHOUSE' || l.location_type === 'FRIDGE'); if(!targetLoc) { alert("لا يوجد مخزن رئيسي أو ثلاجة لإرجاع البضاعة إليها."); return; } try { const {error} = await db.rpc("settle_trip", { p_trip_id: trip.trip_id, p_target_location_id: targetLoc.location_id }); if(error) throw error; msg($("tripsMsg"), "تم تسوية الجولة " + trip.trip_number + " بنجاح.", "success"); await loadTrips(); if(canViewStock) loadStock(); if(canViewTreasuries) loadTreasuries(); } catch (e) { msg($("tripsMsg"), "تعذر تسوية الجولة: " + err(e), "error"); } }
+async function viewTripSummary(trip) { const modal = $("tripSummaryModal"); $("tripSummaryBody").innerHTML = "جارٍ تحميل البيانات..."; modal.classList.remove("hidden"); try { const { data, error } = await db.rpc("get_trip_summary", { p_trip_id: trip.trip_id }); if (error) throw error; let html = `<div class="summary-box"><div class="summary-title">بيانات الجولة</div><div class="line"><span>رقم الجولة:</span><span>${data.trip_number}</span></div><div class="line"><span>المندوب:</span><span>${data.rep_name}</span></div><div class="line"><span>السيارة:</span><span>${data.vehicle_name}</span></div><div class="line"><span>الحالة:</span><span>${data.status === 'DRAFT' ? 'مسودة' : 'مكتملة'}</span></div></div><div class="summary-box"><div class="summary-title">الحركة المالية (العهدة)</div><div class="line"><span>العهدة الافتتاحية:</span><span>${fmt(data.initial_cash)}</span></div><div class="line"><span>إجمالي المبيعات:</span><span>${fmt(data.total_sales)}</span></div><div class="line"><span>إجمالي المرتجعات:</span><span style="color:orange;">${fmt(data.total_returns)}</span></div><div class="line"><span>صافي المبيعات:</span><span>${fmt(data.net_sales)}</span></div><div class="line"><span>إجمالي التحصيلات:</span><span style="color:green;">+ ${fmt(data.total_collections)}</span></div><div class="line"><span>إجمالي المصروفات:</span><span style="color:red;">- ${fmt(data.total_expenses)}</span></div><div class="line grand"><span>صافي النقدية المطلوبة (مع المندوب):</span><span>${fmt(data.remaining_cash)}</span></div></div><div class="summary-box"><div class="summary-title">البضاعة المحملة</div><table class="print-table" style="margin-top:0;"><thead><tr><th>الصنف</th><th>الكمية</th></tr></thead><tbody>`; if(data.loaded_items && data.loaded_items.length > 0) { data.loaded_items.forEach(i => { html += `<tr><td>${i.product_name}</td><td>${Number(i.qty).toLocaleString("ar-EG")} ${i.unit_name}</td></tr>`; }); } else { html += `<tr><td colspan="2" style="text-align:center;">لا توجد بضاعة محملة</td></tr>`; } html += `</tbody></table></div><div class="summary-box"><div class="summary-title">البضاعة المباعة</div><table class="print-table" style="margin-top:0;"><thead><tr><th>الصنف</th><th>الكمية</th></tr></thead><tbody>`; if(data.sold_items && data.sold_items.length > 0) { data.sold_items.forEach(i => { html += `<tr><td>${i.product_name}</td><td>${Number(i.qty).toLocaleString("ar-EG")} ${i.unit_name}</td></tr>`; }); } else { html += `<tr><td colspan="2" style="text-align:center;">لا توجد مبيعات</td></tr>`; } html += `</tbody></table></div><div class="summary-box"><div class="summary-title">البضاعة المتبقية في السيارة حالياً</div><table class="print-table" style="margin-top:0;"><thead><tr><th>الصنف</th><th>الكمية</th></tr></thead><tbody>`; if(data.remaining_items && data.remaining_items.length > 0) { data.remaining_items.forEach(i => { html += `<tr><td>${i.product_name}</td><td>${Number(i.qty).toLocaleString("ar-EG")} ${i.unit_name}</td></tr>`; }); } else { html += `<tr><td colspan="2" style="text-align:center;">السيارة فارغة</td></tr>`; } html += `</tbody></table></div>`; $("tripSummaryBody").innerHTML = html; } catch (e) { $("tripSummaryBody").innerHTML = `<div style="color:red;">تعذر تحميل البيانات: ${err(e)}</div>`; } }
 
 /* ============ Auth & Init ============ */
 $("loginForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("loginMsg")); const loginValue=$("email").value.trim(); const password=$("password").value; busy($("loginBtn"),true,"جارٍ تسجيل الدخول...","تسجيل الدخول"); try{ let user; if(loginValue.includes("@")){ const {data,error}=await db.auth.signInWithPassword({email:loginValue,password}); if(error)throw error; user=data.user; } else{ const response=await fetch(USERNAME_LOGIN_URL,{ method:"POST", headers:{"Content-Type":"application/json","apikey":KEY}, body:JSON.stringify({username:loginValue,password}) }); let result={}; try{result=await response.json();}catch(_){} if(!response.ok||result.success!==true||!result.session)throw new Error(result.error||"تعذر تسجيل الدخول باسم المستخدم."); const {data,error}=await db.auth.setSession({ access_token:result.session.access_token, refresh_token:result.session.refresh_token }); if(error)throw error; user=data.user; } if(!user)throw new Error("لم يتم استرجاع بيانات المستخدم."); showApp(); await userInfo(user); await loadLookups(); await loadProducts(); if(canViewLocations)await loadLocations(); fillLocationsFilter(); if(canViewTreasuries)await loadTreasuries(); if(canViewStock)await loadStock(); if(canViewRecipes)await loadRecipes(); if(canViewProduction)await loadProduction(); if(canViewTrips)await loadTrips(); if(canViewCustomers)await loadCustomers(); if(canViewSales)await loadSales(); if(canViewCollections)await loadCollections(); if(canViewSuppliers)await loadSuppliers(); if(canViewPurchases)await loadPurchases(); if(canViewPartners)await loadPartners(); }catch(e){ msg($("loginMsg"),"تعذر تسجيل الدخول أو تجهيز البيانات: "+err(e),"error"); }finally{ busy($("loginBtn"),false,"","تسجيل الدخول"); } });
