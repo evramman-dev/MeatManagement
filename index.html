@@ -1515,7 +1515,7 @@ $("invoiceForm").addEventListener("submit",async e=>{
     if (finalPaid > 0 && paymentType !== 'CASH') {
         await db.rpc("adjust_treasury_balance", { p_treasury_id: Number(treasuryId), p_amount: finalPaid, p_notes: 'فاتورة بيع ' + invoiceId }); 
     }
-    
+
     msg($("invoiceFormMsg"),"تم حفظ الفاتورة بنجاح. رقم الفاتورة: "+invoiceId,"success"); 
     resetInvoiceForm(); await loadSales(); if(canViewStock)await loadStock(); if(canViewTreasuries)await loadTreasuries(); 
     setTimeout(()=>{$("invoiceFormCard").classList.add("hidden");},1500); 
