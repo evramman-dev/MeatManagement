@@ -648,7 +648,22 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
             <div id="exchangeItems"></div>
             <button id="addExchangeItemBtn" class="btn secondary" type="button" style="margin-top:8px">＋ إضافة صنف جديد</button>
           </div>
-    <div id="sectionPurchases" class="sub-section hidden">
+
+          <div class="total-box">
+            <div class="line"><span>قيمة المرتجع:</span><span id="returnTotalDisplay">0</span></div>
+            <div class="line"><span>قيمة الاستبدال:</span><span id="exchangeTotalDisplay">0</span></div>
+            <div class="line grand"><span>الفرق:</span><span id="diffDisplay">0</span></div>
+          </div>
+
+          <label for="returnNotes">ملاحظات</label><textarea id="returnNotes" rows="2"></textarea>
+          <button id="saveReturnBtn" class="btn" type="submit">حفظ المرتجع</button>
+          <button id="cancelReturnBtn" class="btn secondary" type="button">إلغاء</button>
+          <div id="returnFormMsg" class="status hidden"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+      <div id="sectionPurchases" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="purchasesCard" class="card hidden">
       <div class="row" style="justify-content:space-between"><h2>🛒 فواتير المشتريات</h2><button id="addPurchaseBtn" class="btn hidden" type="button">＋ فاتورة مشتريات</button></div>
@@ -849,21 +864,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 <script>
 (() => {
 "use strict";
-  
-          <div class="total-box">
-            <div class="line"><span>قيمة المرتجع:</span><span id="returnTotalDisplay">0</span></div>
-            <div class="line"><span>قيمة الاستبدال:</span><span id="exchangeTotalDisplay">0</span></div>
-            <div class="line grand"><span>الفرق:</span><span id="diffDisplay">0</span></div>
-          </div>
-
-          <label for="returnNotes">ملاحظات</label><textarea id="returnNotes" rows="2"></textarea>
-          <button id="saveReturnBtn" class="btn" type="submit">حفظ المرتجع</button>
-          <button id="cancelReturnBtn" class="btn secondary" type="button">إلغاء</button>
-          <div id="returnFormMsg" class="status hidden"></div>
-        </form>
-      </div>
-    </div>
-  </div>
   const URL="https://mklbemoisdkoyrwcrmoj.supabase.co";
 const KEY="sb_publishable_7ZjltiXgqnY4BJrZH4iZog_Jh-xfbau";
 const APP_URL="https://evramman-dev.github.io/MeatManagement/";
