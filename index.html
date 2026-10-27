@@ -319,7 +319,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="accountingCard" class="card hidden">
       <h2>🧮 المحاسبة والتقارير</h2>
-      
       <div class="row" style="margin-bottom:15px; background:#f9fbf9; padding:10px; border-radius:10px; border:1px solid var(--line); display:flex; flex-direction:column; gap:10px;">
         <div class="grid" style="width:100%;">
             <div><label>من تاريخ</label><input type="date" id="accFromDate"></div>
@@ -327,15 +326,12 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
         </div>
         <button class="btn" id="btnAccFilter" style="width:100%;">تحديث البيانات</button>
       </div>
-
       <div class="row" style="margin-bottom:15px; gap:5px;">
           <button class="tab-btn active" onclick="switchAccTab('accSummary')">الملخص المالي</button>
           <button class="tab-btn" onclick="switchAccTab('accTrial')">ميزان المراجعة</button>
           <button class="tab-btn" onclick="switchAccTab('accJournal')">دفتر اليومية</button>
       </div>
-
       <div id="accountingLoader" class="info hidden">جارٍ تحميل البيانات المالية...</div>
-      
       <div id="accSummary" class="acc-tab">
         <div class="total-box" style="background:var(--g); color:white; margin-bottom:15px;">
           <div class="line" style="font-size:14px;"><span>إيرادات الفترة:</span><span id="accRevPeriod">0</span></div>
@@ -343,7 +339,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
           <div class="line" style="font-size:14px;"><span>مصروفات الفترة:</span><span id="accExpPeriod">0</span></div>
           <div class="line grand" style="color:var(--gold); font-size:18px; border-top:1px solid #3a6b50;"><span>صافي ربح الفترة:</span><span id="accProfitPeriod">0</span></div>
         </div>
-
         <div class="grid">
           <div class="card" style="margin:0; padding:10px; text-align:center;">
             <div style="font-size:12px; color:var(--muted);">النقدية الحالية</div>
@@ -359,7 +354,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
           </div>
         </div>
       </div>
-
       <div id="accTrial" class="acc-tab hidden">
         <div style="overflow-x:auto;">
           <table class="print-table" id="trialBalanceTable">
@@ -368,7 +362,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
           </table>
         </div>
       </div>
-
       <div id="accJournal" class="acc-tab hidden">
         <div style="overflow-x:auto;">
           <table class="print-table" id="journalTable">
@@ -377,7 +370,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
           </table>
         </div>
       </div>
-
     </div>
   </div>
   <div id="sectionStock" class="sub-section hidden">
@@ -581,7 +573,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
       </div>
     </div>
   </div>
-  <div id="sectionPurchases" class="sub-section hidden">
+    <div id="sectionPurchases" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="purchasesCard" class="card hidden">
       <div class="row" style="justify-content:space-between"><h2>🛒 فواتير المشتريات</h2><button id="addPurchaseBtn" class="btn hidden" type="button">＋ فاتورة مشتريات</button></div>
@@ -777,7 +769,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
   <div class="modal-content">
     <div class="modal-header"><h3>كشف حركة الجولة</h3><button class="close-btn" onclick="document.getElementById('tripSummaryModal').classList.add('hidden')">&times;</button></div>
     <div class="modal-body" id="tripSummaryBody">
-      <!-- سيتم تعبئتها بالجافاسكريبت -->
     </div>
   </div>
 </div>
@@ -1077,7 +1068,10 @@ function fillTreasurySelects() {
     el.replaceChildren();
     const first = document.createElement("option"); first.value = ""; first.textContent = "اختر الخزنة"; el.appendChild(first);
     treasuriesCache.filter(t => t.is_active).forEach(t => {
-      const op = document.createElement("option"); op.value = String(t.treasury_id); op.textContent = t.treasury_name + " (" + fmt(t.current_balance) + ")"; el.appendChild(op);
+      const op = document.createElement("option"); 
+      op.value = String(t.treasury_id); 
+      op.textContent = t.treasury_name + " (" + fmt(t.current_balance) + ")"; 
+      el.appendChild(op);
     });
     el.value = cur;
   });
@@ -1094,8 +1088,7 @@ function fillExpenseTripSelect() {
   });
   el.value = cur;
 }
-
-function resetExpenseForm(){ $("expenseForm").reset(); $("expenseDate").value=todayISO(); $("expenseFormCard").classList.add("hidden"); clear($("expenseFormMsg")); fillTreasurySelects(); fillExpenseTripSelect(); }
+  function resetExpenseForm(){ $("expenseForm").reset(); $("expenseDate").value=todayISO(); $("expenseFormCard").classList.add("hidden"); clear($("expenseFormMsg")); fillTreasurySelects(); fillExpenseTripSelect(); }
 async function loadExpenses(){ if(!canViewExpenses)return; clear($("expensesMsg")); $("expensesList").replaceChildren(); try{ const {data:sessionData,error:sessionError}=await db.auth.getSession(); if(sessionError)throw sessionError; if(!sessionData.session)throw new Error("انتهت جلسة الدخول."); const allowed=await permission("EXPENSES_VIEW") || isSystemAdmin; if(!allowed){canViewExpenses=false;$("menuExpenses").classList.add("hidden");$("expensesCard").classList.add("hidden");throw new Error("لا تملك صلاحية عرض المصروفات.");} const {data,error}=await db.from("expenses").select("expense_id,expense_type,amount,treasury_id,expense_date,notes").order("expense_id",{ascending:false}).limit(200); if(error)throw error; renderExpenses(data||[]); msg($("expensesMsg"),"تم تحميل "+ (data||[]).length +" مصروف.","success"); }catch(e){ msg($("expensesMsg"),"تعذر تحميل المصروفات: "+err(e),"error"); const d=document.createElement("div");d.className="empty";d.textContent="راجع رسالة الخطأ أعلاه.";$("expensesList").replaceChildren(d); } }
 function renderExpenses(data){ const box=$("expensesList");box.replaceChildren(); const q=$("expensesSearch").value.trim().toLowerCase(); const typeMap={FUEL:"وقود",MAINTENANCE:"صيانة",RENT:"إيجارات",SALARY:"رواتب",OTHER:"أخرى"}; const found=data.filter(e=> [typeMap[e.expense_type],e.notes,String(e.amount)].some(v=>String(v||"").toLowerCase().includes(q)) ); if(!found.length){ const d=document.createElement("div");d.className="empty";d.textContent=q?"لا توجد مصروفات مطابقة.":"لا توجد مصروفات مسجلة بعد.";box.appendChild(d);return; } found.forEach(e=>{ const card=document.createElement("div");card.className="product"; const title=document.createElement("div");title.className="pname";title.textContent="🧾 "+(typeMap[e.expense_type]||e.expense_type); const details=document.createElement("div");details.className="details";details.textContent="التاريخ: "+new Date(e.expense_date).toLocaleDateString("ar-EG")+" | الخزنة: "+treasuryName(e.treasury_id)+(e.notes?" | "+e.notes:""); const amt=document.createElement("span");amt.className="badge badge-cancel";amt.textContent="المبلغ: "+fmt(e.amount); card.append(title,details,amt); box.appendChild(card); }); }
 $("addExpenseBtn").addEventListener("click",async()=>{ if(!canManageExpenses)return; if(!treasuriesCache.length)await loadTreasuries(); if(!tripsCache.length)await loadTrips(); resetExpenseForm(); $("expenseFormCard").classList.remove("hidden"); $("expenseFormCard").scrollIntoView({behavior:"smooth",block:"start"}); });
@@ -1180,7 +1173,8 @@ async function loadFinancialSummary() {
 }
 
 $("btnAccFilter").addEventListener("click", loadFinancialSummary);
-  /* ============ أرصدة المخزون ============ */
+  
+/* ============ أرصدة المخزون ============ */
 function fillLocationsFilter(){ const el=$("stockLocationFilter");const cur=el.value;el.replaceChildren(); const all=document.createElement("option");all.value="";all.textContent="كل المواقع";el.appendChild(all); locationsCache.filter(l=>l.is_active).forEach(l=>{ const op=document.createElement("option");op.value=String(l.location_id);op.textContent=l.location_name;el.appendChild(op); }); el.value=cur; }
 function fillStockFormSelects(){ const locEl=$("stockLocation");const curLoc=locEl.value;locEl.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر الموقع";locEl.appendChild(first); locationsCache.filter(l=>l.is_active).forEach(l=>{ const op=document.createElement("option");op.value=String(l.location_id);op.textContent=l.location_name+" ("+l.location_code+")";locEl.appendChild(op); }); locEl.value=curLoc; const prodEl=$("stockProduct");const curProd=prodEl.value;prodEl.replaceChildren(); const firstP=document.createElement("option");firstP.value="";firstP.textContent="اختر المنتج";prodEl.appendChild(firstP); productsCache.filter(p=>p.is_active).forEach(p=>{ const op=document.createElement("option");op.value=String(p.product_id);op.textContent=p.product_name+" ("+p.product_code+")";prodEl.appendChild(op); }); prodEl.value=curProd; }
 async function loadStock(){ if(!canViewStock)return; clear($("stockMsg")); $("stockList").replaceChildren(); try{ const {data:sessionData,error:sessionError}=await db.auth.getSession(); if(sessionError)throw sessionError; if(!sessionData.session)throw new Error("انتهت جلسة الدخول."); const allowed=await permission("STOCK_VIEW"); if(!allowed){canViewStock=false;$("menuStock").classList.add("hidden");$("stockCard").classList.add("hidden");throw new Error("لا تملك صلاحية عرض المخزون.");} const filterLoc=$("stockLocationFilter").value; let query=db.from("stock_balances").select("balance_id,location_id,product_id,quantity,updated_at").order("updated_at",{ascending:false}).limit(500); if(filterLoc)query=query.eq("location_id",Number(filterLoc)); const {data,error}=await query; if(error)throw error; stockCache=data||[]; fillLocationsFilter(); renderStock(); msg($("stockMsg"),"تم تحميل "+stockCache.length+" رصيد مخزون.","success"); }catch(e){ msg($("stockMsg"),"تعذر تحميل الأرصدة: "+err(e),"error"); const d=document.createElement("div");d.className="empty";d.textContent="راجع رسالة الخطأ أعلاه.";$("stockList").replaceChildren(d); } }
@@ -1510,11 +1504,15 @@ $("invoiceForm").addEventListener("submit",async e=>{
   
   const button=$("saveInvoiceBtn"); busy(button,true,"جارٍ حفظ الفاتورة...","حفظ الفاتورة"); 
   try{ 
+    // تمرير المبلغ المدفوع للدالة من خلال إعدادات الجلسة
+    await db.rpc('set_config', { setting: 'request.jwt.claims', value: JSON.stringify({ paid_amount: finalPaid }), is_local: true });
+    
     const {data:invoiceId,error}=await db.rpc("create_sales_invoice",{ p_customer_id:Number(customerId), p_location_id:Number(locationId), p_invoice_date:date, p_payment_type:paymentType, p_discount:discountAmount, p_notes:notes||null, p_items:items, p_trip_id: tripId ? Number(tripId) : null }); 
     if(error)throw error; 
     
     await db.from("sales_invoices").update({ treasury_id: Number(treasuryId) || null, paid_amount: finalPaid, remaining_amount: finalRemaining, status: finalStatus }).eq("sales_invoice_id", invoiceId); 
-    if (finalPaid > 0) {
+    
+    if (finalPaid > 0 && paymentType !== 'CASH') {
         await db.rpc("adjust_treasury_balance", { p_treasury_id: Number(treasuryId), p_amount: finalPaid, p_notes: 'فاتورة بيع ' + invoiceId }); 
     }
     
@@ -1658,7 +1656,6 @@ $("recipeForm").addEventListener("submit",async e=>{
 });
 
 async function toggleRecipe(r){ if(!canManageRecipes)return; const action=r.is_active?"إيقاف":"تفعيل"; if(!confirm("هل تريد "+action+" الوصفة: "+r.recipe_name+"؟"))return; try{ if(!await permission("RECIPES_MANAGE"))throw new Error("لا تملك صلاحية إدارة الوصفات."); const {error}=await db.from("recipes").update({is_active:!r.is_active,updated_at:new Date().toISOString()}).eq("recipe_id",r.recipe_id); if(error)throw error; msg($("recipesMsg"),"تم تأكيد تغيير حالة الوصفة.","success"); await loadRecipes(); }catch(e){ msg($("recipesMsg"),"تعذر تأكيد تغيير الحالة: "+err(e),"error"); } }
-
 
 /* ============ أوامر التشغيل ============ */
 function fillProductionLocationSelect(){ const el=$("productionLocation");if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر الموقع";el.appendChild(first); locationsCache.filter(l=>l.is_active).forEach(l=>{ const op=document.createElement("option");op.value=String(l.location_id);op.textContent=l.location_name+" ("+l.location_code+")";el.appendChild(op); }); el.value=cur; }
@@ -1885,7 +1882,6 @@ $("productionForm").addEventListener("submit", async e => {
     busy(button, false, "", "حفظ أمر التشغيل");
   }
 });
-
 
 /* ============ الجولات والتوزيع ============ */
 function fillTripVehicleSelect(){
@@ -2139,6 +2135,7 @@ async function settleTrip(trip) {
      msg($("tripsMsg"), "تم تسوية الجولة " + trip.trip_number + " بنجاح.", "success");
      await loadTrips();
      if(canViewStock) loadStock();
+     if(canViewTreasuries) loadTreasuries();
 
   } catch (e) {
      msg($("tripsMsg"), "تعذر تسوية الجولة: " + err(e), "error");
@@ -2217,7 +2214,6 @@ async function viewTripSummary(trip) {
     $("tripSummaryBody").innerHTML = `<div style="color:red;">تعذر تحميل البيانات: ${err(e)}</div>`;
   }
 }
-
 
 /* ============ Auth & Init ============ */
 $("loginForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("loginMsg")); const loginValue=$("email").value.trim(); const password=$("password").value; busy($("loginBtn"),true,"جارٍ تسجيل الدخول...","تسجيل الدخول"); try{ let user; if(loginValue.includes("@")){ const {data,error}=await db.auth.signInWithPassword({email:loginValue,password}); if(error)throw error; user=data.user; } else{ const response=await fetch(USERNAME_LOGIN_URL,{ method:"POST", headers:{"Content-Type":"application/json","apikey":KEY}, body:JSON.stringify({username:loginValue,password}) }); let result={}; try{result=await response.json();}catch(_){} if(!response.ok||result.success!==true||!result.session)throw new Error(result.error||"تعذر تسجيل الدخول باسم المستخدم."); const {data,error}=await db.auth.setSession({ access_token:result.session.access_token, refresh_token:result.session.refresh_token }); if(error)throw error; user=data.user; } if(!user)throw new Error("لم يتم استرجاع بيانات المستخدم."); showApp(); await userInfo(user); await loadLookups(); await loadProducts(); if(canViewLocations)await loadLocations(); fillLocationsFilter(); if(canViewTreasuries)await loadTreasuries(); if(canViewStock)await loadStock(); if(canViewRecipes)await loadRecipes(); if(canViewProduction)await loadProduction(); if(canViewTrips)await loadTrips(); if(canViewCustomers)await loadCustomers(); if(canViewSales)await loadSales(); if(canViewCollections)await loadCollections(); if(canViewSuppliers)await loadSuppliers(); if(canViewPurchases)await loadPurchases(); }catch(e){ msg($("loginMsg"),"تعذر تسجيل الدخول أو تجهيز البيانات: "+err(e),"error"); }finally{ busy($("loginBtn"),false,"","تسجيل الدخول"); } });
