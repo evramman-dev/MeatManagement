@@ -293,7 +293,12 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
   <div id="sectionPartners" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="partnersCard" class="card hidden">
-      <div class="row" style="justify-content:space-between"><h2>🤝 الشركاء</h2><button id="addPartnerBtn" class="btn hidden" type="button">＋ شريك جديد</button></div>
+      <div class="row" style="justify-content:space-between"><h2>🤝 الشركاء</h2>
+        <div style="display:flex; gap:8px;">
+          <button id="addPartnerBtn" class="btn hidden" type="button" style="margin:0; width:auto;">＋ شريك جديد</button>
+          <button id="addPartnerTransactionBtn" class="btn hidden" type="button" style="margin:0; width:auto;">💸 حركة جديدة</button>
+        </div>
+      </div>
       <div class="row"><input id="partnerSearch" type="search" placeholder="ابحث..."><button id="refreshPartnersBtn" class="btn secondary" type="button">تحديث</button></div>
       <div id="partnersMsg" class="status hidden"></div>
       <div id="partnersList"><div class="empty">جارٍ تحميل الشركاء...</div></div>
@@ -311,6 +316,38 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
           <button id="savePartnerBtn" class="btn" type="submit">حفظ</button>
           <button id="cancelPartnerBtn" class="btn secondary" type="button">إلغاء</button>
           <div id="partnerFormMsg" class="status hidden"></div>
+        </form>
+      </div>
+      <div id="partnerTransactionsCard" class="card hidden" style="margin-top:20px;">
+        <div class="row" style="justify-content:space-between">
+          <h2>💸 حركات الشركاء</h2>
+          <button id="refreshPartnerTransactionsBtn" class="btn secondary" type="button" style="margin:0; width:auto;">تحديث</button>
+        </div>
+        <div id="partnerTransactionsMsg" class="status hidden"></div>
+        <div id="partnerTransactionsList"><div class="empty">جارٍ تحميل حركات الشركاء...</div></div>
+      </div>
+      <div id="partnerTransactionFormCard" class="hidden" style="margin-top:20px;">
+        <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+        <h2>تسجيل حركة شريك</h2>
+        <form id="partnerTransactionForm">
+          <div class="grid">
+            <div><label for="ptPartner">الشريك *</label><select id="ptPartner" required><option value="">اختر الشريك</option></select></div>
+            <div><label for="ptType">نوع الحركة *</label>
+              <select id="ptType" required>
+                <option value="CAPITAL_IN">مساهمة نقدية (إيداع)</option>
+                <option value="WITHDRAWAL">سحب شخصي</option>
+                <option value="PROFIT">توزيع أرباح</option>
+                <option value="CAPITAL_OUT">مساهمة عينية</option>
+              </select>
+            </div>
+            <div><label for="ptAmount">المبلغ *</label><input id="ptAmount" type="number" min="0.01" step="0.01" required></div>
+            <div><label for="ptDate">التاريخ *</label><input id="ptDate" type="date" required></div>
+            <div><label for="ptTreasury">الخزنة (لو الحركة نقدية)</label><select id="ptTreasury"><option value="">بدون خزنة (مساهمة عينية)</option></select></div>
+          </div>
+          <label for="ptNotes">ملاحظات</label><textarea id="ptNotes" rows="2"></textarea>
+          <button id="savePartnerTransactionBtn" class="btn" type="submit">حفظ الحركة</button>
+          <button id="cancelPartnerTransactionBtn" class="btn secondary" type="button">إلغاء</button>
+          <div id="partnerTransactionFormMsg" class="status hidden"></div>
         </form>
       </div>
     </div>
@@ -768,8 +805,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 <div id="tripSummaryModal" class="modal hidden">
   <div class="modal-content">
     <div class="modal-header"><h3>كشف حركة الجولة</h3><button class="close-btn" onclick="document.getElementById('tripSummaryModal').classList.add('hidden')">&times;</button></div>
-    <div class="modal-body" id="tripSummaryBody">
-    </div>
+    <div class="modal-body" id="tripSummaryBody"></div>
   </div>
 </div>
 <script>
@@ -801,7 +837,7 @@ let canViewSuppliers=false, canManageSuppliers=false;
 let canViewPurchases=false, canManagePurchases=false;
 
 let productsCache=[], categories=[], units=[], cartonUnitId=null;
-let userLookupsLoading=false, locationsCache=[], treasuriesCache=[], stockCache=[], customersCache=[], salesCache=[], collectionsCache=[], suppliersCache=[], purchasesCache=[], recipesCache=[], productionCache=[], tripsCache=[];
+let locationsCache=[], treasuriesCache=[], stockCache=[], customersCache=[], salesCache=[], collectionsCache=[], suppliersCache=[], purchasesCache=[], recipesCache=[], productionCache=[], tripsCache=[], partnersCache=[];
 let invoiceItemCounter=0, purchaseItemCounter=0, recipeItemCounter=0;
 
 const allowedRoles={ SALES_MANAGER:"مدير المبيعات", SALES_REP:"مندوب المبيعات", WAREHOUSE_KEEPER:"أمين المخزن", PRODUCTION_MANAGER:"مسؤول الإنتاج", ACCOUNTANT:"المحاسب", GENERAL_MANAGER:"المدير العام" };
@@ -901,8 +937,7 @@ function updateSalesRepField(){
 }
 async function loadUserManagementLookups(){
   if(!isSystemAdmin){ $("userManagementCard").classList.add("hidden"); return; }
-  if(userLookupsLoading)return;
-  userLookupsLoading=true; $("userManagementCard").classList.remove("hidden"); clear($("userCreateMsg"));
+  $("userManagementCard").classList.remove("hidden"); clear($("userCreateMsg"));
   try{
     const {data:roles,error:rolesError}=await db.from("app_roles").select("role_id,role_code,is_active").eq("is_active",true).order("role_id"); if(rolesError)throw rolesError;
     const usableRoles=(roles||[]).filter(r=> r.role_code!=="SYSTEM_ADMIN" && Object.prototype.hasOwnProperty.call(allowedRoles,r.role_code) );
@@ -916,7 +951,7 @@ async function loadUserManagementLookups(){
     const firstRep=document.createElement("option"); firstRep.value=""; firstRep.textContent="اختر المندوب"; repSelect.appendChild(firstRep);
     (reps||[]).forEach(r=>{ const op=document.createElement("option"); op.value=String(r.sales_rep_id); op.textContent="مندوب رقم "+r.sales_rep_id; repSelect.appendChild(op); });
     updateSalesRepField();
-  }catch(e){ msg($("userCreateMsg"),"تعذر تحميل الأدوار أو المندوبين: "+err(e),"error"); }finally{ userLookupsLoading=false; }
+  }catch(e){ msg($("userCreateMsg"),"تعذر تحميل الأدوار أو المندوبين: "+err(e),"error"); }
 }
 $("newUserRole").addEventListener("change",()=>{ updateSalesRepField(); clear($("userCreateMsg")); });
 $("userCreateForm").addEventListener("submit",async e=>{
@@ -978,14 +1013,13 @@ async function userInfo(user){
   if(roleError)throw roleError; if(!role||!role.is_active)throw new Error("الدور الوظيفي لحسابك غير موجود أو غير مفعّل.");
   isSystemAdmin=role.role_code==="SYSTEM_ADMIN"; $("userInfo").textContent="مرحبًا "+(data.display_name||"بك");
 
-  // تحديث آخر دخول
   await db.from("app_users").update({ last_login: new Date().toISOString() }).eq("user_id", user.id);
 
   canManage=await permission("PRODUCTS_MANAGE"); $("menuProducts").classList.toggle("hidden", !canManage); $("addBtn").classList.toggle("hidden",!canManage);
   try{ canViewLocations=await permission("LOCATIONS_VIEW"); canManageLocations=await permission("LOCATIONS_MANAGE"); $("menuLocations").classList.toggle("hidden",!canViewLocations); $("locationsCard").classList.toggle("hidden",!canViewLocations); $("addLocationBtn").classList.toggle("hidden",!canManageLocations); }catch(e){$("menuLocations").classList.add("hidden");}
   try{ canViewTreasuries=await permission("TREASURIES_VIEW") || isSystemAdmin; canManageTreasuries=await permission("TREASURIES_MANAGE") || isSystemAdmin; $("menuTreasuries").classList.toggle("hidden",!canViewTreasuries); $("treasuriesCard").classList.toggle("hidden",!canViewTreasuries); $("addTreasuryBtn").classList.toggle("hidden",!canManageTreasuries); }catch(e){$("menuTreasuries").classList.add("hidden");}
   try{ canViewExpenses=await permission("EXPENSES_VIEW") || isSystemAdmin; canManageExpenses=await permission("EXPENSES_MANAGE") || isSystemAdmin; $("menuExpenses").classList.toggle("hidden",!canViewExpenses); $("expensesCard").classList.toggle("hidden",!canViewExpenses); $("addExpenseBtn").classList.toggle("hidden",!canManageExpenses); }catch(e){$("menuExpenses").classList.add("hidden");}
-  try{ canViewPartners=await permission("PARTNERS_VIEW") || isSystemAdmin; canManagePartners=await permission("PARTNERS_MANAGE") || isSystemAdmin; $("menuPartners").classList.toggle("hidden",!canViewPartners); $("partnersCard").classList.toggle("hidden",!canViewPartners); $("addPartnerBtn").classList.toggle("hidden",!canManagePartners); }catch(e){$("menuPartners").classList.add("hidden");}
+  try{ canViewPartners=await permission("PARTNERS_VIEW") || isSystemAdmin; canManagePartners=await permission("PARTNERS_MANAGE") || isSystemAdmin; $("menuPartners").classList.toggle("hidden",!canViewPartners); $("partnersCard").classList.toggle("hidden",!canViewPartners); $("addPartnerBtn").classList.toggle("hidden",!canManagePartners); $("addPartnerTransactionBtn").classList.toggle("hidden",!canManagePartners); $("partnerTransactionsCard").classList.toggle("hidden",!canViewPartners); }catch(e){$("menuPartners").classList.add("hidden");}
   try{ canViewStock=await permission("STOCK_VIEW"); canManageStock=await permission("STOCK_MANAGE"); $("menuStock").classList.toggle("hidden",!canViewStock); $("stockCard").classList.toggle("hidden",!canViewStock); $("adjustStockBtn").classList.toggle("hidden",!canManageStock); }catch(e){$("menuStock").classList.add("hidden");}
   try{ canViewRecipes=await permission("RECIPES_VIEW"); canManageRecipes=await permission("RECIPES_MANAGE"); $("menuRecipes").classList.toggle("hidden",!canViewRecipes); $("recipesCard").classList.toggle("hidden",!canViewRecipes); $("addRecipeBtn").classList.toggle("hidden",!canManageRecipes); }catch(e){$("menuRecipes").classList.add("hidden");}
   try{ canViewProduction=await permission("PRODUCTION_VIEW"); canManageProduction=await permission("PRODUCTION_MANAGE"); $("menuProduction").classList.toggle("hidden",!canViewProduction); $("productionCard").classList.toggle("hidden",!canViewProduction); $("addProductionBtn").classList.toggle("hidden",!canManageProduction); }catch(e){$("menuProduction").classList.add("hidden");}
@@ -1095,16 +1129,59 @@ $("addExpenseBtn").addEventListener("click",async()=>{ if(!canManageExpenses)ret
 $("cancelExpenseBtn").addEventListener("click",resetExpenseForm); $("refreshExpensesBtn").addEventListener("click",loadExpenses); $("expensesSearch").addEventListener("input",()=>loadExpenses());
 $("expenseForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("expenseFormMsg")); if(!canManageExpenses)return; const type=$("expenseType").value; const date=$("expenseDate").value; const treasuryId=$("expenseTreasury").value; const amount=Number($("expenseAmount").value||0); const notes=$("expenseNotes").value.trim(); const tripId = $("expenseTrip").value; if(!type||!date||!treasuryId||amount<=0){ msg($("expenseFormMsg"),"أكمل البيانات بشكل صحيح.","error");return; } const button=$("saveExpenseBtn"); busy(button,true,"جارٍ الحفظ...","حفظ المصروف"); try{ if(!await permission("EXPENSES_MANAGE") && !isSystemAdmin)throw new Error("لا تملك صلاحية إدارة المصروفات."); const {data:s,error:se}=await db.auth.getSession(); if(se)throw se; if(!s.session)throw new Error("انتهت جلسة الدخول."); const {error}=await db.from("expenses").insert({ expense_type:type, amount, treasury_id:Number(treasuryId), expense_date:date, notes:notes||null, created_by:s.session.user.id, trip_id: tripId ? Number(tripId) : null }); if(error)throw error; 
     const typeAr = {FUEL:"وقود",MAINTENANCE:"صيانة",RENT:"إيجارات",SALARY:"رواتب",OTHER:"أخرى"}[type] || type;
-await db.rpc("adjust_treasury_balance", { p_treasury_id: Number(treasuryId), p_amount: -amount, p_notes: 'مصروف: ' + typeAr });
+    await db.rpc("adjust_treasury_balance", { p_treasury_id: Number(treasuryId), p_amount: -amount, p_notes: 'مصروف: ' + typeAr });
     msg($("expensesMsg"),"تم تسجيل المصروف بنجاح.","success"); resetExpenseForm(); await loadExpenses(); if(canViewTreasuries)await loadTreasuries(); }catch(e){ msg($("expenseFormMsg"),"تعذر حفظ المصروف: "+err(e),"error"); }finally{ busy(button,false,"","حفظ المصروف"); } });
 
 /* ============ إدارة الشركاء ============ */
 function resetPartnerForm(){ $("partnerForm").reset(); $("partnerActive").checked=true; $("partnerFormCard").classList.add("hidden"); clear($("partnerFormMsg")); }
-async function loadPartners(){ if(!canViewPartners)return; clear($("partnersMsg")); $("partnersList").replaceChildren(); try{ const {data:sessionData,error:sessionError}=await db.auth.getSession(); if(sessionError)throw sessionError; if(!sessionData.session)throw new Error("انتهت جلسة الدخول."); const allowed=await permission("PARTNERS_VIEW") || isSystemAdmin; if(!allowed){canViewPartners=false;$("menuPartners").classList.add("hidden");$("partnersCard").classList.add("hidden");throw new Error("لا تملك صلاحية عرض الشركاء.");} const {data,error}=await db.from("partners").select("*").order("partner_id").limit(50); if(error)throw error; renderPartners(data||[]); msg($("partnersMsg"),"تم تحميل "+ (data||[]).length +" شريك.","success"); }catch(e){ msg($("partnersMsg"),"تعذر تحميل الشركاء: "+err(e),"error"); const d=document.createElement("div");d.className="empty";d.textContent="راجع رسالة الخطأ أعلاه.";$("partnersList").replaceChildren(d); } }
-function renderPartners(data){ const box=$("partnersList");box.replaceChildren(); const q=$("partnerSearch").value.trim().toLowerCase(); const found=data.filter(p=> [p.partner_name,p.phone].some(v=>String(v||"").toLowerCase().includes(q)) ); if(!found.length){ const d=document.createElement("div");d.className="empty";d.textContent=q?"لا يوجد شركاء مطابقون.":"لا يوجد شركاء مسجلون بعد.";box.appendChild(d);return; } found.forEach(p=>{ const card=document.createElement("div");card.className="product"; const title=document.createElement("div");title.className="pname";title.textContent="🤝 "+p.partner_name; const details=document.createElement("div");details.className="details";details.textContent=(p.phone?"موبايل: "+p.phone:"")+(p.share_percentage?" | النسبة: "+p.share_percentage+"%":""); const status=document.createElement("span");status.className="badge"+(p.is_active?"":" off");status.textContent=p.is_active?"نشط":"متوقف"; card.append(title,details,status); box.appendChild(card); }); }
+async function loadPartners(){ if(!canViewPartners)return; clear($("partnersMsg")); $("partnersList").replaceChildren(); try{ const {data:sessionData,error:sessionError}=await db.auth.getSession(); if(sessionError)throw sessionError; if(!sessionData.session)throw new Error("انتهت جلسة الدخول."); const allowed=await permission("PARTNERS_VIEW") || isSystemAdmin; if(!allowed){canViewPartners=false;$("menuPartners").classList.add("hidden");$("partnersCard").classList.add("hidden");throw new Error("لا تملك صلاحية عرض الشركاء.");} const {data,error}=await db.from("partners").select("*").order("partner_id").limit(50); if(error)throw error; partnersCache=data||[]; renderPartners(partnersCache); msg($("partnersMsg"),"تم تحميل "+ partnersCache.length +" شريك.","success"); await loadPartnerTransactions(); }catch(e){ msg($("partnersMsg"),"تعذر تحميل الشركاء: "+err(e),"error"); const d=document.createElement("div");d.className="empty";d.textContent="راجع رسالة الخطأ أعلاه.";$("partnersList").replaceChildren(d); } }
+function renderPartners(data){ const box=$("partnersList");box.replaceChildren(); const q=$("partnerSearch").value.trim().toLowerCase(); const found=data.filter(p=> [p.partner_name,p.phone].some(v=>String(v||"").toLowerCase().includes(q)) ); if(!found.length){ const d=document.createElement("div");d.className="empty";d.textContent=q?"لا يوجد شركاء مطابقون.":"لا يوجد شركاء مسجلون بعد.";box.appendChild(d);return; } found.forEach(p=>{ const card=document.createElement("div");card.className="product"; const title=document.createElement("div");title.className="pname";title.textContent="🤝 "+p.partner_name; const details=document.createElement("div");details.className="details";details.textContent=(p.phone?"موبايل: "+p.phone:"")+(p.share_percentage?" | النسبة: "+p.share_percentage+"%":""); const status=document.createElement("span");status.className="badge"+(p.is_active?"":" off");status.textContent=p.is_active?"نشط":"متوقف"; const bal=document.createElement("span");bal.className="badge badge-paid";bal.textContent="الرصيد: "+fmt(p.current_balance); card.append(title,details,status,bal); box.appendChild(card); }); }
 $("addPartnerBtn").addEventListener("click",()=>{ if(!canManagePartners)return; resetPartnerForm(); $("partnerFormCard").classList.remove("hidden"); $("partnerFormCard").scrollIntoView({behavior:"smooth",block:"start"}); });
 $("cancelPartnerBtn").addEventListener("click",resetPartnerForm); $("refreshPartnersBtn").addEventListener("click",loadPartners); $("partnerSearch").addEventListener("input",()=>loadPartners());
 $("partnerForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("partnerFormMsg")); if(!canManagePartners)return; const name=$("partnerName").value.trim(); const phone=$("partnerPhone").value.trim(); const share=$("partnerShare").value; const notes=$("partnerNotes").value.trim(); const active=$("partnerActive").checked; if(!name){ msg($("partnerFormMsg"),"أكمل اسم الشريك.","error");return; } const button=$("savePartnerBtn"); busy(button,true,"جارٍ الحفظ...","حفظ"); try{ if(!await permission("PARTNERS_MANAGE") && !isSystemAdmin)throw new Error("لا تملك صلاحية إدارة الشركاء."); const payload = { partner_name: name, phone: phone || null, share_percentage: share ? Number(share) : null, notes: notes || null, is_active: active }; const {error}=await db.from("partners").insert(payload); if(error)throw error; msg($("partnersMsg"),"تم إضافة الشريك بنجاح.","success"); resetPartnerForm(); await loadPartners(); }catch(e){ msg($("partnerFormMsg"),"تعذر حفظ الشريك: "+err(e),"error"); }finally{ busy(button,false,"","حفظ"); } });
+
+/* ============ إدارة حركات الشركاء ============ */
+async function loadPartnerTransactions(){
+  if(!canViewPartners)return; clear($("partnerTransactionsMsg")); $("partnerTransactionsList").replaceChildren();
+  try{
+    const {data,error}=await db.from("partner_transactions").select("transaction_id,partner_id,transaction_type,amount,transaction_date,treasury_id,notes,created_at").order("transaction_id",{ascending:false}).limit(200);
+    if(error)throw error;
+    renderPartnerTransactions(data||[]);
+    msg($("partnerTransactionsMsg"),"تم تحميل "+ (data||[]).length +" حركة.","success");
+  }catch(e){ msg($("partnerTransactionsMsg"),"تعذر تحميل الحركات: "+err(e),"error"); }
+}
+function renderPartnerTransactions(data){
+  const box=$("partnerTransactionsList");box.replaceChildren();
+  if(!data.length){ const d=document.createElement("div");d.className="empty";d.textContent="لا توجد حركات مسجلة بعد.";box.appendChild(d);return; }
+  const typeMap={CAPITAL_IN:"مساهمة نقدية",WITHDRAWAL:"سحب شخصي",PROFIT:"توزيع أرباح",CAPITAL_OUT:"مساهمة عينية"};
+  data.forEach(t=>{
+    const p=partnersCache.find(x=>String(x.partner_id)===String(t.partner_id));
+    const card=document.createElement("div");card.className="product";
+    const title=document.createElement("div");title.className="pname";title.textContent=(typeMap[t.transaction_type]||t.transaction_type)+" - "+(p?.partner_name||"شريك");
+    const details=document.createElement("div");details.className="details";details.textContent="التاريخ: "+new Date(t.transaction_date).toLocaleDateString("ar-EG")+(t.treasury_id?" | الخزنة: "+treasuryName(t.treasury_id):" | مساهمة عينية")+(t.notes?" | "+t.notes:"");
+    const amt=document.createElement("span");amt.className="badge badge-paid";amt.textContent="المبلغ: "+fmt(t.amount);
+    card.append(title,details,amt);
+    box.appendChild(card);
+  });
+}
+function fillPartnerTreasurySelect(){ const el=$("ptTreasury");if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="بدون خزنة (مساهمة عينية)";el.appendChild(first); treasuriesCache.filter(t=>t.is_active).forEach(t=>{ const op=document.createElement("option");op.value=String(t.treasury_id);op.textContent=t.treasury_name+" ("+fmt(t.current_balance)+")";el.appendChild(op); }); el.value=cur; }
+function fillPartnerSelect(){ const el=$("ptPartner");if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر الشريك";el.appendChild(first); partnersCache.forEach(p=>{ const op=document.createElement("option");op.value=String(p.partner_id);op.textContent=p.partner_name+" (رصيد: "+fmt(p.current_balance)+")";el.appendChild(op); }); el.value=cur; }
+function resetPartnerTransactionForm(){ $("partnerTransactionForm").reset(); $("ptDate").value=todayISO(); $("partnerTransactionFormCard").classList.add("hidden"); clear($("partnerTransactionFormMsg")); fillPartnerSelect(); fillPartnerTreasurySelect(); }
+$("addPartnerTransactionBtn").addEventListener("click",async()=>{ if(!canManagePartners)return; if(!partnersCache.length)await loadPartners(); if(!treasuriesCache.length)await loadTreasuries(); resetPartnerTransactionForm(); $("partnerTransactionFormCard").classList.remove("hidden"); $("partnerTransactionFormCard").scrollIntoView({behavior:"smooth",block:"start"}); });
+$("cancelPartnerTransactionBtn").addEventListener("click",resetPartnerTransactionForm);
+$("refreshPartnerTransactionsBtn").addEventListener("click",loadPartnerTransactions);
+$("partnerTransactionForm").addEventListener("submit",async e=>{
+  e.preventDefault(); clear($("partnerTransactionFormMsg")); if(!canManagePartners)return;
+  const partnerId=$("ptPartner").value; const type=$("ptType").value; const amount=Number($("ptAmount").value||0); const date=$("ptDate").value; const treasuryId=$("ptTreasury").value; const notes=$("ptNotes").value.trim();
+  if(!partnerId||!type||amount<=0||!date){ msg($("partnerTransactionFormMsg"),"أكمل البيانات بشكل صحيح.","error"); return; }
+  const btn=$("savePartnerTransactionBtn"); busy(btn,true,"جارٍ الحفظ...","حفظ الحركة");
+  try{
+    const {data:txId, error}=await db.rpc("create_partner_transaction",{ p_partner_id:Number(partnerId), p_transaction_type:type, p_amount:amount, p_transaction_date:date, p_treasury_id:treasuryId?Number(treasuryId):null, p_notes:notes||null });
+    if(error)throw error;
+    msg($("partnerTransactionsMsg"),"تم تسجيل الحركة بنجاح.","success");
+    resetPartnerTransactionForm(); await loadPartnerTransactions(); await loadPartners(); if(canViewTreasuries)await loadTreasuries();
+  }catch(e){ msg($("partnerTransactionFormMsg"),"تعذر حفظ الحركة: "+err(e),"error"); }finally{ busy(btn,false,"","حفظ الحركة"); }
+});
 
 /* ============ المحاسبة والتقارير ============ */
 window.switchAccTab = function(tabId) {
@@ -2039,13 +2116,13 @@ $("tripForm").addEventListener("submit", async e=>{
     const tripNumber = "TRP-" + new Date().getTime().toString().slice(-6);
     
     const {data: newTripId, error: tripErr} = await db.rpc("create_trip_with_custody", {
-  p_trip_number: tripNumber,
-  p_sales_rep_id: repId,
-  p_vehicle_location_id: Number(vehicleLoc),
-  p_start_date: $("tripDate").value,
-  p_notes: notes || null,
-  p_initial_cash: initialCash
-});
+      p_trip_number: tripNumber,
+      p_sales_rep_id: repId,
+      p_vehicle_location_id: Number(vehicleLoc),
+      p_start_date: $("tripDate").value,
+      p_notes: notes || null,
+      p_initial_cash: initialCash
+    });
 
     if(tripErr) throw tripErr;
 
@@ -2213,15 +2290,15 @@ async function viewTripSummary(trip) {
 }
 
 /* ============ Auth & Init ============ */
-$("loginForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("loginMsg")); const loginValue=$("email").value.trim(); const password=$("password").value; busy($("loginBtn"),true,"جارٍ تسجيل الدخول...","تسجيل الدخول"); try{ let user; if(loginValue.includes("@")){ const {data,error}=await db.auth.signInWithPassword({email:loginValue,password}); if(error)throw error; user=data.user; } else{ const response=await fetch(USERNAME_LOGIN_URL,{ method:"POST", headers:{"Content-Type":"application/json","apikey":KEY}, body:JSON.stringify({username:loginValue,password}) }); let result={}; try{result=await response.json();}catch(_){} if(!response.ok||result.success!==true||!result.session)throw new Error(result.error||"تعذر تسجيل الدخول باسم المستخدم."); const {data,error}=await db.auth.setSession({ access_token:result.session.access_token, refresh_token:result.session.refresh_token }); if(error)throw error; user=data.user; } if(!user)throw new Error("لم يتم استرجاع بيانات المستخدم."); showApp(); await userInfo(user); await loadLookups(); await loadProducts(); if(canViewLocations)await loadLocations(); fillLocationsFilter(); if(canViewTreasuries)await loadTreasuries(); if(canViewStock)await loadStock(); if(canViewRecipes)await loadRecipes(); if(canViewProduction)await loadProduction(); if(canViewTrips)await loadTrips(); if(canViewCustomers)await loadCustomers(); if(canViewSales)await loadSales(); if(canViewCollections)await loadCollections(); if(canViewSuppliers)await loadSuppliers(); if(canViewPurchases)await loadPurchases(); }catch(e){ msg($("loginMsg"),"تعذر تسجيل الدخول أو تجهيز البيانات: "+err(e),"error"); }finally{ busy($("loginBtn"),false,"","تسجيل الدخول"); } });
+$("loginForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("loginMsg")); const loginValue=$("email").value.trim(); const password=$("password").value; busy($("loginBtn"),true,"جارٍ تسجيل الدخول...","تسجيل الدخول"); try{ let user; if(loginValue.includes("@")){ const {data,error}=await db.auth.signInWithPassword({email:loginValue,password}); if(error)throw error; user=data.user; } else{ const response=await fetch(USERNAME_LOGIN_URL,{ method:"POST", headers:{"Content-Type":"application/json","apikey":KEY}, body:JSON.stringify({username:loginValue,password}) }); let result={}; try{result=await response.json();}catch(_){} if(!response.ok||result.success!==true||!result.session)throw new Error(result.error||"تعذر تسجيل الدخول باسم المستخدم."); const {data,error}=await db.auth.setSession({ access_token:result.session.access_token, refresh_token:result.session.refresh_token }); if(error)throw error; user=data.user; } if(!user)throw new Error("لم يتم استرجاع بيانات المستخدم."); showApp(); await userInfo(user); await loadLookups(); await loadProducts(); if(canViewLocations)await loadLocations(); fillLocationsFilter(); if(canViewTreasuries)await loadTreasuries(); if(canViewStock)await loadStock(); if(canViewRecipes)await loadRecipes(); if(canViewProduction)await loadProduction(); if(canViewTrips)await loadTrips(); if(canViewCustomers)await loadCustomers(); if(canViewSales)await loadSales(); if(canViewCollections)await loadCollections(); if(canViewSuppliers)await loadSuppliers(); if(canViewPurchases)await loadPurchases(); if(canViewPartners)await loadPartners(); }catch(e){ msg($("loginMsg"),"تعذر تسجيل الدخول أو تجهيز البيانات: "+err(e),"error"); }finally{ busy($("loginBtn"),false,"","تسجيل الدخول"); } });
 $("forgotBtn").onclick=()=>{ hideSections(); $("recovery").classList.remove("hidden"); const loginValue=$("email").value.trim(); $("recoveryEmail").value=loginValue.includes("@")?loginValue:""; clear($("recoveryMsg")); }; $("backBtn").onclick=showLogin;
 $("recoveryForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("recoveryMsg")); busy($("recoveryBtn"),true,"جارٍ إرسال الرابط...","إرسال رابط الاستعادة"); try{ const {error}=await db.auth.resetPasswordForEmail($("recoveryEmail").value.trim(),{redirectTo:APP_URL}); if(error)throw error; msg($("recoveryMsg"),"إذا كان البريد مسجلًا، فستصلك رسالة استعادة.","success"); }catch(e){ msg($("recoveryMsg"),"تعذر إرسال الرسالة: "+err(e),"error"); }finally{ busy($("recoveryBtn"),false,"","إرسال رابط الاستعادة"); } });
 $("newPassForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("newPassMsg")); const p=$("newPassword").value; if(p.length<8){msg($("newPassMsg"),"كلمة المرور يجب أن تكون 8 أحرف على الأقل.","error");return;} if(p!==$("confirmPassword").value){msg($("newPassMsg"),"كلمتا المرور غير متطابقتين.","error");return;} busy($("savePassBtn"),true,"جارٍ الحفظ...","حفظ كلمة المرور الجديدة"); try{ const {data,error:se}=await db.auth.getSession(); if(se)throw se; if(!data.session)throw Error("جلسة الاستعادة غير موجودة."); const {error}=await db.auth.updateUser({password:p}); if(error)throw error; recoveryMode=false; await db.auth.signOut(); showLogin(); msg($("loginMsg"),"تم تغيير كلمة المرور بنجاح.","success"); }catch(e){ msg($("newPassMsg"),"تعذر تغيير كلمة المرور: "+err(e),"error"); }finally{ busy($("savePassBtn"),false,"","حفظ كلمة المرور الجديدة"); } });
 $("addBtn").onclick=()=>openForm(); $("cancelBtn").onclick=()=>{ $("formCard").classList.add("hidden"); resetForm(); }; $("refreshBtn").onclick=loadProducts; $("search").addEventListener("input",renderProducts);
-$("logoutBtn").onclick=async()=>{ const {error}=await db.auth.signOut(); if(error){msg($("listMsg"),"تعذر تسجيل الخروج: "+err(error),"error");return;} canManage=false;isSystemAdmin=false; canViewLocations=false;canManageLocations=false; canViewTreasuries=false;canManageTreasuries=false; canViewExpenses=false;canManageExpenses=false; canViewPartners=false;canManagePartners=false; canViewStock=false;canManageStock=false; canViewRecipes=false;canManageRecipes=false; canViewProduction=false;canManageProduction=false; canViewTrips=false;canManageTrips=false; canViewCustomers=false;canManageCustomers=false; canViewSales=false;canManageSales=false; canViewCollections=false;canManageCollections=false; canViewSuppliers=false;canManageSuppliers=false; canViewPurchases=false;canManagePurchases=false; locationsCache=[];treasuriesCache=[];stockCache=[];customersCache=[];salesCache=[];collectionsCache=[];suppliersCache=[];purchasesCache=[];recipesCache=[];productionCache=[];tripsCache=[]; $("password").value=""; document.querySelectorAll(".card").forEach(c=>c.classList.add("hidden")); showLogin(); msg($("loginMsg"),"تم تسجيل الخروج.","success"); };
+$("logoutBtn").onclick=async()=>{ const {error}=await db.auth.signOut(); if(error){msg($("listMsg"),"تعذر تسجيل الخروج: "+err(error),"error");return;} canManage=false;isSystemAdmin=false; canViewLocations=false;canManageLocations=false; canViewTreasuries=false;canManageTreasuries=false; canViewExpenses=false;canManageExpenses=false; canViewPartners=false;canManagePartners=false; canViewStock=false;canManageStock=false; canViewRecipes=false;canManageRecipes=false; canViewProduction=false;canManageProduction=false; canViewTrips=false;canManageTrips=false; canViewCustomers=false;canManageCustomers=false; canViewSales=false;canManageSales=false; canViewCollections=false;canManageCollections=false; canViewSuppliers=false;canManageSuppliers=false; canViewPurchases=false;canManagePurchases=false; locationsCache=[];treasuriesCache=[];stockCache=[];customersCache=[];salesCache=[];collectionsCache=[];suppliersCache=[];purchasesCache=[];recipesCache=[];productionCache=[];tripsCache=[];partnersCache=[]; $("password").value=""; document.querySelectorAll(".card").forEach(c=>c.classList.add("hidden")); showLogin(); msg($("loginMsg"),"تم تسجيل الخروج.","success"); };
 document.querySelectorAll(".navbtn").forEach(b=>{ b.onclick=()=>page(b.dataset.page); });
-db.auth.onAuthStateChange(event=>{ if(event==="PASSWORD_RECOVERY"){ recoveryMode=true; hideSections(); $("newPass").classList.remove("hidden"); } if(event==="SIGNED_OUT"&&!recoveryMode){ canManage=false;isSystemAdmin=false; canViewLocations=false;canManageLocations=false; canViewTreasuries=false;canManageTreasuries=false; canViewExpenses=false;canManageExpenses=false; canViewPartners=false;canManagePartners=false; canViewStock=false;canManageStock=false; canViewRecipes=false;canManageRecipes=false; canViewProduction=false;canManageProduction=false; canViewTrips=false;canManageTrips=false; canViewCustomers=false;canManageCustomers=false; canViewSales=false;canManageSales=false; canViewCollections=false;canManageCollections=false; canViewSuppliers=false;canManageSuppliers=false; canViewPurchases=false;canManagePurchases=false; locationsCache=[];treasuriesCache=[];stockCache=[];customersCache=[];salesCache=[];collectionsCache=[];suppliersCache=[];purchasesCache=[];recipesCache=[];productionCache=[];tripsCache=[]; document.querySelectorAll(".card").forEach(c=>c.classList.add("hidden")); showLogin(); } });
-async function init(){ try{ const params=new URLSearchParams(location.search); const hash=location.hash; if(params.has("error")||params.has("error_description")||hash.includes("error=")){ showLogin(); msg($("loginMsg"),"رابط الاستعادة قد يكون منتهي الصلاحية.","error"); return; } const {data,error}=await db.auth.getSession(); if(error)throw error; if(data.session){ showApp(); await userInfo(data.session.user); await loadLookups(); await loadProducts(); if(canViewLocations)await loadLocations(); fillLocationsFilter(); if(canViewTreasuries)await loadTreasuries(); if(canViewStock)await loadStock(); if(canViewRecipes)await loadRecipes(); if(canViewProduction)await loadProduction(); if(canViewTrips)await loadTrips(); if(canViewCustomers)await loadCustomers(); if(canViewSales)await loadSales(); if(canViewCollections)await loadCollections(); if(canViewSuppliers)await loadSuppliers(); if(canViewPurchases)await loadPurchases(); } else{ showLogin(); } }catch(e){ showLogin(); msg($("loginMsg"),"تعذر التحقق من الجلسة: "+err(e),"error"); } }
+db.auth.onAuthStateChange(event=>{ if(event==="PASSWORD_RECOVERY"){ recoveryMode=true; hideSections(); $("newPass").classList.remove("hidden"); } if(event==="SIGNED_OUT"&&!recoveryMode){ canManage=false;isSystemAdmin=false; canViewLocations=false;canManageLocations=false; canViewTreasuries=false;canManageTreasuries=false; canViewExpenses=false;canManageExpenses=false; canViewPartners=false;canManagePartners=false; canViewStock=false;canManageStock=false; canViewRecipes=false;canManageRecipes=false; canViewProduction=false;canManageProduction=false; canViewTrips=false;canManageTrips=false; canViewCustomers=false;canManageCustomers=false; canViewSales=false;canManageSales=false; canViewCollections=false;canManageCollections=false; canViewSuppliers=false;canManageSuppliers=false; canViewPurchases=false;canManagePurchases=false; locationsCache=[];treasuriesCache=[];stockCache=[];customersCache=[];salesCache=[];collectionsCache=[];suppliersCache=[];purchasesCache=[];recipesCache=[];productionCache=[];tripsCache=[];partnersCache=[]; document.querySelectorAll(".card").forEach(c=>c.classList.add("hidden")); showLogin(); } });
+async function init(){ try{ const params=new URLSearchParams(location.search); const hash=location.hash; if(params.has("error")||params.has("error_description")||hash.includes("error=")){ showLogin(); msg($("loginMsg"),"رابط الاستعادة قد يكون منتهي الصلاحية.","error"); return; } const {data,error}=await db.auth.getSession(); if(error)throw error; if(data.session){ showApp(); await userInfo(data.session.user); await loadLookups(); await loadProducts(); if(canViewLocations)await loadLocations(); fillLocationsFilter(); if(canViewTreasuries)await loadTreasuries(); if(canViewStock)await loadStock(); if(canViewRecipes)await loadRecipes(); if(canViewProduction)await loadProduction(); if(canViewTrips)await loadTrips(); if(canViewCustomers)await loadCustomers(); if(canViewSales)await loadSales(); if(canViewCollections)await loadCollections(); if(canViewSuppliers)await loadSuppliers(); if(canViewPurchases)await loadPurchases(); if(canViewPartners)await loadPartners(); } else{ showLogin(); } }catch(e){ showLogin(); msg($("loginMsg"),"تعذر التحقق من الجلسة: "+err(e),"error"); } }
 init();
 })();
 </script>
