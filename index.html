@@ -1673,119 +1673,214 @@ $("tripLoadForm").addEventListener("submit", async e => { e.preventDefault(); cl
 async function settleTrip(trip) { if(!canManageTrips) return; if(!confirm("هل أنت متأكد من تسوية الجولة " + trip.trip_number + "؟\nسيتم إرجاع البضاعة المتبقية للثلاجة وإغلاق الجولة.")) return; const targetLoc = locationsCache.find(l => l.location_type === 'MAIN_WAREHOUSE' || l.location_type === 'FRIDGE'); if(!targetLoc) { alert("لا يوجد مخزن رئيسي أو ثلاجة لإرجاع البضاعة إليها."); return; } try { const {error} = await db.rpc("settle_trip", { p_trip_id: trip.trip_id, p_target_location_id: targetLoc.location_id }); if(error) throw error; msg($("tripsMsg"), "تم تسوية الجولة " + trip.trip_number + " بنجاح.", "success"); await loadTrips(); if(canViewStock) loadStock(); if(canViewTreasuries) loadTreasuries(); } catch (e) { msg($("tripsMsg"), "تعذر تسوية الجولة: " + err(e), "error"); } }
 async function viewTripSummary(trip) { const modal = $("tripSummaryModal"); $("tripSummaryBody").innerHTML = "جارٍ تحميل البيانات..."; modal.classList.remove("hidden"); try { const { data, error } = await db.rpc("get_trip_summary", { p_trip_id: trip.trip_id }); if (error) throw error; let html = `<div class="summary-box"><div class="summary-title">بيانات الجولة</div><div class="line"><span>رقم الجولة:</span><span>${data.trip_number}</span></div><div class="line"><span>المندوب:</span><span>${data.rep_name}</span></div><div class="line"><span>السيارة:</span><span>${data.vehicle_name}</span></div><div class="line"><span>الحالة:</span><span>${data.status === 'DRAFT' ? 'مسودة' : 'مكتملة'}</span></div></div><div class="summary-box"><div class="summary-title">الحركة المالية (العهدة)</div><div class="line"><span>العهدة الافتتاحية:</span><span>${fmt(data.initial_cash)}</span></div><div class="line"><span>إجمالي المبيعات:</span><span>${fmt(data.total_sales || 0)}</span></div><div class="line"><span>إجمالي المرتجعات:</span><span style="color:orange;">${fmt(data.total_returns || 0)}</span></div><div class="line"><span>صافي المبيعات:</span><span>${fmt(data.net_sales || 0)}</span></div><div class="line"><span>إجمالي التحصيلات:</span><span style="color:green;">+ ${fmt(data.total_collections)}</span></div><div class="line"><span>إجمالي المصروفات:</span><span style="color:red;">- ${fmt(data.total_expenses)}</span></div><div class="line grand"><span>صافي النقدية المطلوبة (مع المندوب):</span><span>${fmt(data.remaining_cash)}</span></div></div><div class="summary-box"><div class="summary-title">البضاعة المحملة</div><table class="print-table" style="margin-top:0;"><thead><tr><th>الصنف</th><th>الكمية</th></tr></thead><tbody>`; if(data.loaded_items && data.loaded_items.length > 0) { data.loaded_items.forEach(i => { html += `<tr><td>${i.product_name}</td><td>${Number(i.qty).toLocaleString("ar-EG")} ${i.unit_name}</td></tr>`; }); } else { html += `<tr><td colspan="2" style="text-align:center;">لا توجد بضاعة محملة</td></tr>`; } html += `</tbody></table></div><div class="summary-box"><div class="summary-title">البضاعة المباعة</div><table class="print-table" style="margin-top:0;"><thead><tr><th>الصنف</th><th>الكمية</th></tr></thead><tbody>`; if(data.sold_items && data.sold_items.length > 0) { data.sold_items.forEach(i => { html += `<tr><td>${i.product_name}</td><td>${Number(i.qty).toLocaleString("ar-EG")} ${i.unit_name}</td></tr>`; }); } else { html += `<tr><td colspan="2" style="text-align:center;">لا توجد مبيعات</td></tr>`; } html += `</tbody></table></div><div class="summary-box"><div class="summary-title">البضاعة المتبقية في السيارة حالياً</div><table class="print-table" style="margin-top:0;"><thead><tr><th>الصنف</th><th>الكمية</th></tr></thead><tbody>`; if(data.remaining_items && data.remaining_items.length > 0) { data.remaining_items.forEach(i => { html += `<tr><td>${i.product_name}</td><td>${Number(i.qty).toLocaleString("ar-EG")} ${i.unit_name}</td></tr>`; }); } else { html += `<tr><td colspan="2" style="text-align:center;">السيارة فارغة</td></tr>`; } html += `</tbody></table></div>`; $("tripSummaryBody").innerHTML = html; } catch (e) { $("tripSummaryBody").innerHTML = `<div style="color:red;">تعذر تحميل البيانات: ${err(e)}</div>`; } }
 
-/* ============ Auth & Init (مُصلَّح نهائيًا) ============ */
+  /* ============ Auth & Init (v6 - bulletproof) ============ */
+(function markVersion(){
+  try {
+    const h2 = document.querySelector("#login h2");
+    if (h2 && !h2.textContent.includes("[v6]")) {
+      h2.innerHTML = "🔐 تسجيل الدخول <span style='font-size:10px;color:#999;'>[v6]</span>";
+    }
+  } catch(_){}
+})();
+
+(function attachErrorBanner(){
+  function showErr(text){
+    try {
+      let el = document.getElementById("__errBanner");
+      if (!el) {
+        el = document.createElement("div");
+        el.id = "__errBanner";
+        el.style.cssText = "position:fixed;top:0;left:0;right:0;background:#a52b2b;color:#fff;padding:8px 40px 8px 8px;z-index:99999;font-size:12px;direction:rtl;text-align:right;line-height:1.5;max-height:30vh;overflow:auto;cursor:pointer;";
+        el.addEventListener("click", () => el.remove());
+        document.body.appendChild(el);
+      }
+      el.textContent = "⚠️ " + text + " (اضغط للإغلاق)";
+    } catch(_){}
+  }
+  window.addEventListener("error", (e) => {
+    showErr("خطأ: " + (e.message || "غير معروف"));
+    console.error("[GLOBAL ERROR]", e.error || e.message);
+  });
+  window.addEventListener("unhandledrejection", (e) => {
+    const reason = e.reason?.message || String(e.reason) || "غير معروف";
+    showErr("خطأ: " + reason);
+    console.error("[UNHANDLED REJECTION]", e.reason);
+  });
+})();
+
+let userLoggingOut = false;
+
 async function bootAppAfterLogin(user){
   showApp();
-  try{
-    await userInfo(user);
-    await loadLookups();
-    await loadProducts();
-    if(canViewLocations) await loadLocations();
-    fillLocationsFilter();
-    if(canViewTreasuries) await loadTreasuries();
-    if(canViewStock) await loadStock();
-    if(canViewRecipes) await loadRecipes();
-    if(canViewProduction) await loadProduction();
-    if(canViewTrips) await loadTrips();
-    if(canViewCustomers) await loadCustomers();
-    if(canViewSales) await loadSales();
-    if(canViewCollections) await loadCollections();
-    if(canViewSuppliers) await loadSuppliers();
-    if(canViewPurchases) await loadPurchases();
-    if(canViewPartners) await loadPartners();
-  }catch(loadErr){
-    console.error("Data load error:",loadErr);
-    alert("تم تسجيل الدخول، لكن تعذر تحميل بعض البيانات:\n"+err(loadErr));
-  }
+  try { await userInfo(user); } catch(e){ console.error("[BOOT userInfo]", e); }
+  try { await loadLookups(); } catch(e){ console.error("[BOOT lookups]", e); }
+  try { await loadProducts(); } catch(e){ console.error("[BOOT products]", e); }
+  if(canViewLocations){ try{ await loadLocations(); }catch(e){console.error("[BOOT locations]",e);} }
+  try { fillLocationsFilter(); } catch(_){}
+  if(canViewTreasuries){ try{ await loadTreasuries(); }catch(e){console.error("[BOOT treasuries]",e);} }
+  if(canViewStock){ try{ await loadStock(); }catch(e){console.error("[BOOT stock]",e);} }
+  if(canViewRecipes){ try{ await loadRecipes(); }catch(e){console.error("[BOOT recipes]",e);} }
+  if(canViewProduction){ try{ await loadProduction(); }catch(e){console.error("[BOOT production]",e);} }
+  if(canViewTrips){ try{ await loadTrips(); }catch(e){console.error("[BOOT trips]",e);} }
+  if(canViewCustomers){ try{ await loadCustomers(); }catch(e){console.error("[BOOT customers]",e);} }
+  if(canViewSales){ try{ await loadSales(); }catch(e){console.error("[BOOT sales]",e);} }
+  if(canViewCollections){ try{ await loadCollections(); }catch(e){console.error("[BOOT collections]",e);} }
+  if(canViewSuppliers){ try{ await loadSuppliers(); }catch(e){console.error("[BOOT suppliers]",e);} }
+  if(canViewPurchases){ try{ await loadPurchases(); }catch(e){console.error("[BOOT purchases]",e);} }
+  if(canViewPartners){ try{ await loadPartners(); }catch(e){console.error("[BOOT partners]",e);} }
+  console.log("[BOOT COMPLETE]");
 }
 
-$("loginForm").addEventListener("submit",async e=>{
+$("loginForm").addEventListener("submit", async e => {
   e.preventDefault();
   clear($("loginMsg"));
-  const loginValue=$("email").value.trim();
-  const password=$("password").value;
-  busy($("loginBtn"),true,"جارٍ تسجيل الدخول...","تسجيل الدخول");
-  try{
-    let user;
-    if(loginValue.includes("@")){
-      const {data,error}=await db.auth.signInWithPassword({email:loginValue,password});
-      if(error)throw error;
-      user=data.user;
-    }else{
-      const response=await fetch(USERNAME_LOGIN_URL,{method:"POST",headers:{"Content-Type":"application/json","apikey":KEY},body:JSON.stringify({username:loginValue,password})});
-      let result={}; try{result=await response.json();}catch(_){}
-      if(!response.ok||result.success!==true||!result.session)throw new Error(result.error||"تعذر تسجيل الدخول باسم المستخدم.");
-      const {data,error}=await db.auth.setSession({access_token:result.session.access_token,refresh_token:result.session.refresh_token});
-      if(error)throw error;
-      user=data.user;
+  const loginValue = $("email").value.trim();
+  const password = $("password").value;
+  busy($("loginBtn"), true, "جارٍ تسجيل الدخول...", "تسجيل الدخول");
+  
+  let user = null;
+  try {
+    if (loginValue.includes("@")) {
+      const { data, error } = await db.auth.signInWithPassword({ email: loginValue, password });
+      if (error) throw error;
+      user = data.user;
+    } else {
+      const response = await fetch(USERNAME_LOGIN_URL, { method:"POST", headers:{"Content-Type":"application/json","apikey":KEY}, body:JSON.stringify({username:loginValue,password}) });
+      let result = {};
+      try { result = await response.json(); } catch(_){}
+      if (!response.ok || result.success !== true || !result.session) throw new Error(result.error || "تعذر تسجيل الدخول باسم المستخدم.");
+      const { data, error } = await db.auth.setSession({ access_token: result.session.access_token, refresh_token: result.session.refresh_token });
+      if (error) throw error;
+      user = data.user;
     }
-    if(!user)throw new Error("لم يتم استرجاع بيانات المستخدم.");
-    await bootAppAfterLogin(user);
-  }catch(e){
-    msg($("loginMsg"),"تعذر تسجيل الدخول: "+err(e),"error");
-    showLogin();
-  }finally{
-    busy($("loginBtn"),false,"","تسجيل الدخول");
+    if (!user) throw new Error("لم يتم استرجاع بيانات المستخدم.");
+  } catch (loginErr) {
+    console.error("[LOGIN FAILED]", loginErr);
+    msg($("loginMsg"), "تعذر تسجيل الدخول: " + err(loginErr), "error");
+    busy($("loginBtn"), false, "", "تسجيل الدخول");
+    return;
+  }
+  
+  console.log("[LOGIN OK]");
+  try { await bootAppAfterLogin(user); } catch(bootErr){ console.error("[BOOT FAILED]", bootErr); }
+  busy($("loginBtn"), false, "", "تسجيل الدخول");
+});
+
+$("forgotBtn").onclick = () => {
+  hideSections(); $("recovery").classList.remove("hidden");
+  const v = $("email").value.trim();
+  $("recoveryEmail").value = v.includes("@") ? v : "";
+  clear($("recoveryMsg"));
+};
+$("backBtn").onclick = showLogin;
+
+$("recoveryForm").addEventListener("submit", async e => {
+  e.preventDefault(); clear($("recoveryMsg"));
+  busy($("recoveryBtn"), true, "جارٍ الإرسال...", "إرسال رابط الاستعادة");
+  try {
+    const { error } = await db.auth.resetPasswordForEmail($("recoveryEmail").value.trim(), { redirectTo: APP_URL });
+    if (error) throw error;
+    msg($("recoveryMsg"), "إذا كان البريد مسجلًا، فستصلك رسالة استعادة.", "success");
+  } catch(e) {
+    msg($("recoveryMsg"), "تعذر الإرسال: " + err(e), "error");
+  } finally {
+    busy($("recoveryBtn"), false, "", "إرسال رابط الاستعادة");
   }
 });
 
-$("forgotBtn").onclick=()=>{ hideSections(); $("recovery").classList.remove("hidden"); const loginValue=$("email").value.trim(); $("recoveryEmail").value=loginValue.includes("@")?loginValue:""; clear($("recoveryMsg")); };
-$("backBtn").onclick=showLogin;
-$("recoveryForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("recoveryMsg")); busy($("recoveryBtn"),true,"جارٍ إرسال الرابط...","إرسال رابط الاستعادة"); try{ const {error}=await db.auth.resetPasswordForEmail($("recoveryEmail").value.trim(),{redirectTo:APP_URL}); if(error)throw error; msg($("recoveryMsg"),"إذا كان البريد مسجلًا، فستصلك رسالة استعادة.","success"); }catch(e){ msg($("recoveryMsg"),"تعذر إرسال الرسالة: "+err(e),"error"); }finally{ busy($("recoveryBtn"),false,"","إرسال رابط الاستعادة"); } });
-$("newPassForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("newPassMsg")); const p=$("newPassword").value; if(p.length<8){msg($("newPassMsg"),"كلمة المرور يجب أن تكون 8 أحرف على الأقل.","error");return;} if(p!==$("confirmPassword").value){msg($("newPassMsg"),"كلمتا المرور غير متطابقتين.","error");return;} busy($("savePassBtn"),true,"جارٍ الحفظ...","حفظ كلمة المرور الجديدة"); try{ const {data,error:se}=await db.auth.getSession(); if(se)throw se; if(!data.session)throw Error("جلسة الاستعادة غير موجودة."); const {error}=await db.auth.updateUser({password:p}); if(error)throw error; recoveryMode=false; await db.auth.signOut(); showLogin(); msg($("loginMsg"),"تم تغيير كلمة المرور بنجاح.","success"); }catch(e){ msg($("newPassMsg"),"تعذر تغيير كلمة المرور: "+err(e),"error"); }finally{ busy($("savePassBtn"),false,"","حفظ كلمة المرور الجديدة"); } });
-$("addBtn").onclick=()=>openForm(); $("cancelBtn").onclick=()=>{ $("formCard").classList.add("hidden"); resetForm(); }; $("refreshBtn").onclick=loadProducts; $("search").addEventListener("input",renderProducts);
-$("logoutBtn").onclick=async()=>{ const {error}=await db.auth.signOut(); if(error){msg($("listMsg"),"تعذر تسجيل الخروج: "+err(error),"error");return;} canManage=false;isSystemAdmin=false; canViewLocations=false;canManageLocations=false; canViewTreasuries=false;canManageTreasuries=false; canViewExpenses=false;canManageExpenses=false; canViewPartners=false;canManagePartners=false; canViewStock=false;canManageStock=false; canViewRecipes=false;canManageRecipes=false; canViewProduction=false;canManageProduction=false; canViewTrips=false;canManageTrips=false; canViewCustomers=false;canManageCustomers=false; canViewSales=false;canManageSales=false; canViewCollections=false;canManageCollections=false; canViewSuppliers=false;canManageSuppliers=false; canViewPurchases=false;canManagePurchases=false; locationsCache=[];treasuriesCache=[];stockCache=[];customersCache=[];salesCache=[];collectionsCache=[];suppliersCache=[];purchasesCache=[];recipesCache=[];productionCache=[];tripsCache=[];partnersCache=[]; $("password").value=""; document.querySelectorAll(".card").forEach(c=>c.classList.add("hidden")); showLogin(); msg($("loginMsg"),"تم تسجيل الخروج.","success"); };
-document.querySelectorAll(".navbtn").forEach(b=>{ b.onclick=()=>page(b.dataset.page); });
-db.auth.onAuthStateChange((event)=>{
-  if(event==="PASSWORD_RECOVERY"){
-    recoveryMode=true;
+$("newPassForm").addEventListener("submit", async e => {
+  e.preventDefault(); clear($("newPassMsg"));
+  const p = $("newPassword").value;
+  if (p.length < 8) { msg($("newPassMsg"), "كلمة المرور 8 أحرف على الأقل.", "error"); return; }
+  if (p !== $("confirmPassword").value) { msg($("newPassMsg"), "كلمتا المرور غير متطابقتين.", "error"); return; }
+  busy($("savePassBtn"), true, "جارٍ الحفظ...", "حفظ كلمة المرور");
+  try {
+    const { error } = await db.auth.updateUser({ password: p });
+    if (error) throw error;
+    recoveryMode = false;
+    await db.auth.signOut();
+    showLogin();
+    msg($("loginMsg"), "تم تغيير كلمة المرور بنجاح.", "success");
+  } catch(e) {
+    msg($("newPassMsg"), "تعذر التغيير: " + err(e), "error");
+  } finally {
+    busy($("savePassBtn"), false, "", "حفظ كلمة المرور");
+  }
+});
+
+$("addBtn").onclick = () => openForm();
+$("cancelBtn").onclick = () => { $("formCard").classList.add("hidden"); resetForm(); };
+$("refreshBtn").onclick = loadProducts;
+$("search").addEventListener("input", renderProducts);
+
+$("logoutBtn").onclick = async () => {
+  userLoggingOut = true;
+  try {
+    const { error } = await db.auth.signOut();
+    if (error) { msg($("listMsg"), "تعذر الخروج: " + err(error), "error"); userLoggingOut = false; return; }
+  } catch(_){}
+  canManage = false; isSystemAdmin = false;
+  canViewLocations = false; canManageLocations = false;
+  canViewTreasuries = false; canManageTreasuries = false;
+  canViewExpenses = false; canManageExpenses = false;
+  canViewPartners = false; canManagePartners = false;
+  canViewStock = false; canManageStock = false;
+  canViewRecipes = false; canManageRecipes = false;
+  canViewProduction = false; canManageProduction = false;
+  canViewTrips = false; canManageTrips = false;
+  canViewCustomers = false; canManageCustomers = false;
+  canViewSales = false; canManageSales = false;
+  canViewCollections = false; canManageCollections = false;
+  canViewSuppliers = false; canManageSuppliers = false;
+  canViewPurchases = false; canManagePurchases = false;
+  locationsCache=[]; treasuriesCache=[]; stockCache=[];
+  customersCache=[]; salesCache=[]; collectionsCache=[];
+  suppliersCache=[]; purchasesCache=[]; recipesCache=[];
+  productionCache=[]; tripsCache=[]; partnersCache=[];
+  $("password").value = "";
+  document.querySelectorAll(".card").forEach(c => c.classList.add("hidden"));
+  showLogin();
+  msg($("loginMsg"), "تم تسجيل الخروج.", "success");
+  userLoggingOut = false;
+};
+
+document.querySelectorAll(".navbtn").forEach(b => { b.onclick = () => page(b.dataset.page); });
+
+db.auth.onAuthStateChange((event) => {
+  console.log("[AUTH STATE]", event);
+  if (event === "PASSWORD_RECOVERY") {
+    recoveryMode = true;
     hideSections();
     $("newPass").classList.remove("hidden");
     return;
   }
-  if(event==="SIGNED_OUT" && !recoveryMode){
-    const wasInApp = !$("nav").classList.contains("hidden");
-    if(wasInApp){
-      canManage=false; isSystemAdmin=false;
-      canViewLocations=false; canManageLocations=false;
-      canViewTreasuries=false; canManageTreasuries=false;
-      canViewExpenses=false; canManageExpenses=false;
-      canViewPartners=false; canManagePartners=false;
-      canViewStock=false; canManageStock=false;
-      canViewRecipes=false; canManageRecipes=false;
-      canViewProduction=false; canManageProduction=false;
-      canViewTrips=false; canManageTrips=false;
-      canViewCustomers=false; canManageCustomers=false;
-      canViewSales=false; canManageSales=false;
-      canViewCollections=false; canManageCollections=false;
-      canViewSuppliers=false; canManageSuppliers=false;
-      canViewPurchases=false; canManagePurchases=false;
-      locationsCache=[]; treasuriesCache=[]; stockCache=[];
-      customersCache=[]; salesCache=[]; collectionsCache=[];
-      suppliersCache=[]; purchasesCache=[]; recipesCache=[];
-      productionCache=[]; tripsCache=[]; partnersCache=[];
-      document.querySelectorAll(".card").forEach(c=>c.classList.add("hidden"));
-      showLogin();
-      msg($("loginMsg"),"انتهت جلستك. يرجى تسجيل الدخول مرة أخرى.","error");
-    }
+  if (event === "SIGNED_OUT" && userLoggingOut) {
+    userLoggingOut = false;
+    showLogin();
+    msg($("loginMsg"), "تم تسجيل الخروج.", "success");
   }
 });
+
 async function init(){
-  try{
-    const params=new URLSearchParams(location.search);
-    const hash=location.hash;
-    if(params.has("error")||params.has("error_description")||hash.includes("error=")){
+  try {
+    if (location.hash && !location.hash.includes("access_token") && !location.hash.includes("error")) {
+      history.replaceState(null, "", location.pathname + location.search);
+    }
+    const params = new URLSearchParams(location.search);
+    if (params.has("error") || params.has("error_description")) {
       showLogin();
-      msg($("loginMsg"),"رابط الاستعادة قد يكون منتهي الصلاحية.","error");
+      msg($("loginMsg"), "رابط الاستعادة منتهي الصلاحية.", "error");
       return;
     }
-    const {data,error}=await db.auth.getSession();
-    if(error)throw error;
-    if(!data.session){ showLogin(); return; }
+    const { data, error } = await db.auth.getSession();
+    if (error) throw error;
+    if (!data.session) { showLogin(); return; }
+    console.log("[INIT] Session found, bootstrapping");
     await bootAppAfterLogin(data.session.user);
-  }catch(e){
+  } catch(e) {
+    console.error("[INIT ERROR]", e);
     showLogin();
-    msg($("loginMsg"),"تعذر التحقق من الجلسة: "+err(e),"error");
+    msg($("loginMsg"), "تعذر التحقق من الجلسة: " + err(e), "error");
   }
 }
 init();
