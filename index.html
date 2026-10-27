@@ -44,8 +44,8 @@ input[type=number]{direction:ltr;text-align:left}
 .badge-partial{background:#fff4d6;color:#8a6d1a}
 .badge-cancel{background:#fff0f0;color:var(--red)}
 .off{background:#fff0f0;color:var(--red)}
-.actions{display:flex;gap:8px;margin-top:10px; flex-wrap:wrap;}
-.actions .btn{flex:1;padding:9px;margin:0; min-width:120px;}
+.actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.actions .btn{flex:1;padding:9px;margin:0;min-width:120px;}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 10px}
 .checks{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -352,7 +352,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
       </div>
     </div>
   </div>
-  <div id="sectionAccounting" class="sub-section hidden">
+    <div id="sectionAccounting" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="accountingCard" class="card hidden">
       <h2>🧮 المحاسبة والتقارير</h2>
@@ -1052,32 +1052,118 @@ async function loadUsersList() {
     box.innerHTML = html;
   } catch(e) { box.innerHTML = `<div class='empty error'>خطأ: ${e.message}</div>`; }
 }
-
-/* ============ التحقق من حساب الموظف والصلاحيات ============ */
+  /* ============ التحقق من حساب الموظف والصلاحيات (مُصلَّح) ============ */
 async function userInfo(user){
   $("userInfo").textContent="تم تسجيل الدخول. جارٍ التحقق...";
   const {data,error}=await db.from("app_users").select("display_name,is_active,role_id").eq("user_id",user.id).maybeSingle();
-  if(error)throw error; if(!data)throw new Error("لا يوجد سجل موظف مرتبط بحساب الدخول."); if(!data.is_active)throw new Error("حساب الموظف غير مفعّل.");
+  if(error)throw error;
+  if(!data)throw new Error("لا يوجد سجل موظف مرتبط بحساب الدخول.");
+  if(!data.is_active)throw new Error("حساب الموظف غير مفعّل.");
   const {data:role,error:roleError}=await db.from("app_roles").select("role_code,is_active").eq("role_id",data.role_id).maybeSingle();
-  if(roleError)throw roleError; if(!role||!role.is_active)throw new Error("الدور الوظيفي لحسابك غير موجود أو غير مفعّل.");
-  isSystemAdmin=role.role_code==="SYSTEM_ADMIN"; $("userInfo").textContent="مرحبًا "+(data.display_name||"بك");
-  await db.from("app_users").update({ last_login: new Date().toISOString() }).eq("user_id", user.id);
+  if(roleError)throw roleError;
+  if(!role||!role.is_active)throw new Error("الدور الوظيفي لحسابك غير موجود أو غير مفعّل.");
+  isSystemAdmin=role.role_code==="SYSTEM_ADMIN";
+  $("userInfo").textContent="مرحبًا "+(data.display_name||"بك");
+  try{ await db.from("app_users").update({last_login:new Date().toISOString()}).eq("user_id",user.id); }catch(_){}
 
-  canManage=await permission("PRODUCTS_MANAGE"); $("menuProducts").classList.toggle("hidden", !canManage); $("addBtn").classList.toggle("hidden",!canManage);
-  try{ canViewLocations=await permission("LOCATIONS_VIEW"); canManageLocations=await permission("LOCATIONS_MANAGE"); $("menuLocations").classList.toggle("hidden",!canViewLocations); $("locationsCard").classList.toggle("hidden",!canViewLocations); $("addLocationBtn").classList.toggle("hidden",!canManageLocations); }catch(e){$("menuLocations").classList.add("hidden");}
-  try{ canViewTreasuries=await permission("TREASURIES_VIEW") || isSystemAdmin; canManageTreasuries=await permission("TREASURIES_MANAGE") || isSystemAdmin; $("menuTreasuries").classList.toggle("hidden",!canViewTreasuries); $("treasuriesCard").classList.toggle("hidden",!canViewTreasuries); $("addTreasuryBtn").classList.toggle("hidden",!canManageTreasuries); }catch(e){$("menuTreasuries").classList.add("hidden");}
-  try{ canViewExpenses=await permission("EXPENSES_VIEW") || isSystemAdmin; canManageExpenses=await permission("EXPENSES_MANAGE") || isSystemAdmin; $("menuExpenses").classList.toggle("hidden",!canViewExpenses); $("expensesCard").classList.toggle("hidden",!canViewExpenses); $("addExpenseBtn").classList.toggle("hidden",!canManageExpenses); }catch(e){$("menuExpenses").classList.add("hidden");}
-  try{ canViewPartners=await permission("PARTNERS_VIEW") || isSystemAdmin; canManagePartners=await permission("PARTNERS_MANAGE") || isSystemAdmin; $("menuPartners").classList.toggle("hidden",!canViewPartners); $("partnersCard").classList.toggle("hidden",!canViewPartners); $("addPartnerBtn").classList.toggle("hidden",!canManagePartners); $("addPartnerTransactionBtn").classList.toggle("hidden",!canManagePartners); $("partnerTransactionsCard").classList.toggle("hidden",!canViewPartners); }catch(e){$("menuPartners").classList.add("hidden");}
-  try{ canViewStock=await permission("STOCK_VIEW"); canManageStock=await permission("STOCK_MANAGE"); $("menuStock").classList.toggle("hidden",!canViewStock); $("stockCard").classList.toggle("hidden",!canViewStock); $("adjustStockBtn").classList.toggle("hidden",!canManageStock); }catch(e){$("menuStock").classList.add("hidden");}
-  try{ canViewRecipes=await permission("RECIPES_VIEW"); canManageRecipes=await permission("RECIPES_MANAGE"); $("menuRecipes").classList.toggle("hidden",!canViewRecipes); $("recipesCard").classList.toggle("hidden",!canViewRecipes); $("addRecipeBtn").classList.toggle("hidden",!canManageRecipes); }catch(e){$("menuRecipes").classList.add("hidden");}
-  try{ canViewProduction=await permission("PRODUCTION_VIEW"); canManageProduction=await permission("PRODUCTION_MANAGE"); $("menuProduction").classList.toggle("hidden",!canViewProduction); $("productionCard").classList.toggle("hidden",!canViewProduction); $("addProductionBtn").classList.toggle("hidden",!canManageProduction); }catch(e){$("menuProduction").classList.add("hidden");}
-  try{ canViewTrips=await permission("TRIPS_VIEW"); canManageTrips=await permission("TRIPS_MANAGE"); $("menuTrips").classList.toggle("hidden",!canViewTrips); $("tripsCard").classList.toggle("hidden",!canViewTrips); $("addTripBtn").classList.toggle("hidden",!canManageTrips); }catch(e){$("menuTrips").classList.add("hidden");}
-  try{ canViewCustomers=await permission("CUSTOMERS_VIEW"); canManageCustomers=await permission("CUSTOMERS_MANAGE"); $("menuCustomers").classList.toggle("hidden",!canViewCustomers); $("customersCard").classList.toggle("hidden",!canViewCustomers); $("addCustomerBtn").classList.toggle("hidden",!canManageCustomers); }catch(e){$("menuCustomers").classList.add("hidden");}
-  try{ canViewSales=await permission("SALES_VIEW"); canManageSales=await permission("SALES_MANAGE"); $("menuSales").classList.toggle("hidden",!canViewSales); $("salesCard").classList.toggle("hidden",!canViewSales); $("addInvoiceBtn").classList.toggle("hidden",!canManageSales); $("addReturnBtn").classList.toggle("hidden",!canManageSales); }catch(e){$("menuSales").classList.add("hidden");}
-  try{ canViewCollections=await permission("COLLECTIONS_VIEW"); canManageCollections=await permission("COLLECTIONS_MANAGE"); $("menuCollections").classList.toggle("hidden",!canViewCollections); $("collectionsCard").classList.toggle("hidden",!canViewCollections); $("addCollectionBtn").classList.toggle("hidden",!canManageCollections); }catch(e){$("menuCollections").classList.add("hidden");}
-  try{ canViewSuppliers=await permission("SUPPLIERS_VIEW"); canManageSuppliers=await permission("SUPPLIERS_MANAGE"); $("menuSuppliers").classList.toggle("hidden",!canViewSuppliers); $("suppliersCard").classList.toggle("hidden",!canViewSuppliers); $("addSupplierBtn").classList.toggle("hidden",!canManageSuppliers); }catch(e){$("menuSuppliers").classList.add("hidden");}
-  try{ canViewPurchases=await permission("PURCHASES_VIEW"); canManagePurchases=await permission("PURCHASES_MANAGE"); $("menuPurchases").classList.toggle("hidden",!canViewPurchases); $("purchasesCard").classList.toggle("hidden",!canViewPurchases); $("addPurchaseBtn").classList.toggle("hidden",!canManagePurchases); }catch(e){$("menuPurchases").classList.add("hidden");}
-  if(isSystemAdmin){ $("menuUsers").classList.remove("hidden"); $("menuAccounting").classList.remove("hidden"); $("accountingCard").classList.remove("hidden"); await loadUserManagementLookups(); }else{ $("menuUsers").classList.add("hidden"); $("userManagementCard").classList.add("hidden"); }
+  async function safePermission(code){
+    try{ return (await permission(code))===true; }catch(e){ console.warn("permission fail:",code,e); return false; }
+  }
+
+  canManage = await safePermission("PRODUCTS_MANAGE");
+  $("menuProducts").classList.toggle("hidden",!canManage);
+  $("addBtn").classList.toggle("hidden",!canManage);
+
+  canViewLocations = await safePermission("LOCATIONS_VIEW");
+  canManageLocations = await safePermission("LOCATIONS_MANAGE");
+  $("menuLocations").classList.toggle("hidden",!canViewLocations);
+  $("locationsCard").classList.toggle("hidden",!canViewLocations);
+  $("addLocationBtn").classList.toggle("hidden",!canManageLocations);
+
+  canViewTreasuries = (await safePermission("TREASURIES_VIEW")) || isSystemAdmin;
+  canManageTreasuries = (await safePermission("TREASURIES_MANAGE")) || isSystemAdmin;
+  $("menuTreasuries").classList.toggle("hidden",!canViewTreasuries);
+  $("treasuriesCard").classList.toggle("hidden",!canViewTreasuries);
+  $("addTreasuryBtn").classList.toggle("hidden",!canManageTreasuries);
+
+  canViewExpenses = (await safePermission("EXPENSES_VIEW")) || isSystemAdmin;
+  canManageExpenses = (await safePermission("EXPENSES_MANAGE")) || isSystemAdmin;
+  $("menuExpenses").classList.toggle("hidden",!canViewExpenses);
+  $("expensesCard").classList.toggle("hidden",!canViewExpenses);
+  $("addExpenseBtn").classList.toggle("hidden",!canManageExpenses);
+
+  canViewPartners = (await safePermission("PARTNERS_VIEW")) || isSystemAdmin;
+  canManagePartners = (await safePermission("PARTNERS_MANAGE")) || isSystemAdmin;
+  $("menuPartners").classList.toggle("hidden",!canViewPartners);
+  $("partnersCard").classList.toggle("hidden",!canViewPartners);
+  $("addPartnerBtn").classList.toggle("hidden",!canManagePartners);
+  $("addPartnerTransactionBtn").classList.toggle("hidden",!canManagePartners);
+  $("partnerTransactionsCard").classList.toggle("hidden",!canViewPartners);
+
+  canViewStock = await safePermission("STOCK_VIEW");
+  canManageStock = await safePermission("STOCK_MANAGE");
+  $("menuStock").classList.toggle("hidden",!canViewStock);
+  $("stockCard").classList.toggle("hidden",!canViewStock);
+  $("adjustStockBtn").classList.toggle("hidden",!canManageStock);
+
+  canViewRecipes = await safePermission("RECIPES_VIEW");
+  canManageRecipes = await safePermission("RECIPES_MANAGE");
+  $("menuRecipes").classList.toggle("hidden",!canViewRecipes);
+  $("recipesCard").classList.toggle("hidden",!canViewRecipes);
+  $("addRecipeBtn").classList.toggle("hidden",!canManageRecipes);
+
+  canViewProduction = await safePermission("PRODUCTION_VIEW");
+  canManageProduction = await safePermission("PRODUCTION_MANAGE");
+  $("menuProduction").classList.toggle("hidden",!canViewProduction);
+  $("productionCard").classList.toggle("hidden",!canViewProduction);
+  $("addProductionBtn").classList.toggle("hidden",!canManageProduction);
+
+  canViewTrips = await safePermission("TRIPS_VIEW");
+  canManageTrips = await safePermission("TRIPS_MANAGE");
+  $("menuTrips").classList.toggle("hidden",!canViewTrips);
+  $("tripsCard").classList.toggle("hidden",!canViewTrips);
+  $("addTripBtn").classList.toggle("hidden",!canManageTrips);
+
+  canViewCustomers = await safePermission("CUSTOMERS_VIEW");
+  canManageCustomers = await safePermission("CUSTOMERS_MANAGE");
+  $("menuCustomers").classList.toggle("hidden",!canViewCustomers);
+  $("customersCard").classList.toggle("hidden",!canViewCustomers);
+  $("addCustomerBtn").classList.toggle("hidden",!canManageCustomers);
+
+  canViewSales = await safePermission("SALES_VIEW");
+  canManageSales = await safePermission("SALES_MANAGE");
+  $("menuSales").classList.toggle("hidden",!canViewSales);
+  $("salesCard").classList.toggle("hidden",!canViewSales);
+  $("addInvoiceBtn").classList.toggle("hidden",!canManageSales);
+  $("addReturnBtn").classList.toggle("hidden",!canManageSales);
+
+  canViewCollections = await safePermission("COLLECTIONS_VIEW");
+  canManageCollections = await safePermission("COLLECTIONS_MANAGE");
+  $("menuCollections").classList.toggle("hidden",!canViewCollections);
+  $("collectionsCard").classList.toggle("hidden",!canViewCollections);
+  $("addCollectionBtn").classList.toggle("hidden",!canManageCollections);
+
+  canViewSuppliers = await safePermission("SUPPLIERS_VIEW");
+  canManageSuppliers = await safePermission("SUPPLIERS_MANAGE");
+  $("menuSuppliers").classList.toggle("hidden",!canViewSuppliers);
+  $("suppliersCard").classList.toggle("hidden",!canViewSuppliers);
+  $("addSupplierBtn").classList.toggle("hidden",!canManageSuppliers);
+
+  canViewPurchases = await safePermission("PURCHASES_VIEW");
+  canManagePurchases = await safePermission("PURCHASES_MANAGE");
+  $("menuPurchases").classList.toggle("hidden",!canViewPurchases);
+  $("purchasesCard").classList.toggle("hidden",!canViewPurchases);
+  $("addPurchaseBtn").classList.toggle("hidden",!canManagePurchases);
+
+  if(isSystemAdmin){
+    $("menuUsers").classList.remove("hidden");
+    $("menuAccounting").classList.remove("hidden");
+    $("accountingCard").classList.remove("hidden");
+    await loadUserManagementLookups();
+  } else {
+    $("menuUsers").classList.add("hidden");
+    $("userManagementCard").classList.add("hidden");
+  }
 }
 
 /* ============ إدارة المواقع ============ */
@@ -1270,7 +1356,8 @@ function renderCustomers(){ const box=$("customersList");box.replaceChildren(); 
 function editCustomer(c){ if(!canManageCustomers)return; $("customerEditId").value=String(c.customer_id); $("customerCode").value=c.customer_code||""; $("customerName").value=c.customer_name||""; $("customerPhone").value=c.phone||""; $("customerWhatsapp").value=c.whatsapp||""; $("customerType").value=c.customer_type||"CASH"; $("customerCreditLimit").value=c.credit_limit==null?"":String(c.credit_limit); $("customerOpeningBalance").value=c.opening_balance==null?"0":String(c.opening_balance); $("customerAddress").value=c.address||""; $("customerNotes").value=c.notes||""; $("customerActive").checked=c.is_active===true; $("customerFormTitle").textContent="تعديل العميل: "+c.customer_name; $("saveCustomerBtn").textContent="حفظ التعديلات"; $("customerFormCard").classList.remove("hidden"); clear($("customerFormMsg")); $("customerFormCard").scrollIntoView({behavior:"smooth",block:"start"}); }
 $("addCustomerBtn").addEventListener("click",()=>{ if(!canManageCustomers)return; resetCustomerForm(); $("customerFormCard").classList.remove("hidden"); $("customerFormCard").scrollIntoView({behavior:"smooth",block:"start"}); });
 $("cancelCustomerBtn").addEventListener("click",resetCustomerForm); $("refreshCustomersBtn").addEventListener("click",loadCustomers); $("customerSearch").addEventListener("input",renderCustomers);
-$("customerForm").addEventListener("submit",async event=>{ event.preventDefault(); clear($("customerFormMsg")); if(!canManageCustomers)return; const id=$("customerEditId").value; const code=$("customerCode").value.trim(); const name=$("customerName").value.trim(); const phone=$("customerPhone").value.trim(); const whatsapp=$("customerWhatsapp").value.trim(); const type=$("customerType").value; const creditLimitRaw=$("customerCreditLimit").value.trim(); const openingRaw=$("customerOpeningBalance").value.trim(); const address=$("customerAddress").value.trim(); const notes=$("customerNotes").value.trim(); const active=$("customerActive").checked; if(!code||!name){ msg($("customerFormMsg"),"أكمل كود العميل والاسم.","error");return; } if(!Object.prototype.hasOwnProperty.call(customerTypes,type)){ msg($("customerFormMsg"),"اختر نوع عميل صحيحًا.","error");return; } const creditLimit=creditLimitRaw===""?null:Number(creditLimitRaw); const opening=openingRaw===""?0:Number(openingRaw); if(creditLimit!==null&&(isNaN(creditLimit)||creditLimit<0)){ msg($("customerFormMsg"),"حد الائتمان يجب أن يكون رقمًا غير سالب.","error");return; } if(isNaN(opening)||opening<0){ msg($("customerFormMsg"),"الرصيد الافتتاحي يجب أن يكون رقمًا غير سالب.","error");return; } const button=$("saveCustomerBtn"); busy(button,true,"جارٍ الحفظ...",id?"حفظ التعديلات":"حفظ العميل"); try{ if(!await permission("CUSTOMERS_MANAGE"))throw new Error("لا تملك صلاحية إدارة العملاء."); const payload={ customer_code:code,customer_name:name,phone:phone||null,whatsapp:whatsapp||null, address:address||null,customer_type:type,credit_limit:creditLimit, opening_balance:opening,is_active:active,notes:notes||null, updated_at:new Date().toISOString() }; let result; if(id){ result=await db.from("customers").update(payload).eq("customer_id",Number(id)).select("customer_id"); } else{ const {data:s,error:se}=await db.auth.getSession(); if(se)throw se; if(!s.session)throw new Error("انتهت جلسة الدخول."); payload.created_by=s.session.user.id; result=await db.from("customers").insert(payload).select("customer_id"); } if(result.error)throw result.error; if(!result.data||result.data.length!==1)throw new Error("لم يتم تأكيد حفظ سجل واحد."); msg($("customersMsg"),id?"تم تأكيد تعديل العميل.":"تم تأكيد إضافة العميل.","success"); resetCustomerForm(); await loadCustomers(); }catch(e){ msg($("customerFormMsg"),"تعذر تأكيد حفظ العميل. "+err(e),"error"); }finally{ busy(button,false,"","حفظ العميل"); $("saveCustomerBtn").textContent=$("customerEditId").value?"حفظ التعديلات":"حفظ العميل"; } });
+$("customerForm").addEventListener("submit",async event=>{ event.preventDefault(); clear($("customerFormMsg")); if(!canManageCustomers)return; const id=$("customerEditId").value; const code=$("customerCode").value.trim(); const name=$("customerName").value.trim(); const phone=$("customerPhone").value.trim(); const whatsapp=$("customerWhatsapp").value.trim(); const type=$("customerType").value; const creditLimitRaw=$("customerCreditLimit").value.trim(); const openingRaw=$("customerOpeningBalance").value.trim(); const address=$("customerAddress").value.trim(); const notes=$("customerNotes").value.trim(); const active=$("customerActive").checked; if(!code||!name){ msg($("customerFormMsg"),"أكمل كود العميل والاسم.","error");return; } if(!Object.prototype.hasOwnProperty.call(customerTypes,type)){ msg($("customerFormMsg"),"اختر نوع عميل صحيحًا.","error");return; } const creditLimit=creditLimitRaw===""?null:Number(creditLimitRaw); const opening=openingRaw===""?0:Number(openingRaw); if(creditLimit!==null&&(isNaN(creditLimit)||creditLimit<0)){ msg($("customerFormMsg"),"حد الائتمان يجب أن يكون رقمًا غير سالب.","error");return; } if(isNaN(opening)||opening<0){ msg($("customerFormMsg"),"الرصيد الافتتاحي يجب أن يكون رقمًا غير سالب.","error");return; } const button=$("saveCustomerBtn"); busy(button,true,"جارٍ الحفظ...",id?"حفظ التعديلات":"حفظ العميل"); try{ if(!await permission("CUSTOMERS_MANAGE"))throw new Error("لا تملك صلاحية إدارة العملاء."); const payload={ customer_code:code,customer_name:name,phone:phone||null,whatsapp:whatsapp||null, address:address||null,customer_type:type,credit_limit:creditLimit, opening_balance:opening,is_active:active,notes:notes||null, updated_at:new Date().toISOString() }; le
+  t result; if(id){ result=await db.from("customers").update(payload).eq("customer_id",Number(id)).select("customer_id"); } else{ const {data:s,error:se}=await db.auth.getSession(); if(se)throw se; if(!s.session)throw new Error("انتهت جلسة الدخول."); payload.created_by=s.session.user.id; result=await db.from("customers").insert(payload).select("customer_id"); } if(result.error)throw result.error; if(!result.data||result.data.length!==1)throw new Error("لم يتم تأكيد حفظ سجل واحد."); msg($("customersMsg"),id?"تم تأكيد تعديل العميل.":"تم تأكيد إضافة العميل.","success"); resetCustomerForm(); await loadCustomers(); }catch(e){ msg($("customerFormMsg"),"تعذر تأكيد حفظ العميل. "+err(e),"error"); }finally{ busy(button,false,"","حفظ العميل"); $("saveCustomerBtn").textContent=$("customerEditId").value?"حفظ التعديلات":"حفظ العميل"; } });
 async function toggleCustomer(c){ if(!canManageCustomers)return; const action=c.is_active?"إيقاف":"تفعيل"; if(!confirm("هل تريد "+action+" العميل: "+c.customer_name+"؟"))return; try{ if(!await permission("CUSTOMERS_MANAGE"))throw new Error("لا تملك صلاحية إدارة العملاء."); const {data,error}=await db.from("customers").update({is_active:!c.is_active,updated_at:new Date().toISOString()}).eq("customer_id",c.customer_id).select("customer_id"); if(error)throw error; if(!data||data.length!==1)throw new Error("لم يتم تأكيد تغيير الحالة."); msg($("customersMsg"),"تم تأكيد تغيير حالة العميل.","success"); await loadCustomers(); }catch(e){ msg($("customersMsg"),"تعذر تأكيد تغيير الحالة: "+err(e),"error"); } }
 async function viewCustomerStatement(c) { const modal = $("customerStatementModal"); $("modalStatementHeader").innerHTML = "جارٍ تحميل البيانات..."; $("modalStatementItems").innerHTML = ""; $("modalStatementSummary").innerHTML = ""; modal.classList.remove("hidden"); try { const { data: invoices, error: invErr } = await db.from("sales_invoices").select("sales_invoice_id, invoice_number, invoice_date, net_total, paid_amount, remaining_amount, status").eq("customer_id", c.customer_id).neq("status", "CANCELLED").order("invoice_date", { ascending: true }); if (invErr) throw invErr; const { data: collections, error: colErr } = await db.from("customer_collections").select("collection_id, collection_number, collection_date, amount, payment_method, status").eq("customer_id", c.customer_id).eq("status", "POSTED").order("collection_date", { ascending: true }); if (colErr) throw colErr; const timeline = []; let totalInvoiced = 0; let totalPaid = 0; (invoices || []).forEach(inv => { timeline.push({ date: inv.invoice_date, type: 'invoice', ref: inv.invoice_number, desc: "فاتورة بيع", debit: Number(inv.net_total), credit: 0 }); totalInvoiced += Number(inv.net_total); }); (collections || []).forEach(col => { timeline.push({ date: col.collection_date, type: 'collection', ref: col.collection_number, desc: "تحصيل نقدية (" + paymentTypeName(col.payment_method) + ")", debit: 0, credit: Number(col.amount) }); totalPaid += Number(col.amount); }); timeline.sort((a, b) => new Date(a.date) - new Date(b.date) || (a.type === 'invoice' ? -1 : 1)); let runningBalance = Number(c.opening_balance) || 0; let rowsHtml = `<thead><tr><th>التاريخ</th><th>المستند</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead><tbody><tr><td colspan="3"><strong>رصيد افتتاحي</strong></td><td>-</td><td>-</td><td><strong>${fmt(runningBalance)}</strong></td></tr>`; timeline.forEach(t => { runningBalance += t.debit - t.credit; rowsHtml += `<tr><td>${new Date(t.date).toLocaleDateString("ar-EG")}</td><td dir="ltr" style="text-align:right;">${t.ref}</td><td>${t.desc}</td><td>${t.debit > 0 ? fmt(t.debit) : "-"}</td><td>${t.credit > 0 ? fmt(t.credit) : "-"}</td><td style="font-weight:bold;">${fmt(runningBalance)}</td></tr>`; }); rowsHtml += `</tbody>`; $("modalStatementItems").innerHTML = rowsHtml; $("modalStatementHeader").innerHTML = `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span><strong>اسم العميل:</strong> ${c.customer_name}</span><span><strong>كود:</strong> ${c.customer_code}</span></div><div style="display:flex; justify-content:space-between;"><span><strong>موبايل:</strong> ${c.phone || "غير مسجل"}</span><span><strong>تاريخ الكشف:</strong> ${new Date().toLocaleDateString("ar-EG")}</span></div>`; $("modalStatementSummary").innerHTML = `<div class="line"><span>إجمالي المبيعات (فواتير):</span><span>${fmt(totalInvoiced)}</span></div><div class="line"><span>إجمالي المدفوع (تحصيلات):</span><span style="color:green;">${fmt(totalPaid)}</span></div><div class="line grand" style="border-top:2px solid #333; padding-top:5px;"><span>الرصيد النهائي (متبقي):</span><span style="color:red;">${fmt(runningBalance)}</span></div>`; const waBtn = $("shareStatementWhatsappBtn"); waBtn.onclick = () => { let waText = `*كشف حساب عميل*\nالعميل: ${c.customer_name}\nالتاريخ: ${new Date().toLocaleDateString("ar-EG")}\n------------------------\nإجمالي المبيعات: ${fmt(totalInvoiced)}\nإجمالي المدفوع: ${fmt(totalPaid)}\n------------------------\n*الرصيد المتبقي: ${fmt(runningBalance)}*\n\nشكراً لتعاملكم معنا!`; let phone = c.phone ? c.phone.replace(/\D/g, '') : ""; if (phone.startsWith('0')) phone = '2' + phone; const url = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(waText)}` : `https://wa.me/?text=${encodeURIComponent(waText)}`; window.open(url, '_blank'); }; } catch (e) { $("modalStatementHeader").innerHTML = `<span style="color:red;">تعذر تحميل كشف الحساب: ${err(e)}</span>`; } }
 
@@ -1309,8 +1396,7 @@ async function viewSupplierStatement(c) {
     waBtn.onclick = () => { let waText = `*كشف حساب مورد*\nالمورد: ${c.supplier_name}\nالتاريخ: ${new Date().toLocaleDateString("ar-EG")}\n------------------------\nإجمالي المشتريات: ${fmt(totalInvoiced)}\nإجمالي المدفوع: ${fmt(totalPaid)}\n------------------------\n*الرصيد المتبقي: ${fmt(Math.abs(runningBalance))}*\n\nشكراً لتعاملكم معنا!`; let phone = c.phone ? c.phone.replace(/\D/g, '') : ""; if (phone.startsWith('0')) phone = '2' + phone; const url = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(waText)}` : `https://wa.me/?text=${encodeURIComponent(waText)}`; window.open(url, '_blank'); }; 
   } catch (e) { $("modalStatementHeader").innerHTML = `<span style="color:red;">تعذر تحميل كشف الحساب: ${err(e)}</span>`; } 
 }
-
-/* ============ فواتير البيع ============ */
+  /* ============ فواتير البيع ============ */
 function paymentTypeName(v){ return({CASH:"نقدي",CREDIT:"آجل",BANK_TRANSFER:"تحويل بنكي",CHEQUE:"شيك",MIXED:"مختلط"})[v]||v||"غير محدد"; }
 function invoiceStatusName(v){ return({POSTED:"مرحّلة",PAID:"مدفوعة",PARTIAL:"جزئية",CANCELLED:"ملغاة",DRAFT:"مسودة"})[v]||v||"—"; }
 function fillInvoiceCustomerSelect(){ const el=$("invoiceCustomer");const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر العميل";el.appendChild(first); customersCache.filter(c=>c.is_active).forEach(c=>{ const op=document.createElement("option");op.value=String(c.customer_id);op.textContent=c.customer_name+" ("+c.customer_code+")";el.appendChild(op); }); el.value=cur; }
@@ -1587,16 +1673,121 @@ $("tripLoadForm").addEventListener("submit", async e => { e.preventDefault(); cl
 async function settleTrip(trip) { if(!canManageTrips) return; if(!confirm("هل أنت متأكد من تسوية الجولة " + trip.trip_number + "؟\nسيتم إرجاع البضاعة المتبقية للثلاجة وإغلاق الجولة.")) return; const targetLoc = locationsCache.find(l => l.location_type === 'MAIN_WAREHOUSE' || l.location_type === 'FRIDGE'); if(!targetLoc) { alert("لا يوجد مخزن رئيسي أو ثلاجة لإرجاع البضاعة إليها."); return; } try { const {error} = await db.rpc("settle_trip", { p_trip_id: trip.trip_id, p_target_location_id: targetLoc.location_id }); if(error) throw error; msg($("tripsMsg"), "تم تسوية الجولة " + trip.trip_number + " بنجاح.", "success"); await loadTrips(); if(canViewStock) loadStock(); if(canViewTreasuries) loadTreasuries(); } catch (e) { msg($("tripsMsg"), "تعذر تسوية الجولة: " + err(e), "error"); } }
 async function viewTripSummary(trip) { const modal = $("tripSummaryModal"); $("tripSummaryBody").innerHTML = "جارٍ تحميل البيانات..."; modal.classList.remove("hidden"); try { const { data, error } = await db.rpc("get_trip_summary", { p_trip_id: trip.trip_id }); if (error) throw error; let html = `<div class="summary-box"><div class="summary-title">بيانات الجولة</div><div class="line"><span>رقم الجولة:</span><span>${data.trip_number}</span></div><div class="line"><span>المندوب:</span><span>${data.rep_name}</span></div><div class="line"><span>السيارة:</span><span>${data.vehicle_name}</span></div><div class="line"><span>الحالة:</span><span>${data.status === 'DRAFT' ? 'مسودة' : 'مكتملة'}</span></div></div><div class="summary-box"><div class="summary-title">الحركة المالية (العهدة)</div><div class="line"><span>العهدة الافتتاحية:</span><span>${fmt(data.initial_cash)}</span></div><div class="line"><span>إجمالي المبيعات:</span><span>${fmt(data.total_sales || 0)}</span></div><div class="line"><span>إجمالي المرتجعات:</span><span style="color:orange;">${fmt(data.total_returns || 0)}</span></div><div class="line"><span>صافي المبيعات:</span><span>${fmt(data.net_sales || 0)}</span></div><div class="line"><span>إجمالي التحصيلات:</span><span style="color:green;">+ ${fmt(data.total_collections)}</span></div><div class="line"><span>إجمالي المصروفات:</span><span style="color:red;">- ${fmt(data.total_expenses)}</span></div><div class="line grand"><span>صافي النقدية المطلوبة (مع المندوب):</span><span>${fmt(data.remaining_cash)}</span></div></div><div class="summary-box"><div class="summary-title">البضاعة المحملة</div><table class="print-table" style="margin-top:0;"><thead><tr><th>الصنف</th><th>الكمية</th></tr></thead><tbody>`; if(data.loaded_items && data.loaded_items.length > 0) { data.loaded_items.forEach(i => { html += `<tr><td>${i.product_name}</td><td>${Number(i.qty).toLocaleString("ar-EG")} ${i.unit_name}</td></tr>`; }); } else { html += `<tr><td colspan="2" style="text-align:center;">لا توجد بضاعة محملة</td></tr>`; } html += `</tbody></table></div><div class="summary-box"><div class="summary-title">البضاعة المباعة</div><table class="print-table" style="margin-top:0;"><thead><tr><th>الصنف</th><th>الكمية</th></tr></thead><tbody>`; if(data.sold_items && data.sold_items.length > 0) { data.sold_items.forEach(i => { html += `<tr><td>${i.product_name}</td><td>${Number(i.qty).toLocaleString("ar-EG")} ${i.unit_name}</td></tr>`; }); } else { html += `<tr><td colspan="2" style="text-align:center;">لا توجد مبيعات</td></tr>`; } html += `</tbody></table></div><div class="summary-box"><div class="summary-title">البضاعة المتبقية في السيارة حالياً</div><table class="print-table" style="margin-top:0;"><thead><tr><th>الصنف</th><th>الكمية</th></tr></thead><tbody>`; if(data.remaining_items && data.remaining_items.length > 0) { data.remaining_items.forEach(i => { html += `<tr><td>${i.product_name}</td><td>${Number(i.qty).toLocaleString("ar-EG")} ${i.unit_name}</td></tr>`; }); } else { html += `<tr><td colspan="2" style="text-align:center;">السيارة فارغة</td></tr>`; } html += `</tbody></table></div>`; $("tripSummaryBody").innerHTML = html; } catch (e) { $("tripSummaryBody").innerHTML = `<div style="color:red;">تعذر تحميل البيانات: ${err(e)}</div>`; } }
 
-/* ============ Auth & Init ============ */
-$("loginForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("loginMsg")); const loginValue=$("email").value.trim(); const password=$("password").value; busy($("loginBtn"),true,"جارٍ تسجيل الدخول...","تسجيل الدخول"); try{ let user; if(loginValue.includes("@")){ const {data,error}=await db.auth.signInWithPassword({email:loginValue,password}); if(error)throw error; user=data.user; } else{ const response=await fetch(USERNAME_LOGIN_URL,{ method:"POST", headers:{"Content-Type":"application/json","apikey":KEY}, body:JSON.stringify({username:loginValue,password}) }); let result={}; try{result=await response.json();}catch(_){} if(!response.ok||result.success!==true||!result.session)throw new Error(result.error||"تعذر تسجيل الدخول باسم المستخدم."); const {data,error}=await db.auth.setSession({ access_token:result.session.access_token, refresh_token:result.session.refresh_token }); if(error)throw error; user=data.user; } if(!user)throw new Error("لم يتم استرجاع بيانات المستخدم."); showApp(); await userInfo(user); await loadLookups(); await loadProducts(); if(canViewLocations)await loadLocations(); fillLocationsFilter(); if(canViewTreasuries)await loadTreasuries(); if(canViewStock)await loadStock(); if(canViewRecipes)await loadRecipes(); if(canViewProduction)await loadProduction(); if(canViewTrips)await loadTrips(); if(canViewCustomers)await loadCustomers(); if(canViewSales)await loadSales(); if(canViewCollections)await loadCollections(); if(canViewSuppliers)await loadSuppliers(); if(canViewPurchases)await loadPurchases(); if(canViewPartners)await loadPartners(); }catch(e){ msg($("loginMsg"),"تعذر تسجيل الدخول أو تجهيز البيانات: "+err(e),"error"); }finally{ busy($("loginBtn"),false,"","تسجيل الدخول"); } });
-$("forgotBtn").onclick=()=>{ hideSections(); $("recovery").classList.remove("hidden"); const loginValue=$("email").value.trim(); $("recoveryEmail").value=loginValue.includes("@")?loginValue:""; clear($("recoveryMsg")); }; $("backBtn").onclick=showLogin;
+/* ============ Auth & Init (مُصلَّح نهائيًا) ============ */
+async function bootAppAfterLogin(user){
+  showApp();
+  try{
+    await userInfo(user);
+    await loadLookups();
+    await loadProducts();
+    if(canViewLocations) await loadLocations();
+    fillLocationsFilter();
+    if(canViewTreasuries) await loadTreasuries();
+    if(canViewStock) await loadStock();
+    if(canViewRecipes) await loadRecipes();
+    if(canViewProduction) await loadProduction();
+    if(canViewTrips) await loadTrips();
+    if(canViewCustomers) await loadCustomers();
+    if(canViewSales) await loadSales();
+    if(canViewCollections) await loadCollections();
+    if(canViewSuppliers) await loadSuppliers();
+    if(canViewPurchases) await loadPurchases();
+    if(canViewPartners) await loadPartners();
+  }catch(loadErr){
+    console.error("Data load error:",loadErr);
+    alert("تم تسجيل الدخول، لكن تعذر تحميل بعض البيانات:\n"+err(loadErr));
+  }
+}
+
+$("loginForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  clear($("loginMsg"));
+  const loginValue=$("email").value.trim();
+  const password=$("password").value;
+  busy($("loginBtn"),true,"جارٍ تسجيل الدخول...","تسجيل الدخول");
+  try{
+    let user;
+    if(loginValue.includes("@")){
+      const {data,error}=await db.auth.signInWithPassword({email:loginValue,password});
+      if(error)throw error;
+      user=data.user;
+    }else{
+      const response=await fetch(USERNAME_LOGIN_URL,{method:"POST",headers:{"Content-Type":"application/json","apikey":KEY},body:JSON.stringify({username:loginValue,password})});
+      let result={}; try{result=await response.json();}catch(_){}
+      if(!response.ok||result.success!==true||!result.session)throw new Error(result.error||"تعذر تسجيل الدخول باسم المستخدم.");
+      const {data,error}=await db.auth.setSession({access_token:result.session.access_token,refresh_token:result.session.refresh_token});
+      if(error)throw error;
+      user=data.user;
+    }
+    if(!user)throw new Error("لم يتم استرجاع بيانات المستخدم.");
+    await bootAppAfterLogin(user);
+  }catch(e){
+    msg($("loginMsg"),"تعذر تسجيل الدخول: "+err(e),"error");
+    showLogin();
+  }finally{
+    busy($("loginBtn"),false,"","تسجيل الدخول");
+  }
+});
+
+$("forgotBtn").onclick=()=>{ hideSections(); $("recovery").classList.remove("hidden"); const loginValue=$("email").value.trim(); $("recoveryEmail").value=loginValue.includes("@")?loginValue:""; clear($("recoveryMsg")); };
+$("backBtn").onclick=showLogin;
 $("recoveryForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("recoveryMsg")); busy($("recoveryBtn"),true,"جارٍ إرسال الرابط...","إرسال رابط الاستعادة"); try{ const {error}=await db.auth.resetPasswordForEmail($("recoveryEmail").value.trim(),{redirectTo:APP_URL}); if(error)throw error; msg($("recoveryMsg"),"إذا كان البريد مسجلًا، فستصلك رسالة استعادة.","success"); }catch(e){ msg($("recoveryMsg"),"تعذر إرسال الرسالة: "+err(e),"error"); }finally{ busy($("recoveryBtn"),false,"","إرسال رابط الاستعادة"); } });
 $("newPassForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("newPassMsg")); const p=$("newPassword").value; if(p.length<8){msg($("newPassMsg"),"كلمة المرور يجب أن تكون 8 أحرف على الأقل.","error");return;} if(p!==$("confirmPassword").value){msg($("newPassMsg"),"كلمتا المرور غير متطابقتين.","error");return;} busy($("savePassBtn"),true,"جارٍ الحفظ...","حفظ كلمة المرور الجديدة"); try{ const {data,error:se}=await db.auth.getSession(); if(se)throw se; if(!data.session)throw Error("جلسة الاستعادة غير موجودة."); const {error}=await db.auth.updateUser({password:p}); if(error)throw error; recoveryMode=false; await db.auth.signOut(); showLogin(); msg($("loginMsg"),"تم تغيير كلمة المرور بنجاح.","success"); }catch(e){ msg($("newPassMsg"),"تعذر تغيير كلمة المرور: "+err(e),"error"); }finally{ busy($("savePassBtn"),false,"","حفظ كلمة المرور الجديدة"); } });
 $("addBtn").onclick=()=>openForm(); $("cancelBtn").onclick=()=>{ $("formCard").classList.add("hidden"); resetForm(); }; $("refreshBtn").onclick=loadProducts; $("search").addEventListener("input",renderProducts);
 $("logoutBtn").onclick=async()=>{ const {error}=await db.auth.signOut(); if(error){msg($("listMsg"),"تعذر تسجيل الخروج: "+err(error),"error");return;} canManage=false;isSystemAdmin=false; canViewLocations=false;canManageLocations=false; canViewTreasuries=false;canManageTreasuries=false; canViewExpenses=false;canManageExpenses=false; canViewPartners=false;canManagePartners=false; canViewStock=false;canManageStock=false; canViewRecipes=false;canManageRecipes=false; canViewProduction=false;canManageProduction=false; canViewTrips=false;canManageTrips=false; canViewCustomers=false;canManageCustomers=false; canViewSales=false;canManageSales=false; canViewCollections=false;canManageCollections=false; canViewSuppliers=false;canManageSuppliers=false; canViewPurchases=false;canManagePurchases=false; locationsCache=[];treasuriesCache=[];stockCache=[];customersCache=[];salesCache=[];collectionsCache=[];suppliersCache=[];purchasesCache=[];recipesCache=[];productionCache=[];tripsCache=[];partnersCache=[]; $("password").value=""; document.querySelectorAll(".card").forEach(c=>c.classList.add("hidden")); showLogin(); msg($("loginMsg"),"تم تسجيل الخروج.","success"); };
 document.querySelectorAll(".navbtn").forEach(b=>{ b.onclick=()=>page(b.dataset.page); });
-db.auth.onAuthStateChange(event=>{ if(event==="PASSWORD_RECOVERY"){ recoveryMode=true; hideSections(); $("newPass").classList.remove("hidden"); } if(event==="SIGNED_OUT"&&!recoveryMode){ canManage=false;isSystemAdmin=false; canViewLocations=false;canManageLocations=false; canViewTreasuries=false;canManageTreasuries=false; canViewExpenses=false;canManageExpenses=false; canViewPartners=false;canManagePartners=false; canViewStock=false;canManageStock=false; canViewRecipes=false;canManageRecipes=false; canViewProduction=false;canManageProduction=false; canViewTrips=false;canManageTrips=false; canViewCustomers=false;canManageCustomers=false; canViewSales=false;canManageSales=false; canViewCollections=false;canManageCollections=false; canViewSuppliers=false;canManageSuppliers=false; canViewPurchases=false;canManagePurchases=false; locationsCache=[];treasuriesCache=[];stockCache=[];customersCache=[];salesCache=[];collectionsCache=[];suppliersCache=[];purchasesCache=[];recipesCache=[];productionCache=[];tripsCache=[];partnersCache=[]; document.querySelectorAll(".card").forEach(c=>c.classList.add("hidden")); showLogin(); } });
-async function init(){ try{ const params=new URLSearchParams(location.search); const hash=location.hash; if(params.has("error")||params.has("error_description")||hash.includes("error=")){ showLogin(); msg($("loginMsg"),"رابط الاستعادة قد يكون منتهي الصلاحية.","error"); return; } const {data,error}=await db.auth.getSession(); if(error)throw error; if(data.session){ showApp(); await userInfo(data.session.user); await loadLookups(); await loadProducts(); if(canViewLocations)await loadLocations(); fillLocationsFilter(); if(canViewTreasuries)await loadTreasuries(); if(canViewStock)await loadStock(); if(canViewRecipes)await loadRecipes(); if(canViewProduction)await loadProduction(); if(canViewTrips)await loadTrips(); if(canViewCustomers)await loadCustomers(); if(canViewSales)await loadSales(); if(canViewCollections)await loadCollections(); if(canViewSuppliers)await loadSuppliers(); if(canViewPurchases)await loadPurchases(); if(canViewPartners)await loadPartners(); } else{ showLogin(); } }catch(e){ showLogin(); msg($("loginMsg"),"تعذر التحقق من الجلسة: "+err(e),"error"); } }
+db.auth.onAuthStateChange((event)=>{
+  if(event==="PASSWORD_RECOVERY"){
+    recoveryMode=true;
+    hideSections();
+    $("newPass").classList.remove("hidden");
+    return;
+  }
+  if(event==="SIGNED_OUT" && !recoveryMode){
+    const wasInApp = !$("nav").classList.contains("hidden");
+    if(wasInApp){
+      canManage=false; isSystemAdmin=false;
+      canViewLocations=false; canManageLocations=false;
+      canViewTreasuries=false; canManageTreasuries=false;
+      canViewExpenses=false; canManageExpenses=false;
+      canViewPartners=false; canManagePartners=false;
+      canViewStock=false; canManageStock=false;
+      canViewRecipes=false; canManageRecipes=false;
+      canViewProduction=false; canManageProduction=false;
+      canViewTrips=false; canManageTrips=false;
+      canViewCustomers=false; canManageCustomers=false;
+      canViewSales=false; canManageSales=false;
+      canViewCollections=false; canManageCollections=false;
+      canViewSuppliers=false; canManageSuppliers=false;
+      canViewPurchases=false; canManagePurchases=false;
+      locationsCache=[]; treasuriesCache=[]; stockCache=[];
+      customersCache=[]; salesCache=[]; collectionsCache=[];
+      suppliersCache=[]; purchasesCache=[]; recipesCache=[];
+      productionCache=[]; tripsCache=[]; partnersCache=[];
+      document.querySelectorAll(".card").forEach(c=>c.classList.add("hidden"));
+      showLogin();
+      msg($("loginMsg"),"انتهت جلستك. يرجى تسجيل الدخول مرة أخرى.","error");
+    }
+  }
+});
+async function init(){
+  try{
+    const params=new URLSearchParams(location.search);
+    const hash=location.hash;
+    if(params.has("error")||params.has("error_description")||hash.includes("error=")){
+      showLogin();
+      msg($("loginMsg"),"رابط الاستعادة قد يكون منتهي الصلاحية.","error");
+      return;
+    }
+    const {data,error}=await db.auth.getSession();
+    if(error)throw error;
+    if(!data.session){ showLogin(); return; }
+    await bootAppAfterLogin(data.session.user);
+  }catch(e){
+    showLogin();
+    msg($("loginMsg"),"تعذر التحقق من الجلسة: "+err(e),"error");
+  }
+}
 init();
 })();
 </script>
