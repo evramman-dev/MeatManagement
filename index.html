@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
 <title>MeatManagement</title>
+<link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--g:#173c2c;--g2:#24563e;--gold:#d5b16a;--bg:#f4f6f3;--line:#e0e6df;--muted:#68736a;--red:#a52b2b}
@@ -111,7 +112,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 </header>
 <main>
 <section id="login" class="card">
-<h2>🔐 تسجيل الدخول <span style="font-size:10px;color:#999;">[v13]</span></h2>
+<h2>🔐 تسجيل الدخول <span style="font-size:10px;color:#999;">[v14]</span></h2>
 <p class="desc">سجّل الدخول باستخدام اسم المستخدم أو البريد الإلكتروني وكلمة المرور.</p>
 <form id="loginForm">
 <label for="email">اسم المستخدم أو البريد الإلكتروني</label>
@@ -1758,6 +1759,15 @@ db.auth.onAuthStateChange(event=>{ if(event==="PASSWORD_RECOVERY"){ recoveryMode
 async function init(){ try{ const params=new URLSearchParams(location.search); const hash=location.hash; if(params.has("error")||params.has("error_description")||hash.includes("error=")){ showLogin(); msg($("loginMsg"),"رابط الاستعادة قد يكون منتهي الصلاحية.","error"); return; } const {data,error}=await db.auth.getSession(); if(error)throw error; if(data.session){ await bootAppAfterLogin(data.session.user); } else{ showLogin(); } }catch(e){ showLogin(); msg($("loginMsg"),"تعذر التحقق من الجلسة: "+err(e),"error"); } }
 init();
 })();
+
+// ====== PWA Service Worker Registration ======
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('[PWA] Service Worker registered', reg.scope))
+      .catch(err => console.error('[PWA] Service Worker registration failed', err));
+  });
+}
 </script>
 </body>
 </html>
