@@ -94,6 +94,10 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 .task-item:last-child { border-bottom: none; }
 .task-box .btn { margin: 10px 15px; width: calc(100% - 30px); }
 .offline-banner { position: fixed; top: 0; left: 0; right: 0; background: #a52b2b; color: #fff; text-align: center; padding: 10px; font-size: 13px; z-index: 9999; font-weight: bold; display: none; }
+/* ستايل النوافذ المنبثقة (Pop-ups) */
+.modal-form { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 16px; }
+.modal-form.active { display: flex; }
+.modal-form-content { background: white; border-radius: 16px; width: 100%; max-width: 650px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 5px 20px rgba(0,0,0,0.2); }
 @media print {
   @page { margin: 10mm; size: A4 portrait; }
   body { background: #fff !important; }
@@ -228,7 +232,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     </div>
   </div>
   
-  <!-- نافذة إضافة مستخدم -->
   <div id="userFormModal" class="modal-form">
     <div class="modal-form-content">
       <div class="modal-header"><h3>إنشاء حساب موظف</h3><button class="close-btn" onclick="document.getElementById('userFormModal').classList.remove('active')">&times;</button></div>
@@ -304,7 +307,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     </div>
   </div>
 
-  <!-- شاشة تحويل الخزائن الجديدة -->
   <div id="sectionTreasuryTransfers" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div class="card">
@@ -458,7 +460,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     </div>
   </div>
 
-  <!-- شاشة تحويل المخازن الجديدة -->
   <div id="sectionStockTransfers" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div class="card">
@@ -750,7 +751,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     </div>
   </div>
 
-  <!-- شاشة سداد الموردين الجديدة -->
   <div id="sectionSupplierPayments" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div class="card">
@@ -776,7 +776,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     </div>
   </div>
 
-  <!-- شاشة مرتجع مشتريات الجديدة -->
   <div id="sectionPurchaseReturns" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div class="card">
@@ -804,7 +803,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     </div>
   </div>
 
-  <!-- شاشة التقارير الجديدة -->
   <div id="sectionReports" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div class="card">
@@ -824,7 +822,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     </div>
   </div>
 
-  <!-- شاشة التحصيلات والمنتجات (كانت في v15، جاري وضعها هنا لتكتمل) -->
   <div id="sectionCollections" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="collectionsCard" class="card hidden">
@@ -916,7 +913,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 <button class="navbtn" data-page="data" type="button">🗂️ البيانات</button>
 </nav>
 
-<!-- المودالات (للطباعة والتفاصيل) -->
 <div id="invoiceDetailsModal" class="modal hidden">
   <div class="modal-content">
     <div class="modal-header"><h3>تفاصيل الفاتورة</h3><button class="close-btn" onclick="document.getElementById('invoiceDetailsModal').classList.add('hidden')">&times;</button></div>
@@ -988,7 +984,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     <div class="modal-body" id="tripSummaryBody"></div>
   </div>
 </div>
-
 <script>
 (() => {
 "use strict";
@@ -997,13 +992,7 @@ const KEY="sb_publishable_7ZjltiXgqnY4BJrZH4iZog_Jh-xfbau";
 const APP_URL="https://evramman-dev.github.io/MeatManagement/";
 const MANAGE_USERS_URL=URL+"/functions/v1/Manage-users";
 const USERNAME_LOGIN_URL=URL+"/functions/v1/username-login";
-  <style>
-/* ستايل النوافذ المنبثقة (Pop-ups) */
-.modal-form { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 16px; }
-.modal-form.active { display: flex; }
-.modal-form-content { background: white; border-radius: 16px; width: 100%; max-width: 650px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 5px 20px rgba(0,0,0,0.2); }
-</style>
-<script>
+
 const db=window.supabase.createClient(URL,KEY,{ auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true, flowType:"implicit" } });
 const $=id=>document.getElementById(id);
 
@@ -1041,6 +1030,7 @@ function busy(btn,on,onText,offText){ if(!btn) return; btn.disabled=on; btn.text
 function fmt(n){ const v=Number(n||0); return v.toLocaleString("ar-EG",{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function todayISO(){ const d=new Date(); const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,"0"); const day=String(d.getDate()).padStart(2,"0"); return y+"-"+m+"-"+day; }
 
+// إصلاح مشكلة الواتساب
 function formatWaPhone(phone) {
     if (!phone) return "";
     let p = phone.replace(/\D/g, '');
@@ -1146,7 +1136,7 @@ function fillTreasurySelects() {
 
 let myChart = null;
 async function loadTasks() {
-  const box = $("tasksList");
+  const box = $("tasksList"); if(!box) return;
   if (!navigator.onLine) { box.innerHTML = "<div class='empty'>أنت أوفلاين حالياً.</div>"; return; }
   box.innerHTML = "<div class='empty'>جارٍ تحميل مهامك...</div>";
   
@@ -1501,6 +1491,7 @@ async function init(){
   }catch(e){ showLogin(); msg($("loginMsg"),"خطأ في الجلسة: "+err(e),"error"); }
 }
 init();
+})();
 </script>
 </body>
 </html>
