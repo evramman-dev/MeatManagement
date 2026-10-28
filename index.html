@@ -1026,7 +1026,7 @@ try {
 
   let productsCache=[], categories=[], units=[], cartonUnitId=null;
   let locationsCache=[], treasuriesCache=[], stockCache=[], customersCache=[], salesCache=[], collectionsCache=[], suppliersCache=[], purchasesCache=[], recipesCache=[], productionCache=[], tripsCache=[], partnersCache=[];
-  let invoiceItemCounter=0, purchaseItemCounter=0, recipeItemCounter=0, returnItemCounter=0, exchangeItemCounter=0;
+  let invoiceItemCounter=0, purchaseItemCounter=0, recipeItemCounter=0, returnItemCounter=0, exchangeItemCounter=0, stItemCounter=0, prItemCounter=0;
 
   const allowedRoles={ SALES_MANAGER:"مدير المبيعات", SALES_REP:"مندوب المبيعات", WAREHOUSE_KEEPER:"أمين المخزن", PRODUCTION_MANAGER:"مسؤول الإنتاج", ACCOUNTANT:"المحاسب", GENERAL_MANAGER:"المدير العام" };
 
@@ -1237,6 +1237,17 @@ try {
       try{ canViewPurchaseReturns=await permission("PURCHASES_MANAGE") || isSystemAdmin; if($("menuPurchaseReturns")) $("menuPurchaseReturns").classList.toggle("hidden",!canViewPurchaseReturns); }catch(e){}
       try{ canViewReports=await permission("SALES_VIEW") || isSystemAdmin; if($("menuReports")) $("menuReports").classList.toggle("hidden",!canViewReports); }catch(e){}
 
+      // Add missing toggles
+      try{ canViewCustomers=await permission("CUSTOMERS_VIEW"); canManageCustomers=await permission("CUSTOMERS_MANAGE"); if($("menuCustomers")) $("menuCustomers").classList.toggle("hidden",!canViewCustomers); }catch(e){}
+      try{ canViewSuppliers=await permission("SUPPLIERS_VIEW"); canManageSuppliers=await permission("SUPPLIERS_MANAGE"); if($("menuSuppliers")) $("menuSuppliers").classList.toggle("hidden",!canViewSuppliers); }catch(e){}
+      try{ canViewPurchases=await permission("PURCHASES_VIEW"); canManagePurchases=await permission("PURCHASES_MANAGE"); if($("menuPurchases")) $("menuPurchases").classList.toggle("hidden",!canViewPurchases); }catch(e){}
+      try{ canViewCollections=await permission("COLLECTIONS_VIEW"); canManageCollections=await permission("COLLECTIONS_MANAGE"); if($("menuCollections")) $("menuCollections").classList.toggle("hidden",!canViewCollections); }catch(e){}
+      try{ canViewTrips=await permission("TRIPS_VIEW"); canManageTrips=await permission("TRIPS_MANAGE"); if($("menuTrips")) $("menuTrips").classList.toggle("hidden",!canViewTrips); }catch(e){}
+      try{ canViewExpenses=await permission("EXPENSES_VIEW") || isSystemAdmin; canManageExpenses=await permission("EXPENSES_MANAGE") || isSystemAdmin; if($("menuExpenses")) $("menuExpenses").classList.toggle("hidden",!canViewExpenses); }catch(e){}
+      try{ canViewPartners=await permission("PARTNERS_VIEW") || isSystemAdmin; canManagePartners=await permission("PARTNERS_MANAGE") || isSystemAdmin; if($("menuPartners")) $("menuPartners").classList.toggle("hidden",!canViewPartners); }catch(e){}
+      try{ canViewRecipes=await permission("RECIPES_VIEW"); canManageRecipes=await permission("RECIPES_MANAGE"); if($("menuRecipes")) $("menuRecipes").classList.toggle("hidden",!canViewRecipes); }catch(e){}
+      try{ canViewProduction=await permission("PRODUCTION_VIEW"); canManageProduction=await permission("PRODUCTION_MANAGE"); if($("menuProduction")) $("menuProduction").classList.toggle("hidden",!canViewProduction); }catch(e){}
+
       if(isSystemAdmin){ if($("menuUsers")) $("menuUsers").classList.remove("hidden"); if($("menuAccounting")) $("menuAccounting").classList.remove("hidden"); if($("accountingCard")) $("accountingCard").classList.remove("hidden"); await loadUserManagementLookups(); }
       else{ if($("menuUsers")) $("menuUsers").classList.add("hidden"); if($("userManagementCard")) $("userManagementCard").classList.add("hidden"); }
       
@@ -1386,10 +1397,26 @@ try {
           html += `</tbody>`;
           $("modalInvoiceItems").innerHTML = html;
           $("modalInvoiceHeader").innerHTML = `فاتورة: ${inv.invoice_number} | العميل: ${customerName(inv.customer_id)} | الإجمالي: ${fmt(inv.net_total)}`;
+          
+          const subtotal = Number(inv.subtotal); const discount = Number(inv.discount_amount);
+          $("modalInvoiceTotals").innerHTML = `<div class="line"><span>الإجمالي قبل الخصم:</span><span>${fmt(subtotal)}</span></div><div class="line"><span>الخصم (${subtotal > 0 ? ((discount / subtotal) * 100).toFixed(2) : 0}%):</span><span style="color:red;">-${fmt(discount)}</span></div><div class="line" style="border-top:1px dashed #ccc; padding-top:5px;"><span>إجمالي الفاتورة بعد الخصم:</span><span style="font-weight:bold;">${fmt(inv.net_total)}</span></div><div class="line"><span>مدفوع من الفاتورة:</span><span style="color:green;">${fmt(inv.paid_amount)}</span></div><div class="line grand"><span>متبقي من الفاتورة:</span><span style="color:red;">${fmt(inv.remaining_amount)}</span></div>`;
+          
+          let totalCustInv = 0, totalCustPaid = 0; salesCache.filter(i => i.customer_id === inv.customer_id && i.status !== 'CANCELLED').forEach(i => { totalCustInv += Number(i.net_total); totalCustPaid += Number(i.paid_amount); });
+          let totalCustRemaining = totalCustInv - totalCustPaid; let prevBalance = totalCustRemaining - Number(inv.remaining_amount);
+          $("modalInvoiceAccountSummary").innerHTML = `<div style="background:#e9f6ec; padding:10px; border-radius:8px; margin-top:10px; border:1px solid #c9d5c9;"><h4 style="margin:0 0 8px; color:#173c2c; text-align:center;">ملخص حساب العميل</h4><div class="line"><span>الرصيد السابق (قبل الفاتورة):</span><span>${fmt(prevBalance)}</span></div><div class="line"><span>إجمالي حساب العميل (كل الفواتير):</span><span>${fmt(totalCustInv)}</span></div><div class="line"><span>إجمالي المدفوع (كل التحصيلات):</span><span style="color:green;">${fmt(totalCustPaid)}</span></div><div class="line grand" style="color:#173c2c;"><span>إجمالي المتبقي (الرصيد الحالي):</span><span>${fmt(totalCustRemaining)}</span></div></div>`;
+          
           const phone = customerPhone(inv.customer_id);
           const waBtn = $("shareWhatsappBtn");
-          let waText = `*MeatManagement*\nفاتورة: ${inv.invoice_number}\nالإجمالي: ${fmt(inv.net_total)}\nالمتبقي: ${fmt(inv.remaining_amount)}`;
-          waBtn.onclick = () => { let formattedPhone = formatWaPhone(phone); window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(waText)}`, '_blank'); };
+          let waText = `*MeatManagement*\nفاتورة رقم: ${inv.invoice_number}\nالتاريخ: ${new Date(inv.invoice_date).toLocaleDateString("ar-EG")}\nالعميل: ${customerName(inv.customer_id)}\n------------------------\n`;
+          (items || []).forEach(item => { const p = productsCache.find(x => String(x.product_id) === String(item.product_id)); waText += `▪️ ${p?.product_name || 'منتج'} - ${item.quantity} ${unitName(item.unit_id)} × ${fmt(item.unit_price)}\n`; });
+          waText += `------------------------\nالإجمالي قبل الخصم: ${fmt(subtotal)}\nالخصم: ${fmt(discount)}\nإجمالي الفاتورة: ${fmt(inv.net_total)}\nمدفوع: ${fmt(inv.paid_amount)}\nمتبقي: ${fmt(inv.remaining_amount)}\n\n`;
+          waText += `*ملخص الحساب:*\nالرصيد السابق: ${fmt(prevBalance)}\nإجمالي المتبقي (رصيدك الحالي): ${fmt(totalCustRemaining)}\n\nشكراً لتعاملكم معنا!`;
+          
+          waBtn.onclick = () => { 
+              let formattedPhone = formatWaPhone(phone); 
+              let url = formattedPhone ? `https://wa.me/${formattedPhone}?text=${encodeURIComponent(waText)}` : `https://wa.me/?text=${encodeURIComponent(waText)}`;
+              window.open(url, '_blank'); 
+          };
       } catch(e) { alert(err(e)); }
   }
 
