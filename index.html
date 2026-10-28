@@ -111,7 +111,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 </header>
 <main>
 <section id="login" class="card">
-<h2>🔐 تسجيل الدخول <span style="font-size:10px;color:#999;">[v12]</span></h2>
+<h2>🔐 تسجيل الدخول <span style="font-size:10px;color:#999;">[v13]</span></h2>
 <p class="desc">سجّل الدخول باستخدام اسم المستخدم أو البريد الإلكتروني وكلمة المرور.</p>
 <form id="loginForm">
 <label for="email">اسم المستخدم أو البريد الإلكتروني</label>
@@ -910,9 +910,7 @@ function hideSections(){ ["login","recovery","newPass","home","tasks","data","na
 function showLogin(){ hideSections(); $("login").classList.remove("hidden"); }
 function showApp(){ hideSections(); $("nav").classList.remove("hidden"); page("home"); }
 
-/* ⬇️⬇️⬇️ الإصلاح الأساسي هنا ⬇️⬇️⬇️ */
 window.openSection = function(name) {
-  // نجبر الموقع يروح لقسم البيانات أولاً (عشان لو جاي من شاشة المهام)
   $("home").classList.add("hidden");
   $("tasks").classList.add("hidden");
   $("data").classList.remove("hidden");
@@ -926,7 +924,6 @@ window.openSection = function(name) {
   if (name === "expenses") { loadExpenses(); }
   if (name === "users") { loadUsersList(); }
 }
-/* ⬆️⬆️⬆️ نهاية الإصلاح ⬆️⬆️⬆️ */
 
 window.closeSection = function() {
   document.querySelectorAll(".sub-section").forEach(el => el.classList.add("hidden"));
@@ -1006,15 +1003,34 @@ async function loadTasks() {
 
   try {
     if (canViewStock) {
-      const { data: stockData, error: stockErr } = await db.from("stock_balances").select("quantity, products(product_name, product_code, minimum_stock)").limit(200);
+      const { data: stockData, error: stockErr } = await db.from("stock_balances").select("product_id, quantity, products(product_name, product_code, minimum_stock)").limit(500);
+      
       if (stockErr) {
         html += `<div class="task-box" style="border-color:red;"><h3 style="color:red;">⚠️ خطأ في جلب المخزون</h3><div class="task-item">${err(stockErr)}</div></div>`;
       } else if (stockData) {
-        const lowStock = stockData.filter(s => s.products && Number(s.quantity) < Number(s.products.minimum_stock));
+        // تجميع الأرصدة لكل منتج في كل المواقع
+        const productTotals = {};
+        stockData.forEach(s => {
+          if (!s.products) return;
+          const pid = s.product_id;
+          if (!productTotals[pid]) {
+            productTotals[pid] = {
+              name: s.products.product_name,
+              code: s.products.product_code,
+              minStock: Number(s.products.minimum_stock || 0),
+              totalQty: 0
+            };
+          }
+          productTotals[pid].totalQty += Number(s.quantity || 0);
+        });
+
+        // مقارنة الإجمالي بالحد الأدنى
+        const lowStock = Object.values(productTotals).filter(p => p.totalQty < p.minStock);
+
         if (lowStock.length > 0) {
           html += `<div class="task-box"><h3>⚠️ تنبيهات نقص المخزون (${lowStock.length} صنف)</h3>`;
           lowStock.slice(0, 5).forEach(item => {
-            html += `<div class="task-item">📦 <b>${item.products.product_name}</b> (${item.products.product_code})<br>الرصيد الحالي: <span style="color:red;">${item.quantity}</span> | الحد الأدنى: ${item.products.minimum_stock}</div>`;
+            html += `<div class="task-item">📦 <b>${item.name}</b> (${item.code})<br>إجمالي الرصيد: <span style="color:red;">${item.totalQty}</span> | الحد الأدنى: ${item.minStock}</div>`;
           });
           if (lowStock.length > 5) html += `<div class="task-item" style="text-align:center; color:var(--muted);">... و ${lowStock.length - 5} أصناف أخرى</div>`;
           html += `<button class="btn secondary" onclick="window.openSection('stock')">الذهاب للمخزون</button></div>`;
