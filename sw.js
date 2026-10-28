@@ -1,5 +1,5 @@
 // Service Worker for MeatManagement PWA
-const CACHE_VERSION = 'meat-v14';
+const CACHE_VERSION = 'meat-v16';
 const CORE_CACHE = [
   './',
   './index.html',
