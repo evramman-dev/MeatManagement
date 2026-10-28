@@ -84,6 +84,13 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 .tab-btn.active { background: var(--g); color: white; border-color: var(--g); }
 .summary-box { border: 1px solid var(--line); padding: 10px; border-radius: 10px; background: #f9fbf9; margin-bottom: 10px; }
 .summary-title { font-weight: bold; color: var(--g); margin-bottom: 5px; border-bottom: 1px solid var(--line); padding-bottom: 5px; }
+/* ---- ستايل شاشة مهامي ---- */
+.task-box { border: 1px solid var(--line); border-radius: 12px; background: #fff; margin-bottom: 15px; overflow: hidden; }
+.task-box h3 { margin: 0; padding: 12px 15px; background: #f9fbf9; font-size: 15px; color: var(--g); border-bottom: 1px solid var(--line); }
+.task-item { padding: 10px 15px; border-bottom: 1px dashed var(--line); font-size: 13px; line-height: 1.6; }
+.task-item:last-child { border-bottom: none; }
+.task-box .btn { margin: 10px 15px; width: calc(100% - 30px); }
+/* ------------------------ */
 @media print {
   @page { margin: 10mm; size: A4 portrait; }
   body { background: #fff !important; }
@@ -149,8 +156,8 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 </div>
 </section>
 <section id="tasks" class="card hidden">
-<h2>📋 مهامي</h2>
-<p class="desc">سيتم توصيل مهام الموظفين حسب أدوارهم في المراحل التالية.</p>
+<h2>📋 مهامي والتنبيهات</h2>
+<div id="tasksList"><div class="empty">جارٍ تحميل مهامك...</div></div>
 </section>
 <section id="data" class="hidden">
   <div id="dataDashboard" class="card">
@@ -175,7 +182,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
       <div class="dash-item hidden" id="menuUsers" onclick="window.openSection('users')"><div class="dash-icon">👤</div><div class="dash-title">المستخدمون</div></div>
     </div>
   </div>
-  <div id="sectionUsers" class="sub-section hidden">
+    <div id="sectionUsers" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="userManagementCard" class="card hidden">
       <h2>👥 إدارة المستخدمين</h2>
@@ -864,7 +871,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 <script>
 (() => {
 "use strict";
-  const URL="https://mklbemoisdkoyrwcrmoj.supabase.co";
+const URL="https://mklbemoisdkoyrwcrmoj.supabase.co";
 const KEY="sb_publishable_7ZjltiXgqnY4BJrZH4iZog_Jh-xfbau";
 const APP_URL="https://evramman-dev.github.io/MeatManagement/";
 const MANAGE_USERS_URL=URL+"/functions/v1/Manage-users";
@@ -873,7 +880,7 @@ const USERNAME_LOGIN_URL=URL+"/functions/v1/username-login";
 const db=window.supabase.createClient(URL,KEY,{ auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true, flowType:"implicit" } });
 const $=id=>document.getElementById(id);
 
-let recoveryMode=false, canManage=false, isSystemAdmin=false;
+let recoveryMode=false, canManage=false, isSystemAdmin=false, currentUserRole=null;
 let canViewLocations=false, canManageLocations=false;
 let canViewTreasuries=false, canManageTreasuries=false;
 let canViewExpenses=false, canManageExpenses=false;
@@ -925,6 +932,7 @@ function page(name){
   $("tasks").classList.toggle("hidden",name!=="tasks");
   $("data").classList.toggle("hidden",name!=="data");
   document.querySelectorAll(".navbtn").forEach(b=>{ b.classList.toggle("active",b.dataset.page===name); });
+  if(name==="tasks"){ loadTasks(); }
   if(name==="data"){
     window.closeSection();
     loadProducts();
@@ -948,36 +956,77 @@ async function permission(code){
   return data===true;
 }
 
-function typeName(v){ return({RAW:"خام",SEMI_FINISHED:"نصف مصنع",FINISHED:"منتج تام"})[v]||v||"غير محدد"; }
-function catName(id){ return categories.find(x=>String(x.category_id)===String(id))?.category_name||"غير محدد"; }
-function unitName(id){ return units.find(x=>String(x.unit_id)===String(id))?.unit_name||"غير محدد"; }
-function customerName(id){ return customersCache.find(x=>String(x.customer_id)===String(id))?.customer_name||"غير محدد"; }
-function customerPhone(id){ return customersCache.find(x=>String(x.customer_id)===String(id))?.phone||""; }
-function locationName(id){ return locationsCache.find(x=>String(x.location_id)===String(id))?.location_name||"غير محدد"; }
-function treasuryName(id){ return treasuriesCache.find(x=>String(x.treasury_id)===String(id))?.treasury_name||"غير محدد"; }
-function invoiceNumber(id){ return salesCache.find(x=>String(x.sales_invoice_id)===String(id))?.invoice_number||"—"; }
-function supplierName(id){ return suppliersCache.find(x=>String(x.supplier_id)===String(id))?.supplier_name||"غير محدد"; }
-function productName(id){ return productsCache.find(x=>String(x.product_id)===String(id))?.product_name||"غير محدد"; }
+/* ============ شاشة مهامي ============ */
+async function loadTasks() {
+  const box = $("tasksList");
+  box.innerHTML = "<div class='empty'>جارٍ تحميل مهامك...</div>";
+  let html = "";
 
-function fillSelect(el,items,idkey,namekey,placeholder){
-  el.replaceChildren();
-  const first=document.createElement("option"); first.value=""; first.textContent=placeholder; el.appendChild(first);
-  items.forEach(x=>{ const op=document.createElement("option"); op.value=x[idkey]; op.textContent=x[namekey]; el.appendChild(op); });
+  try {
+    // 1. تنبيهات نقص المخزون (للمخزن والمدير)
+    if (canViewStock) {
+      const { data: stockData, error: stockErr } = await db.from("stock_balances").select("quantity, products(product_name, product_code, minimum_stock)").limit(200);
+      if (!stockErr && stockData) {
+        const lowStock = stockData.filter(s => s.products && Number(s.quantity) < Number(s.products.minimum_stock));
+        if (lowStock.length > 0) {
+          html += `<div class="task-box"><h3>⚠️ تنبيهات نقص المخزون (${lowStock.length} صنف)</h3>`;
+          lowStock.slice(0, 5).forEach(item => {
+            html += `<div class="task-item">📦 <b>${item.products.product_name}</b> (${item.products.product_code})<br>الرصيد الحالي: <span style="color:red;">${item.quantity}</span> | الحد الأدنى: ${item.products.minimum_stock}</div>`;
+          });
+          if (lowStock.length > 5) html += `<div class="task-item" style="text-align:center; color:var(--muted);">... و ${lowStock.length - 5} أصناف أخرى</div>`;
+          html += `<button class="btn secondary" onclick="window.openSection('stock')">الذهاب للمخزون</button></div>`;
+        }
+      }
+    }
+
+    // 2. الفواتير الآجلة (للمحاسبة والمبيعات)
+    if (canViewSales) {
+      const { data: unpaidInvoices, error: invErr } = await db.from("sales_invoices").select("invoice_number, remaining_amount, customers(customer_name)").eq("status", "POSTED").gt("remaining_amount", 0).limit(20);
+      if (!invErr && unpaidInvoices && unpaidInvoices.length > 0) {
+        html += `<div class="task-box"><h3>💰 فواتير آجلة محتاجة تحصيل (${unpaidInvoices.length} فاتورة)</h3>`;
+        unpaidInvoices.slice(0, 5).forEach(inv => {
+          html += `<div class="task-item">🧾 فاتورة <b>${inv.invoice_number}</b><br>العميل: ${inv.customers?.customer_name || 'غير معروف'} | المتبقي: <span style="color:red;">${fmt(inv.remaining_amount)}</span></div>`;
+        });
+        html += `<button class="btn secondary" onclick="window.openSection('collections')">الذهاب للتحصيلات</button></div>`;
+      }
+    }
+
+    // 3. الجولات المعلقة (للمندوبين)
+    if (canViewTrips) {
+      const { data: draftTrips, error: tripErr } = await db.from("trips").select("trip_number, sales_reps(name)").eq("status", "DRAFT").limit(20);
+      if (!tripErr && draftTrips && draftTrips.length > 0) {
+        html += `<div class="task-box"><h3>🚐 جولات مسودة (${draftTrips.length} جولة)</h3>`;
+        draftTrips.slice(0, 5).forEach(trip => {
+          html += `<div class="task-item">🚚 جولة <b>${trip.trip_number}</b> - المندوب: ${trip.sales_reps?.name || 'غير معروف'} (محتاجة تحميل وتسوية)</div>`;
+        });
+        html += `<button class="btn secondary" onclick="window.openSection('trips')">الذهاب للجولات</button></div>`;
+      }
+    }
+
+    // 4. أوامر التشغيل المسودة (للإنتاج)
+    if (canViewProduction) {
+      const { data: draftProd, error: prodErr } = await db.from("production_orders").select("order_number, recipe_id, recipes(recipe_name)").eq("status", "DRAFT").limit(20);
+      if (!prodErr && draftProd && draftProd.length > 0) {
+        html += `<div class="task-box"><h3>🏭 أوامر تشغيل معلقة (${draftProd.length} أمر)</h3>`;
+        draftProd.slice(0, 5).forEach(p => {
+          html += `<div class="task-item">⚙️ أمر <b>${p.order_number}</b> - الوصفة: ${p.recipes?.recipe_name || 'غير معروف'} (بانتظار التنفيذ)</div>`;
+        });
+        html += `<button class="btn secondary" onclick="window.openSection('production')">الذهاب للإنتاج</button></div>`;
+      }
+    }
+
+    if (!html) {
+      html = "<div class='empty' style='padding:40px 10px;'><div style='font-size:40px;margin-bottom:10px;'>✅</div>مفيش مهام معلقة حالياً!<br>كل شغلك متظبط.</div>";
+    }
+
+    box.innerHTML = html;
+
+  } catch (e) {
+    box.innerHTML = `<div class="empty error">حدث خطأ أثناء تحميل المهام: ${err(e)}</div>`;
+  }
 }
-
-async function loadLookups(){
-  const [c,u]=await Promise.all([ db.from("product_categories").select("category_id,category_name").order("category_id"), db.from("units").select("unit_id,unit_name,is_package_unit").order("unit_id") ]);
-  if(c.error)throw c.error; if(u.error)throw u.error;
-  categories=c.data||[]; units=u.data||[];
-  cartonUnitId=units.find(x=>x.is_package_unit===true)?.unit_id||null;
-  fillSelect($("category"),categories,"category_id","category_name","اختر التصنيف");
-  fillSelect($("baseUnit"),units,"unit_id","unit_name","اختر الوحدة الأساسية");
-  fillSelect($("purchaseUnit"),units,"unit_id","unit_name","بدون تحديد");
-  fillSelect($("salesUnit"),units,"unit_id","unit_name","بدون تحديد");
-  fillSelect($("recipeOutputUnit"),units,"unit_id","unit_name","اختر الوحدة");
-}
-
-/* ============ إدارة المستخدمين ============ */
+/* ======================================== */
+ /* ============ إدارة المستخدمين ============ */
 function updateSalesRepField(){
   const roleId=$("newUserRole").value;
   let roleCode=null;
@@ -1060,7 +1109,7 @@ async function userInfo(user){
   if(error)throw error; if(!data)throw new Error("لا يوجد سجل موظف مرتبط بحساب الدخول."); if(!data.is_active)throw new Error("حساب الموظف غير مفعّل.");
   const {data:role,error:roleError}=await db.from("app_roles").select("role_code,is_active").eq("role_id",data.role_id).maybeSingle();
   if(roleError)throw roleError; if(!role||!role.is_active)throw new Error("الدور الوظيفي لحسابك غير موجود أو غير مفعّل.");
-  isSystemAdmin=role.role_code==="SYSTEM_ADMIN"; $("userInfo").textContent="مرحبًا "+(data.display_name||"بك");
+  isSystemAdmin=role.role_code==="SYSTEM_ADMIN"; currentUserRole=role.role_code; $("userInfo").textContent="مرحبًا "+(data.display_name||"بك");
   await db.from("app_users").update({ last_login: new Date().toISOString() }).eq("user_id", user.id);
 
   canManage=await permission("PRODUCTS_MANAGE"); $("menuProducts").classList.toggle("hidden", !canManage); $("addBtn").classList.toggle("hidden",!canManage);
@@ -1437,13 +1486,13 @@ function resetReturnForm(){ $("returnForm").reset(); $("returnType").value="RETU
 
 function addReturnItemRow(){
   returnItemCounter++; const wrap=document.createElement("div");wrap.className="item-row";
-  const prodLabel=document.createElement("label");prodLabel.textContent="المنتج *"; const prodSel=document.createElement("select");prodSel.className="item-product";prodSel.required=true;
+  const prodLabel=document.createElement("label");prodLabel.textContent="المنتج *"; const prodSel=document.createElement("select");prodSel.className="item-product";
   const first=document.createElement("option");first.value="";first.textContent="اختر المنتج";prodSel.appendChild(first);
   productsCache.filter(p=>p.is_active).forEach(p=>{ const op=document.createElement("option");op.value=String(p.product_id);op.textContent=p.product_name+" ("+p.product_code+")"; op.dataset.baseUnit=String(p.base_unit_id||""); op.dataset.unitsCarton=String(p.units_per_carton||""); prodSel.appendChild(op); });
   const grid3=document.createElement("div");grid3.className="grid3";
-  const unitWrap=document.createElement("div"); const unitLabel=document.createElement("label");unitLabel.textContent="الوحدة *"; const unitSel=document.createElement("select");unitSel.className="item-unit";unitSel.required=true; unitWrap.append(unitLabel,unitSel);
-  const qtyWrap=document.createElement("div"); const qtyLabel=document.createElement("label");qtyLabel.textContent="الكمية *"; const qty=document.createElement("input");qty.type="number";qty.className="item-qty";qty.min="0.0001";qty.step="0.0001";qty.required=true; qtyWrap.append(qtyLabel,qty);
-  const priceWrap=document.createElement("div"); const priceLabel=document.createElement("label");priceLabel.textContent="سعر الوحدة *"; const price=document.createElement("input");price.type="number";price.className="item-price";price.min="0";price.step="0.01";price.required=true; priceWrap.append(priceLabel,price);
+  const unitWrap=document.createElement("div"); const unitLabel=document.createElement("label");unitLabel.textContent="الوحدة *"; const unitSel=document.createElement("select");unitSel.className="item-unit"; unitWrap.append(unitLabel,unitSel);
+  const qtyWrap=document.createElement("div"); const qtyLabel=document.createElement("label");qtyLabel.textContent="الكمية *"; const qty=document.createElement("input");qty.type="number";qty.className="item-qty";qty.min="0.0001";qty.step="0.0001"; qtyWrap.append(qtyLabel,qty);
+  const priceWrap=document.createElement("div"); const priceLabel=document.createElement("label");priceLabel.textContent="سعر الوحدة *"; const price=document.createElement("input");price.type="number";price.className="item-price";price.min="0";price.step="0.01"; priceWrap.append(priceLabel,price);
   grid3.append(unitWrap,qtyWrap,priceWrap);
   const lineTotal=document.createElement("div");lineTotal.className="item-line-total";lineTotal.textContent="الإجمالي: 0";
   const removeBtn=document.createElement("button");removeBtn.type="button";removeBtn.className="btn danger";removeBtn.textContent="حذف";
@@ -1456,13 +1505,13 @@ function addReturnItemRow(){
 
 function addExchangeItemRow(){
   exchangeItemCounter++; const wrap=document.createElement("div");wrap.className="item-row";
-  const prodLabel=document.createElement("label");prodLabel.textContent="المنتج *"; const prodSel=document.createElement("select");prodSel.className="item-product";prodSel.required=true;
+  const prodLabel=document.createElement("label");prodLabel.textContent="المنتج *"; const prodSel=document.createElement("select");prodSel.className="item-product";
   const first=document.createElement("option");first.value="";first.textContent="اختر المنتج";prodSel.appendChild(first);
   productsCache.filter(p=>p.is_active&&p.can_be_sold).forEach(p=>{ const op=document.createElement("option");op.value=String(p.product_id);op.textContent=p.product_name+" ("+p.product_code+")"; op.dataset.baseUnit=String(p.base_unit_id||""); op.dataset.unitsCarton=String(p.units_per_carton||""); if(p.target_selling_price!=null)op.dataset.price=String(p.target_selling_price); prodSel.appendChild(op); });
   const grid3=document.createElement("div");grid3.className="grid3";
-  const unitWrap=document.createElement("div"); const unitLabel=document.createElement("label");unitLabel.textContent="الوحدة *"; const unitSel=document.createElement("select");unitSel.className="item-unit";unitSel.required=true; unitWrap.append(unitLabel,unitSel);
-  const qtyWrap=document.createElement("div"); const qtyLabel=document.createElement("label");qtyLabel.textContent="الكمية *"; const qty=document.createElement("input");qty.type="number";qty.className="item-qty";qty.min="0.0001";qty.step="0.0001";qty.required=true; qtyWrap.append(qtyLabel,qty);
-  const priceWrap=document.createElement("div"); const priceLabel=document.createElement("label");priceLabel.textContent="سعر الوحدة *"; const price=document.createElement("input");price.type="number";price.className="item-price";price.min="0";price.step="0.01";price.required=true; priceWrap.append(priceLabel,price);
+  const unitWrap=document.createElement("div"); const unitLabel=document.createElement("label");unitLabel.textContent="الوحدة *"; const unitSel=document.createElement("select");unitSel.className="item-unit"; unitWrap.append(unitLabel,unitSel);
+  const qtyWrap=document.createElement("div"); const qtyLabel=document.createElement("label");qtyLabel.textContent="الكمية *"; const qty=document.createElement("input");qty.type="number";qty.className="item-qty";qty.min="0.0001";qty.step="0.0001"; qtyWrap.append(qtyLabel,qty);
+  const priceWrap=document.createElement("div"); const priceLabel=document.createElement("label");priceLabel.textContent="سعر الوحدة *"; const price=document.createElement("input");price.type="number";price.className="item-price";price.min="0";price.step="0.01"; priceWrap.append(priceLabel,price);
   grid3.append(unitWrap,qtyWrap,priceWrap);
   const lineTotal=document.createElement("div");lineTotal.className="item-line-total";lineTotal.textContent="الإجمالي: 0";
   const removeBtn=document.createElement("button");removeBtn.type="button";removeBtn.className="btn danger";removeBtn.textContent="حذف";
