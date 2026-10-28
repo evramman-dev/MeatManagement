@@ -998,7 +998,7 @@ const APP_URL="https://evramman-dev.github.io/MeatManagement/";
 const MANAGE_USERS_URL=URL+"/functions/v1/Manage-users";
 const USERNAME_LOGIN_URL=URL+"/functions/v1/username-login";
   <style>
-/* ستايل النوافذ المنبثقة (Pop-ups) الجديد */
+/* ستايل النوافذ المنبثقة (Pop-ups) */
 .modal-form { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 16px; }
 .modal-form.active { display: flex; }
 .modal-form-content { background: white; border-radius: 16px; width: 100%; max-width: 650px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 5px 20px rgba(0,0,0,0.2); }
@@ -1041,7 +1041,6 @@ function busy(btn,on,onText,offText){ if(!btn) return; btn.disabled=on; btn.text
 function fmt(n){ const v=Number(n||0); return v.toLocaleString("ar-EG",{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function todayISO(){ const d=new Date(); const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,"0"); const day=String(d.getDate()).padStart(2,"0"); return y+"-"+m+"-"+day; }
 
-// إصلاح مشكلة الواتساب (تحويل 010 إلى 2010)
 function formatWaPhone(phone) {
     if (!phone) return "";
     let p = phone.replace(/\D/g, '');
@@ -1145,7 +1144,6 @@ function fillTreasurySelects() {
   });
 }
 
-// --- Chart.js للمهام ---
 let myChart = null;
 async function loadTasks() {
   const box = $("tasksList");
@@ -1204,22 +1202,21 @@ async function userInfo(user){
     if($("userInfo")) $("userInfo").textContent="مرحبًا "+(data.display_name||"بك");
     await db.from("app_users").update({ last_login: new Date().toISOString() }).eq("user_id", user.id);
 
-    canManage=await permission("PRODUCTS_MANAGE"); $("menuProducts").classList.toggle("hidden", !canManage); $("addBtn").classList.toggle("hidden",!canManage);
-    try{ canViewLocations=await permission("LOCATIONS_VIEW"); canManageLocations=await permission("LOCATIONS_MANAGE"); $("menuLocations").classList.toggle("hidden",!canViewLocations); $("locationsCard").classList.toggle("hidden",!canViewLocations); $("addLocationBtn").classList.toggle("hidden",!canManageLocations); }catch(e){}
-    try{ canViewTreasuries=await permission("TREASURIES_VIEW") || isSystemAdmin; canManageTreasuries=await permission("TREASURIES_MANAGE") || isSystemAdmin; $("menuTreasuries").classList.toggle("hidden",!canViewTreasuries); $("treasuriesCard").classList.toggle("hidden",!canViewTreasuries); $("addTreasuryBtn").classList.toggle("hidden",!canManageTreasuries); }catch(e){}
-    try{ canViewTreasuryTransfers=await permission("TREASURIES_MANAGE") || isSystemAdmin; $("menuTreasuryTransfers").classList.toggle("hidden",!canViewTreasuryTransfers); }catch(e){}
-    try{ canViewStock=await permission("STOCK_VIEW"); canManageStock=await permission("STOCK_MANAGE"); $("menuStock").classList.toggle("hidden",!canViewStock); $("stockCard").classList.toggle("hidden",!canViewStock); $("adjustStockBtn").classList.toggle("hidden",!canManageStock); }catch(e){}
-    try{ canViewStockTransfers=await permission("STOCK_MANAGE"); $("menuStockTransfers").classList.toggle("hidden",!canViewStockTransfers); }catch(e){}
-    try{ canViewSales=await permission("SALES_VIEW"); canManageSales=await permission("SALES_MANAGE"); $("menuSales").classList.toggle("hidden",!canViewSales); $("salesCard").classList.toggle("hidden",!canViewSales); $("addInvoiceBtn").classList.toggle("hidden",!canManageSales); $("addReturnBtn").classList.toggle("hidden",!canManageSales);}catch(e){}
-    try{ canViewSupplierPayments=await permission("PURCHASES_MANAGE") || isSystemAdmin; $("menuSupplierPayments").classList.toggle("hidden",!canViewSupplierPayments); }catch(e){}
-    try{ canViewPurchaseReturns=await permission("PURCHASES_MANAGE") || isSystemAdmin; $("menuPurchaseReturns").classList.toggle("hidden",!canViewPurchaseReturns); }catch(e){}
-    try{ canViewReports=await permission("SALES_VIEW") || isSystemAdmin; $("menuReports").classList.toggle("hidden",!canViewReports); }catch(e){}
+    canManage=await permission("PRODUCTS_MANAGE"); if($("menuProducts")) $("menuProducts").classList.toggle("hidden", !canManage); if($("addBtn")) $("addBtn").classList.toggle("hidden",!canManage);
+    try{ canViewLocations=await permission("LOCATIONS_VIEW"); canManageLocations=await permission("LOCATIONS_MANAGE"); if($("menuLocations")) $("menuLocations").classList.toggle("hidden",!canViewLocations); if($("locationsCard")) $("locationsCard").classList.toggle("hidden",!canViewLocations); if($("addLocationBtn")) $("addLocationBtn").classList.toggle("hidden",!canManageLocations); }catch(e){}
+    try{ canViewTreasuries=await permission("TREASURIES_VIEW") || isSystemAdmin; canManageTreasuries=await permission("TREASURIES_MANAGE") || isSystemAdmin; if($("menuTreasuries")) $("menuTreasuries").classList.toggle("hidden",!canViewTreasuries); if($("treasuriesCard")) $("treasuriesCard").classList.toggle("hidden",!canViewTreasuries); if($("addTreasuryBtn")) $("addTreasuryBtn").classList.toggle("hidden",!canManageTreasuries); }catch(e){}
+    try{ canViewTreasuryTransfers=await permission("TREASURIES_MANAGE") || isSystemAdmin; if($("menuTreasuryTransfers")) $("menuTreasuryTransfers").classList.toggle("hidden",!canViewTreasuryTransfers); }catch(e){}
+    try{ canViewStock=await permission("STOCK_VIEW"); canManageStock=await permission("STOCK_MANAGE"); if($("menuStock")) $("menuStock").classList.toggle("hidden",!canViewStock); if($("stockCard")) $("stockCard").classList.toggle("hidden",!canViewStock); if($("adjustStockBtn")) $("adjustStockBtn").classList.toggle("hidden",!canManageStock); }catch(e){}
+    try{ canViewStockTransfers=await permission("STOCK_MANAGE"); if($("menuStockTransfers")) $("menuStockTransfers").classList.toggle("hidden",!canViewStockTransfers); }catch(e){}
+    try{ canViewSales=await permission("SALES_VIEW"); canManageSales=await permission("SALES_MANAGE"); if($("menuSales")) $("menuSales").classList.toggle("hidden",!canViewSales); if($("salesCard")) $("salesCard").classList.toggle("hidden",!canViewSales); if($("addInvoiceBtn")) $("addInvoiceBtn").classList.toggle("hidden",!canManageSales); if($("addReturnBtn")) $("addReturnBtn").classList.toggle("hidden",!canManageSales);}catch(e){}
+    try{ canViewSupplierPayments=await permission("PURCHASES_MANAGE") || isSystemAdmin; if($("menuSupplierPayments")) $("menuSupplierPayments").classList.toggle("hidden",!canViewSupplierPayments); }catch(e){}
+    try{ canViewPurchaseReturns=await permission("PURCHASES_MANAGE") || isSystemAdmin; if($("menuPurchaseReturns")) $("menuPurchaseReturns").classList.toggle("hidden",!canViewPurchaseReturns); }catch(e){}
+    try{ canViewReports=await permission("SALES_VIEW") || isSystemAdmin; if($("menuReports")) $("menuReports").classList.toggle("hidden",!canViewReports); }catch(e){}
 
-    if(isSystemAdmin){ $("menuUsers").classList.remove("hidden"); $("menuAccounting").classList.remove("hidden"); await loadUserManagementLookups(); }
+    if(isSystemAdmin){ if($("menuUsers")) $("menuUsers").classList.remove("hidden"); if($("menuAccounting")) $("menuAccounting").classList.remove("hidden"); await loadUserManagementLookups(); }
   } catch(e) { if($("userInfo")) $("userInfo").textContent = "خطأ في الاتصال."; }
 }
 
-// عمليات القراءة والعرض
 async function loadLocations(){ if(!navigator.onLine) { locationsCache=getCache('locations'); renderLocations(); return; } const {data}=await db.from("locations").select("*").order("location_id"); locationsCache=data||[]; saveCache('locations', locationsCache); renderLocations(); fillLocationsFilter(); fillInvoiceLocationSelect(); fillPurchaseLocationSelect(); fillTripVehicleSelect(); fillLoadSourceLocSelect(); fillStockTransferSelects(); }
 function renderLocations(){ 
     const box=$("locationsList"); if(!box) return; box.replaceChildren(); 
@@ -1351,7 +1348,6 @@ async function viewInvoice(inv) {
     } catch(e) { alert(err(e)); }
 }
 
-/* ============ المبيعات والتحقق ============ */
 $("invoiceForm").addEventListener("submit", async e => {
   e.preventDefault(); clear($("invoiceFormMsg"));
   if(!navigator.onLine) { msg($("invoiceFormMsg"), "لا يمكن الحفظ بدون إنترنت.", "error"); return; }
@@ -1399,9 +1395,8 @@ $("invoiceForm").addEventListener("submit", async e => {
   } finally { busy(btn, false, "", "حفظ"); }
 });
 
-/* ============ سداد الموردين والمرتجعات ============ */
 async function loadSupplierPayments() {
-    const box = $("supplierPaymentsList"); box.innerHTML = "جارٍ التحميل...";
+    const box = $("supplierPaymentsList"); if(!box) return; box.innerHTML = "جارٍ التحميل...";
     const { data } = await db.from("supplier_payments").select("*, suppliers(supplier_name), treasuries(treasury_name)").order("payment_id", {ascending:false});
     if(!data || !data.length) { box.innerHTML = "<div class='empty'>لا توجد سدادات.</div>"; return; }
     box.innerHTML = data.map(p => `<div class="product"><div class="pname">💸 ${p.suppliers?.supplier_name}</div><div class="details">المبلغ: ${fmt(p.amount)} | التاريخ: ${p.payment_date} | من: ${p.treasuries?.treasury_name}</div></div>`).join("");
@@ -1415,13 +1410,12 @@ $("supplierPaymentForm").addEventListener("submit", async e => {
 });
 
 async function loadPurchaseReturns() {
-    const box = $("purchaseReturnsList"); box.innerHTML = "جارٍ التحميل...";
+    const box = $("purchaseReturnsList"); if(!box) return; box.innerHTML = "جارٍ التحميل...";
     const { data } = await db.from("purchase_returns").select("*, suppliers(supplier_name)").order("return_id", {ascending:false});
     if(!data || !data.length) { box.innerHTML = "<div class='empty'>لا توجد مرتجعات.</div>"; return; }
     box.innerHTML = data.map(r => `<div class="product"><div class="pname">↩️ ${r.return_number}</div><div class="details">المورد: ${r.suppliers?.supplier_name} | المبلغ: ${fmt(r.total_return_amount)}</div></div>`).join("");
 }
 
-/* ============ تحويل المخزون والخزائن ============ */
 $("stockTransferForm").addEventListener("submit", async e => {
     e.preventDefault();
     const items = [];
@@ -1445,7 +1439,6 @@ $("treasuryTransferForm").addEventListener("submit", async e => {
     busy(btn, false, "", "تنفيذ");
 });
 
-/* ============ التقارير ============ */
 async function loadReports() {
     const { data: aged } = await db.rpc("get_aged_receivables");
     const tbody = $("agedTable").querySelector("tbody");
@@ -1458,7 +1451,6 @@ async function loadSlowMovingStock() {
     if(data) tbody.innerHTML = data.map(i => `<tr><td>${i.product_name}</td><td>${i.location_name}</td><td>${i.quantity}</td><td>${i.last_movement_date ? new Date(i.last_movement_date).toLocaleDateString('ar-EG') : 'لا يوجد'}</td></tr>`).join("");
 }
 
-/* ============ Auth & Init ============ */
 async function bootAppAfterLogin(user){
   showApp();
   await userInfo(user);
