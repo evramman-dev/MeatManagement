@@ -136,7 +136,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 <section id="recovery" class="card hidden">
 <h2>📧 استعادة كلمة المرور</h2>
 <p class="desc">أدخل البريد الإلكتروني المرتبط بحسابك لإرسال رابط الاستعادة.</p>
-<form id="recoveryForm">
+<form id="recoveryForm" onsubmit="event.preventDefault();">
 <label for="recoveryEmail">البريد الإلكتروني</label>
 <input id="recoveryEmail" type="email" required>
 <button id="recoveryBtn" class="btn" type="submit">إرسال رابط الاستعادة</button>
@@ -146,7 +146,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 </section>
 <section id="newPass" class="card hidden">
 <h2>🔑 تعيين كلمة مرور جديدة</h2>
-<form id="newPassForm">
+<form id="newPassForm" onsubmit="event.preventDefault();">
 <label for="newPassword">كلمة المرور الجديدة</label>
 <input id="newPassword" type="password" minlength="8" autocomplete="new-password" required>
 <label for="confirmPassword">تأكيد كلمة المرور</label>
@@ -236,7 +236,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     <div class="modal-form-content">
       <div class="modal-header"><h3>إنشاء حساب موظف</h3><button class="close-btn" onclick="document.getElementById('userFormModal').classList.remove('active')">&times;</button></div>
       <div class="modal-body">
-        <form id="userCreateForm">
+        <form id="userCreateForm" onsubmit="event.preventDefault();">
           <label for="newUserName">اسم الموظف *</label><input id="newUserName" type="text" maxlength="150" required>
           <label for="newUserUsername">اسم المستخدم للدخول *</label><input id="newUserUsername" type="text" minlength="3" maxlength="32" pattern="[A-Za-z0-9._-]{3,32}" required>
           <label for="newUserPassword">كلمة المرور المؤقتة *</label><input id="newUserPassword" type="password" minlength="12" maxlength="128" required>
@@ -264,7 +264,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     <div class="modal-form-content">
       <div class="modal-header"><h3 id="locationFormTitle">إضافة موقع جديد</h3><button class="close-btn" onclick="document.getElementById('locationFormModal').classList.remove('active')">&times;</button></div>
       <div class="modal-body">
-        <form id="locationForm">
+        <form id="locationForm" onsubmit="event.preventDefault();">
           <input id="locationEditId" type="hidden">
           <label for="locationCode">كود الموقع *</label><input id="locationCode" required dir="ltr">
           <label for="locationName">اسم الموقع *</label><input id="locationName" required>
@@ -293,7 +293,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     <div class="modal-form-content">
       <div class="modal-header"><h3 id="treasuryFormTitle">إضافة خزنة جديدة</h3><button class="close-btn" onclick="document.getElementById('treasuryFormModal').classList.remove('active')">&times;</button></div>
       <div class="modal-body">
-        <form id="treasuryForm">
+        <form id="treasuryForm" onsubmit="event.preventDefault();">
           <input id="treasuryEditId" type="hidden">
           <label for="treasuryName">اسم الخزنة *</label><input id="treasuryName" required>
           <label for="treasuryType">نوع الخزنة *</label><select id="treasuryType" required><option value="CASH">نقدية (كاش)</option><option value="BANK">حساب بنكي</option><option value="INSTAPAY">إنستاباي / محفظة</option><option value="PARTNER">خزنة شريك</option></select>
@@ -311,7 +311,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div class="card">
       <h2>🔄 تحويل بين الخزائن</h2>
-      <form id="treasuryTransferForm">
+      <form id="treasuryTransferForm" onsubmit="event.preventDefault();">
         <label>من خزنة *</label><select id="ttSource" required><option value="">اختر الخزنة</option></select>
         <label>إلى خزنة *</label><select id="ttDest" required><option value="">اختر الخزنة</option></select>
         <label>المبلغ *</label><input id="ttAmount" type="number" min="0.01" step="0.01" required>
@@ -335,7 +335,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     <div class="modal-form-content">
       <div class="modal-header"><h3>تسجيل مصروف جديد</h3><button class="close-btn" onclick="document.getElementById('expenseFormModal').classList.remove('active')">&times;</button></div>
       <div class="modal-body">
-        <form id="expenseForm">
+        <form id="expenseForm" onsubmit="event.preventDefault();">
           <label for="expenseType">نوع المصروف *</label>
           <select id="expenseType" required><option value="FUEL">وقود (بنزين/سولار)</option><option value="MAINTENANCE">صيانة وإصلاح</option><option value="RENT">إيجارات</option><option value="SALARY">رواتب وأجور</option><option value="OTHER">مصروفات أخرى</option></select>
           <label for="expenseDate">التاريخ *</label><input id="expenseDate" type="date" required>
@@ -377,7 +377,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     <div class="modal-form-content">
       <div class="modal-header"><h3>إضافة شريك جديد</h3><button class="close-btn" onclick="document.getElementById('partnerFormModal').classList.remove('active')">&times;</button></div>
       <div class="modal-body">
-        <form id="partnerForm">
+        <form id="partnerForm" onsubmit="event.preventDefault();">
           <label for="partnerName">اسم الشريك *</label><input id="partnerName" required>
           <label for="partnerPhone">الموبايل</label><input id="partnerPhone" dir="ltr">
           <label for="partnerShare">نسبة الملكية (%)</label><input id="partnerShare" type="number" min="0" max="100" step="0.01">
@@ -393,7 +393,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     <div class="modal-form-content">
       <div class="modal-header"><h3>تسجيل حركة شريك</h3><button class="close-btn" onclick="document.getElementById('partnerTxFormModal').classList.remove('active')">&times;</button></div>
       <div class="modal-body">
-        <form id="partnerTransactionForm">
+        <form id="partnerTransactionForm" onsubmit="event.preventDefault();">
           <label for="ptPartner">الشريك *</label><select id="ptPartner" required><option value="">اختر الشريك</option></select>
           <label for="ptType">نوع الحركة *</label>
           <select id="ptType" required><option value="CAPITAL_IN">مساهمة نقدية (إيداع)</option><option value="WITHDRAWAL">سحب شخصي</option><option value="PROFIT">توزيع أرباح</option><option value="CAPITAL_OUT">مساهمة عينية</option></select>
@@ -453,7 +453,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     <div class="modal-form-content">
       <div class="modal-header"><h3>تسوية رصيد</h3><button class="close-btn" onclick="document.getElementById('stockFormModal').classList.remove('active')">&times;</button></div>
       <div class="modal-body">
-        <form id="stockForm">
+        <form id="stockForm" onsubmit="event.preventDefault();">
           <label for="stockLocation">الموقع *</label><select id="stockLocation" required><option value="">اختر الموقع</option></select>
           <label for="stockProduct">المنتج *</label><select id="stockProduct" required><option value="">اختر المنتج</option></select>
           <div id="stockCurrentDisplay" class="info">اختر الموقع والمنتج.</div>
@@ -470,7 +470,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div class="card">
       <h2>🔄 تحويل بين المخازن</h2>
-      <form id="stockTransferForm">
+      <form id="stockTransferForm" onsubmit="event.preventDefault();">
         <label>من موقع (المصدر) *</label><select id="stSource" required><option value="">اختر الموقع</option></select>
         <label>إلى موقع (الوجهة) *</label><select id="stDest" required><option value="">اختر الموقع</option></select>
         <label>التاريخ *</label><input id="stDate" type="date" required>
@@ -497,7 +497,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     <div class="modal-form-content">
       <div class="modal-header"><h3 id="recipeFormTitle">إضافة وصفة جديدة</h3><button class="close-btn" onclick="document.getElementById('recipeFormModal').classList.remove('active')">&times;</button></div>
       <div class="modal-body">
-        <form id="recipeForm">
+        <form id="recipeForm" onsubmit="event.preventDefault();">
           <input id="recipeEditId" type="hidden">
           <label for="recipeName">اسم الوصفة *</label><input id="recipeName" required>
           <label for="recipeOutputProduct">المنتج الناتج *</label><select id="recipeOutputProduct" required><option value="">اختر المنتج</option></select>
@@ -528,7 +528,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     <div class="modal-form-content">
       <div class="modal-header"><h3>إنشاء أمر تشغيل</h3><button class="close-btn" onclick="document.getElementById('productionFormModal').classList.remove('active')">&times;</button></div>
       <div class="modal-body">
-        <form id="productionForm">
+        <form id="productionForm" onsubmit="event.preventDefault();">
           <label for="productionRecipe">الوصفة *</label><select id="productionRecipe" required><option value="">اختر الوصفة</option></select>
           <label for="productionTargetQty">الكمية المطلوبة *</label><input id="productionTargetQty" type="number" min="0.0001" step="0.0001" required>
           <div class="info" id="productionOutputInfo">المنتج الناتج: -</div>
@@ -556,7 +556,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     <div class="modal-form-content">
       <div class="modal-header"><h3>إنشاء جولة جديدة</h3><button class="close-btn" onclick="document.getElementById('tripFormModal').classList.remove('active')">&times;</button></div>
       <div class="modal-body">
-        <form id="tripForm">
+        <form id="tripForm" onsubmit="event.preventDefault();">
           <label for="tripRepName">اسم المندوب *</label><input id="tripRepName" required>
           <label for="tripVehicle">السيارة *</label><select id="tripVehicle" required><option value="">اختر السيارة</option></select>
           <label for="tripDate">تاريخ الجولة *</label><input id="tripDate" type="date" required>
@@ -582,7 +582,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     <div class="modal-form-content">
       <div class="modal-header"><h3 id="customerFormTitle">إضافة عميل جديد</h3><button class="close-btn" onclick="document.getElementById('customerFormModal').classList.remove('active')">&times;</button></div>
       <div class="modal-body">
-        <form id="customerForm">
+        <form id="customerForm" onsubmit="event.preventDefault();">
           <input id="customerEditId" type="hidden">
           <label for="customerCode">الكود *</label><input id="customerCode" required dir="ltr">
           <label for="customerName">الاسم *</label><input id="customerName" required>
@@ -614,7 +614,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     <div class="modal-form-content">
       <div class="modal-header"><h3 id="supplierFormTitle">إضافة مورد جديد</h3><button class="close-btn" onclick="document.getElementById('supplierFormModal').classList.remove('active')">&times;</button></div>
       <div class="modal-body">
-        <form id="supplierForm">
+        <form id="supplierForm" onsubmit="event.preventDefault();">
           <input id="supplierEditId" type="hidden">
           <label for="supplierCode">الكود *</label><input id="supplierCode" required dir="ltr">
           <label for="supplierName">الاسم *</label><input id="supplierName" required>
@@ -647,7 +647,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     <div class="modal-form-content">
       <div class="modal-header"><h3>إنشاء فاتورة بيع</h3><button class="close-btn" onclick="document.getElementById('invoiceFormModal').classList.remove('active')">&times;</button></div>
       <div class="modal-body">
-        <form id="invoiceForm">
+        <form id="invoiceForm" onsubmit="event.preventDefault();">
           <label for="invoiceCustomer">العميل *</label><select id="invoiceCustomer" required><option value="">اختر العميل</option></select>
           <label for="invoiceLocation">الموقع *</label><select id="invoiceLocation" required><option value="">اختر الموقع</option></select>
           <label for="invoiceDate">التاريخ *</label><input id="invoiceDate" type="date" required>
@@ -678,7 +678,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     <div class="modal-form-content">
       <div class="modal-header"><h3>تسجيل مرتجع بيع</h3><button class="close-btn" onclick="document.getElementById('returnFormModal').classList.remove('active')">&times;</button></div>
       <div class="modal-body">
-        <form id="returnForm" novalidate>
+        <form id="returnForm" onsubmit="event.preventDefault();" novalidate>
           <label for="returnCustomer">العميل *</label><select id="returnCustomer" required><option value="">اختر العميل</option></select>
           <label for="returnTrip">الجولة *</label><select id="returnTrip" required><option value="">اختر الجولة</option></select>
           <label for="returnInvoice">الفاتورة الأصلية *</label><select id="returnInvoice" required><option value="">اختر الفاتورة</option></select>
@@ -735,7 +735,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     <div class="modal-form-content">
       <div class="modal-header"><h3>إنشاء فاتورة مشتريات</h3><button class="close-btn" onclick="document.getElementById('purchaseFormModal').classList.remove('active')">&times;</button></div>
       <div class="modal-body">
-        <form id="purchaseForm">
+        <form id="purchaseForm" onsubmit="event.preventDefault();">
           <label for="purchaseSupplier">المورد *</label><select id="purchaseSupplier" required><option value="">اختر المورد</option></select>
           <label for="purchaseLocation">الموقع (المستلم) *</label><select id="purchaseLocation" required><option value="">اختر الموقع</option></select>
           <label for="purchaseDate">التاريخ *</label><input id="purchaseDate" type="date" required>
@@ -769,7 +769,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     <div class="modal-form-content">
       <div class="modal-header"><h3>تسجيل سداد للمورد</h3><button class="close-btn" onclick="document.getElementById('supplierPaymentFormModal').classList.remove('active')">&times;</button></div>
       <div class="modal-body">
-        <form id="supplierPaymentForm">
+        <form id="supplierPaymentForm" onsubmit="event.preventDefault();">
           <label>المورد *</label><select id="spSupplier" required><option value="">اختر المورد</option></select>
           <label>المبلغ *</label><input id="spAmount" type="number" min="0.01" step="0.01" required>
           <label>التاريخ *</label><input id="spDate" type="date" required>
@@ -794,7 +794,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     <div class="modal-form-content">
       <div class="modal-header"><h3>تسجيل مرتجع مشتريات</h3><button class="close-btn" onclick="document.getElementById('purchaseReturnFormModal').classList.remove('active')">&times;</button></div>
       <div class="modal-body">
-        <form id="purchaseReturnForm">
+        <form id="purchaseReturnForm" onsubmit="event.preventDefault();">
           <label>فاتورة المشتريات الأصلية *</label><select id="prInvoice" required><option value="">اختر الفاتورة</option></select>
           <div id="prInfo" class="info hidden"></div>
           <label>تاريخ المرتجع *</label><input id="prDate" type="date" required>
@@ -841,7 +841,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     <div class="modal-form-content">
       <div class="modal-header"><h3>تسجيل تحصيل</h3><button class="close-btn" onclick="document.getElementById('collectionFormModal').classList.remove('active')">&times;</button></div>
       <div class="modal-body">
-        <form id="collectionForm">
+        <form id="collectionForm" onsubmit="event.preventDefault();">
           <label for="collectionCustomer">العميل *</label><select id="collectionCustomer" required><option value="">اختر العميل</option></select>
           <label for="collectionDate">التاريخ *</label><input id="collectionDate" type="date" required>
           <label for="collectionInvoice">الفاتورة (اختياري)</label><select id="collectionInvoice"><option value="">بدون ربط</option></select>
@@ -871,7 +871,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     <div class="modal-form-content">
       <div class="modal-header"><h3 id="formTitle">إضافة منتج جديد</h3><button class="close-btn" onclick="document.getElementById('productFormModal').classList.remove('active')">&times;</button></div>
       <div class="modal-body">
-        <form id="productForm">
+        <form id="productForm" onsubmit="event.preventDefault();">
           <input id="editId" type="hidden">
           <div class="grid">
             <div><label for="pname">اسم المنتج *</label><input id="pname" required></div>
@@ -972,7 +972,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
   <div class="modal-content">
     <div class="modal-header"><h3>تحميل بضاعة للجولة</h3><button class="close-btn" onclick="document.getElementById('tripLoadModal').classList.add('hidden')">&times;</button></div>
     <div class="modal-body">
-      <form id="tripLoadForm">
+      <form id="tripLoadForm" onsubmit="event.preventDefault();">
         <input id="loadTripId" type="hidden">
         <div id="loadTripInfo" class="info" style="font-weight:bold; color:var(--g);"></div>
         <label for="loadSourceLoc">من موقع (المصدر) *</label><select id="loadSourceLoc" required><option value="">اختر الموقع</option></select>
@@ -991,7 +991,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     <div class="modal-body" id="tripSummaryBody"></div>
   </div>
 </div>
-
 <script>
 (() => {
 try {
@@ -1044,6 +1043,16 @@ try {
       if (p.startsWith('0')) p = '20' + p.substring(1);
       return p;
   }
+
+  function saveCache(key, data) { try { localStorage.setItem(key, JSON.stringify(data)); } catch(e){} }
+  function getCache(key) { try { return JSON.parse(localStorage.getItem(key)) || []; } catch(e){ return []; } }
+
+  function updateOfflineBanner(){
+    if(!navigator.onLine){ if($("offlineBanner")) $("offlineBanner").style.display = "block"; } 
+    else { if($("offlineBanner")) $("offlineBanner").style.display = "none"; }
+  }
+  window.addEventListener('online', () => { updateOfflineBanner(); location.reload(); });
+  window.addEventListener('offline', updateOfflineBanner);
 
   function hideSections(){ ["login","recovery","newPass","home","tasks","data","nav"].forEach(id=>{ if($(id)) $(id).classList.add("hidden"); }); }
   function showLogin(){ hideSections(); if($("login")) $("login").classList.remove("hidden"); }
@@ -1317,6 +1326,8 @@ try {
   function renderCustomers(){ const box=$("customersList"); if(!box) return; box.replaceChildren(); const found=customersCache.filter(c=> c.customer_name.includes($("customerSearch").value)); if(!found.length){ box.innerHTML=`<div class="empty">لا يوجد عملاء.</div>`; return; } found.forEach(c=>{ const card=document.createElement("div");card.className="product";card.innerHTML=`<div class="pname">${c.customer_name}</div><div class="details">موبايل: ${c.phone||'-'}</div>`; const actions=document.createElement("div"); actions.className="actions"; const stmt=document.createElement("button"); stmt.className="btn secondary"; stmt.textContent="كشف حساب"; stmt.onclick=()=>viewCustomerStatement(c); actions.appendChild(stmt); if(canManageCustomers){ const btn=document.createElement("button");btn.className="btn secondary";btn.textContent="تعديل";btn.onclick=()=>{ $("customerEditId").value=c.customer_id; $("customerCode").value=c.customer_code; $("customerName").value=c.customer_name; $("customerPhone").value=c.phone; $("customerWhatsapp").value=c.whatsapp; $("customerType").value=c.customer_type; $("customerCreditLimit").value=c.credit_limit; $("customerOpeningBalance").value=c.opening_balance; $("customerFormTitle").textContent="تعديل العميل"; $("customerFormModal").classList.add('active'); }; actions.appendChild(btn);} card.appendChild(actions); box.appendChild(card); }); }
   $("customerForm").addEventListener("submit", async e => { e.preventDefault(); const btn=$("saveCustomerBtn"); busy(btn,true,"جارٍ...","حفظ"); const id=$("customerEditId").value; const payload={ customer_code:$("customerCode").value, customer_name:$("customerName").value, phone:$("customerPhone").value, whatsapp:$("customerWhatsapp").value, customer_type:$("customerType").value, credit_limit:Number($("customerCreditLimit").value||0), opening_balance:Number($("customerOpeningBalance").value||0), is_active:$("customerActive").checked }; try{ if(id) await db.from("customers").update(payload).eq("customer_id",id); else await db.from("customers").insert(payload); $("customerFormModal").classList.remove('active'); $("customerForm").reset(); loadCustomers(); }catch(err){ alert(err(err)); } finally{ busy(btn,false,"","حفظ"); } });
 
+  async function viewCustomerStatement(c) { const modal = $("customerStatementModal"); $("modalStatementHeader").innerHTML = "جارٍ تحميل البيانات..."; $("modalStatementItems").innerHTML = ""; $("modalStatementSummary").innerHTML = ""; modal.classList.remove("hidden"); try { const { data: invoices, error: invErr } = await db.from("sales_invoices").select("sales_invoice_id, invoice_number, invoice_date, net_total, paid_amount, remaining_amount, status").eq("customer_id", c.customer_id).neq("status", "CANCELLED").order("invoice_date", { ascending: true }); if (invErr) throw invErr; const { data: collections, error: colErr } = await db.from("customer_collections").select("collection_id, collection_number, collection_date, amount, payment_method, status").eq("customer_id", c.customer_id).eq("status", "POSTED").order("collection_date", { ascending: true }); if (colErr) throw colErr; const { data: retRows, error: retErr } = await db.rpc("get_customer_returns", { p_customer_id: c.customer_id }); if (retErr) throw retErr; const timeline = []; let totalInvoiced = 0; let totalPaid = 0; let totalReturns = 0; (invoices || []).forEach(inv => { timeline.push({ date: inv.invoice_date, type: 'invoice', ref: inv.invoice_number, desc: "فاتورة بيع", debit: Number(inv.net_total), credit: 0 }); totalInvoiced += Number(inv.net_total); }); (collections || []).forEach(col => { timeline.push({ date: col.collection_date, type: 'collection', ref: col.collection_number, desc: "تحصيل نقدية (" + paymentTypeName(col.payment_method) + ")", debit: 0, credit: Number(col.amount) }); totalPaid += Number(col.amount); }); (retRows || []).forEach(r => { const rv = Number(r.total_returned_value) || 0; const ev = Number(r.total_exchange_value) || 0; const cb = (r.cash_action === "CASH_BACK") ? Math.abs(Number(r.price_difference) || 0) : 0; timeline.push({ date: r.return_date, type: "return", ref: r.return_number, desc: "مرتجع بيع", debit: 0, credit: rv }); totalReturns += rv; if (ev > 0) { timeline.push({ date: r.return_date, type: "exchange", ref: r.return_number, desc: "بضاعة استبدال", debit: ev, credit: 0 }); totalInvoiced += ev; } if (cb > 0) { timeline.push({ date: r.return_date, type: "refund", ref: r.return_number, desc: "رد نقدية للعميل", debit: cb, credit: 0 }); } }); timeline.sort((a, b) => new Date(a.date) - new Date(b.date) || (a.type === 'invoice' ? -1 : 1)); let runningBalance = Number(c.opening_balance) || 0; let rowsHtml = `<thead><tr><th>التاريخ</th><th>المستند</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead><tbody><tr><td colspan="3"><strong>رصيد افتتاحي</strong></td><td>-</td><td>-</td><td><strong>${fmt(runningBalance)}</strong></td></tr>`; timeline.forEach(t => { runningBalance += t.debit - t.credit; rowsHtml += `<tr><td>${new Date(t.date).toLocaleDateString("ar-EG")}</td><td dir="ltr" style="text-align:right;">${t.ref}</td><td>${t.desc}</td><td>${t.debit > 0 ? fmt(t.debit) : "-"}</td><td>${t.credit > 0 ? fmt(t.credit) : "-"}</td><td style="font-weight:bold;">${fmt(runningBalance)}</td></tr>`; }); rowsHtml += `</tbody>`; $("modalStatementItems").innerHTML = rowsHtml; $("modalStatementHeader").innerHTML = `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span><strong>اسم العميل:</strong> ${c.customer_name}</span><span><strong>كود:</strong> ${c.customer_code}</span></div><div style="display:flex; justify-content:space-between;"><span><strong>موبايل:</strong> ${c.phone || "غير مسجل"}</span><span><strong>تاريخ الكشف:</strong> ${new Date().toLocaleDateString("ar-EG")}</span></div>`; $("modalStatementSummary").innerHTML = `<div class="line"><span>إجمالي المبيعات (فواتير):</span><span>${fmt(totalInvoiced)}</span></div><div class="line"><span>إجمالي المدفوع (تحصيلات):</span><span style="color:green;">${fmt(totalPaid)}</span></div><div class="line"><span>إجمالي المرتجعات:</span><span style="color:orange;">${fmt(totalReturns)}</span></div><div class="line grand" style="border-top:2px solid #333; padding-top:5px;"><span>الرصيد النهائي (متبقي):</span><span style="color:red;">${fmt(runningBalance)}</span></div>`; const waBtn = $("shareStatementWhatsappBtn"); waBtn.onclick = () => { let waText = `*كشف حساب عميل*\nالعميل: ${c.customer_name}\nالتاريخ: ${new Date().toLocaleDateString("ar-EG")}\n------------------------\nإجمالي المبيعات: ${fmt(totalInvoiced)}\nإجمالي المدفوع: ${fmt(totalPaid)}\nإجمالي المرتجعات: ${fmt(totalReturns)}\n------------------------\n*الرصيد المتبقي: ${fmt(runningBalance)}*\n\nشكراً لتعاملكم معنا!`; let phone = c.phone ? c.phone.replace(/\D/g, '') : ""; if (phone.startsWith('0')) phone = '2' + phone; const url = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(waText)}` : `https://wa.me/?text=${encodeURIComponent(waText)}`; window.open(url, '_blank'); }; } catch (e) { $("modalStatementHeader").innerHTML = `<span style="color:red;">تعذر تحميل كشف الحساب: ${err(e)}</span>`; } }
+
   function resetSupplierForm(){ $("supplierForm").reset(); $("supplierEditId").value=""; $("supplierActive").checked=true; $("supplierFormTitle").textContent="إضافة مورد جديد"; $("supplierFormModal").classList.remove('active'); clear($("supplierFormMsg")); }
   async function loadSuppliers(){ if(!navigator.onLine) return; const {data}=await db.from("suppliers").select("*").order("supplier_id"); suppliersCache=data||[]; const box=$("suppliersList"); if(box){ box.innerHTML = suppliersCache.map(s=>`<div class="product"><div class="pname">${s.supplier_name}</div><div class="details">كود: ${s.supplier_code} | موبايل: ${s.phone||'-'}</div></div>`).join(""); } fillPurchaseSupplierSelect(); fillSupplierSelect(); }
   $("supplierForm").addEventListener("submit", async e => { e.preventDefault(); const btn=$("saveSupplierBtn"); busy(btn,true,"جارٍ...","حفظ"); const id=$("supplierEditId").value; const payload={ supplier_code:$("supplierCode").value, supplier_name:$("supplierName").value, phone:$("supplierPhone").value, is_active:$("supplierActive").checked }; try{ if(id) await db.from("suppliers").update(payload).eq("supplier_id",id); else await db.from("suppliers").insert(payload); $("supplierFormModal").classList.remove('active'); $("supplierForm").reset(); loadSuppliers(); }catch(err){ alert(err(err)); } finally{ busy(btn,false,"","حفظ"); } });
@@ -1475,6 +1486,20 @@ try {
   $("cancelExpenseBtn").addEventListener("click",()=>{ $("expenseFormModal").classList.remove('active'); resetExpenseForm(); }); $("refreshExpensesBtn").addEventListener("click",loadExpenses);
   $("expenseForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("expenseFormMsg")); if(!canManageExpenses)return; const type=$("expenseType").value; const date=$("expenseDate").value; const treasuryId=$("expenseTreasury").value; const amount=Number($("expenseAmount").value||0); const notes=$("expenseNotes").value.trim(); const tripId = $("expenseTrip").value; if(!type||!date||!treasuryId||amount<=0){ msg($("expenseFormMsg"),"أكمل البيانات.","error");return; } const button=$("saveExpenseBtn"); busy(button,true,"جارٍ...","حفظ"); try{ const {data:s,error:se}=await db.auth.getSession(); if(se)throw se; const {error}=await db.from("expenses").insert({ expense_type:type, amount, treasury_id:Number(treasuryId), expense_date:date, notes:notes||null, created_by:s.session.user.id, trip_id: tripId ? Number(tripId) : null }); if(error)throw error; await db.rpc("adjust_treasury_balance", { p_treasury_id: Number(treasuryId), p_amount: -amount, p_notes: 'مصروف' }); msg($("expensesMsg"),"تم تسجيل المصروف.","success"); $("expenseFormModal").classList.remove('active'); resetExpenseForm(); await loadExpenses(); if(canViewTreasuries)await loadTreasuries(); }catch(e){ msg($("expenseFormMsg"),"تعذر الحفظ: "+err(e),"error"); }finally{ busy(button,false,"","حفظ"); } });
 
+  /* ============ Recipes / Production / Trips (Missing Implementations) ============ */
+  async function loadRecipes(){ if(!canViewRecipes)return; if(!navigator.onLine) return; const box=$("recipesList"); if(box) box.innerHTML="<div class='empty'>جارٍ التحميل...</div>"; try{ const {data}=await db.from("recipes").select("*").order("recipe_id"); recipesCache=data||[]; if(box) box.innerHTML=recipesCache.map(r=>`<div class="product"><div class="pname">${r.recipe_name}</div><div class="details">المنتج: ${productName(r.product_id)} | الكمية: ${r.output_quantity}</div></div>`).join(""); }catch(e){ if(box) box.innerHTML=err(e); } }
+  async function loadProduction(){ if(!canViewProduction)return; if(!navigator.onLine) return; const box=$("productionList"); if(box) box.innerHTML="<div class='empty'>جارٍ التحميل...</div>"; try{ const {data}=await db.from("production_orders").select("*").order("order_id",{ascending:false}); productionCache=data||[]; if(box) box.innerHTML=productionCache.map(p=>`<div class="product"><div class="pname">${p.order_number}</div><div class="details">الوصفة: ${recipesCache.find(r=>r.recipe_id===p.recipe_id)?.recipe_name||'-'} | الحالة: ${p.status}</div></div>`).join(""); }catch(e){ if(box) box.innerHTML=err(e); } }
+  async function loadTrips(){ if(!canViewTrips)return; if(!navigator.onLine) return; const box=$("tripsList"); if(box) box.innerHTML="<div class='empty'>جارٍ التحميل...</div>"; try{ const {data}=await db.from("trips").select("*").order("trip_id",{ascending:false}); tripsCache=data||[]; if(box) box.innerHTML=tripsCache.map(t=>`<div class="product"><div class="pname">${t.trip_number}</div><div class="details">السيارة: ${locationName(t.vehicle_location_id)} | الحالة: ${t.status}</div></div>`).join(""); }catch(e){ if(box) box.innerHTML=err(e); } }
+
+  function fillProductionLocationSelect(){ const el=$("productionLocation");if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر الموقع";el.appendChild(first); locationsCache.filter(l=>l.is_active).forEach(l=>{ const op=document.createElement("option");op.value=String(l.location_id);op.textContent=l.location_name+" ("+l.location_code+")";el.appendChild(op); }); el.value=cur; }
+  function fillProductionRecipeSelect(){ const el=$("productionRecipe"); const cur=el.value; el.replaceChildren(); const first=document.createElement("option"); first.value=""; first.textContent="اختر الوصفة"; el.appendChild(first); recipesCache.filter(r=>r.is_active).forEach(r=>{ const op=document.createElement("option"); op.value=String(r.recipe_id); op.textContent=r.recipe_name; el.appendChild(op); }); el.value=cur; }
+  function resetProductionForm(){ $("productionForm").reset(); $("productionFormModal").classList.remove('active'); clear($("productionFormMsg")); }
+  
+  function fillTripVehicleSelect(){ const el=$("tripVehicle"); if(!el) return; const cur=el.value; el.replaceChildren(); const first=document.createElement("option"); first.value=""; first.textContent="اختر السيارة"; el.appendChild(first); locationsCache.filter(l=>l.is_active && l.location_type==="VEHICLE").forEach(l=>{ const op=document.createElement("option"); op.value=String(l.location_id); op.textContent=l.location_name+" ("+l.location_code+")"; el.appendChild(op); }); el.value=cur; }
+  function fillLoadSourceLocSelect(){ const el=$("loadSourceLoc"); if(!el) return; const cur=el.value; el.replaceChildren(); const first=document.createElement("option"); first.value=""; first.textContent="اختر الموقع المصدر"; el.appendChild(first); locationsCache.filter(l=>l.is_active && l.location_type!=="VEHICLE").forEach(l=>{ const op=document.createElement("option"); op.value=String(l.location_id); op.textContent=l.location_name+" ("+l.location_code+")"; el.appendChild(op); }); el.value=cur; }
+  function resetTripForm(){ $("tripForm").reset(); $("tripDate").value = todayISO(); $("tripFormModal").classList.remove('active'); clear($("tripFormMsg")); }
+
+  /* ============ Auth & Init ============ */
   async function bootAppAfterLogin(user){
     showApp();
     try { await userInfo(user); } catch(e){ console.error("[BOOT userInfo]", e); }
@@ -1514,7 +1539,7 @@ try {
     finally { busy($("loginBtn"),false,"","تسجيل الدخول"); }
   });
 
-  $("logoutBtn").onclick=async()=>{ await db.auth.signOut(); localStorage.clear(); showLogin(); };
+  if($("logoutBtn")) $("logoutBtn").onclick=async()=>{ await db.auth.signOut(); localStorage.clear(); showLogin(); };
   document.querySelectorAll(".navbtn").forEach(b=>{ b.onclick=()=>page(b.dataset.page); });
 
   async function init(){
@@ -1540,6 +1565,15 @@ try {
   alert("حدث خطأ فادح في تحميل البرنامج: " + globalError.message);
 }
 })();
+
+// ====== PWA Service Worker Registration ======
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('[PWA] Service Worker registered', reg.scope))
+      .catch(err => console.error('[PWA] Service Worker registration failed', err));
+  });
+}
 </script>
 </body>
 </html>
