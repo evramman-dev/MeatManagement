@@ -991,7 +991,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     <div class="modal-body" id="tripSummaryBody"></div>
   </div>
 </div>
-<script>
+ <script>
 (() => {
 "use strict";
 const URL="https://mklbemoisdkoyrwcrmoj.supabase.co";
@@ -1042,6 +1042,16 @@ function formatWaPhone(phone) {
     if (p.startsWith('0')) p = '20' + p.substring(1);
     return p;
 }
+
+function saveCache(key, data) { try { localStorage.setItem(key, JSON.stringify(data)); } catch(e){} }
+function getCache(key) { try { return JSON.parse(localStorage.getItem(key)) || []; } catch(e){ return []; } }
+
+function updateOfflineBanner(){
+  if(!navigator.onLine){ if($("offlineBanner")) $("offlineBanner").style.display = "block"; } 
+  else { if($("offlineBanner")) $("offlineBanner").style.display = "none"; }
+}
+window.addEventListener('online', () => { updateOfflineBanner(); location.reload(); });
+window.addEventListener('offline', updateOfflineBanner);
 
 function hideSections(){ ["login","recovery","newPass","home","tasks","data","nav"].forEach(id=>{ if($(id)) $(id).classList.add("hidden"); }); }
 function showLogin(){ hideSections(); if($("login")) $("login").classList.remove("hidden"); }
@@ -1155,8 +1165,10 @@ async function loadTasks() {
       const totalExp = expData?.reduce((a,b)=>a+Number(b.amount),0) || 0;
       
       if(myChart) myChart.destroy();
-      const ctx = $("tasksChart").getContext('2d');
-      myChart = new Chart(ctx, { type: 'bar', data: { labels: ['المبيعات', 'المصروفات'], datasets: [{ label: 'الشهر الحالي', data: [totalSales, totalExp], backgroundColor: ['#173c2c', '#a52b2b'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+      if($("tasksChart")) {
+          const ctx = $("tasksChart").getContext('2d');
+          myChart = new Chart(ctx, { type: 'bar', data: { labels: ['المبيعات', 'المصروفات'], datasets: [{ label: 'الشهر الحالي', data: [totalSales, totalExp], backgroundColor: ['#173c2c', '#a52b2b'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+      }
   } catch(e) { console.warn("Chart Error", e); }
 
   let html = "";
