@@ -111,7 +111,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 </header>
 <main>
 <section id="login" class="card">
-<h2>🔐 تسجيل الدخول <span style="font-size:10px;color:#999;">[v11]</span></h2>
+<h2>🔐 تسجيل الدخول <span style="font-size:10px;color:#999;">[v12]</span></h2>
 <p class="desc">سجّل الدخول باستخدام اسم المستخدم أو البريد الإلكتروني وكلمة المرور.</p>
 <form id="loginForm">
 <label for="email">اسم المستخدم أو البريد الإلكتروني</label>
@@ -910,7 +910,14 @@ function hideSections(){ ["login","recovery","newPass","home","tasks","data","na
 function showLogin(){ hideSections(); $("login").classList.remove("hidden"); }
 function showApp(){ hideSections(); $("nav").classList.remove("hidden"); page("home"); }
 
+/* ⬇️⬇️⬇️ الإصلاح الأساسي هنا ⬇️⬇️⬇️ */
 window.openSection = function(name) {
+  // نجبر الموقع يروح لقسم البيانات أولاً (عشان لو جاي من شاشة المهام)
+  $("home").classList.add("hidden");
+  $("tasks").classList.add("hidden");
+  $("data").classList.remove("hidden");
+  document.querySelectorAll(".navbtn").forEach(b=>{ b.classList.toggle("active",b.dataset.page==="data"); });
+  
   $("dataDashboard").classList.add("hidden");
   document.querySelectorAll(".sub-section").forEach(el => el.classList.add("hidden"));
   $(`section${name.charAt(0).toUpperCase() + name.slice(1)}`).classList.remove("hidden");
@@ -919,6 +926,8 @@ window.openSection = function(name) {
   if (name === "expenses") { loadExpenses(); }
   if (name === "users") { loadUsersList(); }
 }
+/* ⬆️⬆️⬆️ نهاية الإصلاح ⬆️⬆️⬆️ */
+
 window.closeSection = function() {
   document.querySelectorAll(".sub-section").forEach(el => el.classList.add("hidden"));
   $("dataDashboard").classList.remove("hidden");
