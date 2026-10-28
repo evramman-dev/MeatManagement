@@ -90,6 +90,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 .task-item { padding: 10px 15px; border-bottom: 1px dashed var(--line); font-size: 13px; line-height: 1.6; }
 .task-item:last-child { border-bottom: none; }
 .task-box .btn { margin: 10px 15px; width: calc(100% - 30px); }
+.offline-banner { position: fixed; top: 0; left: 0; right: 0; background: #a52b2b; color: #fff; text-align: center; padding: 10px; font-size: 13px; z-index: 9999; font-weight: bold; display: none; }
 @media print {
   @page { margin: 10mm; size: A4 portrait; }
   body { background: #fff !important; }
@@ -106,13 +107,14 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 </style>
 </head>
 <body>
+<div id="offlineBanner" class="offline-banner">⚠️ أنت أوفلاين (بدون إنترنت). يتم عرض البيانات المحفوظة فقط.</div>
   <header>
 <h1>🥩 MeatManagement</h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 </header>
 <main>
 <section id="login" class="card">
-<h2>🔐 تسجيل الدخول <span style="font-size:10px;color:#999;">[v14]</span></h2>
+<h2>🔐 تسجيل الدخول <span style="font-size:10px;color:#999;">[v15]</span></h2>
 <p class="desc">سجّل الدخول باستخدام اسم المستخدم أو البريد الإلكتروني وكلمة المرور.</p>
 <form id="loginForm">
 <label for="email">اسم المستخدم أو البريد الإلكتروني</label>
@@ -199,7 +201,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
       <div id="usersList"><div class="empty">جارٍ تحميل المستخدمين...</div></div>
     </div>
   </div>
-  <div id="sectionLocations" class="sub-section hidden">
+    <div id="sectionLocations" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="locationsCard" class="card hidden">
       <div class="row" style="justify-content:space-between">
@@ -358,7 +360,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
       </div>
     </div>
   </div>
-    <div id="sectionAccounting" class="sub-section hidden">
+  <div id="sectionAccounting" class="sub-section hidden">
     <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px; width:auto;">⬅ رجوع للقائمة</button>
     <div id="accountingCard" class="card hidden">
       <h2>🧮 المحاسبة والتقارير</h2>
@@ -907,6 +909,15 @@ function busy(btn,on,onText,offText){ btn.disabled=on; btn.textContent=on?onText
 function fmt(n){ const v=Number(n||0); return v.toLocaleString("ar-EG",{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function todayISO(){ const d=new Date(); const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,"0"); const day=String(d.getDate()).padStart(2,"0"); return y+"-"+m+"-"+day; }
 
+// دالة عرض شريط الأوفلاين
+function updateOfflineBanner(){
+  const banner = $("offlineBanner");
+  if(!navigator.onLine){ banner.style.display = "block"; } 
+  else { banner.style.display = "none"; }
+}
+window.addEventListener('online', updateOfflineBanner);
+window.addEventListener('offline', updateOfflineBanner);
+
 function hideSections(){ ["login","recovery","newPass","home","tasks","data","nav"].forEach(id=>{ $(id).classList.add("hidden"); }); }
 function showLogin(){ hideSections(); $("login").classList.remove("hidden"); }
 function showApp(){ hideSections(); $("nav").classList.remove("hidden"); page("home"); }
@@ -956,21 +967,30 @@ function page(name){
 }
 
 async function permission(code){
-  const {data,error}=await db.rpc("has_permission",{p_permission_code:code});
-  if(error)throw error;
-  return data===true;
+  try {
+    const {data,error}=await db.rpc("has_permission",{p_permission_code:code});
+    if(error)throw error;
+    return data===true;
+  } catch (e) {
+    console.warn("[PERMISSION OFFLINE]", code, e);
+    return false; // لو أوفلاين، بنرجع false عشان الشاشة متعلقش
+  }
 }
 
 async function loadLookups(){
-  const [c,u]=await Promise.all([ db.from("product_categories").select("category_id,category_name").order("category_id"), db.from("units").select("unit_id,unit_name,is_package_unit").order("unit_id") ]);
-  if(c.error)throw c.error; if(u.error)throw u.error;
-  categories=c.data||[]; units=u.data||[];
-  cartonUnitId=units.find(x=>x.is_package_unit===true)?.unit_id||null;
-  fillSelect($("category"),categories,"category_id","category_name","اختر التصنيف");
-  fillSelect($("baseUnit"),units,"unit_id","unit_name","اختر الوحدة الأساسية");
-  fillSelect($("purchaseUnit"),units,"unit_id","unit_name","بدون تحديد");
-  fillSelect($("salesUnit"),units,"unit_id","unit_name","بدون تحديد");
-  fillSelect($("recipeOutputUnit"),units,"unit_id","unit_name","اختر الوحدة");
+  try {
+    const [c,u]=await Promise.all([ db.from("product_categories").select("category_id,category_name").order("category_id"), db.from("units").select("unit_id,unit_name,is_package_unit").order("unit_id") ]);
+    if(c.error)throw c.error; if(u.error)throw u.error;
+    categories=c.data||[]; units=u.data||[];
+    cartonUnitId=units.find(x=>x.is_package_unit===true)?.unit_id||null;
+    fillSelect($("category"),categories,"category_id","category_name","اختر التصنيف");
+    fillSelect($("baseUnit"),units,"unit_id","unit_name","اختر الوحدة الأساسية");
+    fillSelect($("purchaseUnit"),units,"unit_id","unit_name","بدون تحديد");
+    fillSelect($("salesUnit"),units,"unit_id","unit_name","بدون تحديد");
+    fillSelect($("recipeOutputUnit"),units,"unit_id","unit_name","اختر الوحدة");
+  } catch(e) {
+    console.warn("[LOOKUPS OFFLINE]", e);
+  }
 }
 
 function typeName(v){ return({RAW:"خام",SEMI_FINISHED:"نصف مصنع",FINISHED:"منتج تام"})[v]||v||"غير محدد"; }
@@ -999,6 +1019,11 @@ async function loadTasks() {
     return; 
   }
 
+  if (!navigator.onLine) {
+    box.innerHTML = "<div class='empty' style='padding:40px 10px;'><div style='font-size:40px;margin-bottom:10px;'>📶</div>أنت أوفلاين حالياً.<br>الرجاء الاتصال بالإنترنت لتحميل المهام.</div>";
+    return;
+  }
+
   box.innerHTML = "<div class='empty'>جارٍ تحميل مهامك...</div>";
   let html = "";
 
@@ -1009,7 +1034,6 @@ async function loadTasks() {
       if (stockErr) {
         html += `<div class="task-box" style="border-color:red;"><h3 style="color:red;">⚠️ خطأ في جلب المخزون</h3><div class="task-item">${err(stockErr)}</div></div>`;
       } else if (stockData) {
-        // تجميع الأرصدة لكل منتج في كل المواقع
         const productTotals = {};
         stockData.forEach(s => {
           if (!s.products) return;
@@ -1025,7 +1049,6 @@ async function loadTasks() {
           productTotals[pid].totalQty += Number(s.quantity || 0);
         });
 
-        // مقارنة الإجمالي بالحد الأدنى
         const lowStock = Object.values(productTotals).filter(p => p.totalQty < p.minStock);
 
         if (lowStock.length > 0) {
@@ -1166,30 +1189,41 @@ async function loadUsersList() {
 /* ============ التحقق من حساب الموظف والصلاحيات ============ */
 async function userInfo(user){
   $("userInfo").textContent="تم تسجيل الدخول. جارٍ التحقق...";
-  const {data,error}=await db.from("app_users").select("display_name,is_active,role_id").eq("user_id",user.id).maybeSingle();
-  if(error)throw error; if(!data)throw new Error("لا يوجد سجل موظف مرتبط بحساب الدخول."); if(!data.is_active)throw new Error("حساب الموظف غير مفعّل.");
-  const {data:role,error:roleError}=await db.from("app_roles").select("role_code,is_active").eq("role_id",data.role_id).maybeSingle();
-  if(roleError)throw roleError; if(!role||!role.is_active)throw new Error("الدور الوظيفي لحسابك غير موجود أو غير مفعّل.");
-  isSystemAdmin=role.role_code==="SYSTEM_ADMIN"; currentUserRole=role.role_code; $("userInfo").textContent="مرحبًا "+(data.display_name||"بك");
-  await db.from("app_users").update({ last_login: new Date().toISOString() }).eq("user_id", user.id);
-
-  canManage=await permission("PRODUCTS_MANAGE"); $("menuProducts").classList.toggle("hidden", !canManage); $("addBtn").classList.toggle("hidden",!canManage);
-  try{ canViewLocations=await permission("LOCATIONS_VIEW"); canManageLocations=await permission("LOCATIONS_MANAGE"); $("menuLocations").classList.toggle("hidden",!canViewLocations); $("locationsCard").classList.toggle("hidden",!canViewLocations); $("addLocationBtn").classList.toggle("hidden",!canManageLocations); }catch(e){$("menuLocations").classList.add("hidden");}
-  try{ canViewTreasuries=await permission("TREASURIES_VIEW") || isSystemAdmin; canManageTreasuries=await permission("TREASURIES_MANAGE") || isSystemAdmin; $("menuTreasuries").classList.toggle("hidden",!canViewTreasuries); $("treasuriesCard").classList.toggle("hidden",!canViewTreasuries); $("addTreasuryBtn").classList.toggle("hidden",!canManageTreasuries); }catch(e){$("menuTreasuries").classList.add("hidden");}
-  try{ canViewExpenses=await permission("EXPENSES_VIEW") || isSystemAdmin; canManageExpenses=await permission("EXPENSES_MANAGE") || isSystemAdmin; $("menuExpenses").classList.toggle("hidden",!canViewExpenses); $("expensesCard").classList.toggle("hidden",!canViewExpenses); $("addExpenseBtn").classList.toggle("hidden",!canManageExpenses); }catch(e){$("menuExpenses").classList.add("hidden");}
-  try{ canViewPartners=await permission("PARTNERS_VIEW") || isSystemAdmin; canManagePartners=await permission("PARTNERS_MANAGE") || isSystemAdmin; $("menuPartners").classList.toggle("hidden",!canViewPartners); $("partnersCard").classList.toggle("hidden",!canViewPartners); $("addPartnerBtn").classList.toggle("hidden",!canManagePartners); $("addPartnerTransactionBtn").classList.toggle("hidden",!canManagePartners); $("partnerTransactionsCard").classList.toggle("hidden",!canViewPartners); }catch(e){$("menuPartners").classList.add("hidden");}
-  try{ canViewStock=await permission("STOCK_VIEW"); canManageStock=await permission("STOCK_MANAGE"); $("menuStock").classList.toggle("hidden",!canViewStock); $("stockCard").classList.toggle("hidden",!canViewStock); $("adjustStockBtn").classList.toggle("hidden",!canManageStock); }catch(e){$("menuStock").classList.add("hidden");}
-  try{ canViewRecipes=await permission("RECIPES_VIEW"); canManageRecipes=await permission("RECIPES_MANAGE"); $("menuRecipes").classList.toggle("hidden",!canViewRecipes); $("recipesCard").classList.toggle("hidden",!canViewRecipes); $("addRecipeBtn").classList.toggle("hidden",!canManageRecipes); }catch(e){$("menuRecipes").classList.add("hidden");}
-  try{ canViewProduction=await permission("PRODUCTION_VIEW"); canManageProduction=await permission("PRODUCTION_MANAGE"); $("menuProduction").classList.toggle("hidden",!canViewProduction); $("productionCard").classList.toggle("hidden",!canViewProduction); $("addProductionBtn").classList.toggle("hidden",!canManageProduction); }catch(e){$("menuProduction").classList.add("hidden");}
-  try{ canViewTrips=await permission("TRIPS_VIEW"); canManageTrips=await permission("TRIPS_MANAGE"); $("menuTrips").classList.toggle("hidden",!canViewTrips); $("tripsCard").classList.toggle("hidden",!canViewTrips); $("addTripBtn").classList.toggle("hidden",!canManageTrips); }catch(e){$("menuTrips").classList.add("hidden");}
-  try{ canViewCustomers=await permission("CUSTOMERS_VIEW"); canManageCustomers=await permission("CUSTOMERS_MANAGE"); $("menuCustomers").classList.toggle("hidden",!canViewCustomers); $("customersCard").classList.toggle("hidden",!canViewCustomers); $("addCustomerBtn").classList.toggle("hidden",!canManageCustomers); }catch(e){$("menuCustomers").classList.add("hidden");}
-  try{ canViewSales=await permission("SALES_VIEW"); canManageSales=await permission("SALES_MANAGE"); $("menuSales").classList.toggle("hidden",!canViewSales); $("salesCard").classList.toggle("hidden",!canViewSales); $("addInvoiceBtn").classList.toggle("hidden",!canManageSales); $("addReturnBtn").classList.toggle("hidden",!canManageSales); }catch(e){$("menuSales").classList.add("hidden");}
-  try{ canViewCollections=await permission("COLLECTIONS_VIEW"); canManageCollections=await permission("COLLECTIONS_MANAGE"); $("menuCollections").classList.toggle("hidden",!canViewCollections); $("collectionsCard").classList.toggle("hidden",!canViewCollections); $("addCollectionBtn").classList.toggle("hidden",!canManageCollections); }catch(e){$("menuCollections").classList.add("hidden");}
-  try{ canViewSuppliers=await permission("SUPPLIERS_VIEW"); canManageSuppliers=await permission("SUPPLIERS_MANAGE"); $("menuSuppliers").classList.toggle("hidden",!canViewSuppliers); $("suppliersCard").classList.toggle("hidden",!canViewSuppliers); $("addSupplierBtn").classList.toggle("hidden",!canManageSuppliers); }catch(e){$("menuSuppliers").classList.add("hidden");}
-  try{ canViewPurchases=await permission("PURCHASES_VIEW"); canManagePurchases=await permission("PURCHASES_MANAGE"); $("menuPurchases").classList.toggle("hidden",!canViewPurchases); $("purchasesCard").classList.toggle("hidden",!canViewPurchases); $("addPurchaseBtn").classList.toggle("hidden",!canManagePurchases); }catch(e){$("menuPurchases").classList.add("hidden");}
-  if(isSystemAdmin){ $("menuUsers").classList.remove("hidden"); $("menuAccounting").classList.remove("hidden"); $("accountingCard").classList.remove("hidden"); await loadUserManagementLookups(); }else{ $("menuUsers").classList.add("hidden"); $("userManagementCard").classList.add("hidden"); }
   
-  if(!$("tasks").classList.contains("hidden")){ loadTasks(); }
+  if(!navigator.onLine){
+    $("userInfo").textContent="أنت أوفلاين. سيتم عرض بيانات محدودة.";
+    return;
+  }
+
+  try {
+    const {data,error}=await db.from("app_users").select("display_name,is_active,role_id").eq("user_id",user.id).maybeSingle();
+    if(error)throw error; if(!data)throw new Error("لا يوجد سجل موظف مرتبط بحساب الدخول."); if(!data.is_active)throw new Error("حساب الموظف غير مفعّل.");
+    const {data:role,error:roleError}=await db.from("app_roles").select("role_code,is_active").eq("role_id",data.role_id).maybeSingle();
+    if(roleError)throw roleError; if(!role||!role.is_active)throw new Error("الدور الوظيفي لحسابك غير موجود أو غير مفعّل.");
+    isSystemAdmin=role.role_code==="SYSTEM_ADMIN"; currentUserRole=role.role_code; $("userInfo").textContent="مرحبًا "+(data.display_name||"بك");
+    await db.from("app_users").update({ last_login: new Date().toISOString() }).eq("user_id", user.id);
+
+    canManage=await permission("PRODUCTS_MANAGE"); $("menuProducts").classList.toggle("hidden", !canManage); $("addBtn").classList.toggle("hidden",!canManage);
+    try{ canViewLocations=await permission("LOCATIONS_VIEW"); canManageLocations=await permission("LOCATIONS_MANAGE"); $("menuLocations").classList.toggle("hidden",!canViewLocations); $("locationsCard").classList.toggle("hidden",!canViewLocations); $("addLocationBtn").classList.toggle("hidden",!canManageLocations); }catch(e){$("menuLocations").classList.add("hidden");}
+    try{ canViewTreasuries=await permission("TREASURIES_VIEW") || isSystemAdmin; canManageTreasuries=await permission("TREASURIES_MANAGE") || isSystemAdmin; $("menuTreasuries").classList.toggle("hidden",!canViewTreasuries); $("treasuriesCard").classList.toggle("hidden",!canViewTreasuries); $("addTreasuryBtn").classList.toggle("hidden",!canManageTreasuries); }catch(e){$("menuTreasuries").classList.add("hidden");}
+    try{ canViewExpenses=await permission("EXPENSES_VIEW") || isSystemAdmin; canManageExpenses=await permission("EXPENSES_MANAGE") || isSystemAdmin; $("menuExpenses").classList.toggle("hidden",!canViewExpenses); $("expensesCard").classList.toggle("hidden",!canViewExpenses); $("addExpenseBtn").classList.toggle("hidden",!canManageExpenses); }catch(e){$("menuExpenses").classList.add("hidden");}
+    try{ canViewPartners=await permission("PARTNERS_VIEW") || isSystemAdmin; canManagePartners=await permission("PARTNERS_MANAGE") || isSystemAdmin; $("menuPartners").classList.toggle("hidden",!canViewPartners); $("partnersCard").classList.toggle("hidden",!canViewPartners); $("addPartnerBtn").classList.toggle("hidden",!canManagePartners); $("addPartnerTransactionBtn").classList.toggle("hidden",!canManagePartners); $("partnerTransactionsCard").classList.toggle("hidden",!canViewPartners); }catch(e){$("menuPartners").classList.add("hidden");}
+    try{ canViewStock=await permission("STOCK_VIEW"); canManageStock=await permission("STOCK_MANAGE"); $("menuStock").classList.toggle("hidden",!canViewStock); $("stockCard").classList.toggle("hidden",!canViewStock); $("adjustStockBtn").classList.toggle("hidden",!canManageStock); }catch(e){$("menuStock").classList.add("hidden");}
+    try{ canViewRecipes=await permission("RECIPES_VIEW"); canManageRecipes=await permission("RECIPES_MANAGE"); $("menuRecipes").classList.toggle("hidden",!canViewRecipes); $("recipesCard").classList.toggle("hidden",!canViewRecipes); $("addRecipeBtn").classList.toggle("hidden",!canManageRecipes); }catch(e){$("menuRecipes").classList.add("hidden");}
+    try{ canViewProduction=await permission("PRODUCTION_VIEW"); canManageProduction=await permission("PRODUCTION_MANAGE"); $("menuProduction").classList.toggle("hidden",!canViewProduction); $("productionCard").classList.toggle("hidden",!canViewProduction); $("addProductionBtn").classList.toggle("hidden",!canManageProduction); }catch(e){$("menuProduction").classList.add("hidden");}
+    try{ canViewTrips=await permission("TRIPS_VIEW"); canManageTrips=await permission("TRIPS_MANAGE"); $("menuTrips").classList.toggle("hidden",!canViewTrips); $("tripsCard").classList.toggle("hidden",!canViewTrips); $("addTripBtn").classList.toggle("hidden",!canManageTrips); }catch(e){$("menuTrips").classList.add("hidden");}
+    try{ canViewCustomers=await permission("CUSTOMERS_VIEW"); canManageCustomers=await permission("CUSTOMERS_MANAGE"); $("menuCustomers").classList.toggle("hidden",!canViewCustomers); $("customersCard").classList.toggle("hidden",!canViewCustomers); $("addCustomerBtn").classList.toggle("hidden",!canManageCustomers); }catch(e){$("menuCustomers").classList.add("hidden");}
+    try{ canViewSales=await permission("SALES_VIEW"); canManageSales=await permission("SALES_MANAGE"); $("menuSales").classList.toggle("hidden",!canViewSales); $("salesCard").classList.toggle("hidden",!canViewSales); $("addInvoiceBtn").classList.toggle("hidden",!canManageSales); $("addReturnBtn").classList.toggle("hidden",!canManageSales); }catch(e){$("menuSales").classList.add("hidden");}
+    try{ canViewCollections=await permission("COLLECTIONS_VIEW"); canManageCollections=await permission("COLLECTIONS_MANAGE"); $("menuCollections").classList.toggle("hidden",!canViewCollections); $("collectionsCard").classList.toggle("hidden",!canViewCollections); $("addCollectionBtn").classList.toggle("hidden",!canManageCollections); }catch(e){$("menuCollections").classList.add("hidden");}
+    try{ canViewSuppliers=await permission("SUPPLIERS_VIEW"); canManageSuppliers=await permission("SUPPLIERS_MANAGE"); $("menuSuppliers").classList.toggle("hidden",!canViewSuppliers); $("suppliersCard").classList.toggle("hidden",!canViewSuppliers); $("addSupplierBtn").classList.toggle("hidden",!canManageSuppliers); }catch(e){$("menuSuppliers").classList.add("hidden");}
+    try{ canViewPurchases=await permission("PURCHASES_VIEW"); canManagePurchases=await permission("PURCHASES_MANAGE"); $("menuPurchases").classList.toggle("hidden",!canViewPurchases); $("purchasesCard").classList.toggle("hidden",!canViewPurchases); $("addPurchaseBtn").classList.toggle("hidden",!canManagePurchases); }catch(e){$("menuPurchases").classList.add("hidden");}
+    if(isSystemAdmin){ $("menuUsers").classList.remove("hidden"); $("menuAccounting").classList.remove("hidden"); $("accountingCard").classList.remove("hidden"); await loadUserManagementLookups(); }else{ $("menuUsers").classList.add("hidden"); $("userManagementCard").classList.add("hidden"); }
+    
+    if(!$("tasks").classList.contains("hidden")){ loadTasks(); }
+  } catch(e) {
+    console.warn("[USERINFO OFFLINE FAIL]", e);
+    $("userInfo").textContent = "أنت أوفلاين أو حدث خطأ في الاتصال.";
+  }
 }
 
 /* ============ إدارة المواقع ============ */
@@ -1756,7 +1790,29 @@ $("addBtn").onclick=()=>openForm(); $("cancelBtn").onclick=()=>{ $("formCard").c
 $("logoutBtn").onclick=async()=>{ const {error}=await db.auth.signOut(); if(error){msg($("listMsg"),"تعذر تسجيل الخروج: "+err(error),"error");return;} canManage=false;isSystemAdmin=false; canViewLocations=false;canManageLocations=false; canViewTreasuries=false;canManageTreasuries=false; canViewExpenses=false;canManageExpenses=false; canViewPartners=false;canManagePartners=false; canViewStock=false;canManageStock=false; canViewRecipes=false;canManageRecipes=false; canViewProduction=false;canManageProduction=false; canViewTrips=false;canManageTrips=false; canViewCustomers=false;canManageCustomers=false; canViewSales=false;canManageSales=false; canViewCollections=false;canManageCollections=false; canViewSuppliers=false;canManageSuppliers=false; canViewPurchases=false;canManagePurchases=false; locationsCache=[];treasuriesCache=[];stockCache=[];customersCache=[];salesCache=[];collectionsCache=[];suppliersCache=[];purchasesCache=[];recipesCache=[];productionCache=[];tripsCache=[];partnersCache=[]; $("password").value=""; document.querySelectorAll(".card").forEach(c=>c.classList.add("hidden")); showLogin(); msg($("loginMsg"),"تم تسجيل الخروج.","success"); };
 document.querySelectorAll(".navbtn").forEach(b=>{ b.onclick=()=>page(b.dataset.page); });
 db.auth.onAuthStateChange(event=>{ if(event==="PASSWORD_RECOVERY"){ recoveryMode=true; hideSections(); $("newPass").classList.remove("hidden"); } if(event==="SIGNED_OUT"&&!recoveryMode){ canManage=false;isSystemAdmin=false; canViewLocations=false;canManageLocations=false; canViewTreasuries=false;canManageTreasuries=false; canViewExpenses=false;canManageExpenses=false; canViewPartners=false;canManagePartners=false; canViewStock=false;canManageStock=false; canViewRecipes=false;canManageRecipes=false; canViewProduction=false;canManageProduction=false; canViewTrips=false;canManageTrips=false; canViewCustomers=false;canManageCustomers=false; canViewSales=false;canManageSales=false; canViewCollections=false;canManageCollections=false; canViewSuppliers=false;canManageSuppliers=false; canViewPurchases=false;canManagePurchases=false; locationsCache=[];treasuriesCache=[];stockCache=[];customersCache=[];salesCache=[];collectionsCache=[];suppliersCache=[];purchasesCache=[];recipesCache=[];productionCache=[];tripsCache=[];partnersCache=[]; document.querySelectorAll(".card").forEach(c=>c.classList.add("hidden")); showLogin(); } });
-async function init(){ try{ const params=new URLSearchParams(location.search); const hash=location.hash; if(params.has("error")||params.has("error_description")||hash.includes("error=")){ showLogin(); msg($("loginMsg"),"رابط الاستعادة قد يكون منتهي الصلاحية.","error"); return; } const {data,error}=await db.auth.getSession(); if(error)throw error; if(data.session){ await bootAppAfterLogin(data.session.user); } else{ showLogin(); } }catch(e){ showLogin(); msg($("loginMsg"),"تعذر التحقق من الجلسة: "+err(e),"error"); } }
+async function init(){
+  updateOfflineBanner();
+  try{
+    const params=new URLSearchParams(location.search);
+    const hash=location.hash;
+    if(params.has("error")||params.has("error_description")||hash.includes("error=")){ showLogin(); msg($("loginMsg"),"رابط الاستعادة قد يكون منتهي الصلاحية.","error"); return; }
+    const {data,error}=await db.auth.getSession(); if(error)throw error;
+    if(data.session){
+      if(!navigator.onLine){
+        // وضع الأوفلاين: عرض الواجهة مع تعطيل التحميل
+        showApp();
+        $("userInfo").textContent="أنت أوفلاين (بدون إنترنت).";
+        $("offlineBanner").style.display="block";
+        return;
+      }
+      await bootAppAfterLogin(data.session.user);
+    } else {
+      showLogin();
+    }
+  }catch(e){
+    showLogin(); msg($("loginMsg"),"تعذر التحقق من الجلسة: "+err(e),"error");
+  }
+}
 init();
 })();
 
