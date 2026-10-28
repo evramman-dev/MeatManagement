@@ -1058,6 +1058,7 @@ try {
   function showLogin(){ hideSections(); if($("login")) $("login").classList.remove("hidden"); }
   function showApp(){ hideSections(); if($("nav")) $("nav").classList.remove("hidden"); page("home"); }
 
+  // FIX: Added logic to remove 'hidden' from all cards inside the opened section
   window.openSection = function(name) {
     if($("home")) $("home").classList.add("hidden"); 
     if($("tasks")) $("tasks").classList.add("hidden"); 
@@ -1065,8 +1066,13 @@ try {
     document.querySelectorAll(".navbtn").forEach(b=>{ b.classList.toggle("active",b.dataset.page==="data"); });
     if($("dataDashboard")) $("dataDashboard").classList.add("hidden");
     document.querySelectorAll(".sub-section").forEach(el => el.classList.add("hidden"));
+    
     let target = $(`section${name.charAt(0).toUpperCase() + name.slice(1)}`);
-    if(target) target.classList.remove("hidden");
+    if(target) {
+        target.classList.remove("hidden");
+        // This line fixes the empty screens! It removes the 'hidden' class from the inner cards.
+        target.querySelectorAll('.card.hidden').forEach(c => c.classList.remove('hidden'));
+    }
     window.scrollTo(0, 0);
     
     if (name === "accounting") loadFinancialSummary();
@@ -1092,7 +1098,21 @@ try {
     if(name==="tasks"){ loadTasks(); }
     if(name==="data"){
       window.closeSection();
-      if(navigator.onLine) { loadProducts(); if(canViewLocations)loadLocations(); if(canViewTreasuries)loadTreasuries(); if(canViewStock)loadStock(); if(canViewSales)loadSales(); if(canViewCustomers)loadCustomers(); if(canViewSuppliers)loadSuppliers(); if(canViewPurchases)loadPurchases(); if(canViewCollections)loadCollections(); if(canViewRecipes)loadRecipes(); if(canViewProduction)loadProduction(); if(canViewTrips)loadTrips(); if(canViewPartners)loadPartners(); }
+      if(navigator.onLine) { 
+          loadProducts(); 
+          if(canViewLocations)loadLocations(); 
+          if(canViewTreasuries)loadTreasuries(); 
+          if(canViewStock)loadStock(); 
+          if(canViewSales)loadSales(); 
+          if(canViewCustomers)loadCustomers(); 
+          if(canViewSuppliers)loadSuppliers(); 
+          if(canViewPurchases)loadPurchases(); 
+          if(canViewCollections)loadCollections(); 
+          if(canViewRecipes)loadRecipes(); 
+          if(canViewProduction)loadProduction(); 
+          if(canViewTrips)loadTrips(); 
+          if(canViewPartners)loadPartners(); 
+      }
     }
   }
 
@@ -1226,27 +1246,27 @@ try {
       if($("userInfo")) $("userInfo").textContent="مرحبًا "+(data.display_name||"بك");
       await db.from("app_users").update({ last_login: new Date().toISOString() }).eq("user_id", user.id);
 
-      canManage=await permission("PRODUCTS_MANAGE"); if($("menuProducts")) $("menuProducts").classList.toggle("hidden", !canManage); if($("addBtn")) $("addBtn").classList.toggle("hidden",!canManage);
-      try{ canViewLocations=await permission("LOCATIONS_VIEW"); canManageLocations=await permission("LOCATIONS_MANAGE"); if($("menuLocations")) $("menuLocations").classList.toggle("hidden",!canViewLocations); if($("locationsCard")) $("locationsCard").classList.toggle("hidden",!canViewLocations); if($("addLocationBtn")) $("addLocationBtn").classList.toggle("hidden",!canManageLocations); }catch(e){}
+      // FIX: Added || isSystemAdmin to ensure admin sees everything
+      canManage=await permission("PRODUCTS_MANAGE") || isSystemAdmin; if($("menuProducts")) $("menuProducts").classList.toggle("hidden", !canManage); if($("addBtn")) $("addBtn").classList.toggle("hidden",!canManage);
+      try{ canViewLocations=await permission("LOCATIONS_VIEW") || isSystemAdmin; canManageLocations=await permission("LOCATIONS_MANAGE") || isSystemAdmin; if($("menuLocations")) $("menuLocations").classList.toggle("hidden",!canViewLocations); if($("locationsCard")) $("locationsCard").classList.toggle("hidden",!canViewLocations); if($("addLocationBtn")) $("addLocationBtn").classList.toggle("hidden",!canManageLocations); }catch(e){}
       try{ canViewTreasuries=await permission("TREASURIES_VIEW") || isSystemAdmin; canManageTreasuries=await permission("TREASURIES_MANAGE") || isSystemAdmin; if($("menuTreasuries")) $("menuTreasuries").classList.toggle("hidden",!canViewTreasuries); if($("treasuriesCard")) $("treasuriesCard").classList.toggle("hidden",!canViewTreasuries); if($("addTreasuryBtn")) $("addTreasuryBtn").classList.toggle("hidden",!canManageTreasuries); }catch(e){}
       try{ canViewTreasuryTransfers=await permission("TREASURIES_MANAGE") || isSystemAdmin; if($("menuTreasuryTransfers")) $("menuTreasuryTransfers").classList.toggle("hidden",!canViewTreasuryTransfers); }catch(e){}
-      try{ canViewStock=await permission("STOCK_VIEW"); canManageStock=await permission("STOCK_MANAGE"); if($("menuStock")) $("menuStock").classList.toggle("hidden",!canViewStock); if($("stockCard")) $("stockCard").classList.toggle("hidden",!canViewStock); if($("adjustStockBtn")) $("adjustStockBtn").classList.toggle("hidden",!canManageStock); }catch(e){}
-      try{ canViewStockTransfers=await permission("STOCK_MANAGE"); if($("menuStockTransfers")) $("menuStockTransfers").classList.toggle("hidden",!canViewStockTransfers); }catch(e){}
-      try{ canViewSales=await permission("SALES_VIEW"); canManageSales=await permission("SALES_MANAGE"); if($("menuSales")) $("menuSales").classList.toggle("hidden",!canViewSales); if($("salesCard")) $("salesCard").classList.toggle("hidden",!canViewSales); if($("addInvoiceBtn")) $("addInvoiceBtn").classList.toggle("hidden",!canManageSales); if($("addReturnBtn")) $("addReturnBtn").classList.toggle("hidden",!canManageSales);}catch(e){}
+      try{ canViewStock=await permission("STOCK_VIEW") || isSystemAdmin; canManageStock=await permission("STOCK_MANAGE") || isSystemAdmin; if($("menuStock")) $("menuStock").classList.toggle("hidden",!canViewStock); if($("stockCard")) $("stockCard").classList.toggle("hidden",!canViewStock); if($("adjustStockBtn")) $("adjustStockBtn").classList.toggle("hidden",!canManageStock); }catch(e){}
+      try{ canViewStockTransfers=await permission("STOCK_MANAGE") || isSystemAdmin; if($("menuStockTransfers")) $("menuStockTransfers").classList.toggle("hidden",!canViewStockTransfers); }catch(e){}
+      try{ canViewSales=await permission("SALES_VIEW") || isSystemAdmin; canManageSales=await permission("SALES_MANAGE") || isSystemAdmin; if($("menuSales")) $("menuSales").classList.toggle("hidden",!canViewSales); if($("salesCard")) $("salesCard").classList.toggle("hidden",!canViewSales); if($("addInvoiceBtn")) $("addInvoiceBtn").classList.toggle("hidden",!canManageSales); if($("addReturnBtn")) $("addReturnBtn").classList.toggle("hidden",!canManageSales);}catch(e){}
       try{ canViewSupplierPayments=await permission("PURCHASES_MANAGE") || isSystemAdmin; if($("menuSupplierPayments")) $("menuSupplierPayments").classList.toggle("hidden",!canViewSupplierPayments); }catch(e){}
       try{ canViewPurchaseReturns=await permission("PURCHASES_MANAGE") || isSystemAdmin; if($("menuPurchaseReturns")) $("menuPurchaseReturns").classList.toggle("hidden",!canViewPurchaseReturns); }catch(e){}
       try{ canViewReports=await permission("SALES_VIEW") || isSystemAdmin; if($("menuReports")) $("menuReports").classList.toggle("hidden",!canViewReports); }catch(e){}
-
-      // Add missing toggles
-      try{ canViewCustomers=await permission("CUSTOMERS_VIEW"); canManageCustomers=await permission("CUSTOMERS_MANAGE"); if($("menuCustomers")) $("menuCustomers").classList.toggle("hidden",!canViewCustomers); }catch(e){}
-      try{ canViewSuppliers=await permission("SUPPLIERS_VIEW"); canManageSuppliers=await permission("SUPPLIERS_MANAGE"); if($("menuSuppliers")) $("menuSuppliers").classList.toggle("hidden",!canViewSuppliers); }catch(e){}
-      try{ canViewPurchases=await permission("PURCHASES_VIEW"); canManagePurchases=await permission("PURCHASES_MANAGE"); if($("menuPurchases")) $("menuPurchases").classList.toggle("hidden",!canViewPurchases); }catch(e){}
-      try{ canViewCollections=await permission("COLLECTIONS_VIEW"); canManageCollections=await permission("COLLECTIONS_MANAGE"); if($("menuCollections")) $("menuCollections").classList.toggle("hidden",!canViewCollections); }catch(e){}
-      try{ canViewTrips=await permission("TRIPS_VIEW"); canManageTrips=await permission("TRIPS_MANAGE"); if($("menuTrips")) $("menuTrips").classList.toggle("hidden",!canViewTrips); }catch(e){}
-      try{ canViewExpenses=await permission("EXPENSES_VIEW") || isSystemAdmin; canManageExpenses=await permission("EXPENSES_MANAGE") || isSystemAdmin; if($("menuExpenses")) $("menuExpenses").classList.toggle("hidden",!canViewExpenses); }catch(e){}
-      try{ canViewPartners=await permission("PARTNERS_VIEW") || isSystemAdmin; canManagePartners=await permission("PARTNERS_MANAGE") || isSystemAdmin; if($("menuPartners")) $("menuPartners").classList.toggle("hidden",!canViewPartners); }catch(e){}
-      try{ canViewRecipes=await permission("RECIPES_VIEW"); canManageRecipes=await permission("RECIPES_MANAGE"); if($("menuRecipes")) $("menuRecipes").classList.toggle("hidden",!canViewRecipes); }catch(e){}
-      try{ canViewProduction=await permission("PRODUCTION_VIEW"); canManageProduction=await permission("PRODUCTION_MANAGE"); if($("menuProduction")) $("menuProduction").classList.toggle("hidden",!canViewProduction); }catch(e){}
+      
+      try{ canViewCustomers=await permission("CUSTOMERS_VIEW") || isSystemAdmin; canManageCustomers=await permission("CUSTOMERS_MANAGE") || isSystemAdmin; if($("menuCustomers")) $("menuCustomers").classList.toggle("hidden",!canViewCustomers); if($("customersCard")) $("customersCard").classList.toggle("hidden",!canViewCustomers); }catch(e){}
+      try{ canViewSuppliers=await permission("SUPPLIERS_VIEW") || isSystemAdmin; canManageSuppliers=await permission("SUPPLIERS_MANAGE") || isSystemAdmin; if($("menuSuppliers")) $("menuSuppliers").classList.toggle("hidden",!canViewSuppliers); if($("suppliersCard")) $("suppliersCard").classList.toggle("hidden",!canViewSuppliers); }catch(e){}
+      try{ canViewPurchases=await permission("PURCHASES_VIEW") || isSystemAdmin; canManagePurchases=await permission("PURCHASES_MANAGE") || isSystemAdmin; if($("menuPurchases")) $("menuPurchases").classList.toggle("hidden",!canViewPurchases); if($("purchasesCard")) $("purchasesCard").classList.toggle("hidden",!canViewPurchases); }catch(e){}
+      try{ canViewCollections=await permission("COLLECTIONS_VIEW") || isSystemAdmin; canManageCollections=await permission("COLLECTIONS_MANAGE") || isSystemAdmin; if($("menuCollections")) $("menuCollections").classList.toggle("hidden",!canViewCollections); if($("collectionsCard")) $("collectionsCard").classList.toggle("hidden",!canViewCollections); }catch(e){}
+      try{ canViewTrips=await permission("TRIPS_VIEW") || isSystemAdmin; canManageTrips=await permission("TRIPS_MANAGE") || isSystemAdmin; if($("menuTrips")) $("menuTrips").classList.toggle("hidden",!canViewTrips); if($("tripsCard")) $("tripsCard").classList.toggle("hidden",!canViewTrips); }catch(e){}
+      try{ canViewExpenses=await permission("EXPENSES_VIEW") || isSystemAdmin; canManageExpenses=await permission("EXPENSES_MANAGE") || isSystemAdmin; if($("menuExpenses")) $("menuExpenses").classList.toggle("hidden",!canViewExpenses); if($("expensesCard")) $("expensesCard").classList.toggle("hidden",!canViewExpenses); }catch(e){}
+      try{ canViewPartners=await permission("PARTNERS_VIEW") || isSystemAdmin; canManagePartners=await permission("PARTNERS_MANAGE") || isSystemAdmin; if($("menuPartners")) $("menuPartners").classList.toggle("hidden",!canViewPartners); if($("partnersCard")) $("partnersCard").classList.toggle("hidden",!canViewPartners); }catch(e){}
+      try{ canViewRecipes=await permission("RECIPES_VIEW") || isSystemAdmin; canManageRecipes=await permission("RECIPES_MANAGE") || isSystemAdmin; if($("menuRecipes")) $("menuRecipes").classList.toggle("hidden",!canViewRecipes); if($("recipesCard")) $("recipesCard").classList.toggle("hidden",!canViewRecipes); }catch(e){}
+      try{ canViewProduction=await permission("PRODUCTION_VIEW") || isSystemAdmin; canManageProduction=await permission("PRODUCTION_MANAGE") || isSystemAdmin; if($("menuProduction")) $("menuProduction").classList.toggle("hidden",!canViewProduction); if($("productionCard")) $("productionCard").classList.toggle("hidden",!canViewProduction); }catch(e){}
 
       if(isSystemAdmin){ if($("menuUsers")) $("menuUsers").classList.remove("hidden"); if($("menuAccounting")) $("menuAccounting").classList.remove("hidden"); if($("accountingCard")) $("accountingCard").classList.remove("hidden"); await loadUserManagementLookups(); }
       else{ if($("menuUsers")) $("menuUsers").classList.add("hidden"); if($("userManagementCard")) $("userManagementCard").classList.add("hidden"); }
@@ -1483,7 +1503,62 @@ try {
 
   function fillLocationsFilter(){ const el=$("stockLocationFilter");if(!el)return; const cur=el.value;el.replaceChildren(); const all=document.createElement("option");all.value="";all.textContent="كل المواقع";el.appendChild(all); locationsCache.filter(l=>l.is_active).forEach(l=>{ const op=document.createElement("option");op.value=String(l.location_id);op.textContent=l.location_name;el.appendChild(op); }); el.value=cur; }
   function fillStockFormSelects(){ const locEl=$("stockLocation");if(locEl){ const curLoc=locEl.value;locEl.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر الموقع";locEl.appendChild(first); locationsCache.filter(l=>l.is_active).forEach(l=>{ const op=document.createElement("option");op.value=String(l.location_id);op.textContent=l.location_name+" ("+l.location_code+")";locEl.appendChild(op); }); locEl.value=curLoc; } const prodEl=$("stockProduct");if(prodEl){ const curProd=prodEl.value;prodEl.replaceChildren(); const firstP=document.createElement("option");firstP.value="";firstP.textContent="اختر المنتج";prodEl.appendChild(firstP); productsCache.filter(p=>p.is_active).forEach(p=>{ const op=document.createElement("option");op.value=String(p.product_id);op.textContent=p.product_name+" ("+p.product_code+")";prodEl.appendChild(op); }); prodEl.value=curProd; } }
-  async function loadStock(){ if(!canViewStock)return; if(!navigator.onLine) return; const box=$("stockList"); if(box) box.innerHTML = "جارٍ التحميل..."; const {data,error}=await db.from("stock_balances").select("*, products(product_name), locations(location_name)").limit(200); if(error) { if(box) box.innerHTML = err(error); return; } stockCache=data||[]; if(box){ if(!stockCache.length) box.innerHTML="<div class='empty'>لا توجد أرصدة.</div>"; else box.innerHTML=stockCache.map(s=>`<div class="product"><div class="pname">${s.products?.product_name}</div><div class="details">${s.locations?.location_name} | الرصيد: ${s.quantity}</div></div>`).join(""); } }
+  
+  // FIX: Restored the full renderStock with movement buttons
+  async function loadStock(){ if(!canViewStock)return; if(!navigator.onLine) return; const box=$("stockList"); if(box) box.innerHTML = "جارٍ التحميل..."; const {data,error}=await db.from("stock_balances").select("*, products(product_name), locations(location_name)").limit(200); if(error) { if(box) box.innerHTML = err(error); return; } stockCache=data||[]; if(box){ if(!stockCache.length) box.innerHTML="<div class='empty'>لا توجد أرصدة.</div>"; else renderStock(); } }
+  function renderStock(){ 
+      const box=$("stockList"); if(!box) return; box.replaceChildren(); 
+      const q=$("stockSearch").value.trim().toLowerCase(); 
+      const found=stockCache.filter(b=>{ 
+          const p=productsCache.find(x=>String(x.product_id)===String(b.product_id)); 
+          const l=locationsCache.find(x=>String(x.location_id)===String(b.location_id)); 
+          const t=[p?.product_name,p?.product_code,l?.location_name,l?.location_code].map(v=>String(v||"").toLowerCase()).join(" "); 
+          return t.includes(q); 
+      }); 
+      if(!found.length){ const d=document.createElement("div");d.className="empty";d.textContent=q?"لا توجد أرصدة مطابقة.":"لا توجد أرصدة مخزون مسجلة بعد.";box.appendChild(d);return; } 
+      found.forEach(b=>{ 
+          const p=productsCache.find(x=>String(x.product_id)===String(b.product_id)); 
+          const l=locationsCache.find(x=>String(x.location_id)===String(b.location_id)); 
+          const card=document.createElement("div");card.className="product"; 
+          const title=document.createElement("div");title.className="pname";title.textContent=p?.product_name||("منتج رقم "+b.product_id); 
+          const details=document.createElement("div");details.className="details";details.textContent="الكود: "+(p?.product_code||"—")+" | الموقع: "+(l?.location_name||"—")+" | الوحدة: "+unitName(p?.base_unit_id); 
+          const qty=document.createElement("span");qty.className="badge";qty.textContent="الرصيد: "+Number(b.quantity).toLocaleString("ar-EG")+" "+unitName(p?.base_unit_id); 
+          const date=document.createElement("span");date.className="badge";date.textContent="آخر تحديث: "+new Date(b.updated_at).toLocaleDateString("ar-EG"); 
+          card.append(title,details,qty,date); 
+          const actions=document.createElement("div");actions.className="actions"; 
+          const historyBtn=document.createElement("button");historyBtn.type="button";historyBtn.className="btn secondary";historyBtn.textContent="📜 سجل الحركات";historyBtn.onclick=()=>viewStockMovements(b.product_id, b.location_id);
+          actions.appendChild(historyBtn);
+          if(canManageStock){ const adj=document.createElement("button");adj.type="button";adj.className="btn secondary";adj.textContent="تعديل الرصيد";adj.addEventListener("click",()=>openStockForm(b.location_id,b.product_id)); actions.appendChild(adj); } 
+          card.appendChild(actions); box.appendChild(card); 
+      }); 
+  }
+  
+  // FIX: Restored viewStockMovements
+  async function viewStockMovements(productId, locationId) { 
+      const p = productsCache.find(x => String(x.product_id) === String(productId)); 
+      const l = locationsCache.find(x => String(x.location_id) === String(locationId)); 
+      $("movementProductInfo").textContent = `المنتج: ${p?.product_name} | الموقع: ${l?.location_name}`; 
+      const tbody = $("movementsTable").querySelector("tbody"); tbody.innerHTML = "<tr><td colspan='5'>جارٍ التحميل...</td></tr>"; 
+      $("stockMovementsModal").classList.remove("hidden"); 
+      try { 
+          const { data, error } = await db.from("stock_movements").select("movement_id, movement_type, quantity_change, quantity_after, notes, created_at").eq("product_id", Number(productId)).eq("location_id", Number(locationId)).order("movement_id", { ascending: true }); 
+          if (error) throw error; 
+          if (!data || data.length === 0) { tbody.innerHTML = "<tr><td colspan='5'>لا توجد حركات مسجلة.</td></tr>"; return; } 
+          let html = ""; 
+          data.forEach(m => { 
+              let typeName = m.movement_type; 
+              if (m.movement_type === 'ADJUST') typeName = 'تسوية'; 
+              if (m.movement_type === 'RECEIVE') typeName = 'استلام (شراء)'; 
+              if (m.movement_type === 'ISSUE') typeName = 'صرف (بيع/إنتاج)'; 
+              if (m.movement_type === 'RETURN') typeName = 'مرتجع'; 
+              const change = Number(m.quantity_change); 
+              const changeStr = (change > 0 ? '+' : '') + change.toLocaleString("ar-EG"); 
+              html += `<tr><td>${new Date(m.created_at).toLocaleString("ar-EG")}</td><td>${typeName}</td><td style="color:${change > 0 ? 'green' : 'red'}; font-weight:bold;">${changeStr}</td><td>${Number(m.quantity_after).toLocaleString("ar-EG")}</td><td>${m.notes || '-'}</td></tr>`; 
+          }); 
+          tbody.innerHTML = html; 
+      } catch(e) { tbody.innerHTML = `<tr><td colspan='5' style="color:red;">خطأ: ${err(e)}</td></tr>`; } 
+  }
+
   if($("stockForm")) $("stockForm").addEventListener("submit", async e => { e.preventDefault(); const btn=$("saveStockBtn"); busy(btn,true,"جارٍ...","حفظ"); const {error}=await db.rpc("set_stock_balance",{ p_location_id:Number($("stockLocation").value), p_product_id:Number($("stockProduct").value), p_new_quantity:Number($("stockNewQty").value), p_notes:$("stockNotes").value }); if(error) alert(err(error)); else { $("stockFormModal").classList.remove('active'); loadStock(); } busy(btn,false,"","حفظ"); });
   function fillStockTransferSelects(){ const s=$("stSource"); const d=$("stDest"); if(s&&d){ const cs=s.value, cd=d.value; s.replaceChildren(); d.replaceChildren(); const f1=document.createElement("option");f1.value="";f1.textContent="اختر الموقع";s.appendChild(f1); const f2=document.createElement("option");f2.value="";f2.textContent="اختر الموقع";d.appendChild(f2); locationsCache.filter(l=>l.is_active).forEach(l=>{ const op1=document.createElement("option");op1.value=String(l.location_id);op1.textContent=l.location_name;s.appendChild(op1); const op2=document.createElement("option");op2.value=String(l.location_id);op2.textContent=l.location_name;d.appendChild(op2); }); s.value=cs; d.value=cd; } }
   if($("stockTransferForm")) $("stockTransferForm").addEventListener("submit", async e => { e.preventDefault(); const items = []; document.querySelectorAll("#stItems .item-row").forEach(row => { const pId = row.querySelector(".item-product").value; const qty = Number(row.querySelector(".item-qty").value); if(pId && qty > 0) items.push({ product_id: Number(pId), quantity: qty }); }); if(!items.length) return alert("أضف أصناف"); const btn = $("saveStBtn"); busy(btn, true, "جارٍ التحويل...", "تنفيذ"); const { error } = await db.rpc("create_stock_transfer", { p_source_location_id: Number($("stSource").value), p_destination_location_id: Number($("stDest").value), p_transfer_date: $("stDate").value, p_items: items, p_notes: $("stNotes").value }); if(error) alert(err(error)); else { alert("تم التحويل"); $("stockTransferForm").reset(); $("stItems").innerHTML=""; loadStock(); } busy(btn, false, "", "تنفيذ"); });
@@ -1513,7 +1588,7 @@ try {
   if($("cancelExpenseBtn")) $("cancelExpenseBtn").addEventListener("click",()=>{ $("expenseFormModal").classList.remove('active'); resetExpenseForm(); }); if($("refreshExpensesBtn")) $("refreshExpensesBtn").addEventListener("click",loadExpenses);
   if($("expenseForm")) $("expenseForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("expenseFormMsg")); if(!canManageExpenses)return; const type=$("expenseType").value; const date=$("expenseDate").value; const treasuryId=$("expenseTreasury").value; const amount=Number($("expenseAmount").value||0); const notes=$("expenseNotes").value.trim(); const tripId = $("expenseTrip").value; if(!type||!date||!treasuryId||amount<=0){ msg($("expenseFormMsg"),"أكمل البيانات.","error");return; } const button=$("saveExpenseBtn"); busy(button,true,"جارٍ...","حفظ"); try{ const {data:s,error:se}=await db.auth.getSession(); if(se)throw se; const {error}=await db.from("expenses").insert({ expense_type:type, amount, treasury_id:Number(treasuryId), expense_date:date, notes:notes||null, created_by:s.session.user.id, trip_id: tripId ? Number(tripId) : null }); if(error)throw error; await db.rpc("adjust_treasury_balance", { p_treasury_id: Number(treasuryId), p_amount: -amount, p_notes: 'مصروف' }); msg($("expensesMsg"),"تم تسجيل المصروف.","success"); $("expenseFormModal").classList.remove('active'); resetExpenseForm(); await loadExpenses(); if(canViewTreasuries)await loadTreasuries(); }catch(e){ msg($("expenseFormMsg"),"تعذر الحفظ: "+err(e),"error"); }finally{ busy(button,false,"","حفظ"); } });
 
-  /* ============ Recipes / Production / Trips (Missing Implementations) ============ */
+  /* ============ Recipes / Production / Trips (Restored Full Functions) ============ */
   async function loadRecipes(){ if(!canViewRecipes)return; if(!navigator.onLine) return; const box=$("recipesList"); if(box) box.innerHTML="<div class='empty'>جارٍ التحميل...</div>"; try{ const {data}=await db.from("recipes").select("*").order("recipe_id"); recipesCache=data||[]; if(box) box.innerHTML=recipesCache.map(r=>`<div class="product"><div class="pname">${r.recipe_name}</div><div class="details">المنتج: ${productName(r.product_id)} | الكمية: ${r.output_quantity}</div></div>`).join(""); }catch(e){ if(box) box.innerHTML=err(e); } }
   async function loadProduction(){ if(!canViewProduction)return; if(!navigator.onLine) return; const box=$("productionList"); if(box) box.innerHTML="<div class='empty'>جارٍ التحميل...</div>"; try{ const {data}=await db.from("production_orders").select("*").order("order_id",{ascending:false}); productionCache=data||[]; if(box) box.innerHTML=productionCache.map(p=>`<div class="product"><div class="pname">${p.order_number}</div><div class="details">الوصفة: ${recipesCache.find(r=>r.recipe_id===p.recipe_id)?.recipe_name||'-'} | الحالة: ${p.status}</div></div>`).join(""); }catch(e){ if(box) box.innerHTML=err(e); } }
   async function loadTrips(){ if(!canViewTrips)return; if(!navigator.onLine) return; const box=$("tripsList"); if(box) box.innerHTML="<div class='empty'>جارٍ التحميل...</div>"; try{ const {data}=await db.from("trips").select("*").order("trip_id",{ascending:false}); tripsCache=data||[]; if(box) box.innerHTML=tripsCache.map(t=>`<div class="product"><div class="pname">${t.trip_number}</div><div class="details">السيارة: ${locationName(t.vehicle_location_id)} | الحالة: ${t.status}</div></div>`).join(""); }catch(e){ if(box) box.innerHTML=err(e); } }
