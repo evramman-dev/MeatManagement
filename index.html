@@ -1021,10 +1021,10 @@ let canViewSales=false, canManageSales=false;
 let canViewCollections=false, canManageCollections=false;
 let canViewSuppliers=false, canManageSuppliers=false;
 let canViewPurchases=false, canManagePurchases=false;
-let canViewSupplierPayments=false, canManageSupplierPayments=false;
-let canViewPurchaseReturns=false, canManagePurchaseReturns=false;
-let canViewStockTransfers=false, canManageStockTransfers=false;
-let canViewTreasuryTransfers=false, canManageTreasuryTransfers=false;
+let canViewSupplierPayments=false;
+let canViewPurchaseReturns=false;
+let canViewStockTransfers=false;
+let canViewTreasuryTransfers=false;
 let canViewReports=false;
 
 let productsCache=[], categories=[], units=[], cartonUnitId=null;
@@ -1034,10 +1034,10 @@ let invoiceItemCounter=0, purchaseItemCounter=0, recipeItemCounter=0, returnItem
 
 const allowedRoles={ SALES_MANAGER:"مدير المبيعات", SALES_REP:"مندوب المبيعات", WAREHOUSE_KEEPER:"أمين المخزن", PRODUCTION_MANAGER:"مسؤول الإنتاج", ACCOUNTANT:"المحاسب", GENERAL_MANAGER:"المدير العام" };
 
-function msg(el,text,type=""){ el.textContent=text; el.className="status"+(type?" "+type:""); }
-function clear(el){ el.textContent=""; el.className="status hidden"; }
+function msg(el,text,type=""){ if(!el) return; el.textContent=text; el.className="status"+(type?" "+type:""); }
+function clear(el){ if(!el) return; el.textContent=""; el.className="status hidden"; }
 function err(e){ return(e?.message||"حدث خطأ غير معروف.")+(e?.code?" — الرمز: "+e.code:""); }
-function busy(btn,on,onText,offText){ btn.disabled=on; btn.textContent=on?onText:offText; }
+function busy(btn,on,onText,offText){ if(!btn) return; btn.disabled=on; btn.textContent=on?onText:offText; }
 function fmt(n){ const v=Number(n||0); return v.toLocaleString("ar-EG",{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function todayISO(){ const d=new Date(); const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,"0"); const day=String(d.getDate()).padStart(2,"0"); return y+"-"+m+"-"+day; }
 
@@ -1049,7 +1049,6 @@ function formatWaPhone(phone) {
     return p;
 }
 
-// --- الأوفلاين ---
 function saveCache(key, data) { try { localStorage.setItem(key, JSON.stringify(data)); } catch(e){} }
 function getCache(key) { try { return JSON.parse(localStorage.getItem(key)) || []; } catch(e){ return []; } }
 
@@ -1060,17 +1059,16 @@ function updateOfflineBanner(){
 window.addEventListener('online', () => { updateOfflineBanner(); location.reload(); });
 window.addEventListener('offline', updateOfflineBanner);
 
-function hideSections(){ ["login","recovery","newPass","home","tasks","data","nav"].forEach(id=>{ $(id).classList.add("hidden"); }); }
-function showLogin(){ hideSections(); $("login").classList.remove("hidden"); }
-function showApp(){ hideSections(); $("nav").classList.remove("hidden"); page("home"); }
+function hideSections(){ ["login","recovery","newPass","home","tasks","data","nav"].forEach(id=>{ if($(id)) $(id).classList.add("hidden"); }); }
+function showLogin(){ hideSections(); if($("login")) $("login").classList.remove("hidden"); }
+function showApp(){ hideSections(); if($("nav")) $("nav").classList.remove("hidden"); page("home"); }
 
 window.openSection = function(name) {
-  if(!navigator.onLine && !["home","tasks","data"].includes(name)) {
-      // مسموح بالدخول للشاشات بس للقراءة فقط
-  }
-  $("home").classList.add("hidden"); $("tasks").classList.add("hidden"); $("data").classList.remove("hidden");
+  if($("home")) $("home").classList.add("hidden"); 
+  if($("tasks")) $("tasks").classList.add("hidden"); 
+  if($("data")) $("data").classList.remove("hidden");
   document.querySelectorAll(".navbtn").forEach(b=>{ b.classList.toggle("active",b.dataset.page==="data"); });
-  $("dataDashboard").classList.add("hidden");
+  if($("dataDashboard")) $("dataDashboard").classList.add("hidden");
   document.querySelectorAll(".sub-section").forEach(el => el.classList.add("hidden"));
   let target = $(`section${name.charAt(0).toUpperCase() + name.slice(1)}`);
   if(target) target.classList.remove("hidden");
@@ -1086,14 +1084,14 @@ window.openSection = function(name) {
 
 window.closeSection = function() {
   document.querySelectorAll(".sub-section").forEach(el => el.classList.add("hidden"));
-  $("dataDashboard").classList.remove("hidden");
+  if($("dataDashboard")) $("dataDashboard").classList.remove("hidden");
   window.scrollTo(0, 0);
 }
 
 function page(name){
-  $("home").classList.toggle("hidden",name!=="home");
-  $("tasks").classList.toggle("hidden",name!=="tasks");
-  $("data").classList.toggle("hidden",name!=="data");
+  if($("home")) $("home").classList.toggle("hidden",name!=="home");
+  if($("tasks")) $("tasks").classList.toggle("hidden",name!=="tasks");
+  if($("data")) $("data").classList.toggle("hidden",name!=="data");
   document.querySelectorAll(".navbtn").forEach(b=>{ b.classList.toggle("active",b.dataset.page===name); });
   if(name==="tasks"){ loadTasks(); }
   if(name==="data"){
@@ -1111,6 +1109,7 @@ async function permission(code){
 }
 
 async function loadLookups(){
+  if(!navigator.onLine) return;
   try {
     const [c,u]=await Promise.all([ db.from("product_categories").select("category_id,category_name").order("category_id"), db.from("units").select("unit_id,unit_name,is_package_unit").order("unit_id") ]);
     if(c.error)throw c.error; if(u.error)throw u.error;
@@ -1131,6 +1130,21 @@ function fillSelect(el,items,idkey,namekey,placeholder){
   items.forEach(x=>{ const op=document.createElement("option"); op.value=x[idkey]; op.textContent=x[namekey]; el.appendChild(op); });
 }
 
+function fillTreasurySelects() {
+  const selects = ["expenseTreasury", "invoiceTreasury", "purchaseTreasury", "collectionTreasury", "returnTreasury", "spTreasury", "ttSource", "ttDest"];
+  selects.forEach(id => {
+    const el = $(id);
+    if (!el) return;
+    const cur = el.value;
+    el.replaceChildren();
+    const first = document.createElement("option"); first.value = ""; first.textContent = "اختر الخزنة"; el.appendChild(first);
+    treasuriesCache.filter(t => t.is_active).forEach(t => {
+      const op = document.createElement("option"); op.value = String(t.treasury_id); op.textContent = t.treasury_name + " (" + fmt(t.current_balance) + ")"; el.appendChild(op);
+    });
+    el.value = cur;
+  });
+}
+
 // --- Chart.js للمهام ---
 let myChart = null;
 async function loadTasks() {
@@ -1138,7 +1152,6 @@ async function loadTasks() {
   if (!navigator.onLine) { box.innerHTML = "<div class='empty'>أنت أوفلاين حالياً.</div>"; return; }
   box.innerHTML = "<div class='empty'>جارٍ تحميل مهامك...</div>";
   
-  // Chart Data
   try {
       const {data: invData} = await db.from("sales_invoices").select("net_total").gte("invoice_date", todayISO().substring(0,7)+"-01").neq("status","CANCELLED");
       const {data: expData} = await db.from("expenses").select("amount").gte("expense_date", todayISO().substring(0,7)+"-01");
@@ -1178,54 +1191,167 @@ async function loadTasks() {
 }
 
 async function userInfo(user){
-  $("userInfo").textContent="جارٍ التحقق...";
+  if($("userInfo")) $("userInfo").textContent="جارٍ التحقق...";
   if(!navigator.onLine){
-    $("userInfo").textContent="أنت أوفلاين. البيانات للعرض فقط.";
+    if($("userInfo")) $("userInfo").textContent="أنت أوفلاين. البيانات للعرض فقط.";
     return;
   }
   try {
     const {data,error}=await db.from("app_users").select("display_name,is_active,role_id").eq("user_id",user.id).maybeSingle();
     if(error)throw error; if(!data||!data.is_active)throw new Error("حساب غير مفعل.");
     const {data:role} = await db.from("app_roles").select("role_code").eq("role_id",data.role_id).maybeSingle();
-    isSystemAdmin=role?.role_code==="SYSTEM_ADMIN"; $("userInfo").textContent="مرحبًا "+(data.display_name||"بك");
+    isSystemAdmin=role?.role_code==="SYSTEM_ADMIN"; 
+    if($("userInfo")) $("userInfo").textContent="مرحبًا "+(data.display_name||"بك");
     await db.from("app_users").update({ last_login: new Date().toISOString() }).eq("user_id", user.id);
 
-    canManage=await permission("PRODUCTS_MANAGE"); $("menuProducts").classList.toggle("hidden", !canManage && !canViewProducts); $("addBtn").classList.toggle("hidden",!canManage);
-    
+    canManage=await permission("PRODUCTS_MANAGE"); $("menuProducts").classList.toggle("hidden", !canManage); $("addBtn").classList.toggle("hidden",!canManage);
     try{ canViewLocations=await permission("LOCATIONS_VIEW"); canManageLocations=await permission("LOCATIONS_MANAGE"); $("menuLocations").classList.toggle("hidden",!canViewLocations); $("locationsCard").classList.toggle("hidden",!canViewLocations); $("addLocationBtn").classList.toggle("hidden",!canManageLocations); }catch(e){}
     try{ canViewTreasuries=await permission("TREASURIES_VIEW") || isSystemAdmin; canManageTreasuries=await permission("TREASURIES_MANAGE") || isSystemAdmin; $("menuTreasuries").classList.toggle("hidden",!canViewTreasuries); $("treasuriesCard").classList.toggle("hidden",!canViewTreasuries); $("addTreasuryBtn").classList.toggle("hidden",!canManageTreasuries); }catch(e){}
-    
     try{ canViewTreasuryTransfers=await permission("TREASURIES_MANAGE") || isSystemAdmin; $("menuTreasuryTransfers").classList.toggle("hidden",!canViewTreasuryTransfers); }catch(e){}
     try{ canViewStock=await permission("STOCK_VIEW"); canManageStock=await permission("STOCK_MANAGE"); $("menuStock").classList.toggle("hidden",!canViewStock); $("stockCard").classList.toggle("hidden",!canViewStock); $("adjustStockBtn").classList.toggle("hidden",!canManageStock); }catch(e){}
     try{ canViewStockTransfers=await permission("STOCK_MANAGE"); $("menuStockTransfers").classList.toggle("hidden",!canViewStockTransfers); }catch(e){}
-    
-    try{ canViewSales=await permission("SALES_VIEW"); canManageSales=await permission("SALES_MANAGE"); $("menuSales").classList.toggle("hidden",!canViewSales); $("salesCard").classList.toggle("hidden",!canViewSales); $("addInvoiceBtn").classList.toggle("hidden",!canManageSales); }catch(e){}
+    try{ canViewSales=await permission("SALES_VIEW"); canManageSales=await permission("SALES_MANAGE"); $("menuSales").classList.toggle("hidden",!canViewSales); $("salesCard").classList.toggle("hidden",!canViewSales); $("addInvoiceBtn").classList.toggle("hidden",!canManageSales); $("addReturnBtn").classList.toggle("hidden",!canManageSales);}catch(e){}
     try{ canViewSupplierPayments=await permission("PURCHASES_MANAGE") || isSystemAdmin; $("menuSupplierPayments").classList.toggle("hidden",!canViewSupplierPayments); }catch(e){}
     try{ canViewPurchaseReturns=await permission("PURCHASES_MANAGE") || isSystemAdmin; $("menuPurchaseReturns").classList.toggle("hidden",!canViewPurchaseReturns); }catch(e){}
     try{ canViewReports=await permission("SALES_VIEW") || isSystemAdmin; $("menuReports").classList.toggle("hidden",!canViewReports); }catch(e){}
 
     if(isSystemAdmin){ $("menuUsers").classList.remove("hidden"); $("menuAccounting").classList.remove("hidden"); await loadUserManagementLookups(); }
-  } catch(e) { $("userInfo").textContent = "خطأ في الاتصال."; }
+  } catch(e) { if($("userInfo")) $("userInfo").textContent = "خطأ في الاتصال."; }
 }
 
-/* ============ CRUD العمليات الأساسية ============ */
-// (تم اختصار الدوال المتكررة زي المواقع والخزائن لتوفير المساحة، ولكنها شغالة بنفس منطق v15)
+// عمليات القراءة والعرض
 async function loadLocations(){ if(!navigator.onLine) { locationsCache=getCache('locations'); renderLocations(); return; } const {data}=await db.from("locations").select("*").order("location_id"); locationsCache=data||[]; saveCache('locations', locationsCache); renderLocations(); fillLocationsFilter(); fillInvoiceLocationSelect(); fillPurchaseLocationSelect(); fillTripVehicleSelect(); fillLoadSourceLocSelect(); fillStockTransferSelects(); }
-function renderLocations(){ /* كود عرض المواقع */ }
+function renderLocations(){ 
+    const box=$("locationsList"); if(!box) return; box.replaceChildren(); 
+    const q=$("locationSearch").value.trim().toLowerCase(); 
+    const found=locationsCache.filter(l=> [l.location_code,l.location_name].some(v=>String(v||"").toLowerCase().includes(q)) ); 
+    if(!found.length){ box.innerHTML = `<div class="empty">لا توجد مواقع.</div>`; return; } 
+    found.forEach(location=>{ 
+        const card=document.createElement("div");card.className="product"; 
+        const title=document.createElement("div");title.className="pname";title.textContent=location.location_name||"موقع"; 
+        const details=document.createElement("div");details.className="details";details.textContent="الكود: "+(location.location_code||"—"); 
+        card.append(title,details); 
+        if(canManageLocations){ 
+            const actions=document.createElement("div");actions.className="actions"; 
+            const edit=document.createElement("button");edit.type="button";edit.className="btn secondary";edit.textContent="تعديل"; 
+            edit.addEventListener("click",()=>{ $("locationEditId").value=String(location.location_id); $("locationCode").value=location.location_code||""; $("locationName").value=location.location_name||""; $("locationType").value=location.location_type||"MAIN_WAREHOUSE"; $("locationNotes").value=location.notes||""; $("locationFormTitle").textContent="تعديل الموقع"; $("locationFormModal").classList.add('active'); }); 
+            actions.appendChild(edit); card.appendChild(actions); 
+        } 
+        box.appendChild(card); 
+    }); 
+}
 
 async function loadTreasuries(){ if(!navigator.onLine) { treasuriesCache=getCache('treasuries'); renderTreasuries(); return; } const {data}=await db.from("treasuries").select("*").order("treasury_id"); treasuriesCache=data||[]; saveCache('treasuries', treasuriesCache); renderTreasuries(); fillTreasurySelects(); }
-function renderTreasuries(){ /* كود عرض الخزائن */ }
+function renderTreasuries(){ 
+    const box=$("treasuriesList"); if(!box) return; box.replaceChildren(); 
+    const q=$("treasurySearch").value.trim().toLowerCase(); 
+    const found=treasuriesCache.filter(t=> [t.treasury_name,t.treasury_type].some(v=>String(v||"").toLowerCase().includes(q)) ); 
+    if(!found.length){ box.innerHTML = `<div class="empty">لا توجد خزائن.</div>`; return; } 
+    found.forEach(t=>{ 
+        const card=document.createElement("div");card.className="product"; 
+        const title=document.createElement("div");title.className="pname";title.textContent="💵 "+t.treasury_name; 
+        const bal=document.createElement("span");bal.className="badge badge-paid";bal.textContent="الرصيد: "+fmt(t.current_balance); 
+        card.append(title,bal); box.appendChild(card); 
+    }); 
+}
 
 async function loadCustomers(){ if(!navigator.onLine) { customersCache=getCache('customers'); renderCustomers(); return; } const {data}=await db.from("customers").select("*").order("customer_id"); customersCache=data||[]; saveCache('customers', customersCache); renderCustomers(); fillInvoiceCustomerSelect(); fillCollectionCustomerSelect(); fillReturnCustomerSelect(); }
-function renderCustomers(){ /* كود عرض العملاء */ }
+function renderCustomers(){ 
+    const box=$("customersList"); if(!box) return; box.replaceChildren(); 
+    const q=$("customerSearch").value.trim().toLowerCase(); 
+    const found=customersCache.filter(c=> [c.customer_code,c.customer_name,c.phone].some(v=>String(v||"").toLowerCase().includes(q)) ); 
+    if(!found.length){ box.innerHTML = `<div class="empty">لا يوجد عملاء.</div>`; return; } 
+    found.forEach(c=>{ 
+        const card=document.createElement("div");card.className="product"; 
+        const title=document.createElement("div");title.className="pname";title.textContent=c.customer_name; 
+        const details=document.createElement("div");details.className="details";details.textContent="الكود: "+(c.customer_code||"—")+" | موبايل: "+(c.phone||"—"); 
+        card.append(title,details); 
+        if(canManageCustomers){ 
+            const actions=document.createElement("div");actions.className="actions"; 
+            const edit=document.createElement("button");edit.type="button";edit.className="btn secondary";edit.textContent="تعديل"; 
+            edit.addEventListener("click",()=>{ $("customerEditId").value=String(c.customer_id); $("customerCode").value=c.customer_code||""; $("customerName").value=c.customer_name||""; $("customerPhone").value=c.phone||""; $("customerWhatsapp").value=c.whatsapp||""; $("customerType").value=c.customer_type||"CASH"; $("customerCreditLimit").value=c.credit_limit||""; $("customerOpeningBalance").value=c.opening_balance||"0"; $("customerActive").checked=c.is_active; $("customerFormTitle").textContent="تعديل العميل"; $("customerFormModal").classList.add('active'); }); 
+            const stmtBtn=document.createElement("button");stmtBtn.type="button";stmtBtn.className="btn secondary";stmtBtn.textContent="كشف حساب"; stmtBtn.onclick=()=>viewCustomerStatement(c); 
+            actions.append(edit, stmtBtn); card.appendChild(actions); 
+        } 
+        box.appendChild(card); 
+    }); 
+}
 
 async function loadProducts(){ if(!navigator.onLine) { productsCache=getCache('products'); renderProducts(); return; } const {data}=await db.from("products").select("*").order("product_id"); productsCache=data||[]; saveCache('products', productsCache); renderProducts(); fillStockFormSelects(); }
-function renderProducts(){ /* كود عرض المنتجات */ }
+function renderProducts(){ 
+    const box=$("products"); if(!box) return; box.replaceChildren(); 
+    const q=$("search").value.trim().toLowerCase(); 
+    const found=productsCache.filter(p=> [p.product_name,p.product_code].some(v=>String(v||"").toLowerCase().includes(q)) ); 
+    if(!found.length){ box.innerHTML = `<div class="empty">لا توجد منتجات.</div>`; return; } 
+    found.forEach(p=>{ 
+        const card=document.createElement("div");card.className="product"; 
+        const title=document.createElement("div");title.className="pname";title.textContent=p.product_name; 
+        const details=document.createElement("div");details.className="details";details.textContent="الكود: "+p.product_code+" | النوع: "+p.product_type; 
+        card.append(title,details); 
+        if(canManage){ 
+            const actions=document.createElement("div");actions.className="actions"; 
+            const edit=document.createElement("button");edit.type="button";edit.className="btn secondary";edit.textContent="تعديل"; 
+            edit.addEventListener("click",()=>{ $("editId").value=String(p.product_id); $("pname").value=p.product_name; $("pcode").value=p.product_code; $("ptype").value=p.product_type; $("category").value=p.category_id; $("baseUnit").value=p.base_unit_id; $("minStock").value=p.minimum_stock||0; $("active").checked=p.is_active; $("formTitle").textContent="تعديل المنتج"; $("productFormModal").classList.add('active'); }); 
+            actions.appendChild(edit); card.appendChild(actions); 
+        } 
+        box.appendChild(card); 
+    }); 
+}
 
 async function loadSales(){ if(!navigator.onLine) { salesCache=getCache('sales'); renderSales(); return; } const {data}=await db.from("sales_invoices").select("*").order("sales_invoice_id",{ascending:false}).limit(100); salesCache=data||[]; saveCache('sales', salesCache); renderSales(); }
-function renderSales(){ /* كود عرض الفواتير */ }
+function renderSales(){ 
+    const box=$("salesList"); if(!box) return; box.replaceChildren(); 
+    const q=$("salesSearch").value.trim().toLowerCase(); 
+    const found=salesCache.filter(inv=> [inv.invoice_number, String(inv.net_total)].some(v=>String(v||"").toLowerCase().includes(q)) ); 
+    if(!found.length){ box.innerHTML = `<div class="empty">لا توجد فواتير.</div>`; return; } 
+    found.forEach(inv=>{ 
+        const card=document.createElement("div");card.className="product"; 
+        const title=document.createElement("div");title.className="pname";title.textContent="🧾 "+inv.invoice_number; 
+        const cust = customersCache.find(c => String(c.customer_id) === String(inv.customer_id));
+        const details=document.createElement("div");details.className="details";details.textContent="العميل: "+(cust?cust.customer_name:inv.customer_id)+" | التاريخ: "+inv.invoice_date+" | الإجمالي: "+fmt(inv.net_total); 
+        card.append(title,details); 
+        const actions=document.createElement("div");actions.className="actions"; 
+        const view=document.createElement("button");view.type="button";view.className="btn secondary";view.textContent="عرض"; view.onclick=()=>viewInvoice(inv); 
+        actions.appendChild(view); card.appendChild(actions); 
+        box.appendChild(card); 
+    }); 
+}
 
-/* ============ المبيعات والتحقق من الائتمان والمخزون ============ */
+async function viewCustomerStatement(c) {
+    const modal = $("customerStatementModal"); $("modalStatementHeader").innerHTML = "جارٍ التحميل..."; $("modalStatementItems").innerHTML = ""; modal.classList.remove("hidden");
+    try {
+        const { data: invoices } = await db.from("sales_invoices").select("*").eq("customer_id", c.customer_id);
+        const { data: collections } = await db.from("customer_collections").select("*").eq("customer_id", c.customer_id);
+        let html = `<thead><tr><th>التاريخ</th><th>البيان</th><th>مدين</th><th>دائن</th></tr></thead><tbody>`;
+        let balance = Number(c.opening_balance) || 0;
+        (invoices||[]).forEach(inv => { html += `<tr><td>${inv.invoice_date}</td><td>فاتورة ${inv.invoice_number}</td><td>${fmt(inv.net_total)}</td><td>-</td></tr>`; balance += Number(inv.net_total); });
+        (collections||[]).forEach(col => { html += `<tr><td>${col.collection_date}</td><td>تحصيل ${col.collection_number}</td><td>-</td><td>${fmt(col.amount)}</td></tr>`; balance -= Number(col.amount); });
+        html += `</tbody>`;
+        $("modalStatementItems").innerHTML = html;
+        $("modalStatementHeader").innerHTML = `العميل: ${c.customer_name} | الرصيد الحالي: ${fmt(balance)}`;
+        const waBtn = $("shareStatementWhatsappBtn");
+        waBtn.onclick = () => { let waText = `*كشف حساب*\nالعميل: ${c.customer_name}\nالرصيد: ${fmt(balance)}`; window.open(`https://wa.me/${formatWaPhone(c.phone)}?text=${encodeURIComponent(waText)}`, '_blank'); };
+    } catch(e) { alert(err(e)); }
+}
+
+async function viewInvoice(inv) {
+    const modal = $("invoiceDetailsModal"); $("modalInvoiceHeader").innerHTML = "جارٍ التحميل..."; $("modalInvoiceItems").innerHTML = ""; modal.classList.remove("hidden");
+    try {
+        const { data: items } = await db.from("sales_invoice_items").select("*").eq("sales_invoice_id", inv.sales_invoice_id);
+        let html = `<thead><tr><th>الصنف</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr></thead><tbody>`;
+        (items||[]).forEach(i => { const p = productsCache.find(x => String(x.product_id) === String(i.product_id)); html += `<tr><td>${p?p.product_name:i.product_id}</td><td>${i.quantity}</td><td>${fmt(i.unit_price)}</td><td>${fmt(i.line_total)}</td></tr>`; });
+        html += `</tbody>`;
+        $("modalInvoiceItems").innerHTML = html;
+        const cust = customersCache.find(c => String(c.customer_id) === String(inv.customer_id));
+        $("modalInvoiceHeader").innerHTML = `فاتورة: ${inv.invoice_number} | العميل: ${cust?cust.customer_name:inv.customer_id} | الإجمالي: ${fmt(inv.net_total)}`;
+        const phone = cust ? cust.phone : "";
+        const waBtn = $("shareWhatsappBtn");
+        let waText = `*MeatManagement*\nفاتورة: ${inv.invoice_number}\nالإجمالي: ${fmt(inv.net_total)}\nالمتبقي: ${fmt(inv.remaining_amount)}`;
+        waBtn.onclick = () => { let formattedPhone = formatWaPhone(phone); window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(waText)}`, '_blank'); };
+    } catch(e) { alert(err(e)); }
+}
+
+/* ============ المبيعات والتحقق ============ */
 $("invoiceForm").addEventListener("submit", async e => {
   e.preventDefault(); clear($("invoiceFormMsg"));
   if(!navigator.onLine) { msg($("invoiceFormMsg"), "لا يمكن الحفظ بدون إنترنت.", "error"); return; }
@@ -1250,30 +1376,21 @@ $("invoiceForm").addEventListener("submit", async e => {
   let subTotal = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
   let netTotal = subTotal - (subTotal * (discount/100));
 
-  // 1. التحقق من حد الائتمان
   if(paymentType === "CREDIT") {
       const cust = customersCache.find(c => String(c.customer_id) === String(customerId));
       if(cust && cust.credit_limit) {
           const currentDebt = salesCache.filter(s => s.customer_id == customerId && s.status !== 'CANCELLED').reduce((acc, curr) => acc + Number(curr.remaining_amount||0), 0);
           if(currentDebt + netTotal > Number(cust.credit_limit)) {
-              msg($("invoiceFormMsg"), `عذراً، العميل تعدى حد الائتمان المسموح (${fmt(cust.credit_limit)}). المديونية الحالية: ${fmt(currentDebt)}`, "error");
+              msg($("invoiceFormMsg"), `عذراً، العميل تعدى حد الائتمان المسموح (${fmt(cust.credit_limit)}). المديونية: ${fmt(currentDebt)}`, "error");
               return;
           }
       }
   }
 
-  // 2. التحقق من المخزون
   const btn = $("saveInvoiceBtn"); busy(btn, true, "جارٍ التحقق...", "حفظ");
   try {
-      for(let item of items) {
-          const { data: stock } = await db.from("stock_balances").select("quantity").eq("location_id", locationId).eq("product_id", item.product_id).maybeSingle();
-          const avail = stock ? Number(stock.quantity) : 0;
-          // ملاحظة: لو الوحدة كرتونة، لازم نحولها للوحدة الأساسية، بس لتبسيط الأمر هنعتمد على دالة قاعدة البيانات بإنها هترفض لو مفيش رصيد
-      }
-      
       const { data: invoiceId, error } = await db.rpc("create_sales_invoice", { p_customer_id: Number(customerId), p_location_id: Number(locationId), p_invoice_date: $("invoiceDate").value, p_payment_type: paymentType, p_discount: (subTotal * (discount/100)), p_notes: $("invoiceNotes").value, p_items: items, p_trip_id: $("invoiceTrip").value||null, p_paid_amount: paymentType==="CASH"?netTotal:Number($("invoicePaidAmount").value||0) });
       if(error) throw error;
-      
       msg($("invoiceFormMsg"), "تم الحفظ بنجاح.", "success");
       $("invoiceFormModal").classList.remove('active');
       loadSales(); loadStock();
@@ -1282,19 +1399,7 @@ $("invoiceForm").addEventListener("submit", async e => {
   } finally { busy(btn, false, "", "حفظ"); }
 });
 
-/* ============ الواتساب (تم الإصلاح) ============ */
-async function viewInvoice(inv) {
-    // ... كود جلب الفاتورة ...
-    const phone = customerPhone(inv.customer_id);
-    const waBtn = $("shareWhatsappBtn");
-    let waText = `*MeatManagement*\nفاتورة: ${inv.invoice_number}\nالعميل: ${customerName(inv.customer_id)}\nالإجمالي: ${fmt(inv.net_total)}\nالمتبقي: ${fmt(inv.remaining_amount)}`;
-    waBtn.onclick = () => { 
-        let formattedPhone = formatWaPhone(phone); 
-        window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(waText)}`, '_blank'); 
-    };
-}
-
-/* ============ سداد الموردين والمرتجعات الجديدة ============ */
+/* ============ سداد الموردين والمرتجعات ============ */
 async function loadSupplierPayments() {
     const box = $("supplierPaymentsList"); box.innerHTML = "جارٍ التحميل...";
     const { data } = await db.from("supplier_payments").select("*, suppliers(supplier_name), treasuries(treasury_name)").order("payment_id", {ascending:false});
@@ -1303,8 +1408,10 @@ async function loadSupplierPayments() {
 }
 $("supplierPaymentForm").addEventListener("submit", async e => {
     e.preventDefault();
+    const btn = $("saveSpBtn"); busy(btn, true, "جارٍ الحفظ...", "حفظ");
     const { error } = await db.rpc("create_supplier_payment", { p_supplier_id: Number($("spSupplier").value), p_amount: Number($("spAmount").value), p_payment_date: $("spDate").value, p_treasury_id: Number($("spTreasury").value), p_notes: $("spNotes").value });
-    if(error) alert(err(error)); else { $("supplierPaymentFormModal").classList.remove('active'); loadSupplierPayments(); }
+    if(error) alert(err(error)); else { $("supplierPaymentFormModal").classList.remove('active'); loadSupplierPayments(); loadTreasuries(); }
+    busy(btn, false, "", "حفظ");
 });
 
 async function loadPurchaseReturns() {
@@ -1324,19 +1431,22 @@ $("stockTransferForm").addEventListener("submit", async e => {
         if(pId && qty > 0) items.push({ product_id: Number(pId), quantity: qty });
     });
     if(!items.length) return alert("أضف أصناف");
+    const btn = $("saveStBtn"); busy(btn, true, "جارٍ التحويل...", "تنفيذ");
     const { error } = await db.rpc("create_stock_transfer", { p_source_location_id: Number($("stSource").value), p_destination_location_id: Number($("stDest").value), p_transfer_date: $("stDate").value, p_items: items, p_notes: $("stNotes").value });
-    if(error) alert(err(error)); else { alert("تم التحويل"); $("stockTransferForm").reset(); $("stItems").innerHTML=""; }
+    if(error) alert(err(error)); else { alert("تم التحويل"); $("stockTransferForm").reset(); $("stItems").innerHTML=""; loadStock(); }
+    busy(btn, false, "", "تنفيذ");
 });
 
 $("treasuryTransferForm").addEventListener("submit", async e => {
     e.preventDefault();
+    const btn = $("saveTtBtn"); busy(btn, true, "جارٍ التحويل...", "تنفيذ");
     const { error } = await db.rpc("transfer_treasury_funds", { p_source_treasury_id: Number($("ttSource").value), p_destination_treasury_id: Number($("ttDest").value), p_amount: Number($("ttAmount").value), p_notes: $("ttNotes").value });
     if(error) alert(err(error)); else { alert("تم تحويل الخزائن بنجاح"); $("treasuryTransferForm").reset(); loadTreasuries(); }
+    busy(btn, false, "", "تنفيذ");
 });
 
 /* ============ التقارير ============ */
 async function loadReports() {
-    // أعمار الديون
     const { data: aged } = await db.rpc("get_aged_receivables");
     const tbody = $("agedTable").querySelector("tbody");
     if(aged) tbody.innerHTML = aged.map(a => `<tr><td>${a.customer_name}</td><td dir="ltr">${a.phone||'-'}</td><td>${fmt(a.current_balance)}</td><td>${fmt(a.days_0_30)}</td><td>${fmt(a.days_31_60)}</td><td>${fmt(a.days_61_90)}</td><td style="color:red;">${fmt(a.days_over_90)}</td></tr>`).join("");
@@ -1380,7 +1490,7 @@ $("loginForm").addEventListener("submit",async e=>{
   finally { busy($("loginBtn"),false,"","تسجيل الدخول"); }
 });
 
-$("logoutBtn").onclick=async()=>{ await db.auth.signOut(); localStorage.clear(); showLogin(); };
+if($("logoutBtn")) $("logoutBtn").onclick=async()=>{ await db.auth.signOut(); localStorage.clear(); showLogin(); };
 document.querySelectorAll(".navbtn").forEach(b=>{ b.onclick=()=>page(b.dataset.page); });
 
 async function init(){
@@ -1389,8 +1499,8 @@ async function init(){
     const {data,error}=await db.auth.getSession(); if(error)throw error;
     if(data.session){
       if(!navigator.onLine){
-        showApp(); $("userInfo").textContent="أنت أوفلاين (بدون إنترنت). البيانات للعرض فقط.";
-        $("offlineBanner").style.display="block";
+        showApp(); if($("userInfo")) $("userInfo").textContent="أنت أوفلاين (بدون إنترنت). البيانات للعرض فقط.";
+        if($("offlineBanner")) $("offlineBanner").style.display="block";
         productsCache = getCache('products'); locationsCache = getCache('locations'); treasuriesCache = getCache('treasuries'); salesCache = getCache('sales'); customersCache = getCache('customers');
         return;
       }
@@ -1399,7 +1509,6 @@ async function init(){
   }catch(e){ showLogin(); msg($("loginMsg"),"خطأ في الجلسة: "+err(e),"error"); }
 }
 init();
-})();
 </script>
 </body>
 </html>
