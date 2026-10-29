@@ -1869,7 +1869,6 @@ try {
       `;
       if(lowStockCount > 0) showToast(`⚠️ يوجد ${lowStockCount} أصناف تحت الحد الأدنى`, "warn", 6000);
     } catch(e) { box.innerHTML = `<div class='empty error'>خطأ: ${err(e)}</div>`; }
-  }
 
   // ========== المهام والتنبيهات ==========
   let tasksSalesChart = null, tasksExpensesChart = null, tasksTripsChart = null;
