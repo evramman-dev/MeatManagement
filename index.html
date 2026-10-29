@@ -1211,71 +1211,21 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
 // نهاية الجزء الرابع
     // ========== المحاسبة ==========
   async function loadFinancialSummary() { 
-      if(!isSystemAdmin) return; 
-      try { 
-          // لو التواريخ فاضية، نحط تاريخ افتراضي من 2020 لحد النهاردة عشان نجيب كل الحركات
-          let from = $("accFromDate").value; 
-          let to = $("accToDate").value;
-          if(!from) from = "2020-01-01"; 
-          if(!to) to = todayISO();
-          $("accFromDate").value = from; 
-          $("accToDate").value = to;
-
-          // 1. الملخص المالي
-          const { data: periodData, error: periodError } = await db.rpc("get_period_summary", { p_from: from, p_to: to }); 
-          if(periodError) console.warn("Period Summary Error:", periodError);
-          if(periodData && periodData.length > 0) { 
-            const p = periodData[0]; 
-            $("accRevPeriod").textContent = fmt(p.rev); 
-            $("accPurchPeriod").textContent = fmt(p.purch); 
-            $("accExpPeriod").textContent = fmt(p.exp); 
-            $("accProfitPeriod").textContent = fmt(p.profit); 
-            $("accCash").textContent = fmt(p.cash); 
-            $("accAR").textContent = fmt(p.ar); 
-            $("accAP").textContent = fmt(p.ap); 
-          } else { 
-            $("accRevPeriod").textContent = "0"; 
-            $("accPurchPeriod").textContent = "0"; 
-            $("accExpPeriod").textContent = "0"; 
-            $("accProfitPeriod").textContent = "0"; 
-            $("accCash").textContent = "0"; 
-            $("accAR").textContent = "0"; 
-            $("accAP").textContent = "0"; 
-          }
-
-          // 2. ميزان المراجعة
-          const { data: trialData, error: trialError } = await db.rpc("get_trial_balance", { p_from: from, p_to: to });
-          if(trialError) console.warn("Trial Balance Error:", trialError);
-          const tbodyTrial = $("trialBalanceTable").querySelector("tbody"); 
-          tbodyTrial.innerHTML = "";
-          if(trialData && trialData.length > 0) { 
-            let totalDr = 0, totalCr = 0; 
-            trialData.forEach(row => { 
-              tbodyTrial.innerHTML += `<tr><td>${row.account_name} (${row.account_code})</td><td>${fmt(row.total_debit)}</td><td>${fmt(row.total_credit)}</td></tr>`; 
-              totalDr += Number(row.total_debit); 
-              totalCr += Number(row.total_credit); 
-            }); 
-            tbodyTrial.innerHTML += `<tr style="background:#e9efe9;font-weight:bold;"><td>الإجمالي</td><td>${fmt(totalDr)}</td><td>${fmt(totalCr)}</td></tr>`; 
-            const diff = Math.abs(totalDr - totalCr); 
-            if(diff > 0.01) tbodyTrial.innerHTML += `<tr style="background:#fff0f0;color:var(--red);font-weight:bold;"><td colspan="3">⚠️ يوجد فرق: ${fmt(diff)}</td></tr>`; 
-          } else { 
-            tbodyTrial.innerHTML = "<tr><td colspan='3' style='text-align:center;'>لا توجد قيود في هذه الفترة</td></tr>"; 
-          }
-
-          // 3. اليومية
-          const { data: journalData, error: journalError } = await db.rpc("get_journal_entries", { p_from: from, p_to: to });
-          if(journalError) console.warn("Journal Error:", journalError);
-          const tbodyJournal = $("journalTable").querySelector("tbody"); 
-          tbodyJournal.innerHTML = "";
-          if(journalData && journalData.length > 0) { 
-            journalData.forEach(row => { 
-              tbodyJournal.innerHTML += `<tr><td>${new Date(row.entry_date).toLocaleDateString("ar-EG")}</td><td>${row.description}</td><td>${row.account_name}</td><td>${fmt(row.debit)}</td><td>${fmt(row.credit)}</td></tr>`; 
-            }); 
-          } else { 
-            tbodyJournal.innerHTML = "<tr><td colspan='5' style='text-align:center;'>لا توجد قيود</td></tr>"; 
-          }
-      } catch(e){ console.error("Accounting Error:", e); } 
-  }
+    if(!isSystemAdmin) return; 
+    try { 
+        let from = $("accFromDate").value; let to = $("accToDate").value;
+        // لو مفيش تاريخ، منبعتش تاريخ (نخليها null) عشان الدالة تجيب كل الحركات
+        if(!from) from = null; if(!to) to = null;
+        const { data: periodData } = await db.rpc("get_period_summary", { p_from: from, p_to: to }); 
+        if(periodData && periodData.length > 0) { const p = periodData[0]; $("accRevPeriod").textContent = fmt(p.rev); $("accPurchPeriod").textContent = fmt(p.purch); $("accExpPeriod").textContent = fmt(p.exp); $("accProfitPeriod").textContent = fmt(p.profit); $("accCash").textContent = fmt(p.cash); $("accAR").textContent = fmt(p.ar); $("accAP").textContent = fmt(p.ap); } else { $("accRevPeriod").textContent="0";$("accPurchPeriod").textContent="0";$("accExpPeriod").textContent="0";$("accProfitPeriod").textContent="0";$("accCash").textContent="0";$("accAR").textContent="0";$("accAP").textContent="0"; }
+        const { data: trialData } = await db.rpc("get_trial_balance", { p_from: from, p_to: to });
+        const tbodyTrial = $("trialBalanceTable").querySelector("tbody"); tbodyTrial.innerHTML = "";
+        if(trialData && trialData.length > 0) { let totalDr = 0, totalCr = 0; trialData.forEach(row => { tbodyTrial.innerHTML += `<tr><td>${row.account_name} (${row.account_code})</td><td>${fmt(row.total_debit)}</td><td>${fmt(row.total_credit)}</td></tr>`; totalDr += Number(row.total_debit); totalCr += Number(row.total_credit); }); tbodyTrial.innerHTML += `<tr style="background:#e9efe9;font-weight:bold;"><td>الإجمالي</td><td>${fmt(totalDr)}</td><td>${fmt(totalCr)}</td></tr>`; const diff = Math.abs(totalDr - totalCr); if(diff > 0.01) tbodyTrial.innerHTML += `<tr style="background:#fff0f0;color:var(--red);font-weight:bold;"><td colspan="3">⚠️ يوجد فرق: ${fmt(diff)}</td></tr>`; } else { tbodyTrial.innerHTML = "<tr><td colspan='3' style='text-align:center;'>لا توجد قيود</td></tr>"; }
+        const { data: journalData } = await db.rpc("get_journal_entries", { p_from: from || '2000-01-01', p_to: to || '2100-12-31' });
+        const tbodyJournal = $("journalTable").querySelector("tbody"); tbodyJournal.innerHTML = "";
+        if(journalData && journalData.length > 0) { journalData.forEach(row => { tbodyJournal.innerHTML += `<tr><td>${new Date(row.entry_date).toLocaleDateString("ar-EG")}</td><td>${row.description}</td><td>${row.account_name}</td><td>${fmt(row.debit)}</td><td>${fmt(row.credit)}</td></tr>`; }); } else { tbodyJournal.innerHTML = "<tr><td colspan='5' style='text-align:center;'>لا توجد قيود</td></tr>"; }
+    } catch(e){ console.error(e); } 
+}
   window.switchAccTab = function(tabId) { 
     document.querySelectorAll(".acc-tab").forEach(el => el.classList.add("hidden")); 
     const btns = document.querySelectorAll('[onclick^="switchAccTab"]'); 
@@ -1301,24 +1251,28 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
     finally { busy(btn, false, "", "حفظ القيد"); } 
   });
   if($("btnBackup")) $("btnBackup").addEventListener("click", async () => { 
-    if(!confirm("سيتم تنزيل نسخة احتياطية. متابعة؟")) return; 
-    const btn = $("btnBackup"); busy(btn, true, "جارٍ...", "📥 نسخة احتياطية"); 
-    try { 
-      const tables = ["products","customers","suppliers","locations","treasuries","sales_invoices","sales_invoice_items","purchase_invoices","purchase_invoice_items","customer_collections","sales_returns","purchase_returns","expenses","partner_transactions","production_orders","trips"]; 
-      const backup = { exported_at: new Date().toISOString(), company: companySettings }; 
-      for(const t of tables){ 
-        const { data, error } = await db.from(t).select("*").limit(10000); 
-        if(error) { backup[t] = { error: error.message }; continue; } 
-        backup[t] = data; 
-      } 
-      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" }); 
-      const url = URL.createObjectURL(blob); 
-      const a = document.createElement("a"); a.href = url; a.download = `MeatManagement_Backup_${todayISO()}.json`; a.click(); 
-      URL.revokeObjectURL(url); 
-      showToast("✅ تم التنزيل", "success"); 
-    } catch(e) { alert("خطأ: " + err(e)); } 
-    finally { busy(btn, false, "", "📥 نسخة احتياطية"); } 
-  });
+  if(!confirm("سيتم تنزيل نسخة احتياطية. متابعة؟")) return; 
+  const btn = $("btnBackup"); busy(btn, true, "جارٍ...", "📥 نسخة احتياطية"); 
+  try { 
+    const tables = ["products","customers","suppliers","locations","treasuries","sales_invoices","sales_invoice_items","purchase_invoices","purchase_invoice_items","customer_collections","sales_returns","purchase_returns","expenses","partner_transactions","production_orders","trips"]; 
+    const backup = { exported_at: new Date().toISOString(), company: companySettings }; 
+    for(const t of tables){ 
+      const { data, error } = await db.from(t).select("*").limit(10000); 
+      if(error) { backup[t] = { error: error.message }; continue; } 
+      backup[t] = data; 
+    } 
+    // الطريقة الجديدة للتحميل (بتشتغل على كل المتصفحات)
+    const jsonStr = JSON.stringify(backup, null, 2);
+    const a = document.createElement("a");
+    a.setAttribute("href", "data:application/json;charset=utf-8," + encodeURIComponent(jsonStr));
+    a.setAttribute("download", `MeatManagement_Backup_${todayISO()}.json`);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showToast("✅ تم التنزيل", "success"); 
+  } catch(e) { alert("خطأ: " + err(e)); } 
+  finally { busy(btn, false, "", "📥 نسخة احتياطية"); } 
+});
 
   // ========== التقارير ==========
   async function loadReports() { 
@@ -1340,7 +1294,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
     } catch(e){ alert(err(e)); } 
   }
   window.loadSlowMovingStock = loadSlowMovingStock;
-  window.loadProfitLoss = async function() { 
+  window.loadProfitLoss = async function() { let from = $("plFromDate").value; let to = $("plToDate").value; if(!from) from = null; if(!to) to = null; try { const { data, error } = await db.rpc("get_profit_loss", { p_from: from, p_to: to }); if(error) throw error; const row = data && data[0]; if(!row) { $("plResult").innerHTML = "<div class='empty'>لا توجد بيانات</div>"; return; } const isLoss = row.profit < 0; const margin = row.revenue > 0 ? ((row.profit / row.revenue) * 100).toFixed(2) : 0; const color = isLoss ? 'var(--red)' : 'green'; $("plResult").innerHTML = `<div class="line"><span>الإيرادات:</span><span style="color:green;">${fmt(row.revenue)}</span></div><div class="line"><span>تكلفة المبيعات (المشتريات):</span><span style="color:red;">-${fmt(row.cogs)}</span></div><div class="line"><span>المصروفات:</span><span style="color:red;">-${fmt(row.expenses)}</span></div><div class="line grand" style="color:${color};"><span>${isLoss ? '⚠️ صافي الخسارة:' : 'صافي الربح:'}</span><span>${fmt(row.profit)}</span></div><div class="line"><span>هامش الربح:</span><span style="color:${color};">${margin}% ${isLoss ? '(خسارة)' : '(ربح)'}</span></div>`; } catch(e) { $("plResult").innerHTML = `<div class="error">خطأ: ${err(e)}</div>`; } };
     let from = $("plFromDate").value; 
     let to = $("plToDate").value; 
     if(!from) from = "2020-01-01"; 
