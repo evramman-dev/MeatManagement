@@ -340,6 +340,10 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 <canvas id="tasksExpensesChart" style="max-height:220px;"></canvas>
 </div>
 <div style="margin-top:20px;">
+<div class="dashboard-title">🚐 مبيعات الجولات</div>
+<canvas id="tasksTripsChart" style="max-height:220px;"></canvas>
+</div>
+<div style="margin-top:20px;">
 <div class="dashboard-title">🔔 التنبيهات المهمة</div>
 <div id="tasksList"><div class="empty">جارٍ تحميل مهامك...</div></div>
 </div>
@@ -1868,7 +1872,7 @@ try {
   }
 
   // ========== المهام والتنبيهات ==========
-  let tasksSalesChart = null, tasksExpensesChart = null;
+  let tasksSalesChart = null, tasksExpensesChart = null, tasksTripsChart = null;
   async function loadTasks() {
     const box = $("tasksList"); if(!box) return;
     if (!navigator.onLine) { box.innerHTML = "<div class='empty'>أنت أوفلاين حالياً.</div>"; return; }
@@ -1923,7 +1927,55 @@ try {
       const expData = Object.values(expTypes);
       if(tasksExpensesChart) tasksExpensesChart.destroy();
       if($("tasksExpensesChart") && expLabels.length) tasksExpensesChart = new Chart($("tasksExpensesChart").getContext('2d'), { type:'doughnut', data:{ labels: expLabels, datasets:[{ data: expData, backgroundColor:['#a52b2b','#d5b16a','#173c2c','#24563e','#68736a'] }] }, options:{ responsive:true, maintainAspectRatio:false } });
+    }
+      // ✅ كود رسم بياني لمبيعات الجولات
+const { data: tripsData } = await db.from("trips").select("trip_number, sales_reps(name)").eq("status", "COMPLETED");
+const { data: invoicesData } = await db.from("sales_invoices").select("trip_id, net_total").neq("status", "CANCELLED").gte("invoice_date", from).lte("invoice_date", to);
 
+const tripSalesMap = {};
+(invoicesData||[]).forEach(inv => {
+    if(!inv.trip_id) return;
+    if(!tripSalesMap[inv.trip_id]) tripSalesMap[inv.trip_id] = 0;
+    tripSalesMap[inv.trip_id] += Number(inv.net_total||0);
+});
+
+const tripLabels = [];
+const tripData = [];
+Object.keys(tripSalesMap).forEach(tripId => {
+    const tripInfo = tripsData ? tripsData.find(t => String(t.trip_id) === String(tripId)) : null;
+    const tripName = tripInfo ? (tripInfo.trip_number + " (" + (tripInfo.sales_reps?.name || 'مندوب') + ")") : ("جولة " + tripId);
+    tripLabels.push(tripName);
+    tripData.push(tripSalesMap[tripId]);
+});
+
+if(tasksTripsChart) tasksTripsChart.destroy();
+if($("tasksTripsChart") && tripLabels.length) {
+    tasksTripsChart = new Chart($("tasksTripsChart").getContext('2d'), { 
+        type:'bar', 
+        data:{ 
+            labels: tripLabels, 
+            datasets:[{ 
+                label:'مبيعات الجولة', 
+                data: tripData, 
+                backgroundColor: '#24563e',
+                borderRadius: 6
+            }] 
+        }, 
+        options:{ 
+            responsive:true, 
+            maintainAspectRatio:false, 
+            plugins:{ legend:{display:false} },
+            scales: { y: { beginAtZero: true } }
+        } 
+    });
+} else if ($("tasksTripsChart")) {
+    const ctx = $("tasksTripsChart").getContext('2d');
+    ctx.clearRect(0, 0, $("tasksTripsChart").width, $("tasksTripsChart").height);
+    ctx.font = "14px Arial";
+    ctx.fillStyle = "#68736a";
+    ctx.textAlign = "center";
+    ctx.fillText("لا توجد جولات مكتملة في هذه الفترة", $("tasksTripsChart").width/2, 50);
+}
       let html = "";
       const productTotals = {};
       (lowStockRes.data||[]).forEach(s => { if(s.products){ if(!productTotals[s.product_id]) productTotals[s.product_id]={name:s.products.product_name, min:s.products.minimum_stock, qty:0}; productTotals[s.product_id].qty+=Number(s.quantity); } });
