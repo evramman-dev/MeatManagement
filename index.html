@@ -2349,7 +2349,16 @@ async function viewInvoice(inv) {
         const waBtn = $("shareWhatsappBtn");
         let waText = `*MeatManagement*\nفاتورة رقم: ${inv.invoice_number}\nالتاريخ: ${invoiceTime}\nالعميل: ${customerName(inv.customer_id)}\n------------------------\n`;
         (items || []).forEach(item => { const p = productsCache.find(x => String(x.product_id) === String(item.product_id)); waText += `▪️ ${p?.product_name || 'منتج'} - ${fmtQty(item.quantity)} × ${fmt(item.unit_price)}\n`; });
-        waText += `------------------------\nالإجمالي: ${fmt(inv.net_total)}\nمدفوع: ${fmt(inv.paid_amount)}\nمتبقي: ${fmt(inv.remaining_amount)}\n\n*الرصيد الحالي: ${fmt(totalCustRemaining)}*`;
+        waText += `\n------------------------\n`;
+waText += `*الإجمالي:* ${fmt(inv.net_total)}\n`;
+waText += `*مدفوع:* ${fmt(inv.paid_amount)}\n`;
+waText += `*متبقي:* ${fmt(inv.remaining_amount)}\n`;
+waText += `\n--------------------\n`;
+waText += `*الرصيد الحالي للعميل:* ${fmt(totalCustRemaining)}\n`;
+waText += `========================\n`;
+waText += `شكراً لتعاملكم معنا 🤝\n`;
+waText += `_${companySettings.company_name || 'منتجات جمعية الشطبي'}_\n`;
+waText += `_للتواصل: ${companySettings.company_phone_1 || ''}_`;
         waBtn.onclick = () => { let formattedPhone = formatWaPhone(phone); let url = formattedPhone ? `https://wa.me/${formattedPhone}?text=${encodeURIComponent(waText)}` : `https://wa.me/?text=${encodeURIComponent(waText)}`; window.open(url, '_blank'); };
         if($("exportInvoiceJsonBtn")) $("exportInvoiceJsonBtn").onclick = () => exportInvoiceJSON(inv, items);
         fillPrintHeaders();
