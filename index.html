@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v21</title>
+<title>MeatManagement v22</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -24,7 +24,7 @@ h2{font-size:19px;margin:0 0 14px}
 label{display:block;font-size:13px;margin:13px 0 6px;font-weight:bold}
 input,select,textarea{display:block;width:100%;padding:12px;border:1px solid #ccd5cc;border-radius:10px;background:#fff;color:#202820}
 input:focus,select:focus,textarea:focus{outline:1px solid var(--g2)}
-input[type=number]{direction:ltr;text-align:left}
+input[type=number],input[type=date]{direction:ltr;text-align:left}
 .btn{width:100%;border:0;border-radius:10px;padding:12px;margin-top:12px;background:var(--g);color:#fff;font-weight:bold}
 .btn:disabled{opacity:.6;cursor:wait}
 .secondary{background:#edf1ed;color:var(--g);border:1px solid var(--line)}
@@ -101,6 +101,9 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 .mini-summary{margin-top:14px;border:1px solid #c9d5c9;border-radius:10px;background:#f9fbf9;padding:10px;font-size:13px;line-height:1.9}
 .mini-summary h4{margin:0 0 8px;font-size:14px;color:var(--g);border-bottom:1px solid var(--line);padding-bottom:5px}
 .mini-summary .line{display:flex;justify-content:space-between;padding:3px 0}
+.filter-box{background:#f9fbf9;border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:15px;}
+.filter-box .row{margin-bottom:8px;}
+.filter-box label{margin:0 0 5px;}
 @media print{
   @page{margin:10mm;size:A4 portrait}
   body{background:#fff!important}
@@ -121,7 +124,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 <body>
 <div id="offlineBanner" class="offline-banner">⚠️ أنت أوفلاين (بدون إنترنت). يتم عرض البيانات المحفوظة فقط (قراءة فقط).</div>
 <header>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v21]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v22]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 </header>
 <main>
@@ -225,6 +228,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 </div>
 </div>
 
+<!-- تم تعديل شاشة المستخدمين لإضافة خانات البحث والفلاتر الجديدة -->
 <div id="sectionUsers" class="sub-section hidden">
 <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
 <div id="userManagementCard" class="card hidden">
@@ -339,11 +343,30 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 </div>
 </div>
 
+<!-- 4. تعديل المصروفات -->
 <div id="sectionExpenses" class="sub-section hidden">
 <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
 <div id="expensesCard" class="card hidden">
 <div class="row" style="justify-content:space-between"><h2>🧾 المصروفات</h2><button id="addExpenseBtn" class="btn hidden" type="button" onclick="document.getElementById('expenseFormModal').classList.add('active')">＋ مصروف جديد</button></div>
-<div class="row"><input id="expensesSearch" type="search" placeholder="ابحث..."><button id="refreshExpensesBtn" class="btn secondary" type="button">تحديث</button></div>
+<div class="filter-box">
+    <div class="grid">
+        <div><label>من تاريخ</label><input type="date" id="expenseFromDate"></div>
+        <div><label>إلى تاريخ</label><input type="date" id="expenseToDate"></div>
+    </div>
+    <label>بند المصروف</label>
+    <select id="expenseTypeFilter">
+        <option value="">كل البنود</option>
+        <option value="FUEL">وقود (بنزين/سولار)</option>
+        <option value="MAINTENANCE">صيانة وإصلاح</option>
+        <option value="RENT">إيجارات</option>
+        <option value="SALARY">رواتب وأجور</option>
+        <option value="OTHER">مصروفات أخرى</option>
+    </select>
+    <div class="row" style="margin-top:10px;">
+        <button id="refreshExpensesBtn" class="btn secondary" type="button" style="flex:1;">تحديث البحث</button>
+        <button id="viewExpensesStatementBtn" class="btn" type="button" style="flex:1; background:var(--gold); color:var(--g);">📄 كشف حركة</button>
+    </div>
+</div>
 <div id="expensesMsg" class="status hidden"></div>
 <div id="expensesList"><div class="empty">جارٍ تحميل المصروفات...</div></div>
 </div>
@@ -793,11 +816,29 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 </div>
 </div>
 
+<!-- 3. تعديل سداد الموردين -->
 <div id="sectionSupplierPayments" class="sub-section hidden">
 <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
 <div class="card">
 <h2>💸 سداد الموردين</h2>
-<div class="row" style="justify-content:space-between"><span>سجل الدفعات</span><button class="btn" style="margin:0;width:auto;" onclick="document.getElementById('supplierPaymentFormModal').classList.add('active')">＋ دفعة جديدة</button></div>
+<div class="filter-box">
+    <div class="grid">
+        <div><label>من تاريخ</label><input type="date" id="spFromDate"></div>
+        <div><label>إلى تاريخ</label><input type="date" id="spToDate"></div>
+    </div>
+    <label>المورد</label>
+    <select id="spSupplierFilter">
+        <option value="">كل الموردين</option>
+    </select>
+    <div class="row" style="margin-top:10px;">
+        <button id="refreshSpBtn" class="btn secondary" type="button" style="flex:1;">تحديث البحث</button>
+        <button id="viewSpStatementBtn" class="btn" type="button" style="flex:1; background:var(--gold); color:var(--g);">📄 كشف حركة</button>
+    </div>
+</div>
+<div class="row" style="justify-content:space-between; margin-bottom:10px;">
+    <span style="font-weight:bold; font-size:14px; color:var(--g);">سجل الدفعات</span>
+    <button class="btn" style="margin:0;width:auto;" onclick="document.getElementById('supplierPaymentFormModal').classList.add('active')">＋ دفعة جديدة</button>
+</div>
 <div id="supplierPaymentsList" style="margin-top:15px;"><div class="empty">جارٍ التحميل...</div></div>
 </div>
 </div>
@@ -818,11 +859,29 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 </div>
 </div>
 
+<!-- 2. تعديل مرتجع المشتريات -->
 <div id="sectionPurchaseReturns" class="sub-section hidden">
 <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
 <div class="card">
 <h2>↩️ مرتجع مشتريات</h2>
-<div class="row" style="justify-content:space-between"><span>سجل المرتجعات</span><button class="btn" style="margin:0;width:auto;" onclick="document.getElementById('purchaseReturnFormModal').classList.add('active')">＋ مرتجع جديد</button></div>
+<div class="filter-box">
+    <div class="grid">
+        <div><label>من تاريخ</label><input type="date" id="prFromDate"></div>
+        <div><label>إلى تاريخ</label><input type="date" id="prToDate"></div>
+    </div>
+    <label>المورد</label>
+    <select id="prSupplierFilter">
+        <option value="">كل الموردين</option>
+    </select>
+    <div class="row" style="margin-top:10px;">
+        <button id="refreshPrBtn" class="btn secondary" type="button" style="flex:1;">تحديث البحث</button>
+        <button id="viewPrStatementBtn" class="btn" type="button" style="flex:1; background:var(--gold); color:var(--g);">📄 كشف حركة</button>
+    </div>
+</div>
+<div class="row" style="justify-content:space-between; margin-bottom:10px;">
+    <span style="font-weight:bold; font-size:14px; color:var(--g);">سجل المرتجعات</span>
+    <button class="btn" style="margin:0;width:auto;" onclick="document.getElementById('purchaseReturnFormModal').classList.add('active')">＋ مرتجع جديد</button>
+</div>
 <div id="purchaseReturnsList" style="margin-top:15px;"><div class="empty">جارٍ التحميل...</div></div>
 </div>
 </div>
@@ -868,11 +927,25 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 </div>
 </div>
 
+<!-- 1. تعديل التحصيلات -->
 <div id="sectionCollections" class="sub-section hidden">
 <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
 <div id="collectionsCard" class="card hidden">
 <div class="row" style="justify-content:space-between"><h2>💰 التحصيلات</h2><button id="addCollectionBtn" class="btn hidden" type="button" onclick="document.getElementById('collectionFormModal').classList.add('active')">＋ تسجيل تحصيل</button></div>
-<div class="row"><input id="collectionsSearch" type="search" placeholder="ابحث..."><button id="refreshCollectionsBtn" class="btn secondary" type="button">تحديث</button></div>
+<div class="filter-box">
+    <div class="grid">
+        <div><label>من تاريخ</label><input type="date" id="collectionsFromDate"></div>
+        <div><label>إلى تاريخ</label><input type="date" id="collectionsToDate"></div>
+    </div>
+    <label>اسم العميل</label>
+    <select id="collectionsCustomerFilter">
+        <option value="">كل العملاء</option>
+    </select>
+    <div class="row" style="margin-top:10px;">
+        <button id="refreshCollectionsBtn" class="btn secondary" type="button" style="flex:1;">تحديث البحث</button>
+        <button id="viewCollectionsStatementBtn" class="btn" type="button" style="flex:1; background:var(--gold); color:var(--g);">📄 كشف حركة</button>
+    </div>
+</div>
 <div id="collectionsMsg" class="status hidden"></div>
 <div id="collectionsList"><div class="empty">جارٍ تحميل التحصيلات...</div></div>
 </div>
@@ -951,7 +1024,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v21</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v22</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -959,6 +1032,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 <button class="navbtn" data-page="data" type="button">🗂️ البيانات</button>
 </nav>
 
+<!-- المودالات (للطباعة والتفاصيل) -->
 <div id="invoiceDetailsModal" class="modal hidden">
 <div class="modal-content">
 <div class="modal-header"><h3>تفاصيل الفاتورة</h3><button class="close-btn" onclick="document.getElementById('invoiceDetailsModal').classList.add('hidden')">&times;</button></div>
@@ -1003,6 +1077,26 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 </div>
 </div>
 </div>
+
+<!-- النافذة الجديدة لكشوفات المصروفات والمرتجعات والسدادات والتحصيلات -->
+<div id="genericStatementModal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header"><h3 id="genericStatementTitle">كشف حركة</h3><button class="close-btn" onclick="document.getElementById('genericStatementModal').classList.add('hidden')">&times;</button></div>
+    <div class="modal-body">
+      <div id="genericPrintArea" class="statement-print-area">
+        <div style="text-align:center;margin-bottom:20px;"><h2 style="margin:0;color:#173c2c;">🥩 MeatManagement</h2><p style="margin:5px 0;font-size:14px;color:#555;">نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p><hr style="border:1px solid #173c2c;"></div>
+        <div id="genericStatementHeader" style="font-size:14px;line-height:1.8;margin-bottom:15px;"></div>
+        <div class="table-responsive"><table class="print-table" id="genericStatementItems"></table></div>
+        <div id="genericStatementSummary" class="total-box" style="background:#f9fbf9;border:1px solid #ddd;border-radius:10px;margin-top:15px;font-size:14px;"></div>
+      </div>
+      <div class="no-print" style="margin-top:20px;display:flex;gap:10px;">
+          <button class="btn" onclick="window.print()" style="background:var(--gold);color:var(--g);flex:1;">🖨️ طباعة / PDF</button>
+          <button class="btn" id="shareGenericWhatsappBtn" style="background:#25D366;flex:1;">💬 واتساب</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="stockMovementsModal" class="modal hidden">
 <div class="modal-content">
 <div class="modal-header"><h3>كشف حركة صنف (كارت الصنف)</h3><button class="close-btn" onclick="document.getElementById('stockMovementsModal').classList.add('hidden')">&times;</button></div>
@@ -1082,17 +1176,18 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 </div>
 </div>
 </div>
+
 <div id="tripSummaryModal" class="modal hidden">
-<div class="modal-content">
-<div class="modal-header"><h3>كشف حركة الجولة</h3><button class="close-btn" onclick="document.getElementById('tripSummaryModal').classList.add('hidden')">&times;</button></div>
-<div class="modal-body">
-<div id="tripSummaryPrintArea" class="statement-print-area">
-<div style="text-align:center;margin-bottom:20px;"><h2 style="margin:0;color:#173c2c;">🥩 MeatManagement</h2><p style="margin:5px 0;font-size:14px;color:#555;">نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p><hr style="border:1px solid #173c2c;"></div>
-<div id="tripSummaryBody"></div>
-</div>
-<div class="no-print" style="margin-top:20px;display:flex;gap:10px;"><button class="btn" onclick="window.print()" style="background:var(--gold);color:var(--g);flex:1;">🖨️ طباعة / PDF</button><button class="btn" id="shareTripWhatsappBtn" style="background:#25D366;flex:1;">💬 واتساب</button></div>
-</div>
-</div>
+  <div class="modal-content">
+    <div class="modal-header"><h3>كشف حركة الجولة</h3><button class="close-btn" onclick="document.getElementById('tripSummaryModal').classList.add('hidden')">&times;</button></div>
+    <div class="modal-body">
+      <div id="tripSummaryPrintArea" class="statement-print-area">
+        <div style="text-align:center;margin-bottom:20px;"><h2 style="margin:0;color:#173c2c;">🥩 MeatManagement</h2><p style="margin:5px 0;font-size:14px;color:#555;">نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p><hr style="border:1px solid #173c2c;"></div>
+        <div id="tripSummaryBody"></div>
+      </div>
+      <div class="no-print" style="margin-top:20px;display:flex;gap:10px;"><button class="btn" onclick="window.print()" style="background:var(--gold);color:var(--g);flex:1;">🖨️ طباعة / PDF</button><button class="btn" id="shareTripWhatsappBtn" style="background:#25D366;flex:1;">💬 واتساب</button></div>
+    </div>
+  </div>
 </div>
 <script>
 (() => {
@@ -1107,7 +1202,7 @@ try {
   const db=window.supabase.createClient(URL,KEY,{ auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true, flowType:"implicit" } });
   const $=id=>document.getElementById(id);
 
-  let recoveryMode=false, canManage=false, isSystemAdmin=false;
+  let canManage=false, isSystemAdmin=false;
   let canViewLocations=false, canManageLocations=false;
   let canViewTreasuries=false, canManageTreasuries=false;
   let canViewExpenses=false, canManageExpenses=false;
@@ -1128,7 +1223,7 @@ try {
   let canViewReports=false;
 
   let productsCache=[], categories=[], units=[], cartonUnitId=null;
-  let locationsCache=[], treasuriesCache=[], stockCache=[], customersCache=[], salesCache=[], collectionsCache=[], suppliersCache=[], purchasesCache=[], recipesCache=[], productionCache=[], tripsCache=[], partnersCache=[], usersCache=[];
+  let locationsCache=[], treasuriesCache=[], stockCache=[], customersCache=[], salesCache=[], collectionsCache=[], suppliersCache=[], purchasesCache=[], recipesCache=[], productionCache=[], tripsCache=[], partnersCache=[], usersCache=[], purchaseReturnsCache=[], supplierPaymentsCache=[];
   let invoiceItemCounter=0, purchaseItemCounter=0, recipeItemCounter=0, returnItemCounter=0, exchangeItemCounter=0, stItemCounter=0, prItemCounter=0;
 
   const allowedRoles={ SALES_MANAGER:"مدير المبيعات", SALES_REP:"مندوب المبيعات", WAREHOUSE_KEEPER:"أمين المخزن", PRODUCTION_MANAGER:"مسؤول الإنتاج", ACCOUNTANT:"المحاسب", GENERAL_MANAGER:"المدير العام" };
@@ -1266,6 +1361,7 @@ try {
   function paymentTypeName(v){ return({CASH:"نقدي",CREDIT:"آجل",BANK_TRANSFER:"تحويل بنكي",CHEQUE:"شيك",MIXED:"مختلط"})[v]||v||"غير محدد"; }
   function invoiceStatusName(v){ return({POSTED:"مرحّلة",PAID:"مدفوعة",PARTIAL:"جزئية",CANCELLED:"ملغاة",DRAFT:"مسودة"})[v]||v||"—"; }
   function tripNumber(id){ return tripsCache.find(x=>String(x.trip_id)===String(id))?.trip_number||"—"; }
+  function expenseTypeName(v){ return({FUEL:"وقود",MAINTENANCE:"صيانة",RENT:"إيجارات",SALARY:"رواتب",OTHER:"أخرى"})[v]||v||"غير محدد"; }
 
   function fillSelect(el,items,idkey,namekey,placeholder){
     if(!el) return;
@@ -1287,7 +1383,7 @@ try {
     });
   }
 
-  // =========== سجل تتبع المستخدمين (نقطة 10) ===========
+  // =========== سجل تتبع المستخدمين ===========
   async function logUserAction(actionType, description){
     try {
       if(!navigator.onLine) return;
@@ -1335,14 +1431,7 @@ try {
         if(myChart) myChart.destroy();
         if($("tasksChart")) {
             const ctx = $("tasksChart").getContext('2d');
-            myChart = new Chart(ctx, { 
-                type: 'bar', 
-                data: { 
-                    labels: ['المبيعات', 'المشتريات', 'المصروفات', 'التحصيلات'], 
-                    datasets: [{ label: 'الشهر الحالي', data: [totalSales, totalPurch, totalExp, totalColl], backgroundColor: ['#173c2c', '#d5b16a', '#a52b2b', '#24563e'] }] 
-                }, 
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } 
-            });
+            myChart = new Chart(ctx, { type: 'bar', data: { labels: ['المبيعات', 'المشتريات', 'المصروفات', 'التحصيلات'], datasets: [{ label: 'الشهر الحالي', data: [totalSales, totalPurch, totalExp, totalColl], backgroundColor: ['#173c2c', '#d5b16a', '#a52b2b', '#24563e'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
         }
     } catch(e) { console.warn("Chart Error", e); }
 
@@ -1502,7 +1591,6 @@ try {
   if($("refreshLocationsBtn")) $("refreshLocationsBtn").addEventListener("click",loadLocations);
   if($("locationSearch")) $("locationSearch").addEventListener("input",renderLocations);
 
-  // =========== كشف حركة المخزن + الرصيد التراكمي + الملخص (نقطة 1) ===========
   async function viewLocationStatement(loc) {
       const modal = $("locationStatementModal");
       $("locationStatementHeader").innerHTML = "جارٍ التحميل...";
@@ -1545,7 +1633,6 @@ try {
           
           $("locationStatementHeader").innerHTML = `<div><strong>المخزن:</strong> ${loc.location_name}</div><div><strong>النوع:</strong> ${locationTypeName(loc.location_type)}</div><div><strong>عدد الحركات:</strong> ${(movements||[]).length}</div>`;
           
-          // نص واتساب
           waText += `*ملخص الأصناف:*\n`;
           Object.values(productSummary).forEach(ps => {
               waText += `▪️ ${ps.name} | وارد: ${fmtQty(ps.inQty)} | صادر: ${fmtQty(ps.outQty)} | الرصيد: ${fmtQty(ps.lastBalance)} ${ps.unit}\n`;
@@ -1619,12 +1706,12 @@ try {
 
   // =========== الموردين ===========
   function resetSupplierForm(){ $("supplierForm").reset(); $("supplierEditId").value=""; $("supplierActive").checked=true; $("supplierFormTitle").textContent="إضافة مورد جديد"; $("supplierFormModal").classList.remove('active'); clear($("supplierFormMsg")); }
-  async function loadSuppliers(){ if(!navigator.onLine) { suppliersCache=getCache('suppliers'); renderSuppliers(); return; } const {data}=await db.from("suppliers").select("*").order("supplier_id"); suppliersCache=data||[]; saveCache('suppliers', suppliersCache); renderSuppliers(); fillPurchaseSupplierSelect(); fillSupplierSelect(); fillPurchaseReturnSupplierSelect(); }
+  async function loadSuppliers(){ if(!navigator.onLine) { suppliersCache=getCache('suppliers'); renderSuppliers(); return; } const {data}=await db.from("suppliers").select("*").order("supplier_id"); suppliersCache=data||[]; saveCache('suppliers', suppliersCache); renderSuppliers(); fillPurchaseSupplierSelect(); fillSupplierSelect(); fillSupplierFilterSelects(); }
   function renderSuppliers(){ const box=$("suppliersList"); if(!box) return; box.replaceChildren(); const q=($("supplierSearch").value||""); const found=suppliersCache.filter(s=> String(s.supplier_name||"").includes(q) || String(s.supplier_code||"").includes(q)); if(!found.length){ box.innerHTML=`<div class="empty">لا يوجد موردون.</div>`; return; } found.forEach(s=>{ const card=document.createElement("div");card.className="product";card.innerHTML=`<div class="pname">${s.supplier_name}</div><div class="details">كود: ${s.supplier_code||'-'} | موبايل: ${s.phone||'-'}</div>`; const actions=document.createElement("div"); actions.className="actions"; const stmt=document.createElement("button"); stmt.className="btn secondary"; stmt.textContent="كشف حساب"; stmt.onclick=()=>viewSupplierStatement(s); actions.appendChild(stmt); if(canManageSuppliers){ const btn=document.createElement("button");btn.className="btn secondary";btn.textContent="تعديل";btn.onclick=()=>{ $("supplierEditId").value=s.supplier_id; $("supplierCode").value=s.supplier_code; $("supplierName").value=s.supplier_name; $("supplierPhone").value=s.phone||""; $("supplierFormTitle").textContent="تعديل المورد"; $("supplierFormModal").classList.add('active'); }; actions.appendChild(btn);} card.appendChild(actions); box.appendChild(card); }); }
   if($("supplierForm")) $("supplierForm").addEventListener("submit", async e => { e.preventDefault(); const btn=$("saveSupplierBtn"); busy(btn,true,"جارٍ...","حفظ"); const id=$("supplierEditId").value; const payload={ supplier_code:$("supplierCode").value, supplier_name:$("supplierName").value, phone:$("supplierPhone").value, is_active:$("supplierActive").checked }; try{ if(id) await db.from("suppliers").update(payload).eq("supplier_id",id); else await db.from("suppliers").insert(payload); $("supplierFormModal").classList.remove('active'); $("supplierForm").reset(); loadSuppliers(); }catch(e){ alert(err(e)); } finally{ busy(btn,false,"","حفظ"); } });
   if($("refreshSuppliersBtn")) $("refreshSuppliersBtn").addEventListener("click",loadSuppliers);
   if($("supplierSearch")) $("supplierSearch").addEventListener("input",renderSuppliers);
-  
+
   async function viewSupplierStatement(s) { 
       const modal = $("supplierStatementModal"); $("modalSupplierHeader").innerHTML = "جارٍ تحميل البيانات..."; $("modalSupplierItems").innerHTML = ""; $("modalSupplierSummary").innerHTML = ""; modal.classList.remove("hidden"); 
       try { 
@@ -1673,9 +1760,27 @@ try {
   function fillPartnerTreasurySelect(){ const el=$("ptTreasury"); if(!el)return; const cur=el.value; el.replaceChildren(); const first=document.createElement("option"); first.value=""; first.textContent="بدون خزنة (مساهمة عينية)"; el.appendChild(first); treasuriesCache.filter(t=>t.is_active).forEach(t=>{ const op=document.createElement("option"); op.value=String(t.treasury_id); op.textContent=t.treasury_name; el.appendChild(op); }); el.value=cur; }
   function fillExpenseTripSelect() { const el = $("expenseTrip"); if(!el) return; const cur = el.value; el.replaceChildren(); const first = document.createElement("option"); first.value = ""; first.textContent = "بدون ربط"; el.appendChild(first); tripsCache.filter(t => t.status !== 'COMPLETED').forEach(t => { const op = document.createElement("option"); op.value = String(t.trip_id); op.textContent = t.trip_number + " (" + (t.rep_name||t.sales_rep_name||"") + ")"; el.appendChild(op); }); el.value = cur; }
   function fillPurchaseReturnInvoiceSelect() { const el = $("prInvoice"); if(!el) return; const cur = el.value; el.replaceChildren(); const first = document.createElement("option"); first.value = ""; first.textContent = "اختر الفاتورة"; el.appendChild(first); purchasesCache.forEach(inv => { const op = document.createElement("option"); op.value = String(inv.purchase_invoice_id); op.textContent = inv.invoice_number + " - " + supplierName(inv.supplier_id); el.appendChild(op); }); el.value = cur; }
-  function fillPurchaseReturnSupplierSelect() { /* reserved */ }
+  
+  // دوال تعبئة الفلاتر الجديدة
+  function fillSupplierFilterSelects() {
+      const ids = ["spSupplierFilter", "prSupplierFilter"];
+      ids.forEach(id => {
+          const el = $(id); if(!el) return;
+          const cur = el.value; el.replaceChildren();
+          const first = document.createElement("option"); first.value = ""; first.textContent = "كل الموردين"; el.appendChild(first);
+          suppliersCache.filter(s=>s.is_active).forEach(s => { const op = document.createElement("option"); op.value = String(s.supplier_id); op.textContent = s.supplier_name; el.appendChild(op); });
+          el.value = cur;
+      });
+  }
+  function fillCollectionsCustomerFilter() {
+      const el = $("collectionsCustomerFilter"); if(!el) return;
+      const cur = el.value; el.replaceChildren();
+      const first = document.createElement("option"); first.value = ""; first.textContent = "كل العملاء"; el.appendChild(first);
+      customersCache.filter(c=>c.is_active).forEach(c => { const op = document.createElement("option"); op.value = String(c.customer_id); op.textContent = c.customer_name; el.appendChild(op); });
+      el.value = cur;
+  }
 
-  // نهاية الجزء الثاني من الـ JS — يُتبع في الجزء الثالث
+  // نهاية الجزء الثاني
   // =========== فواتير البيع ===========
 function resetInvoiceForm(){ $("invoiceForm").reset(); $("invoiceDate").value=todayISO(); $("invoicePaymentType").value="CASH"; $("invoiceDiscount").value="0"; $("invoicePaidAmount").value="0"; $("invoicePaidAmountWrap").classList.add("hidden"); $("invoiceItems").replaceChildren(); invoiceItemCounter=0; addInvoiceItemRow(); updateInvoiceTotals(); $("invoiceFormModal").classList.remove('active'); clear($("invoiceFormMsg")); fillInvoiceCustomerSelect(); fillInvoiceLocationSelect(); fillTreasurySelects(); fillInvoiceTripSelect(); }
 
@@ -1830,9 +1935,8 @@ function renderPurchases(){
 if($("refreshPurchasesBtn")) $("refreshPurchasesBtn").addEventListener("click",loadPurchases);
 if($("purchasesSearch")) $("purchasesSearch").addEventListener("input",renderPurchases);
 
-// نقطة 6: معاينة فاتورة المشتريات كاملة (كانت مش شغالة)
 async function viewPurchaseInvoice(inv) {
-    const modal = $("purchaseDetailsModal"); if(!modal) { alert("مودال التفاصيل غير موجود"); return; }
+    const modal = $("purchaseDetailsModal"); if(!modal) return;
     $("modalPurchaseHeader").innerHTML = "جارٍ التحميل..."; $("modalPurchaseItems").innerHTML = ""; $("modalPurchaseTotals").innerHTML = ""; modal.classList.remove("hidden");
     try {
         const { data: items, error: iErr } = await db.from("purchase_invoice_items").select("*").eq("purchase_invoice_id", inv.purchase_invoice_id);
@@ -1883,14 +1987,28 @@ if($("purchaseForm")) $("purchaseForm").addEventListener("submit", async e => {
     }catch(e){ msg($("purchaseFormMsg"),"تعذر حفظ الفاتورة: "+err(e),"error"); }finally{ busy(button,false,"","حفظ الفاتورة"); } 
 });
 
-// =========== سداد الموردين ===========
+// =========== سداد الموردين (مع الفلترة) ===========
 async function loadSupplierPayments() { 
     const box = $("supplierPaymentsList"); if(!box) return; box.innerHTML = "جارٍ التحميل..."; 
     if(!navigator.onLine) { box.innerHTML = "<div class='empty'>أنت أوفلاين.</div>"; return; }
-    const { data } = await db.from("supplier_payments").select("*, suppliers(supplier_name), treasuries(treasury_name)").order("payment_id", {ascending:false}); 
-    if(!data || !data.length) { box.innerHTML = "<div class='empty'>لا توجد سدادات.</div>"; return; } 
-    box.innerHTML = data.map(p => `<div class="product"><div class="pname">💸 ${p.suppliers?.supplier_name||'-'}</div><div class="details">المبلغ: ${fmt(p.amount)} | التاريخ: ${p.payment_date} | من: ${p.treasuries?.treasury_name||'-'}</div></div>`).join(""); 
+    
+    const from = $("spFromDate").value;
+    const to = $("spToDate").value;
+    const supId = $("spSupplierFilter").value;
+
+    let query = db.from("supplier_payments").select("*, suppliers(supplier_name), treasuries(treasury_name)").order("payment_id", {ascending:false});
+    if (from) query = query.gte("payment_date", from);
+    if (to) query = query.lte("payment_date", to);
+    if (supId) query = query.eq("supplier_id", supId);
+
+    const { data, error } = await query; 
+    if(error) { box.innerHTML = `<div class="empty error">خطأ: ${err(error)}</div>`; return; }
+    supplierPaymentsCache = data || [];
+    
+    if(!data || !data.length) { box.innerHTML = "<div class='empty'>لا توجد سدادات مطابقة للبحث.</div>"; return; } 
+    box.innerHTML = data.map(p => `<div class="product"><div class="pname">💸 ${p.suppliers?.supplier_name||'-'}</div><div class="details">المبلغ: ${fmt(p.amount)} | التاريخ: ${new Date(p.payment_date).toLocaleDateString("ar-EG")} | من: ${p.treasuries?.treasury_name||'-'}</div></div>`).join(""); 
 }
+
 if($("supplierPaymentForm")) $("supplierPaymentForm").addEventListener("submit", async e => { 
     e.preventDefault(); const btn = $("saveSpBtn"); busy(btn, true, "جارٍ الحفظ...", "حفظ"); 
     try {
@@ -1902,14 +2020,111 @@ if($("supplierPaymentForm")) $("supplierPaymentForm").addEventListener("submit",
     finally { busy(btn, false, "", "حفظ"); }
 });
 
-// =========== مرتجع مشتريات ===========
+if($("refreshSpBtn")) $("refreshSpBtn").addEventListener("click", loadSupplierPayments);
+
+// كشف حركة السدادات
+if($("viewSpStatementBtn")) $("viewSpStatementBtn").addEventListener("click", async () => {
+    const modal = $("genericStatementModal");
+    $("genericStatementTitle").textContent = "كشف حركة السدادات";
+    $("genericStatementHeader").innerHTML = "جارٍ التحميل...";
+    $("genericStatementItems").innerHTML = ""; $("genericStatementSummary").innerHTML = "";
+    modal.classList.remove("hidden");
+    
+    const from = $("spFromDate").value;
+    const to = $("spToDate").value;
+    const supId = $("spSupplierFilter").value;
+    let supName = supId ? supplierName(supId) : "كل الموردين";
+    let periodText = (from ? "من: " + from : "") + (to ? " إلى: " + to : "");
+
+    let query = db.from("supplier_payments").select("*, suppliers(supplier_name)").order("payment_date", {ascending:true});
+    if (from) query = query.gte("payment_date", from);
+    if (to) query = query.lte("payment_date", to);
+    if (supId) query = query.eq("supplier_id", supId);
+
+    const { data, error } = await query;
+    if(error) { $("genericStatementHeader").innerHTML = "خطأ: "+err(error); return; }
+
+    let total = 0;
+    let html = `<thead><tr><th>التاريخ</th><th>المورد</th><th>المبلغ</th></tr></thead><tbody>`;
+    (data||[]).forEach(row => {
+        total += Number(row.amount);
+        html += `<tr><td>${new Date(row.payment_date).toLocaleDateString("ar-EG")}</td><td>${row.suppliers?.supplier_name||'-'}</td><td>${fmt(row.amount)}</td></tr>`;
+    });
+    if(!data || !data.length) html += `<tr><td colspan="3">لا توجد سدادات</td></tr>`;
+    html += `</tbody>`;
+
+    $("genericStatementItems").innerHTML = html;
+    $("genericStatementHeader").innerHTML = `<div><strong>المورد:</strong> ${supName}</div><div><strong>الفترة:</strong> ${periodText || "كل الفترات"}</div>`;
+    $("genericStatementSummary").innerHTML = `<div class="line grand"><span>إجمالي السدادات:</span><span>${fmt(total)}</span></div>`;
+
+    let waText = `*كشف حركة السدادات*\nالمورد: ${supName}\n${periodText}\n------------------------\n`;
+    (data||[]).forEach(row => { waText += `▪️ ${new Date(row.payment_date).toLocaleDateString("ar-EG")} | ${row.suppliers?.supplier_name||'-'} | ${fmt(row.amount)}\n`; });
+    waText += `------------------------\n*إجمالي السدادات: ${fmt(total)}*`;
+    $("shareGenericWhatsappBtn").onclick = () => { window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); };
+});
+
+// =========== مرتجع مشتريات (مع الفلترة) ===========
 async function loadPurchaseReturns() { 
     const box = $("purchaseReturnsList"); if(!box) return; box.innerHTML = "جارٍ التحميل..."; 
     if(!navigator.onLine) { box.innerHTML = "<div class='empty'>أنت أوفلاين.</div>"; return; }
-    const { data } = await db.from("purchase_returns").select("*, suppliers(supplier_name)").order("return_id", {ascending:false}); 
-    if(!data || !data.length) { box.innerHTML = "<div class='empty'>لا توجد مرتجعات.</div>"; return; } 
-    box.innerHTML = data.map(r => `<div class="product"><div class="pname">↩️ ${r.return_number}</div><div class="details">المورد: ${r.suppliers?.supplier_name} | المبلغ: ${fmt(r.total_return_amount)}</div></div>`).join(""); 
+    
+    const from = $("prFromDate").value;
+    const to = $("prToDate").value;
+    const supId = $("prSupplierFilter").value;
+
+    let query = db.from("purchase_returns").select("*, suppliers(supplier_name)").order("return_id", {ascending:false}); 
+    if (from) query = query.gte("return_date", from);
+    if (to) query = query.lte("return_date", to);
+    if (supId) query = query.eq("supplier_id", supId);
+
+    const { data, error } = await query; 
+    if(error) { box.innerHTML = `<div class="empty error">خطأ: ${err(error)}</div>`; return; }
+    
+    if(!data || !data.length) { box.innerHTML = "<div class='empty'>لا توجد مرتجعات مطابقة للبحث.</div>"; return; } 
+    box.innerHTML = data.map(r => `<div class="product"><div class="pname">↩️ ${r.return_number}</div><div class="details">المورد: ${r.suppliers?.supplier_name} | المبلغ: ${fmt(r.total_return_amount)} | التاريخ: ${new Date(r.return_date).toLocaleDateString("ar-EG")}</div></div>`).join(""); 
 }
+if($("refreshPrBtn")) $("refreshPrBtn").addEventListener("click", loadPurchaseReturns);
+
+if($("viewPrStatementBtn")) $("viewPrStatementBtn").addEventListener("click", async () => {
+    const modal = $("genericStatementModal");
+    $("genericStatementTitle").textContent = "كشف حركة المرتجعات";
+    $("genericStatementHeader").innerHTML = "جارٍ التحميل...";
+    $("genericStatementItems").innerHTML = ""; $("genericStatementSummary").innerHTML = "";
+    modal.classList.remove("hidden");
+    
+    const from = $("prFromDate").value;
+    const to = $("prToDate").value;
+    const supId = $("prSupplierFilter").value;
+    let supName = supId ? supplierName(supId) : "كل الموردين";
+    let periodText = (from ? "من: " + from : "") + (to ? " إلى: " + to : "");
+
+    let query = db.from("purchase_returns").select("*, suppliers(supplier_name)").order("return_date", {ascending:true});
+    if (from) query = query.gte("return_date", from);
+    if (to) query = query.lte("return_date", to);
+    if (supId) query = query.eq("supplier_id", supId);
+
+    const { data, error } = await query;
+    if(error) { $("genericStatementHeader").innerHTML = "خطأ: "+err(error); return; }
+
+    let total = 0;
+    let html = `<thead><tr><th>التاريخ</th><th>رقم المرتجع</th><th>المورد</th><th>المبلغ</th></tr></thead><tbody>`;
+    (data||[]).forEach(row => {
+        total += Number(row.total_return_amount);
+        html += `<tr><td>${new Date(row.return_date).toLocaleDateString("ar-EG")}</td><td>${row.return_number}</td><td>${row.suppliers?.supplier_name||'-'}</td><td>${fmt(row.total_return_amount)}</td></tr>`;
+    });
+    if(!data || !data.length) html += `<tr><td colspan="4">لا توجد مرتجعات</td></tr>`;
+    html += `</tbody>`;
+
+    $("genericStatementItems").innerHTML = html;
+    $("genericStatementHeader").innerHTML = `<div><strong>المورد:</strong> ${supName}</div><div><strong>الفترة:</strong> ${periodText || "كل الفترات"}</div>`;
+    $("genericStatementSummary").innerHTML = `<div class="line grand"><span>إجمالي المرتجعات:</span><span>${fmt(total)}</span></div>`;
+
+    let waText = `*كشف حركة المرتجعات*\nالمورد: ${supName}\n${periodText}\n------------------------\n`;
+    (data||[]).forEach(row => { waText += `▪️ ${new Date(row.return_date).toLocaleDateString("ar-EG")} | ${row.return_number} | ${fmt(row.total_return_amount)}\n`; });
+    waText += `------------------------\n*إجمالي المرتجعات: ${fmt(total)}*`;
+    $("shareGenericWhatsappBtn").onclick = () => { window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); };
+});
+
 function addPrItemRow(){ 
   prItemCounter++; 
   const wrap=document.createElement("div"); wrap.className="item-row"; 
@@ -1923,6 +2138,8 @@ function addPrItemRow(){
   const removeBtn=document.createElement("button"); removeBtn.type="button"; removeBtn.className="btn danger"; removeBtn.textContent="حذف"; removeBtn.onclick=()=>{ wrap.remove(); if(!$("prItems").children.length) addPrItemRow(); }; 
   wrap.append(prodLabel,prodSel,grid2,removeBtn); $("prItems").appendChild(wrap); 
 }
+window.addPrItemRow = addPrItemRow;
+
 if($("purchaseReturnForm")) $("purchaseReturnForm").addEventListener("submit", async e => {
     e.preventDefault(); const btn=$("savePrBtn"); busy(btn,true,"جارٍ...","حفظ");
     const items=[]; 
@@ -1979,7 +2196,6 @@ function openStockForm(locationId, productId) {
     $("stockFormModal").classList.add('active');
 }
 
-// نقطة 2: كارت الصنف مع ملخص الحركة أسفل الجدول
 async function viewStockMovements(productId, locationId) { 
     const p = productsCache.find(x => String(x.product_id) === String(productId)); 
     const l = locationsCache.find(x => String(x.location_id) === String(locationId)); 
@@ -2047,13 +2263,32 @@ if($("stockTransferForm")) $("stockTransferForm").addEventListener("submit", asy
     busy(btn, false, "", "تنفيذ"); 
 });
 
-// =========== التحصيلات (نقطة 7: عرض المندوب والتاريخ والجولة) ===========
-async function loadCollections(){ if(!navigator.onLine) { collectionsCache=getCache('collections'); renderCollections(); return; } const {data}=await db.from("customer_collections").select("*").order("collection_id",{ascending:false}).limit(100); collectionsCache=data||[]; saveCache('collections', collectionsCache); renderCollections(); }
+// =========== التحصيلات (مع الفلترة) ===========
+async function loadCollections(){ 
+    if(!navigator.onLine) { collectionsCache=getCache('collections'); renderCollections(); return; } 
+    const box = $("collectionsList"); if(box) box.innerHTML = "جارٍ التحميل...";
+
+    const from = $("collectionsFromDate").value;
+    const to = $("collectionsToDate").value;
+    const custId = $("collectionsCustomerFilter").value;
+
+    let query = db.from("customer_collections").select("*").order("collection_id",{ascending:false}).limit(200); 
+    if (from) query = query.gte("collection_date", from);
+    if (to) query = query.lte("collection_date", to);
+    if (custId) query = query.eq("customer_id", custId);
+
+    const {data, error} = await query;
+    if(error) { if(box) box.innerHTML = `<div class="empty error">خطأ: ${err(error)}</div>`; return; }
+    
+    collectionsCache=data||[]; 
+    saveCache('collections', collectionsCache); 
+    renderCollections(); 
+}
 function renderCollections(){ 
     const box=$("collectionsList"); if(!box) return; box.replaceChildren(); 
     const q=($("collectionsSearch").value||"").trim().toLowerCase(); 
     const found=collectionsCache.filter(col=> [col.collection_number, customerName(col.customer_id)].some(v=>String(v||"").toLowerCase().includes(q))); 
-    if(!found.length){ box.innerHTML = `<div class="empty">لا توجد تحصيلات.</div>`; return; } 
+    if(!found.length){ box.innerHTML = `<div class="empty">لا توجد تحصيلات مطابقة للبحث.</div>`; return; } 
     found.forEach(col=>{ 
         const card=document.createElement("div");card.className="product";
         const repName = col.sales_rep_name || "غير محدد";
@@ -2064,6 +2299,46 @@ function renderCollections(){
 }
 if($("refreshCollectionsBtn")) $("refreshCollectionsBtn").addEventListener("click",loadCollections);
 if($("collectionsSearch")) $("collectionsSearch").addEventListener("input",renderCollections);
+
+if($("viewCollectionsStatementBtn")) $("viewCollectionsStatementBtn").addEventListener("click", async () => {
+    const modal = $("genericStatementModal");
+    $("genericStatementTitle").textContent = "كشف حركة التحصيلات";
+    $("genericStatementHeader").innerHTML = "جارٍ التحميل...";
+    $("genericStatementItems").innerHTML = ""; $("genericStatementSummary").innerHTML = "";
+    modal.classList.remove("hidden");
+    
+    const from = $("collectionsFromDate").value;
+    const to = $("collectionsToDate").value;
+    const custId = $("collectionsCustomerFilter").value;
+    let custName = custId ? customerName(custId) : "كل العملاء";
+    let periodText = (from ? "من: " + from : "") + (to ? " إلى: " + to : "");
+
+    let query = db.from("customer_collections").select("*").order("collection_date", {ascending:true});
+    if (from) query = query.gte("collection_date", from);
+    if (to) query = query.lte("collection_date", to);
+    if (custId) query = query.eq("customer_id", custId);
+
+    const { data, error } = await query;
+    if(error) { $("genericStatementHeader").innerHTML = "خطأ: "+err(error); return; }
+
+    let total = 0;
+    let html = `<thead><tr><th>التاريخ</th><th>رقم التحصيل</th><th>العميل</th><th>المندوب</th><th>المبلغ</th></tr></thead><tbody>`;
+    (data||[]).forEach(row => {
+        total += Number(row.amount);
+        html += `<tr><td>${new Date(row.collection_date).toLocaleDateString("ar-EG")}</td><td>${row.collection_number}</td><td>${customerName(row.customer_id)}</td><td>${row.sales_rep_name||'-'}</td><td>${fmt(row.amount)}</td></tr>`;
+    });
+    if(!data || !data.length) html += `<tr><td colspan="5">لا توجد تحصيلات</td></tr>`;
+    html += `</tbody>`;
+
+    $("genericStatementItems").innerHTML = html;
+    $("genericStatementHeader").innerHTML = `<div><strong>العميل:</strong> ${custName}</div><div><strong>الفترة:</strong> ${periodText || "كل الفترات"}</div>`;
+    $("genericStatementSummary").innerHTML = `<div class="line grand"><span>إجمالي التحصيلات:</span><span>${fmt(total)}</span></div>`;
+
+    let waText = `*كشف حركة التحصيلات*\nالعميل: ${custName}\n${periodText}\n------------------------\n`;
+    (data||[]).forEach(row => { waText += `▪️ ${new Date(row.collection_date).toLocaleDateString("ar-EG")} | ${customerName(row.customer_id)} | ${fmt(row.amount)}\n`; });
+    waText += `------------------------\n*إجمالي التحصيلات: ${fmt(total)}*`;
+    $("shareGenericWhatsappBtn").onclick = () => { window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); };
+});
 
 if($("collectionForm")) $("collectionForm").addEventListener("submit", async e => { 
     e.preventDefault(); const btn=$("saveCollectionBtn"); busy(btn,true,"جارٍ...","حفظ"); 
@@ -2077,6 +2352,75 @@ if($("collectionForm")) $("collectionForm").addEventListener("submit", async e =
     } catch(e){ alert(err(e)); } finally{ busy(btn,false,"","حفظ"); } 
 });
 if($("addCollectionBtn")) $("addCollectionBtn").addEventListener("click",()=>{ $("collectionDate").value=todayISO(); fillCollectionCustomerSelect(); fillTreasurySelects(); fillCollectionTripSelect(); });
+
+// =========== المصروفات (مع الفلترة) ===========
+async function loadExpenses(){ 
+    if(!canViewExpenses)return; 
+    clear($("expensesMsg")); 
+    const box = $("expensesList"); if(box) box.innerHTML = "جارٍ التحميل...";
+    if(!navigator.onLine){ if(box) box.innerHTML="<div class='empty'>أنت أوفلاين.</div>"; return; } 
+
+    const from = $("expenseFromDate").value;
+    const to = $("expenseToDate").value;
+    const type = $("expenseTypeFilter").value;
+
+    let query = db.from("expenses").select("*").order("expense_id",{ascending:false}).limit(200); 
+    if (from) query = query.gte("expense_date", from);
+    if (to) query = query.lte("expense_date", to);
+    if (type) query = query.eq("expense_type", type);
+
+    const {data, error} = await query;
+    if(error){ msg($("expensesMsg"),"تعذر تحميل المصروفات: "+err(error),"error"); if(box) box.innerHTML=""; return; }
+    
+    if(box) { 
+        box.innerHTML = (data||[]).map(e=>`<div class="product"><div class="pname">🧾 ${expenseTypeName(e.expense_type)}</div><div class="details">المبلغ: ${fmt(e.amount)} | التاريخ: ${new Date(e.expense_date).toLocaleDateString("ar-EG")}</div></div>`).join(""); 
+        if(!data || !data.length) box.innerHTML = "<div class='empty'>لا توجد مصروفات مطابقة للبحث.</div>";
+    } 
+}
+if($("addExpenseBtn")) $("addExpenseBtn").addEventListener("click",async()=>{ if(!canManageExpenses)return; if(!treasuriesCache.length)await loadTreasuries(); if(!tripsCache.length)await loadTrips(); resetExpenseForm(); $("expenseFormModal").classList.add('active'); });
+if($("refreshExpensesBtn")) $("refreshExpensesBtn").addEventListener("click",loadExpenses);
+
+if($("viewExpensesStatementBtn")) $("viewExpensesStatementBtn").addEventListener("click", async () => {
+    const modal = $("genericStatementModal");
+    $("genericStatementTitle").textContent = "كشف حركة المصروفات";
+    $("genericStatementHeader").innerHTML = "جارٍ التحميل...";
+    $("genericStatementItems").innerHTML = ""; $("genericStatementSummary").innerHTML = "";
+    modal.classList.remove("hidden");
+    
+    const from = $("expenseFromDate").value;
+    const to = $("expenseToDate").value;
+    const type = $("expenseTypeFilter").value;
+    let typeNameStr = type ? expenseTypeName(type) : "كل البنود";
+    let periodText = (from ? "من: " + from : "") + (to ? " إلى: " + to : "");
+
+    let query = db.from("expenses").select("*").order("expense_date", {ascending:true});
+    if (from) query = query.gte("expense_date", from);
+    if (to) query = query.lte("expense_date", to);
+    if (type) query = query.eq("expense_type", type);
+
+    const { data, error } = await query;
+    if(error) { $("genericStatementHeader").innerHTML = "خطأ: "+err(error); return; }
+
+    let total = 0;
+    let html = `<thead><tr><th>التاريخ</th><th>البند</th><th>المبلغ</th></tr></thead><tbody>`;
+    (data||[]).forEach(row => {
+        total += Number(row.amount);
+        html += `<tr><td>${new Date(row.expense_date).toLocaleDateString("ar-EG")}</td><td>${expenseTypeName(row.expense_type)}</td><td>${fmt(row.amount)}</td></tr>`;
+    });
+    if(!data || !data.length) html += `<tr><td colspan="3">لا توجد مصروفات</td></tr>`;
+    html += `</tbody>`;
+
+    $("genericStatementItems").innerHTML = html;
+    $("genericStatementHeader").innerHTML = `<div><strong>البند:</strong> ${typeNameStr}</div><div><strong>الفترة:</strong> ${periodText || "كل الفترات"}</div>`;
+    $("genericStatementSummary").innerHTML = `<div class="line grand"><span>إجمالي المصروفات:</span><span>${fmt(total)}</span></div>`;
+
+    let waText = `*كشف حركة المصروفات*\nالبند: ${typeNameStr}\n${periodText}\n------------------------\n`;
+    (data||[]).forEach(row => { waText += `▪️ ${new Date(row.expense_date).toLocaleDateString("ar-EG")} | ${expenseTypeName(row.expense_type)} | ${fmt(row.amount)}\n`; });
+    waText += `------------------------\n*إجمالي المصروفات: ${fmt(total)}*`;
+    $("shareGenericWhatsappBtn").onclick = () => { window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); };
+});
+
+if($("expenseForm")) $("expenseForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("expenseFormMsg")); if(!canManageExpenses)return; const type=$("expenseType").value; const date=$("expenseDate").value; const treasuryId=$("expenseTreasury").value; const amount=Number($("expenseAmount").value||0); const notes=$("expenseNotes").value.trim(); const tripId = $("expenseTrip").value; if(!type||!date||!treasuryId||amount<=0){ msg($("expenseFormMsg"),"أكمل البيانات.","error");return; } const button=$("saveExpenseBtn"); busy(button,true,"جارٍ...","حفظ"); try{ const {data:s,error:se}=await db.auth.getSession(); if(se)throw se; const {error}=await db.from("expenses").insert({ expense_type:type, amount, treasury_id:Number(treasuryId), expense_date:date, notes:notes||null, created_by:s.session.user.id, trip_id: tripId ? Number(tripId) : null }); if(error)throw error; await db.rpc("adjust_treasury_balance", { p_treasury_id: Number(treasuryId), p_amount: -amount, p_notes: 'مصرف' }); logUserAction("CREATE", "مصروف: " + type + " - " + amount); msg($("expensesMsg"),"تم تسجيل المصروف.","success"); $("expenseFormModal").classList.remove('active'); resetExpenseForm(); await loadExpenses(); if(canViewTreasuries)await loadTreasuries(); }catch(e){ msg($("expenseFormMsg"),"تعذر الحفظ: "+err(e),"error"); }finally{ busy(button,false,"","حفظ"); } });
 
 // =========== التقارير ===========
 async function loadReports() { 
@@ -2133,7 +2477,7 @@ window.switchReportTab = function(tabId) {
     if(tabId === 'repSlow' && buttons[1]) buttons[1].classList.add('active');
 }
 
-// =========== الشركاء (نقطة 11: تعديل الشريك شغال) ===========
+// =========== الشركاء ===========
 async function loadPartners(){ 
     if(!navigator.onLine) return; 
     const {data}=await db.from("partners").select("*").order("partner_id"); partnersCache=data||[]; 
@@ -2180,7 +2524,6 @@ async function loadPartnerTransactions(){
 if($("refreshPartnersBtn")) $("refreshPartnersBtn").addEventListener("click",loadPartners);
 if($("refreshPartnerTransactionsBtn")) $("refreshPartnerTransactionsBtn").addEventListener("click",loadPartnerTransactions);
 
-// فورم إضافة/تعديل الشريك
 if($("partnerForm")) $("partnerForm").addEventListener("submit", async e => {
   e.preventDefault(); clear($("partnerFormMsg")); 
   const btn = $("savePartnerBtn"); busy(btn, true, "جارٍ...", "حفظ");
@@ -2245,14 +2588,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
     } catch(e){ alert(err(e)); } finally{ busy(btn,false,"","حفظ"); } 
 });
 
-// =========== المصروفات ===========
-function resetExpenseForm(){ $("expenseForm").reset(); $("expenseDate").value=todayISO(); $("expenseFormModal").classList.remove('active'); clear($("expenseFormMsg")); fillTreasurySelects(); fillExpenseTripSelect(); }
-async function loadExpenses(){ if(!canViewExpenses)return; clear($("expensesMsg")); $("expensesList").replaceChildren(); if(!navigator.onLine){ $("expensesList").innerHTML="<div class='empty'>أنت أوفلاين.</div>"; return; } try{ const {data,error}=await db.from("expenses").select("expense_id,expense_type,amount,treasury_id,expense_date,notes").order("expense_id",{ascending:false}).limit(200); if(error)throw error; const box=$("expensesList"); const typeMap={FUEL:"وقود",MAINTENANCE:"صيانة",RENT:"إيجارات",SALARY:"رواتب",OTHER:"أخرى"}; if(box) { box.innerHTML = (data||[]).map(e=>`<div class="product"><div class="pname">🧾 ${typeMap[e.expense_type]||e.expense_type}</div><div class="details">المبلغ: ${fmt(e.amount)} | التاريخ: ${e.expense_date}</div></div>`).join(""); } msg($("expensesMsg"),"تم تحميل "+ (data||[]).length +" مصروف.","success"); }catch(e){ msg($("expensesMsg"),"تعذر تحميل المصروفات: "+err(e),"error"); } }
-if($("addExpenseBtn")) $("addExpenseBtn").addEventListener("click",async()=>{ if(!canManageExpenses)return; if(!treasuriesCache.length)await loadTreasuries(); if(!tripsCache.length)await loadTrips(); resetExpenseForm(); $("expenseFormModal").classList.add('active'); });
-if($("refreshExpensesBtn")) $("refreshExpensesBtn").addEventListener("click",loadExpenses);
-if($("expenseForm")) $("expenseForm").addEventListener("submit",async e=>{ e.preventDefault(); clear($("expenseFormMsg")); if(!canManageExpenses)return; const type=$("expenseType").value; const date=$("expenseDate").value; const treasuryId=$("expenseTreasury").value; const amount=Number($("expenseAmount").value||0); const notes=$("expenseNotes").value.trim(); const tripId = $("expenseTrip").value; if(!type||!date||!treasuryId||amount<=0){ msg($("expenseFormMsg"),"أكمل البيانات.","error");return; } const button=$("saveExpenseBtn"); busy(button,true,"جارٍ...","حفظ"); try{ const {data:s,error:se}=await db.auth.getSession(); if(se)throw se; const {error}=await db.from("expenses").insert({ expense_type:type, amount, treasury_id:Number(treasuryId), expense_date:date, notes:notes||null, created_by:s.session.user.id, trip_id: tripId ? Number(tripId) : null }); if(error)throw error; await db.rpc("adjust_treasury_balance", { p_treasury_id: Number(treasuryId), p_amount: -amount, p_notes: 'مصرف' }); logUserAction("CREATE", "مصروف: " + type + " - " + amount); msg($("expensesMsg"),"تم تسجيل المصروف.","success"); $("expenseFormModal").classList.remove('active'); resetExpenseForm(); await loadExpenses(); if(canViewTreasuries)await loadTreasuries(); }catch(e){ msg($("expenseFormMsg"),"تعذر الحفظ: "+err(e),"error"); }finally{ busy(button,false,"","حفظ"); } });
-
-// =========== الوصفات (نقطة 3: تعديل الوصفة شغال) ===========
+// =========== الوصفات ===========
 async function loadRecipes(){ 
     if(!canViewRecipes)return; 
     if(!navigator.onLine) { recipesCache=getCache('recipes'); renderRecipes(); return; }
@@ -2372,7 +2708,7 @@ if($("recipeForm")) $("recipeForm").addEventListener("submit", async e => {
     finally { busy(btn, false, "", "حفظ"); }
 });
 
-// =========== أوامر التشغيل (نقطة 4: كانت فاضية - بقت شغالة) ===========
+// =========== أوامر التشغيل ===========
 async function loadProduction(){ 
     if(!canViewProduction)return; 
     if(!navigator.onLine) { productionCache=getCache('production'); renderProduction(); return; }
@@ -2469,7 +2805,7 @@ if($("productionForm")) $("productionForm").addEventListener("submit", async e =
   finally { busy(btn, false, "", "حفظ"); }
 });
 
-// =========== الجولات (نقطة 8: كشف حساب الجولة) ===========
+// =========== الجولات ===========
 async function loadTrips(){ 
     if(!canViewTrips)return; 
     if(!navigator.onLine) { tripsCache=getCache('trips'); renderTrips(); return; }
@@ -2545,60 +2881,80 @@ if($("tripLoadForm")) $("tripLoadForm").addEventListener("submit", async e => {
   finally { busy(btn, false, "", "تحميل"); }
 });
 
-// نقطة 8: كشف حساب الجولة الكامل
+// كشف حساب الجولة المعدل
 async function viewTripSummary(t){
   const modal = $("tripSummaryModal");
   $("tripSummaryBody").innerHTML = "جارٍ التحميل...";
   modal.classList.remove("hidden");
   try {
     const tripId = t.trip_id;
-    const [invoicesRes, collectionsRes, expensesRes, movementsRes] = await Promise.all([
+    const [invoicesRes, collectionsRes, expensesRes, returnsRes] = await Promise.all([
       db.from("sales_invoices").select("*").eq("trip_id", tripId),
       db.from("customer_collections").select("*").eq("trip_id", tripId),
       db.from("expenses").select("*").eq("trip_id", tripId),
-      db.from("stock_movements").select("*, products(product_name)").eq("trip_id", tripId)
+      db.rpc("get_trip_returns", { p_trip_id: tripId })
     ]);
     const invoices = invoicesRes.data || [];
     const collections = collectionsRes.data || [];
     const expenses = expensesRes.data || [];
-    const movements = movementsRes.data || [];
+    const returns = returnsRes.data || [];
+
     const totalSales = invoices.filter(i=>i.status!=="CANCELLED").reduce((s,i)=>s+Number(i.net_total||0),0);
     const totalPaidSales = invoices.filter(i=>i.status!=="CANCELLED").reduce((s,i)=>s+Number(i.paid_amount||0),0);
     const totalCollections = collections.reduce((s,c)=>s+Number(c.amount||0),0);
     const totalExpenses = expenses.reduce((s,e)=>s+Number(e.amount||0),0);
+    const totalReturns = returns.reduce((s,r)=>s+Number(r.total_returned_value||0),0);
+
     const cashIn = totalPaidSales + totalCollections + Number(t.initial_cash||0);
-    const cashOut = totalExpenses;
-    const netCash = cashIn - cashOut;
+    const cashOut = totalExpenses + totalReturns; // Cash returns may deduct but we'll show them separately
+    const netCash = cashIn - totalExpenses; // Simplified cash logic
     
-    let html = `<div style="font-size:14px;line-height:1.9;"><div><strong>الجولة:</strong> ${t.trip_number}</div><div><strong>المندوب:</strong> ${t.rep_name||"-"}</div><div><strong>السيارة:</strong> ${locationName(t.vehicle_location_id)}</div><div><strong>التاريخ:</strong> ${new Date(t.trip_date).toLocaleDateString("ar-EG")}</div></div>`;
-    html += `<div class="total-box" style="background:var(--g);color:white;margin-top:15px;"><div class="line"><span>عهدة أول المدة:</span><span>${fmt(t.initial_cash)}</span></div><div class="line"><span>مبيعات (صافي):</span><span>${fmt(totalSales)}</span></div><div class="line"><span>مدفوع فواتير:</span><span>${fmt(totalPaidSales)}</span></div><div class="line"><span>تحصيلات:</span><span>${fmt(totalCollections)}</span></div><div class="line"><span>مصروفات:</span><span style="color:#ffd;">-${fmt(totalExpenses)}</span></div><div class="line grand" style="color:var(--gold);"><span>صافي النقدية بالجولة:</span><span>${fmt(netCash)}</span></div></div>`;
+    let tripDateStr = "-";
+    if (t.trip_date) {
+        const d = new Date(t.trip_date);
+        if (!isNaN(d.getTime())) tripDateStr = d.toLocaleDateString("ar-EG");
+    }
+
+    let html = `<div style="font-size:14px;line-height:1.9;"><div><strong>الجولة:</strong> ${t.trip_number}</div><div><strong>المندوب:</strong> ${t.rep_name||"-"}</div><div><strong>السيارة:</strong> ${locationName(t.vehicle_location_id)}</div><div><strong>التاريخ:</strong> ${tripDateStr}</div></div>`;
+    
+    html += `<div class="total-box" style="background:var(--g);color:white;margin-top:15px;"><div class="line"><span>عهدة أول المدة:</span><span>${fmt(t.initial_cash)}</span></div><div class="line"><span>مبيعات (صافي):</span><span>${fmt(totalSales)}</span></div><div class="line"><span>مدفوع فواتير:</span><span>${fmt(totalPaidSales)}</span></div><div class="line"><span>تحصيلات:</span><span>${fmt(totalCollections)}</span></div><div class="line"><span>إجمالي المرتجعات:</span><span>${fmt(totalReturns)}</span></div><div class="line"><span>مصروفات:</span><span style="color:#ffd;">-${fmt(totalExpenses)}</span></div><div class="line grand" style="color:var(--gold);"><span>صافي النقدية بالجولة:</span><span>${fmt(netCash)}</span></div></div>`;
     
     html += `<h4 style="color:var(--g);margin-top:20px;">🧾 الفواتير (${invoices.length})</h4>`;
     html += `<div class="table-responsive"><table class="print-table"><thead><tr><th>رقم</th><th>العميل</th><th>الصافي</th><th>المدفوع</th></tr></thead><tbody>`;
     invoices.forEach(i => { html += `<tr><td>${i.invoice_number}</td><td>${customerName(i.customer_id)}</td><td>${fmt(i.net_total)}</td><td>${fmt(i.paid_amount)}</td></tr>`; });
     if(!invoices.length) html += `<tr><td colspan="4">لا توجد فواتير</td></tr>`;
     html += `</tbody></table></div>`;
+    html += `<div class="mini-summary"><div class="line"><span>إجمالي الفواتير:</span><span style="font-weight:bold;">${fmt(totalSales)}</span></div></div>`;
+
+    html += `<h4 style="color:var(--g);margin-top:20px;">↩️ المرتجعات (${returns.length})</h4>`;
+    html += `<div class="table-responsive"><table class="print-table"><thead><tr><th>رقم</th><th>العميل</th><th>القيمة</th></tr></thead><tbody>`;
+    returns.forEach(r => { html += `<tr><td>${r.return_number}</td><td>${r.customer_name}</td><td>${fmt(r.total_returned_value)}</td></tr>`; });
+    if(!returns.length) html += `<tr><td colspan="3">لا توجد مرتجعات</td></tr>`;
+    html += `</tbody></table></div>`;
+    html += `<div class="mini-summary"><div class="line"><span>إجمالي المرتجعات:</span><span style="font-weight:bold;">${fmt(totalReturns)}</span></div></div>`;
     
     html += `<h4 style="color:var(--g);margin-top:20px;">💰 التحصيلات (${collections.length})</h4>`;
     html += `<div class="table-responsive"><table class="print-table"><thead><tr><th>رقم</th><th>العميل</th><th>المبلغ</th></tr></thead><tbody>`;
     collections.forEach(c => { html += `<tr><td>${c.collection_number}</td><td>${customerName(c.customer_id)}</td><td>${fmt(c.amount)}</td></tr>`; });
     if(!collections.length) html += `<tr><td colspan="3">لا توجد تحصيلات</td></tr>`;
     html += `</tbody></table></div>`;
+    html += `<div class="mini-summary"><div class="line"><span>إجمالي التحصيلات:</span><span style="font-weight:bold;">${fmt(totalCollections)}</span></div></div>`;
     
     html += `<h4 style="color:var(--g);margin-top:20px;">🧾 المصروفات (${expenses.length})</h4>`;
     html += `<div class="table-responsive"><table class="print-table"><thead><tr><th>النوع</th><th>المبلغ</th><th>التاريخ</th></tr></thead><tbody>`;
-    expenses.forEach(e => { html += `<tr><td>${e.expense_type}</td><td>${fmt(e.amount)}</td><td>${new Date(e.expense_date).toLocaleDateString("ar-EG")}</td></tr>`; });
+    expenses.forEach(e => { html += `<tr><td>${expenseTypeName(e.expense_type)}</td><td>${fmt(e.amount)}</td><td>${new Date(e.expense_date).toLocaleDateString("ar-EG")}</td></tr>`; });
     if(!expenses.length) html += `<tr><td colspan="3">لا توجد مصروفات</td></tr>`;
     html += `</tbody></table></div>`;
+    html += `<div class="mini-summary"><div class="line"><span>إجمالي المصروفات:</span><span style="font-weight:bold;">${fmt(totalExpenses)}</span></div></div>`;
     
     $("tripSummaryBody").innerHTML = html;
     
-    const waText = `*كشف حساب الجولة*\n${t.trip_number} - ${t.rep_name||""}\n------------------------\nعهدة: ${fmt(t.initial_cash)}\nمبيعات: ${fmt(totalSales)}\nمدفوع فواتير: ${fmt(totalPaidSales)}\nتحصيلات: ${fmt(totalCollections)}\nمصروفات: ${fmt(totalExpenses)}\n------------------------\n*صافي النقدية: ${fmt(netCash)}*`;
+    const waText = `*كشف حساب الجولة*\n${t.trip_number} - ${t.rep_name||""}\n------------------------\nعهدة: ${fmt(t.initial_cash)}\nمبيعات: ${fmt(totalSales)}\nتحصيلات: ${fmt(totalCollections)}\nمرتجعات: ${fmt(totalReturns)}\nمصروفات: ${fmt(totalExpenses)}\n------------------------\n*صافي النقدية: ${fmt(netCash)}*`;
     $("shareTripWhatsappBtn").onclick = () => { window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); };
   } catch(e){ $("tripSummaryBody").innerHTML = `<span style="color:red;">خطأ: ${err(e)}</span>`; }
 }
 
-// نهاية الجزء الثالث من الـ JS — يُتبع في الجزء الرابع
+// نهاية الجزء الثالث
     // =========== تهيئة التطبيق بعد الدخول ===========
   async function bootAppAfterLogin(user){
     showApp();
