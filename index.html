@@ -2238,43 +2238,51 @@ if($("reservationForm")) $("reservationForm").addEventListener("submit", async e
 
   // ========== المحاسبة ==========
   async function loadFinancialSummary() { 
-      if(!isSystemAdmin) return; 
-      try { 
-          const from = $("accFromDate").value || null;
-          const to = $("accToDate").value || null;
-          const { data: periodData } = await db.rpc("get_period_summary", { p_from: from || '1900-01-01', p_to: to || '2100-12-31' }); 
-          if(periodData) { 
-            $("accRevPeriod").textContent = fmt(periodData.rev); 
-            $("accPurchPeriod").textContent = fmt(periodData.purch); 
-            $("accExpPeriod").textContent = fmt(periodData.exp); 
-            $("accProfitPeriod").textContent = fmt(periodData.profit); 
-            $("accCash").textContent = fmt(periodData.cash); 
-            $("accAR").textContent = fmt(periodData.ar); 
-            $("accAP").textContent = fmt(periodData.ap); 
-          } 
-          const { data: trialData } = await db.rpc("get_trial_balance", { p_from: from, p_to: to });
-          const tbodyTrial = $("trialBalanceTable").querySelector("tbody"); tbodyTrial.innerHTML = "";
-          if(trialData && trialData.length > 0) { 
-            let totalDr = 0, totalCr = 0;
-            trialData.forEach(row => { 
-              tbodyTrial.innerHTML += `<tr><td>${row.account_name} (${row.account_code})</td><td>${fmt(row.total_debit)}</td><td>${fmt(row.total_credit)}</td></tr>`; 
-              totalDr += Number(row.total_debit); totalCr += Number(row.total_credit);
-            }); 
-            tbodyTrial.innerHTML += `<tr style="background:#e9efe9;font-weight:bold;"><td>الإجمالي</td><td>${fmt(totalDr)}</td><td>${fmt(totalCr)}</td></tr>`;
-            const diff = Math.abs(totalDr - totalCr);
-            if(diff > 0.01) tbodyTrial.innerHTML += `<tr style="background:#fff0f0;color:var(--red);font-weight:bold;"><td colspan="3">⚠️ يوجد فرق: ${fmt(diff)}</td></tr>`;
-          } else { 
-            tbodyTrial.innerHTML = "<tr><td colspan='3' style='text-align:center;'>لا توجد قيود في هذه الفترة</td></tr>"; 
-          }
-          const { data: journalData } = await db.rpc("get_journal_entries", { p_from: from || '1900-01-01', p_to: to || '2100-12-31' });
-          const tbodyJournal = $("journalTable").querySelector("tbody"); tbodyJournal.innerHTML = "";
-          if(journalData && journalData.length > 0) { 
-            journalData.forEach(row => { tbodyJournal.innerHTML += `<tr><td>${new Date(row.entry_date).toLocaleDateString("ar-EG")}</td><td>${row.description}</td><td>${row.account_name}</td><td>${fmt(row.debit)}</td><td>${fmt(row.credit)}</td></tr>`; }); 
-          } else { 
-            tbodyJournal.innerHTML = "<tr><td colspan='5' style='text-align:center;'>لا توجد قيود</td></tr>"; 
-          }
-      } catch(e){ console.warn(e); } 
-  }
+    if(!isSystemAdmin) return; 
+    try { 
+        // لو التواريخ فاضية، نحط تاريخ افتراضي (من 2020 لحد النهاردة) عشان نجيب كل الحركات
+        let from = $("accFromDate").value;
+        let to = $("accToDate").value;
+        if(!from) from = "2020-01-01";
+        if(!to) to = todayISO();
+
+        // عشان نظهر التواريخ في الخانات عشان إنت تشوفها
+        $("accFromDate").value = from;
+        $("accToDate").value = to;
+
+        const { data: periodData } = await db.rpc("get_period_summary", { p_from: from, p_to: to }); 
+        if(periodData) { 
+          $("accRevPeriod").textContent = fmt(periodData.rev); 
+          $("accPurchPeriod").textContent = fmt(periodData.purch); 
+          $("accExpPeriod").textContent = fmt(periodData.exp); 
+          $("accProfitPeriod").textContent = fmt(periodData.profit); 
+          $("accCash").textContent = fmt(periodData.cash); 
+          $("accAR").textContent = fmt(periodData.ar); 
+          $("accAP").textContent = fmt(periodData.ap); 
+        } 
+        const { data: trialData } = await db.rpc("get_trial_balance", { p_from: from, p_to: to });
+        const tbodyTrial = $("trialBalanceTable").querySelector("tbody"); tbodyTrial.innerHTML = "";
+        if(trialData && trialData.length > 0) { 
+          let totalDr = 0, totalCr = 0;
+          trialData.forEach(row => { 
+            tbodyTrial.innerHTML += `<tr><td>${row.account_name} (${row.account_code})</td><td>${fmt(row.total_debit)}</td><td>${fmt(row.total_credit)}</td></tr>`; 
+            totalDr += Number(row.total_debit); totalCr += Number(row.total_credit);
+          }); 
+          tbodyTrial.innerHTML += `<tr style="background:#e9efe9;font-weight:bold;"><td>الإجمالي</td><td>${fmt(totalDr)}</td><td>${fmt(totalCr)}</td></tr>`;
+          const diff = Math.abs(totalDr - totalCr);
+          if(diff > 0.01) tbodyTrial.innerHTML += `<tr style="background:#fff0f0;color:var(--red);font-weight:bold;"><td colspan="3">⚠️ يوجد فرق: ${fmt(diff)}</td></tr>`;
+        } else { 
+          tbodyTrial.innerHTML = "<tr><td colspan='3' style='text-align:center;'>لا توجد قيود في هذه الفترة</td></tr>"; 
+        }
+        const { data: journalData } = await db.rpc("get_journal_entries", { p_from: from, p_to: to });
+        const tbodyJournal = $("journalTable").querySelector("tbody"); tbodyJournal.innerHTML = "";
+        if(journalData && journalData.length > 0) { 
+          journalData.forEach(row => { tbodyJournal.innerHTML += `<tr><td>${new Date(row.entry_date).toLocaleDateString("ar-EG")}</td><td>${row.description}</td><td>${row.account_name}</td><td>${fmt(row.debit)}</td><td>${fmt(row.credit)}</td></tr>`; }); 
+        } else { 
+          tbodyJournal.innerHTML = "<tr><td colspan='5' style='text-align:center;'>لا توجد قيود</td></tr>"; 
+        }
+    } catch(e){ console.warn(e); } 
+}
   window.switchAccTab = function(tabId) {
       document.querySelectorAll(".acc-tab").forEach(el => el.classList.add("hidden"));
       const btns = document.querySelectorAll('[onclick^="switchAccTab"]'); btns.forEach(b => b.classList.remove("active"));
@@ -2308,27 +2316,33 @@ if($("reservationForm")) $("reservationForm").addEventListener("submit", async e
   }
   window.loadSlowMovingStock = loadSlowMovingStock;
   window.loadProfitLoss = async function() {
-      const from = $("plFromDate").value || null;
-      const to = $("plToDate").value || null;
-      try {
-          const { data, error } = await db.rpc("get_profit_loss", { p_from: from || '1900-01-01', p_to: to || '2100-12-31' });
-          if(error) throw error;
-          const row = data && data[0];
-          if(!row) { $("plResult").innerHTML = "<div class='empty'>لا توجد بيانات</div>"; return; }
-          const isLoss = row.profit < 0;
-          const margin = row.revenue > 0 ? ((row.profit / row.revenue) * 100).toFixed(2) : 0;
-          const color = isLoss ? 'var(--red)' : 'green';
-          $("plResult").innerHTML = `
-              <div class="line"><span>الإيرادات:</span><span style="color:green;">${fmt(row.revenue)}</span></div>
-              <div class="line"><span>تكلفة المبيعات (المشتريات):</span><span style="color:red;">-${fmt(row.cogs)}</span></div>
-              <div class="line"><span>المصروفات:</span><span style="color:red;">-${fmt(row.expenses)}</span></div>
-              <div class="line grand" style="color:${color};"><span>${isLoss ? '⚠️ صافي الخسارة:' : 'صافي الربح:'}</span><span>${fmt(row.profit)}</span></div>
-              <div class="line"><span>هامش الربح:</span><span style="color:${color};">${margin}% ${isLoss ? '(خسارة)' : '(ربح)'}</span></div>
-              <div class="line" style="font-size:12px;color:var(--muted);"><span>من:</span><span>${from || 'البداية'}</span></div>
-              <div class="line" style="font-size:12px;color:var(--muted);"><span>إلى:</span><span>${to || 'النهاية'}</span></div>
-          `;
-      } catch(e) { $("plResult").innerHTML = `<div class="error">خطأ: ${err(e)}</div>`; }
-  };
+    let from = $("plFromDate").value;
+    let to = $("plToDate").value;
+    if(!from) from = "2020-01-01";
+    if(!to) to = todayISO();
+
+    $("plFromDate").value = from;
+    $("plToDate").value = to;
+
+    try {
+        const { data, error } = await db.rpc("get_profit_loss", { p_from: from, p_to: to });
+        if(error) throw error;
+        const row = data && data[0];
+        if(!row) { $("plResult").innerHTML = "<div class='empty'>لا توجد بيانات</div>"; return; }
+        const isLoss = row.profit < 0;
+        const margin = row.revenue > 0 ? ((row.profit / row.revenue) * 100).toFixed(2) : 0;
+        const color = isLoss ? 'var(--red)' : 'green';
+        $("plResult").innerHTML = `
+            <div class="line"><span>الإيرادات:</span><span style="color:green;">${fmt(row.revenue)}</span></div>
+            <div class="line"><span>تكلفة المبيعات (المشتريات):</span><span style="color:red;">-${fmt(row.cogs)}</span></div>
+            <div class="line"><span>المصروفات:</span><span style="color:red;">-${fmt(row.expenses)}</span></div>
+            <div class="line grand" style="color:${color};"><span>${isLoss ? '⚠️ صافي الخسارة:' : 'صافي الربح:'}</span><span>${fmt(row.profit)}</span></div>
+            <div class="line"><span>هامش الربح:</span><span style="color:${color};">${margin}% ${isLoss ? '(خسارة)' : '(ربح)'}</span></div>
+            <div class="line" style="font-size:12px;color:var(--muted);"><span>من:</span><span>${from}</span></div>
+            <div class="line" style="font-size:12px;color:var(--muted);"><span>إلى:</span><span>${to}</span></div>
+        `;
+    } catch(e) { $("plResult").innerHTML = `<div class="error">خطأ: ${err(e)}</div>`; }
+};
   window.switchReportTab = function(tabId) {
       document.querySelectorAll(".report-tab").forEach(el => el.classList.add("hidden"));
       const btns = document.querySelectorAll('[onclick^="switchReportTab"]'); btns.forEach(b => b.classList.remove("active"));
