@@ -1072,7 +1072,8 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 <button class="tab-btn active" onclick="switchReportTab('repAged')">أعمار الديون</button>
 <button class="tab-btn" onclick="switchReportTab('repSlow')">المخزون الراكد</button>
 <button class="tab-btn" onclick="switchReportTab('repPL')">الأرباح والخسائر</button>
-<button class="btn" id="btnExportExcel" style="background:#1c6330; color:white; flex:1;">📊 تصدير تقرير شامل إلى Excel (CSV)</button>
+<div style="margin-top:15px;">
+<button class="btn" id="btnExportExcel" style="background:#1c6330; color:white; width:100%;">📊 تصدير تقرير شامل إلى Excel (CSV)</button>
 </div>
 <div id="repAged" class="report-tab">
 <div class="table-responsive"><table class="print-table" id="agedTable"><thead><tr><th>العميل</th><th>الموبايل</th><th>الرصيد</th><th>0-30</th><th>31-60</th><th>61-90</th><th>+90</th></tr></thead><tbody></tbody></table></div>
@@ -3051,21 +3052,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
       } else { showLogin(); }
     }catch(e){ showLogin(); msg($("loginMsg"),"خطأ في الجلسة: "+err(e),"error"); }
   }
-
-  init();
-} catch (globalError) {
-  console.error("CRITICAL ERROR:", globalError);
-  alert("حدث خطأ فادح في تحميل البرنامج: " + globalError.message);
-}
-})();
-
-// ====== PWA ======
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
-  });
-}
-    // ========== تصدير تقرير شامل إلى Excel (CSV) ==========
+// ========== تصدير تقرير شامل إلى Excel (CSV) ==========
 if($("btnExportExcel")) $("btnExportExcel").addEventListener("click", async () => {
     const btn = $("btnExportExcel"); busy(btn, true, "جارٍ التجهيز...", "📊 تصدير تقرير شامل إلى Excel (CSV)");
     try {
@@ -3146,6 +3133,19 @@ if($("btnExportExcel")) $("btnExportExcel").addEventListener("click", async () =
         busy(btn, false, "", "📊 تصدير تقرير شامل إلى Excel (CSV)");
     }
 });
+  init();
+} catch (globalError) {
+  console.error("CRITICAL ERROR:", globalError);
+  alert("حدث خطأ فادح في تحميل البرنامج: " + globalError.message);
+}
+})();
+
+// ====== PWA ======
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
+  });
+}
 </script>
 </body>
 </html>
