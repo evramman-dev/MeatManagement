@@ -97,13 +97,66 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 .filter-box{background:#f9fbf9;border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:15px}
 .filter-box .row{margin-bottom:8px}
 .filter-box label{margin:0 0 5px}
-.home-dashboard{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-top:12px}
-.home-card{background:linear-gradient(135deg,var(--g),var(--g2));color:white;border-radius:14px;padding:14px;box-shadow:0 3px 10px rgba(23,60,44,0.15)}
-.home-card.gold{background:linear-gradient(135deg,#c9a254,#d5b16a);color:var(--g)}
-.home-card.red{background:linear-gradient(135deg,#8a1c1c,#a52b2b)}
-.home-card.green{background:linear-gradient(135deg,#1c6330,#2d8a45)}
-.home-card .hc-label{font-size:12px;opacity:.9;margin-bottom:6px}
-.home-card .hc-value{font-size:20px;font-weight:bold;direction:ltr;text-align:right}
+/* كروت الرئيسية - تعديل احترافي ومتناسق */
+.home-dashboard {
+    display: grid;
+    /* عرض ثابت ومنتظم: كرتين في الصف على الموبايل */
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 15px; /* مسافة متناسقة بين المربعات */
+    margin-top: 15px;
+}
+
+.home-card {
+    /* شكل المربع */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center; /* توسيط النص في النص */
+    text-align: center;
+    min-height: 100px; /* ارتفاع ثابت عشان كل المربعات تبقى زي بعض */
+    padding: 15px 10px;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* ظل خفيف */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* تأثير احترافي لما تضغط على المربع */
+.home-card:active {
+    transform: scale(0.96);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* الألوان بتاعتك (زي ما هي بس متنسقة أحسن) */
+.home-card { background: linear-gradient(135deg, var(--g), var(--g2)); color: white; }
+.home-card.gold { background: linear-gradient(135deg, #c9a254, #d5b16a); color: var(--g); }
+.home-card.red { background: linear-gradient(135deg, #8a1c1c, #a52b2b); color: white; }
+.home-card.green { background: linear-gradient(135deg, #1c6330, #2d8a45); color: white; }
+
+/* النص جوه المربع */
+.home-card .hc-label {
+    font-size: 13px;
+    font-weight: bold;
+    opacity: 0.95;
+    margin-bottom: 8px;
+}
+
+.home-card .hc-value {
+    font-size: 22px; /* حجم خط أوضح */
+    font-weight: 900;
+    direction: ltr; /* الأرقام تظهر بشكل صحيح */
+    letter-spacing: 1px;
+}
+
+/* تعديل الموبايل عشان يبقى كرتين في الصف دايماً */
+@media(max-width: 480px) {
+    .home-dashboard {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .home-card .hc-value {
+        font-size: 18px; /* تصغير الخط شوية في الشاشات الصغيرة جداً */
+    }
+}
 #toastContainer{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;pointer-events:none;width:calc(100% - 32px);max-width:500px}
 .toast{padding:12px 18px;border-radius:10px;color:white;font-weight:bold;font-size:14px;box-shadow:0 4px 15px rgba(0,0,0,0.2);animation:slideIn 0.3s ease;pointer-events:auto}
 .toast-success{background:#1c6330}
