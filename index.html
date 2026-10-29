@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v25</title>
+<title>MeatManagement v26</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -155,7 +155,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
   <div id="barcodeReader"></div>
   <div class="scanner-footer">وجّه الكاميرا نحو الباركود</div>
 </div>
-<header><h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v25]</span></h1><p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p></header>
+<header><h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v26]</span></h1><p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p></header>
 <main>
 <section id="login" class="card">
 <h2>🔐 تسجيل الدخول</h2>
@@ -329,7 +329,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 <label class="check"><input id="active" type="checkbox" checked> نشط</label><button id="saveBtn" class="btn" type="submit">حفظ</button><div id="formMsg" class="status hidden"></div></form></div></div></div>
 
 </section>
-<p class="foot">النسخة v25</p>
+<p class="foot">النسخة v26</p>
 </main>
 <nav id="nav" class="hidden"><button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button><button class="navbtn" data-page="tasks" type="button">📋 مهامي</button><button class="navbtn" data-page="data" type="button">🗂️ البيانات</button></nav>
 
@@ -342,7 +342,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 <div id="locationStatementModal" class="modal hidden"><div class="modal-content"><div class="modal-header"><h3>كشف مخزن</h3><button class="close-btn" onclick="document.getElementById('locationStatementModal').classList.add('hidden')">&times;</button></div><div class="modal-body"><div id="locationPrintArea" class="statement-print-area"><div class="print-header" id="locationPrintHeader"></div><div id="locationStatementHeader"></div><div class="table-responsive"><table class="print-table" id="locationStatementTable"><thead><tr><th>التاريخ</th><th>الصنف</th><th>الحركة</th><th>التغيير</th><th>الرصيد</th><th>البيان</th></tr></thead><tbody></tbody></table></div><div id="locationSummaryTitle" style="font-weight:bold;margin-top:20px;color:var(--g);border-bottom:2px solid var(--gold);display:inline-block;">ملخص</div><div class="table-responsive" style="margin-top:10px;"><table class="print-table" id="locationSummaryTable"><thead><tr><th>الصنف</th><th>وارد</th><th>صادر</th><th>صافي</th><th>الرصيد</th></tr></thead><tbody></tbody></table></div><div class="print-footer" id="locationPrintFooter"></div></div><div class="no-print" style="margin-top:20px;display:flex;gap:10px;"><button class="btn" onclick="window.print()" style="background:var(--gold);color:var(--g);flex:1;">🖨️ طباعة</button><button class="btn" id="shareLocationWhatsappBtn" style="background:#25D366;flex:1;">💬 واتساب</button></div></div></div></div>
 <div id="tripLoadModal" class="modal hidden"><div class="modal-content"><div class="modal-header"><h3>تحميل</h3><button class="close-btn" onclick="document.getElementById('tripLoadModal').classList.add('hidden')">&times;</button></div><div class="modal-body"><form id="tripLoadForm" onsubmit="event.preventDefault();"><input id="loadTripId" type="hidden"><div id="loadTripInfo" class="info"></div><label>المصدر *</label><select id="loadSourceLoc" required></select><label>المنتج *</label><select id="loadProduct" required></select><label>الكمية *</label><input id="loadQty" type="number" min="0.0001" required><button id="saveLoadBtn" class="btn" type="submit">تحميل</button><button class="btn secondary" type="button" onclick="document.getElementById('tripLoadModal').classList.add('hidden')">إلغاء</button><div id="loadMsg" class="status hidden"></div></form></div></div></div>
 <div id="tripSummaryModal" class="modal hidden"><div class="modal-content"><div class="modal-header"><h3>كشف جولة</h3><button class="close-btn" onclick="document.getElementById('tripSummaryModal').classList.add('hidden')">&times;</button></div><div class="modal-body"><div id="tripSummaryPrintArea" class="statement-print-area"><div class="print-header" id="tripPrintHeader"></div><div id="tripSummaryBody"></div><div class="print-footer" id="tripPrintFooter"></div></div><div class="no-print" style="margin-top:20px;display:flex;gap:10px;"><button class="btn" onclick="window.print()" style="background:var(--gold);color:var(--g);flex:1;">🖨️ طباعة</button><button class="btn" id="shareTripWhatsappBtn" style="background:#25D366;flex:1;">💬 واتساب</button></div></div></div></div>
-
 <script>
 (() => {
 try {
@@ -378,11 +377,11 @@ try {
   let locationsCache=[], treasuriesCache=[], stockCache=[], customersCache=[], salesCache=[], collectionsCache=[], suppliersCache=[], purchasesCache=[], recipesCache=[], productionCache=[], tripsCache=[], partnersCache=[], usersCache=[], purchaseReturnsCache=[], supplierPaymentsCache=[], reservationsCache=[];
   let invoiceItemCounter=0, purchaseItemCounter=0, recipeItemCounter=0, returnItemCounter=0, exchangeItemCounter=0, stItemCounter=0, prItemCounter=0;
 
-  const allowedRoles={ SALES_MANAGER:"مدير المبيعات", SALES_REP:"مندوب", WAREHOUSE_KEEPER:"أمين المخزن", PRODUCTION_MANAGER:"مسؤول الإنتاج", ACCOUNTANT:"المحاسب", GENERAL_MANAGER:"المدير العام" };
+  const allowedRoles={ SALES_MANAGER:"مدير المبيعات", SALES_REP:"مندوب المبيعات", WAREHOUSE_KEEPER:"أمين المخزن", PRODUCTION_MANAGER:"مسؤول الإنتاج", ACCOUNTANT:"المحاسب", GENERAL_MANAGER:"المدير العام" };
 
   function msg(el,text,type=""){ if(!el) return; el.textContent=text; el.className="status"+(type?" "+type:""); }
   function clear(el){ if(!el) return; el.textContent=""; el.className="status hidden"; }
-  function err(e){ return(e?.message||"خطأ.")+(e?.code?" — "+e.code:""); }
+  function err(e){ return(e?.message||"حدث خطأ غير معروف.")+(e?.code?" — الرمز: "+e.code:""); }
   function busy(btn,on,onText,offText){ if(!btn) return; btn.disabled=on; btn.textContent=on?onText:offText; }
   function fmt(n){ const v=Number(n||0); return v.toLocaleString("ar-EG",{minimumFractionDigits:2,maximumFractionDigits:2}); }
   function fmtQty(n){ const v=Number(n||0); return v.toLocaleString("ar-EG",{minimumFractionDigits:0,maximumFractionDigits:4}); }
@@ -392,6 +391,7 @@ try {
   function saveCache(key, data) { try { localStorage.setItem(key, JSON.stringify(data)); } catch(e){} }
   function getCache(key) { try { return JSON.parse(localStorage.getItem(key)) || []; } catch(e){ return []; } }
 
+  // ========== الإشعارات (Toast) ==========
   function showToast(message, type="info", duration=4000) {
     const container = $("toastContainer"); if(!container) return;
     const toast = document.createElement("div"); toast.className = "toast toast-" + type; toast.textContent = message; container.appendChild(toast);
@@ -404,14 +404,7 @@ try {
   window.addEventListener('online', () => { updateOfflineBanner(); location.reload(); });
   window.addEventListener('offline', updateOfflineBanner);
 
-  function buildPrintHeader() {
-    const h = $("invoicePrintHeader"); if(!h) return;
-    h.innerHTML = `<div class="header-row">
-      <div class="company-right"><div class="c-name">${companySettings.company_name||'منتجات جمعية الشطبي'}</div><div class="c-sub">${companySettings.company_subtitle||''}</div><div class="c-reg">${companySettings.company_reg_number||''}</div></div>
-      <div class="company-center"><div class="c-logo">${companySettings.company_short_name||'الشطبي'}</div></div>
-      <div class="company-left"><div>ت/ ${companySettings.company_phone_1||''}</div><div>ت/ ${companySettings.company_phone_2||''}</div></div>
-    </div>`;
-  }
+  // ========== الطباعة ==========
   function buildPrintFooter() { return `<div class="sig-row"><div class="sig-box"><div class="sig-line"></div>توقيع المستلم</div><div class="sig-box"><div class="sig-line"></div>الختم</div><div class="sig-box"><div class="sig-line"></div>المحاسب</div></div>`; }
   function fillPrintHeaders() {
     const ids = ["invoicePrintHeader","customerPrintHeader","supplierPrintHeader","genericPrintHeader","movementPrintHeader","treasuryPrintHeader","locationPrintHeader","tripPrintHeader","purchasePrintHeader"];
@@ -420,13 +413,13 @@ try {
     footerIds.forEach(id => { const el = $(id); if(el && !el.innerHTML.trim()) el.innerHTML = buildPrintFooter(); });
   }
 
+  // ========== التنقل ==========
   function hideSections(){ ["login","recovery","newPass","home","tasks","data","nav"].forEach(id=>{ if($(id)) $(id).classList.add("hidden"); }); }
   function showLogin(){ hideSections(); if($("login")) $("login").classList.remove("hidden"); }
   function showApp(){ hideSections(); if($("nav")) $("nav").classList.remove("hidden"); page("home"); }
 
   window.openSection = function(name) {
-    if($("home")) $("home").classList.add("hidden"); 
-    if($("tasks")) $("tasks").classList.add("hidden"); 
+    if($("home")) $("home").classList.add("hidden"); if($("tasks")) $("tasks").classList.add("hidden"); 
     if($("data")) $("data").classList.remove("hidden");
     document.querySelectorAll(".navbtn").forEach(b=>{ b.classList.toggle("active",b.dataset.page==="data"); });
     if($("dataDashboard")) $("dataDashboard").classList.add("hidden");
@@ -435,7 +428,8 @@ try {
     if(target) { target.classList.remove("hidden"); target.querySelectorAll('.card.hidden').forEach(c => c.classList.remove('hidden')); }
     window.scrollTo(0, 0);
     if (name === "accounting") {
-        const from = $("accFromDate").value; const to = $("accToDate").value;
+        // إجبار التواريخ الافتراضية عند فتح الشاشة عشان تجيب كل الموقف
+        let from = $("accFromDate").value; let to = $("accToDate").value;
         if(!from) $("accFromDate").value = "2020-01-01";
         if(!to) $("accToDate").value = todayISO();
         setTimeout(() => loadFinancialSummary(), 100);
@@ -444,7 +438,7 @@ try {
     if (name === "users") loadUsersList();
     if (name === "supplierPayments") loadSupplierPayments();
     if (name === "purchaseReturns") { loadPurchaseReturns(); fillPurchaseReturnInvoiceSelect(); }
-    if (name === "reports") loadReports();
+    if (name === "reports") { loadReports(); if(!$("plFromDate").value) $("plFromDate").value = "2020-01-01"; if(!$("plToDate").value) $("plToDate").value = todayISO(); }
     if (name === "stockTransfers") { fillStockTransferSelects(); if(!$("stItems").children.length) addStItemRow(); }
     if (name === "production") { fillProductionRecipeSelect(); fillProductionLocationSelect(); }
     if (name === "recipes") loadRecipes();
@@ -490,6 +484,9 @@ try {
   function paymentTypeName(v){ return({CASH:"نقدي",CREDIT:"آجل",BANK_TRANSFER:"بنكي",CHEQUE:"شيك",MIXED:"مختلط"})[v]||v||"غير محدد"; }
   function tripNumber(id){ return tripsCache.find(x=>String(x.trip_id)===String(id))?.trip_number||"—"; }
   function expenseTypeName(v){ return({FUEL:"وقود",MAINTENANCE:"صيانة",RENT:"إيجارات",SALARY:"رواتب",OTHER:"أخرى"})[v]||v||"غير محدد"; }
+  function locationTypeName(v){ return({MAIN_WAREHOUSE:"مخزن",FRIDGE:"ثلاجة",VEHICLE:"سيارة",FACTORY:"مصنع",SHOWROOM:"معرض"})[v]||v||"غير محدد"; }
+  function treasuryTypeName(v){ return({CASH:"كاش",BANK:"بنك",INSTAPAY:"إنستاباي",PARTNER:"شريك"})[v]||v||"غير محدد"; }
+  function customerTypeName(v){ return({CASH:"نقدي",CREDIT:"آجل",WHOLESALE:"جملة",RETAIL:"تجزئة"})[v]||v||"غير محدد"; }
 
   function fillSelect(el,items,idkey,namekey,placeholder){
     if(!el) return; el.replaceChildren();
@@ -497,6 +494,7 @@ try {
     items.forEach(x=>{ const op=document.createElement("option"); op.value=x[idkey]; op.textContent=x[namekey]; el.appendChild(op); });
   }
 
+  // ========== تحميل البيانات الأساسية ==========
   async function loadLookups(){
     if(!navigator.onLine) return;
     try {
@@ -515,6 +513,7 @@ try {
     try { const { data } = await db.from("company_settings").select("*"); companySettings = {}; (data||[]).forEach(row => companySettings[row.setting_key] = row.setting_value); saveCache('companySettings', companySettings); } catch(e) { companySettings = getCache('companySettings') || {}; }
   }
 
+  // ========== قوائم الاختيار (كاملة) ==========
   function fillTreasurySelects() {
     const selects = ["expenseTreasury", "invoiceTreasury", "purchaseTreasury", "collectionTreasury", "returnTreasury", "spTreasury", "ttSource", "ttDest", "ptTreasury", "qcTreasury"];
     selects.forEach(id => { const el = $(id); if (!el) return; const cur = el.value; el.replaceChildren(); const first = document.createElement("option"); first.value = ""; first.textContent = "اختر الخزنة"; el.appendChild(first); treasuriesCache.filter(t => t.is_active).forEach(t => { const op = document.createElement("option"); op.value = String(t.treasury_id); op.textContent = t.treasury_name + " (" + fmt(t.current_balance) + ")"; el.appendChild(op); }); el.value = cur; });
@@ -542,9 +541,11 @@ try {
   function fillCollectionsCustomerFilter() { const el = $("collectionsCustomerFilter"); if(!el) return; const cur = el.value; el.replaceChildren(); const first = document.createElement("option"); first.value = ""; first.textContent = "كل العملاء"; el.appendChild(first); customersCache.filter(c=>c.is_active).forEach(c => { const op = document.createElement("option"); op.value = String(c.customer_id); op.textContent = c.customer_name; el.appendChild(op); }); el.value = cur; }
   function fillReservationSelects() { const cs = $("rsCustomer"); if(cs){ const cur=cs.value; cs.replaceChildren(); const f=document.createElement("option"); f.value=""; f.textContent="اختر العميل"; cs.appendChild(f); customersCache.filter(c=>c.is_active).forEach(c=>{ const op=document.createElement("option"); op.value=String(c.customer_id); op.textContent=c.customer_name; cs.appendChild(op); }); cs.value=cur; } const ps = $("rsProduct"); if(ps){ const cur=ps.value; ps.replaceChildren(); const f=document.createElement("option"); f.value=""; f.textContent="اختر المنتج"; ps.appendChild(f); productsCache.filter(p=>p.is_active).forEach(p=>{ const op=document.createElement("option"); op.value=String(p.product_id); op.textContent=p.product_name; ps.appendChild(op); }); ps.value=cur; } const ls = $("rsLocation"); if(ls){ const cur=ls.value; ls.replaceChildren(); const f=document.createElement("option"); f.value=""; f.textContent="اختر الموقع"; ls.appendChild(f); locationsCache.filter(l=>l.is_active).forEach(l=>{ const op=document.createElement("option"); op.value=String(l.location_id); op.textContent=l.location_name; ls.appendChild(op); }); ls.value=cur; } }
 
+  // ========== سجل تتبع المستخدمين ==========
   async function logUserAction(actionType, description){ try { if(!navigator.onLine) return; const {data:s} = await db.auth.getSession(); const uid = s?.session?.user?.id; if(!uid) return; await db.from("user_logs").insert({ user_id: uid, action_type: actionType, description: description }); } catch(e){ console.warn("[LOG]", e); } }
-  window.viewUserLogs = async function(userId, displayName){ const modal = $("userLogsModal"); $("userLogsHeader").innerHTML = "جارٍ التحميل..."; $("userLogsTable").querySelector("tbody").innerHTML = ""; modal.classList.remove("hidden"); try { const { data, error } = await db.from("user_logs").select("*").eq("user_id", userId).order("created_at", {ascending:false}).limit(500); if(error) throw error; $("userLogsHeader").innerHTML = `<strong>المستخدم:</strong> ${displayName||"-"}<br><strong>عدد الحركات:</strong> ${(data||[]).length}`; const typeMap = { LOGIN:"دخول", CREATE:"إنشاء", UPDATE:"تعديل", DELETE:"حذف", INVOICE:"فاتورة", COLLECTION:"تحصيل", RETURN:"مرتجع", PURCHASE:"مشتريات", PAYMENT:"سداد", PRODUCTION:"إنتاج", TRIP:"جولة" }; let html = ""; (data||[]).forEach(row => { html += `<tr><td>${new Date(row.created_at).toLocaleString("ar-EG")}</td><td>${typeMap[row.action_type]||row.action_type||"-"}</td><td>${row.description||"-"}</td></tr>`; }); $("userLogsTable").querySelector("tbody").innerHTML = html || "<tr><td colspan='3'>لا توجد حركات.</td></tr>"; } catch(e){ $("userLogsHeader").innerHTML = `<span style="color:red;">خطأ: ${err(e)}</span>`; } }
+  window.viewUserLogs = async function(userId, displayName){ const modal = $("userLogsModal"); $("userLogsHeader").innerHTML = "جارٍ التحميل..."; $("userLogsTable").querySelector("tbody").innerHTML = ""; modal.classList.remove("hidden"); try { const { data, error } = await db.from("user_logs").select("*").eq("user_id", userId).order("created_at", {ascending:false}).limit(500); if(error) throw error; $("userLogsHeader").innerHTML = `<strong>المستخدم:</strong> ${displayName||"-"}<br><strong>عدد الحركات:</strong> ${(data||[]).length}`; const typeMap = { LOGIN:"دخول", CREATE:"إنشاء", UPDATE:"تعديل", DELETE:"حذف", INVOICE:"فاتورة", COLLECTION:"تحصيل", RETURN:"مرتجع", PURCHASE:"مشتريات", PAYMENT:"سداد", PRODUCTION:"إنتاج", TRIP:"جولة" }; let html = ""; (data||[]).forEach(row => { html += `<tr><td>${new Date(row.created_at).toLocaleString("ar-EG")}</td><td>${typeMap[row.action_type]||row.action_type||"-"}</td><td>${row.description||"-"}</td></tr>`; }); $("userLogsTable").querySelector("tbody").innerHTML = html || "<tr><td colspan='3'>لا توجد حركات مسجلة.</td></tr>"; } catch(e){ $("userLogsHeader").innerHTML = `<span style="color:red;">خطأ: ${err(e)}</span>`; } }
 
+  // ========== المستخدم الحالي والصلاحيات ==========
   async function userInfo(user){
     if($("userInfo")) $("userInfo").textContent="جارٍ التحقق...";
     if(!navigator.onLine){ if($("userInfo")) $("userInfo").textContent="أنت أوفلاين. البيانات للعرض فقط."; return; }
@@ -582,6 +583,7 @@ try {
     } catch(e) { if($("userInfo")) $("userInfo").textContent = "خطأ في الاتصال."; }
   }
 
+  // ========== إدارة المستخدمين ==========
   function updateSalesRepField(){ const roleId=$("newUserRole").value; let roleCode=null; try{ const roleMap=JSON.parse($("newUserRole").dataset.roleCodes||"{}"); roleCode=roleMap[String(roleId)]||null; }catch(_){} const needsRep=roleCode==="SALES_REP"; if($("salesRepWrap")) $("salesRepWrap").classList.toggle("hidden",!needsRep); if($("newUserSalesRep")) $("newUserSalesRep").required=needsRep; if(!needsRep && $("newUserSalesRep")) $("newUserSalesRep").value=""; }
   async function loadUserManagementLookups(){
     if(!isSystemAdmin){ if($("userManagementCard")) $("userManagementCard").classList.add("hidden"); return; }
@@ -631,6 +633,7 @@ try {
     } catch(e) { box.innerHTML = `<div class='empty error'>خطأ: ${e.message}</div>`; }
   }
 
+  // ========== إعدادات الشركة ==========
   function loadSettings() { $("setCompanyName").value = companySettings.company_name || ""; $("setCompanySubtitle").value = companySettings.company_subtitle || ""; $("setCompanyReg").value = companySettings.company_reg_number || ""; $("setCompanyShort").value = companySettings.company_short_name || ""; $("setCompanyPhone1").value = companySettings.company_phone_1 || ""; $("setCompanyPhone2").value = companySettings.company_phone_2 || ""; $("setCompanyTax").value = companySettings.company_tax_number || ""; clear($("settingsMsg")); }
   if($("saveSettingsBtn")) $("saveSettingsBtn").addEventListener("click", async () => {
     if(!isSystemAdmin) return; const btn = $("saveSettingsBtn"); busy(btn, true, "جارٍ...", "حفظ الإعدادات");
@@ -638,166 +641,264 @@ try {
     try { for(const key in pairs) { await db.from("company_settings").upsert({ setting_key: key, setting_value: pairs[key] }); } await loadCompanySettings(); msg($("settingsMsg"), "تم حفظ الإعدادات", "success"); showToast("✅ تم حفظ الإعدادات", "success"); } catch(e) { msg($("settingsMsg"), "خطأ: " + err(e), "error"); } finally { busy(btn, false, "", "حفظ الإعدادات"); }
   });
 
-  // ========== DATA LOADERS & UI ==========
-  async function loadHomeDashboard() {
-    const box = $("homeDashboard"); if(!box) return;
+  // نهاية الجزء الثاني
+  // ========== لوحة التحكم الرئيسية ==========
+async function loadHomeDashboard() {
+  const box = $("homeDashboard"); if(!box) return;
+  if(!navigator.onLine) { box.innerHTML = "<div class='empty'>أنت أوفلاين.</div>"; return; }
+  box.innerHTML = "<div class='empty'>جارٍ التحميل...</div>";
+  try {
+    const today = todayISO();
+    const [salesRes, customersRes, lowStockRes, invRes, cashRes, tripsRes] = await Promise.all([
+      db.from("sales_invoices").select("net_total").eq("invoice_date", today).neq("status","CANCELLED"),
+      db.from("customers").select("customer_id", {count:"exact", head:true}).eq("is_active", true),
+      db.from("stock_balances").select("product_id, quantity, products(minimum_stock)").limit(1000),
+      db.from("sales_invoices").select("remaining_amount").eq("status","POSTED").gt("remaining_amount", 0),
+      db.from("treasuries").select("current_balance").eq("is_active", true),
+      db.from("trips").select("trip_id", {count:"exact", head:true}).neq("status","COMPLETED")
+    ]);
+    const todaySales = (salesRes.data||[]).reduce((s,i)=>s+Number(i.net_total||0),0);
+    const customersCount = customersRes.count || 0;
+    const lowStockProducts = {};
+    (lowStockRes.data||[]).forEach(sb => { if(sb.products){ const pid = sb.product_id; if(!lowStockProducts[pid]) lowStockProducts[pid] = {qty:0, min:Number(sb.products.minimum_stock||0)}; lowStockProducts[pid].qty += Number(sb.quantity||0); } });
+    const lowStockCount = Object.values(lowStockProducts).filter(p => p.qty < p.min).length;
+    const unpaidCount = (invRes.data||[]).length;
+    const totalCash = (cashRes.data||[]).reduce((s,t)=>s+Number(t.current_balance||0),0);
+    const activeTrips = tripsRes.count || 0;
+    box.innerHTML = `
+      <div class="home-card green"><div class="hc-label">💰 مبيعات اليوم</div><div class="hc-value">${fmt(todaySales)}</div></div>
+      <div class="home-card"><div class="hc-label">👥 العملاء</div><div class="hc-value">${customersCount}</div></div>
+      <div class="home-card red"><div class="hc-label">⚠️ نقص مخزون</div><div class="hc-value">${lowStockCount}</div></div>
+      <div class="home-card gold"><div class="hc-label">📄 فواتير آجلة</div><div class="hc-value">${unpaidCount}</div></div>
+      <div class="home-card"><div class="hc-label">💵 إجمالي النقدية</div><div class="hc-value">${fmt(totalCash)}</div></div>
+      <div class="home-card"><div class="hc-label">🚐 جولات نشطة</div><div class="hc-value">${activeTrips}</div></div>
+    `;
+    if(lowStockCount > 0) showToast(`⚠️ يوجد ${lowStockCount} أصناف تحت الحد الأدنى`, "warn", 6000);
+  } catch(e) { box.innerHTML = `<div class='empty error'>خطأ: ${err(e)}</div>`; }
+}
+
+// ========== المهام والتنبيهات ==========
+let tasksSalesChart = null, tasksExpensesChart = null;
+async function loadTasks() {
+  const box = $("tasksList"); if(!box) return;
+  if (!navigator.onLine) { box.innerHTML = "<div class='empty'>أنت أوفلاين.</div>"; return; }
+  box.innerHTML = "<div class='empty'>جارٍ التحميل...</div>";
+  const from = $("tasksFromDate").value || todayISO().substring(0,7)+"-01"; const to = $("tasksToDate").value || todayISO();
+  try {
+    const [salesRes, purchRes, expRes, collRes, retRes, lowStockRes, unpaidInvRes, draftTripsRes, draftProdRes] = await Promise.all([
+      db.from("sales_invoices").select("net_total, invoice_date").gte("invoice_date", from).lte("invoice_date", to).neq("status","CANCELLED"),
+      db.from("purchase_invoices").select("net_total").gte("invoice_date", from).lte("invoice_date", to).neq("status","CANCELLED"),
+      db.from("expenses").select("amount, expense_type").gte("expense_date", from).lte("expense_date", to),
+      db.from("customer_collections").select("amount").gte("collection_date", from).lte("collection_date", to).eq("status","POSTED"),
+      db.from("purchase_returns").select("total_return_amount").gte("return_date", from).lte("return_date", to),
+      db.from("sales_returns").select("total_returned_value").gte("return_date", from).lte("return_date", to),
+      db.from("stock_balances").select("product_id, quantity, products(product_name, minimum_stock)").limit(1000),
+      db.from("sales_invoices").select("invoice_number, remaining_amount, customers(customer_name)").eq("status", "POSTED").gt("remaining_amount", 0).limit(20),
+      db.from("trips").select("trip_number, sales_reps(name)").eq("status", "DRAFT").limit(20),
+      db.from("production_orders").select("order_number, recipes(recipe_name)").eq("status", "DRAFT").limit(20)
+    ]);
+    const totalSales = (salesRes.data||[]).reduce((a,b)=>a+Number(b.net_total),0);
+    const totalPurch = (purchRes.data||[]).reduce((a,b)=>a+Number(b.net_total),0);
+    const totalExp = (expRes.data||[]).reduce((a,b)=>a+Number(b.amount),0);
+    const totalColl = (collRes.data||[]).reduce((a,b)=>a+Number(b.amount),0);
+    const totalPurRet = (retRes.data||[]).reduce((a,b)=>a+Number(b.total_return_amount),0);
+    const totalSalRet = (retRes.data||[]).reduce((a,b)=>a+Number(b.total_returned_value),0);
+    const netProfit = totalSales - totalPurRet - totalPurch - totalExp;
+    $("tasksDashboard").innerHTML = `
+      <div class="home-card green"><div class="hc-label">💰 المبيعات</div><div class="hc-value">${fmt(totalSales)}</div></div>
+      <div class="home-card gold"><div class="hc-label">🛒 المشتريات</div><div class="hc-value">${fmt(totalPurch)}</div></div>
+      <div class="home-card red"><div class="hc-label">🧾 المصروفات</div><div class="hc-value">${fmt(totalExp)}</div></div>
+      <div class="home-card"><div class="hc-label">💸 التحصيلات</div><div class="hc-value">${fmt(totalColl)}</div></div>
+      <div class="home-card"><div class="hc-label">↩️ مرتجع مشتريات</div><div class="hc-value">${fmt(totalPurRet)}</div></div>
+      <div class="home-card"><div class="hc-label">↩️ مرتجع بيع</div><div class="hc-value">${fmt(totalSalRet)}</div></div>
+      <div class="home-card ${netProfit >= 0 ? 'green' : 'red'}"><div class="hc-label">📊 صافي الربح</div><div class="hc-value">${fmt(netProfit)}</div></div>
+    `;
+    const dailySales = {}; for(let i=6; i>=0; i--){ const d = new Date(); d.setDate(d.getDate()-i); const key = d.toISOString().substring(0,10); dailySales[key] = 0; }
+    (salesRes.data||[]).forEach(s => { if(dailySales[s.invoice_date] !== undefined) dailySales[s.invoice_date] += Number(s.net_total||0); });
+    const labels = Object.keys(dailySales).map(k => new Date(k).toLocaleDateString("ar-EG", {day:"2-digit", month:"2-digit"}));
+    const data = Object.values(dailySales);
+    if(tasksSalesChart) tasksSalesChart.destroy();
+    if($("tasksSalesChart")) tasksSalesChart = new Chart($("tasksSalesChart").getContext('2d'), { type:'line', data:{ labels, datasets:[{ label:'المبيعات', data, borderColor:'#173c2c', backgroundColor:'rgba(23,60,44,0.15)', fill:true, tension:0.3 }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} } } });
+    const expTypes = {}; (expRes.data||[]).forEach(e => { const t = expenseTypeName(e.expense_type); expTypes[t] = (expTypes[t]||0) + Number(e.amount||0); });
+    const expLabels = Object.keys(expTypes); const expData = Object.values(expTypes);
+    if(tasksExpensesChart) tasksExpensesChart.destroy();
+    if($("tasksExpensesChart") && expLabels.length) tasksExpensesChart = new Chart($("tasksExpensesChart").getContext('2d'), { type:'doughnut', data:{ labels: expLabels, datasets:[{ data: expData, backgroundColor:['#a52b2b','#d5b16a','#173c2c','#24563e','#68736a'] }] }, options:{ responsive:true, maintainAspectRatio:false } });
+    let html = "";
+    const productTotals = {};
+    (lowStockRes.data||[]).forEach(s => { if(s.products){ if(!productTotals[s.product_id]) productTotals[s.product_id]={name:s.products.product_name, min:s.products.minimum_stock, qty:0}; productTotals[s.product_id].qty+=Number(s.quantity); } });
+    const lowStock = Object.values(productTotals).filter(p => p.qty < p.min);
+    if (lowStock.length > 0) { html += `<div class="task-box"><h3>⚠️ نقص المخزون (${lowStock.length})</h3>`; lowStock.slice(0,5).forEach(i => html += `<div class="task-item">📦 ${i.name}: <span style="color:red;">${fmtQty(i.qty)}</span> (الحد: ${fmtQty(i.min)})</div>`); html += `<button class="btn secondary" onclick="window.openSection('stock')">عرض المخزون</button></div>`; }
+    if (unpaidInvRes.data && unpaidInvRes.data.length > 0) { html += `<div class="task-box"><h3>💰 فواتير آجلة محتاجة تحصيل (${unpaidInvRes.data.length})</h3>`; unpaidInvRes.data.slice(0,5).forEach(inv => html += `<div class="task-item">🧾 فاتورة <b>${inv.invoice_number}</b> | ${inv.customers?.customer_name} | متبقي: <span style="color:red;">${fmt(inv.remaining_amount)}</span></div>`); html += `<button class="btn secondary" onclick="window.openSection('collections')">التحصيلات</button></div>`; }
+    if (draftTripsRes.data && draftTripsRes.data.length > 0) { html += `<div class="task-box"><h3>🚐 جولات مسودة (${draftTripsRes.data.length})</h3>`; draftTripsRes.data.slice(0,5).forEach(trip => html += `<div class="task-item">🚚 جولة <b>${trip.trip_number}</b> | ${trip.sales_reps?.name||"-"}</div>`); html += `<button class="btn secondary" onclick="window.openSection('trips')">الجولات</button></div>`; }
+    if (draftProdRes.data && draftProdRes.data.length > 0) { html += `<div class="task-box"><h3>🏭 أوامر تشغيل معلقة (${draftProdRes.data.length})</h3>`; draftProdRes.data.slice(0,5).forEach(p => html += `<div class="task-item">⚙️ أمر <b>${p.order_number}</b> | ${p.recipes?.recipe_name}</div>`); html += `<button class="btn secondary" onclick="window.openSection('production')">الإنتاج</button></div>`; }
+    if(!html) html = "<div class='empty'>✅ مفيش تنبيهات حالياً.</div>";
+    box.innerHTML = html;
+  } catch (e) { box.innerHTML = `<div class="empty error">خطأ: ${err(e)}</div>`; }
+}
+if($("tasksFilterBtn")) $("tasksFilterBtn").addEventListener("click", loadTasks);
+
+// ========== المواقع ==========
+async function loadLocations(){ if(!navigator.onLine) { locationsCache=getCache('locations'); renderLocations(); return; } const {data}=await db.from("locations").select("*").order("location_id"); locationsCache=data||[]; saveCache('locations', locationsCache); renderLocations(); fillInvoiceLocationSelect(); fillPurchaseLocationSelect(); fillProductionLocationSelect(); fillTripVehicleSelect(); fillLoadSourceLocSelect(); fillStockTransferSelects(); fillStockFormSelects(); renderStockLocationTabs(); }
+function renderLocations(){ const box=$("locationsList"); if(!box) return; box.replaceChildren(); const q=($("locationSearch").value||"").toLowerCase(); const found=locationsCache.filter(l=> [l.location_code,l.location_name].some(v=>String(v||"").toLowerCase().includes(q))); if(!found.length){ box.innerHTML = `<div class="empty">لا توجد مواقع.</div>`; return; } found.forEach(location=>{ const card=document.createElement("div");card.className="product";card.innerHTML=`<div class="pname">${location.location_name||"موقع"}</div><div class="details">الكود: ${location.location_code||"—"} | النوع: ${locationTypeName(location.location_type)}</div>`; const actions=document.createElement("div"); actions.className="actions"; const stmt=document.createElement("button"); stmt.className="btn secondary"; stmt.textContent="كشف حركة"; stmt.onclick=()=>viewLocationStatement(location); actions.appendChild(stmt); if(canManageLocations){ const btn=document.createElement("button");btn.className="btn secondary";btn.textContent="تعديل";btn.onclick=()=>{ $("locationEditId").value=location.location_id; $("locationCode").value=location.location_code; $("locationName").value=location.location_name; $("locationType").value=location.location_type; $("locationNotes").value=location.notes||""; $("locationFormTitle").textContent="تعديل الموقع"; $("locationFormModal").classList.add('active'); }; actions.appendChild(btn);} card.appendChild(actions); box.appendChild(card); }); }
+if($("locationForm")) $("locationForm").addEventListener("submit", async e => { e.preventDefault(); const btn=$("saveLocationBtn"); busy(btn,true,"جارٍ...","حفظ"); const id=$("locationEditId").value; const payload={location_code:$("locationCode").value, location_name:$("locationName").value, location_type:$("locationType").value}; try{ if(id) await db.from("locations").update(payload).eq("location_id",id); else await db.from("locations").insert(payload); $("locationFormModal").classList.remove('active'); $("locationForm").reset(); loadLocations(); showToast("تم الحفظ","success"); }catch(e){ alert(err(e)); } finally{ busy(btn,false,"","حفظ"); } });
+if($("refreshLocationsBtn")) $("refreshLocationsBtn").addEventListener("click",loadLocations); if($("locationSearch")) $("locationSearch").addEventListener("input",renderLocations);
+async function viewLocationStatement(loc) {
+    const modal = $("locationStatementModal"); $("locationStatementHeader").innerHTML = "جارٍ التحميل..."; $("locationStatementTable").querySelector("tbody").innerHTML = ""; $("locationSummaryTable").querySelector("tbody").innerHTML = ""; modal.classList.remove("hidden");
+    try {
+        const { data: movements } = await db.from("stock_movements").select("*, products(product_name, product_code, base_unit_id)").eq("location_id", loc.location_id).order("created_at", {ascending: true});
+        let html = ""; let waText = `*كشف حركة مخزن*\nالمخزن: ${loc.location_name}\n------------------------\n`;
+        const productSummary = {};
+        (movements||[]).forEach(m => {
+            let typeName = m.movement_type;
+            if (m.movement_type === 'ADJUST') typeName = 'تسوية'; if (m.movement_type === 'RECEIVE') typeName = 'استلام'; if (m.movement_type === 'ISSUE') typeName = 'صرف'; if (m.movement_type === 'RETURN') typeName = 'مرتجع';
+            const change = Number(m.quantity_change); const changeStr = (change > 0 ? '+' : '') + fmtQty(change); const runningBalance = Number(m.quantity_after || 0); const unitLabel = unitName(m.products?.base_unit_id);
+            html += `<tr><td>${new Date(m.created_at).toLocaleDateString("ar-EG")}</td><td>${m.products?.product_name || ''}</td><td>${typeName}</td><td style="color:${change>0?'green':'red'}">${changeStr}</td><td style="font-weight:bold;">${fmtQty(runningBalance)} ${unitLabel}</td><td>${m.notes || '-'}</td></tr>`;
+            const pid = m.product_id; if(!productSummary[pid]) productSummary[pid] = { name: m.products?.product_name || '', unit: unitLabel, inQty: 0, outQty: 0, lastBalance: 0, code: m.products?.product_code || '' };
+            if(change > 0) productSummary[pid].inQty += change; else if(change < 0) productSummary[pid].outQty += Math.abs(change); productSummary[pid].lastBalance = runningBalance;
+        });
+        $("locationStatementTable").querySelector("tbody").innerHTML = html || "<tr><td colspan='6'>لا توجد حركات.</td></tr>";
+        let summaryHtml = ""; Object.values(productSummary).forEach(ps => { const net = ps.inQty - ps.outQty; summaryHtml += `<tr><td>${ps.name} (${ps.code})</td><td style="color:green;">${fmtQty(ps.inQty)}</td><td style="color:red;">${fmtQty(ps.outQty)}</td><td>${fmtQty(net)}</td><td style="font-weight:bold;">${fmtQty(ps.lastBalance)} ${ps.unit}</td></tr>`; });
+        $("locationSummaryTable").querySelector("tbody").innerHTML = summaryHtml || "<tr><td colspan='5'>لا يوجد ملخص.</td></tr>";
+        $("locationStatementHeader").innerHTML = `<div><strong>المخزن:</strong> ${loc.location_name}</div><div><strong>النوع:</strong> ${locationTypeName(loc.location_type)}</div><div><strong>عدد الحركات:</strong> ${(movements||[]).length}</div>`;
+        waText += `*ملخص الأصناف:*\n`; Object.values(productSummary).forEach(ps => { waText += `▪️ ${ps.name} | وارد: ${fmtQty(ps.inQty)} | صادر: ${fmtQty(ps.outQty)} | الرصيد: ${fmtQty(ps.lastBalance)} ${ps.unit}\n`; });
+        $("shareLocationWhatsappBtn").onclick = () => { window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); }; fillPrintHeaders();
+    } catch(e) { alert(err(e)); }
+}
+
+// ========== الخزائن ==========
+async function loadTreasuries(){ if(!navigator.onLine) { treasuriesCache=getCache('treasuries'); renderTreasuries(); return; } const {data}=await db.from("treasuries").select("*").order("treasury_id"); treasuriesCache=data||[]; saveCache('treasuries', treasuriesCache); renderTreasuries(); fillTreasurySelects(); fillPartnerTreasurySelect(); }
+function renderTreasuries(){ const box=$("treasuriesList"); if(!box) return; box.replaceChildren(); const q=($("treasurySearch").value||""); const found=treasuriesCache.filter(t=> String(t.treasury_name||"").includes(q)); if(!found.length){ box.innerHTML=`<div class="empty">لا توجد خزائن.</div>`; return; } found.forEach(t=>{ const card=document.createElement("div");card.className="product";card.innerHTML=`<div class="pname">💵 ${t.treasury_name}</div><div class="details">النوع: ${treasuryTypeName(t.treasury_type)} | الرصيد: ${fmt(t.current_balance)}</div>`; const actions=document.createElement("div"); actions.className="actions"; const stmt=document.createElement("button"); stmt.className="btn secondary"; stmt.textContent="كشف حساب"; stmt.onclick=()=>viewTreasuryStatement(t); actions.appendChild(stmt); if(canManageTreasuries){ const btn=document.createElement("button");btn.className="btn secondary";btn.textContent="تعديل";btn.onclick=()=>{ $("treasuryEditId").value=t.treasury_id; $("treasuryName").value=t.treasury_name; $("treasuryType").value=t.treasury_type; $("treasuryOpeningBalance").value=t.opening_balance; $("treasuryOpeningBalance").disabled=true; $("treasuryFormTitle").textContent="تعديل الخزنة"; $("treasuryFormModal").classList.add('active'); }; actions.appendChild(btn);} card.appendChild(actions); box.appendChild(card); }); }
+if($("treasuryForm")) $("treasuryForm").addEventListener("submit", async e => { e.preventDefault(); const btn=$("saveTreasuryBtn"); busy(btn,true,"جارٍ...","حفظ"); const id=$("treasuryEditId").value; const payload={ treasury_name:$("treasuryName").value, treasury_type:$("treasuryType").value }; if(!id) { payload.opening_balance=Number($("treasuryOpeningBalance").value); payload.current_balance=payload.opening_balance; } try{ if(id) await db.from("treasuries").update(payload).eq("treasury_id",id); else await db.from("treasuries").insert(payload); $("treasuryFormModal").classList.remove('active'); $("treasuryForm").reset(); loadTreasuries(); showToast("تم الحفظ","success"); }catch(e){ alert(err(e)); } finally{ busy(btn,false,"","حفظ"); } });
+if($("refreshTreasuriesBtn")) $("refreshTreasuriesBtn").addEventListener("click",loadTreasuries); if($("treasurySearch")) $("treasurySearch").addEventListener("input",renderTreasuries);
+if($("treasuryTransferForm")) $("treasuryTransferForm").addEventListener("submit", async e => { e.preventDefault(); const btn = $("saveTtBtn"); busy(btn, true, "جارٍ...", "تنفيذ"); const { error } = await db.rpc("transfer_treasury_funds", { p_source_treasury_id: Number($("ttSource").value), p_destination_treasury_id: Number($("ttDest").value), p_amount: Number($("ttAmount").value), p_notes: $("ttNotes").value }); if(error) alert(err(error)); else { showToast("تم التحويل","success"); $("treasuryTransferForm").reset(); loadTreasuries(); } busy(btn, false, "", "تنفيذ"); });
+async function viewTreasuryStatement(t) {
+    const modal = $("treasuryStatementModal"); $("treasuryStatementTable").querySelector("tbody").innerHTML = ""; $("treasuryStatementHeader").innerHTML = "جارٍ التحميل..."; modal.classList.remove("hidden");
+    try {
+        const { data: tx } = await db.from("treasury_transactions").select("*").eq("treasury_id", t.treasury_id).order("created_at", {ascending: true});
+        let runningBalance = Number(t.opening_balance || 0); let rows = `<tr style="background:#f4f6f3;font-weight:bold;"><td colspan="4">الرصيد الافتتاحي</td><td>${fmt(runningBalance)}</td></tr>`; let waText = `*كشف حساب خزنة*\nالخزنة: ${t.treasury_name}\n------------------------\n`;
+        (tx||[]).forEach(tr => { let deposit = 0, withdraw = 0; if (tr.transaction_type === 'DEPOSIT' || tr.transaction_type === 'TRANSFER_IN') { deposit = Number(tr.amount); runningBalance += deposit; } else if (tr.transaction_type === 'WITHDRAW' || tr.transaction_type === 'TRANSFER_OUT') { withdraw = Number(tr.amount); runningBalance -= withdraw; } rows += `<tr><td>${new Date(tr.created_at).toLocaleDateString("ar-EG")}</td><td>${tr.notes || tr.transaction_type}</td><td style="color:green">${deposit>0?fmt(deposit):'-'}</td><td style="color:red">${withdraw>0?fmt(withdraw):'-'}</td><td>${fmt(runningBalance)}</td></tr>`; waText += `▪️ ${new Date(tr.created_at).toLocaleDateString("ar-EG")} | ${tr.notes || tr.transaction_type} | ${deposit>0?('+' + fmt(deposit)):('-' + fmt(withdraw))} | رصيد: ${fmt(runningBalance)}\n`; });
+        $("treasuryStatementTable").querySelector("tbody").innerHTML = rows; $("treasuryStatementHeader").innerHTML = `<div><strong>الخزنة:</strong> ${t.treasury_name}</div><div><strong>الرصيد الحالي:</strong> ${fmt(t.current_balance)}</div>`; $("shareTreasuryWhatsappBtn").onclick = () => { window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); }; fillPrintHeaders();
+    } catch(e) { alert(err(e)); }
+}
+
+// ========== المنتجات ==========
+async function loadProducts(){ if(!navigator.onLine) { productsCache=getCache('products'); renderProducts(); return; } const {data}=await db.from("products").select("*").order("product_id"); productsCache=data||[]; saveCache('products', productsCache); renderProducts(); fillStockFormSelects(); fillReservationSelects(); }
+function renderProducts(){ const box=$("products"); if(!box) return; box.replaceChildren(); const q=($("search").value||"").toLowerCase(); const found=productsCache.filter(p=> [p.product_name,p.product_code,p.barcode].some(v=>String(v||"").toLowerCase().includes(q))); if(!found.length){ box.innerHTML = `<div class="empty">لا توجد منتجات.</div>`; return; } found.forEach(p=>{ const card=document.createElement("div");card.className="product";card.innerHTML=`<div class="pname">${p.product_name}</div><div class="details">كود: ${p.product_code} | نوع: ${typeName(p.product_type)}${p.barcode?" | باركود: "+p.barcode:""}</div>`; if(canManage){ const btn=document.createElement("button");btn.className="btn secondary";btn.textContent="تعديل";btn.onclick=()=>{ $("editId").value=p.product_id; $("pname").value=p.product_name; $("pcode").value=p.product_code; $("barcode").value=p.barcode||""; $("ptype").value=p.product_type; $("category").value=p.category_id; $("baseUnit").value=p.base_unit_id; $("minStock").value=p.minimum_stock; $("minPrice").value=p.min_selling_price||""; $("targetPrice").value=p.target_selling_price||""; $("maxPrice").value=p.max_selling_price||""; $("unitsCarton").value=p.units_per_carton||""; $("active").checked=p.is_active; $("canPurchase").checked=p.can_be_purchased; $("canProduce").checked=p.can_be_produced; $("canSell").checked=p.can_be_sold; $("canLoad").checked=p.can_be_loaded; $("formTitle").textContent="تعديل المنتج"; $("productFormModal").classList.add('active'); }; card.appendChild(btn);} box.appendChild(card); }); }
+if($("productForm")) $("productForm").addEventListener("submit", async e => { e.preventDefault(); const btn=$("saveBtn"); busy(btn,true,"جارٍ...","حفظ"); const id=$("editId").value; const payload={ product_name:$("pname").value, product_code:$("pcode").value, barcode:$("barcode").value||null, product_type:$("ptype").value, category_id:Number($("category").value), base_unit_id:Number($("baseUnit").value), minimum_stock:Number($("minStock").value||0), units_per_carton:Number($("unitsCarton").value||0)||null, min_selling_price:$("minPrice").value?Number($("minPrice").value):null, target_selling_price:$("targetPrice").value?Number($("targetPrice").value):null, max_selling_price:$("maxPrice").value?Number($("maxPrice").value):null, is_active:$("active").checked, can_be_purchased:$("canPurchase").checked, can_be_produced:$("canProduce").checked, can_be_sold:$("canSell").checked, can_be_loaded:$("canLoad").checked }; try{ if(id) await db.from("products").update(payload).eq("product_id",id); else await db.from("products").insert(payload); $("productFormModal").classList.remove('active'); $("productForm").reset(); loadProducts(); showToast("تم الحفظ","success"); }catch(e){ alert(err(e)); } finally{ busy(btn,false,"","حفظ"); } });
+if($("refreshBtn")) $("refreshBtn").addEventListener("click",loadProducts); if($("search")) $("search").addEventListener("input",renderProducts);
+
+// ========== العملاء ==========
+async function loadCustomers(){ if(!navigator.onLine) { customersCache=getCache('customers'); renderCustomers(); return; } const {data}=await db.from("customers").select("*").order("customer_id"); customersCache=data||[]; saveCache('customers', customersCache); renderCustomers(); fillInvoiceCustomerSelect(); fillCollectionCustomerSelect(); fillReturnCustomerSelect(); fillCollectionsCustomerFilter(); fillReservationSelects(); }
+function renderCustomers(){ const box=$("customersList"); if(!box) return; box.replaceChildren(); const q=($("customerSearch").value||""); const found=customersCache.filter(c=> String(c.customer_name||"").includes(q) || String(c.phone||"").includes(q)); if(!found.length){ box.innerHTML=`<div class="empty">لا يوجد عملاء.</div>`; return; } found.forEach(c=>{ const card=document.createElement("div");card.className="product";card.innerHTML=`<div class="pname">${c.customer_name}</div><div class="details">موبايل: ${c.phone||'-'} | النوع: ${customerTypeName(c.customer_type)}</div>`; const actions=document.createElement("div"); actions.className="actions"; const stmt=document.createElement("button"); stmt.className="btn secondary"; stmt.textContent="كشف حساب"; stmt.onclick=()=>viewCustomerStatement(c); actions.appendChild(stmt); const qc=document.createElement("button"); qc.className="btn"; qc.textContent="💰 تحصيل"; qc.onclick=()=>openQuickCollect(c); actions.appendChild(qc); if(canManageCustomers){ const btn=document.createElement("button");btn.className="btn secondary";btn.textContent="تعديل";btn.onclick=()=>{ $("customerEditId").value=c.customer_id; $("customerCode").value=c.customer_code; $("customerName").value=c.customer_name; $("customerPhone").value=c.phone||""; $("customerWhatsapp").value=c.whatsapp||""; $("customerTaxNumber").value=c.tax_number||""; $("customerType").value=c.customer_type; $("customerCreditLimit").value=c.credit_limit||""; $("customerOpeningBalance").value=c.opening_balance||0; $("customerFormTitle").textContent="تعديل العميل"; $("customerFormModal").classList.add('active'); }; actions.appendChild(btn);} card.appendChild(actions); box.appendChild(card); }); }
+if($("customerForm")) $("customerForm").addEventListener("submit", async e => { e.preventDefault(); const btn=$("saveCustomerBtn"); busy(btn,true,"جارٍ...","حفظ"); const id=$("customerEditId").value; const payload={ customer_code:$("customerCode").value, customer_name:$("customerName").value, phone:$("customerPhone").value, whatsapp:$("customerWhatsapp").value, tax_number:$("customerTaxNumber").value||null, customer_type:$("customerType").value, credit_limit:Number($("customerCreditLimit").value||0), opening_balance:Number($("customerOpeningBalance").value||0), is_active:$("customerActive").checked }; try{ if(id) await db.from("customers").update(payload).eq("customer_id",id); else await db.from("customers").insert(payload); $("customerFormModal").classList.remove('active'); $("customerForm").reset(); loadCustomers(); showToast("تم الحفظ","success"); }catch(e){ alert(err(e)); } finally{ busy(btn,false,"","حفظ"); } });
+if($("refreshCustomersBtn")) $("refreshCustomersBtn").addEventListener("click",loadCustomers); if($("customerSearch")) $("customerSearch").addEventListener("input",renderCustomers);
+async function viewCustomerStatement(c) { const modal = $("customerStatementModal"); $("modalStatementHeader").innerHTML = "جارٍ التحميل..."; $("modalStatementItems").innerHTML = ""; $("modalStatementSummary").innerHTML = ""; modal.classList.remove("hidden"); try { const { data: invoices } = await db.from("sales_invoices").select("invoice_number, invoice_date, net_total, paid_amount, remaining_amount, status").eq("customer_id", c.customer_id).neq("status", "CANCELLED").order("invoice_date", { ascending: true }); const { data: collections } = await db.from("customer_collections").select("collection_number, collection_date, amount, payment_method, status").eq("customer_id", c.customer_id).eq("status", "POSTED").order("collection_date", { ascending: true }); const { data: retRows } = await db.rpc("get_customer_returns", { p_customer_id: c.customer_id }); const timeline = []; let totalInvoiced = 0, totalPaid = 0, totalReturns = 0; (invoices || []).forEach(inv => { timeline.push({ date: inv.invoice_date, type: 'invoice', ref: inv.invoice_number, desc: "فاتورة بيع", debit: Number(inv.net_total), credit: 0 }); totalInvoiced += Number(inv.net_total); }); (collections || []).forEach(col => { timeline.push({ date: col.collection_date, type: 'collection', ref: col.collection_number, desc: "تحصيل (" + paymentTypeName(col.payment_method) + ")", debit: 0, credit: Number(col.amount) }); totalPaid += Number(col.amount); }); (retRows || []).forEach(r => { const rv = Number(r.total_returned_value) || 0; timeline.push({ date: r.return_date, type: "return", ref: r.return_number, desc: "مرتجع بيع", debit: 0, credit: rv }); totalReturns += rv; }); timeline.sort((a, b) => new Date(a.date) - new Date(b.date)); let runningBalance = Number(c.opening_balance) || 0; let rowsHtml = `<thead><tr><th>التاريخ</th><th>المستند</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead><tbody><tr><td colspan="3"><strong>رصيد افتتاحي</strong></td><td>-</td><td>-</td><td><strong>${fmt(runningBalance)}</strong></td></tr>`; timeline.forEach(t => { runningBalance += t.debit - t.credit; rowsHtml += `<tr><td>${new Date(t.date).toLocaleDateString("ar-EG")}</td><td dir="ltr">${t.ref}</td><td>${t.desc}</td><td>${t.debit > 0 ? fmt(t.debit) : "-"}</td><td>${t.credit > 0 ? fmt(t.credit) : "-"}</td><td style="font-weight:bold;">${fmt(runningBalance)}</td></tr>`; }); rowsHtml += `</tbody>`; $("modalStatementItems").innerHTML = rowsHtml; $("modalStatementHeader").innerHTML = `<div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span><strong>العميل:</strong> ${c.customer_name}</span><span><strong>كود:</strong> ${c.customer_code}</span></div><div style="display:flex;justify-content:space-between;"><span><strong>موبايل:</strong> ${c.phone || "غير مسجل"}</span><span><strong>تاريخ الكشف:</strong> ${new Date().toLocaleDateString("ar-EG")}</span></div>`; $("modalStatementSummary").innerHTML = `<div class="line"><span>إجمالي المبيعات:</span><span>${fmt(totalInvoiced)}</span></div><div class="line"><span>إجمالي المدفوع:</span><span style="color:green;">${fmt(totalPaid)}</span></div><div class="line"><span>إجمالي المرتجعات:</span><span style="color:orange;">${fmt(totalReturns)}</span></div><div class="line grand"><span>الرصيد النهائي:</span><span style="color:red;">${fmt(runningBalance)}</span></div>`; const waBtn = $("shareStatementWhatsappBtn"); waBtn.onclick = () => { let waText = `*كشف حساب عميل*\nالعميل: ${c.customer_name}\nالتاريخ: ${new Date().toLocaleDateString("ar-EG")}\n------------------------\nإجمالي المبيعات: ${fmt(totalInvoiced)}\nإجمالي المدفوع: ${fmt(totalPaid)}\nإجمالي المرتجعات: ${fmt(totalReturns)}\n------------------------\n*الرصيد المتبقي: ${fmt(runningBalance)}*`; let phone = formatWaPhone(c.phone); window.open(phone ? `https://wa.me/${phone}?text=${encodeURIComponent(waText)}` : `https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); }; fillPrintHeaders(); } catch (e) { $("modalStatementHeader").innerHTML = `<span style="color:red;">خطأ: ${err(e)}</span>`; } }
+function openQuickCollect(c) { $("quickCollectForm").reset(); clear($("qcMsg")); $("qcCustomerId").value = c.customer_id; $("qcCustomerInfo").innerHTML = `<strong>العميل:</strong> ${c.customer_name}<br><strong>الهاتف:</strong> ${c.phone||"-"}`; $("qcDate").value = todayISO(); fillTreasurySelects(); $("quickCollectModal").classList.add('active'); }
+if($("quickCollectForm")) $("quickCollectForm").addEventListener("submit", async e => { e.preventDefault(); clear($("qcMsg")); const btn = $("saveQcBtn"); busy(btn, true, "جارٍ...", "حفظ التحصيل"); try { const custId = Number($("qcCustomerId").value); const amount = Number($("qcAmount").value); const treasuryId = Number($("qcTreasury").value); const date = $("qcDate").value; const notes = $("qcNotes").value; const { data: colId, error } = await db.rpc("create_collection", { p_customer_id: custId, p_sales_invoice_id: null, p_amount: amount, p_payment_method: 'CASH', p_collection_date: date, p_notes: notes||null, p_trip_id: null }); if(error) throw error; await db.from("customer_collections").update({ treasury_id: treasuryId }).eq("collection_id", colId); await db.rpc("adjust_treasury_balance", { p_treasury_id: treasuryId, p_amount: amount, p_notes: "تحصيل سريع" }); showToast("✅ تم تسجيل التحصيل بنجاح", "success"); logUserAction("COLLECTION", "تحصيل سريع من عميل: " + custId); $("quickCollectModal").classList.remove('active'); loadCustomers(); loadTreasuries(); } catch(e) { msg($("qcMsg"), "خطأ: " + err(e), "error"); } finally { busy(btn, false, "", "حفظ التحصيل"); } });
+
+// ========== الموردين ==========
+async function loadSuppliers(){ if(!navigator.onLine) { suppliersCache=getCache('suppliers'); renderSuppliers(); return; } const {data}=await db.from("suppliers").select("*").order("supplier_id"); suppliersCache=data||[]; saveCache('suppliers', suppliersCache); renderSuppliers(); fillPurchaseSupplierSelect(); fillSupplierSelect(); fillSupplierFilterSelects(); }
+function renderSuppliers(){ const box=$("suppliersList"); if(!box) return; box.replaceChildren(); const q=($("supplierSearch").value||""); const found=suppliersCache.filter(s=> String(s.supplier_name||"").includes(q) || String(s.supplier_code||"").includes(q)); if(!found.length){ box.innerHTML=`<div class="empty">لا يوجد موردون.</div>`; return; } found.forEach(s=>{ const card=document.createElement("div");card.className="product";card.innerHTML=`<div class="pname">${s.supplier_name}</div><div class="details">كود: ${s.supplier_code||'-'} | موبايل: ${s.phone||'-'}</div>`; const actions=document.createElement("div"); actions.className="actions"; const stmt=document.createElement("button"); stmt.className="btn secondary"; stmt.textContent="كشف حساب"; stmt.onclick=()=>viewSupplierStatement(s); actions.appendChild(stmt); if(canManageSuppliers){ const btn=document.createElement("button");btn.className="btn secondary";btn.textContent="تعديل";btn.onclick=()=>{ $("supplierEditId").value=s.supplier_id; $("supplierCode").value=s.supplier_code; $("supplierName").value=s.supplier_name; $("supplierPhone").value=s.phone||""; $("supplierTaxNumber").value=s.tax_number||""; $("supplierFormTitle").textContent="تعديل المورد"; $("supplierFormModal").classList.add('active'); }; actions.appendChild(btn);} card.appendChild(actions); box.appendChild(card); }); }
+if($("supplierForm")) $("supplierForm").addEventListener("submit", async e => { e.preventDefault(); const btn=$("saveSupplierBtn"); busy(btn,true,"جارٍ...","حفظ"); const id=$("supplierEditId").value; const payload={ supplier_code:$("supplierCode").value, supplier_name:$("supplierName").value, phone:$("supplierPhone").value, tax_number:$("supplierTaxNumber").value||null, is_active:$("supplierActive").checked }; try{ if(id) await db.from("suppliers").update(payload).eq("supplier_id",id); else await db.from("suppliers").insert(payload); $("supplierFormModal").classList.remove('active'); $("supplierForm").reset(); loadSuppliers(); showToast("تم الحفظ","success"); }catch(e){ alert(err(e)); } finally{ busy(btn,false,"","حفظ"); } });
+if($("refreshSuppliersBtn")) $("refreshSuppliersBtn").addEventListener("click",loadSuppliers); if($("supplierSearch")) $("supplierSearch").addEventListener("input",renderSuppliers);
+async function viewSupplierStatement(s) { const modal = $("supplierStatementModal"); $("modalSupplierHeader").innerHTML = "جارٍ تحميل البيانات..."; $("modalSupplierItems").innerHTML = ""; $("modalSupplierSummary").innerHTML = ""; modal.classList.remove("hidden"); try { const { data: invoices } = await db.from("purchase_invoices").select("invoice_number, invoice_date, net_total, status, treasury_id").eq("supplier_id", s.supplier_id).neq("status", "CANCELLED").order("invoice_date", { ascending: true }); const { data: payments } = await db.from("supplier_payments").select("payment_date, amount").eq("supplier_id", s.supplier_id).order("payment_date", {ascending: true}); const timeline = []; let totalInvoiced = 0, totalPaid = 0; (invoices || []).forEach(inv => { timeline.push({ date: inv.invoice_date, type: 'invoice', ref: inv.invoice_number, desc: "فاتورة مشتريات", debit: 0, credit: Number(inv.net_total) }); totalInvoiced += Number(inv.net_total); if (inv.treasury_id) { timeline.push({ date: inv.invoice_date, type: 'payment', ref: inv.invoice_number, desc: "سداد نقدي للفاتورة", debit: Number(inv.net_total), credit: 0 }); totalPaid += Number(inv.net_total); } }); (payments || []).forEach(p => { timeline.push({ date: p.payment_date, type: 'payment', ref: '-', desc: "سداد دفعة", debit: Number(p.amount), credit: 0 }); totalPaid += Number(p.amount); }); timeline.sort((a, b) => new Date(a.date) - new Date(b.date)); let runningBalance = 0; let rowsHtml = `<thead><tr><th>التاريخ</th><th>المستند</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead><tbody>`; timeline.forEach(t => { runningBalance = runningBalance - t.credit + t.debit; rowsHtml += `<tr><td>${new Date(t.date).toLocaleDateString("ar-EG")}</td><td dir="ltr">${t.ref}</td><td>${t.desc}</td><td>${t.debit > 0 ? fmt(t.debit) : "-"}</td><td>${t.credit > 0 ? fmt(t.credit) : "-"}</td><td style="font-weight:bold;">${fmt(runningBalance)}</td></tr>`; }); rowsHtml += `</tbody>`; $("modalSupplierItems").innerHTML = rowsHtml; $("modalSupplierHeader").innerHTML = `<div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span><strong>المورد:</strong> ${s.supplier_name}</span><span><strong>كود:</strong> ${s.supplier_code}</span></div><div style="display:flex;justify-content:space-between;"><span><strong>موبايل:</strong> ${s.phone || "غير مسجل"}</span><span><strong>تاريخ الكشف:</strong> ${new Date().toLocaleDateString("ar-EG")}</span></div>`; $("modalSupplierSummary").innerHTML = `<div class="line"><span>إجمالي المشتريات:</span><span>${fmt(totalInvoiced)}</span></div><div class="line"><span>إجمالي المدفوع:</span><span style="color:green;">${fmt(totalPaid)}</span></div><div class="line grand"><span>الرصيد النهائي:</span><span style="color:red;">${fmt(Math.abs(runningBalance))}</span></div>`; const waBtn = $("shareSupplierWhatsappBtn"); waBtn.onclick = () => { let waText = `*كشف حساب مورد*\nالمورد: ${s.supplier_name}\nالتاريخ: ${new Date().toLocaleDateString("ar-EG")}\n------------------------\nإجمالي المشتريات: ${fmt(totalInvoiced)}\nإجمالي المدفوع: ${fmt(totalPaid)}\n------------------------\n*الرصيد المتبقي: ${fmt(Math.abs(runningBalance))}*`; let phone = formatWaPhone(s.phone); window.open(phone ? `https://wa.me/${phone}?text=${encodeURIComponent(waText)}` : `https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); }; fillPrintHeaders(); } catch (e) { $("modalSupplierHeader").innerHTML = `<span style="color:red;">خطأ: ${err(e)}</span>`; } }
+
+// ========== المخزون ==========
+let currentStockLocationFilter = null;
+async function loadStock(){ 
+    if(!canViewStock)return; 
+    if(!navigator.onLine) { stockCache=getCache('stock'); renderStockLocationTabs(); renderStock(); return; } 
+    const box=$("stockList"); if(box) box.innerHTML = "جارٍ التحميل..."; 
+    const {data,error}=await db.from("stock_balances").select("*, products(product_name, product_code, base_unit_id), locations(location_name)").limit(500); 
+    if(error) { if(box) box.innerHTML = err(error); return; } 
+    stockCache=data||[]; saveCache('stock', stockCache); 
+    renderStockLocationTabs();
+    renderStock(); 
+}
+function renderStockLocationTabs() {
+    const box = $("stockLocationTabs"); if(!box) return; box.innerHTML = "";
+    const allBtn = document.createElement("button"); allBtn.className = "tab-btn" + (currentStockLocationFilter === null ? " active" : ""); allBtn.textContent = "الكل"; allBtn.style.cssText = "flex:0 0 auto; padding:8px 14px; white-space:nowrap;"; allBtn.onclick = () => { currentStockLocationFilter = null; renderStockLocationTabs(); renderStock(); }; box.appendChild(allBtn);
+    locationsCache.filter(l => l.is_active).forEach(loc => { const btn = document.createElement("button"); btn.className = "tab-btn" + (String(currentStockLocationFilter) === String(loc.location_id) ? " active" : ""); btn.textContent = loc.location_name; btn.style.cssText = "flex:0 0 auto; padding:8px 14px; white-space:nowrap;"; btn.onclick = () => { currentStockLocationFilter = loc.location_id; renderStockLocationTabs(); renderStock(); }; box.appendChild(btn); });
+}
+function renderStock(){ 
+    const box=$("stockList"); if(!box) return; box.replaceChildren(); 
+    const q=($("stockSearch").value||"").trim().toLowerCase(); 
+    const found=stockCache.filter(b=>{ 
+        if(currentStockLocationFilter !== null && String(b.location_id)!==String(currentStockLocationFilter)) return false;
+        const p=productsCache.find(x=>String(x.product_id)===String(b.product_id)); 
+        const l=locationsCache.find(x=>String(x.location_id)===String(b.location_id)); 
+        const t=[p?.product_name,p?.product_code,l?.location_name,l?.location_code].map(v=>String(v||"").toLowerCase()).join(" "); 
+        return t.includes(q) && Number(b.quantity) > 0; 
+    }); 
+    if(!found.length){ const d=document.createElement("div");d.className="empty";d.textContent="لا توجد أرصدة مطابقة.";box.appendChild(d);return; } 
+    found.forEach(b=>{ 
+        const p=productsCache.find(x=>String(x.product_id)===String(b.product_id)); 
+        const l=locationsCache.find(x=>String(x.location_id)===String(b.location_id)); 
+        const card=document.createElement("div");card.className="product"; 
+        const title=document.createElement("div");title.className="pname";title.textContent=p?.product_name||("منتج رقم "+b.product_id); 
+        const details=document.createElement("div");details.className="details";details.textContent="الكود: "+(p?.product_code||"—")+" | الموقع: "+(l?.location_name||"—")+" | الوحدة: "+unitName(p?.base_unit_id); 
+        const qty=document.createElement("span");qty.className="badge";qty.textContent="الرصيد: "+fmtQty(b.quantity)+" "+unitName(p?.base_unit_id); 
+        card.append(title,details,qty); 
+        const actions=document.createElement("div");actions.className="actions"; 
+        const historyBtn=document.createElement("button");historyBtn.type="button";historyBtn.className="btn secondary";historyBtn.textContent="📜 كارت الصنف";historyBtn.onclick=()=>viewStockMovements(b.product_id, b.location_id); actions.appendChild(historyBtn);
+        if(canManageStock){ const adj=document.createElement("button");adj.type="button";adj.className="btn secondary";adj.textContent="تعديل";adj.addEventListener("click",()=>openStockForm(b.location_id,b.product_id)); actions.appendChild(adj); } 
+        card.appendChild(actions); box.appendChild(card); 
+    }); 
+}
+if($("refreshStockBtn")) $("refreshStockBtn").addEventListener("click",loadStock);
+if($("stockSearch")) $("stockSearch").addEventListener("input",renderStock);
+function openStockForm(locationId, productId) { $("stockLocation").value = locationId || ""; $("stockProduct").value = productId || ""; const existing = stockCache.find(b => String(b.location_id)===String(locationId) && String(b.product_id)===String(productId)); $("stockCurrentDisplay").textContent = "الرصيد الحالي: " + (existing ? fmtQty(existing.quantity) : "0"); $("stockNewQty").value = existing ? existing.quantity : 0; $("stockFormModal").classList.add('active'); }
+async function viewStockMovements(productId, locationId) { 
+    const p = productsCache.find(x => String(x.product_id) === String(productId)); 
+    const l = locationsCache.find(x => String(x.location_id) === String(locationId)); 
+    $("movementProductInfo").textContent = `المنتج: ${p?.product_name} | الموقع: ${l?.location_name}`; 
+    const tbody = $("movementsTable").querySelector("tbody"); tbody.innerHTML = "<tr><td colspan='5'>جارٍ التحميل...</td></tr>"; 
+    $("movementSummary").innerHTML = ""; $("stockMovementsModal").classList.remove("hidden"); 
+    try { 
+        const { data, error } = await db.from("stock_movements").select("movement_id, movement_type, quantity_change, quantity_after, notes, created_at").eq("product_id", Number(productId)).eq("location_id", Number(locationId)).order("movement_id", { ascending: true }); 
+        if (error) throw error; 
+        if (!data || data.length === 0) { tbody.innerHTML = "<tr><td colspan='5'>لا توجد حركات مسجلة.</td></tr>"; return; } 
+        let html = ""; let waText = `*كشف حركة صنف*\nالمنتج: ${p?.product_name}\nالموقع: ${l?.location_name}\n------------------------\n`;
+        let totalIn = 0, totalOut = 0, netChange = 0;
+        data.forEach(m => { 
+            let typeName = m.movement_type; 
+            if (m.movement_type === 'ADJUST') typeName = 'تسوية'; if (m.movement_type === 'RECEIVE') typeName = 'استلام'; if (m.movement_type === 'ISSUE') typeName = 'صرف'; if (m.movement_type === 'RETURN') typeName = 'مرتجع'; 
+            const change = Number(m.quantity_change); 
+            if(change > 0) totalIn += change; else if(change < 0) totalOut += Math.abs(change); netChange += change;
+            const changeStr = (change > 0 ? '+' : '') + fmtQty(change); 
+            html += `<tr><td>${new Date(m.created_at).toLocaleString("ar-EG")}</td><td>${typeName}</td><td style="color:${change > 0 ? 'green' : 'red'};font-weight:bold;">${changeStr}</td><td>${fmtQty(m.quantity_after)}</td><td>${m.notes || '-'}</td></tr>`; 
+            waText += `▪️ ${new Date(m.created_at).toLocaleDateString("ar-EG")} | ${typeName} | ${changeStr} | رصيد: ${fmtQty(m.quantity_after)}\n`;
+        }); 
+        tbody.innerHTML = html; 
+        const unitLabel = unitName(p?.base_unit_id); const lastBalance = Number(data[data.length-1].quantity_after || 0);
+        $("movementSummary").innerHTML = `<h4>ملخص حركة الصنف</h4><div class="line"><span>إجمالي الوارد:</span><span style="color:green;">${fmtQty(totalIn)} ${unitLabel}</span></div><div class="line"><span>إجمالي الصادر:</span><span style="color:red;">${fmtQty(totalOut)} ${unitLabel}</span></div><div class="line"><span>صافي الحركة:</span><span style="font-weight:bold;">${fmtQty(netChange)} ${unitLabel}</span></div><div class="line"><span>الرصيد الحالي:</span><span style="font-weight:bold;color:var(--g);">${fmtQty(lastBalance)} ${unitLabel}</span></div>`;
+        waText += `------------------------\n*ملخص:*\nوارد: ${fmtQty(totalIn)}\nصادر: ${fmtQty(totalOut)}\nرصيد: ${fmtQty(lastBalance)}`;
+        $("shareMovementWhatsappBtn").onclick = () => { window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); }; fillPrintHeaders();
+    } catch(e) { tbody.innerHTML = `<tr><td colspan='5' style="color:red;">خطأ: ${err(e)}</td></tr>`; } 
+}
+if($("stockForm")) $("stockForm").addEventListener("submit", async e => { e.preventDefault(); const btn=$("saveStockBtn"); busy(btn,true,"جارٍ...","حفظ"); const {error}=await db.rpc("set_stock_balance",{ p_location_id:Number($("stockLocation").value), p_product_id:Number($("stockProduct").value), p_new_quantity:Number($("stockNewQty").value), p_notes:$("stockNotes").value }); if(error) alert(err(error)); else { $("stockFormModal").classList.remove('active'); loadStock(); showToast("تم الحفظ","success"); } busy(btn,false,"","حفظ"); });
+function addStItemRow(){ stItemCounter++; const wrap=document.createElement("div"); wrap.className="item-row"; const prodLabel=document.createElement("label"); prodLabel.textContent="المنتج *"; const prodSel=document.createElement("select"); prodSel.className="item-product"; prodSel.required=true; const first=document.createElement("option"); first.value=""; first.textContent="اختر المنتج"; prodSel.appendChild(first); productsCache.filter(p=>p.is_active).forEach(p=>{ const op=document.createElement("option"); op.value=String(p.product_id); op.textContent=p.product_name; prodSel.appendChild(op); }); const qtyLabel=document.createElement("label"); qtyLabel.textContent="الكمية *"; const qty=document.createElement("input"); qty.type="number"; qty.className="item-qty"; qty.min="0.0001"; qty.step="0.0001"; qty.required=true; const removeBtn=document.createElement("button"); removeBtn.type="button"; removeBtn.className="btn danger"; removeBtn.textContent="حذف"; removeBtn.onclick=()=>{ wrap.remove(); }; wrap.append(prodLabel,prodSel,qtyLabel,qty,removeBtn); $("stItems").appendChild(wrap); }
+window.addStItemRow = addStItemRow;
+if($("stockTransferForm")) $("stockTransferForm").addEventListener("submit", async e => { e.preventDefault(); const items = []; document.querySelectorAll("#stItems .item-row").forEach(row => { const pId = row.querySelector(".item-product").value; const qty = Number(row.querySelector(".item-qty").value); if(pId && qty > 0) items.push({ product_id: Number(pId), quantity: qty }); }); if(!items.length) return alert("أضف أصناف"); const btn = $("saveStBtn"); busy(btn, true, "جارٍ التحويل...", "تنفيذ"); const { error } = await db.rpc("create_stock_transfer", { p_source_location_id: Number($("stSource").value), p_destination_location_id: Number($("stDest").value), p_transfer_date: $("stDate").value, p_items: items, p_notes: $("stNotes").value }); if(error) alert(err(error)); else { showToast("تم التحويل","success"); $("stockTransferForm").reset(); $("stItems").innerHTML=""; loadStock(); } busy(btn, false, "", "تنفيذ"); });
+
+// ========== الحجوزات ==========
+async function loadReservations() {
+    const box = $("reservationsList"); if(!box) return; box.innerHTML = "جارٍ التحميل...";
     if(!navigator.onLine) { box.innerHTML = "<div class='empty'>أنت أوفلاين.</div>"; return; }
-    box.innerHTML = "<div class='empty'>جارٍ التحميل...</div>";
     try {
-      const today = todayISO();
-      const [salesRes, customersRes, lowStockRes, invRes, cashRes, tripsRes] = await Promise.all([
-        db.from("sales_invoices").select("net_total").eq("invoice_date", today).neq("status","CANCELLED"),
-        db.from("customers").select("customer_id", {count:"exact", head:true}).eq("is_active", true),
-        db.from("stock_balances").select("product_id, quantity, products(minimum_stock)").limit(1000),
-        db.from("sales_invoices").select("remaining_amount").eq("status","POSTED").gt("remaining_amount", 0),
-        db.from("treasuries").select("current_balance").eq("is_active", true),
-        db.from("trips").select("trip_id", {count:"exact", head:true}).neq("status","COMPLETED")
-      ]);
-      const todaySales = (salesRes.data||[]).reduce((s,i)=>s+Number(i.net_total||0),0);
-      const customersCount = customersRes.count || 0;
-      const lowStockProducts = {};
-      (lowStockRes.data||[]).forEach(sb => { if(sb.products){ const pid = sb.product_id; if(!lowStockProducts[pid]) lowStockProducts[pid] = {qty:0, min:Number(sb.products.minimum_stock||0)}; lowStockProducts[pid].qty += Number(sb.quantity||0); } });
-      const lowStockCount = Object.values(lowStockProducts).filter(p => p.qty < p.min).length;
-      const unpaidCount = (invRes.data||[]).length;
-      const totalCash = (cashRes.data||[]).reduce((s,t)=>s+Number(t.current_balance||0),0);
-      const activeTrips = tripsRes.count || 0;
-      box.innerHTML = `
-        <div class="home-card green"><div class="hc-label">💰 مبيعات اليوم</div><div class="hc-value">${fmt(todaySales)}</div></div>
-        <div class="home-card"><div class="hc-label">👥 العملاء</div><div class="hc-value">${customersCount}</div></div>
-        <div class="home-card red"><div class="hc-label">⚠️ نقص مخزون</div><div class="hc-value">${lowStockCount}</div></div>
-        <div class="home-card gold"><div class="hc-label">📄 فواتير آجلة</div><div class="hc-value">${unpaidCount}</div></div>
-        <div class="home-card"><div class="hc-label">💵 إجمالي النقدية</div><div class="hc-value">${fmt(totalCash)}</div></div>
-        <div class="home-card"><div class="hc-label">🚐 جولات نشطة</div><div class="hc-value">${activeTrips}</div></div>
-      `;
-      if(lowStockCount > 0) showToast(`⚠️ يوجد ${lowStockCount} أصناف تحت الحد الأدنى`, "warn", 6000);
+        const { data, error } = await db.from("reservations").select("*").order("reservation_id", {ascending:false}).limit(200);
+        if(error) throw error;
+        reservationsCache = data || [];
+        if(!reservationsCache.length) { box.innerHTML = "<div class='empty'>لا توجد حجوزات.</div>"; return; }
+        const statusMap = { ACTIVE:"نشط", DELIVERED:"تم التسليم", CANCELLED:"ملغي" };
+        box.innerHTML = reservationsCache.map(r => { const custName = customerName(r.customer_id); const prodName = productName(r.product_id); const locName = locationName(r.location_id); return `<div class="product"><div class="pname">🔒 ${prodName}</div><div class="details">العميل: ${custName} | الكمية: ${fmtQty(r.quantity)} | الموقع: ${locName}</div><div class="details">الحالة: ${statusMap[r.status]||r.status}${r.reserved_until?" | حتى: "+new Date(r.reserved_until).toLocaleDateString("ar-EG"):""}</div>${r.status==="ACTIVE"?`<div class="actions"><button class="btn secondary" onclick="window.cancelReservation(${r.reservation_id})">إلغاء الحجز</button></div>`:""}</div>`; }).join("");
     } catch(e) { box.innerHTML = `<div class='empty error'>خطأ: ${err(e)}</div>`; }
-  }
+}
+window.cancelReservation = async function(id) { if(!confirm("إلغاء الحجز؟")) return; try { const { error } = await db.from("reservations").update({ status:"CANCELLED" }).eq("reservation_id", id); if(error) throw error; showToast("تم إلغاء الحجز","success"); loadReservations(); } catch(e) { alert(err(e)); } };
+if($("addReservationBtn")) $("addReservationBtn").addEventListener("click", () => { $("reservationForm").reset(); fillReservationSelects(); clear($("rsMsg")); $("reservationFormModal").classList.add('active'); });
+if($("reservationForm")) $("reservationForm").addEventListener("submit", async e => { e.preventDefault(); clear($("rsMsg")); const btn = $("saveRsBtn"); busy(btn, true, "جارٍ...", "حفظ الحجز"); try { const { data: sess } = await db.auth.getSession(); const { error } = await db.from("reservations").insert({ customer_id: Number($("rsCustomer").value), product_id: Number($("rsProduct").value), location_id: Number($("rsLocation").value), quantity: Number($("rsQty").value), reserved_until: $("rsUntil").value || null, notes: $("rsNotes").value || null, status: "ACTIVE", created_by: sess?.session?.user?.id }); if(error) throw error; showToast("تم الحجز بنجاح", "success"); $("reservationFormModal").classList.remove('active'); loadReservations(); } catch(e) { msg($("rsMsg"), "خطأ: " + err(e), "error"); } finally { busy(btn, false, "", "حفظ الحجز"); } });
 
-  let tasksSalesChart = null, tasksExpensesChart = null;
-  async function loadTasks() {
-    const box = $("tasksList"); if(!box) return; if (!navigator.onLine) { box.innerHTML = "<div class='empty'>أنت أوفلاين.</div>"; return; }
-    box.innerHTML = "<div class='empty'>جارٍ التحميل...</div>";
-    const from = $("tasksFromDate").value || todayISO().substring(0,7)+"-01"; const to = $("tasksToDate").value || todayISO();
-    try {
-      const [salesRes, purchRes, expRes, collRes, retRes, prodRes, lowStockRes, unpaidInvRes, draftTripsRes, draftProdRes] = await Promise.all([
-        db.from("sales_invoices").select("net_total, invoice_date").gte("invoice_date", from).lte("invoice_date", to).neq("status","CANCELLED"),
-        db.from("purchase_invoices").select("net_total").gte("invoice_date", from).lte("invoice_date", to).neq("status","CANCELLED"),
-        db.from("expenses").select("amount, expense_type").gte("expense_date", from).lte("expense_date", to),
-        db.from("customer_collections").select("amount").gte("collection_date", from).lte("collection_date", to).eq("status","POSTED"),
-        db.from("purchase_returns").select("total_return_amount").gte("return_date", from).lte("return_date", to),
-        db.from("sales_returns").select("total_returned_value").gte("return_date", from).lte("return_date", to),
-        db.from("stock_balances").select("product_id, quantity, products(product_name, minimum_stock)").limit(1000),
-        db.from("sales_invoices").select("invoice_number, remaining_amount, customers(customer_name)").eq("status", "POSTED").gt("remaining_amount", 0).limit(20),
-        db.from("trips").select("trip_number, sales_reps(name)").eq("status", "DRAFT").limit(20),
-        db.from("production_orders").select("order_number, recipes(recipe_name)").eq("status", "DRAFT").limit(20)
-      ]);
-      const totalSales = (salesRes.data||[]).reduce((a,b)=>a+Number(b.net_total),0);
-      const totalPurch = (purchRes.data||[]).reduce((a,b)=>a+Number(b.net_total),0);
-      const totalExp = (expRes.data||[]).reduce((a,b)=>a+Number(b.amount),0);
-      const totalColl = (collRes.data||[]).reduce((a,b)=>a+Number(b.amount),0);
-      const totalPurRet = (retRes.data||[]).reduce((a,b)=>a+Number(b.total_return_amount),0);
-      const totalSalRet = (retRes.data||[]).reduce((a,b)=>a+Number(b.total_returned_value),0);
-      const netProfit = totalSales - totalPurRet - totalPurch - totalExp;
-      $("tasksDashboard").innerHTML = `
-        <div class="home-card green"><div class="hc-label">💰 المبيعات</div><div class="hc-value">${fmt(totalSales)}</div></div>
-        <div class="home-card gold"><div class="hc-label">🛒 المشتريات</div><div class="hc-value">${fmt(totalPurch)}</div></div>
-        <div class="home-card red"><div class="hc-label">🧾 المصروفات</div><div class="hc-value">${fmt(totalExp)}</div></div>
-        <div class="home-card"><div class="hc-label">💸 التحصيلات</div><div class="hc-value">${fmt(totalColl)}</div></div>
-        <div class="home-card"><div class="hc-label">↩️ مرتجع مشتريات</div><div class="hc-value">${fmt(totalPurRet)}</div></div>
-        <div class="home-card"><div class="hc-label">↩️ مرتجع بيع</div><div class="hc-value">${fmt(totalSalRet)}</div></div>
-        <div class="home-card ${netProfit >= 0 ? 'green' : 'red'}"><div class="hc-label">📊 صافي الربح</div><div class="hc-value">${fmt(netProfit)}</div></div>
-      `;
-      const dailySales = {}; for(let i=6; i>=0; i--){ const d = new Date(); d.setDate(d.getDate()-i); const key = d.toISOString().substring(0,10); dailySales[key] = 0; }
-      (salesRes.data||[]).forEach(s => { if(dailySales[s.invoice_date] !== undefined) dailySales[s.invoice_date] += Number(s.net_total||0); });
-      const labels = Object.keys(dailySales).map(k => new Date(k).toLocaleDateString("ar-EG", {day:"2-digit", month:"2-digit"}));
-      const data = Object.values(dailySales);
-      if(tasksSalesChart) tasksSalesChart.destroy();
-      if($("tasksSalesChart")) tasksSalesChart = new Chart($("tasksSalesChart").getContext('2d'), { type:'line', data:{ labels, datasets:[{ label:'المبيعات', data, borderColor:'#173c2c', backgroundColor:'rgba(23,60,44,0.15)', fill:true, tension:0.3 }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} } } });
-      const expTypes = {}; (expRes.data||[]).forEach(e => { const t = expenseTypeName(e.expense_type); expTypes[t] = (expTypes[t]||0) + Number(e.amount||0); });
-      const expLabels = Object.keys(expTypes); const expData = Object.values(expTypes);
-      if(tasksExpensesChart) tasksExpensesChart.destroy();
-      if($("tasksExpensesChart") && expLabels.length) tasksExpensesChart = new Chart($("tasksExpensesChart").getContext('2d'), { type:'doughnut', data:{ labels: expLabels, datasets:[{ data: expData, backgroundColor:['#a52b2b','#d5b16a','#173c2c','#24563e','#68736a'] }] }, options:{ responsive:true, maintainAspectRatio:false } });
-      let html = "";
-      const productTotals = {};
-      (lowStockRes.data||[]).forEach(s => { if(s.products){ if(!productTotals[s.product_id]) productTotals[s.product_id]={name:s.products.product_name, min:s.products.minimum_stock, qty:0}; productTotals[s.product_id].qty+=Number(s.quantity); } });
-      const lowStock = Object.values(productTotals).filter(p => p.qty < p.min);
-      if (lowStock.length > 0) { html += `<div class="task-box"><h3>⚠️ نقص المخزون (${lowStock.length})</h3>`; lowStock.slice(0,5).forEach(i => html += `<div class="task-item">📦 ${i.name}: <span style="color:red;">${fmtQty(i.qty)}</span> (الحد: ${fmtQty(i.min)})</div>`); html += `<button class="btn secondary" onclick="window.openSection('stock')">عرض المخزون</button></div>`; }
-      if (unpaidInvRes.data && unpaidInvRes.data.length > 0) { html += `<div class="task-box"><h3>💰 فواتير آجلة محتاجة تحصيل (${unpaidInvRes.data.length})</h3>`; unpaidInvRes.data.slice(0,5).forEach(inv => html += `<div class="task-item">🧾 فاتورة <b>${inv.invoice_number}</b> | ${inv.customers?.customer_name} | متبقي: <span style="color:red;">${fmt(inv.remaining_amount)}</span></div>`); html += `<button class="btn secondary" onclick="window.openSection('collections')">التحصيلات</button></div>`; }
-      if (draftTripsRes.data && draftTripsRes.data.length > 0) { html += `<div class="task-box"><h3>🚐 جولات مسودة (${draftTripsRes.data.length})</h3>`; draftTripsRes.data.slice(0,5).forEach(trip => html += `<div class="task-item">🚚 جولة <b>${trip.trip_number}</b> | ${trip.sales_reps?.name||"-"}</div>`); html += `<button class="btn secondary" onclick="window.openSection('trips')">الجولات</button></div>`; }
-      if (draftProdRes.data && draftProdRes.data.length > 0) { html += `<div class="task-box"><h3>🏭 أوامر تشغيل معلقة (${draftProdRes.data.length})</h3>`; draftProdRes.data.slice(0,5).forEach(p => html += `<div class="task-item">⚙️ أمر <b>${p.order_number}</b> | ${p.recipes?.recipe_name}</div>`); html += `<button class="btn secondary" onclick="window.openSection('production')">الإنتاج</button></div>`; }
-      if(!html) html = "<div class='empty'>✅ مفيش تنبيهات حالياً.</div>";
-      box.innerHTML = html;
-    } catch (e) { box.innerHTML = `<div class="empty error">خطأ: ${err(e)}</div>`; }
-  }
-  if($("tasksFilterBtn")) $("tasksFilterBtn").addEventListener("click", loadTasks);
-
-  const locationTypes={ MAIN_WAREHOUSE:"مخزن رئيسي",FRIDGE:"ثلاجة",VEHICLE:"سيارة",FACTORY:"مصنع",SHOWROOM:"معرض" };
-  function locationTypeName(value){ return locationTypes[value]||value||"غير محدد"; }
-  async function loadLocations(){ if(!navigator.onLine) { locationsCache=getCache('locations'); renderLocations(); return; } const {data}=await db.from("locations").select("*").order("location_id"); locationsCache=data||[]; saveCache('locations', locationsCache); renderLocations(); fillInvoiceLocationSelect(); fillPurchaseLocationSelect(); fillProductionLocationSelect(); fillTripVehicleSelect(); fillLoadSourceLocSelect(); fillStockTransferSelects(); fillStockFormSelects(); renderStockLocationTabs(); }
-  function renderLocations(){ const box=$("locationsList"); if(!box) return; box.replaceChildren(); const q=($("locationSearch").value||"").toLowerCase(); const found=locationsCache.filter(l=> [l.location_code,l.location_name].some(v=>String(v||"").toLowerCase().includes(q))); if(!found.length){ box.innerHTML = `<div class="empty">لا توجد مواقع.</div>`; return; } found.forEach(location=>{ const card=document.createElement("div");card.className="product";card.innerHTML=`<div class="pname">${location.location_name||"موقع"}</div><div class="details">الكود: ${location.location_code||"—"} | النوع: ${locationTypeName(location.location_type)}</div>`; const actions=document.createElement("div"); actions.className="actions"; const stmt=document.createElement("button"); stmt.className="btn secondary"; stmt.textContent="كشف حركة"; stmt.onclick=()=>viewLocationStatement(location); actions.appendChild(stmt); if(canManageLocations){ const btn=document.createElement("button");btn.className="btn secondary";btn.textContent="تعديل";btn.onclick=()=>{ $("locationEditId").value=location.location_id; $("locationCode").value=location.location_code; $("locationName").value=location.location_name; $("locationType").value=location.location_type; $("locationNotes").value=location.notes||""; $("locationFormTitle").textContent="تعديل الموقع"; $("locationFormModal").classList.add('active'); }; actions.appendChild(btn);} card.appendChild(actions); box.appendChild(card); }); }
-  if($("locationForm")) $("locationForm").addEventListener("submit", async e => { e.preventDefault(); const btn=$("saveLocationBtn"); busy(btn,true,"جارٍ...","حفظ"); const id=$("locationEditId").value; const payload={location_code:$("locationCode").value, location_name:$("locationName").value, location_type:$("locationType").value}; try{ if(id) await db.from("locations").update(payload).eq("location_id",id); else await db.from("locations").insert(payload); $("locationFormModal").classList.remove('active'); $("locationForm").reset(); loadLocations(); showToast("تم الحفظ","success"); }catch(e){ alert(err(e)); } finally{ busy(btn,false,"","حفظ"); } });
-  if($("refreshLocationsBtn")) $("refreshLocationsBtn").addEventListener("click",loadLocations); if($("locationSearch")) $("locationSearch").addEventListener("input",renderLocations);
-
-  async function viewLocationStatement(loc) {
-      const modal = $("locationStatementModal"); $("locationStatementHeader").innerHTML = "جارٍ التحميل..."; $("locationStatementTable").querySelector("tbody").innerHTML = ""; $("locationSummaryTable").querySelector("tbody").innerHTML = ""; modal.classList.remove("hidden");
-      try {
-          const { data: movements } = await db.from("stock_movements").select("*, products(product_name, product_code, base_unit_id)").eq("location_id", loc.location_id).order("created_at", {ascending: true});
-          let html = ""; let waText = `*كشف حركة مخزن*\nالمخزن: ${loc.location_name}\n------------------------\n`;
-          const productSummary = {};
-          (movements||[]).forEach(m => {
-              let typeName = m.movement_type;
-              if (m.movement_type === 'ADJUST') typeName = 'تسوية'; if (m.movement_type === 'RECEIVE') typeName = 'استلام'; if (m.movement_type === 'ISSUE') typeName = 'صرف'; if (m.movement_type === 'RETURN') typeName = 'مرتجع';
-              const change = Number(m.quantity_change); const changeStr = (change > 0 ? '+' : '') + fmtQty(change); const runningBalance = Number(m.quantity_after || 0); const unitLabel = unitName(m.products?.base_unit_id);
-              html += `<tr><td>${new Date(m.created_at).toLocaleDateString("ar-EG")}</td><td>${m.products?.product_name || ''}</td><td>${typeName}</td><td style="color:${change>0?'green':'red'}">${changeStr}</td><td style="font-weight:bold;">${fmtQty(runningBalance)} ${unitLabel}</td><td>${m.notes || '-'}</td></tr>`;
-              const pid = m.product_id; if(!productSummary[pid]) productSummary[pid] = { name: m.products?.product_name || '', unit: unitLabel, inQty: 0, outQty: 0, lastBalance: 0, code: m.products?.product_code || '' };
-              if(change > 0) productSummary[pid].inQty += change; else if(change < 0) productSummary[pid].outQty += Math.abs(change); productSummary[pid].lastBalance = runningBalance;
-          });
-          $("locationStatementTable").querySelector("tbody").innerHTML = html || "<tr><td colspan='6'>لا توجد حركات.</td></tr>";
-          let summaryHtml = ""; Object.values(productSummary).forEach(ps => { const net = ps.inQty - ps.outQty; summaryHtml += `<tr><td>${ps.name} (${ps.code})</td><td style="color:green;">${fmtQty(ps.inQty)}</td><td style="color:red;">${fmtQty(ps.outQty)}</td><td>${fmtQty(net)}</td><td style="font-weight:bold;">${fmtQty(ps.lastBalance)} ${ps.unit}</td></tr>`; });
-          $("locationSummaryTable").querySelector("tbody").innerHTML = summaryHtml || "<tr><td colspan='5'>لا يوجد ملخص.</td></tr>";
-          $("locationStatementHeader").innerHTML = `<div><strong>المخزن:</strong> ${loc.location_name}</div><div><strong>النوع:</strong> ${locationTypeName(loc.location_type)}</div><div><strong>عدد الحركات:</strong> ${(movements||[]).length}</div>`;
-          waText += `*ملخص الأصناف:*\n`; Object.values(productSummary).forEach(ps => { waText += `▪️ ${ps.name} | وارد: ${fmtQty(ps.inQty)} | صادر: ${fmtQty(ps.outQty)} | الرصيد: ${fmtQty(ps.lastBalance)} ${ps.unit}\n`; });
-          $("shareLocationWhatsappBtn").onclick = () => { window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); }; fillPrintHeaders();
-      } catch(e) { alert(err(e)); }
-  }
-
-  const treasuryTypes={CASH:"كاش", BANK:"بنك", INSTAPAY:"إنستاباي", PARTNER:"شريك"};
-  function treasuryTypeName(value){ return treasuryTypes[value]||value||"غير محدد"; }
-  async function loadTreasuries(){ if(!navigator.onLine) { treasuriesCache=getCache('treasuries'); renderTreasuries(); return; } const {data}=await db.from("treasuries").select("*").order("treasury_id"); treasuriesCache=data||[]; saveCache('treasuries', treasuriesCache); renderTreasuries(); fillTreasurySelects(); fillPartnerTreasurySelect(); }
-  function renderTreasuries(){ const box=$("treasuriesList"); if(!box) return; box.replaceChildren(); const q=($("treasurySearch").value||""); const found=treasuriesCache.filter(t=> String(t.treasury_name||"").includes(q)); if(!found.length){ box.innerHTML=`<div class="empty">لا توجد خزائن.</div>`; return; } found.forEach(t=>{ const card=document.createElement("div");card.className="product";card.innerHTML=`<div class="pname">💵 ${t.treasury_name}</div><div class="details">النوع: ${treasuryTypeName(t.treasury_type)} | الرصيد: ${fmt(t.current_balance)}</div>`; const actions=document.createElement("div"); actions.className="actions"; const stmt=document.createElement("button"); stmt.className="btn secondary"; stmt.textContent="كشف حساب"; stmt.onclick=()=>viewTreasuryStatement(t); actions.appendChild(stmt); if(canManageTreasuries){ const btn=document.createElement("button");btn.className="btn secondary";btn.textContent="تعديل";btn.onclick=()=>{ $("treasuryEditId").value=t.treasury_id; $("treasuryName").value=t.treasury_name; $("treasuryType").value=t.treasury_type; $("treasuryOpeningBalance").value=t.opening_balance; $("treasuryOpeningBalance").disabled=true; $("treasuryFormTitle").textContent="تعديل الخزنة"; $("treasuryFormModal").classList.add('active'); }; actions.appendChild(btn);} card.appendChild(actions); box.appendChild(card); }); }
-  if($("treasuryForm")) $("treasuryForm").addEventListener("submit", async e => { e.preventDefault(); const btn=$("saveTreasuryBtn"); busy(btn,true,"جارٍ...","حفظ"); const id=$("treasuryEditId").value; const payload={ treasury_name:$("treasuryName").value, treasury_type:$("treasuryType").value }; if(!id) { payload.opening_balance=Number($("treasuryOpeningBalance").value); payload.current_balance=payload.opening_balance; } try{ if(id) await db.from("treasuries").update(payload).eq("treasury_id",id); else await db.from("treasuries").insert(payload); $("treasuryFormModal").classList.remove('active'); $("treasuryForm").reset(); loadTreasuries(); showToast("تم الحفظ","success"); }catch(e){ alert(err(e)); } finally{ busy(btn,false,"","حفظ"); } });
-  if($("refreshTreasuriesBtn")) $("refreshTreasuriesBtn").addEventListener("click",loadTreasuries); if($("treasurySearch")) $("treasurySearch").addEventListener("input",renderTreasuries);
-  if($("treasuryTransferForm")) $("treasuryTransferForm").addEventListener("submit", async e => { e.preventDefault(); const btn = $("saveTtBtn"); busy(btn, true, "جارٍ...", "تنفيذ"); const { error } = await db.rpc("transfer_treasury_funds", { p_source_treasury_id: Number($("ttSource").value), p_destination_treasury_id: Number($("ttDest").value), p_amount: Number($("ttAmount").value), p_notes: $("ttNotes").value }); if(error) alert(err(error)); else { showToast("تم التحويل","success"); $("treasuryTransferForm").reset(); loadTreasuries(); } busy(btn, false, "", "تنفيذ"); });
-  async function viewTreasuryStatement(t) {
-      const modal = $("treasuryStatementModal"); $("treasuryStatementTable").querySelector("tbody").innerHTML = ""; $("treasuryStatementHeader").innerHTML = "جارٍ التحميل..."; modal.classList.remove("hidden");
-      try {
-          const { data: tx } = await db.from("treasury_transactions").select("*").eq("treasury_id", t.treasury_id).order("created_at", {ascending: true});
-          let runningBalance = Number(t.opening_balance || 0); let rows = `<tr style="background:#f4f6f3;font-weight:bold;"><td colspan="4">الرصيد الافتتاحي</td><td>${fmt(runningBalance)}</td></tr>`; let waText = `*كشف حساب خزنة*\nالخزنة: ${t.treasury_name}\n------------------------\n`;
-          (tx||[]).forEach(tr => { let deposit = 0, withdraw = 0; if (tr.transaction_type === 'DEPOSIT' || tr.transaction_type === 'TRANSFER_IN') { deposit = Number(tr.amount); runningBalance += deposit; } else if (tr.transaction_type === 'WITHDRAW' || tr.transaction_type === 'TRANSFER_OUT') { withdraw = Number(tr.amount); runningBalance -= withdraw; } rows += `<tr><td>${new Date(tr.created_at).toLocaleDateString("ar-EG")}</td><td>${tr.notes || tr.transaction_type}</td><td style="color:green">${deposit>0?fmt(deposit):'-'}</td><td style="color:red">${withdraw>0?fmt(withdraw):'-'}</td><td>${fmt(runningBalance)}</td></tr>`; waText += `▪️ ${new Date(tr.created_at).toLocaleDateString("ar-EG")} | ${tr.notes || tr.transaction_type} | ${deposit>0?('+' + fmt(deposit)):('-' + fmt(withdraw))} | رصيد: ${fmt(runningBalance)}\n`; });
-          $("treasuryStatementTable").querySelector("tbody").innerHTML = rows; $("treasuryStatementHeader").innerHTML = `<div><strong>الخزنة:</strong> ${t.treasury_name}</div><div><strong>الرصيد الحالي:</strong> ${fmt(t.current_balance)}</div>`; $("shareTreasuryWhatsappBtn").onclick = () => { window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); }; fillPrintHeaders();
-      } catch(e) { alert(err(e)); }
-  }
-
-  async function loadProducts(){ if(!navigator.onLine) { productsCache=getCache('products'); renderProducts(); return; } const {data}=await db.from("products").select("*").order("product_id"); productsCache=data||[]; saveCache('products', productsCache); renderProducts(); fillStockFormSelects(); fillReservationSelects(); }
-  function renderProducts(){ const box=$("products"); if(!box) return; box.replaceChildren(); const q=($("search").value||"").toLowerCase(); const found=productsCache.filter(p=> [p.product_name,p.product_code,p.barcode].some(v=>String(v||"").toLowerCase().includes(q))); if(!found.length){ box.innerHTML = `<div class="empty">لا توجد منتجات.</div>`; return; } found.forEach(p=>{ const card=document.createElement("div");card.className="product";card.innerHTML=`<div class="pname">${p.product_name}</div><div class="details">كود: ${p.product_code} | نوع: ${typeName(p.product_type)}${p.barcode?" | باركود: "+p.barcode:""}</div>`; if(canManage){ const btn=document.createElement("button");btn.className="btn secondary";btn.textContent="تعديل";btn.onclick=()=>{ $("editId").value=p.product_id; $("pname").value=p.product_name; $("pcode").value=p.product_code; $("barcode").value=p.barcode||""; $("ptype").value=p.product_type; $("category").value=p.category_id; $("baseUnit").value=p.base_unit_id; $("minStock").value=p.minimum_stock; $("minPrice").value=p.min_selling_price||""; $("targetPrice").value=p.target_selling_price||""; $("maxPrice").value=p.max_selling_price||""; $("unitsCarton").value=p.units_per_carton||""; $("active").checked=p.is_active; $("canPurchase").checked=p.can_be_purchased; $("canProduce").checked=p.can_be_produced; $("canSell").checked=p.can_be_sold; $("canLoad").checked=p.can_be_loaded; $("formTitle").textContent="تعديل المنتج"; $("productFormModal").classList.add('active'); }; card.appendChild(btn);} box.appendChild(card); }); }
-  if($("productForm")) $("productForm").addEventListener("submit", async e => { e.preventDefault(); const btn=$("saveBtn"); busy(btn,true,"جارٍ...","حفظ"); const id=$("editId").value; const payload={ product_name:$("pname").value, product_code:$("pcode").value, barcode:$("barcode").value||null, product_type:$("ptype").value, category_id:Number($("category").value), base_unit_id:Number($("baseUnit").value), minimum_stock:Number($("minStock").value||0), units_per_carton:Number($("unitsCarton").value||0)||null, min_selling_price:$("minPrice").value?Number($("minPrice").value):null, target_selling_price:$("targetPrice").value?Number($("targetPrice").value):null, max_selling_price:$("maxPrice").value?Number($("maxPrice").value):null, is_active:$("active").checked, can_be_purchased:$("canPurchase").checked, can_be_produced:$("canProduce").checked, can_be_sold:$("canSell").checked, can_be_loaded:$("canLoad").checked }; try{ if(id) await db.from("products").update(payload).eq("product_id",id); else await db.from("products").insert(payload); $("productFormModal").classList.remove('active'); $("productForm").reset(); loadProducts(); showToast("تم الحفظ","success"); }catch(e){ alert(err(e)); } finally{ busy(btn,false,"","حفظ"); } });
-  if($("refreshBtn")) $("refreshBtn").addEventListener("click",loadProducts); if($("search")) $("search").addEventListener("input",renderProducts);
-
-  async function loadCustomers(){ if(!navigator.onLine) { customersCache=getCache('customers'); renderCustomers(); return; } const {data}=await db.from("customers").select("*").order("customer_id"); customersCache=data||[]; saveCache('customers', customersCache); renderCustomers(); fillInvoiceCustomerSelect(); fillCollectionCustomerSelect(); fillReturnCustomerSelect(); fillCollectionsCustomerFilter(); fillReservationSelects(); }
-  function renderCustomers(){ const box=$("customersList"); if(!box) return; box.replaceChildren(); const q=($("customerSearch").value||""); const found=customersCache.filter(c=> String(c.customer_name||"").includes(q) || String(c.phone||"").includes(q)); if(!found.length){ box.innerHTML=`<div class="empty">لا يوجد عملاء.</div>`; return; } found.forEach(c=>{ const card=document.createElement("div");card.className="product";card.innerHTML=`<div class="pname">${c.customer_name}</div><div class="details">موبايل: ${c.phone||'-'} | النوع: ${customerTypeName(c.customer_type)}</div>`; const actions=document.createElement("div"); actions.className="actions"; const stmt=document.createElement("button"); stmt.className="btn secondary"; stmt.textContent="كشف حساب"; stmt.onclick=()=>viewCustomerStatement(c); actions.appendChild(stmt); const qc=document.createElement("button"); qc.className="btn"; qc.textContent="💰 تحصيل"; qc.onclick=()=>openQuickCollect(c); actions.appendChild(qc); if(canManageCustomers){ const btn=document.createElement("button");btn.className="btn secondary";btn.textContent="تعديل";btn.onclick=()=>{ $("customerEditId").value=c.customer_id; $("customerCode").value=c.customer_code; $("customerName").value=c.customer_name; $("customerPhone").value=c.phone||""; $("customerWhatsapp").value=c.whatsapp||""; $("customerTaxNumber").value=c.tax_number||""; $("customerType").value=c.customer_type; $("customerCreditLimit").value=c.credit_limit||""; $("customerOpeningBalance").value=c.opening_balance||0; $("customerFormTitle").textContent="تعديل العميل"; $("customerFormModal").classList.add('active'); }; actions.appendChild(btn);} card.appendChild(actions); box.appendChild(card); }); }
-  if($("customerForm")) $("customerForm").addEventListener("submit", async e => { e.preventDefault(); const btn=$("saveCustomerBtn"); busy(btn,true,"جارٍ...","حفظ"); const id=$("customerEditId").value; const payload={ customer_code:$("customerCode").value, customer_name:$("customerName").value, phone:$("customerPhone").value, whatsapp:$("customerWhatsapp").value, tax_number:$("customerTaxNumber").value||null, customer_type:$("customerType").value, credit_limit:Number($("customerCreditLimit").value||0), opening_balance:Number($("customerOpeningBalance").value||0), is_active:$("customerActive").checked }; try{ if(id) await db.from("customers").update(payload).eq("customer_id",id); else await db.from("customers").insert(payload); $("customerFormModal").classList.remove('active'); $("customerForm").reset(); loadCustomers(); showToast("تم الحفظ","success"); }catch(e){ alert(err(e)); } finally{ busy(btn,false,"","حفظ"); } });
-  if($("refreshCustomersBtn")) $("refreshCustomersBtn").addEventListener("click",loadCustomers); if($("customerSearch")) $("customerSearch").addEventListener("input",renderCustomers);
-  async function viewCustomerStatement(c) { const modal = $("customerStatementModal"); $("modalStatementHeader").innerHTML = "جارٍ التحميل..."; $("modalStatementItems").innerHTML = ""; $("modalStatementSummary").innerHTML = ""; modal.classList.remove("hidden"); try { const { data: invoices } = await db.from("sales_invoices").select("invoice_number, invoice_date, net_total, paid_amount, remaining_amount, status").eq("customer_id", c.customer_id).neq("status", "CANCELLED").order("invoice_date", { ascending: true }); const { data: collections } = await db.from("customer_collections").select("collection_number, collection_date, amount, payment_method, status").eq("customer_id", c.customer_id).eq("status", "POSTED").order("collection_date", { ascending: true }); const { data: retRows } = await db.rpc("get_customer_returns", { p_customer_id: c.customer_id }); const timeline = []; let totalInvoiced = 0, totalPaid = 0, totalReturns = 0; (invoices || []).forEach(inv => { timeline.push({ date: inv.invoice_date, type: 'invoice', ref: inv.invoice_number, desc: "فاتورة بيع", debit: Number(inv.net_total), credit: 0 }); totalInvoiced += Number(inv.net_total); }); (collections || []).forEach(col => { timeline.push({ date: col.collection_date, type: 'collection', ref: col.collection_number, desc: "تحصيل (" + paymentTypeName(col.payment_method) + ")", debit: 0, credit: Number(col.amount) }); totalPaid += Number(col.amount); }); (retRows || []).forEach(r => { const rv = Number(r.total_returned_value) || 0; timeline.push({ date: r.return_date, type: "return", ref: r.return_number, desc: "مرتجع بيع", debit: 0, credit: rv }); totalReturns += rv; }); timeline.sort((a, b) => new Date(a.date) - new Date(b.date)); let runningBalance = Number(c.opening_balance) || 0; let rowsHtml = `<thead><tr><th>التاريخ</th><th>المستند</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead><tbody><tr><td colspan="3"><strong>رصيد افتتاحي</strong></td><td>-</td><td>-</td><td><strong>${fmt(runningBalance)}</strong></td></tr>`; timeline.forEach(t => { runningBalance += t.debit - t.credit; rowsHtml += `<tr><td>${new Date(t.date).toLocaleDateString("ar-EG")}</td><td dir="ltr">${t.ref}</td><td>${t.desc}</td><td>${t.debit > 0 ? fmt(t.debit) : "-"}</td><td>${t.credit > 0 ? fmt(t.credit) : "-"}</td><td style="font-weight:bold;">${fmt(runningBalance)}</td></tr>`; }); rowsHtml += `</tbody>`; $("modalStatementItems").innerHTML = rowsHtml; $("modalStatementHeader").innerHTML = `<div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span><strong>العميل:</strong> ${c.customer_name}</span><span><strong>كود:</strong> ${c.customer_code}</span></div><div style="display:flex;justify-content:space-between;"><span><strong>موبايل:</strong> ${c.phone || "غير مسجل"}</span><span><strong>تاريخ الكشف:</strong> ${new Date().toLocaleDateString("ar-EG")}</span></div>`; $("modalStatementSummary").innerHTML = `<div class="line"><span>إجمالي المبيعات:</span><span>${fmt(totalInvoiced)}</span></div><div class="line"><span>إجمالي المدفوع:</span><span style="color:green;">${fmt(totalPaid)}</span></div><div class="line"><span>إجمالي المرتجعات:</span><span style="color:orange;">${fmt(totalReturns)}</span></div><div class="line grand"><span>الرصيد النهائي:</span><span style="color:red;">${fmt(runningBalance)}</span></div>`; const waBtn = $("shareStatementWhatsappBtn"); waBtn.onclick = () => { let waText = `*كشف حساب عميل*\nالعميل: ${c.customer_name}\nالتاريخ: ${new Date().toLocaleDateString("ar-EG")}\n------------------------\nإجمالي المبيعات: ${fmt(totalInvoiced)}\nإجمالي المدفوع: ${fmt(totalPaid)}\nإجمالي المرتجعات: ${fmt(totalReturns)}\n------------------------\n*الرصيد المتبقي: ${fmt(runningBalance)}*`; let phone = formatWaPhone(c.phone); window.open(phone ? `https://wa.me/${phone}?text=${encodeURIComponent(waText)}` : `https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); }; fillPrintHeaders(); } catch (e) { $("modalStatementHeader").innerHTML = `<span style="color:red;">خطأ: ${err(e)}</span>`; } }
-  function openQuickCollect(c) { $("quickCollectForm").reset(); clear($("qcMsg")); $("qcCustomerId").value = c.customer_id; $("qcCustomerInfo").innerHTML = `<strong>العميل:</strong> ${c.customer_name}<br><strong>الهاتف:</strong> ${c.phone||"-"}`; $("qcDate").value = todayISO(); fillTreasurySelects(); $("quickCollectModal").classList.add('active'); }
-  if($("quickCollectForm")) $("quickCollectForm").addEventListener("submit", async e => { e.preventDefault(); clear($("qcMsg")); const btn = $("saveQcBtn"); busy(btn, true, "جارٍ...", "حفظ التحصيل"); try { const custId = Number($("qcCustomerId").value); const amount = Number($("qcAmount").value); const treasuryId = Number($("qcTreasury").value); const date = $("qcDate").value; const notes = $("qcNotes").value; const { data: colId, error } = await db.rpc("create_collection", { p_customer_id: custId, p_sales_invoice_id: null, p_amount: amount, p_payment_method: 'CASH', p_collection_date: date, p_notes: notes||null, p_trip_id: null }); if(error) throw error; await db.from("customer_collections").update({ treasury_id: treasuryId }).eq("collection_id", colId); await db.rpc("adjust_treasury_balance", { p_treasury_id: treasuryId, p_amount: amount, p_notes: "تحصيل سريع" }); showToast("✅ تم تسجيل التحصيل بنجاح", "success"); logUserAction("COLLECTION", "تحصيل سريع من عميل: " + custId); $("quickCollectModal").classList.remove('active'); loadCustomers(); loadTreasuries(); } catch(e) { msg($("qcMsg"), "خطأ: " + err(e), "error"); } finally { busy(btn, false, "", "حفظ التحصيل"); } });
-
-  async function loadSuppliers(){ if(!navigator.onLine) { suppliersCache=getCache('suppliers'); renderSuppliers(); return; } const {data}=await db.from("suppliers").select("*").order("supplier_id"); suppliersCache=data||[]; saveCache('suppliers', suppliersCache); renderSuppliers(); fillPurchaseSupplierSelect(); fillSupplierSelect(); fillSupplierFilterSelects(); }
-  function renderSuppliers(){ const box=$("suppliersList"); if(!box) return; box.replaceChildren(); const q=($("supplierSearch").value||""); const found=suppliersCache.filter(s=> String(s.supplier_name||"").includes(q) || String(s.supplier_code||"").includes(q)); if(!found.length){ box.innerHTML=`<div class="empty">لا يوجد موردون.</div>`; return; } found.forEach(s=>{ const card=document.createElement("div");card.className="product";card.innerHTML=`<div class="pname">${s.supplier_name}</div><div class="details">كود: ${s.supplier_code||'-'} | موبايل: ${s.phone||'-'}</div>`; const actions=document.createElement("div"); actions.className="actions"; const stmt=document.createElement("button"); stmt.className="btn secondary"; stmt.textContent="كشف حساب"; stmt.onclick=()=>viewSupplierStatement(s); actions.appendChild(stmt); if(canManageSuppliers){ const btn=document.createElement("button");btn.className="btn secondary";btn.textContent="تعديل";btn.onclick=()=>{ $("supplierEditId").value=s.supplier_id; $("supplierCode").value=s.supplier_code; $("supplierName").value=s.supplier_name; $("supplierPhone").value=s.phone||""; $("supplierTaxNumber").value=s.tax_number||""; $("supplierFormTitle").textContent="تعديل المورد"; $("supplierFormModal").classList.add('active'); }; actions.appendChild(btn);} card.appendChild(actions); box.appendChild(card); }); }
-  if($("supplierForm")) $("supplierForm").addEventListener("submit", async e => { e.preventDefault(); const btn=$("saveSupplierBtn"); busy(btn,true,"جارٍ...","حفظ"); const id=$("supplierEditId").value; const payload={ supplier_code:$("supplierCode").value, supplier_name:$("supplierName").value, phone:$("supplierPhone").value, tax_number:$("supplierTaxNumber").value||null, is_active:$("supplierActive").checked }; try{ if(id) await db.from("suppliers").update(payload).eq("supplier_id",id); else await db.from("suppliers").insert(payload); $("supplierFormModal").classList.remove('active'); $("supplierForm").reset(); loadSuppliers(); showToast("تم الحفظ","success"); }catch(e){ alert(err(e)); } finally{ busy(btn,false,"","حفظ"); } });
-  if($("refreshSuppliersBtn")) $("refreshSuppliersBtn").addEventListener("click",loadSuppliers); if($("supplierSearch")) $("supplierSearch").addEventListener("input",renderSuppliers);
-  async function viewSupplierStatement(s) { const modal = $("supplierStatementModal"); $("modalSupplierHeader").innerHTML = "جارٍ تحميل البيانات..."; $("modalSupplierItems").innerHTML = ""; $("modalSupplierSummary").innerHTML = ""; modal.classList.remove("hidden"); try { const { data: invoices } = await db.from("purchase_invoices").select("invoice_number, invoice_date, net_total, status, treasury_id").eq("supplier_id", s.supplier_id).neq("status", "CANCELLED").order("invoice_date", { ascending: true }); const { data: payments } = await db.from("supplier_payments").select("payment_date, amount").eq("supplier_id", s.supplier_id).order("payment_date", {ascending: true}); const timeline = []; let totalInvoiced = 0, totalPaid = 0; (invoices || []).forEach(inv => { timeline.push({ date: inv.invoice_date, type: 'invoice', ref: inv.invoice_number, desc: "فاتورة مشتريات", debit: 0, credit: Number(inv.net_total) }); totalInvoiced += Number(inv.net_total); if (inv.treasury_id) { timeline.push({ date: inv.invoice_date, type: 'payment', ref: inv.invoice_number, desc: "سداد نقدي للفاتورة", debit: Number(inv.net_total), credit: 0 }); totalPaid += Number(inv.net_total); } }); (payments || []).forEach(p => { timeline.push({ date: p.payment_date, type: 'payment', ref: '-', desc: "سداد دفعة", debit: Number(p.amount), credit: 0 }); totalPaid += Number(p.amount); }); timeline.sort((a, b) => new Date(a.date) - new Date(b.date)); let runningBalance = 0; let rowsHtml = `<thead><tr><th>التاريخ</th><th>المستند</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead><tbody>`; timeline.forEach(t => { runningBalance = runningBalance - t.credit + t.debit; rowsHtml += `<tr><td>${new Date(t.date).toLocaleDateString("ar-EG")}</td><td dir="ltr">${t.ref}</td><td>${t.desc}</td><td>${t.debit > 0 ? fmt(t.debit) : "-"}</td><td>${t.credit > 0 ? fmt(t.credit) : "-"}</td><td style="font-weight:bold;">${fmt(runningBalance)}</td></tr>`; }); rowsHtml += `</tbody>`; $("modalSupplierItems").innerHTML = rowsHtml; $("modalSupplierHeader").innerHTML = `<div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span><strong>المورد:</strong> ${s.supplier_name}</span><span><strong>كود:</strong> ${s.supplier_code}</span></div><div style="display:flex;justify-content:space-between;"><span><strong>موبايل:</strong> ${s.phone || "غير مسجل"}</span><span><strong>تاريخ الكشف:</strong> ${new Date().toLocaleDateString("ar-EG")}</span></div>`; $("modalSupplierSummary").innerHTML = `<div class="line"><span>إجمالي المشتريات:</span><span>${fmt(totalInvoiced)}</span></div><div class="line"><span>إجمالي المدفوع:</span><span style="color:green;">${fmt(totalPaid)}</span></div><div class="line grand"><span>الرصيد النهائي:</span><span style="color:red;">${fmt(Math.abs(runningBalance))}</span></div>`; const waBtn = $("shareSupplierWhatsappBtn"); waBtn.onclick = () => { let waText = `*كشف حساب مورد*\nالمورد: ${s.supplier_name}\nالتاريخ: ${new Date().toLocaleDateString("ar-EG")}\n------------------------\nإجمالي المشتريات: ${fmt(totalInvoiced)}\nإجمالي المدفوع: ${fmt(totalPaid)}\n------------------------\n*الرصيد المتبقي: ${fmt(Math.abs(runningBalance))}*`; let phone = formatWaPhone(s.phone); window.open(phone ? `https://wa.me/${phone}?text=${encodeURIComponent(waText)}` : `https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); }; fillPrintHeaders(); } catch (e) { $("modalSupplierHeader").innerHTML = `<span style="color:red;">خطأ: ${err(e)}</span>`; } }
-
-  // نهاية الجزء الأول
+// نهاية الجزء الثالث
     // ========== الباركود ==========
   let html5QrCode = null, barcodeTargetInput = null;
   function openBarcodeScanner(targetInputId) {
@@ -1109,21 +1210,22 @@ try {
   async function loadFinancialSummary() { 
       if(!isSystemAdmin) return; 
       try { 
+          // لو التواريخ فاضية، نحط تاريخ افتراضي من 2020 لحد النهاردة
           let from = $("accFromDate").value; let to = $("accToDate").value;
           if(!from) from = "2020-01-01"; if(!to) to = todayISO();
           $("accFromDate").value = from; $("accToDate").value = to;
           const { data: periodData, error: periodError } = await db.rpc("get_period_summary", { p_from: from, p_to: to }); 
-          if(periodError) console.warn(periodError);
+          if(periodError) console.warn("Period Summary Error:", periodError);
           if(periodData && periodData.length > 0) { const p = periodData[0]; $("accRevPeriod").textContent = fmt(p.rev); $("accPurchPeriod").textContent = fmt(p.purch); $("accExpPeriod").textContent = fmt(p.exp); $("accProfitPeriod").textContent = fmt(p.profit); $("accCash").textContent = fmt(p.cash); $("accAR").textContent = fmt(p.ar); $("accAP").textContent = fmt(p.ap); } else { $("accRevPeriod").textContent="0";$("accPurchPeriod").textContent="0";$("accExpPeriod").textContent="0";$("accProfitPeriod").textContent="0";$("accCash").textContent="0";$("accAR").textContent="0";$("accAP").textContent="0"; }
           const { data: trialData, error: trialError } = await db.rpc("get_trial_balance", { p_from: from, p_to: to });
-          if(trialError) console.warn(trialError);
+          if(trialError) console.warn("Trial Balance Error:", trialError);
           const tbodyTrial = $("trialBalanceTable").querySelector("tbody"); tbodyTrial.innerHTML = "";
           if(trialData && trialData.length > 0) { let totalDr = 0, totalCr = 0; trialData.forEach(row => { tbodyTrial.innerHTML += `<tr><td>${row.account_name} (${row.account_code})</td><td>${fmt(row.total_debit)}</td><td>${fmt(row.total_credit)}</td></tr>`; totalDr += Number(row.total_debit); totalCr += Number(row.total_credit); }); tbodyTrial.innerHTML += `<tr style="background:#e9efe9;font-weight:bold;"><td>الإجمالي</td><td>${fmt(totalDr)}</td><td>${fmt(totalCr)}</td></tr>`; const diff = Math.abs(totalDr - totalCr); if(diff > 0.01) tbodyTrial.innerHTML += `<tr style="background:#fff0f0;color:var(--red);font-weight:bold;"><td colspan="3">⚠️ يوجد فرق: ${fmt(diff)}</td></tr>`; } else { tbodyTrial.innerHTML = "<tr><td colspan='3' style='text-align:center;'>لا توجد قيود في هذه الفترة</td></tr>"; }
           const { data: journalData, error: journalError } = await db.rpc("get_journal_entries", { p_from: from, p_to: to });
-          if(journalError) console.warn(journalError);
+          if(journalError) console.warn("Journal Error:", journalError);
           const tbodyJournal = $("journalTable").querySelector("tbody"); tbodyJournal.innerHTML = "";
           if(journalData && journalData.length > 0) { journalData.forEach(row => { tbodyJournal.innerHTML += `<tr><td>${new Date(row.entry_date).toLocaleDateString("ar-EG")}</td><td>${row.description}</td><td>${row.account_name}</td><td>${fmt(row.debit)}</td><td>${fmt(row.credit)}</td></tr>`; }); } else { tbodyJournal.innerHTML = "<tr><td colspan='5' style='text-align:center;'>لا توجد قيود</td></tr>"; }
-      } catch(e){ console.error(e); } 
+      } catch(e){ console.error("Accounting Error:", e); } 
   }
   window.switchAccTab = function(tabId) { document.querySelectorAll(".acc-tab").forEach(el => el.classList.add("hidden")); const btns = document.querySelectorAll('[onclick^="switchAccTab"]'); btns.forEach(b => b.classList.remove("active")); if($(tabId)) $(tabId).classList.remove("hidden"); const map = { accSummary: 0, accTrial: 1, accJournal: 2 }; if(map[tabId] !== undefined && btns[map[tabId]]) btns[map[tabId]].classList.add("active"); }
   if($("btnAccFilter")) $("btnAccFilter").addEventListener("click", loadFinancialSummary);
