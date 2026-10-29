@@ -202,6 +202,64 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
   .print-header,.print-footer{display:block!important;visibility:visible!important}
 }
 @media(max-width:480px){.grid,.grid3{grid-template-columns:1fr}.card{padding:14px}.actions{flex-direction:column}}
+    /* ====== تنسيقات فاتورة الطباعة A4 الاحترافية ====== */
+.invoice-print-area {
+    background: #fff;
+    padding: 20px;
+    font-family: 'Tahoma', 'Arial', sans-serif;
+}
+.invoice-header-title {
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--g);
+    margin-bottom: 15px;
+    border-bottom: 2px solid var(--gold);
+    padding-bottom: 8px;
+}
+.invoice-meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 15px;
+    font-size: 13px;
+    background: #f9fbf9;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+}
+.invoice-meta-grid div { padding: 4px; }
+.invoice-meta-grid strong { color: var(--g); }
+.invoice-print-area .print-table th { background: var(--g); color: white; font-size: 13px; padding: 8px; border-color: #173c2c; }
+.invoice-print-area .print-table td { font-size: 13px; padding: 8px; }
+.invoice-total-section {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 15px;
+}
+.invoice-total-box {
+    width: 50%;
+    background: #f9fbf9;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px;
+}
+.invoice-total-box .line { display: flex; justify-content: space-between; padding: 5px 0; font-size: 14px; border-bottom: 1px dashed #ccc; }
+.invoice-total-box .line:last-child { border-bottom: none; }
+.invoice-total-box .grand { font-weight: bold; font-size: 16px; color: var(--g); background: #e9efe9; padding: 8px; border-radius: 5px; margin-top: 5px; }
+.invoice-notes-box {
+    margin-top: 15px;
+    font-size: 13px;
+    background: #fff4d6;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #f0d9a5;
+    display: none; /* تظهر بس لو فيه ملاحظات */
+}
+@media(max-width: 480px) {
+    .invoice-meta-grid { grid-template-columns: 1fr; }
+    .invoice-total-box { width: 100%; }
+}
 </style>
 </head>
 <body>
@@ -1443,20 +1501,34 @@ try {
 
   // ========== الطباعة ==========
   async function buildPrintHeader() {
-    const h = $("invoicePrintHeader");
-    if(!h) return;
-    h.innerHTML = `<div class="header-row">
-      <div class="company-right"><div class="c-name">${companySettings.company_name||'منتجات جمعية الشطبي'}</div><div class="c-sub">${companySettings.company_subtitle||''}</div><div class="c-reg">${companySettings.company_reg_number||''}</div></div>
-      <div class="company-center"><div class="c-logo">${companySettings.company_short_name||'الشطبي'}</div></div>
-      <div class="company-left"><div>ت/ ${companySettings.company_phone_1||''}</div><div>ت/ ${companySettings.company_phone_2||''}</div></div>
-    </div>`;
-  }
+    return new Promise(resolve => {
+        const h = $("invoicePrintHeader");
+        if (!h) { resolve(); return; }
+        h.innerHTML = `<div class="header-row">
+            <div class="company-right">
+                <div class="c-name">${companySettings.company_name || 'منتجات جمعية الشطبي'}</div>
+                <div class="c-sub">${companySettings.company_subtitle || ''}</div>
+                <div class="c-reg">${companySettings.company_reg_number || ''}</div>
+                <div class="c-reg" style="color:#000;font-weight:bold;">الرقم الضريبي: ${companySettings.company_tax_number || 'غير مسجل'}</div>
+            </div>
+            <div class="company-center">
+                <div class="c-logo" style="border: 2px solid var(--g); padding: 5px 15px; border-radius: 8px;">${companySettings.company_short_name || 'الشطبي'}</div>
+            </div>
+            <div class="company-left">
+                <div>📞 ${companySettings.company_phone_1 || ''}</div>
+                <div>📞 ${companySettings.company_phone_2 || ''}</div>
+                <div style="font-size:10px; margin-top:5px; color:#666;">التاريخ: ${new Date().toLocaleDateString('ar-EG')}</div>
+            </div>
+        </div>`;
+        resolve();
+    });
+}
   function buildPrintFooter() {
     return `<div class="sig-row"><div class="sig-box"><div class="sig-line"></div>توقيع المستلم</div><div class="sig-box"><div class="sig-line"></div>الختم</div><div class="sig-box"><div class="sig-line"></div>المحاسب</div></div>`;
   }
   function fillPrintHeaders() {
     const ids = ["invoicePrintHeader","customerPrintHeader","supplierPrintHeader","genericPrintHeader","movementPrintHeader","treasuryPrintHeader","locationPrintHeader","tripPrintHeader","purchasePrintHeader"];
-    ids.forEach(id => { const el = $(id); if(el && !el.innerHTML.trim()) { el.innerHTML = `<div class="header-row"><div class="company-right"><div class="c-name">${companySettings.company_name||'منتجات جمعية الشطبي'}</div><div class="c-sub">${companySettings.company_subtitle||''}</div><div class="c-reg">${companySettings.company_reg_number||''}</div></div><div class="company-center"><div class="c-logo">${companySettings.company_short_name||'الشطبي'}</div></div><div class="company-left"><div>ت/ ${companySettings.company_phone_1||''}</div><div>ت/ ${companySettings.company_phone_2||''}</div></div></div>`; } });
+      ids.forEach(id => { const el = $(id); if(el && !el.innerHTML.trim()) { buildPrintHeader().then(() => { $(id).innerHTML = $("invoicePrintHeader").innerHTML; }); } });
     const footerIds = ["invoicePrintFooter","customerPrintFooter","supplierPrintFooter","genericPrintFooter","movementPrintFooter","treasuryPrintFooter","locationPrintFooter","tripPrintFooter","purchasePrintFooter"];
     footerIds.forEach(id => { const el = $(id); if(el && !el.innerHTML.trim()) el.innerHTML = buildPrintFooter(); });
   }
