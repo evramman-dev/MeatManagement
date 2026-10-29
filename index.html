@@ -1837,38 +1837,40 @@ try {
 
   // ========== لوحة التحكم الرئيسية ==========
   async function loadHomeDashboard() {
-    const box = $("homeDashboard"); if(!box) return;
-    if(!navigator.onLine) { box.innerHTML = "<div class='empty'>أنت أوفلاين.</div>"; return; }
-    box.innerHTML = "<div class='empty'>جارٍ التحميل...</div>";
-    try {
-      const today = todayISO();
-      const [salesRes, customersRes, lowStockRes, invRes, cashRes, tripsRes] = await Promise.all([
-        db.from("sales_invoices").select("net_total").eq("invoice_date", today).neq("status","CANCELLED"),
-        db.from("customers").select("customer_id", {count:"exact", head:true}).eq("is_active", true),
-        db.from("stock_balances").select("product_id, quantity, products(minimum_stock)").limit(1000),
-        db.from("sales_invoices").select("remaining_amount").eq("status","POSTED").gt("remaining_amount", 0),
-        db.from("treasuries").select("current_balance").eq("is_active", true),
-        db.from("trips").select("trip_id", {count:"exact", head:true}).neq("status","COMPLETED")
-      ]);
-      const todaySales = (salesRes.data||[]).reduce((s,i)=>s+Number(i.net_total||0),0);
-      const customersCount = customersRes.count || 0;
-      const lowStockProducts = {};
-      (lowStockRes.data||[]).forEach(sb => { if(sb.products){ const pid = sb.product_id; if(!lowStockProducts[pid]) lowStockProducts[pid] = {qty:0, min:Number(sb.products.minimum_stock||0)}; lowStockProducts[pid].qty += Number(sb.quantity||0); } });
-      const lowStockCount = Object.values(lowStockProducts).filter(p => p.qty < p.min).length;
-      const unpaidCount = (invRes.data||[]).length;
-      const totalCash = (cashRes.data||[]).reduce((s,t)=>s+Number(t.current_balance||0),0);
-      const activeTrips = tripsRes.count || 0;
+  const box = $("homeDashboard"); if(!box) return;
+  if(!navigator.onLine) { box.innerHTML = "<div class='empty'>أنت أوفلاين.</div>"; return; }
+  box.innerHTML = "<div class='empty'>جارٍ التحميل...</div>";
+  try {
+    const today = todayISO();
+    const [salesRes, customersRes, lowStockRes, invRes, cashRes, tripsRes] = await Promise.all([
+      db.from("sales_invoices").select("net_total").eq("invoice_date", today).neq("status","CANCELLED"),
+      db.from("customers").select("customer_id", {count:"exact", head:true}).eq("is_active", true),
+      db.from("stock_balances").select("product_id, quantity, products(minimum_stock)").limit(1000),
+      db.from("sales_invoices").select("remaining_amount").eq("status","POSTED").gt("remaining_amount", 0),
+      db.from("treasuries").select("current_balance").eq("is_active", true),
+      db.from("trips").select("trip_id", {count:"exact", head:true}).neq("status","COMPLETED")
+    ]);
+    const todaySales = (salesRes.data||[]).reduce((s,i)=>s+Number(i.net_total||0),0);
+    const customersCount = customersRes.count || 0;
+    const lowStockProducts = {};
+    (lowStockRes.data||[]).forEach(sb => { if(sb.products){ const pid = sb.product_id; if(!lowStockProducts[pid]) lowStockProducts[pid] = {qty:0, min:Number(sb.products.minimum_stock||0)}; lowStockProducts[pid].qty += Number(sb.quantity||0); } });
+    const lowStockCount = Object.values(lowStockProducts).filter(p => p.qty < p.min).length;
+    const unpaidCount = (invRes.data||[]).length;
+    const totalCash = (cashRes.data||[]).reduce((s,t)=>s+Number(t.current_balance||0),0);
+    const activeTrips = tripsRes.count || 0;
 
-      box.innerHTML = `
-        <div class="home-card green"><div class="hc-label">💰 مبيعات اليوم</div><div class="hc-value">${fmt(todaySales)}</div></div>
-        <div class="home-card"><div class="hc-label">👥 العملاء</div><div class="hc-value">${customersCount}</div></div>
-        <div class="home-card red"><div class="hc-label">⚠️ نقص مخزون</div><div class="hc-value">${lowStockCount}</div></div>
-        <div class="home-card gold"><div class="hc-label">📄 فواتير آجلة</div><div class="hc-value">${unpaidCount}</div></div>
-        <div class="home-card"><div class="hc-label">💵 إجمالي النقدية</div><div class="hc-value">${fmt(totalCash)}</div></div>
-        <div class="home-card"><div class="hc-label">🚐 جولات نشطة</div><div class="hc-value">${activeTrips}</div></div>
-      `;
-      if(lowStockCount > 0) showToast(`⚠️ يوجد ${lowStockCount} أصناف تحت الحد الأدنى`, "warn", 6000);
-      } catch(e) { box.innerHTML = `<div class='empty error'>خطأ: ${err(e)}</div>`; }
+    box.innerHTML = `
+      <div class="home-card green"><div class="hc-label">💰 مبيعات اليوم</div><div class="hc-value">${fmt(todaySales)}</div></div>
+      <div class="home-card"><div class="hc-label">👥 العملاء</div><div class="hc-value">${customersCount}</div></div>
+      <div class="home-card red"><div class="hc-label">⚠️ نقص مخزون</div><div class="hc-value">${lowStockCount}</div></div>
+      <div class="home-card gold"><div class="hc-label">📄 فواتير آجلة</div><div class="hc-value">${unpaidCount}</div></div>
+      <div class="home-card"><div class="hc-label">💵 إجمالي النقدية</div><div class="hc-value">${fmt(totalCash)}</div></div>
+      <div class="home-card"><div class="hc-label">🚐 جولات نشطة</div><div class="hc-value">${activeTrips}</div></div>
+    `;
+    if(lowStockCount > 0) showToast(`⚠️ يوجد ${lowStockCount} أصناف تحت الحد الأدنى`, "warn", 6000);
+  } catch(e) { 
+      box.innerHTML = `<div class='empty error'>خطأ: ${err(e)}</div>`; 
+  }
 }
   // ========== المهام والتنبيهات ==========
   let tasksSalesChart = null, tasksExpensesChart = null, tasksTripsChart = null;
