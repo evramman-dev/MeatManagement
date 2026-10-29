@@ -1868,8 +1868,8 @@ try {
         <div class="home-card"><div class="hc-label">🚐 جولات نشطة</div><div class="hc-value">${activeTrips}</div></div>
       `;
       if(lowStockCount > 0) showToast(`⚠️ يوجد ${lowStockCount} أصناف تحت الحد الأدنى`, "warn", 6000);
-    } catch(e) { box.innerHTML = `<div class='empty error'>خطأ: ${err(e)}</div>`; }
-
+      } catch(e) { box.innerHTML = `<div class='empty error'>خطأ: ${err(e)}</div>`; }
+}
   // ========== المهام والتنبيهات ==========
   let tasksSalesChart = null, tasksExpensesChart = null, tasksTripsChart = null;
   async function loadTasks() {
@@ -3020,6 +3020,77 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
           console.warn(e); 
           if(tbodyAged) tbodyAged.innerHTML = `<tr><td colspan='7' style="color:red;">خطأ: ${err(e)}</td></tr>`;
       }
+      // ========== تصدير تقرير شامل إلى Excel (CSV) ==========
+if($("btnExportExcel")) $("btnExportExcel").addEventListener("click", async () => {
+    const btn = $("btnExportExcel"); busy(btn, true, "جارٍ التجهيز...", "📊 تصدير إكسيل (CSV)");
+    try {
+        const [salesRes, purchRes, stockRes, custRes, suppRes, expRes] = await Promise.all([
+            db.from("sales_invoices").select("*").neq("status","CANCELLED"),
+            db.from("purchase_invoices").select("*").neq("status","CANCELLED"),
+            db.from("stock_balances").select("*, products(product_name, product_code)"),
+            db.from("customers").select("*"),
+            db.from("suppliers").select("*"),
+            db.from("expenses").select("*")
+        ]);
+
+        const num = (n) => Number(n || 0).toFixed(2);
+        let csv = "\uFEFF"; 
+        csv += "=== تقرير المبيعات ===\n";
+        csv += "رقم الفاتورة,التاريخ,العميل,الصافي,المدفوع,المتبقي,الحالة\n";
+        (salesRes.data || []).forEach(inv => {
+            csv += `"${inv.invoice_number}","${inv.invoice_date}","${customerName(inv.customer_id)}","${num(inv.net_total)}","${num(inv.paid_amount)}","${num(inv.remaining_amount)}","${inv.status}"\n`;
+        });
+
+        csv += "\n=== تقرير المشتريات ===\n";
+        csv += "رقم الفاتورة,التاريخ,المورد,الصافي\n";
+        (purchRes.data || []).forEach(inv => {
+            csv += `"${inv.invoice_number}","${inv.invoice_date}","${supplierName(inv.supplier_id)}","${num(inv.net_total)}"\n`;
+        });
+
+        csv += "\n=== تقرير المخزون ===\n";
+        csv += "المنتج,الكود,الموقع,الكمية\n";
+        (stockRes.data || []).forEach(st => {
+            const pName = st.products?.product_name || "-";
+            const pCode = st.products?.product_code || "-";
+            const loc = locationName(st.location_id);
+            csv += `"${pName}","${pCode}","${loc}","${num(st.quantity)}"\n`;
+        });
+
+        csv += "\n=== تقرير العملاء ===\n";
+        csv += "الكود,الاسم,الموبايل,النوع\n";
+        (custRes.data || []).forEach(c => {
+            csv += `"${c.customer_code}","${c.customer_name}","${c.phone || ""}","${customerTypeName(c.customer_type)}"\n`;
+        });
+
+        csv += "\n=== تقرير الموردين ===\n";
+        csv += "الكود,الاسم,الموبايل\n";
+        (suppRes.data || []).forEach(s => {
+            csv += `"${s.supplier_code}","${s.supplier_name}","${s.phone || ""}"\n`;
+        });
+
+        csv += "\n=== تقرير المصروفات ===\n";
+        csv += "النوع,التاريخ,المبلغ\n";
+        (expRes.data || []).forEach(e => {
+            csv += `"${expenseTypeName(e.expense_type)}","${e.expense_date}","${num(e.amount)}"\n`;
+        });
+
+        const fileName = `MeatManagement_Report_${todayISO()}.csv`;
+        const dataUri = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
+        const a = document.createElement("a");
+        a.href = dataUri;
+        a.download = fileName;
+        a.style.display = "none";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        showToast("✅ تم تصدير التقرير الشامل بنجاح", "success");
+    } catch(e) {
+        alert("خطأ في التصدير: " + err(e));
+    } finally {
+        busy(btn, false, "", "📊 تصدير إكسيل (CSV)");
+    }
+});
   }
   
   async function loadSlowMovingStock() { 
