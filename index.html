@@ -688,8 +688,27 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 <form id="adjustmentForm" onsubmit="event.preventDefault();">
 <label for="adjDate">التاريخ *</label><input id="adjDate" type="date" required>
 <label for="adjDesc">البيان *</label><input id="adjDesc" required>
-<label for="adjDebit">الحساب المدين (كود) *</label><input id="adjDebit" required dir="ltr" placeholder="مثال: 1100">
-<label for="adjCredit">الحساب الدائن (كود) *</label><input id="adjCredit" required dir="ltr" placeholder="مثال: 1200">
+
+<label for="adjDebit">الحساب المدين *</label>
+<select id="adjDebit" required>
+<option value="">اختر الحساب المدين...</option>
+<option value="1100">1100 - الخزينة (الكاش)</option>
+<option value="1200">1200 - العملاء</option>
+<option value="2100">2100 - الموردين</option>
+<option value="4100">4100 - إيرادات المبيعات</option>
+<option value="5100">5100 - المصروفات</option>
+</select>
+
+<label for="adjCredit">الحساب الدائن *</label>
+<select id="adjCredit" required>
+<option value="">اختر الحساب الدائن...</option>
+<option value="1100">1100 - الخزينة (الكاش)</option>
+<option value="1200">1200 - العملاء</option>
+<option value="2100">2100 - الموردين</option>
+<option value="4100">4100 - إيرادات المبيعات</option>
+<option value="5100">5100 - المصروفات</option>
+</select>
+
 <label for="adjAmount">المبلغ *</label><input id="adjAmount" type="number" min="0.01" step="0.01" required>
 <button id="saveAdjustmentBtn" class="btn" type="submit">حفظ القيد</button>
 <div id="adjustmentMsg" class="status hidden"></div>
