@@ -1490,7 +1490,7 @@ try {
   const $=id=>document.getElementById(id);
 
   // ========== المتغيرات ==========
-  let canManage=false, isSystemAdmin=false;
+  let canManage=false, isSystemAdmin=false, currentRoleCode=null, currentSalesRepId=null;
   let canViewLocations=false, canManageLocations=false;
   let canViewTreasuries=false, canManageTreasuries=false;
   let canViewExpenses=false, canManageExpenses=false;
@@ -1597,6 +1597,13 @@ function showLogin(){ hideSections(); if($("login")) $("login").classList.remove
 function showApp(){ hideSections(); if($("nav")) $("nav").classList.remove("hidden"); page("home"); }
 
 window.openSection = function(name) {
+  const sectionMenuMap = { products:"menuProducts", locations:"menuLocations", stock:"menuStock", stockTransfers:"menuStockTransfers", recipes:"menuRecipes", production:"menuProduction", reservations:"menuReservations", suppliers:"menuSuppliers", purchases:"menuPurchases", purchaseReturns:"menuPurchaseReturns", supplierPayments:"menuSupplierPayments", expenses:"menuExpenses", customers:"menuCustomers", sales:"menuSales", collections:"menuCollections", trips:"menuTrips", salesReps:"menuSalesReps", treasuries:"menuTreasuries", treasuryTransfers:"menuTreasuryTransfers", partners:"menuPartners", accounting:"menuAccounting", reports:"menuReports", users:"menuUsers", settings:"menuSettings" };
+  const allowedIds = getRoleMenuIds(currentRoleCode);
+  const requestedMenuId = sectionMenuMap[name];
+  if(!isSystemAdmin && (!requestedMenuId || !allowedIds.has(requestedMenuId))) {
+    showToast("هذا القسم غير متاح لحسابك.", "error");
+    return;
+  }
   if($("home")) $("home").classList.add("hidden"); 
   if($("tasks")) $("tasks").classList.add("hidden"); 
   if($("data")) $("data").classList.remove("hidden");
@@ -1796,10 +1803,12 @@ async function userInfo(user){
   if($("userInfo")) $("userInfo").textContent="جارٍ التحقق...";
   if(!navigator.onLine){ if($("userInfo")) $("userInfo").textContent="أنت أوفلاين. البيانات للعرض فقط."; return; }
   try {
-    const {data,error}=await db.from("app_users").select("display_name,is_active,role_id").eq("user_id",user.id).maybeSingle();
+    const {data,error}=await db.from("app_users").select("display_name,is_active,role_id,sales_rep_id").eq("user_id",user.id).maybeSingle();
     if(error)throw error; if(!data||!data.is_active)throw new Error("حساب غير مفعل.");
     const {data:role} = await db.from("app_roles").select("role_code").eq("role_id",data.role_id).maybeSingle();
-    isSystemAdmin=role?.role_code==="SYSTEM_ADMIN"; 
+    currentRoleCode=role?.role_code||null;
+    currentSalesRepId=data.sales_rep_id??null;
+    isSystemAdmin=currentRoleCode==="SYSTEM_ADMIN"; 
     if($("userInfo")) $("userInfo").textContent="مرحبًا "+(data.display_name||"بك");
     await db.from("app_users").update({ last_login: new Date().toISOString() }).eq("user_id", user.id);
     logUserAction("LOGIN", "تسجيل دخول");
@@ -1825,11 +1834,76 @@ async function userInfo(user){
     try{ canViewProduction=await permission("PRODUCTION_VIEW") || isSystemAdmin; canManageProduction=await permission("PRODUCTION_MANAGE") || isSystemAdmin; if($("menuProduction")) $("menuProduction").classList.toggle("hidden",!canViewProduction); if($("productionCard")) $("productionCard").classList.toggle("hidden",!canViewProduction); if($("addProductionBtn")) $("addProductionBtn").classList.toggle("hidden",!canManageProduction); }catch(e){}
     try{ canManageReservations=await permission("STOCK_MANAGE") || isSystemAdmin; if($("menuReservations")) $("menuReservations").classList.toggle("hidden",!canManageReservations); }catch(e){}
 
-    if(isSystemAdmin){ if($("menuUsers")) $("menuUsers").classList.remove("hidden"); if($("menuSalesReps")) $("menuSalesReps").classList.remove("hidden"); if($("salesRepsCard")) $("salesRepsCard").classList.remove("hidden"); if($("menuAccounting")) $("menuAccounting").classList.remove("hidden"); if($("accountingCard")) $("accountingCard").classList.remove("hidden"); if($("menuSettings")) $("menuSettings").classList.remove("hidden"); await loadUserManagementLookups(); }
-    else{ if($("menuUsers")) $("menuUsers").classList.add("hidden"); if($("userManagementCard")) $("userManagementCard").classList.add("hidden"); if($("menuSalesReps")) $("menuSalesReps").classList.add("hidden"); if($("salesRepsCard")) $("salesRepsCard").classList.add("hidden"); if($("menuSettings")) $("menuSettings").classList.add("hidden"); }
-    
+    if(isSystemAdmin){
+      // مدير النظام يرى جميع أقسام مركز البيانات دون الاعتماد على صلاحيات فرعية.
+      document.querySelectorAll("#dataDashboard .dash-item").forEach(el=>el.classList.remove("hidden"));
+      document.querySelectorAll("#dataDashboard .dashboard-group").forEach(el=>el.classList.remove("hidden"));
+      ["menuUsers","menuSalesReps","menuAccounting","menuSettings"].forEach(id=>{ if($(id)) $(id).classList.remove("hidden"); });
+      ["userManagementCard","salesRepsCard","accountingCard"].forEach(id=>{ if($(id)) $(id).classList.remove("hidden"); });
+      await loadUserManagementLookups();
+    } else {
+      if($("menuUsers")) $("menuUsers").classList.add("hidden");
+      if($("userManagementCard")) $("userManagementCard").classList.add("hidden");
+      if($("menuSalesReps")) $("menuSalesReps").classList.add("hidden");
+      if($("salesRepsCard")) $("salesRepsCard").classList.add("hidden");
+      if($("menuSettings")) $("menuSettings").classList.add("hidden");
+    }
+
+    applyRoleWorkspace();
     if($("tasks") && !$("tasks").classList.contains("hidden")) loadTasks();
   } catch(e) { if($("userInfo")) $("userInfo").textContent = "خطأ في الاتصال."; }
+}
+
+function getRoleMenuIds(roleCode){
+  const roleMenus = {
+    SALES_REP: ["menuProducts","menuCustomers","menuSales","menuCollections","menuTrips"],
+    SALES_MANAGER: ["menuProducts","menuCustomers","menuSales","menuCollections","menuTrips","menuReports"],
+    WAREHOUSE_KEEPER: ["menuProducts","menuLocations","menuStock","menuStockTransfers"],
+    PRODUCTION_MANAGER: ["menuProducts","menuLocations","menuStock","menuRecipes","menuProduction"],
+    ACCOUNTANT: ["menuSuppliers","menuPurchases","menuPurchaseReturns","menuSupplierPayments","menuExpenses","menuCustomers","menuSales","menuCollections","menuTrips","menuTreasuries","menuTreasuryTransfers","menuPartners","menuAccounting","menuReports"],
+    GENERAL_MANAGER: ["menuProducts","menuLocations","menuStock","menuStockTransfers","menuRecipes","menuProduction","menuReservations","menuSuppliers","menuPurchases","menuPurchaseReturns","menuSupplierPayments","menuExpenses","menuCustomers","menuSales","menuCollections","menuTrips","menuTreasuries","menuTreasuryTransfers","menuPartners","menuAccounting","menuReports"]
+  };
+  return new Set(roleMenus[roleCode] || []);
+}
+
+function getRoleQuickLinks(roleCode){
+  const links = {
+    SALES_REP: [
+      ["sales","🧾","فواتير البيع"],["customers","👥","العملاء"],["collections","💰","التحصيلات"],["trips","🚐","الجولات"],["products","📦","المنتجات"]
+    ],
+    SALES_MANAGER: [
+      ["sales","🧾","فواتير البيع"],["customers","👥","العملاء"],["collections","💰","التحصيلات"],["trips","🚐","الجولات"],["reports","📈","تقارير المبيعات"]
+    ],
+    WAREHOUSE_KEEPER: [
+      ["stock","📊","أرصدة المخزون"],["stockTransfers","🔄","تحويل المخازن"],["locations","🏭","المواقع والمخازن"],["products","📦","المنتجات"]
+    ],
+    PRODUCTION_MANAGER: [
+      ["production","🏭","أوامر التشغيل"],["recipes","📝","الوصفات"],["stock","📊","أرصدة المخزون"],["locations","🏭","المواقع والمخازن"]
+    ],
+    ACCOUNTANT: [
+      ["accounting","🧮","المحاسبة"],["treasuries","💵","الخزائن"],["customers","👥","العملاء"],["suppliers","🚚","الموردون"],["sales","🧾","فواتير البيع"],["purchases","🛒","المشتريات"],["expenses","🧾","المصروفات"],["reports","📈","التقارير"]
+    ],
+    GENERAL_MANAGER: [
+      ["reports","📈","التقارير"],["sales","🧾","المبيعات"],["purchases","🛒","المشتريات"],["production","🏭","الإنتاج"],["stock","📊","المخزون"],["accounting","🧮","المحاسبة"],["trips","🚐","الجولات"]
+    ]
+  };
+  return links[roleCode] || [];
+}
+
+function applyRoleWorkspace(){
+  if(isSystemAdmin){
+    document.querySelectorAll("#dataDashboard .dash-item").forEach(el=>el.classList.remove("hidden"));
+    document.querySelectorAll("#dataDashboard .dashboard-group").forEach(el=>el.classList.remove("hidden"));
+    return;
+  }
+  const allowedMenuIds = getRoleMenuIds(currentRoleCode);
+  document.querySelectorAll("#dataDashboard .dash-item").forEach(el=>{
+    el.classList.toggle("hidden", !allowedMenuIds.has(el.id));
+  });
+  document.querySelectorAll("#dataDashboard .dashboard-group").forEach(group=>{
+    const hasVisibleItem = Array.from(group.querySelectorAll(".dash-item")).some(item=>!item.classList.contains("hidden"));
+    group.classList.toggle("hidden", !hasVisibleItem);
+  });
 }
 
 function updateSalesRepField(){
@@ -2024,6 +2098,17 @@ if($("saveSettingsBtn")) $("saveSettingsBtn").addEventListener("click", async ()
 async function loadHomeDashboard() {
   const box = $("homeDashboard"); if(!box) return;
   if(!navigator.onLine) { box.innerHTML = "<div class='empty'>أنت أوفلاين.</div>"; return; }
+  if(!isSystemAdmin){
+    const quickLinks = getRoleQuickLinks(currentRoleCode);
+    if(!quickLinks.length){
+      box.innerHTML = "<div class='empty'>لا توجد أقسام مخصصة لهذا الدور حتى الآن. راجع مدير النظام.</div>";
+      return;
+    }
+    box.innerHTML = quickLinks.map(([section,icon,label])=>
+      `<div class="home-card" role="button" tabindex="0" onclick="window.openSection('${section}')"><div class="hc-label">${icon} ${label}</div><div class="hc-value">فتح القسم</div></div>`
+    ).join("");
+    return;
+  }
   box.innerHTML = "<div class='empty'>جارٍ التحميل...</div>";
   try {
     const today = todayISO();
@@ -2063,6 +2148,23 @@ let tasksSalesChart = null, tasksExpensesChart = null, tasksTripsChart = null;
 async function loadTasks() {
   const box = $("tasksList"); if(!box) return;
   if (!navigator.onLine) { box.innerHTML = "<div class='empty'>أنت أوفلاين حالياً.</div>"; return; }
+  if(!isSystemAdmin){
+    const filterBox = document.querySelector("#tasks .filter-box");
+    if(filterBox) filterBox.classList.add("hidden");
+    ["tasksSalesChart","tasksExpensesChart","tasksTripsChart"].forEach(id=>{
+      const canvas=$(id); if(canvas && canvas.parentElement) canvas.parentElement.classList.add("hidden");
+    });
+    const dash=$("tasksDashboard");
+    const quickLinks = getRoleQuickLinks(currentRoleCode);
+    if(dash) dash.innerHTML = quickLinks.map(([section,icon,label])=>
+      `<div class="home-card"><div class="hc-label">${icon} ${label}</div><div class="hc-value">متابعة العمل</div><button class="btn secondary" onclick="window.openSection('${section}')">فتح القسم</button></div>`
+    ).join("");
+    if(box) box.innerHTML = "<div class='empty'>تظهر هنا المهام والتنبيهات الخاصة بدورك. تم إخفاء المؤشرات المالية والتشغيلية العامة عن الأدوار غير الإدارية.</div>";
+    return;
+  }
+  // إعادة إظهار عناصر التحليل عند دخول دور إداري أو محاسبي.
+  const filterBox = document.querySelector("#tasks .filter-box"); if(filterBox) filterBox.classList.remove("hidden");
+  ["tasksSalesChart","tasksExpensesChart","tasksTripsChart"].forEach(id=>{ const canvas=$(id); if(canvas && canvas.parentElement) canvas.parentElement.classList.remove("hidden"); });
   box.innerHTML = "<div class='empty'>جارٍ تحميل مهامك...</div>";
   
   const from = $("tasksFromDate").value || todayISO().substring(0,7)+"-01";
@@ -4980,9 +5082,10 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
 
   // ========== تهيئة التطبيق ==========
   async function bootAppAfterLogin(user){
-    showApp();
+    // تحميل الدور والصلاحيات قبل إظهار أي لوحة بيانات حتى لا تظهر مؤشرات عامة لحساب المندوب أثناء التهيئة.
     try { await loadCompanySettings(); } catch(e){ console.error("[BOOT settings]", e); }
     try { await userInfo(user); } catch(e){ console.error("[BOOT userInfo]", e); }
+    showApp();
     try { await loadLookups(); } catch(e){ console.error("[BOOT lookups]", e); }
     try { await loadProducts(); } catch(e){ console.error("[BOOT products]", e); }
     if(canViewLocations){ try{ await loadLocations(); }catch(e){console.error("[BOOT locations]",e);} }
