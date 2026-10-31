@@ -260,6 +260,9 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     .invoice-meta-grid { grid-template-columns: 1fr; }
     .invoice-total-box { width: 100%; }
 }
+
+/* حقول التاريخ في الواجهة العربية: عزل اتجاه التاريخ عن اتجاه النص العربي */
+input[type="date"] { direction: ltr !important; text-align: left !important; unicode-bidi: isolate; }
 </style>
 </head>
 <body>
@@ -1490,7 +1493,7 @@ try {
   const $=id=>document.getElementById(id);
 
   // ========== المتغيرات ==========
-  let canManage=false, isSystemAdmin=false, currentRoleCode=null, currentSalesRepId=null;
+  let canManage=false, isSystemAdmin=false, currentRoleCode=null, currentSalesRepId=null, currentSalesRepName=null;
   let canViewLocations=false, canManageLocations=false;
   let canViewTreasuries=false, canManageTreasuries=false;
   let canViewExpenses=false, canManageExpenses=false;
@@ -1761,8 +1764,8 @@ function fillTreasurySelects() {
 }
 function fillInvoiceCustomerSelect(){ const el=$("invoiceCustomer");if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر العميل";el.appendChild(first); customersCache.filter(c=>c.is_active).forEach(c=>{ const op=document.createElement("option");op.value=String(c.customer_id);op.textContent=c.customer_name+" ("+c.customer_code+")";el.appendChild(op); }); el.value=cur; }
 function fillInvoiceLocationSelect(){ const el=$("invoiceLocation");if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر الموقع";el.appendChild(first); locationsCache.filter(l=>l.is_active).forEach(l=>{ const op=document.createElement("option");op.value=String(l.location_id);op.textContent=l.location_name+" ("+l.location_code+")";el.appendChild(op); }); el.value=cur; }
-function fillInvoiceTripSelect(){ const el=$("invoiceTrip");if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="بدون ربط";el.appendChild(first); tripsCache.filter(t=>t.status!=='COMPLETED').forEach(t=>{ const op=document.createElement("option");op.value=String(t.trip_id);op.textContent=t.trip_number+" ("+(t.rep_name||"")+")";el.appendChild(op); }); el.value=cur; }
-function fillCollectionTripSelect(){ const el=$("collectionTrip");if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="بدون ربط";el.appendChild(first); tripsCache.filter(t=>t.status!=='COMPLETED').forEach(t=>{ const op=document.createElement("option");op.value=String(t.trip_id);op.textContent=t.trip_number+" ("+(t.rep_name||"")+")";el.appendChild(op); }); el.value=cur; }
+function fillInvoiceTripSelect(){ const el=$("invoiceTrip");if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="بدون ربط";el.appendChild(first); const available=tripsCache.filter(t=>t.status!=='COMPLETED'&&(currentRoleCode!=="SALES_REP"|| (currentSalesRepName&&t.rep_name===currentSalesRepName))); available.forEach(t=>{ const op=document.createElement("option");op.value=String(t.trip_id);op.textContent=t.trip_number+" ("+(t.rep_name||"")+")";el.appendChild(op); }); el.value=cur; }
+function fillCollectionTripSelect(){ const el=$("collectionTrip");if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent=currentRoleCode==="SALES_REP"?"اختر جولتك":"بدون ربط";el.appendChild(first); const available=tripsCache.filter(t=>t.status!=='COMPLETED'&&(currentRoleCode!=="SALES_REP"|| (currentSalesRepName&&t.rep_name===currentSalesRepName))); available.forEach(t=>{ const op=document.createElement("option");op.value=String(t.trip_id);op.textContent=t.trip_number+" ("+(t.rep_name||"")+")";el.appendChild(op); }); el.value=cur; }
 function fillPurchaseSupplierSelect(){ const el=$("purchaseSupplier");if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر المورد";el.appendChild(first); suppliersCache.filter(c=>c.is_active).forEach(c=>{ const op=document.createElement("option");op.value=String(c.supplier_id);op.textContent=c.supplier_name+" ("+c.supplier_code+")";el.appendChild(op); }); el.value=cur; }
 function fillPurchaseLocationSelect(){ const el=$("purchaseLocation");if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر الموقع";el.appendChild(first); locationsCache.filter(l=>l.is_active).forEach(l=>{ const op=document.createElement("option");op.value=String(l.location_id);op.textContent=l.location_name+" ("+l.location_code+")";el.appendChild(op); }); el.value=cur; }
 function fillSupplierSelect(){ const el=$("spSupplier"); if(!el)return; const cur=el.value; el.replaceChildren(); const first=document.createElement("option"); first.value=""; first.textContent="اختر المورد"; el.appendChild(first); suppliersCache.filter(s=>s.is_active).forEach(s=>{ const op=document.createElement("option"); op.value=String(s.supplier_id); op.textContent=s.supplier_name; el.appendChild(op); }); el.value=cur; }
@@ -1808,6 +1811,11 @@ async function userInfo(user){
     const {data:role} = await db.from("app_roles").select("role_code").eq("role_id",data.role_id).maybeSingle();
     currentRoleCode=role?.role_code||null;
     currentSalesRepId=data.sales_rep_id??null;
+    currentSalesRepName=null;
+    if(currentSalesRepId){
+      const {data:repProfile}=await db.from("sales_reps").select("name").eq("sales_rep_id",currentSalesRepId).maybeSingle();
+      currentSalesRepName=repProfile?.name||null;
+    }
     isSystemAdmin=currentRoleCode==="SYSTEM_ADMIN"; 
     if($("userInfo")) $("userInfo").textContent="مرحبًا "+(data.display_name||"بك");
     await db.from("app_users").update({ last_login: new Date().toISOString() }).eq("user_id", user.id);
@@ -1833,6 +1841,34 @@ async function userInfo(user){
     try{ canViewRecipes=await permission("RECIPES_VIEW") || isSystemAdmin; canManageRecipes=await permission("RECIPES_MANAGE") || isSystemAdmin; if($("menuRecipes")) $("menuRecipes").classList.toggle("hidden",!canViewRecipes); if($("recipesCard")) $("recipesCard").classList.toggle("hidden",!canViewRecipes); if($("addRecipeBtn")) $("addRecipeBtn").classList.toggle("hidden",!canManageRecipes); }catch(e){}
     try{ canViewProduction=await permission("PRODUCTION_VIEW") || isSystemAdmin; canManageProduction=await permission("PRODUCTION_MANAGE") || isSystemAdmin; if($("menuProduction")) $("menuProduction").classList.toggle("hidden",!canViewProduction); if($("productionCard")) $("productionCard").classList.toggle("hidden",!canViewProduction); if($("addProductionBtn")) $("addProductionBtn").classList.toggle("hidden",!canManageProduction); }catch(e){}
     try{ canManageReservations=await permission("STOCK_MANAGE") || isSystemAdmin; if($("menuReservations")) $("menuReservations").classList.toggle("hidden",!canManageReservations); }catch(e){}
+
+    // صلاحيات واجهة مندوب المبيعات: السماح بفتح نماذج إنشاء العميل والفاتورة والتحصيل.
+    // تظل صلاحيات قاعدة البيانات هي المرجع النهائي لقبول العمليات.
+    if(currentRoleCode === "SALES_REP"){
+      canManageCustomers = true;
+      canManageSales = true;
+      canManageCollections = true;
+      canViewTrips = true;
+      canManageTrips = false;
+      if($("addCustomerBtn")) $("addCustomerBtn").classList.remove("hidden");
+      if($("addInvoiceBtn")) $("addInvoiceBtn").classList.remove("hidden");
+      if($("addCollectionBtn")) $("addCollectionBtn").classList.remove("hidden");
+      if($("addReturnBtn")) $("addReturnBtn").classList.add("hidden");
+      if($("addTripBtn")) $("addTripBtn").classList.add("hidden");
+    }
+
+    // متابعة الجولات متاحة للأدوار المسؤولة عن إدارتها وتسويتها.
+    if(["SALES_MANAGER","ACCOUNTANT","GENERAL_MANAGER"].includes(currentRoleCode)){
+      canViewTrips = true;
+      if($("menuTrips")) $("menuTrips").classList.remove("hidden");
+      if($("tripsCard")) $("tripsCard").classList.remove("hidden");
+    }
+
+    // إنشاء الجولة من اختصاص مدير المبيعات فقط، بالإضافة إلى مدير النظام.
+    if($("addTripBtn")){
+      const canCreateTrip = isSystemAdmin || currentRoleCode === "SALES_MANAGER";
+      $("addTripBtn").classList.toggle("hidden", !canCreateTrip);
+    }
 
     if(isSystemAdmin){
       // مدير النظام يرى جميع أقسام مركز البيانات دون الاعتماد على صلاحيات فرعية.
@@ -2637,7 +2673,7 @@ function renderCustomers(){
     qc.className="btn"; 
     qc.textContent="💰 تحصيل"; 
     qc.onclick=()=>openQuickCollect(c); 
-    actions.appendChild(qc); 
+    if(currentRoleCode !== "SALES_REP") actions.appendChild(qc); 
     if(canManageCustomers){ 
       const btn=document.createElement("button");
       btn.className="btn secondary";
@@ -3849,10 +3885,16 @@ if($("collectionForm")) $("collectionForm").addEventListener("submit", async e =
     const btn=$("saveCollectionBtn"); 
     busy(btn,true,"جارٍ...","حفظ");
     try {
+        if(currentRoleCode === "SALES_REP" && !$("collectionTrip").value) throw new Error("اختر الجولة المكلف بها لتسجيل التحصيل ضمن عهدتها.");
         const {data:id,error}=await db.rpc("create_collection",{ p_customer_id:Number($("collectionCustomer").value), p_sales_invoice_id:$("collectionInvoice").value?Number($("collectionInvoice").value):null, p_amount:Number($("collectionAmount").value), p_payment_method:$("collectionPaymentMethod").value, p_collection_date:$("collectionDate").value, p_notes:$("collectionNotes").value, p_trip_id:$("collectionTrip").value?Number($("collectionTrip").value):null });
         if(error) throw error;
-        await db.from("customer_collections").update({treasury_id:Number($("collectionTreasury").value)}).eq("collection_id",id);
-        await db.rpc("adjust_treasury_balance",{p_treasury_id:Number($("collectionTreasury").value),p_amount:Number($("collectionAmount").value),p_notes:"تحصيل"});
+        if(currentRoleCode !== "SALES_REP"){
+          if(!$("collectionTreasury").value) throw new Error("اختر الخزنة.");
+          const {error: treasuryLinkError} = await db.from("customer_collections").update({treasury_id:Number($("collectionTreasury").value)}).eq("collection_id",id);
+          if(treasuryLinkError) throw treasuryLinkError;
+          const {error: treasuryAdjustError} = await db.rpc("adjust_treasury_balance",{p_treasury_id:Number($("collectionTreasury").value),p_amount:Number($("collectionAmount").value),p_notes:"تحصيل"});
+          if(treasuryAdjustError) throw treasuryAdjustError;
+        }
         showToast("✅ تم الحفظ", "success");
         logUserAction("COLLECTION", "تحصيل من عميل #" + $("collectionCustomer").value);
         $("collectionFormModal").classList.remove('active'); 
@@ -3866,7 +3908,17 @@ if($("addCollectionBtn")) $("addCollectionBtn").addEventListener("click",()=>{
   $("collectionDate").value=todayISO(); 
   fillCollectionCustomerSelect(); 
   fillTreasurySelects(); 
-  fillCollectionTripSelect(); 
+  fillCollectionTripSelect();
+  const treasuryField = $("collectionTreasury");
+  const treasuryLabel = document.querySelector('label[for="collectionTreasury"]');
+  const isRep = currentRoleCode === "SALES_REP";
+  if(treasuryField) treasuryField.required = !isRep;
+  if(treasuryField) treasuryField.classList.toggle("hidden", isRep);
+  if(treasuryLabel) treasuryLabel.classList.toggle("hidden", isRep);
+  const tripField = $("collectionTrip");
+  const tripLabel = document.querySelector('label[for="collectionTrip"]');
+  if(tripField) tripField.required = isRep;
+  if(tripLabel && isRep) tripLabel.textContent = "الجولة المكلف بها *";
 });
 
 // ========== المصروفات ==========
@@ -4285,10 +4337,20 @@ if($("productionForm")) $("productionForm").addEventListener("submit", async e =
 // ========== الجولات ==========
 async function loadTrips(){ 
   if(!canViewTrips)return; 
-  if(!navigator.onLine) { tripsCache=getCache('trips'); renderTrips(); return; } 
+  if(!navigator.onLine) {
+    tripsCache=getCache('trips');
+    if(currentRoleCode === "SALES_REP") tripsCache=tripsCache.filter(t=>currentSalesRepName&&t.rep_name===currentSalesRepName);
+    renderTrips(); return;
+  } 
   const box=$("tripsList"); if(box) box.innerHTML="<div class='empty'>جارٍ التحميل...</div>"; 
   try{ 
-    const {data}=await db.from("trips").select("*").order("trip_id",{ascending:false}); 
+    let tripQuery=db.from("trips").select("*").order("trip_id",{ascending:false});
+    if(currentRoleCode === "SALES_REP"){
+      if(!currentSalesRepName){ tripsCache=[]; renderTrips(); return; }
+      tripQuery=tripQuery.eq("rep_name",currentSalesRepName);
+    }
+    const {data,error}=await tripQuery;
+    if(error) throw error;
     tripsCache=data||[]; 
     saveCache('trips', tripsCache); 
     renderTrips(); 
