@@ -450,6 +450,21 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 </div>
 </div>
 
+<div id="repPasswordModal" class="modal-form">
+<div class="modal-form-content">
+<div class="modal-header"><h3>تغيير كلمة مرور Rep-01</h3><button class="close-btn" type="button" onclick="document.getElementById('repPasswordModal').classList.remove('active')">&times;</button></div>
+<div class="modal-body">
+<form id="repPasswordForm" onsubmit="event.preventDefault();">
+<p class="info">اكتب كلمة المرور الجديدة مرتين. لن تظهر كلمة المرور بعد الحفظ.</p>
+<label for="repNewPassword">كلمة المرور الجديدة</label><input id="repNewPassword" type="password" minlength="12" maxlength="128" autocomplete="new-password" required>
+<label for="repConfirmPassword">تأكيد كلمة المرور</label><input id="repConfirmPassword" type="password" minlength="12" maxlength="128" autocomplete="new-password" required>
+<button id="saveRepPasswordBtn" class="btn" type="submit">حفظ كلمة المرور</button>
+<div id="repPasswordMsg" class="status hidden"></div>
+</form>
+</div>
+</div>
+</div>
+
 <div id="userLogsModal" class="modal hidden">
 <div class="modal-content">
 <div class="modal-header"><h3>سجل تتبع المستخدم</h3><button class="close-btn" onclick="document.getElementById('userLogsModal').classList.add('hidden')">&times;</button></div>
@@ -1927,11 +1942,52 @@ async function loadUsersList() {
     let html = "";
     users.forEach(u => {
       const status = u.is_active ? "<span class='badge badge-paid'>نشط</span>" : "<span class='badge badge-cancel'>موقوف</span>";
-      html += `<div class="product"><div class="pname">${u.display_name || ''} (${u.username || ''})</div><div class="details">الدور: ${roleMap[u.role_id] || 'غير محدد'} ${status}</div><div class="actions"><button class="btn secondary" onclick="window.viewUserLogs('${u.user_id}','${(u.display_name||'').replace(/'/g,'')}')">📋 سجل التتبع</button></div></div>`;
+      const safeName = String(u.display_name || '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+      const safeUsername = String(u.username || '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+      const resetButton = String(u.username || '').toLowerCase() === 'rep-01' && u.is_active
+        ? `<button class="btn secondary" type="button" onclick="window.openRepPasswordModal()">🔑 تغيير كلمة المرور</button>`
+        : '';
+      html += `<div class="product"><div class="pname">${safeName} (${safeUsername})</div><div class="details">الدور: ${roleMap[u.role_id] || 'غير محدد'} ${status}</div><div class="actions"><button class="btn secondary" onclick="window.viewUserLogs('${u.user_id}','${safeName.replace(/'/g,'&#39;')}')">📋 سجل التتبع</button>${resetButton}</div></div>`;
     });
     box.innerHTML = html;
   } catch(e) { box.innerHTML = `<div class='empty error'>خطأ: ${e.message}</div>`; }
 }
+
+// تغيير كلمة مرور حساب Rep-01 من داخل التطبيق.
+window.openRepPasswordModal = function(){
+  if(!isSystemAdmin){ showToast("هذه العملية لمدير النظام فقط.","error"); return; }
+  if($("repPasswordForm")) $("repPasswordForm").reset();
+  clear($("repPasswordMsg"));
+  $("repPasswordModal").classList.add("active");
+};
+if($("repPasswordForm")) $("repPasswordForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const password=$("repNewPassword").value;
+  const confirmation=$("repConfirmPassword").value;
+  const btn=$("saveRepPasswordBtn");
+  clear($("repPasswordMsg"));
+  if(!isSystemAdmin){ msg($("repPasswordMsg"),"هذه العملية لمدير النظام فقط.","error"); return; }
+  if(password.length<12 || password.length>128){ msg($("repPasswordMsg"),"كلمة المرور يجب أن تكون من 12 إلى 128 حرفًا.","error"); return; }
+  if(password!==confirmation){ msg($("repPasswordMsg"),"كلمتا المرور غير متطابقتين.","error"); return; }
+  busy(btn,true,"جارٍ تغيير كلمة المرور...","حفظ كلمة المرور");
+  try{
+    const {data:sessionData,error:sessionError}=await db.auth.getSession();
+    if(sessionError) throw sessionError;
+    const session=sessionData?.session;
+    if(!session?.access_token) throw new Error("انتهت جلسة الدخول. سجّل الدخول مرة أخرى.");
+    const response=await fetch(MANAGE_USERS_URL,{
+      method:"POST",
+      headers:{"Content-Type":"application/json","apikey":KEY,"Authorization":"Bearer "+session.access_token},
+      body:JSON.stringify({action:"reset_password",username:"Rep-01",password})
+    });
+    let result={}; try{ result=await response.json(); }catch(_){}
+    if(!response.ok || result.success!==true) throw new Error(result.error||"تعذر تغيير كلمة المرور.");
+    $("repPasswordForm").reset();
+    msg($("repPasswordMsg"),"تم تغيير كلمة مرور Rep-01 بنجاح. يمكنك الآن تجربة تسجيل الدخول.","success");
+    logUserAction("UPDATE","تغيير كلمة مرور حساب Rep-01");
+  }catch(error){ msg($("repPasswordMsg"),"تعذر تغيير كلمة المرور: "+err(error),"error"); }
+  finally{ busy(btn,false,"","حفظ كلمة المرور"); }
+});
 
 // ========== إعدادات الشركة ==========
 function loadSettings() {
