@@ -2883,7 +2883,7 @@ function resetInvoiceForm(){
   invoiceItemCounter=0; 
   addInvoiceItemRow(); 
   updateInvoiceTotals(); 
-  $("invoiceFormModal").classList.remove('active'); 
+  $("invoiceFormModal").classList.add('active'); 
   clear($("invoiceFormMsg")); 
   fillInvoiceCustomerSelect(); 
   fillInvoiceLocationSelect(); 
@@ -3769,7 +3769,7 @@ function resetRecipeForm(){
   recipeItemCounter=0; 
   addRecipeItemRow(); 
   $("recipeActive").checked=true; 
-  $("recipeFormModal").classList.remove('active'); 
+  $("recipeFormModal").classList.add('active'); 
   clear($("recipeFormMsg")); 
   fillRecipeOutputSelects(); 
 }
