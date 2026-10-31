@@ -383,6 +383,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 <div class="dash-item hidden" id="menuSales" onclick="window.openSection('sales')"><div class="dash-icon">🧾</div><div class="dash-title">فواتير البيع</div></div>
 <div class="dash-item hidden" id="menuCollections" onclick="window.openSection('collections')"><div class="dash-icon">💰</div><div class="dash-title">التحصيلات</div></div>
 <div class="dash-item hidden" id="menuTrips" onclick="window.openSection('trips')"><div class="dash-icon">🚐</div><div class="dash-title">الجولات</div></div>
+<div class="dash-item hidden" id="menuSalesReps" onclick="window.openSection('salesReps')"><div class="dash-icon">🧑‍💼</div><div class="dash-title">إدارة المندوبين</div></div>
 </div>
 </div>
 <div class="dashboard-group">
@@ -405,6 +406,30 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 <h2>👥 إدارة المستخدمين</h2>
 <button class="btn" onclick="document.getElementById('userFormModal').classList.add('active')">＋ إضافة مستخدم جديد</button>
 <div id="usersList" style="margin-top:15px;"><div class="empty">جارٍ تحميل المستخدمين...</div></div>
+</div>
+</div>
+<!-- شاشة إدارة المندوبين -->
+<div id="sectionSalesReps" class="sub-section hidden">
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<div id="salesRepsCard" class="card hidden">
+<div class="row" style="justify-content:space-between"><h2>🧑‍💼 إدارة المندوبين</h2><button id="addSalesRepBtn" class="btn" type="button" onclick="window.openSalesRepForm()" style="width:auto;margin:0;">＋ إضافة مندوب</button></div>
+<div class="row"><input id="salesRepSearch" type="search" placeholder="ابحث باسم المندوب..."><button id="refreshSalesRepsBtn" class="btn secondary" type="button">تحديث</button></div>
+<div id="salesRepsMsg" class="status hidden"></div>
+<div id="salesRepsList"><div class="empty">جارٍ تحميل المندوبين...</div></div>
+</div>
+</div>
+<div id="salesRepFormModal" class="modal-form">
+<div class="modal-form-content">
+<div class="modal-header"><h3 id="salesRepFormTitle">إضافة مندوب جديد</h3><button class="close-btn" type="button" onclick="document.getElementById('salesRepFormModal').classList.remove('active')">&times;</button></div>
+<div class="modal-body">
+<form id="salesRepForm" onsubmit="event.preventDefault();">
+<input id="salesRepEditId" type="hidden">
+<label for="salesRepName">اسم المندوب *</label><input id="salesRepName" type="text" maxlength="150" required>
+<label class="check" style="margin-top:14px"><input id="salesRepActive" type="checkbox" checked> المندوب نشط</label>
+<button id="saveSalesRepBtn" class="btn" type="submit">حفظ المندوب</button>
+<div id="salesRepFormMsg" class="status hidden"></div>
+</form>
+</div>
 </div>
 </div>
 
@@ -1574,6 +1599,7 @@ window.openSection = function(name) {
   if (name === "accounting") loadFinancialSummary();
   if (name === "expenses") loadExpenses();
   if (name === "users") loadUsersList();
+  if (name === "salesReps") loadSalesReps();
   if (name === "supplierPayments") loadSupplierPayments();
   if (name === "purchaseReturns") { loadPurchaseReturns(); fillPurchaseReturnInvoiceSelect(); }
   if (name === "reports") loadReports();
@@ -1784,8 +1810,8 @@ async function userInfo(user){
     try{ canViewProduction=await permission("PRODUCTION_VIEW") || isSystemAdmin; canManageProduction=await permission("PRODUCTION_MANAGE") || isSystemAdmin; if($("menuProduction")) $("menuProduction").classList.toggle("hidden",!canViewProduction); if($("productionCard")) $("productionCard").classList.toggle("hidden",!canViewProduction); if($("addProductionBtn")) $("addProductionBtn").classList.toggle("hidden",!canManageProduction); }catch(e){}
     try{ canManageReservations=await permission("STOCK_MANAGE") || isSystemAdmin; if($("menuReservations")) $("menuReservations").classList.toggle("hidden",!canManageReservations); }catch(e){}
 
-    if(isSystemAdmin){ if($("menuUsers")) $("menuUsers").classList.remove("hidden"); if($("menuAccounting")) $("menuAccounting").classList.remove("hidden"); if($("accountingCard")) $("accountingCard").classList.remove("hidden"); if($("menuSettings")) $("menuSettings").classList.remove("hidden"); await loadUserManagementLookups(); }
-    else{ if($("menuUsers")) $("menuUsers").classList.add("hidden"); if($("userManagementCard")) $("userManagementCard").classList.add("hidden"); if($("menuSettings")) $("menuSettings").classList.add("hidden"); }
+    if(isSystemAdmin){ if($("menuUsers")) $("menuUsers").classList.remove("hidden"); if($("menuSalesReps")) $("menuSalesReps").classList.remove("hidden"); if($("salesRepsCard")) $("salesRepsCard").classList.remove("hidden"); if($("menuAccounting")) $("menuAccounting").classList.remove("hidden"); if($("accountingCard")) $("accountingCard").classList.remove("hidden"); if($("menuSettings")) $("menuSettings").classList.remove("hidden"); await loadUserManagementLookups(); }
+    else{ if($("menuUsers")) $("menuUsers").classList.add("hidden"); if($("userManagementCard")) $("userManagementCard").classList.add("hidden"); if($("menuSalesReps")) $("menuSalesReps").classList.add("hidden"); if($("salesRepsCard")) $("salesRepsCard").classList.add("hidden"); if($("menuSettings")) $("menuSettings").classList.add("hidden"); }
     
     if($("tasks") && !$("tasks").classList.contains("hidden")) loadTasks();
   } catch(e) { if($("userInfo")) $("userInfo").textContent = "خطأ في الاتصال."; }
@@ -1799,6 +1825,63 @@ function updateSalesRepField(){
   if($("newUserSalesRep")) $("newUserSalesRep").required=needsRep;
   if(!needsRep && $("newUserSalesRep")) $("newUserSalesRep").value="";
 }
+let salesRepsCache=[];
+function salesRepText(value){ return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch])); }
+function renderSalesReps(){
+  const box=$("salesRepsList"); if(!box) return;
+  const term=($("salesRepSearch")?.value||"").trim().toLowerCase();
+  const rows=salesRepsCache.filter(r=>String(r.name||"").toLowerCase().includes(term));
+  if(!rows.length){ box.innerHTML='<div class="empty">'+(salesRepsCache.length?'لا توجد نتائج مطابقة.':'لا يوجد مندوبون مسجلون حتى الآن.')+'</div>'; return; }
+  box.innerHTML=rows.map(r=>{
+    const status=r.is_active?'<span class="badge badge-paid">نشط</span>':'<span class="badge badge-cancel">موقوف</span>';
+    const linked=r.auth_user_id?'<span class="badge">مرتبط بحساب دخول</span>':'<span class="badge">غير مرتبط بحساب دخول</span>';
+    return `<div class="product"><div class="pname">${salesRepText(r.name||'مندوب بدون اسم')}</div><div class="details">رقم المندوب: ${salesRepText(r.sales_rep_id)} ${status} ${linked}</div><div class="actions"><button class="btn secondary" type="button" onclick="window.editSalesRep('${salesRepText(r.sales_rep_id)}')">تعديل</button></div></div>`;
+  }).join("");
+}
+async function loadSalesReps(){
+  if(!isSystemAdmin){ if($("salesRepsCard")) $("salesRepsCard").classList.add("hidden"); return; }
+  const box=$("salesRepsList"); if(box) box.innerHTML='<div class="empty">جارٍ تحميل المندوبين...</div>';
+  try{
+    const {data,error}=await db.from("sales_reps").select("sales_rep_id,name,is_active,auth_user_id").order("sales_rep_id");
+    if(error) throw error;
+    salesRepsCache=data||[]; renderSalesReps();
+    if($("salesRepsMsg")) clear($("salesRepsMsg"));
+  }catch(e){ if(box) box.innerHTML=`<div class="empty error">تعذر تحميل المندوبين: ${salesRepText(err(e))}</div>`; }
+}
+window.openSalesRepForm=function(){
+  if(!isSystemAdmin){ showToast("هذه العملية لمدير النظام فقط.","error"); return; }
+  $("salesRepForm").reset(); $("salesRepEditId").value=""; $("salesRepActive").checked=true;
+  $("salesRepFormTitle").textContent="إضافة مندوب جديد"; $("saveSalesRepBtn").textContent="حفظ المندوب"; clear($("salesRepFormMsg"));
+  $("salesRepFormModal").classList.add("active");
+};
+window.editSalesRep=function(id){
+  if(!isSystemAdmin) return;
+  const rep=salesRepsCache.find(r=>String(r.sales_rep_id)===String(id)); if(!rep) return;
+  $("salesRepEditId").value=rep.sales_rep_id; $("salesRepName").value=rep.name||""; $("salesRepActive").checked=!!rep.is_active;
+  $("salesRepFormTitle").textContent="تعديل بيانات المندوب"; $("saveSalesRepBtn").textContent="حفظ التعديلات"; clear($("salesRepFormMsg"));
+  $("salesRepFormModal").classList.add("active");
+};
+if($("salesRepSearch")) $("salesRepSearch").addEventListener("input",renderSalesReps);
+if($("refreshSalesRepsBtn")) $("refreshSalesRepsBtn").addEventListener("click",loadSalesReps);
+if($("salesRepForm")) $("salesRepForm").addEventListener("submit",async e=>{
+  e.preventDefault(); clear($("salesRepFormMsg"));
+  if(!isSystemAdmin){ msg($("salesRepFormMsg"),"هذه العملية لمدير النظام فقط.","error"); return; }
+  const id=$("salesRepEditId").value; const name=$("salesRepName").value.trim(); const is_active=$("salesRepActive").checked;
+  if(!name){ msg($("salesRepFormMsg"),"اكتب اسم المندوب.","error"); return; }
+  const btn=$("saveSalesRepBtn"); busy(btn,true,"جارٍ الحفظ...",id?"حفظ التعديلات":"حفظ المندوب");
+  try{
+    let result;
+    if(id) result=await db.from("sales_reps").update({name,is_active}).eq("sales_rep_id",Number(id)).select("sales_rep_id,name,is_active,auth_user_id").single();
+    else result=await db.from("sales_reps").insert({name,is_active}).select("sales_rep_id,name,is_active,auth_user_id").single();
+    if(result.error) throw result.error;
+    logUserAction(id?"UPDATE":"CREATE",(id?"تعديل مندوب: ":"إضافة مندوب: ")+name);
+    $("salesRepFormModal").classList.remove("active");
+    await loadSalesReps(); await loadUserManagementLookups();
+    showToast(id?"تم تحديث بيانات المندوب.":"تمت إضافة المندوب.","success");
+  }catch(e){ msg($("salesRepFormMsg"),"تعذر الحفظ: "+err(e),"error"); }
+  finally{ busy(btn,false,"","حفظ المندوب"); }
+});
+
 async function loadUserManagementLookups(){
   if(!isSystemAdmin){ if($("userManagementCard")) $("userManagementCard").classList.add("hidden"); return; }
   if($("userManagementCard")) $("userManagementCard").classList.remove("hidden"); clear($("userCreateMsg"));
@@ -1806,8 +1889,8 @@ async function loadUserManagementLookups(){
     const {data:roles,error:rolesError}=await db.from("app_roles").select("role_id,role_code,is_active").eq("is_active",true).order("role_id"); if(rolesError)throw rolesError;
     const usableRoles=(roles||[]).filter(r=> r.role_code!=="SYSTEM_ADMIN" && Object.prototype.hasOwnProperty.call(allowedRoles,r.role_code) );
     const roleSelect=$("newUserRole"); if(roleSelect){ roleSelect.replaceChildren(); const firstRole=document.createElement("option"); firstRole.value=""; firstRole.textContent=usableRoles.length?"اختر الدور الوظيفي":"لا توجد أدوار متاحة"; roleSelect.appendChild(firstRole); const roleMap={}; usableRoles.forEach(r=>{ const op=document.createElement("option"); op.value=String(r.role_id); op.textContent=allowedRoles[r.role_code]; roleSelect.appendChild(op); roleMap[String(r.role_id)]=r.role_code; }); roleSelect.dataset.roleCodes=JSON.stringify(roleMap); }
-    const {data:reps,error:repsError}=await db.from("sales_reps").select("sales_rep_id,is_active,auth_user_id").eq("is_active",true).is("auth_user_id",null).order("sales_rep_id"); if(repsError)throw repsError;
-    const repSelect=$("newUserSalesRep"); if(repSelect){ repSelect.replaceChildren(); const firstRep=document.createElement("option"); firstRep.value=""; firstRep.textContent="اختر المندوب"; repSelect.appendChild(firstRep); (reps||[]).forEach(r=>{ const op=document.createElement("option"); op.value=String(r.sales_rep_id); op.textContent="مندوب رقم "+r.sales_rep_id; repSelect.appendChild(op); }); }
+    const {data:reps,error:repsError}=await db.from("sales_reps").select("sales_rep_id,name,is_active,auth_user_id").eq("is_active",true).is("auth_user_id",null).order("sales_rep_id"); if(repsError)throw repsError;
+    const repSelect=$("newUserSalesRep"); if(repSelect){ repSelect.replaceChildren(); const firstRep=document.createElement("option"); firstRep.value=""; firstRep.textContent="اختر المندوب"; repSelect.appendChild(firstRep); (reps||[]).forEach(r=>{ const op=document.createElement("option"); op.value=String(r.sales_rep_id); op.textContent=r.name||("مندوب رقم "+r.sales_rep_id); repSelect.appendChild(op); }); }
     updateSalesRepField();
   }catch(e){ msg($("userCreateMsg"),"تعذر تحميل البيانات: "+err(e),"error"); }
 }
