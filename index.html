@@ -990,9 +990,10 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <label for="invoiceCustomer">العميل *</label><select id="invoiceCustomer" required><option value="">اختر العميل</option></select>
 <label for="invoiceLocation">الموقع *</label><select id="invoiceLocation" required><option value="">اختر الموقع</option></select>
 <label for="invoiceDate">التاريخ *</label><input id="invoiceDate" type="date" required>
-<label for="invoicePaymentType">النوع *</label><select id="invoicePaymentType" required onchange="document.getElementById('invoicePaidAmountWrap').classList.toggle('hidden', this.value === 'CASH')"><option value="CASH">نقدي</option><option value="CREDIT">آجل</option></select>
-<label for="invoiceTreasury">الخزنة (للنقدي) *</label><select id="invoiceTreasury"><option value="">اختر الخزنة</option></select>
-<div id="invoicePaidAmountWrap" class="hidden"><label for="invoicePaidAmount">المدفوع (للآجل)</label><input id="invoicePaidAmount" type="number" min="0" step="0.01" value="0"></div>
+<div class="info">يمكنك تسجيل أكثر من وسيلة دفع للفاتورة. أضف المبالغ التي دفعها العميل الآن، وسيظل الفرق المتبقي آجلًا. اترك قائمة الدفعات فارغة إذا لم يدفع العميل وقت إصدار الفاتورة.</div>
+<label>الدفعات عند إصدار الفاتورة</label>
+<div id="invoicePayments"></div>
+<button id="addInvoicePaymentBtn" class="btn secondary" type="button">＋ إضافة وسيلة دفع</button>
 <label for="invoiceTrip">ربط بجولة (اختياري)</label><select id="invoiceTrip"><option value="">بدون ربط</option></select>
 <label for="invoiceDiscount">الخصم (%) - الحد الأقصى 3%</label><input id="invoiceDiscount" type="number" min="0" max="3" step="0.01" value="0">
 <div class="error-text" id="discountError">نسبة الخصم تتجاوز الحد المسموح به</div>
@@ -1270,8 +1271,11 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <label for="collectionDate">التاريخ *</label><input id="collectionDate" type="date" required>
 <label for="collectionInvoice">الفاتورة (اختياري)</label><select id="collectionInvoice"><option value="">بدون ربط</option></select>
 <label for="collectionAmount">المبلغ *</label><input id="collectionAmount" type="number" min="0.01" step="0.01" required>
-<label for="collectionPaymentMethod">طريقة الدفع *</label><select id="collectionPaymentMethod" required><option value="CASH">نقدي</option><option value="BANK_TRANSFER">تحويل بنكي</option><option value="CHEQUE">شيك</option></select>
-<label for="collectionTreasury">الخزنة *</label><select id="collectionTreasury" required><option value="">اختر الخزنة</option></select>
+<label for="collectionPaymentMethod">طريقة الدفع *</label><select id="collectionPaymentMethod" required><option value="CASH">نقدي</option><option value="BANK_TRANSFER">تحويل بنكي</option><option value="INSTAPAY">إنستاباي</option><option value="CHEQUE">شيك</option></select>
+<div id="collectionTreasuryWrap"><label for="collectionTreasury">الخزنة النقدية *</label><select id="collectionTreasury"><option value="">اختر الخزنة</option></select></div>
+<div id="collectionReferenceWrap" class="hidden"><label for="collectionReferenceNumber">رقم المرجع / رقم الشيك</label><input id="collectionReferenceNumber" type="text" maxlength="150"></div>
+<div id="collectionBankWrap" class="hidden"><label for="collectionBankName">اسم البنك</label><input id="collectionBankName" type="text" maxlength="150"></div>
+<div id="collectionDueDateWrap" class="hidden"><label for="collectionDueDate">تاريخ استحقاق الشيك</label><input id="collectionDueDate" type="date"> </div>
 <label for="collectionTrip">ربط بجولة (اختياري)</label><select id="collectionTrip"><option value="">بدون ربط</option></select>
 <label for="collectionNotes">ملاحظات</label><textarea id="collectionNotes" rows="2"></textarea>
 <button id="saveCollectionBtn" class="btn" type="submit">حفظ</button>
@@ -1680,7 +1684,7 @@ function locationName(id){ return locationsCache.find(x=>String(x.location_id)==
 function treasuryName(id){ return treasuriesCache.find(x=>String(x.treasury_id)===String(id))?.treasury_name||"غير محدد"; }
 function supplierName(id){ return suppliersCache.find(x=>String(x.supplier_id)===String(id))?.supplier_name||"غير محدد"; }
 function productName(id){ return productsCache.find(x=>String(x.product_id)===String(id))?.product_name||"غير محدد"; }
-function paymentTypeName(v){ return({CASH:"نقدي",CREDIT:"آجل",BANK_TRANSFER:"تحويل بنكي",CHEQUE:"شيك",MIXED:"مختلط"})[v]||v||"غير محدد"; }
+function paymentTypeName(v){ return({CASH:"نقدي",CREDIT:"آجل",BANK_TRANSFER:"تحويل بنكي",INSTAPAY:"إنستاباي",CHEQUE:"شيك",MIXED:"مختلط"})[v]||v||"غير محدد"; }
 function tripNumber(id){ return tripsCache.find(x=>String(x.trip_id)===String(id))?.trip_number||"—"; }
 function expenseTypeName(v){ return({FUEL:"وقود",MAINTENANCE:"صيانة",RENT:"إيجارات",SALARY:"رواتب",OTHER:"أخرى"})[v]||v||"غير محدد"; }
 const locationTypes={ MAIN_WAREHOUSE:"مخزن رئيسي",FRIDGE:"ثلاجة",VEHICLE:"سيارة",FACTORY:"مصنع",SHOWROOM:"معرض" };
@@ -1753,12 +1757,16 @@ async function loadCompanySettings() {
 
 // ========== قوائم الاختيار ==========
 function fillTreasurySelects() {
-  const selects = ["expenseTreasury", "invoiceTreasury", "purchaseTreasury", "collectionTreasury", "returnTreasury", "spTreasury", "ttSource", "ttDest", "ptTreasury", "qcTreasury"];
+  const selects = ["expenseTreasury", "purchaseTreasury", "collectionTreasury", "returnTreasury", "spTreasury", "ttSource", "ttDest", "ptTreasury", "qcTreasury"];
   selects.forEach(id => {
     const el = $(id); if (!el) return;
     const cur = el.value; el.replaceChildren();
     const first = document.createElement("option"); first.value = ""; first.textContent = "اختر الخزنة"; el.appendChild(first);
-    treasuriesCache.filter(t => t.is_active).forEach(t => { const op = document.createElement("option"); op.value = String(t.treasury_id); op.textContent = t.treasury_name + " (" + fmt(t.current_balance) + ")"; el.appendChild(op); });
+    const activeTreasuries = treasuriesCache.filter(t => t.is_active);
+    const allowedTreasuries = ["collectionTreasury", "qcTreasury"].includes(id)
+      ? activeTreasuries.filter(t => [1,2,3,4,5].includes(Number(t.treasury_id)) && t.treasury_type === "CASH")
+      : activeTreasuries;
+    allowedTreasuries.forEach(t => { const op = document.createElement("option"); op.value = String(t.treasury_id); op.textContent = t.treasury_name + " (" + fmt(t.current_balance) + ")"; el.appendChild(op); });
     el.value = cur;
   });
 }
@@ -2802,7 +2810,19 @@ if($("quickCollectForm")) $("quickCollectForm").addEventListener("submit", async
         const notes = $("qcNotes").value;
         if(!canPostCollections) throw new Error("ليس لديك صلاحية تسجيل التحصيل.");
         if(!treasuryId) throw new Error("اختر الخزنة.");
-        const { data: colId, error } = await db.rpc("create_collection_v2", { p_customer_id: custId, p_sales_invoice_id: null, p_amount: amount, p_payment_method: 'CASH', p_collection_date: date, p_notes: notes||null, p_trip_id: null, p_treasury_id: treasuryId });
+        const { data: colId, error } = await db.rpc("create_collection_v3", {
+          p_customer_id: custId,
+          p_sales_invoice_id: null,
+          p_amount: amount,
+          p_payment_method: "CASH",
+          p_collection_date: date,
+          p_notes: notes || null,
+          p_trip_id: null,
+          p_treasury_id: treasuryId,
+          p_reference_number: null,
+          p_bank_name: null,
+          p_due_date: null
+        });
         if(error) throw error;
         showToast("تم تسجيل التحصيل بنجاح", "success");
         logUserAction("COLLECTION", "تحصيل سريع من عميل: " + custId);
@@ -3157,23 +3177,109 @@ function onBarcodeError(errMsg) { /* صامت */ }
 if($("closeScannerBtn")) $("closeScannerBtn").addEventListener("click", closeBarcodeScanner);
 
 // ========== فواتير البيع ==========
+let invoicePaymentCounter = 0;
+
+function updateInvoicePaymentRow(row) {
+  if(!row) return;
+  const method = row.querySelector(".invoice-pay-method")?.value || "CASH";
+  const tripId = $("invoiceTrip")?.value || "";
+  const isCash = method === "CASH";
+  const treasuryWrap = row.querySelector(".invoice-pay-treasury-wrap");
+  const refWrap = row.querySelector(".invoice-pay-reference-wrap");
+  const bankWrap = row.querySelector(".invoice-pay-bank-wrap");
+  const dueWrap = row.querySelector(".invoice-pay-due-wrap");
+  const needsCheque = method === "CHEQUE";
+  if(treasuryWrap) {
+    const showTreasury = isCash && !tripId && currentRoleCode !== "SALES_REP";
+    treasuryWrap.classList.toggle("hidden", !showTreasury);
+    const sel = treasuryWrap.querySelector("select");
+    if(sel) sel.required = showTreasury;
+  }
+  if(refWrap) {
+    const showRef = ["BANK_TRANSFER","INSTAPAY","CHEQUE"].includes(method);
+    refWrap.classList.toggle("hidden", !showRef);
+    const input = refWrap.querySelector("input");
+    if(input) input.required = needsCheque;
+  }
+  if(bankWrap) bankWrap.classList.toggle("hidden", !needsCheque);
+  if(dueWrap) dueWrap.classList.toggle("hidden", !needsCheque);
+}
+
+function addInvoicePaymentRow() {
+  const box = $("invoicePayments");
+  if(!box) return;
+  invoicePaymentCounter++;
+  const row = document.createElement("div");
+  row.className = "item-row";
+  row.dataset.paymentRow = String(invoicePaymentCounter);
+  row.innerHTML = `
+    <div class="row" style="justify-content:space-between">
+      <strong>دفعة ${invoicePaymentCounter}</strong>
+      <button type="button" class="btn danger invoice-pay-remove" style="width:auto;margin:0;padding:7px 12px">حذف</button>
+    </div>
+    <label>وسيلة الدفع *</label>
+    <select class="invoice-pay-method">
+      <option value="CASH">نقدي</option>
+      <option value="BANK_TRANSFER">تحويل بنكي</option>
+      <option value="INSTAPAY">إنستاباي</option>
+      <option value="CHEQUE">شيك</option>
+    </select>
+    <label>المبلغ *</label>
+    <input class="invoice-pay-amount" type="number" min="0.01" step="0.01" required>
+    <div class="invoice-pay-treasury-wrap">
+      <label>الخزنة النقدية *</label>
+      <select class="invoice-pay-treasury"><option value="">اختر الخزنة</option></select>
+    </div>
+    <div class="invoice-pay-reference-wrap hidden">
+      <label>رقم المرجع / رقم الشيك</label>
+      <input class="invoice-pay-reference" type="text" maxlength="150">
+    </div>
+    <div class="invoice-pay-bank-wrap hidden">
+      <label>اسم البنك</label>
+      <input class="invoice-pay-bank" type="text" maxlength="150">
+    </div>
+    <div class="invoice-pay-due-wrap hidden">
+      <label>تاريخ استحقاق الشيك</label>
+      <input class="invoice-pay-due" type="date">
+    </div>`;
+  const treasury = row.querySelector(".invoice-pay-treasury");
+  treasuriesCache.filter(t => t.is_active && t.treasury_type === "CASH" && [1,2,3,4,5].includes(Number(t.treasury_id)))
+    .forEach(t => {
+      const op = document.createElement("option");
+      op.value = String(t.treasury_id);
+      op.textContent = t.treasury_name + " (" + fmt(t.current_balance) + ")";
+      treasury.appendChild(op);
+    });
+  row.querySelector(".invoice-pay-method").addEventListener("change", () => updateInvoicePaymentRow(row));
+  row.querySelector(".invoice-pay-remove").addEventListener("click", () => row.remove());
+  box.appendChild(row);
+  updateInvoicePaymentRow(row);
+}
+
+function refreshInvoicePaymentRows() {
+  document.querySelectorAll("#invoicePayments .item-row").forEach(updateInvoicePaymentRow);
+}
+if($("addInvoicePaymentBtn")) $("addInvoicePaymentBtn").addEventListener("click", addInvoicePaymentRow);
+if($("invoiceTrip")) $("invoiceTrip").addEventListener("change", refreshInvoicePaymentRows);
+
 function resetInvoiceForm(){ 
   $("invoiceForm").reset(); 
   $("invoiceDate").value=todayISO(); 
-  $("invoicePaymentType").value="CASH"; 
   $("invoiceDiscount").value="0"; 
-  $("invoicePaidAmount").value="0"; 
-  $("invoicePaidAmountWrap").classList.add("hidden"); 
+  $("invoicePayments").replaceChildren();
+  invoicePaymentCounter=0;
   $("invoiceItems").replaceChildren(); 
   invoiceItemCounter=0; 
   addInvoiceItemRow(); 
   updateInvoiceTotals(); 
-  $("invoiceFormModal").classList.add('active'); 
-  clear($("invoiceFormMsg")); 
   fillInvoiceCustomerSelect(); 
   fillInvoiceLocationSelect(); 
   fillTreasurySelects(); 
   fillInvoiceTripSelect(); 
+  const tripField = $("invoiceTrip");
+  if(tripField) tripField.required = currentRoleCode === "SALES_REP";
+  $("invoiceFormModal").classList.add('active'); 
+  clear($("invoiceFormMsg")); 
 }
 if($("addInvoiceBtn")) $("addInvoiceBtn").addEventListener("click",()=>resetInvoiceForm());
 
@@ -3394,7 +3500,6 @@ if($("invoiceForm")) $("invoiceForm").addEventListener("submit", async e => {
   if(!navigator.onLine) { msg($("invoiceFormMsg"), "لا يمكن الحفظ بدون إنترنت.", "error"); return; }
   const customerId = $("invoiceCustomer").value; 
   const locationId = $("invoiceLocation").value; 
-  const paymentType = $("invoicePaymentType").value; 
   const discount = Number($("invoiceDiscount").value||0);
   const items = []; 
   let valid = true;
@@ -3409,20 +3514,65 @@ if($("invoiceForm")) $("invoiceForm").addEventListener("submit", async e => {
   if(!items.length || !valid) { msg($("invoiceFormMsg"), "أكمل بيانات الأصناف.", "error"); return; }
   let subTotal = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
   let netTotal = subTotal - (subTotal * (discount/100));
-  if(paymentType === "CREDIT") { 
-    const cust = customersCache.find(c => String(c.customer_id) === String(customerId)); 
-    if(cust && cust.credit_limit) { 
-      const currentDebt = salesCache.filter(s => s.customer_id == customerId && s.status !== 'CANCELLED').reduce((acc, curr) => acc + Number(curr.remaining_amount||0), 0); 
-      if(currentDebt + netTotal > Number(cust.credit_limit)) { 
-        msg($("invoiceFormMsg"), `العميل تعدى حد الائتمان (${fmt(cust.credit_limit)}). المديونية: ${fmt(currentDebt)}`, "error"); 
-        return; 
-      } 
-    } 
+  const tripId = $("invoiceTrip").value ? Number($("invoiceTrip").value) : null;
+  if(currentRoleCode === "SALES_REP" && !tripId) {
+    msg($("invoiceFormMsg"), "اختر الجولة المكلف بها قبل إصدار الفاتورة.", "error");
+    return;
+  }
+  const payments = [];
+  let paidNow = 0;
+  try {
+    document.querySelectorAll("#invoicePayments .item-row").forEach(row => {
+      const method = row.querySelector(".invoice-pay-method").value;
+      const amount = Number(row.querySelector(".invoice-pay-amount").value || 0);
+      const treasuryId = row.querySelector(".invoice-pay-treasury").value;
+      const referenceNumber = row.querySelector(".invoice-pay-reference").value.trim();
+      const bankName = row.querySelector(".invoice-pay-bank").value.trim();
+      const dueDate = row.querySelector(".invoice-pay-due").value || null;
+      if(!(amount > 0)) throw new Error("أدخل مبلغًا صحيحًا لكل وسيلة دفع أضفتها.");
+      if(method === "CASH" && !tripId && currentRoleCode !== "SALES_REP" && !treasuryId)
+        throw new Error("اختر خزنة استلام المبلغ النقدي.");
+      if(method === "CHEQUE" && !referenceNumber)
+        throw new Error("اكتب رقم الشيك.");
+      payments.push({
+        payment_method: method,
+        amount,
+        treasury_id: method === "CASH" && !tripId ? (treasuryId ? Number(treasuryId) : null) : null,
+        reference_number: referenceNumber || null,
+        bank_name: bankName || null,
+        due_date: dueDate
+      });
+      paidNow += amount;
+    });
+  } catch(validationError) {
+    msg($("invoiceFormMsg"), validationError.message, "error");
+    return;
+  }
+  if(paidNow > netTotal + 0.00001) {
+    msg($("invoiceFormMsg"), "إجمالي الدفعات أكبر من صافي الفاتورة.", "error");
+    return;
+  }
+  const cust = customersCache.find(c => String(c.customer_id) === String(customerId));
+  if(cust && cust.credit_limit && paidNow < netTotal) {
+    const currentDebt = salesCache.filter(s => s.customer_id == customerId && s.status !== 'CANCELLED').reduce((acc, curr) => acc + Number(curr.remaining_amount||0), 0);
+    if(currentDebt + (netTotal - paidNow) > Number(cust.credit_limit)) {
+      msg($("invoiceFormMsg"), `العميل تعدى حد الائتمان (${fmt(cust.credit_limit)}). المديونية: ${fmt(currentDebt)}`, "error");
+      return;
+    }
   }
   const btn = $("saveInvoiceBtn"); 
   busy(btn, true, "جارٍ التحقق...", "حفظ");
   try {
-      const { data: invoiceId, error } = await db.rpc("create_sales_invoice", { p_customer_id: Number(customerId), p_location_id: Number(locationId), p_invoice_date: $("invoiceDate").value, p_payment_type: paymentType, p_discount: (subTotal * (discount/100)), p_notes: $("invoiceNotes").value, p_items: items, p_trip_id: $("invoiceTrip").value||null, p_paid_amount: paymentType==="CASH"?netTotal:Number($("invoicePaidAmount").value||0) });
+      const { data: invoiceId, error } = await db.rpc("create_sales_invoice_v2", {
+        p_customer_id: Number(customerId),
+        p_location_id: Number(locationId),
+        p_invoice_date: $("invoiceDate").value,
+        p_discount: (subTotal * (discount/100)),
+        p_notes: $("invoiceNotes").value || null,
+        p_items: items,
+        p_trip_id: tripId,
+        p_payments: payments
+      });
       if(error) throw error;
       showToast("✅ تم حفظ الفاتورة بنجاح", "success");
       logUserAction("INVOICE", "فاتورة بيع #" + invoiceId);
@@ -3888,6 +4038,29 @@ if($("viewCollectionsStatementBtn")) $("viewCollectionsStatementBtn").addEventLi
     fillPrintHeaders();
 });
 
+function updateCollectionPaymentFields() {
+    const method = $("collectionPaymentMethod")?.value || "CASH";
+    const isRep = currentRoleCode === "SALES_REP";
+    const cash = method === "CASH";
+    const cheque = method === "CHEQUE";
+    const hasReference = ["BANK_TRANSFER","INSTAPAY","CHEQUE"].includes(method);
+    const treasuryWrap = $("collectionTreasuryWrap");
+    const treasury = $("collectionTreasury");
+    if(treasuryWrap) treasuryWrap.classList.toggle("hidden", !cash || isRep);
+    if(treasury) treasury.required = cash && !isRep;
+    const refWrap = $("collectionReferenceWrap");
+    if(refWrap) refWrap.classList.toggle("hidden", !hasReference);
+    const ref = $("collectionReferenceNumber");
+    if(ref) ref.required = cheque;
+    const bankWrap = $("collectionBankWrap");
+    if(bankWrap) bankWrap.classList.toggle("hidden", !cheque);
+    const dueWrap = $("collectionDueDateWrap");
+    if(dueWrap) dueWrap.classList.toggle("hidden", !cheque);
+}
+
+if($("collectionPaymentMethod")) $("collectionPaymentMethod").addEventListener("change", updateCollectionPaymentFields);
+if($("collectionTrip")) $("collectionTrip").addEventListener("change", updateCollectionPaymentFields);
+
 if($("collectionForm")) $("collectionForm").addEventListener("submit", async e => {
     e.preventDefault(); 
     const btn=$("saveCollectionBtn"); 
@@ -3896,9 +4069,25 @@ if($("collectionForm")) $("collectionForm").addEventListener("submit", async e =
         if(currentRoleCode === "SALES_REP" && !$("collectionTrip").value) throw new Error("اختر الجولة المكلف بها لتسجيل التحصيل ضمن عهدتها.");
         if(!canPostCollections) throw new Error("ليس لديك صلاحية تسجيل التحصيل.");
         if(currentRoleCode === "SALES_REP" && !$("collectionTrip").value) throw new Error("اختر الجولة المكلف بها لتسجيل التحصيل ضمن عهدتها.");
-        const selectedTreasuryId = currentRoleCode === "SALES_REP" ? null : Number($("collectionTreasury").value);
-        if(currentRoleCode !== "SALES_REP" && !selectedTreasuryId) throw new Error("اختر الخزنة.");
-        const {data:id,error}=await db.rpc("create_collection_v2",{ p_customer_id:Number($("collectionCustomer").value), p_sales_invoice_id:$("collectionInvoice").value?Number($("collectionInvoice").value):null, p_amount:Number($("collectionAmount").value), p_payment_method:$("collectionPaymentMethod").value, p_collection_date:$("collectionDate").value, p_notes:$("collectionNotes").value, p_trip_id:$("collectionTrip").value?Number($("collectionTrip").value):null, p_treasury_id:selectedTreasuryId });
+        const method = $("collectionPaymentMethod").value;
+        const tripId = $("collectionTrip").value ? Number($("collectionTrip").value) : null;
+        const selectedTreasuryId = method === "CASH" && currentRoleCode !== "SALES_REP" ? Number($("collectionTreasury").value) : null;
+        if(method === "CASH" && currentRoleCode !== "SALES_REP" && !selectedTreasuryId) throw new Error("اختر خزنة استلام المبلغ النقدي.");
+        const referenceNumber = $("collectionReferenceNumber").value.trim();
+        if(method === "CHEQUE" && !referenceNumber) throw new Error("اكتب رقم الشيك.");
+        const {data:id,error}=await db.rpc("create_collection_v3",{
+          p_customer_id:Number($("collectionCustomer").value),
+          p_sales_invoice_id:$("collectionInvoice").value?Number($("collectionInvoice").value):null,
+          p_amount:Number($("collectionAmount").value),
+          p_payment_method:method,
+          p_collection_date:$("collectionDate").value,
+          p_notes:$("collectionNotes").value || null,
+          p_trip_id:tripId,
+          p_treasury_id:selectedTreasuryId,
+          p_reference_number:referenceNumber || null,
+          p_bank_name:$("collectionBankName").value.trim() || null,
+          p_due_date:$("collectionDueDate").value || null
+        });
         if(error) throw error;
         showToast("✅ تم الحفظ", "success");
         logUserAction("COLLECTION", "تحصيل من عميل #" + $("collectionCustomer").value);
@@ -3924,6 +4113,11 @@ if($("addCollectionBtn")) $("addCollectionBtn").addEventListener("click",()=>{
   const tripLabel = document.querySelector('label[for="collectionTrip"]');
   if(tripField) tripField.required = isRep;
   if(tripLabel && isRep) tripLabel.textContent = "الجولة المكلف بها *";
+  $("collectionPaymentMethod").value = "CASH";
+  $("collectionReferenceNumber").value = "";
+  $("collectionBankName").value = "";
+  $("collectionDueDate").value = "";
+  updateCollectionPaymentFields();
 });
 
 // ========== المصروفات ==========
