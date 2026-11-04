@@ -3950,14 +3950,61 @@ async function loadSupplierPayments() {
     if(!data || !data.length) { box.innerHTML = "<div class='empty'>لا توجد سدادات مطابقة للبحث.</div>"; return; } 
     box.innerHTML = data.map(p => `<div class="product"><div class="pname">💸 ${p.suppliers?.supplier_name||'-'}</div><div class="details">المبلغ: ${fmt(p.amount)} | التاريخ: ${new Date(p.payment_date).toLocaleDateString("ar-EG")} | من: ${p.treasuries?.treasury_name||'-'}</div></div>`).join(""); 
 }
+function createSupplierPaymentRequestId() {
+    const bytes = new Uint8Array(16);
+    window.crypto.getRandomValues(bytes);
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    const hex = Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("");
+    return hex.slice(0, 8) + "-" + hex.slice(8, 12) + "-" + hex.slice(12, 16) + "-" + hex.slice(16, 20) + "-" + hex.slice(20);
+}
+
 if($("supplierPaymentForm")) $("supplierPaymentForm").addEventListener("submit", async e => { 
     e.preventDefault(); 
     const btn = $("saveSpBtn"); busy(btn, true, "جارٍ...", "حفظ"); 
+    const requestStorageKey = "mm_supplier_payment_pending_request";
     try { 
-        const { error } = await db.rpc("create_supplier_payment", { p_supplier_id: Number($("spSupplier").value), p_amount: Number($("spAmount").value), p_payment_date: $("spDate").value, p_treasury_id: Number($("spTreasury").value), p_notes: $("spNotes").value }); 
-        if(error) throw error; 
-        showToast("✅ تم الحفظ", "success"); 
-        logUserAction("PAYMENT", "سداد مورد: " + $("spSupplier").value); 
+        const supplierId = Number($("spSupplier").value);
+        const amount = Math.round((Number($("spAmount").value) + Number.EPSILON) * 100) / 100;
+        const paymentDate = $("spDate").value;
+        const treasuryId = Number($("spTreasury").value);
+        const notes = $("spNotes").value;
+        if(!supplierId || !Number.isFinite(amount) || amount <= 0 || !paymentDate || !treasuryId) {
+            throw new Error("أكمل المورد والمبلغ والتاريخ والخزنة بصورة صحيحة");
+        }
+
+        const requestPayload = {
+            supplier_id: supplierId,
+            amount: amount,
+            payment_date: paymentDate,
+            treasury_id: treasuryId
+        };
+        let pendingRequest = null;
+        try { pendingRequest = JSON.parse(localStorage.getItem(requestStorageKey) || "null"); } catch(storageReadError) {}
+
+        if(!pendingRequest || !pendingRequest.request_id) {
+            pendingRequest = {
+                request_id: createSupplierPaymentRequestId(),
+                payload: requestPayload
+            };
+        } else {
+            pendingRequest.payload = requestPayload;
+        }
+        localStorage.setItem(requestStorageKey, JSON.stringify(pendingRequest));
+
+        const { data, error } = await db.rpc("create_supplier_payment", {
+            p_supplier_id: supplierId,
+            p_amount: amount,
+            p_payment_date: paymentDate,
+            p_treasury_id: treasuryId,
+            p_notes: notes,
+            p_request_id: pendingRequest.request_id
+        });
+        if(error) throw error;
+
+        localStorage.removeItem(requestStorageKey);
+        showToast("تم حفظ السداد رقم " + data, "success"); 
+        logUserAction("PAYMENT", "سداد مورد: " + supplierId); 
         $("supplierPaymentFormModal").classList.remove('active'); 
         $("supplierPaymentForm").reset(); 
         loadSupplierPayments(); 
