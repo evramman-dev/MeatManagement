@@ -3932,6 +3932,7 @@ if($("purchaseForm")) $("purchaseForm").addEventListener("submit", async e => {
             notes: notes || null,
             treasury_id: treasuryId ? Number(treasuryId) : null,
             items: items.slice().sort((a, b) =>
+                a.purchase_invoice_item_id - b.purchase_invoice_item_id ||
                 a.product_id - b.product_id ||
                 a.unit_id - b.unit_id ||
                 a.quantity - b.quantity ||
@@ -4170,61 +4171,81 @@ async function loadPurchaseReturnInvoiceItems(){
     }
 
     $("prSupplierName").value = supplierName(invoice.supplier_id);
+    $("prItems").innerHTML = '<div class="empty">جارٍ تحميل بنود الفاتورة...</div>';
 
     const {data, error} = await db
         .from("purchase_invoice_items")
-        .select("item_id,purchase_invoice_id,product_id,unit_id,quantity,base_quantity,unit_price,line_total,products(product_name,base_unit_id)")
+        .select("item_id,purchase_invoice_id,product_id,unit_id,quantity,base_quantity,conversion_factor,unit_price,line_total,products(product_name)")
         .eq("purchase_invoice_id", invoiceId)
         .order("item_id");
 
     if(error) throw error;
+
     const sourceItems = Array.isArray(data) ? data : [];
     const invoiceSubtotal = Number(invoice.subtotal || 0);
     const invoiceDiscount = Number(invoice.discount || 0);
-    const grouped = new Map();
-    sourceItems.forEach(item => {
+    let cumulativeGross = 0;
+    let previousAllocatedDiscount = 0;
+
+    prInvoiceItemsCache = sourceItems.map(item => {
         const product = productsCache.find(p => Number(p.product_id) === Number(item.product_id));
-        const baseUnitId = Number(item.products?.base_unit_id || product?.base_unit_id || 0);
-        const baseQuantity = Number(item.base_quantity || 0);
-        if(!baseUnitId || baseQuantity <= 0) return;
-        const key = String(item.product_id);
-        if(!grouped.has(key)){
-            grouped.set(key, {
-                product_id: Number(item.product_id),
-                unit_id: baseUnitId,
-                quantity: 0,
-                gross_total: 0,
-                products: item.products || {product_name: product?.product_name}
-            });
-        }
-        const group = grouped.get(key);
-        group.quantity += baseQuantity;
-        group.gross_total += Number(item.line_total || (Number(item.quantity || 0) * Number(item.unit_price || 0)));
-    });
-    prInvoiceItemsCache = Array.from(grouped.values()).map(item => {
-        const discountShare = invoiceSubtotal > 0
-            ? invoiceDiscount * item.gross_total / invoiceSubtotal
+        const grossTotal = Number(item.line_total ?? (Number(item.quantity || 0) * Number(item.unit_price || 0)));
+        cumulativeGross += grossTotal;
+
+        // توزيع الخصم على البنود بترتيب رقم البند، مع ضبط التقريب حتى يساوي مجموع التوزيع خصم الفاتورة.
+        const cumulativeAllocatedDiscount = invoiceSubtotal > 0
+            ? Math.round((cumulativeGross * invoiceDiscount / invoiceSubtotal + Number.EPSILON) * 100) / 100
             : 0;
-        const netTotal = Math.max(0, item.gross_total - discountShare);
+        const discountShare = Math.max(0, cumulativeAllocatedDiscount - previousAllocatedDiscount);
+        previousAllocatedDiscount = cumulativeAllocatedDiscount;
+
+        const netLineTotal = Math.max(0, grossTotal - discountShare);
+        const quantity = Number(item.quantity || 0);
+        const factor = Number(item.conversion_factor || 0);
+        const baseQuantity = Number(item.base_quantity || 0);
+
         return {
-            ...item,
+            purchase_invoice_item_id: Number(item.item_id),
+            product_id: Number(item.product_id),
+            unit_id: Number(item.unit_id),
+            quantity,
+            base_quantity: baseQuantity,
+            conversion_factor: factor,
+            gross_total: grossTotal,
             discount_share: discountShare,
-            net_total: netTotal,
-            unit_price: item.quantity > 0 ? netTotal / item.quantity : 0
+            net_total: netLineTotal,
+            unit_price: quantity > 0 ? netLineTotal / quantity : 0,
+            products: item.products || {product_name: product?.product_name},
+            is_returnable: quantity > 0 && baseQuantity > 0 && factor > 0
         };
     });
 
     if(!prInvoiceItemsCache.length){
-        $("prItems").innerHTML = '<div class="empty">لا توجد أصناف قابلة للمرتجع في فاتورة الشراء.</div>';
+        $("prItems").innerHTML = '<div class="empty">لا توجد بنود في فاتورة الشراء.</div>';
         return;
     }
 
-    prInvoiceItemsCache.forEach((item, index) => addPrItemRow(item, index));
+    const blocked = prInvoiceItemsCache.filter(item => !item.is_returnable);
+    if(blocked.length){
+        showToast("يوجد بند لا يحتوي على معامل التحويل التاريخي، ولن يظهر للاختيار في المرتجع.", "warn");
+    }
+
+    prInvoiceItemsCache.forEach((item, index) => {
+        if(item.is_returnable) addPrItemRow(item, index);
+    });
+
+    if(!$("prItems").querySelector(".item-row")){
+        $("prItems").innerHTML = '<div class="empty">لا توجد بنود مكتملة بيانات التحويل ويمكن إرجاعها.</div>';
+    }
 }
 
 function addPrItemRow(invoiceItem = null, rowIndex = null){
-    if(!prInvoiceItemsCache.length){
-        showToast("اختر فاتورة شراء تحتوي على أصناف أولاً", "error");
+    const availableItems = prInvoiceItemsCache
+        .map((item, index) => ({item, index}))
+        .filter(x => x.item.is_returnable);
+
+    if(!availableItems.length){
+        showToast("اختر فاتورة شراء تحتوي على بنود قابلة للمرتجع أولاً", "error");
         return;
     }
 
@@ -4234,7 +4255,7 @@ function addPrItemRow(invoiceItem = null, rowIndex = null){
     wrap.dataset.itemId = "prItem_" + prItemCounter;
 
     const prodLabel = document.createElement("label");
-    prodLabel.textContent = "صنف فاتورة الشراء *";
+    prodLabel.textContent = "بند فاتورة الشراء الأصلي *";
 
     const prodSel = document.createElement("select");
     prodSel.className = "item-product";
@@ -4242,23 +4263,30 @@ function addPrItemRow(invoiceItem = null, rowIndex = null){
 
     const first = document.createElement("option");
     first.value = "";
-    first.textContent = "اختر الصنف";
+    first.textContent = "اختر بند الفاتورة";
     prodSel.appendChild(first);
 
-    prInvoiceItemsCache.forEach((item, index) => {
+    const alreadySelected = new Set(
+        Array.from(document.querySelectorAll("#prItems .item-row .item-product"))
+            .map(el => el.value)
+            .filter(v => v !== "")
+    );
+
+    availableItems.forEach(({item, index}) => {
+        if(alreadySelected.has(String(index)) && index !== rowIndex) return;
         const product = productsCache.find(p => Number(p.product_id) === Number(item.product_id));
         const op = document.createElement("option");
         op.value = String(index);
         op.textContent =
+            "بند #" + item.purchase_invoice_item_id + " - " +
             (item.products?.product_name || product?.product_name || ("صنف " + item.product_id)) +
-            " - وحدة المخزون: " + unitName(item.unit_id) +
-            " - الكمية بالفاتورة: " + fmtQty(item.quantity);
+            " - " + fmtQty(item.quantity) + " " + unitName(item.unit_id);
         prodSel.appendChild(op);
     });
 
     const qtyWrap = document.createElement("div");
     const qtyLabel = document.createElement("label");
-    qtyLabel.textContent = "الكمية المرتجعة *";
+    qtyLabel.textContent = "الكمية المرتجعة بنفس وحدة الفاتورة *";
     const qty = document.createElement("input");
     qty.type = "number";
     qty.className = "item-qty";
@@ -4270,7 +4298,7 @@ function addPrItemRow(invoiceItem = null, rowIndex = null){
 
     const unitWrap = document.createElement("div");
     const unitLabel = document.createElement("label");
-    unitLabel.textContent = "وحدة المخزون";
+    unitLabel.textContent = "وحدة الفاتورة الأصلية";
     const unitDisplay = document.createElement("input");
     unitDisplay.type = "text";
     unitDisplay.readOnly = true;
@@ -4279,7 +4307,7 @@ function addPrItemRow(invoiceItem = null, rowIndex = null){
 
     const priceWrap = document.createElement("div");
     const priceLabel = document.createElement("label");
-    priceLabel.textContent = "سعر الوحدة بعد الخصم";
+    priceLabel.textContent = "صافي سعر الوحدة بعد توزيع الخصم";
     const price = document.createElement("input");
     price.type = "number";
     price.className = "item-price";
@@ -4295,12 +4323,12 @@ function addPrItemRow(invoiceItem = null, rowIndex = null){
 
     const hint = document.createElement("div");
     hint.className = "item-hint";
-    hint.textContent = "السعر المعروض بعد توزيع خصم الفاتورة على الأصناف. أدخل الكمية بوحدة المخزون.";
+    hint.textContent = "كل سطر مرتبط ببند مستقل من فاتورة الشراء. لا تغيّر وحدة القياس عن وحدة الفاتورة الأصلية.";
 
     const removeBtn = document.createElement("button");
     removeBtn.type = "button";
     removeBtn.className = "btn danger";
-    removeBtn.textContent = "حذف الصنف";
+    removeBtn.textContent = "حذف البند";
     removeBtn.onclick = () => {
         wrap.remove();
         if(!$("prItems").querySelector(".item-row")) addPrItemRow();
@@ -4311,10 +4339,13 @@ function addPrItemRow(invoiceItem = null, rowIndex = null){
         if(!selected){
             unitDisplay.value = "";
             price.value = "";
+            qty.max = "";
             return;
         }
         unitDisplay.value = unitName(selected.unit_id);
         price.value = Number(selected.unit_price || 0).toFixed(4);
+        qty.max = String(selected.quantity);
+        qty.placeholder = "الحد الأصلي " + fmtQty(selected.quantity);
     }
 
     prodSel.addEventListener("change", applyInvoiceItem);
@@ -4412,7 +4443,13 @@ if($("purchaseReturnForm")) $("purchaseReturnForm").addEventListener("submit", a
             return;
         }
 
+        if(quantity > Number(invoiceItem.quantity) + 0.0000001){
+            invalidRow = true;
+            return;
+        }
+
         items.push({
+            purchase_invoice_item_id: Number(invoiceItem.purchase_invoice_item_id),
             product_id: Number(invoiceItem.product_id),
             unit_id: Number(invoiceItem.unit_id),
             quantity,
@@ -4420,8 +4457,11 @@ if($("purchaseReturnForm")) $("purchaseReturnForm").addEventListener("submit", a
         });
     });
 
+    const sourceLineIds = items.map(item => item.purchase_invoice_item_id);
+    if(new Set(sourceLineIds).size !== sourceLineIds.length) invalidRow = true;
+
     if(invalidRow || !items.length){
-        alert("راجع الأصناف والكميات وأسعار الوحدات.");
+        alert("راجع البنود والكميات. لا يمكن تكرار بند الفاتورة، ولا يجوز تجاوز كميته الأصلية.");
         return;
     }
 
