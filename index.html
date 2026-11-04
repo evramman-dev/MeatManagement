@@ -2919,50 +2919,161 @@ if($("supplierForm")) $("supplierForm").addEventListener("submit", async e => {
 if($("refreshSuppliersBtn")) $("refreshSuppliersBtn").addEventListener("click",loadSuppliers);
 if($("supplierSearch")) $("supplierSearch").addEventListener("input",renderSuppliers);
 
-async function viewSupplierStatement(s) { 
-    const modal = $("supplierStatementModal"); 
-    $("modalSupplierHeader").innerHTML = "جارٍ تحميل البيانات..."; 
-    $("modalSupplierItems").innerHTML = ""; 
-    $("modalSupplierSummary").innerHTML = ""; 
-    modal.classList.remove("hidden"); 
-    try { 
-        const { data: invoices } = await db.from("purchase_invoices").select("invoice_number, invoice_date, net_total, status, treasury_id").eq("supplier_id", s.supplier_id).neq("status", "CANCELLED").order("invoice_date", { ascending: true }); 
-        const { data: payments } = await db.from("supplier_payments").select("payment_date, amount").eq("supplier_id", s.supplier_id).order("payment_date", {ascending: true});
-        const timeline = []; 
-        let totalInvoiced = 0, totalPaid = 0; 
-        (invoices || []).forEach(inv => { 
-          timeline.push({ date: inv.invoice_date, type: 'invoice', ref: inv.invoice_number, desc: "فاتورة مشتريات", debit: 0, credit: Number(inv.net_total) }); 
-          totalInvoiced += Number(inv.net_total); 
-          if (inv.treasury_id) { 
-            timeline.push({ date: inv.invoice_date, type: 'payment', ref: inv.invoice_number, desc: "سداد نقدي للفاتورة", debit: Number(inv.net_total), credit: 0 }); 
-            totalPaid += Number(inv.net_total); 
-          } 
-        }); 
-        (payments || []).forEach(p => { 
-          timeline.push({ date: p.payment_date, type: 'payment', ref: '-', desc: "سداد دفعة", debit: Number(p.amount), credit: 0 }); 
-          totalPaid += Number(p.amount); 
+async function viewSupplierStatement(s) {
+    const modal = $("supplierStatementModal");
+    $("modalSupplierHeader").innerHTML = "جارٍ تحميل البيانات...";
+    $("modalSupplierItems").innerHTML = "";
+    $("modalSupplierSummary").innerHTML = "";
+    modal.classList.remove("hidden");
+
+    try {
+        const [invoiceResult, paymentResult, returnResult] = await Promise.all([
+            db.from("purchase_invoices")
+                .select("invoice_number, invoice_date, net_total, status, treasury_id")
+                .eq("supplier_id", s.supplier_id)
+                .neq("status", "CANCELLED")
+                .order("invoice_date", { ascending: true }),
+            db.from("supplier_payments")
+                .select("payment_date, amount, payment_id")
+                .eq("supplier_id", s.supplier_id)
+                .order("payment_date", { ascending: true }),
+            db.from("purchase_returns")
+                .select("return_number, return_date, total_return_amount, settlement_method")
+                .eq("supplier_id", s.supplier_id)
+                .order("return_date", { ascending: true })
+        ]);
+
+        if(invoiceResult.error) throw invoiceResult.error;
+        if(paymentResult.error) throw paymentResult.error;
+        if(returnResult.error) throw returnResult.error;
+
+        const invoices = invoiceResult.data || [];
+        const payments = paymentResult.data || [];
+        const returns = returnResult.data || [];
+        const timeline = [];
+
+        let totalCreditPurchases = 0;
+        let totalCashPurchases = 0;
+        let totalSupplierCreditReturns = 0;
+        let totalPayments = 0;
+
+        invoices.forEach(inv => {
+            const amount = Number(inv.net_total || 0);
+            if(inv.treasury_id) {
+                totalCashPurchases += amount;
+                timeline.push({
+                    date: inv.invoice_date,
+                    priority: 1,
+                    ref: inv.invoice_number,
+                    desc: "فاتورة مشتريات نقدية - لا تؤثر على رصيد المورد",
+                    debit: 0,
+                    credit: 0
+                });
+            } else {
+                totalCreditPurchases += amount;
+                timeline.push({
+                    date: inv.invoice_date,
+                    priority: 1,
+                    ref: inv.invoice_number,
+                    desc: "فاتورة مشتريات آجلة",
+                    debit: 0,
+                    credit: amount
+                });
+            }
         });
-        timeline.sort((a, b) => new Date(a.date) - new Date(b.date)); 
-        let runningBalance = 0; 
-        let rowsHtml = `<thead><tr><th>التاريخ</th><th>المستند</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead><tbody>`; 
-        timeline.forEach(t => { 
-          runningBalance = runningBalance - t.credit + t.debit; 
-          rowsHtml += `<tr><td>${new Date(t.date).toLocaleDateString("ar-EG")}</td><td dir="ltr">${t.ref}</td><td>${t.desc}</td><td>${t.debit > 0 ? fmt(t.debit) : "-"}</td><td>${t.credit > 0 ? fmt(t.credit) : "-"}</td><td style="font-weight:bold;">${fmt(runningBalance)}</td></tr>`; 
-        }); 
-        rowsHtml += `</tbody>`; 
-        $("modalSupplierItems").innerHTML = rowsHtml; 
-        $("modalSupplierHeader").innerHTML = `<div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span><strong>المورد:</strong> ${s.supplier_name}</span><span><strong>كود:</strong> ${s.supplier_code}</span></div><div style="display:flex;justify-content:space-between;"><span><strong>موبايل:</strong> ${s.phone || "غير مسجل"}</span><span><strong>تاريخ الكشف:</strong> ${new Date().toLocaleDateString("ar-EG")}</span></div>`; 
-        $("modalSupplierSummary").innerHTML = `<div class="line"><span>إجمالي المشتريات:</span><span>${fmt(totalInvoiced)}</span></div><div class="line"><span>إجمالي المدفوع:</span><span style="color:green;">${fmt(totalPaid)}</span></div><div class="line grand"><span>الرصيد النهائي:</span><span style="color:red;">${fmt(Math.abs(runningBalance))}</span></div>`; 
-        const waBtn = $("shareSupplierWhatsappBtn"); 
-        waBtn.onclick = () => { 
-          let waText = `*كشف حساب مورد*\nالمورد: ${s.supplier_name}\nالتاريخ: ${new Date().toLocaleDateString("ar-EG")}\n------------------------\nإجمالي المشتريات: ${fmt(totalInvoiced)}\nإجمالي المدفوع: ${fmt(totalPaid)}\n------------------------\n*الرصيد المتبقي: ${fmt(Math.abs(runningBalance))}*`; 
-          let phone = formatWaPhone(s.phone); 
-          window.open(phone ? `https://wa.me/${phone}?text=${encodeURIComponent(waText)}` : `https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); 
-        }; 
+
+        returns.forEach(ret => {
+            const amount = Number(ret.total_return_amount || 0);
+            if(ret.settlement_method === "SUPPLIER_CREDIT") {
+                totalSupplierCreditReturns += amount;
+                timeline.push({
+                    date: ret.return_date,
+                    priority: 2,
+                    ref: ret.return_number,
+                    desc: "مرتجع مشتريات - خصم من حساب المورد",
+                    debit: amount,
+                    credit: 0
+                });
+            } else {
+                timeline.push({
+                    date: ret.return_date,
+                    priority: 2,
+                    ref: ret.return_number,
+                    desc: ret.settlement_method === "CASH"
+                        ? "مرتجع مشتريات - استرداد نقدي، لا يؤثر على رصيد المورد"
+                        : "مرتجع مشتريات - استرداد بنكي، لا يؤثر على رصيد المورد",
+                    debit: 0,
+                    credit: 0
+                });
+            }
+        });
+
+        payments.forEach(payment => {
+            const amount = Number(payment.amount || 0);
+            totalPayments += amount;
+            timeline.push({
+                date: payment.payment_date,
+                priority: 3,
+                ref: payment.payment_id ? "سداد " + payment.payment_id : "-",
+                desc: "دفعة للمورد",
+                debit: amount,
+                credit: 0
+            });
+        });
+
+        timeline.sort((a, b) => {
+            const dateDiff = new Date(a.date) - new Date(b.date);
+            return dateDiff || a.priority - b.priority;
+        });
+
+        let runningBalance = 0;
+        let rowsHtml = `<thead><tr><th>التاريخ</th><th>المستند</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead><tbody>`;
+
+        timeline.forEach(t => {
+            runningBalance = runningBalance - t.credit + t.debit;
+            const balanceLabel = runningBalance > 0
+                ? "مستحق للمورد " + fmt(runningBalance)
+                : runningBalance < 0
+                    ? "دفعة مقدمة " + fmt(Math.abs(runningBalance))
+                    : fmt(0);
+            rowsHtml += `<tr><td>${t.date ? new Date(t.date).toLocaleDateString("ar-EG") : "-"}</td><td dir="ltr">${t.ref || "-"}</td><td>${t.desc}</td><td>${t.debit > 0 ? fmt(t.debit) : "-"}</td><td>${t.credit > 0 ? fmt(t.credit) : "-"}</td><td style="font-weight:bold;">${balanceLabel}</td></tr>`;
+        });
+
+        rowsHtml += `</tbody>`;
+        $("modalSupplierItems").innerHTML = rowsHtml;
+
+        $("modalSupplierHeader").innerHTML = `<div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span><strong>المورد:</strong> ${s.supplier_name}</span><span><strong>كود:</strong> ${s.supplier_code}</span></div><div style="display:flex;justify-content:space-between;"><span><strong>موبايل:</strong> ${s.phone || "غير مسجل"}</span><span><strong>تاريخ الكشف:</strong> ${new Date().toLocaleDateString("ar-EG")}</span></div>`;
+
+        let finalBalanceLabel = "الحساب متسوي";
+        let finalBalanceColor = "#333";
+        if(runningBalance > 0) {
+            finalBalanceLabel = "مستحق للمورد: " + fmt(runningBalance);
+            finalBalanceColor = "red";
+        } else if(runningBalance < 0) {
+            finalBalanceLabel = "رصيد مدفوع مقدمًا لصالحك: " + fmt(Math.abs(runningBalance));
+            finalBalanceColor = "#176b3a";
+        }
+
+        $("modalSupplierSummary").innerHTML =
+            `<div class="line"><span>المشتريات الآجلة:</span><span>${fmt(totalCreditPurchases)}</span></div>` +
+            `<div class="line"><span>المشتريات النقدية (للعرض فقط):</span><span>${fmt(totalCashPurchases)}</span></div>` +
+            `<div class="line"><span>مرتجعات مخصومة من حساب المورد:</span><span>${fmt(totalSupplierCreditReturns)}</span></div>` +
+            `<div class="line"><span>دفعات المورد:</span><span style="color:green;">${fmt(totalPayments)}</span></div>` +
+            `<div class="line grand"><span>الرصيد النهائي:</span><span style="color:${finalBalanceColor};">${finalBalanceLabel}</span></div>`;
+
+        const waBtn = $("shareSupplierWhatsappBtn");
+        waBtn.onclick = () => {
+            const waText = `كشف حساب مورد\nالمورد: ${s.supplier_name}\nالتاريخ: ${new Date().toLocaleDateString("ar-EG")}\n------------------------\nالمشتريات الآجلة: ${fmt(totalCreditPurchases)}\nمرتجعات مخصومة من حساب المورد: ${fmt(totalSupplierCreditReturns)}\nدفعات المورد: ${fmt(totalPayments)}\n------------------------\n${finalBalanceLabel}`;
+            const phone = formatWaPhone(s.phone);
+            window.open(phone ? `https://wa.me/${phone}?text=${encodeURIComponent(waText)}` : `https://wa.me/?text=${encodeURIComponent(waText)}`, "_blank");
+        };
+
         fillPrintHeaders();
-    } catch (e) { $("modalSupplierHeader").innerHTML = `<span style="color:red;">خطأ: ${err(e)}</span>`; } 
+    } catch (e) {
+        $("modalSupplierHeader").innerHTML = `<span style="color:red;">خطأ: ${err(e)}</span>`;
+    }
 }
-    
+
 // ========== المخزون ==========
 let currentStockLocationFilter = null;
 async function loadStock(){ 
