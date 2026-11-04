@@ -3932,7 +3932,6 @@ if($("purchaseForm")) $("purchaseForm").addEventListener("submit", async e => {
             notes: notes || null,
             treasury_id: treasuryId ? Number(treasuryId) : null,
             items: items.slice().sort((a, b) =>
-                a.purchase_invoice_item_id - b.purchase_invoice_item_id ||
                 a.product_id - b.product_id ||
                 a.unit_id - b.unit_id ||
                 a.quantity - b.quantity ||
@@ -4171,81 +4170,61 @@ async function loadPurchaseReturnInvoiceItems(){
     }
 
     $("prSupplierName").value = supplierName(invoice.supplier_id);
-    $("prItems").innerHTML = '<div class="empty">جارٍ تحميل بنود الفاتورة...</div>';
 
     const {data, error} = await db
         .from("purchase_invoice_items")
-        .select("item_id,purchase_invoice_id,product_id,unit_id,quantity,base_quantity,conversion_factor,unit_price,line_total,products(product_name)")
+        .select("item_id,purchase_invoice_id,product_id,unit_id,quantity,base_quantity,unit_price,line_total,products(product_name,base_unit_id)")
         .eq("purchase_invoice_id", invoiceId)
         .order("item_id");
 
     if(error) throw error;
-
     const sourceItems = Array.isArray(data) ? data : [];
     const invoiceSubtotal = Number(invoice.subtotal || 0);
     const invoiceDiscount = Number(invoice.discount || 0);
-    let cumulativeGross = 0;
-    let previousAllocatedDiscount = 0;
-
-    prInvoiceItemsCache = sourceItems.map(item => {
+    const grouped = new Map();
+    sourceItems.forEach(item => {
         const product = productsCache.find(p => Number(p.product_id) === Number(item.product_id));
-        const grossTotal = Number(item.line_total ?? (Number(item.quantity || 0) * Number(item.unit_price || 0)));
-        cumulativeGross += grossTotal;
-
-        // توزيع الخصم على البنود بترتيب رقم البند، مع ضبط التقريب حتى يساوي مجموع التوزيع خصم الفاتورة.
-        const cumulativeAllocatedDiscount = invoiceSubtotal > 0
-            ? Math.round((cumulativeGross * invoiceDiscount / invoiceSubtotal + Number.EPSILON) * 100) / 100
-            : 0;
-        const discountShare = Math.max(0, cumulativeAllocatedDiscount - previousAllocatedDiscount);
-        previousAllocatedDiscount = cumulativeAllocatedDiscount;
-
-        const netLineTotal = Math.max(0, grossTotal - discountShare);
-        const quantity = Number(item.quantity || 0);
-        const factor = Number(item.conversion_factor || 0);
+        const baseUnitId = Number(item.products?.base_unit_id || product?.base_unit_id || 0);
         const baseQuantity = Number(item.base_quantity || 0);
-
+        if(!baseUnitId || baseQuantity <= 0) return;
+        const key = String(item.product_id);
+        if(!grouped.has(key)){
+            grouped.set(key, {
+                product_id: Number(item.product_id),
+                unit_id: baseUnitId,
+                quantity: 0,
+                gross_total: 0,
+                products: item.products || {product_name: product?.product_name}
+            });
+        }
+        const group = grouped.get(key);
+        group.quantity += baseQuantity;
+        group.gross_total += Number(item.line_total || (Number(item.quantity || 0) * Number(item.unit_price || 0)));
+    });
+    prInvoiceItemsCache = Array.from(grouped.values()).map(item => {
+        const discountShare = invoiceSubtotal > 0
+            ? invoiceDiscount * item.gross_total / invoiceSubtotal
+            : 0;
+        const netTotal = Math.max(0, item.gross_total - discountShare);
         return {
-            purchase_invoice_item_id: Number(item.item_id),
-            product_id: Number(item.product_id),
-            unit_id: Number(item.unit_id),
-            quantity,
-            base_quantity: baseQuantity,
-            conversion_factor: factor,
-            gross_total: grossTotal,
+            ...item,
             discount_share: discountShare,
-            net_total: netLineTotal,
-            unit_price: quantity > 0 ? netLineTotal / quantity : 0,
-            products: item.products || {product_name: product?.product_name},
-            is_returnable: quantity > 0 && baseQuantity > 0 && factor > 0
+            net_total: netTotal,
+            unit_price: item.quantity > 0 ? netTotal / item.quantity : 0
         };
     });
 
     if(!prInvoiceItemsCache.length){
-        $("prItems").innerHTML = '<div class="empty">لا توجد بنود في فاتورة الشراء.</div>';
+        $("prItems").innerHTML = '<div class="empty">لا توجد أصناف قابلة للمرتجع في فاتورة الشراء.</div>';
         return;
     }
 
-    const blocked = prInvoiceItemsCache.filter(item => !item.is_returnable);
-    if(blocked.length){
-        showToast("يوجد بند لا يحتوي على معامل التحويل التاريخي، ولن يظهر للاختيار في المرتجع.", "warn");
-    }
-
-    prInvoiceItemsCache.forEach((item, index) => {
-        if(item.is_returnable) addPrItemRow(item, index);
-    });
-
-    if(!$("prItems").querySelector(".item-row")){
-        $("prItems").innerHTML = '<div class="empty">لا توجد بنود مكتملة بيانات التحويل ويمكن إرجاعها.</div>';
-    }
+    prInvoiceItemsCache.forEach((item, index) => addPrItemRow(item, index));
 }
 
 function addPrItemRow(invoiceItem = null, rowIndex = null){
-    const availableItems = prInvoiceItemsCache
-        .map((item, index) => ({item, index}))
-        .filter(x => x.item.is_returnable);
-
-    if(!availableItems.length){
-        showToast("اختر فاتورة شراء تحتوي على بنود قابلة للمرتجع أولاً", "error");
+    if(!prInvoiceItemsCache.length){
+        showToast("اختر فاتورة شراء تحتوي على أصناف أولاً", "error");
         return;
     }
 
@@ -4255,7 +4234,7 @@ function addPrItemRow(invoiceItem = null, rowIndex = null){
     wrap.dataset.itemId = "prItem_" + prItemCounter;
 
     const prodLabel = document.createElement("label");
-    prodLabel.textContent = "بند فاتورة الشراء الأصلي *";
+    prodLabel.textContent = "صنف فاتورة الشراء *";
 
     const prodSel = document.createElement("select");
     prodSel.className = "item-product";
@@ -4263,30 +4242,23 @@ function addPrItemRow(invoiceItem = null, rowIndex = null){
 
     const first = document.createElement("option");
     first.value = "";
-    first.textContent = "اختر بند الفاتورة";
+    first.textContent = "اختر الصنف";
     prodSel.appendChild(first);
 
-    const alreadySelected = new Set(
-        Array.from(document.querySelectorAll("#prItems .item-row .item-product"))
-            .map(el => el.value)
-            .filter(v => v !== "")
-    );
-
-    availableItems.forEach(({item, index}) => {
-        if(alreadySelected.has(String(index)) && index !== rowIndex) return;
+    prInvoiceItemsCache.forEach((item, index) => {
         const product = productsCache.find(p => Number(p.product_id) === Number(item.product_id));
         const op = document.createElement("option");
         op.value = String(index);
         op.textContent =
-            "بند #" + item.purchase_invoice_item_id + " - " +
             (item.products?.product_name || product?.product_name || ("صنف " + item.product_id)) +
-            " - " + fmtQty(item.quantity) + " " + unitName(item.unit_id);
+            " - وحدة المخزون: " + unitName(item.unit_id) +
+            " - الكمية بالفاتورة: " + fmtQty(item.quantity);
         prodSel.appendChild(op);
     });
 
     const qtyWrap = document.createElement("div");
     const qtyLabel = document.createElement("label");
-    qtyLabel.textContent = "الكمية المرتجعة بنفس وحدة الفاتورة *";
+    qtyLabel.textContent = "الكمية المرتجعة *";
     const qty = document.createElement("input");
     qty.type = "number";
     qty.className = "item-qty";
@@ -4298,7 +4270,7 @@ function addPrItemRow(invoiceItem = null, rowIndex = null){
 
     const unitWrap = document.createElement("div");
     const unitLabel = document.createElement("label");
-    unitLabel.textContent = "وحدة الفاتورة الأصلية";
+    unitLabel.textContent = "وحدة المخزون";
     const unitDisplay = document.createElement("input");
     unitDisplay.type = "text";
     unitDisplay.readOnly = true;
@@ -4307,7 +4279,7 @@ function addPrItemRow(invoiceItem = null, rowIndex = null){
 
     const priceWrap = document.createElement("div");
     const priceLabel = document.createElement("label");
-    priceLabel.textContent = "صافي سعر الوحدة بعد توزيع الخصم";
+    priceLabel.textContent = "سعر الوحدة بعد الخصم";
     const price = document.createElement("input");
     price.type = "number";
     price.className = "item-price";
@@ -4323,12 +4295,12 @@ function addPrItemRow(invoiceItem = null, rowIndex = null){
 
     const hint = document.createElement("div");
     hint.className = "item-hint";
-    hint.textContent = "كل سطر مرتبط ببند مستقل من فاتورة الشراء. لا تغيّر وحدة القياس عن وحدة الفاتورة الأصلية.";
+    hint.textContent = "السعر المعروض بعد توزيع خصم الفاتورة على الأصناف. أدخل الكمية بوحدة المخزون.";
 
     const removeBtn = document.createElement("button");
     removeBtn.type = "button";
     removeBtn.className = "btn danger";
-    removeBtn.textContent = "حذف البند";
+    removeBtn.textContent = "حذف الصنف";
     removeBtn.onclick = () => {
         wrap.remove();
         if(!$("prItems").querySelector(".item-row")) addPrItemRow();
@@ -4339,13 +4311,10 @@ function addPrItemRow(invoiceItem = null, rowIndex = null){
         if(!selected){
             unitDisplay.value = "";
             price.value = "";
-            qty.max = "";
             return;
         }
         unitDisplay.value = unitName(selected.unit_id);
         price.value = Number(selected.unit_price || 0).toFixed(4);
-        qty.max = String(selected.quantity);
-        qty.placeholder = "الحد الأصلي " + fmtQty(selected.quantity);
     }
 
     prodSel.addEventListener("change", applyInvoiceItem);
@@ -4443,13 +4412,7 @@ if($("purchaseReturnForm")) $("purchaseReturnForm").addEventListener("submit", a
             return;
         }
 
-        if(quantity > Number(invoiceItem.quantity) + 0.0000001){
-            invalidRow = true;
-            return;
-        }
-
         items.push({
-            purchase_invoice_item_id: Number(invoiceItem.purchase_invoice_item_id),
             product_id: Number(invoiceItem.product_id),
             unit_id: Number(invoiceItem.unit_id),
             quantity,
@@ -4457,11 +4420,8 @@ if($("purchaseReturnForm")) $("purchaseReturnForm").addEventListener("submit", a
         });
     });
 
-    const sourceLineIds = items.map(item => item.purchase_invoice_item_id);
-    if(new Set(sourceLineIds).size !== sourceLineIds.length) invalidRow = true;
-
     if(invalidRow || !items.length){
-        alert("راجع البنود والكميات. لا يمكن تكرار بند الفاتورة، ولا يجوز تجاوز كميته الأصلية.");
+        alert("راجع الأصناف والكميات وأسعار الوحدات.");
         return;
     }
 
@@ -5234,56 +5194,133 @@ if($("tripLoadForm")) $("tripLoadForm").addEventListener("submit", async e => {
 });
 
 async function viewTripSummary(t){
-  const modal = $("tripSummaryModal"); 
-  $("tripSummaryBody").innerHTML = "جارٍ التحميل..."; 
+  const modal = $("tripSummaryModal");
+  $("tripSummaryBody").innerHTML = "جارٍ التحميل...";
   modal.classList.remove("hidden");
   try {
-    const [invoicesRes, collectionsRes, expensesRes, returnsRes] = await Promise.all([ 
-      db.from("sales_invoices").select("*").eq("trip_id", t.trip_id), 
-      db.from("customer_collections").select("*").eq("trip_id", t.trip_id), 
-      db.from("expenses").select("*").eq("trip_id", t.trip_id), 
-      db.rpc("get_trip_returns", { p_trip_id: t.trip_id }) 
+    const [invoicesRes, collectionsRes, expensesRes, returnsRes] = await Promise.all([
+      db.from("sales_invoices").select("*").eq("trip_id", t.trip_id),
+      db.from("customer_collections").select("*").eq("trip_id", t.trip_id),
+      db.from("expenses").select("*").eq("trip_id", t.trip_id),
+      db.rpc("get_trip_returns", { p_trip_id: t.trip_id })
     ]);
-    const invoices = invoicesRes.data || []; 
-    const collections = collectionsRes.data || []; 
-    const expenses = expensesRes.data || []; 
-    const returns = returnsRes.data || [];
-    const totalSales = invoices.filter(i=>i.status!=="CANCELLED").reduce((s,i)=>s+Number(i.net_total||0),0);
-    const totalPaidSales = invoices.filter(i=>i.status!=="CANCELLED").reduce((s,i)=>s+Number(i.paid_amount||0),0);
-    const totalCollections = collections.reduce((s,c)=>s+Number(c.amount||0),0);
-    const totalExpenses = expenses.reduce((s,e)=>s+Number(e.amount||0),0);
-    const totalReturns = returns.reduce((s,r)=>s+Number(r.total_returned_value||0),0);
-    const netCash = totalPaidSales + totalCollections + Number(t.initial_cash||0) - totalExpenses;
-    let tripDateStr = "-"; 
-    if (t.trip_date) { 
-      const d = new Date(t.trip_date); 
-      if (!isNaN(d.getTime())) tripDateStr = d.toLocaleDateString("ar-EG"); 
-    }
-    let html = `<div style="font-size:14px;line-height:1.9;"><div><strong>الجولة:</strong> ${t.trip_number}</div><div><strong>المندوب:</strong> ${t.rep_name||"-"}</div><div><strong>السيارة:</strong> ${locationName(t.vehicle_location_id)}</div><div><strong>التاريخ:</strong> ${tripDateStr}</div></div>`;
-    html += `<div class="total-box" style="background:var(--g);color:white;margin-top:15px;"><div class="line"><span>عهدة أول المدة:</span><span>${fmt(t.initial_cash)}</span></div><div class="line"><span>مبيعات (صافي):</span><span>${fmt(totalSales)}</span></div><div class="line"><span>مدفوع فواتير:</span><span>${fmt(totalPaidSales)}</span></div><div class="line"><span>تحصيلات:</span><span>${fmt(totalCollections)}</span></div><div class="line"><span>إجمالي المرتجعات:</span><span>${fmt(totalReturns)}</span></div><div class="line"><span>مصروفات:</span><span style="color:#ffd;">-${fmt(totalExpenses)}</span></div><div class="line grand" style="color:var(--gold);"><span>صافي النقدية بالجولة:</span><span>${fmt(netCash)}</span></div></div>`;
-    html += `<h4 style="color:var(--g);margin-top:20px;">🧾 الفواتير (${invoices.length})</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>رقم</th><th>العميل</th><th>الصافي</th><th>المدفوع</th></tr></thead><tbody>`;
-    invoices.forEach(i => { html += `<tr><td>${i.invoice_number}</td><td>${customerName(i.customer_id)}</td><td>${fmt(i.net_total)}</td><td>${fmt(i.paid_amount)}</td></tr>`; }); 
-    if(!invoices.length) html += `<tr><td colspan="4">لا توجد فواتير</td></tr>`; 
-    html += `</tbody></table></div><div class="mini-summary"><div class="line"><span>إجمالي الفواتير:</span><span style="font-weight:bold;">${fmt(totalSales)}</span></div></div>`;
-    html += `<h4 style="color:var(--g);margin-top:20px;">↩️ المرتجعات (${returns.length})</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>رقم</th><th>العميل</th><th>القيمة</th></tr></thead><tbody>`;
-    returns.forEach(r => { html += `<tr><td>${r.return_number}</td><td>${r.customer_name}</td><td>${fmt(r.total_returned_value)}</td></tr>`; }); 
-    if(!returns.length) html += `<tr><td colspan="3">لا توجد مرتجعات</td></tr>`; 
-    html += `</tbody></table></div><div class="mini-summary"><div class="line"><span>إجمالي المرتجعات:</span><span style="font-weight:bold;">${fmt(totalReturns)}</span></div></div>`;
-    html += `<h4 style="color:var(--g);margin-top:20px;">💰 التحصيلات (${collections.length})</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>رقم</th><th>العميل</th><th>المبلغ</th></tr></thead><tbody>`;
-    collections.forEach(c => { html += `<tr><td>${c.collection_number}</td><td>${customerName(c.customer_id)}</td><td>${fmt(c.amount)}</td></tr>`; }); 
-    if(!collections.length) html += `<tr><td colspan="3">لا توجد تحصيلات</td></tr>`; 
-    html += `</tbody></table></div><div class="mini-summary"><div class="line"><span>إجمالي التحصيلات:</span><span style="font-weight:bold;">${fmt(totalCollections)}</span></div></div>`;
-    html += `<h4 style="color:var(--g);margin-top:20px;">🧾 المصروفات (${expenses.length})</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>النوع</th><th>المبلغ</th><th>التاريخ</th></tr></thead><tbody>`;
-    expenses.forEach(e => { html += `<tr><td>${expenseTypeName(e.expense_type)}</td><td>${fmt(e.amount)}</td><td>${new Date(e.expense_date).toLocaleDateString("ar-EG")}</td></tr>`; }); 
-    if(!expenses.length) html += `<tr><td colspan="3">لا توجد مصروفات</td></tr>`; 
-    html += `</tbody></table></div><div class="mini-summary"><div class="line"><span>إجمالي المصروفات:</span><span style="font-weight:bold;">${fmt(totalExpenses)}</span></div></div>`;
-    $("tripSummaryBody").innerHTML = html;
-    const waText = `*كشف حساب الجولة*\n${t.trip_number} - ${t.rep_name||""}\n------------------------\nعهدة: ${fmt(t.initial_cash)}\nمبيعات: ${fmt(totalSales)}\nتحصيلات: ${fmt(totalCollections)}\nمرتجعات: ${fmt(totalReturns)}\nمصروفات: ${fmt(totalExpenses)}\n------------------------\n*صافي النقدية: ${fmt(netCash)}*`;
-    $("shareTripWhatsappBtn").onclick = () => { window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); };
-    fillPrintHeaders();
-  } catch(e){ $("tripSummaryBody").innerHTML = `<span style="color:red;">خطأ: ${err(e)}</span>`; }
-}
 
+    if (invoicesRes.error) throw invoicesRes.error;
+    if (collectionsRes.error) throw collectionsRes.error;
+    if (expensesRes.error) throw expensesRes.error;
+    if (returnsRes.error) throw returnsRes.error;
+
+    const invoices = invoicesRes.data || [];
+    const collections = (collectionsRes.data || []).filter(c => c.status === "POSTED");
+    const expenses = expensesRes.data || [];
+    const returns = returnsRes.data || [];
+
+    const MANDOUB_TREASURY_ID = 8;
+    const totalSales = invoices
+      .filter(i => i.status !== "CANCELLED")
+      .reduce((s, i) => s + Number(i.net_total || 0), 0);
+
+    const totalCollections = collections.reduce(
+      (s, c) => s + Number(c.amount || 0), 0
+    );
+    const cashCollections = collections
+      .filter(c => c.payment_method === "CASH" && Number(c.treasury_id) === MANDOUB_TREASURY_ID)
+      .reduce((s, c) => s + Number(c.amount || 0), 0);
+
+    const collectionTotals = collections.reduce((totals, c) => {
+      const method = c.payment_method || "OTHER";
+      totals[method] = (totals[method] || 0) + Number(c.amount || 0);
+      return totals;
+    }, {});
+
+    const totalExpenses = expenses.reduce(
+      (s, e) => s + Number(e.amount || 0), 0
+    );
+    const cashExpenses = expenses
+      .filter(e => Number(e.treasury_id) === MANDOUB_TREASURY_ID)
+      .reduce((s, e) => s + Number(e.amount || 0), 0);
+
+    const totalReturns = returns.reduce(
+      (s, r) => s + Number(r.total_returned_value || 0), 0
+    );
+    const cashBackReturns = returns
+      .filter(r => r.cash_action === "CASH_BACK" && Number(r.treasury_id) === MANDOUB_TREASURY_ID)
+      .reduce((s, r) => s + Math.abs(Number(r.price_difference || 0)), 0);
+
+    const initialCash = Number(t.initial_cash || 0);
+    const netCash = initialCash + cashCollections - cashExpenses - cashBackReturns;
+
+    const methodNames = {
+      CASH: "نقدي",
+      BANK_TRANSFER: "تحويل بنكي",
+      INSTAPAY: "إنستاباي",
+      CHEQUE: "شيك",
+      OTHER: "أخرى"
+    };
+
+    let tripDateStr = "-";
+    if (t.trip_date) {
+      const d = new Date(t.trip_date);
+      if (!isNaN(d.getTime())) tripDateStr = d.toLocaleDateString("ar-EG");
+    }
+
+    let html = `<div style="font-size:14px;line-height:1.9;"><div><strong>الجولة:</strong> ${t.trip_number}</div><div><strong>المندوب:</strong> ${t.rep_name||"-"}</div><div><strong>السيارة:</strong> ${locationName(t.vehicle_location_id)}</div><div><strong>التاريخ:</strong> ${tripDateStr}</div></div>`;
+
+    html += `<div class="total-box" style="background:var(--g);color:white;margin-top:15px;">
+      <div class="line"><span>عهدة أول المدة:</span><span>${fmt(initialCash)}</span></div>
+      <div class="line"><span>مبيعات (صافي):</span><span>${fmt(totalSales)}</span></div>
+      <div class="line"><span>إجمالي التحصيلات بكل الوسائل:</span><span>${fmt(totalCollections)}</span></div>
+      <div class="line"><span>التحصيل النقدي بخزنة المناديب:</span><span>${fmt(cashCollections)}</span></div>
+      <div class="line"><span>مصروفات خزنة المناديب:</span><span>-${fmt(cashExpenses)}</span></div>
+      <div class="line"><span>مبالغ مردودة نقدًا من خزنة المناديب:</span><span>-${fmt(cashBackReturns)}</span></div>
+      <div class="line"><span>إجمالي قيمة المرتجعات (للعرض فقط):</span><span>${fmt(totalReturns)}</span></div>
+      <div class="line grand" style="color:var(--gold);"><span>صافي النقدية الفعلية بالجولة:</span><span>${fmt(netCash)}</span></div>
+    </div>`;
+
+    html += `<h4 style="color:var(--g);margin-top:20px;">🧾 الفواتير (${invoices.length})</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>رقم</th><th>العميل</th><th>الصافي</th><th>المدفوع بالفاتورة</th></tr></thead><tbody>`;
+    invoices.forEach(i => {
+      html += `<tr><td>${i.invoice_number}</td><td>${customerName(i.customer_id)}</td><td>${fmt(i.net_total)}</td><td>${fmt(i.paid_amount)}</td></tr>`;
+    });
+    if(!invoices.length) html += `<tr><td colspan="4">لا توجد فواتير</td></tr>`;
+    html += `</tbody></table></div><div class="mini-summary"><div class="line"><span>إجمالي الفواتير غير الملغاة:</span><span style="font-weight:bold;">${fmt(totalSales)}</span></div></div>`;
+
+    html += `<h4 style="color:var(--g);margin-top:20px;">↩️ المرتجعات (${returns.length})</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>رقم</th><th>العميل</th><th>قيمة المرتجع</th><th>الإجراء النقدي</th><th>فرق السعر</th><th>الخزنة</th></tr></thead><tbody>`;
+    returns.forEach(r => {
+      const actionName = r.cash_action === "CASH_BACK" ? "رد نقدي" : r.cash_action === "CUSTOMER_PAYS_CASH" ? "تحصيل نقدي" : (r.cash_action || "-");
+      html += `<tr><td>${r.return_number}</td><td>${r.customer_name}</td><td>${fmt(r.total_returned_value)}</td><td>${actionName}</td><td>${fmt(r.price_difference)}</td><td>${r.treasury_id || "-"}</td></tr>`;
+    });
+    if(!returns.length) html += `<tr><td colspan="6">لا توجد مرتجعات</td></tr>`;
+    html += `</tbody></table></div><div class="mini-summary"><div class="line"><span>إجمالي قيمة المرتجعات (لا تخصم من النقدية تلقائيًا):</span><span style="font-weight:bold;">${fmt(totalReturns)}</span></div><div class="line"><span>المردود نقدًا من خزنة المناديب:</span><span style="font-weight:bold;">${fmt(cashBackReturns)}</span></div></div>`;
+
+    html += `<h4 style="color:var(--g);margin-top:20px;">💰 التحصيلات (${collections.length})</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>رقم</th><th>العميل</th><th>وسيلة الدفع</th><th>الخزنة</th><th>المبلغ</th></tr></thead><tbody>`;
+    collections.forEach(c => {
+      html += `<tr><td>${c.collection_number || "-"}</td><td>${customerName(c.customer_id)}</td><td>${methodNames[c.payment_method] || c.payment_method || "أخرى"}</td><td>${c.treasury_id || "-"}</td><td>${fmt(c.amount)}</td></tr>`;
+    });
+    if(!collections.length) html += `<tr><td colspan="5">لا توجد تحصيلات</td></tr>`;
+    html += `</tbody></table></div><div class="mini-summary">`;
+    Object.keys(collectionTotals).sort().forEach(method => {
+      html += `<div class="line"><span>تحصيلات ${methodNames[method] || method}:</span><span style="font-weight:bold;">${fmt(collectionTotals[method])}</span></div>`;
+    });
+    html += `<div class="line"><span>إجمالي التحصيلات:</span><span style="font-weight:bold;">${fmt(totalCollections)}</span></div></div>`;
+
+    html += `<h4 style="color:var(--g);margin-top:20px;">🧾 المصروفات (${expenses.length})</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>النوع</th><th>الخزنة</th><th>المبلغ</th><th>التاريخ</th></tr></thead><tbody>`;
+    expenses.forEach(e => {
+      html += `<tr><td>${expenseTypeName(e.expense_type)}</td><td>${e.treasury_id || "-"}</td><td>${fmt(e.amount)}</td><td>${new Date(e.expense_date).toLocaleDateString("ar-EG")}</td></tr>`;
+    });
+    if(!expenses.length) html += `<tr><td colspan="4">لا توجد مصروفات</td></tr>`;
+    html += `</tbody></table></div><div class="mini-summary"><div class="line"><span>إجمالي مصروفات الجولة:</span><span style="font-weight:bold;">${fmt(totalExpenses)}</span></div><div class="line"><span>المخصوم من خزنة المناديب:</span><span style="font-weight:bold;">${fmt(cashExpenses)}</span></div></div>`;
+
+    $("tripSummaryBody").innerHTML = html;
+
+    const waText = `كشف حساب الجولة\n${t.trip_number} - ${t.rep_name||""}\nعهدة أول المدة: ${fmt(initialCash)}\nالمبيعات: ${fmt(totalSales)}\nإجمالي التحصيلات: ${fmt(totalCollections)}\nالتحصيل النقدي بخزنة المناديب: ${fmt(cashCollections)}\nمصروفات خزنة المناديب: ${fmt(cashExpenses)}\nمردود نقدي من خزنة المناديب: ${fmt(cashBackReturns)}\nإجمالي المرتجعات: ${fmt(totalReturns)}\nصافي النقدية الفعلية: ${fmt(netCash)}`;
+    $("shareTripWhatsappBtn").onclick = () => {
+      window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, "_blank");
+    };
+    fillPrintHeaders();
+  } catch(e) {
+    $("tripSummaryBody").innerHTML = `<span style="color:red;">خطأ: ${err(e)}</span>`;
+  }
+}
 // ========== الشركاء ==========
 async function loadPartners(){ 
   if(!navigator.onLine) return; 
