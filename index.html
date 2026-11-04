@@ -1075,7 +1075,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <label for="purchaseLocation">الموقع (المستلم) *</label><select id="purchaseLocation" required><option value="">اختر الموقع</option></select>
 <label for="purchaseDate">التاريخ *</label><input id="purchaseDate" type="date" required>
 <label for="purchaseDiscount">الخصم</label><input id="purchaseDiscount" type="number" min="0" step="0.01" value="0">
-<label for="purchaseTreasury">الخزنة (للمشتريات النقدية) *</label><select id="purchaseTreasury"><option value="">اختر الخزنة</option></select>
+<label for="purchaseTreasury">الخزنة (للمشتريات النقدية)</label><select id="purchaseTreasury"><option value="">بدون خزنة - شراء آجل</option></select><p class="desc" style="margin:6px 0 10px;">اختر الخزنة إذا دفعت قيمة الفاتورة نقدًا. اتركها بدون اختيار إذا كانت المشتريات على الحساب.</p>
 <label style="margin-top:16px">الأصناف *</label>
 <div id="purchaseItems"></div>
 <button id="addPurchaseItemBtn" class="btn secondary" type="button" style="margin-top:8px">＋ إضافة صنف</button>
@@ -1182,15 +1182,18 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <label style="margin-top:10px;">الأصناف المرتجعة *</label>
 <div id="prItems"><div class="empty">اختر فاتورة الشراء لتحميل أصنافها.</div></div>
 <button type="button" class="btn secondary" onclick="addPrItemRow()" style="margin-top:8px;">＋ إضافة صنف من الفاتورة</button>
-<label>طريقة التسوية *</label>
+<div class="card" style="margin-top:14px;padding:12px;border:1px solid var(--line);">
+<label style="margin-top:0;">طريقة التسوية *</label>
 <select id="prSettlementMethod" required>
 <option value="SUPPLIER_CREDIT">إضافة قيمة المرتجع إلى رصيد المورد</option>
 <option value="CASH">استرداد نقدي</option>
 <option value="BANK">استرداد بنكي أو Instapay</option>
 </select>
+<p class="desc" style="margin:6px 0;">اختر إضافة قيمة المرتجع إلى رصيد المورد، أو استردادها نقدًا، أو تحويلًا بنكيًا / Instapay.</p>
 <div id="prTreasuryWrap" class="hidden">
 <label>خزنة الاسترداد *</label>
 <select id="prTreasury"><option value="">اختر الخزنة</option></select>
+</div>
 </div>
 <label>ملاحظات</label><textarea id="prNotes" rows="2"></textarea>
 <button id="savePrBtn" class="btn" type="submit">حفظ المرتجع</button>
@@ -3979,6 +3982,8 @@ async function loadPurchaseReturnInvoiceItems(){
 
     if(error) throw error;
     const sourceItems = Array.isArray(data) ? data : [];
+    const invoiceSubtotal = Number(invoice.subtotal || 0);
+    const invoiceDiscount = Number(invoice.discount || 0);
     const grouped = new Map();
     sourceItems.forEach(item => {
         const product = productsCache.find(p => Number(p.product_id) === Number(item.product_id));
@@ -3991,18 +3996,26 @@ async function loadPurchaseReturnInvoiceItems(){
                 product_id: Number(item.product_id),
                 unit_id: baseUnitId,
                 quantity: 0,
-                total_cost: 0,
+                gross_total: 0,
                 products: item.products || {product_name: product?.product_name}
             });
         }
         const group = grouped.get(key);
         group.quantity += baseQuantity;
-        group.total_cost += Number(item.line_total || (Number(item.quantity || 0) * Number(item.unit_price || 0)));
+        group.gross_total += Number(item.line_total || (Number(item.quantity || 0) * Number(item.unit_price || 0)));
     });
-    prInvoiceItemsCache = Array.from(grouped.values()).map(item => ({
-        ...item,
-        unit_price: item.quantity > 0 ? item.total_cost / item.quantity : 0
-    }));
+    prInvoiceItemsCache = Array.from(grouped.values()).map(item => {
+        const discountShare = invoiceSubtotal > 0
+            ? invoiceDiscount * item.gross_total / invoiceSubtotal
+            : 0;
+        const netTotal = Math.max(0, item.gross_total - discountShare);
+        return {
+            ...item,
+            discount_share: discountShare,
+            net_total: netTotal,
+            unit_price: item.quantity > 0 ? netTotal / item.quantity : 0
+        };
+    });
 
     if(!prInvoiceItemsCache.length){
         $("prItems").innerHTML = '<div class="empty">لا توجد أصناف قابلة للمرتجع في فاتورة الشراء.</div>';
@@ -4069,12 +4082,13 @@ function addPrItemRow(invoiceItem = null, rowIndex = null){
 
     const priceWrap = document.createElement("div");
     const priceLabel = document.createElement("label");
-    priceLabel.textContent = "سعر الوحدة *";
+    priceLabel.textContent = "سعر الوحدة بعد الخصم";
     const price = document.createElement("input");
     price.type = "number";
     price.className = "item-price";
     price.min = "0";
-    price.step = "0.01";
+    price.step = "0.0001";
+    price.readOnly = true;
     price.required = true;
     priceWrap.append(priceLabel, price);
 
@@ -4084,7 +4098,7 @@ function addPrItemRow(invoiceItem = null, rowIndex = null){
 
     const hint = document.createElement("div");
     hint.className = "item-hint";
-    hint.textContent = "أدخل الكمية بوحدة المخزون. يتحقق النظام من الكمية المتبقية عند الحفظ.";
+    hint.textContent = "السعر المعروض بعد توزيع خصم الفاتورة على الأصناف. أدخل الكمية بوحدة المخزون.";
 
     const removeBtn = document.createElement("button");
     removeBtn.type = "button";
@@ -4103,7 +4117,7 @@ function addPrItemRow(invoiceItem = null, rowIndex = null){
             return;
         }
         unitDisplay.value = unitName(selected.unit_id);
-        price.value = Number(selected.unit_price || 0).toFixed(2);
+        price.value = Number(selected.unit_price || 0).toFixed(4);
     }
 
     prodSel.addEventListener("change", applyInvoiceItem);
