@@ -4428,6 +4428,40 @@ if($("purchaseReturnForm")) $("purchaseReturnForm").addEventListener("submit", a
     busy(btn, true, "جارٍ...", "حفظ");
 
     try {
+        const { data: authData, error: authError } = await db.auth.getUser();
+        if(authError) throw authError;
+        const currentUserId = authData?.user?.id;
+        if(!currentUserId) throw new Error("انتهت جلسة الدخول. سجل الدخول مرة أخرى ثم أعد المحاولة.");
+
+        const requestStorageKey = "mm_purchase_return_pending_request_" + currentUserId;
+        const requestPayload = {
+            purchase_invoice_id: invoiceId,
+            supplier_id: Number(invoice.supplier_id),
+            return_date: $("prDate").value,
+            items: items.slice().sort((a, b) =>
+                a.product_id - b.product_id ||
+                a.unit_id - b.unit_id ||
+                a.quantity - b.quantity ||
+                a.unit_price - b.unit_price
+            ),
+            notes: $("prNotes").value || null,
+            settlement_method: method,
+            treasury_id: treasuryId
+        };
+
+        let pendingRequest = null;
+        try {
+            pendingRequest = JSON.parse(localStorage.getItem(requestStorageKey) || "null");
+        } catch(storageReadError) {}
+
+        if(!pendingRequest || !pendingRequest.request_id || JSON.stringify(pendingRequest.payload) !== JSON.stringify(requestPayload)) {
+            pendingRequest = {
+                request_id: createSupplierPaymentRequestId(),
+                payload: requestPayload
+            };
+        }
+        localStorage.setItem(requestStorageKey, JSON.stringify(pendingRequest));
+
         const {error} = await db.rpc("create_purchase_return", {
             p_purchase_invoice_id: invoiceId,
             p_supplier_id: Number(invoice.supplier_id),
@@ -4435,11 +4469,13 @@ if($("purchaseReturnForm")) $("purchaseReturnForm").addEventListener("submit", a
             p_items: items,
             p_notes: $("prNotes").value,
             p_settlement_method: method,
-            p_treasury_id: treasuryId
+            p_treasury_id: treasuryId,
+            p_request_id: pendingRequest.request_id
         });
 
         if(error) throw error;
 
+        localStorage.removeItem(requestStorageKey);
         showToast("تم تسجيل المرتجع وتسويته بنجاح", "success");
         $("purchaseReturnFormModal").classList.remove("active");
         $("purchaseReturnForm").reset();
