@@ -1166,7 +1166,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 <div class="row" style="justify-content:space-between; margin-bottom:10px;">
 <span style="font-weight:bold; font-size:14px; color:var(--g);">سجل المرتجعات</span>
-<button class="btn" style="margin:0;width:auto;" onclick="document.getElementById('purchaseReturnFormModal').classList.add('active')">＋ مرتجع جديد</button>
+<button class="btn" style="margin:0;width:auto;" onclick="openPurchaseReturnForm()">＋ مرتجع جديد</button>
 </div>
 <div id="purchaseReturnsList" style="margin-top:15px;"><div class="empty">جارٍ التحميل...</div></div>
 </div>
@@ -1177,10 +1177,21 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="modal-body">
 <form id="purchaseReturnForm" onsubmit="event.preventDefault();">
 <label>فاتورة المشتريات الأصلية *</label><select id="prInvoice" required><option value="">اختر الفاتورة</option></select>
+<label>المورد</label><input id="prSupplierName" type="text" readonly placeholder="يُحدد من فاتورة الشراء">
 <label>تاريخ المرتجع *</label><input id="prDate" type="date" required>
 <label style="margin-top:10px;">الأصناف المرتجعة *</label>
-<div id="prItems"></div>
-<button type="button" class="btn secondary" onclick="addPrItemRow()" style="margin-top:8px;">＋ إضافة صنف</button>
+<div id="prItems"><div class="empty">اختر فاتورة الشراء لتحميل أصنافها.</div></div>
+<button type="button" class="btn secondary" onclick="addPrItemRow()" style="margin-top:8px;">＋ إضافة صنف من الفاتورة</button>
+<label>طريقة التسوية *</label>
+<select id="prSettlementMethod" required>
+<option value="SUPPLIER_CREDIT">إضافة قيمة المرتجع إلى رصيد المورد</option>
+<option value="CASH">استرداد نقدي</option>
+<option value="BANK">استرداد بنكي أو Instapay</option>
+</select>
+<div id="prTreasuryWrap" class="hidden">
+<label>خزنة الاسترداد *</label>
+<select id="prTreasury"><option value="">اختر الخزنة</option></select>
+</div>
 <label>ملاحظات</label><textarea id="prNotes" rows="2"></textarea>
 <button id="savePrBtn" class="btn" type="submit">حفظ المرتجع</button>
 <div id="prMsg" class="status hidden"></div>
@@ -1788,7 +1799,7 @@ function fillStockTransferSelects(){ const s=$("stSource"); const d=$("stDest");
 function fillPartnerSelect(){ const el=$("ptPartner"); if(!el)return; const cur=el.value; el.replaceChildren(); const first=document.createElement("option"); first.value=""; first.textContent="اختر الشريك"; el.appendChild(first); partnersCache.filter(p=>p.is_active).forEach(p=>{ const op=document.createElement("option"); op.value=String(p.partner_id); op.textContent=p.partner_name; el.appendChild(op); }); el.value=cur; }
 function fillPartnerTreasurySelect(){ const el=$("ptTreasury"); if(!el)return; const cur=el.value; el.replaceChildren(); const first=document.createElement("option"); first.value=""; first.textContent="بدون خزنة (مساهمة عينية)"; el.appendChild(first); treasuriesCache.filter(t=>t.is_active).forEach(t=>{ const op=document.createElement("option"); op.value=String(t.treasury_id); op.textContent=t.treasury_name; el.appendChild(op); }); el.value=cur; }
 function fillExpenseTripSelect() { const el = $("expenseTrip"); if(!el) return; const cur = el.value; el.replaceChildren(); const first = document.createElement("option"); first.value = ""; first.textContent = "بدون ربط"; el.appendChild(first); tripsCache.filter(t => t.status !== 'COMPLETED').forEach(t => { const op = document.createElement("option"); op.value = String(t.trip_id); op.textContent = t.trip_number + " (" + (t.rep_name||"") + ")"; el.appendChild(op); }); el.value = cur; }
-function fillPurchaseReturnInvoiceSelect() { const el = $("prInvoice"); if(!el) return; const cur = el.value; el.replaceChildren(); const first = document.createElement("option"); first.value = ""; first.textContent = "اختر الفاتورة"; el.appendChild(first); purchasesCache.forEach(inv => { const op = document.createElement("option"); op.value = String(inv.purchase_invoice_id); op.textContent = inv.invoice_number + " - " + supplierName(inv.supplier_id); el.appendChild(op); }); el.value = cur; }
+function fillPurchaseReturnInvoiceSelect() { const el = $("prInvoice"); if(!el) return; const cur = el.value; el.replaceChildren(); const first = document.createElement("option"); first.value = ""; first.textContent = "اختر الفاتورة"; el.appendChild(first); purchasesCache.filter(inv => inv.status === "POSTED").forEach(inv => { const op = document.createElement("option"); op.value = String(inv.purchase_invoice_id); op.textContent = inv.invoice_number + " - " + supplierName(inv.supplier_id); el.appendChild(op); }); el.value = cur; }
 function fillSupplierFilterSelects() { const ids = ["spSupplierFilter", "prSupplierFilter"]; ids.forEach(id => { const el = $(id); if(!el) return; const cur = el.value; el.replaceChildren(); const first = document.createElement("option"); first.value = ""; first.textContent = "كل الموردين"; el.appendChild(first); suppliersCache.filter(s=>s.is_active).forEach(s => { const op = document.createElement("option"); op.value = String(s.supplier_id); op.textContent = s.supplier_name; el.appendChild(op); }); el.value = cur; }); }
 function fillCollectionsCustomerFilter() { const el = $("collectionsCustomerFilter"); if(!el) return; const cur = el.value; el.replaceChildren(); const first = document.createElement("option"); first.value = ""; first.textContent = "كل العملاء"; el.appendChild(first); customersCache.filter(c=>c.is_active).forEach(c => { const op = document.createElement("option"); op.value = String(c.customer_id); op.textContent = c.customer_name; el.appendChild(op); }); el.value = cur; }
 function fillReservationSelects() { const cs = $("rsCustomer"); if(cs){ const cur=cs.value; cs.replaceChildren(); const f=document.createElement("option"); f.value=""; f.textContent="اختر العميل"; cs.appendChild(f); customersCache.filter(c=>c.is_active).forEach(c=>{ const op=document.createElement("option"); op.value=String(c.customer_id); op.textContent=c.customer_name; cs.appendChild(op); }); cs.value=cur; } const ps = $("rsProduct"); if(ps){ const cur=ps.value; ps.replaceChildren(); const f=document.createElement("option"); f.value=""; f.textContent="اختر المنتج"; ps.appendChild(f); productsCache.filter(p=>p.is_active).forEach(p=>{ const op=document.createElement("option"); op.value=String(p.product_id); op.textContent=p.product_name; ps.appendChild(op); }); ps.value=cur; } const ls = $("rsLocation"); if(ls){ const cur=ls.value; ls.replaceChildren(); const f=document.createElement("option"); f.value=""; f.textContent="اختر الموقع"; ls.appendChild(f); locationsCache.filter(l=>l.is_active).forEach(l=>{ const op=document.createElement("option"); op.value=String(l.location_id); op.textContent=l.location_name; ls.appendChild(op); }); ls.value=cur; } }
@@ -3926,50 +3937,309 @@ if($("viewPrStatementBtn")) $("viewPrStatementBtn").addEventListener("click", as
     fillPrintHeaders();
 });
 
-function addPrItemRow(){ 
-    prItemCounter++; 
-    const wrap=document.createElement("div"); wrap.className="item-row"; 
-    const prodLabel=document.createElement("label"); prodLabel.textContent="المنتج *"; 
-    const prodSel=document.createElement("select"); prodSel.className="item-product"; prodSel.required=true; 
-    const first=document.createElement("option"); first.value=""; first.textContent="اختر المنتج"; prodSel.appendChild(first); 
-    productsCache.filter(p=>p.is_active).forEach(p=>{ const op=document.createElement("option"); op.value=String(p.product_id); op.textContent=p.product_name; prodSel.appendChild(op); }); 
-    const qtyWrap=document.createElement("div"); 
-    const qtyLabel=document.createElement("label"); qtyLabel.textContent="الكمية *"; 
-    const qty=document.createElement("input"); qty.type="number"; qty.className="item-qty"; qty.min="0.0001"; qty.step="0.0001"; qty.required=true; 
-    qtyWrap.append(qtyLabel,qty); 
-    const priceWrap=document.createElement("div"); 
-    const priceLabel=document.createElement("label"); priceLabel.textContent="سعر الوحدة *"; 
-    const price=document.createElement("input"); price.type="number"; price.className="item-price"; price.min="0"; price.step="0.01"; price.required=true; 
-    priceWrap.append(priceLabel,price); 
-    const grid2=document.createElement("div"); grid2.className="grid"; grid2.append(qtyWrap,priceWrap); 
-    const removeBtn=document.createElement("button"); removeBtn.type="button"; removeBtn.className="btn danger"; removeBtn.textContent="حذف"; 
-    removeBtn.onclick=()=>{ wrap.remove(); if(!$("prItems").children.length) addPrItemRow(); }; 
-    wrap.append(prodLabel,prodSel,grid2,removeBtn); 
-    $("prItems").appendChild(wrap); 
+let prInvoiceItemsCache = [];
+
+function openPurchaseReturnForm(){
+    const form = $("purchaseReturnForm");
+    if(form) form.reset();
+    $("prItems").innerHTML = '<div class="empty">اختر فاتورة الشراء لتحميل أصنافها.</div>';
+    $("prSupplierName").value = "";
+    $("prTreasuryWrap").classList.add("hidden");
+    $("prTreasury").replaceChildren();
+    const first = document.createElement("option");
+    first.value = "";
+    first.textContent = "اختر الخزنة";
+    $("prTreasury").appendChild(first);
+    const today = new Date();
+    $("prDate").value = [today.getFullYear(), String(today.getMonth()+1).padStart(2,"0"), String(today.getDate()).padStart(2,"0")].join("-");
+    prInvoiceItemsCache = [];
+    fillPurchaseReturnInvoiceSelect();
+    $("purchaseReturnFormModal").classList.add("active");
 }
+
+async function loadPurchaseReturnInvoiceItems(){
+    const invoiceId = Number($("prInvoice").value || 0);
+    const invoice = purchasesCache.find(x => Number(x.purchase_invoice_id) === invoiceId);
+    prInvoiceItemsCache = [];
+    $("prItems").replaceChildren();
+
+    if(!invoiceId || !invoice){
+        $("prSupplierName").value = "";
+        $("prItems").innerHTML = '<div class="empty">اختر فاتورة الشراء لتحميل أصنافها.</div>';
+        return;
+    }
+
+    $("prSupplierName").value = supplierName(invoice.supplier_id);
+
+    const {data, error} = await db
+        .from("purchase_invoice_items")
+        .select("item_id,purchase_invoice_id,product_id,unit_id,quantity,base_quantity,unit_price,line_total,products(product_name,base_unit_id)")
+        .eq("purchase_invoice_id", invoiceId)
+        .order("item_id");
+
+    if(error) throw error;
+    const sourceItems = Array.isArray(data) ? data : [];
+    const grouped = new Map();
+    sourceItems.forEach(item => {
+        const product = productsCache.find(p => Number(p.product_id) === Number(item.product_id));
+        const baseUnitId = Number(item.products?.base_unit_id || product?.base_unit_id || 0);
+        const baseQuantity = Number(item.base_quantity || 0);
+        if(!baseUnitId || baseQuantity <= 0) return;
+        const key = String(item.product_id);
+        if(!grouped.has(key)){
+            grouped.set(key, {
+                product_id: Number(item.product_id),
+                unit_id: baseUnitId,
+                quantity: 0,
+                total_cost: 0,
+                products: item.products || {product_name: product?.product_name}
+            });
+        }
+        const group = grouped.get(key);
+        group.quantity += baseQuantity;
+        group.total_cost += Number(item.line_total || (Number(item.quantity || 0) * Number(item.unit_price || 0)));
+    });
+    prInvoiceItemsCache = Array.from(grouped.values()).map(item => ({
+        ...item,
+        unit_price: item.quantity > 0 ? item.total_cost / item.quantity : 0
+    }));
+
+    if(!prInvoiceItemsCache.length){
+        $("prItems").innerHTML = '<div class="empty">لا توجد أصناف قابلة للمرتجع في فاتورة الشراء.</div>';
+        return;
+    }
+
+    prInvoiceItemsCache.forEach((item, index) => addPrItemRow(item, index));
+}
+
+function addPrItemRow(invoiceItem = null, rowIndex = null){
+    if(!prInvoiceItemsCache.length){
+        showToast("اختر فاتورة شراء تحتوي على أصناف أولاً", "error");
+        return;
+    }
+
+    prItemCounter++;
+    const wrap = document.createElement("div");
+    wrap.className = "item-row";
+    wrap.dataset.itemId = "prItem_" + prItemCounter;
+
+    const prodLabel = document.createElement("label");
+    prodLabel.textContent = "صنف فاتورة الشراء *";
+
+    const prodSel = document.createElement("select");
+    prodSel.className = "item-product";
+    prodSel.required = true;
+
+    const first = document.createElement("option");
+    first.value = "";
+    first.textContent = "اختر الصنف";
+    prodSel.appendChild(first);
+
+    prInvoiceItemsCache.forEach((item, index) => {
+        const product = productsCache.find(p => Number(p.product_id) === Number(item.product_id));
+        const op = document.createElement("option");
+        op.value = String(index);
+        op.textContent =
+            (item.products?.product_name || product?.product_name || ("صنف " + item.product_id)) +
+            " - وحدة المخزون: " + unitName(item.unit_id) +
+            " - الكمية بالفاتورة: " + fmtQty(item.quantity);
+        prodSel.appendChild(op);
+    });
+
+    const qtyWrap = document.createElement("div");
+    const qtyLabel = document.createElement("label");
+    qtyLabel.textContent = "الكمية المرتجعة *";
+    const qty = document.createElement("input");
+    qty.type = "number";
+    qty.className = "item-qty";
+    qty.min = "0.0001";
+    qty.step = "0.0001";
+    qty.required = true;
+    qty.placeholder = "أدخل الكمية";
+    qtyWrap.append(qtyLabel, qty);
+
+    const unitWrap = document.createElement("div");
+    const unitLabel = document.createElement("label");
+    unitLabel.textContent = "وحدة المخزون";
+    const unitDisplay = document.createElement("input");
+    unitDisplay.type = "text";
+    unitDisplay.readOnly = true;
+    unitDisplay.className = "item-unit-display";
+    unitWrap.append(unitLabel, unitDisplay);
+
+    const priceWrap = document.createElement("div");
+    const priceLabel = document.createElement("label");
+    priceLabel.textContent = "سعر الوحدة *";
+    const price = document.createElement("input");
+    price.type = "number";
+    price.className = "item-price";
+    price.min = "0";
+    price.step = "0.01";
+    price.required = true;
+    priceWrap.append(priceLabel, price);
+
+    const grid = document.createElement("div");
+    grid.className = "grid";
+    grid.append(qtyWrap, unitWrap, priceWrap);
+
+    const hint = document.createElement("div");
+    hint.className = "item-hint";
+    hint.textContent = "أدخل الكمية بوحدة المخزون. يتحقق النظام من الكمية المتبقية عند الحفظ.";
+
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "btn danger";
+    removeBtn.textContent = "حذف الصنف";
+    removeBtn.onclick = () => {
+        wrap.remove();
+        if(!$("prItems").querySelector(".item-row")) addPrItemRow();
+    };
+
+    function applyInvoiceItem(){
+        const selected = prInvoiceItemsCache[Number(prodSel.value)];
+        if(!selected){
+            unitDisplay.value = "";
+            price.value = "";
+            return;
+        }
+        unitDisplay.value = unitName(selected.unit_id);
+        price.value = Number(selected.unit_price || 0).toFixed(2);
+    }
+
+    prodSel.addEventListener("change", applyInvoiceItem);
+    wrap.append(prodLabel, prodSel, grid, hint, removeBtn);
+    $("prItems").appendChild(wrap);
+
+    if(invoiceItem){
+        const index = rowIndex !== null
+            ? rowIndex
+            : prInvoiceItemsCache.indexOf(invoiceItem);
+        prodSel.value = String(index);
+        applyInvoiceItem();
+    }
+}
+
 window.addPrItemRow = addPrItemRow;
-if($("purchaseReturnForm")) $("purchaseReturnForm").addEventListener("submit", async e => { 
-    e.preventDefault(); 
-    const btn=$("savePrBtn"); 
-    busy(btn,true,"جارٍ...","حفظ"); 
-    const items=[]; 
-    document.querySelectorAll("#prItems .item-row").forEach(row => { 
-      const pid=row.querySelector(".item-product").value; 
-      const q=Number(row.querySelector(".item-qty").value||0); 
-      const p=Number(row.querySelector(".item-price").value||0); 
-      if(pid && q>0) items.push({product_id:Number(pid), quantity:q, unit_price:p}); 
-    }); 
-    if(!items.length){ alert("أضف أصناف"); busy(btn,false,"","حفظ"); return; } 
-    try { 
-        const { error } = await db.rpc("create_purchase_return", { p_purchase_invoice_id: Number($("prInvoice").value), p_return_date: $("prDate").value, p_items: items, p_notes: $("prNotes").value }); 
-        if(error) throw error; 
-        showToast("✅ تم تسجيل المرتجع", "success"); 
-        $("purchaseReturnFormModal").classList.remove('active'); 
-        $("purchaseReturnForm").reset(); 
-        $("prItems").innerHTML=""; 
-        loadPurchaseReturns(); 
-    } catch(e) { alert(err(e)); } 
-    finally { busy(btn,false,"","حفظ"); } 
+window.openPurchaseReturnForm = openPurchaseReturnForm;
+
+function fillPurchaseReturnTreasurySelect(){
+    const method = $("prSettlementMethod").value;
+    const wrap = $("prTreasuryWrap");
+    const select = $("prTreasury");
+    select.replaceChildren();
+
+    const first = document.createElement("option");
+    first.value = "";
+    first.textContent = "اختر الخزنة";
+    select.appendChild(first);
+
+    if(method === "SUPPLIER_CREDIT"){
+        wrap.classList.add("hidden");
+        select.required = false;
+        return;
+    }
+
+    wrap.classList.remove("hidden");
+    select.required = true;
+
+    const allowed = treasuriesCache.filter(t => {
+        if(!t.is_active) return false;
+        if(method === "CASH") return t.treasury_type === "CASH";
+        if(method === "BANK") return ["BANK", "INSTAPAY"].includes(t.treasury_type);
+        return false;
+    });
+
+    allowed.forEach(t => {
+        const op = document.createElement("option");
+        op.value = String(t.treasury_id);
+        op.textContent = t.treasury_name + " (" + fmt(t.current_balance) + ")";
+        select.appendChild(op);
+    });
+}
+
+if($("prInvoice")) $("prInvoice").addEventListener("change", async () => {
+    try {
+        await loadPurchaseReturnInvoiceItems();
+    } catch(e) {
+        $("prItems").innerHTML = '<div class="empty error">تعذر تحميل أصناف الفاتورة: ' + err(e) + '</div>';
+        showToast("تعذر تحميل أصناف فاتورة الشراء", "error");
+    }
+});
+
+if($("prSettlementMethod")) $("prSettlementMethod").addEventListener("change", fillPurchaseReturnTreasurySelect);
+
+if($("purchaseReturnForm")) $("purchaseReturnForm").addEventListener("submit", async e => {
+    e.preventDefault();
+
+    const btn = $("savePrBtn");
+    const invoiceId = Number($("prInvoice").value || 0);
+    const invoice = purchasesCache.find(x => Number(x.purchase_invoice_id) === invoiceId);
+    const method = $("prSettlementMethod").value;
+    const treasuryId = $("prTreasury").value ? Number($("prTreasury").value) : null;
+
+    if(!invoiceId || !invoice){
+        alert("اختر فاتورة الشراء.");
+        return;
+    }
+
+    if(method !== "SUPPLIER_CREDIT" && !treasuryId){
+        alert("اختر خزنة الاسترداد.");
+        return;
+    }
+
+    const items = [];
+    let invalidRow = false;
+
+    document.querySelectorAll("#prItems .item-row").forEach(row => {
+        const selectedIndex = row.querySelector(".item-product").value;
+        const invoiceItem = prInvoiceItemsCache[Number(selectedIndex)];
+        const quantity = Number(row.querySelector(".item-qty").value || 0);
+        const unitPrice = Number(row.querySelector(".item-price").value || 0);
+
+        if(!invoiceItem || quantity <= 0 || unitPrice < 0){
+            invalidRow = true;
+            return;
+        }
+
+        items.push({
+            product_id: Number(invoiceItem.product_id),
+            unit_id: Number(invoiceItem.unit_id),
+            quantity,
+            unit_price: unitPrice
+        });
+    });
+
+    if(invalidRow || !items.length){
+        alert("راجع الأصناف والكميات وأسعار الوحدات.");
+        return;
+    }
+
+    busy(btn, true, "جارٍ...", "حفظ");
+
+    try {
+        const {error} = await db.rpc("create_purchase_return", {
+            p_purchase_invoice_id: invoiceId,
+            p_supplier_id: Number(invoice.supplier_id),
+            p_return_date: $("prDate").value,
+            p_items: items,
+            p_notes: $("prNotes").value,
+            p_settlement_method: method,
+            p_treasury_id: treasuryId
+        });
+
+        if(error) throw error;
+
+        showToast("تم تسجيل المرتجع وتسويته بنجاح", "success");
+        $("purchaseReturnFormModal").classList.remove("active");
+        $("purchaseReturnForm").reset();
+        $("prItems").innerHTML = '<div class="empty">اختر فاتورة الشراء لتحميل أصنافها.</div>';
+        prInvoiceItemsCache = [];
+        await loadPurchaseReturns();
+    } catch(e) {
+        alert(err(e));
+    } finally {
+        busy(btn, false, "", "حفظ");
+    }
 });
 
 // ========== التحصيلات ==========
