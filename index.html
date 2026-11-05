@@ -915,8 +915,8 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <label for="customerOpeningBalance">رصيد افتتاحي</label><input id="customerOpeningBalance" type="number" min="0" step="0.01" value="0">
 <input id="customerLegacyCity" type="hidden">
 <input id="customerLegacyArea" type="hidden">
-<label for="customerGovernorate">المحافظة</label><select id="customerGovernorate"><option value="">اختر المحافظة</option></select>
-<label for="customerCity">الوحدة الإدارية</label><select id="customerCity" disabled><option value="">اختر الوحدة الإدارية</option></select>
+<label for="customerGovernorate">المحافظة *</label><select id="customerGovernorate" required><option value="">اختر المحافظة</option></select>
+<label for="customerCity">الوحدة الإدارية *</label><select id="customerCity" required disabled><option value="">اختر الوحدة الإدارية</option></select>
 <label for="customerArea">المنطقة / القرية</label><select id="customerArea" disabled><option value="">اختر المنطقة / القرية</option></select>
 <label for="customerAddress">العنوان</label><textarea id="customerAddress" rows="2"></textarea>
 <label class="check"><input id="customerActive" type="checkbox" checked>العميل نشط</label>
@@ -2739,10 +2739,10 @@ function updateCustomerAreaOptions(selectedId=""){
   el.value=selectedId?String(selectedId):"";
 }
 function syncCustomerLegacyGeo(){
+  const cityId=$("customerCity")?.value||"";
   const areaId=$("customerArea")?.value||"";
-  if(!areaId) return;
-  const area=customerAreasCache.find(a=>String(a.area_id)===String(areaId));
-  const city=area && customerCitiesCache.find(c=>String(c.city_id)===String(area.city_id));
+  const city=customerCitiesCache.find(c=>String(c.city_id)===String(cityId));
+  const area=areaId?customerAreasCache.find(a=>String(a.area_id)===String(areaId)&&String(a.city_id)===String(cityId)):null;
   if($("customerLegacyCity")) $("customerLegacyCity").value=city?.name||"";
   if($("customerLegacyArea")) $("customerLegacyArea").value=area?.name||"";
 }
@@ -2765,10 +2765,13 @@ window.openCustomerForm=async function(c=null){
     $("customerLegacyCity").value=c?.city||"";
     $("customerLegacyArea").value=c?.area||"";
     const area=c?.area_id?customerAreasCache.find(a=>String(a.area_id)===String(c.area_id)):null;
-    const city=area?customerCitiesCache.find(x=>String(x.city_id)===String(area.city_id)):null;
-    fillCustomerGovernorates(city?.governorate_id||"");
+    const city=(c?.city_id?customerCitiesCache.find(x=>String(x.city_id)===String(c.city_id)):null)
+      ||(area?customerCitiesCache.find(x=>String(x.city_id)===String(area.city_id)):null);
+    const governorateId=c?.governorate_id||city?.governorate_id||"";
+    fillCustomerGovernorates(governorateId);
     updateCustomerCityOptions(city?.city_id||"");
     updateCustomerAreaOptions(area?.area_id||"");
+    syncCustomerLegacyGeo();
     $("customerFormMsg").classList.add("hidden");
     $("customerFormModal").classList.add("active");
   }catch(e){
@@ -2777,8 +2780,15 @@ window.openCustomerForm=async function(c=null){
     else alert(err(e));
   }
 };
-if($("customerGovernorate")) $("customerGovernorate").addEventListener("change",()=>{ updateCustomerCityOptions(); updateCustomerAreaOptions(); });
-if($("customerCity")) $("customerCity").addEventListener("change",()=>updateCustomerAreaOptions());
+if($("customerGovernorate")) $("customerGovernorate").addEventListener("change",()=>{
+  updateCustomerCityOptions();
+  updateCustomerAreaOptions();
+  syncCustomerLegacyGeo();
+});
+if($("customerCity")) $("customerCity").addEventListener("change",()=>{
+  updateCustomerAreaOptions();
+  syncCustomerLegacyGeo();
+});
 if($("customerArea")) $("customerArea").addEventListener("change",syncCustomerLegacyGeo);
 
 function renderCustomers(){ 
@@ -2816,25 +2826,47 @@ function renderCustomers(){
 }
 if($("customerForm")) $("customerForm").addEventListener("submit", async e => { 
   e.preventDefault(); 
-  const btn=$("saveCustomerBtn"); 
-  busy(btn,true,"جارٍ...","حفظ"); 
-  const id=$("customerEditId").value; 
+  const btn=$("saveCustomerBtn");
+  const governorateId=$("customerGovernorate").value;
+  const cityId=$("customerCity").value;
   const areaId=$("customerArea").value||null;
+  const formMsg=$("customerFormMsg");
+  if(!governorateId){
+    msg(formMsg,"اختر المحافظة قبل حفظ العميل.","error");
+    return;
+  }
+  if(!cityId){
+    msg(formMsg,"اختر الوحدة الإدارية قبل حفظ العميل.","error");
+    return;
+  }
+  const selectedCity=customerCitiesCache.find(c=>String(c.city_id)===String(cityId));
+  if(!selectedCity||String(selectedCity.governorate_id)!==String(governorateId)){
+    msg(formMsg,"الوحدة الإدارية لا تتبع المحافظة المختارة. اختر الوحدة من جديد.","error");
+    return;
+  }
+  if(areaId&&!customerAreasCache.some(a=>String(a.area_id)===String(areaId)&&String(a.city_id)===String(cityId))){
+    msg(formMsg,"المنطقة المختارة لا تتبع الوحدة الإدارية. اختر المنطقة من جديد.","error");
+    return;
+  }
+  busy(btn,true,"جارٍ...","حفظ");
+  const id=$("customerEditId").value;
   syncCustomerLegacyGeo();
-  const payload={ 
-    customer_code:$("customerCode").value, 
-    customer_name:$("customerName").value, 
-    phone:$("customerPhone").value, 
-    whatsapp:$("customerWhatsapp").value, 
-    tax_number:$("customerTaxNumber").value||null, 
-    customer_type:$("customerType").value, 
-    credit_limit:Number($("customerCreditLimit").value||0), 
-    opening_balance:Number($("customerOpeningBalance").value||0), 
-    address:$("customerAddress").value||null, 
-    city:$("customerLegacyCity").value||null, 
-    area:$("customerLegacyArea").value||null, 
+  const payload={
+    customer_code:$("customerCode").value,
+    customer_name:$("customerName").value,
+    phone:$("customerPhone").value,
+    whatsapp:$("customerWhatsapp").value,
+    tax_number:$("customerTaxNumber").value||null,
+    customer_type:$("customerType").value,
+    credit_limit:Number($("customerCreditLimit").value||0),
+    opening_balance:Number($("customerOpeningBalance").value||0),
+    address:$("customerAddress").value||null,
+    governorate_id:Number(governorateId),
+    city_id:Number(cityId),
+    city:$("customerLegacyCity").value||null,
+    area:$("customerLegacyArea").value||null,
     area_id:areaId,
-    is_active:$("customerActive").checked 
+    is_active:$("customerActive").checked
   }; 
   try{ 
     const result=id ? await db.from("customers").update(payload).eq("customer_id",id) : await db.from("customers").insert(payload);
