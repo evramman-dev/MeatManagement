@@ -1244,7 +1244,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div><label for="geoSalesToDate">إلى تاريخ</label><input type="date" id="geoSalesToDate"></div>
 </div>
 <button class="btn" id="refreshGeoSalesReport" type="button" style="margin-top:10px;">عرض التقرير</button>
-<div class="info" style="margin-top:10px;">المبيعات والتحصيلات خلال الفترة. المبيعات الآجلة تعرض قيمة الفواتير التي ما زال عليها رصيد. المديونية المتبقية هي الرصيد غير المسدد حتى تاريخ التقرير.</div>
+<div class="info" style="margin-top:10px;">المبيعات والتحصيلات خلال الفترة. المبيعات الآجلة تعرض قيمة الفواتير التي ما زال عليها رصيد. المديونية المتبقية هي رصيد الفواتير القائمة حتى نهاية الفترة المحددة، بعد خصم التحصيلات المسجلة حتى ذلك التاريخ.</div>
 <div class="table-responsive" style="margin-top:12px;"><table class="print-table" id="geoSalesTable"><thead><tr><th>المحافظة</th><th>المبيعات</th><th>التحصيلات</th><th>قيمة الفواتير ذات الرصيد</th><th>المديونية المتبقية</th></tr></thead><tbody><tr><td colspan="5">حدد الفترة ثم اضغط عرض التقرير.</td></tr></tbody></table></div>
 </div>
 <div id="repPL" class="report-tab hidden">
@@ -2729,11 +2729,12 @@ async function fetchAllRows(query){
 }
 async function buildGeoSalesSummary(from,to){
   await loadCustomerGeoData();
-  const [customers,sales,collections,openInvoices]=await Promise.all([
+  const [y,m,d]=String(to).split("-").map(Number);
+  const nextDate=new Date(Date.UTC(y,m-1,d+1)).toISOString().slice(0,10);
+  const [customers,sales,collections]=await Promise.all([
     fetchAllRows(db.from("customers").select("customer_id,governorate_id").order("customer_id")),
-    fetchAllRows(db.from("sales_invoices").select("customer_id,invoice_date,net_total,paid_amount,remaining_amount,status").gte("invoice_date",from).lte("invoice_date",to).neq("status","CANCELLED").order("invoice_date")),
-    fetchAllRows(db.from("customer_collections").select("customer_id,collection_date,amount,status").gte("collection_date",from).lte("collection_date",to).eq("status","POSTED").order("collection_date")),
-    fetchAllRows(db.from("sales_invoices").select("customer_id,remaining_amount,status,invoice_date").eq("status","POSTED").gt("remaining_amount",0).order("invoice_date"))
+    fetchAllRows(db.from("sales_invoices").select("sales_invoice_id,customer_id,invoice_date,net_total,paid_amount,status").lte("invoice_date",to).in("status",["POSTED","PAID","PARTIAL"]).order("invoice_date")),
+    fetchAllRows(db.from("customer_collections").select("sales_invoice_id,customer_id,amount,collection_date,status").eq("status","POSTED").lt("collection_date",nextDate).order("collection_date"))
   ]);
   const customerGovMap=new Map(customers.map(c=>[String(c.customer_id),c.governorate_id]));
   const map=new Map();
@@ -2742,14 +2743,31 @@ async function buildGeoSalesSummary(from,to){
     if(!map.has(key)) map.set(key,{name:id==null?"غير محدد":geoGovernorateName(id),sales:0,collections:0,credit:0,debt:0});
     return map.get(key);
   };
+  const invoicesByCustomer=new Map();
   customerGovernoratesCache.forEach(g=>ensure(g.governorate_id));
   sales.forEach(inv=>{
-    const row=ensure(customerGovMap.get(String(inv.customer_id))), total=Number(inv.net_total||0);
-    row.sales+=total;
-    if(Number(inv.paid_amount||0)<total-0.00001) row.credit+=total;
+    const customerKey=String(inv.customer_id);
+    const total=Number(inv.net_total||0);
+    invoicesByCustomer.set(customerKey,(invoicesByCustomer.get(customerKey)||0)+total);
+    const row=ensure(customerGovMap.get(customerKey));
+    if(inv.invoice_date>=from && inv.invoice_date<=to){
+      row.sales+=total;
+      if(Number(inv.paid_amount||0)<total-0.00001) row.credit+=total;
+    }
   });
-  collections.forEach(col=>{ensure(customerGovMap.get(String(col.customer_id))).collections+=Number(col.amount||0);});
-  openInvoices.forEach(inv=>{ensure(customerGovMap.get(String(inv.customer_id))).debt+=Number(inv.remaining_amount||0);});
+  const collectionsByCustomer=new Map();
+  collections.forEach(col=>{
+    const customerKey=String(col.customer_id);
+    collectionsByCustomer.set(customerKey,(collectionsByCustomer.get(customerKey)||0)+Number(col.amount||0));
+    const collectionDay=String(col.collection_date||"").slice(0,10);
+    if(collectionDay>=from && collectionDay<=to){
+      ensure(customerGovMap.get(customerKey)).collections+=Number(col.amount||0);
+    }
+  });
+  invoicesByCustomer.forEach((invoiceTotal,customerKey)=>{
+    const outstanding=Math.max(0,invoiceTotal-(collectionsByCustomer.get(customerKey)||0));
+    if(outstanding>0) ensure(customerGovMap.get(customerKey)).debt+=outstanding;
+  });
   return Array.from(map.values()).filter(x=>x.sales||x.collections||x.credit||x.debt).sort((a,b)=>a.name.localeCompare(b.name,"ar"));
 }
 function geoSalesRowsHtml(rows){
@@ -2771,7 +2789,7 @@ async function loadHomeGeoSummary(){
   box.innerHTML='<h3>ملخص المبيعات والتحصيلات حسب المحافظة</h3><div class="info">جارٍ تحميل الملخص...</div>';
   try{
     const rows=await buildGeoSalesSummary(from,to);
-    box.innerHTML='<h3>ملخص المبيعات والتحصيلات حسب المحافظة</h3><div class="info">من '+from+' إلى '+to+' | المديونية المتبقية حتى اليوم</div><div class="table-responsive"><table class="print-table"><thead><tr><th>المحافظة</th><th>المبيعات</th><th>التحصيلات</th><th>قيمة الفواتير ذات الرصيد</th><th>المديونية المتبقية</th></tr></thead><tbody>'+(rows.length?geoSalesRowsHtml(rows):'<tr><td colspan="5">لا توجد حركة.</td></tr>')+'</tbody></table></div>';
+    box.innerHTML='<h3>ملخص المبيعات والتحصيلات حسب المحافظة</h3><div class="info">من '+from+' إلى '+to+' | المديونية المتبقية حتى نهاية الفترة</div><div class="table-responsive"><table class="print-table"><thead><tr><th>المحافظة</th><th>المبيعات</th><th>التحصيلات</th><th>قيمة الفواتير ذات الرصيد</th><th>المديونية المتبقية</th></tr></thead><tbody>'+(rows.length?geoSalesRowsHtml(rows):'<tr><td colspan="5">لا توجد حركة.</td></tr>')+'</tbody></table></div>';
   }catch(e){box.innerHTML='<h3>ملخص المبيعات والتحصيلات حسب المحافظة</h3><div class="empty error">تعذر تحميل الملخص: '+err(e)+'</div>';}
 }
 
