@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v26</title>
+<title>MeatManagement v27</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -275,7 +275,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 <header>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v26]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v27]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 </header>
 <main>
@@ -319,6 +319,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <h2>🏠 الرئيسية</h2>
 <div id="userInfo" class="info">جارٍ تحميل بيانات الحساب...</div>
 <div class="home-dashboard" id="homeDashboard"></div>
+<div id="homeGeoSummary" class="card" style="margin-top:14px;"><h3>ملخص المبيعات والتحصيلات حسب المحافظة</h3><div class="info">جارٍ تحميل الملخص...</div></div>
 <button id="logoutBtn" class="btn secondary" type="button" style="margin-top:16px;">تسجيل الخروج</button>
 </div>
 </section>
@@ -894,7 +895,15 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
 <div id="customersCard" class="card hidden">
 <div class="row" style="justify-content:space-between"><h2>👥 العملاء</h2><button id="addCustomerBtn" class="btn hidden" type="button" onclick="window.openCustomerForm()">＋ إضافة عميل</button></div>
-<div class="row"><input id="customerSearch" type="search" placeholder="ابحث..."><button id="refreshCustomersBtn" class="btn secondary" type="button">تحديث</button></div>
+<div class="row"><input id="customerSearch" type="search" placeholder="ابحث بالاسم أو الموبايل"><button id="refreshCustomersBtn" class="btn secondary" type="button">تحديث</button></div>
+<div class="filter-box" style="margin-top:10px;">
+<div class="grid">
+<div><label for="customersGovernorateFilter">المحافظة</label><select id="customersGovernorateFilter"><option value="">كل المحافظات</option></select></div>
+<div><label for="customersCityFilter">الوحدة الإدارية</label><select id="customersCityFilter" disabled><option value="">كل الوحدات</option></select></div>
+<div><label for="customersAreaFilter">المنطقة / القرية</label><select id="customersAreaFilter" disabled><option value="">كل المناطق</option></select></div>
+</div>
+<button id="clearCustomerGeoFilters" class="btn secondary" type="button" style="margin-top:8px;">مسح الفلاتر الجغرافية</button>
+</div>
 <div id="customersMsg" class="status hidden"></div>
 <div id="customersList"><div class="empty">جارٍ تحميل العملاء...</div></div>
 </div>
@@ -1216,6 +1225,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <button class="tab-btn active" onclick="switchReportTab('repAged')">أعمار الديون</button>
 <button class="tab-btn" onclick="switchReportTab('repSlow')">المخزون الراكد</button>
 <button class="tab-btn" onclick="switchReportTab('repPL')">الأرباح والخسائر</button>
+<button class="tab-btn" onclick="switchReportTab('repGeo')">المبيعات حسب المحافظة</button>
 </div>
 <div class="row" style="margin-bottom:15px; gap:5px;">
 <button class="tab-btn" id="btnExportExcel" style="flex: 1;">📊 تصدير إكسيل (CSV)</button>
@@ -1227,6 +1237,15 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <label>عدد أيام بدون حركة (مثال: 30)</label>
 <div class="row"><input type="number" id="slowDays" value="30" min="1"><button class="btn" onclick="loadSlowMovingStock()">بحث</button></div>
 <div class="table-responsive" style="margin-top:10px;"><table class="print-table" id="slowTable"><thead><tr><th>المنتج</th><th>الموقع</th><th>الكمية</th><th>آخر حركة</th></tr></thead><tbody></tbody></table></div>
+</div>
+<div id="repGeo" class="report-tab hidden">
+<div class="grid">
+<div><label for="geoSalesFromDate">من تاريخ</label><input type="date" id="geoSalesFromDate"></div>
+<div><label for="geoSalesToDate">إلى تاريخ</label><input type="date" id="geoSalesToDate"></div>
+</div>
+<button class="btn" id="refreshGeoSalesReport" type="button" style="margin-top:10px;">عرض التقرير</button>
+<div class="info" style="margin-top:10px;">المبيعات والتحصيلات خلال الفترة. المبيعات الآجلة تعرض قيمة الفواتير التي ما زال عليها رصيد. المديونية المتبقية هي الرصيد غير المسدد حتى تاريخ التقرير.</div>
+<div class="table-responsive" style="margin-top:12px;"><table class="print-table" id="geoSalesTable"><thead><tr><th>المحافظة</th><th>المبيعات</th><th>التحصيلات</th><th>قيمة الفواتير ذات الرصيد</th><th>المديونية المتبقية</th></tr></thead><tbody><tr><td colspan="5">حدد الفترة ثم اضغط عرض التقرير.</td></tr></tbody></table></div>
 </div>
 <div id="repPL" class="report-tab hidden">
 <div class="grid"><div><label>من تاريخ</label><input type="date" id="plFromDate"></div><div><label>إلى تاريخ</label><input type="date" id="plToDate"></div></div>
@@ -1350,7 +1369,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v26</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v27</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -2166,11 +2185,12 @@ if($("saveSettingsBtn")) $("saveSettingsBtn").addEventListener("click", async ()
   finally { busy(btn, false, "", "حفظ الإعدادات"); }
 });
 
-// ========== لوحة التحكم الرئيسية (v26 - مُصلَّحة) ==========
+// ========== لوحة التحكم الرئيسية (v27 - مُصلَّحة) ==========
 async function loadHomeDashboard() {
   const box = $("homeDashboard"); if(!box) return;
   if(!navigator.onLine) { box.innerHTML = "<div class='empty'>أنت أوفلاين.</div>"; return; }
   if(!isSystemAdmin){
+    if($("homeGeoSummary")) $("homeGeoSummary").classList.add("hidden");
     const quickLinks = getRoleQuickLinks(currentRoleCode);
     if(!quickLinks.length){
       box.innerHTML = "<div class='empty'>لا توجد أقسام مخصصة لهذا الدور حتى الآن. راجع مدير النظام.</div>";
@@ -2210,12 +2230,13 @@ async function loadHomeDashboard() {
       <div class="home-card"><div class="hc-label">🚐 جولات نشطة</div><div class="hc-value">${activeTrips}</div></div>
     `;
     if(lowStockCount > 0) showToast(`⚠️ يوجد ${lowStockCount} أصناف تحت الحد الأدنى`, "warn", 6000);
+    await loadHomeGeoSummary();
   } catch(e) { 
       box.innerHTML = `<div class='empty error'>خطأ: ${err(e)}</div>`; 
   }
 }
     
-// ========== المهام والتنبيهات (v26 - مُصلَّحة) ==========
+// ========== المهام والتنبيهات (v27 - مُصلَّحة) ==========
 let tasksSalesChart = null, tasksExpensesChart = null, tasksTripsChart = null;
 async function loadTasks() {
   const box = $("tasksList"); if(!box) return;
@@ -2675,12 +2696,93 @@ if($("productForm")) $("productForm").addEventListener("submit", async e => {
 if($("refreshBtn")) $("refreshBtn").addEventListener("click",loadProducts);
 if($("search")) $("search").addEventListener("input",renderProducts);
 
+// ========== أدوات التقارير الجغرافية ==========
+function geoGovernorateName(id){ return customerGovernoratesCache.find(g=>String(g.governorate_id)===String(id))?.name||"غير محدد"; }
+function geoCityName(id){ return customerCitiesCache.find(c=>String(c.city_id)===String(id))?.name||""; }
+function geoAreaName(id){ return customerAreasCache.find(a=>String(a.area_id)===String(id))?.name||""; }
+function fillCustomerListGeoFilters(){
+  const gov=$("customersGovernorateFilter"), city=$("customersCityFilter"), area=$("customersAreaFilter");
+  if(!gov||!city||!area) return;
+  const oldGov=gov.value, oldCity=city.value, oldArea=area.value;
+  gov.innerHTML='<option value="">كل المحافظات</option>';
+  customerGovernoratesCache.forEach(g=>gov.add(new Option(g.name,String(g.governorate_id))));
+  gov.value=oldGov;
+  city.innerHTML='<option value="">كل الوحدات</option>';
+  customerCitiesCache.filter(c=>!gov.value||String(c.governorate_id)===gov.value).forEach(c=>city.add(new Option(c.name,String(c.city_id))));
+  city.disabled=!gov.value;
+  city.value=oldCity;
+  area.innerHTML='<option value="">كل المناطق</option>';
+  customerAreasCache.filter(a=>!city.value||String(a.city_id)===city.value).forEach(a=>area.add(new Option(a.name,String(a.area_id))));
+  area.disabled=!city.value;
+  area.value=oldArea;
+}
+async function fetchAllRows(query){
+  const all=[]; let start=0, batch=1000;
+  while(true){
+    const {data,error}=await query.range(start,start+batch-1);
+    if(error) throw error;
+    const rows=data||[]; all.push(...rows);
+    if(rows.length<batch) break;
+    start+=batch;
+  }
+  return all;
+}
+async function buildGeoSalesSummary(from,to){
+  await loadCustomerGeoData();
+  const [customers,sales,collections,openInvoices]=await Promise.all([
+    fetchAllRows(db.from("customers").select("customer_id,governorate_id").order("customer_id")),
+    fetchAllRows(db.from("sales_invoices").select("customer_id,invoice_date,net_total,paid_amount,remaining_amount,status").gte("invoice_date",from).lte("invoice_date",to).neq("status","CANCELLED").order("invoice_date")),
+    fetchAllRows(db.from("customer_collections").select("customer_id,collection_date,amount,status").gte("collection_date",from).lte("collection_date",to).eq("status","POSTED").order("collection_date")),
+    fetchAllRows(db.from("sales_invoices").select("customer_id,remaining_amount,status,invoice_date").eq("status","POSTED").gt("remaining_amount",0).order("invoice_date"))
+  ]);
+  const customerGovMap=new Map(customers.map(c=>[String(c.customer_id),c.governorate_id]));
+  const map=new Map();
+  const ensure=(id)=>{
+    const key=id==null?"unknown":String(id);
+    if(!map.has(key)) map.set(key,{name:id==null?"غير محدد":geoGovernorateName(id),sales:0,collections:0,credit:0,debt:0});
+    return map.get(key);
+  };
+  customerGovernoratesCache.forEach(g=>ensure(g.governorate_id));
+  sales.forEach(inv=>{
+    const row=ensure(customerGovMap.get(String(inv.customer_id))), total=Number(inv.net_total||0);
+    row.sales+=total;
+    if(Number(inv.paid_amount||0)<total-0.00001) row.credit+=total;
+  });
+  collections.forEach(col=>{ensure(customerGovMap.get(String(col.customer_id))).collections+=Number(col.amount||0);});
+  openInvoices.forEach(inv=>{ensure(customerGovMap.get(String(inv.customer_id))).debt+=Number(inv.remaining_amount||0);});
+  return Array.from(map.values()).filter(x=>x.sales||x.collections||x.credit||x.debt).sort((a,b)=>a.name.localeCompare(b.name,"ar"));
+}
+function geoSalesRowsHtml(rows){
+  const totals=rows.reduce((t,r)=>({sales:t.sales+r.sales,collections:t.collections+r.collections,credit:t.credit+r.credit,debt:t.debt+r.debt}),{sales:0,collections:0,credit:0,debt:0});
+  return rows.map(r=>`<tr><td>${r.name}</td><td>${fmt(r.sales)}</td><td>${fmt(r.collections)}</td><td>${fmt(r.credit)}</td><td>${fmt(r.debt)}</td></tr>`).join("")+`<tr style="background:#e9efe9;font-weight:bold;"><td>الإجمالي</td><td>${fmt(totals.sales)}</td><td>${fmt(totals.collections)}</td><td>${fmt(totals.credit)}</td><td>${fmt(totals.debt)}</td></tr>`;
+}
+async function loadGeoSalesReport(){
+  const body=$("geoSalesTable")?.querySelector("tbody"); if(!body) return;
+  const from=$("geoSalesFromDate").value||monthStartISO(), to=$("geoSalesToDate").value||todayISO();
+  if(from>to){body.innerHTML='<tr><td colspan="5">تاريخ البداية يجب أن يسبق تاريخ النهاية.</td></tr>';return;}
+  body.innerHTML='<tr><td colspan="5">جارٍ تحميل التقرير...</td></tr>';
+  try{const rows=await buildGeoSalesSummary(from,to);body.innerHTML=rows.length?geoSalesRowsHtml(rows):'<tr><td colspan="5">لا توجد حركة خلال الفترة.</td></tr>';}
+  catch(e){body.innerHTML=`<tr><td colspan="5" style="color:red;">تعذر تحميل التقرير: ${err(e)}</td></tr>`;}
+}
+async function loadHomeGeoSummary(){
+  const box=$("homeGeoSummary"); if(!box||!isSystemAdmin){if(box)box.classList.add("hidden");return;}
+  box.classList.remove("hidden");
+  const from=monthStartISO(),to=todayISO();
+  box.innerHTML='<h3>ملخص المبيعات والتحصيلات حسب المحافظة</h3><div class="info">جارٍ تحميل الملخص...</div>';
+  try{
+    const rows=await buildGeoSalesSummary(from,to);
+    box.innerHTML='<h3>ملخص المبيعات والتحصيلات حسب المحافظة</h3><div class="info">من '+from+' إلى '+to+' | المديونية المتبقية حتى اليوم</div><div class="table-responsive"><table class="print-table"><thead><tr><th>المحافظة</th><th>المبيعات</th><th>التحصيلات</th><th>قيمة الفواتير ذات الرصيد</th><th>المديونية المتبقية</th></tr></thead><tbody>'+(rows.length?geoSalesRowsHtml(rows):'<tr><td colspan="5">لا توجد حركة.</td></tr>')+'</tbody></table></div>';
+  }catch(e){box.innerHTML='<h3>ملخص المبيعات والتحصيلات حسب المحافظة</h3><div class="empty error">تعذر تحميل الملخص: '+err(e)+'</div>';}
+}
+
 // ========== العملاء ==========
-async function loadCustomers(){ 
-  if(!navigator.onLine) { customersCache=getCache('customers'); renderCustomers(); return; } 
-  const {data}=await db.from("customers").select("*").order("customer_id"); 
-  customersCache=data||[]; 
-  saveCache('customers', customersCache); 
+async function loadCustomers(){
+  if(!navigator.onLine) { customersCache=getCache('customers'); renderCustomers(); return; }
+  const {data,error}=await db.from("customers").select("*").order("customer_id");
+  if(error) throw error;
+  customersCache=data||[];
+  saveCache('customers', customersCache);
+  try{await loadCustomerGeoData();fillCustomerListGeoFilters();}catch(e){console.warn("[CUSTOMER GEO FILTERS]",e);}
   renderCustomers(); 
   fillInvoiceCustomerSelect(); 
   fillCollectionCustomerSelect(); 
@@ -2794,13 +2896,22 @@ if($("customerArea")) $("customerArea").addEventListener("change",syncCustomerLe
 function renderCustomers(){ 
   const box=$("customersList"); if(!box) return; 
   box.replaceChildren(); 
-  const q=($("customerSearch").value||""); 
-  const found=customersCache.filter(c=> String(c.customer_name||"").includes(q) || String(c.phone||"").includes(q)); 
+  const q=($("customerSearch").value||"").trim();
+  const govFilter=$("customersGovernorateFilter")?.value||"";
+  const cityFilter=$("customersCityFilter")?.value||"";
+  const areaFilter=$("customersAreaFilter")?.value||"";
+  const found=customersCache.filter(c=>
+    (!q || String(c.customer_name||"").includes(q) || String(c.phone||"").includes(q)) &&
+    (!govFilter || String(c.governorate_id||"")===govFilter) &&
+    (!cityFilter || String(c.city_id||"")===cityFilter) &&
+    (!areaFilter || String(c.area_id||"")===areaFilter)
+  );
   if(!found.length){ box.innerHTML=`<div class="empty">لا يوجد عملاء.</div>`; return; } 
   found.forEach(c=>{ 
     const card=document.createElement("div");
     card.className="product";
-    card.innerHTML=`<div class="pname">${c.customer_name}</div><div class="details">موبايل: ${c.phone||'-'} | النوع: ${customerTypeName(c.customer_type)}</div>`; 
+    const geoParts=[geoGovernorateName(c.governorate_id),geoCityName(c.city_id),geoAreaName(c.area_id)].filter((v,i)=>v&&!(i===0&&v==="غير محدد"));
+    card.innerHTML=`<div class="pname">${c.customer_name}</div><div class="details">موبايل: ${c.phone||'-'} | النوع: ${customerTypeName(c.customer_type)}</div><div class="details">الموقع: ${geoParts.length?geoParts.join(" / "):"غير محدد"}</div>${c.address?`<div class="details">العنوان: ${c.address}</div>`:""}`;
     const actions=document.createElement("div"); 
     actions.className="actions"; 
     const stmt=document.createElement("button"); 
@@ -2880,6 +2991,10 @@ if($("customerForm")) $("customerForm").addEventListener("submit", async e => {
 });
 if($("refreshCustomersBtn")) $("refreshCustomersBtn").addEventListener("click",loadCustomers);
 if($("customerSearch")) $("customerSearch").addEventListener("input",renderCustomers);
+if($("customersGovernorateFilter")) $("customersGovernorateFilter").addEventListener("change",()=>{if($("customersCityFilter"))$("customersCityFilter").value="";if($("customersAreaFilter"))$("customersAreaFilter").value="";fillCustomerListGeoFilters();renderCustomers();});
+if($("customersCityFilter")) $("customersCityFilter").addEventListener("change",()=>{if($("customersAreaFilter"))$("customersAreaFilter").value="";fillCustomerListGeoFilters();renderCustomers();});
+if($("customersAreaFilter")) $("customersAreaFilter").addEventListener("change",renderCustomers);
+if($("clearCustomerGeoFilters")) $("clearCustomerGeoFilters").addEventListener("click",()=>{if($("customersGovernorateFilter"))$("customersGovernorateFilter").value="";if($("customersCityFilter"))$("customersCityFilter").value="";if($("customersAreaFilter"))$("customersAreaFilter").value="";fillCustomerListGeoFilters();renderCustomers();});
 
 async function viewCustomerStatement(c) { 
     const modal = $("customerStatementModal"); 
@@ -5823,6 +5938,9 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
             if(tbodyAged) tbodyAged.innerHTML = "<tr><td colspan='7' style='text-align:center;'>لا يوجد عملاء عليهم مديونية.</td></tr>";
         }
         
+        if($("geoSalesFromDate") && !$("geoSalesFromDate").value) $("geoSalesFromDate").value=monthStartISO();
+        if($("geoSalesToDate") && !$("geoSalesToDate").value) $("geoSalesToDate").value=todayISO();
+        await loadGeoSalesReport();
         if(!$("plFromDate").value) $("plFromDate").value = monthStartISO();
         if(!$("plToDate").value) $("plToDate").value = todayISO();
         await loadProfitLoss();
@@ -5833,6 +5951,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
   }
   
   // ========== تصدير تقرير شامل إلى Excel (CSV) ==========
+  if($("refreshGeoSalesReport")) $("refreshGeoSalesReport").addEventListener("click",loadGeoSalesReport);
   if($("btnExportExcel")) $("btnExportExcel").addEventListener("click", async () => {
       const btn = $("btnExportExcel"); 
       busy(btn, true, "جارٍ التجهيز...", "📊 تصدير إكسيل (CSV)");
@@ -5974,7 +6093,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
       const btns = document.querySelectorAll('[onclick^="switchReportTab"]');
       btns.forEach(b => b.classList.remove("active"));
       if($(tabId)) $(tabId).classList.remove("hidden");
-      const map = { repAged: 0, repSlow: 1, repPL: 2 };
+      const map = { repAged: 0, repSlow: 1, repPL: 2, repGeo: 3 };
       if(map[tabId] !== undefined && btns[map[tabId]]) btns[map[tabId]].classList.add("active");
   }
 
