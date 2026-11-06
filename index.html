@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v28</title>
+<title>MeatManagement v29</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -275,7 +275,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 <header>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v28]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v29]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 </header>
 <main>
@@ -1370,7 +1370,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v28</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v29</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -1823,7 +1823,7 @@ function fillSupplierSelect(){ const el=$("spSupplier"); if(!el)return; const cu
 function fillCollectionCustomerSelect(){ const el=$("collectionCustomer"); if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر العميل";el.appendChild(first); customersCache.filter(c=>c.is_active).forEach(c=>{ const op=document.createElement("option");op.value=String(c.customer_id);op.textContent=c.customer_name;el.appendChild(op); }); el.value=cur; }
 function fillReturnCustomerSelect(){ const el=$("returnCustomer"); if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر العميل";el.appendChild(first); customersCache.filter(c=>c.is_active).forEach(c=>{ const op=document.createElement("option");op.value=String(c.customer_id);op.textContent=c.customer_name;el.appendChild(op); }); el.value=cur; }
 function fillStockFormSelects(){ const locEl=$("stockLocation");if(locEl){ const curLoc=locEl.value;locEl.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر الموقع";locEl.appendChild(first); locationsCache.filter(l=>l.is_active).forEach(l=>{ const op=document.createElement("option");op.value=String(l.location_id);op.textContent=l.location_name+" ("+l.location_code+")";locEl.appendChild(op); }); locEl.value=curLoc; } const prodEl=$("stockProduct");if(prodEl){ const curProd=prodEl.value;prodEl.replaceChildren(); const firstP=document.createElement("option");firstP.value="";firstP.textContent="اختر المنتج";prodEl.appendChild(firstP); productsCache.filter(p=>p.is_active).forEach(p=>{ const op=document.createElement("option");op.value=String(p.product_id);op.textContent=p.product_name+" ("+p.product_code+")";prodEl.appendChild(op); }); prodEl.value=curProd; } }
-function fillProductionLocationSelect(){ const el=$("productionLocation");if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر الموقع";el.appendChild(first); locationsCache.filter(l=>l.is_active).forEach(l=>{ const op=document.createElement("option");op.value=String(l.location_id);op.textContent=l.location_name+" ("+l.location_code+")";el.appendChild(op); }); el.value=cur; }
+function fillProductionLocationSelect(){ const el=$("productionLocation");if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر موقع المصنع";el.appendChild(first); locationsCache.filter(l=>l.is_active&&l.location_type==="FACTORY").forEach(l=>{ const op=document.createElement("option");op.value=String(l.location_id);op.textContent=l.location_name+" ("+l.location_code+")";el.appendChild(op); }); el.value=cur; }
 function fillProductionRecipeSelect(){ const el=$("productionRecipe"); if(!el)return; const cur=el.value; el.replaceChildren(); const first=document.createElement("option"); first.value=""; first.textContent="اختر الوصفة"; el.appendChild(first); recipesCache.filter(r=>r.is_active).forEach(r=>{ const op=document.createElement("option"); op.value=String(r.recipe_id); op.textContent=r.recipe_name; el.appendChild(op); }); el.value=cur; }
 function fillTripVehicleSelect(){ const el=$("tripVehicle"); if(!el) return; const cur=el.value; el.replaceChildren(); const first=document.createElement("option"); first.value=""; first.textContent="اختر السيارة"; el.appendChild(first); locationsCache.filter(l=>l.is_active && l.location_type==="VEHICLE").forEach(l=>{ const op=document.createElement("option"); op.value=String(l.location_id); op.textContent=l.location_name+" ("+l.location_code+")"; el.appendChild(op); }); el.value=cur; }
 function fillStockTransferSelects(){ const s=$("stSource"); const d=$("stDest"); if(s&&d){ const cs=s.value, cd=d.value; s.replaceChildren(); d.replaceChildren(); const f1=document.createElement("option");f1.value="";f1.textContent="اختر الموقع";s.appendChild(f1); const f2=document.createElement("option");f2.value="";f2.textContent="اختر الموقع";d.appendChild(f2); locationsCache.filter(l=>l.is_active).forEach(l=>{ const op1=document.createElement("option");op1.value=String(l.location_id);op1.textContent=l.location_name;s.appendChild(op1); const op2=document.createElement("option");op2.value=String(l.location_id);op2.textContent=l.location_name;d.appendChild(op2); }); s.value=cs; d.value=cd; } }
@@ -5017,7 +5017,8 @@ async function loadRecipes(){
   if(!navigator.onLine) { recipesCache=getCache('recipes'); renderRecipes(); return; } 
   const box=$("recipesList"); if(box) box.innerHTML="<div class='empty'>جارٍ التحميل...</div>"; 
   try{ 
-    const {data}=await db.from("recipes").select("*").order("recipe_id"); 
+    const {data,error}=await db.from("recipes").select("*").order("recipe_id"); 
+    if(error) throw error;
     recipesCache=data||[]; 
     saveCache('recipes', recipesCache); 
     renderRecipes(); 
@@ -5032,7 +5033,7 @@ function renderRecipes(){
   found.forEach(r=>{ 
     const card=document.createElement("div"); card.className="product"; 
     const title=document.createElement("div"); title.className="pname"; title.textContent="📝 "+r.recipe_name; 
-    const details=document.createElement("div"); details.className="details"; details.textContent="المنتج: "+productName(r.product_id)+" | الكمية: "+fmtQty(r.output_quantity)+" "+unitName(r.output_unit_id); 
+    const details=document.createElement("div"); details.className="details"; details.textContent="المنتج: "+productName(r.product_id)+" | الكمية: "+fmtQty(r.output_quantity)+" "+unitName(r.unit_id); 
     const actions=document.createElement("div"); actions.className="actions"; 
     if(canManageRecipes){ 
       const edit=document.createElement("button"); 
@@ -5083,7 +5084,7 @@ function addRecipeItemRow(item){
   const prodLabel=document.createElement("label"); prodLabel.textContent="المكون *"; 
   const prodSel=document.createElement("select"); prodSel.className="item-product"; prodSel.required=true; 
   const first=document.createElement("option"); first.value=""; first.textContent="اختر المكون"; prodSel.appendChild(first); 
-  productsCache.filter(p=>p.is_active&&p.can_be_purchased).forEach(p=>{ 
+  productsCache.filter(p=>p.is_active).forEach(p=>{ 
     const op=document.createElement("option"); 
     op.value=String(p.product_id); 
     op.textContent=p.product_name; 
@@ -5101,7 +5102,7 @@ function addRecipeItemRow(item){
   const qtyLabel=document.createElement("label"); qtyLabel.textContent="الكمية *"; 
   const qty=document.createElement("input"); qty.type="number"; qty.className="item-qty"; qty.min="0.0001"; qty.step="0.0001"; qty.required=true; 
   if(item){ 
-    prodSel.value=String(item.component_product_id||""); 
+    prodSel.value=String(item.ingredient_product_id||""); 
     unitSel.value=String(item.unit_id||""); 
     qty.value=item.quantity||""; 
   } 
@@ -5122,7 +5123,7 @@ async function editRecipe(r){
     fillRecipeOutputSelects(); 
     $("recipeOutputProduct").value = String(r.product_id||""); 
     $("recipeOutputQty").value = r.output_quantity||""; 
-    $("recipeOutputUnit").value = String(r.output_unit_id||""); 
+    $("recipeOutputUnit").value = String(r.unit_id||""); 
     $("recipeNotes").value = r.notes||""; 
     $("recipeActive").checked = r.is_active !== false; 
     $("recipeItems").innerHTML = ""; 
@@ -5159,7 +5160,7 @@ if($("recipeForm")) $("recipeForm").addEventListener("submit", async e => {
     const uid = row.querySelector(".item-unit").value; 
     const q = Number(row.querySelector(".item-qty").value||0); 
     if(!pid || !uid || q<=0) valid = false; 
-    else items.push({ component_product_id: Number(pid), unit_id: Number(uid), quantity: q }); 
+    else items.push({ ingredient_product_id: Number(pid), unit_id: Number(uid), quantity: q }); 
   }); 
   if(!valid || !items.length){ 
     msg($("recipeFormMsg"),"أكمل المكونات","error"); 
@@ -5167,7 +5168,7 @@ if($("recipeForm")) $("recipeForm").addEventListener("submit", async e => {
     return; 
   } 
   try { 
-    const payload = { recipe_name: name, product_id: Number(productId), output_quantity: qty, output_unit_id: Number(unitId), notes: notes||null, is_active: isActive }; 
+    const payload = { recipe_name: name, product_id: Number(productId), output_quantity: qty, unit_id: Number(unitId), notes: notes||null, is_active: isActive }; 
     let recipeId = id; 
     if(id) { 
       const { error } = await db.from("recipes").update(payload).eq("recipe_id", Number(id)); 
@@ -5203,7 +5204,8 @@ async function loadProduction(){
   if(!navigator.onLine) { productionCache=getCache('production'); renderProduction(); return; } 
   const box=$("productionList"); if(box) box.innerHTML="<div class='empty'>جارٍ التحميل...</div>"; 
   try{ 
-    const {data}=await db.from("production_orders").select("*").order("order_id",{ascending:false}); 
+    const {data,error}=await db.from("production_orders").select("*").order("order_id",{ascending:false}); 
+    if(error) throw error;
     productionCache=data||[]; 
     saveCache('production', productionCache); 
     renderProduction(); 
@@ -5225,7 +5227,7 @@ function renderProduction(){
     const recipeName = recipesCache.find(r=>String(r.recipe_id)===String(p.recipe_id))?.recipe_name || "-"; 
     const details=document.createElement("div"); 
     details.className="details"; 
-    details.textContent="الوصفة: "+recipeName+" | الكمية: "+fmtQty(p.target_quantity)+" | الحالة: "+(statusMap[p.status]||p.status); 
+    details.textContent="الوصفة: "+recipeName+" | الناتج: "+productName(p.output_product_id)+" | الكمية: "+fmtQty(p.target_quantity)+" "+unitName(p.output_unit_id)+" | الحالة: "+(statusMap[p.status]||p.status); 
     const actions=document.createElement("div"); 
     actions.className="actions"; 
     if(canManageProduction && p.status === "DRAFT"){ 
@@ -5269,7 +5271,7 @@ if($("productionRecipe")) $("productionRecipe").addEventListener("change", async
   } 
   const recipe = recipesCache.find(r => String(r.recipe_id)===String(rid)); 
   if(!recipe) return; 
-  $("productionOutputInfo").textContent = "المنتج الناتج: " + productName(recipe.product_id) + " | الوحدة: " + unitName(recipe.output_unit_id); 
+  $("productionOutputInfo").textContent = "المنتج الناتج: " + productName(recipe.product_id) + " | الوحدة: " + unitName(recipe.unit_id); 
   await previewProductionMaterials(); 
 });
 if($("productionTargetQty")) $("productionTargetQty").addEventListener("input", previewProductionMaterials);
@@ -5281,14 +5283,14 @@ async function previewProductionMaterials(){
     return; 
   } 
   try { 
-    const {data:recipe, error:rErr} = await db.from("recipes").select("output_quantity").eq("recipe_id", Number(rid)).single(); 
+    const {data:recipe, error:rErr} = await db.from("recipes").select("output_quantity, unit_id").eq("recipe_id", Number(rid)).single(); 
     if(rErr) throw rErr; 
-    const {data:items, error:iErr} = await db.from("recipe_items").select("*, products(product_name), units(unit_name)").eq("recipe_id", Number(rid)); 
+    const {data:items, error:iErr} = await db.from("recipe_items").select("*, products!recipe_items_product_fkey(product_name), units(unit_name)").eq("recipe_id", Number(rid)); 
     if(iErr) throw iErr; 
     const factor = qty / Number(recipe.output_quantity || 1); 
     let html = "<strong>الخامات المطلوبة:</strong><br>"; 
     (items||[]).forEach(it => { 
-      const needQty = Number(it.quantity) * factor; 
+      const needQty = Number(it.quantity) * factor * (1 + Number(it.waste_percentage||0) / 100); 
       html += `▪️ ${it.products?.product_name || "مكوّن"}: ${fmtQty(needQty)} ${it.units?.unit_name || ""}<br>`; 
     }); 
     $("productionMaterialsPreview").innerHTML = html; 
