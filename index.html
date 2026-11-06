@@ -1708,7 +1708,7 @@ function page(name){
   if(name==="data"){
     window.closeSection();
     if(navigator.onLine) { 
-        loadProducts(); if(canViewLocations)loadLocations(); if(canViewTreasuries)loadTreasuries(); if(canViewStock)loadStock(); 
+        loadProducts(); if(canViewLocations || canViewStockTransfers)loadLocations(); if(canViewTreasuries)loadTreasuries(); if(canViewStock)loadStock(); 
         if(canViewSales)loadSales(); if(canViewCustomers)loadCustomers(); if(canViewSuppliers)loadSuppliers(); 
         if(canViewPurchases)loadPurchases(); if(canViewCollections)loadCollections(); if(canViewRecipes)loadRecipes(); 
         if(canViewProduction)loadProduction(); if(canViewTrips)loadTrips(); if(canViewPartners)loadPartners(); 
@@ -6335,7 +6335,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
     showApp();
     try { await loadLookups(); } catch(e){ console.error("[BOOT lookups]", e); }
     try { await loadProducts(); } catch(e){ console.error("[BOOT products]", e); }
-    if(canViewLocations){ try{ await loadLocations(); }catch(e){console.error("[BOOT locations]",e);} }
+    if(canViewLocations || canViewStockTransfers){ try{ await loadLocations(); }catch(e){console.error("[BOOT locations]",e);} }
     if(canViewTreasuries){ try{ await loadTreasuries(); }catch(e){console.error("[BOOT treasuries]",e);} }
     if(canViewStock){ try{ await loadStock(); }catch(e){console.error("[BOOT stock]",e);} }
     if(canViewRecipes){ try{ await loadRecipes(); }catch(e){console.error("[BOOT recipes]",e);} }
