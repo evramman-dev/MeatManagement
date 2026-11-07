@@ -275,7 +275,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 <header>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v31]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v33]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 </header>
 <main>
@@ -1371,7 +1371,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v31</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v33</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -1582,6 +1582,26 @@ try {
   function monthStartISO(){ const d=new Date(); const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,"0"); return y+"-"+m+"-01"; }
   function nowTimeStr(){ return new Date().toLocaleTimeString("ar-EG",{hour:"2-digit",minute:"2-digit"}); }
 
+  // توحيد عرض كل التواريخ بصيغة سنة/شهر/يوم بأرقام لاتينية لتجنب انقلاب ترتيب التاريخ في RTL.
+  function formatDate(value){
+    if(arguments.length===0) value=new Date();
+    if(value===null||value===undefined||value==="") return "-";
+    let d;
+    if(value instanceof Date) d=value;
+    else if(typeof value==="string" && /^\d{4}-\d{2}-\d{2}$/.test(value)){
+      const parts=value.split("-").map(Number);
+      d=new Date(parts[0],parts[1]-1,parts[2]);
+    } else d=new Date(value);
+    if(!Number.isFinite(d.getTime())) return "-";
+    return d.getFullYear()+"/"+(d.getMonth()+1)+"/"+d.getDate();
+  }
+  function formatDateTime(value){
+    if(value===null||value===undefined||value==="") return "-";
+    const d=value instanceof Date?value:new Date(value);
+    if(!Number.isFinite(d.getTime())) return "-";
+    return formatDate(d)+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");
+  }
+
   function formatWaPhone(phone) { if (!phone) return ""; let p = String(phone).replace(/\D/g, ''); if (p.startsWith('0')) p = '20' + p.substring(1); return p; }
   function saveCache(key, data) { try { localStorage.setItem(key, JSON.stringify(data)); } catch(e){} }
   function getCache(key) { try { return JSON.parse(localStorage.getItem(key)) || []; } catch(e){ return []; } }
@@ -1628,7 +1648,7 @@ try {
         <div class="company-left">
             <div>📞 ${companySettings.company_phone_1 || ''}</div>
             <div>📞 ${companySettings.company_phone_2 || ''}</div>
-            <div style="font-size:10px; margin-top:5px; color:#666;">التاريخ: ${new Date().toLocaleDateString('ar-EG')}</div>
+            <div style="font-size:10px; margin-top:5px; color:#666;">التاريخ: ${formatDate()}</div>
         </div>
     </div>`;
   }
@@ -1719,7 +1739,7 @@ function page(name){
   }
 }
 
-async function permission(code){ if(!navigator.onLine) return false; try { const {data,error}=await db.rpc("has_permission",{p_permission_code:code}); if(error)throw error; return data===true; } catch (e) { return false; } }
+async function permission(code){ if(isSystemAdmin) return true; if(!navigator.onLine) return false; try { const {data,error}=await db.rpc("has_permission",{p_permission_code:code}); if(error)throw error; return data===true; } catch (e) { return false; } }
 
 // ========== الحقول المساعدة ==========
 function typeName(v){ return({RAW:"خام",SEMI_FINISHED:"نصف مصنع",FINISHED:"منتج تام"})[v]||v||"غير محدد"; }
@@ -1852,7 +1872,7 @@ window.viewUserLogs = async function(userId, displayName){
     if(error) throw error;
     $("userLogsHeader").innerHTML = `<strong>المستخدم:</strong> ${displayName||"-"}<br><strong>عدد الحركات:</strong> ${(data||[]).length}`;
     const typeMap = { LOGIN:"دخول", CREATE:"إنشاء", UPDATE:"تعديل", DELETE:"حذف", INVOICE:"فاتورة", COLLECTION:"تحصيل", RETURN:"مرتجع", PURCHASE:"مشتريات", PAYMENT:"سداد", PRODUCTION:"إنتاج", TRIP:"جولة" };
-    let html = ""; (data||[]).forEach(row => { html += `<tr><td>${new Date(row.created_at).toLocaleString("ar-EG")}</td><td>${typeMap[row.action_type]||row.action_type||"-"}</td><td>${row.description||"-"}</td></tr>`; });
+    let html = ""; (data||[]).forEach(row => { html += `<tr><td>${formatDateTime(row.created_at)}</td><td>${typeMap[row.action_type]||row.action_type||"-"}</td><td>${row.description||"-"}</td></tr>`; });
     $("userLogsTable").querySelector("tbody").innerHTML = html || "<tr><td colspan='3'>لا توجد حركات مسجلة.</td></tr>";
   } catch(e){ $("userLogsHeader").innerHTML = `<span style="color:red;">خطأ: ${err(e)}</span>`; }
 }
@@ -1894,8 +1914,9 @@ async function userInfo(user){
     try{ canViewCollections=await permission("COLLECTIONS_VIEW") || isSystemAdmin; canPostCollections=await permission("COLLECTIONS_POST") || isSystemAdmin; canManageCollections=await permission("COLLECTIONS_MANAGE") || isSystemAdmin; if($("menuCollections")) $("menuCollections").classList.toggle("hidden",!canViewCollections); if($("collectionsCard")) $("collectionsCard").classList.toggle("hidden",!canViewCollections); if($("addCollectionBtn")) $("addCollectionBtn").classList.toggle("hidden",!canPostCollections); }catch(e){}
     try{
       canRequestTripLoads=await permission("TRIP_LOAD_MANAGE") || isSystemAdmin;
-      canApproveTripLoads=await permission("TRIP_LOAD_APPROVE") || isSystemAdmin;
-      canDispatchTripLoads=await permission("TRIP_LOAD_DISPATCH") || isSystemAdmin;
+      const approvalRoleAllowed=["SALES_MANAGER","ACCOUNTANT","GENERAL_MANAGER"].includes(currentRoleCode);
+      canApproveTripLoads=isSystemAdmin || (approvalRoleAllowed && await permission("TRIP_LOAD_APPROVE"));
+      canDispatchTripLoads=isSystemAdmin || (currentRoleCode==="WAREHOUSE_KEEPER" && await permission("TRIP_LOAD_DISPATCH"));
       canViewTrips=await permission("TRIPS_VIEW") || isSystemAdmin || canApproveTripLoads;
       canManageTrips=await permission("TRIPS_MANAGE") || isSystemAdmin;
       canCreateTrips=await permission("TRIPS_SETUP") || isSystemAdmin;
@@ -2327,7 +2348,7 @@ async function loadTasks() {
     const dailySales = {};
     for(let i=6; i>=0; i--){ const d = new Date(); d.setDate(d.getDate()-i); const key = d.toISOString().substring(0,10); dailySales[key] = 0; }
     (salesRes.data||[]).forEach(s => { if(dailySales[s.invoice_date] !== undefined) dailySales[s.invoice_date] += Number(s.net_total||0); });
-    const labels = Object.keys(dailySales).map(k => new Date(k).toLocaleDateString("ar-EG", {day:"2-digit", month:"2-digit"}));
+    const labels = Object.keys(dailySales).map(k => formatDate(k));
     const data = Object.values(dailySales);
     if(tasksSalesChart) tasksSalesChart.destroy();
     if($("tasksSalesChart")) tasksSalesChart = new Chart($("tasksSalesChart").getContext('2d'), { type:'line', data:{ labels, datasets:[{ label:'المبيعات', data, borderColor:'#173c2c', backgroundColor:'rgba(23,60,44,0.15)', fill:true, tension:0.3 }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} } } });
@@ -2494,7 +2515,7 @@ async function viewLocationStatement(loc) {
             const changeStr = (change > 0 ? '+' : '') + fmtQty(change);
             const runningBalance = Number(m.quantity_after || 0);
             const unitLabel = unitName(m.products?.base_unit_id);
-            html += `<tr><td>${new Date(m.created_at).toLocaleDateString("ar-EG")}</td><td>${m.products?.product_name || ''}</td><td>${typeName}</td><td style="color:${change>0?'green':'red'}">${changeStr}</td><td style="font-weight:bold;">${fmtQty(runningBalance)} ${unitLabel}</td><td>${m.notes || '-'}</td></tr>`;
+            html += `<tr><td>${formatDate(m.created_at)}</td><td>${m.products?.product_name || ''}</td><td>${typeName}</td><td style="color:${change>0?'green':'red'}">${changeStr}</td><td style="font-weight:bold;">${fmtQty(runningBalance)} ${unitLabel}</td><td>${m.notes || '-'}</td></tr>`;
             const pid = m.product_id;
             if(!productSummary[pid]) productSummary[pid] = { name: m.products?.product_name || '', unit: unitLabel, inQty: 0, outQty: 0, lastBalance: 0, code: m.products?.product_code || '' };
             if(change > 0) productSummary[pid].inQty += change; else if(change < 0) productSummary[pid].outQty += Math.abs(change);
@@ -2607,8 +2628,8 @@ async function viewTreasuryStatement(t) {
             let deposit = 0, withdraw = 0;
             if (tr.transaction_type === 'DEPOSIT' || tr.transaction_type === 'TRANSFER_IN') { deposit = Number(tr.amount); runningBalance += deposit; }
             else if (tr.transaction_type === 'WITHDRAW' || tr.transaction_type === 'TRANSFER_OUT') { withdraw = Number(tr.amount); runningBalance -= withdraw; }
-            rows += `<tr><td>${new Date(tr.created_at).toLocaleDateString("ar-EG")}</td><td>${tr.notes || tr.transaction_type}</td><td style="color:green">${deposit>0?fmt(deposit):'-'}</td><td style="color:red">${withdraw>0?fmt(withdraw):'-'}</td><td>${fmt(runningBalance)}</td></tr>`;
-            waText += `▪️ ${new Date(tr.created_at).toLocaleDateString("ar-EG")} | ${tr.notes || tr.transaction_type} | ${deposit>0?('+' + fmt(deposit)):('-' + fmt(withdraw))} | رصيد: ${fmt(runningBalance)}\n`;
+            rows += `<tr><td>${formatDate(tr.created_at)}</td><td>${tr.notes || tr.transaction_type}</td><td style="color:green">${deposit>0?fmt(deposit):'-'}</td><td style="color:red">${withdraw>0?fmt(withdraw):'-'}</td><td>${fmt(runningBalance)}</td></tr>`;
+            waText += `▪️ ${formatDate(tr.created_at)} | ${tr.notes || tr.transaction_type} | ${deposit>0?('+' + fmt(deposit)):('-' + fmt(withdraw))} | رصيد: ${fmt(runningBalance)}\n`;
         });
         $("treasuryStatementTable").querySelector("tbody").innerHTML = rows;
         $("treasuryStatementHeader").innerHTML = `<div><strong>الخزنة:</strong> ${t.treasury_name}</div><div><strong>الرصيد الحالي:</strong> ${fmt(t.current_balance)}</div>`;
@@ -3083,15 +3104,15 @@ async function viewCustomerStatement(c) {
         let rowsHtml = `<thead><tr><th>التاريخ</th><th>المستند</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead><tbody><tr><td colspan="3"><strong>رصيد افتتاحي</strong></td><td>-</td><td>-</td><td><strong>${fmt(runningBalance)}</strong></td></tr>`; 
         timeline.forEach(t => { 
           runningBalance += t.debit - t.credit; 
-          rowsHtml += `<tr><td>${new Date(t.date).toLocaleDateString("ar-EG")}</td><td dir="ltr">${t.ref}</td><td>${t.desc}</td><td>${t.debit > 0 ? fmt(t.debit) : "-"}</td><td>${t.credit > 0 ? fmt(t.credit) : "-"}</td><td style="font-weight:bold;">${fmt(runningBalance)}</td></tr>`; 
+          rowsHtml += `<tr><td>${formatDate(t.date)}</td><td dir="ltr">${t.ref}</td><td>${t.desc}</td><td>${t.debit > 0 ? fmt(t.debit) : "-"}</td><td>${t.credit > 0 ? fmt(t.credit) : "-"}</td><td style="font-weight:bold;">${fmt(runningBalance)}</td></tr>`; 
         }); 
         rowsHtml += `</tbody>`; 
         $("modalStatementItems").innerHTML = rowsHtml; 
-        $("modalStatementHeader").innerHTML = `<div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span><strong>العميل:</strong> ${c.customer_name}</span><span><strong>كود:</strong> ${c.customer_code}</span></div><div style="display:flex;justify-content:space-between;"><span><strong>موبايل:</strong> ${c.phone || "غير مسجل"}</span><span><strong>تاريخ الكشف:</strong> ${new Date().toLocaleDateString("ar-EG")}</span></div>`; 
+        $("modalStatementHeader").innerHTML = `<div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span><strong>العميل:</strong> ${c.customer_name}</span><span><strong>كود:</strong> ${c.customer_code}</span></div><div style="display:flex;justify-content:space-between;"><span><strong>موبايل:</strong> ${c.phone || "غير مسجل"}</span><span><strong>تاريخ الكشف:</strong> ${formatDate()}</span></div>`; 
         $("modalStatementSummary").innerHTML = `<div class="line"><span>إجمالي المبيعات:</span><span>${fmt(totalInvoiced)}</span></div><div class="line"><span>إجمالي المدفوع:</span><span style="color:green;">${fmt(totalPaid)}</span></div><div class="line"><span>إجمالي المرتجعات:</span><span style="color:orange;">${fmt(totalReturns)}</span></div><div class="line grand"><span>الرصيد النهائي:</span><span style="color:red;">${fmt(runningBalance)}</span></div>`; 
         const waBtn = $("shareStatementWhatsappBtn"); 
         waBtn.onclick = () => { 
-          let waText = `*كشف حساب عميل*\nالعميل: ${c.customer_name}\nالتاريخ: ${new Date().toLocaleDateString("ar-EG")}\n------------------------\nإجمالي المبيعات: ${fmt(totalInvoiced)}\nإجمالي المدفوع: ${fmt(totalPaid)}\nإجمالي المرتجعات: ${fmt(totalReturns)}\n------------------------\n*الرصيد المتبقي: ${fmt(runningBalance)}*`; 
+          let waText = `*كشف حساب عميل*\nالعميل: ${c.customer_name}\nالتاريخ: ${formatDate()}\n------------------------\nإجمالي المبيعات: ${fmt(totalInvoiced)}\nإجمالي المدفوع: ${fmt(totalPaid)}\nإجمالي المرتجعات: ${fmt(totalReturns)}\n------------------------\n*الرصيد المتبقي: ${fmt(runningBalance)}*`; 
           let phone = formatWaPhone(c.phone); 
           window.open(phone ? `https://wa.me/${phone}?text=${encodeURIComponent(waText)}` : `https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); 
         }; 
@@ -3334,13 +3355,13 @@ async function viewSupplierStatement(s) {
                 : runningBalance < 0
                     ? "دفعة مقدمة " + fmt(Math.abs(runningBalance))
                     : fmt(0);
-            rowsHtml += `<tr><td>${t.date ? new Date(t.date).toLocaleDateString("ar-EG") : "-"}</td><td dir="ltr">${t.ref || "-"}</td><td>${t.desc}</td><td>${t.debit > 0 ? fmt(t.debit) : "-"}</td><td>${t.credit > 0 ? fmt(t.credit) : "-"}</td><td style="font-weight:bold;">${balanceLabel}</td></tr>`;
+            rowsHtml += `<tr><td>${t.date ? formatDate(t.date) : "-"}</td><td dir="ltr">${t.ref || "-"}</td><td>${t.desc}</td><td>${t.debit > 0 ? fmt(t.debit) : "-"}</td><td>${t.credit > 0 ? fmt(t.credit) : "-"}</td><td style="font-weight:bold;">${balanceLabel}</td></tr>`;
         });
 
         rowsHtml += `</tbody>`;
         $("modalSupplierItems").innerHTML = rowsHtml;
 
-        $("modalSupplierHeader").innerHTML = `<div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span><strong>المورد:</strong> ${s.supplier_name}</span><span><strong>كود:</strong> ${s.supplier_code}</span></div><div style="display:flex;justify-content:space-between;"><span><strong>موبايل:</strong> ${s.phone || "غير مسجل"}</span><span><strong>تاريخ الكشف:</strong> ${new Date().toLocaleDateString("ar-EG")}</span></div>`;
+        $("modalSupplierHeader").innerHTML = `<div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span><strong>المورد:</strong> ${s.supplier_name}</span><span><strong>كود:</strong> ${s.supplier_code}</span></div><div style="display:flex;justify-content:space-between;"><span><strong>موبايل:</strong> ${s.phone || "غير مسجل"}</span><span><strong>تاريخ الكشف:</strong> ${formatDate()}</span></div>`;
 
         let finalBalanceLabel = "الحساب متسوي";
         let finalBalanceColor = "#333";
@@ -3361,7 +3382,7 @@ async function viewSupplierStatement(s) {
 
         const waBtn = $("shareSupplierWhatsappBtn");
         waBtn.onclick = () => {
-            const waText = `كشف حساب مورد\nالمورد: ${s.supplier_name}\nالتاريخ: ${new Date().toLocaleDateString("ar-EG")}\n------------------------\nالمشتريات الآجلة: ${fmt(totalCreditPurchases)}\nمرتجعات مخصومة من حساب المورد: ${fmt(totalSupplierCreditReturns)}\nدفعات المورد: ${fmt(totalPayments)}\n------------------------\n${finalBalanceLabel}`;
+            const waText = `كشف حساب مورد\nالمورد: ${s.supplier_name}\nالتاريخ: ${formatDate()}\n------------------------\nالمشتريات الآجلة: ${fmt(totalCreditPurchases)}\nمرتجعات مخصومة من حساب المورد: ${fmt(totalSupplierCreditReturns)}\nدفعات المورد: ${fmt(totalPayments)}\n------------------------\n${finalBalanceLabel}`;
             const phone = formatWaPhone(s.phone);
             window.open(phone ? `https://wa.me/${phone}?text=${encodeURIComponent(waText)}` : `https://wa.me/?text=${encodeURIComponent(waText)}`, "_blank");
         };
@@ -3461,8 +3482,8 @@ async function viewStockMovements(productId, locationId) {
             const change = Number(m.quantity_change); 
             if(change > 0) totalIn += change; else if(change < 0) totalOut += Math.abs(change); netChange += change;
             const changeStr = (change > 0 ? '+' : '') + fmtQty(change); 
-            html += `<tr><td>${new Date(m.created_at).toLocaleString("ar-EG")}</td><td>${typeName}</td><td style="color:${change > 0 ? 'green' : 'red'};font-weight:bold;">${changeStr}</td><td>${fmtQty(m.quantity_after)}</td><td>${m.notes || '-'}</td></tr>`; 
-            waText += `▪️ ${new Date(m.created_at).toLocaleDateString("ar-EG")} | ${typeName} | ${changeStr} | رصيد: ${fmtQty(m.quantity_after)}\n`;
+            html += `<tr><td>${formatDateTime(m.created_at)}</td><td>${typeName}</td><td style="color:${change > 0 ? 'green' : 'red'};font-weight:bold;">${changeStr}</td><td>${fmtQty(m.quantity_after)}</td><td>${m.notes || '-'}</td></tr>`; 
+            waText += `▪️ ${formatDate(m.created_at)} | ${typeName} | ${changeStr} | رصيد: ${fmtQty(m.quantity_after)}\n`;
         }); 
         tbody.innerHTML = html; 
         const unitLabel = unitName(p?.base_unit_id);
@@ -3529,7 +3550,7 @@ async function loadReservations() {
             const custName = customerName(r.customer_id);
             const prodName = productName(r.product_id);
             const locName = locationName(r.location_id);
-            return `<div class="product"><div class="pname">🔒 ${prodName}</div><div class="details">العميل: ${custName} | الكمية: ${fmtQty(r.quantity)} | الموقع: ${locName}</div><div class="details">الحالة: ${statusMap[r.status]||r.status}${r.reserved_until?" | حتى: "+new Date(r.reserved_until).toLocaleDateString("ar-EG"):""}</div>${r.status==="ACTIVE"?`<div class="actions"><button class="btn secondary" onclick="window.cancelReservation(${r.reservation_id})">إلغاء الحجز</button></div>`:""}</div>`;
+            return `<div class="product"><div class="pname">🔒 ${prodName}</div><div class="details">العميل: ${custName} | الكمية: ${fmtQty(r.quantity)} | الموقع: ${locName}</div><div class="details">الحالة: ${statusMap[r.status]||r.status}${r.reserved_until?" | حتى: "+formatDate(r.reserved_until):""}</div>${r.status==="ACTIVE"?`<div class="actions"><button class="btn secondary" onclick="window.cancelReservation(${r.reservation_id})">إلغاء الحجز</button></div>`:""}</div>`;
         }).join("");
     } catch(e) { box.innerHTML = `<div class='empty error'>خطأ: ${err(e)}</div>`; }
 }
@@ -3868,7 +3889,7 @@ async function viewInvoice(inv) {
         });
         html += `</tbody>`;
         $("modalInvoiceItems").innerHTML = html;
-        const invoiceTime = new Date(inv.created_at || inv.invoice_date).toLocaleString("ar-EG");
+        const invoiceTime = formatDateTime(inv.created_at || inv.invoice_date);
         $("modalInvoiceHeader").innerHTML = `<div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span><strong>فاتورة:</strong> ${inv.invoice_number}</span><span><strong>التاريخ:</strong> ${invoiceTime}</span></div><div style="display:flex;justify-content:space-between;"><span><strong>العميل:</strong> ${customerName(inv.customer_id)}</span><span><strong>الإجمالي:</strong> ${fmt(inv.net_total)}</span></div>`;
         const subtotal = Number(inv.subtotal); 
         const discount = Number(inv.discount_amount);
@@ -4142,7 +4163,7 @@ function renderPurchases(){
   found.forEach(inv=>{ 
     const card=document.createElement("div");card.className="product"; 
     const title=document.createElement("div");title.className="pname";title.textContent="🛒 "+inv.invoice_number; 
-    const details=document.createElement("div");details.className="details";details.textContent="المورد: "+supplierName(inv.supplier_id)+" | التاريخ: "+new Date(inv.invoice_date).toLocaleDateString("ar-EG"); 
+    const details=document.createElement("div");details.className="details";details.textContent="المورد: "+supplierName(inv.supplier_id)+" | التاريخ: "+formatDate(inv.invoice_date); 
     const total=document.createElement("span");total.className="badge";total.textContent="الإجمالي: "+fmt(inv.net_total); 
     card.append(title,details,total); 
     const actions=document.createElement("div");actions.className="actions"; 
@@ -4171,14 +4192,14 @@ async function viewPurchaseInvoice(inv) {
         });
         html += `</tbody>`; 
         $("modalPurchaseItems").innerHTML = html;
-        $("modalPurchaseHeader").innerHTML = `<div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span><strong>فاتورة:</strong> ${inv.invoice_number}</span><span><strong>التاريخ:</strong> ${new Date(inv.invoice_date).toLocaleDateString("ar-EG")}</span></div><div style="display:flex;justify-content:space-between;"><span><strong>المورد:</strong> ${supplierName(inv.supplier_id)}</span><span><strong>الموقع:</strong> ${locationName(inv.location_id)}</span></div>`;
+        $("modalPurchaseHeader").innerHTML = `<div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span><strong>فاتورة:</strong> ${inv.invoice_number}</span><span><strong>التاريخ:</strong> ${formatDate(inv.invoice_date)}</span></div><div style="display:flex;justify-content:space-between;"><span><strong>المورد:</strong> ${supplierName(inv.supplier_id)}</span><span><strong>الموقع:</strong> ${locationName(inv.location_id)}</span></div>`;
         const subtotal = Number(inv.subtotal); 
         const discount = Number(inv.discount);
         $("modalPurchaseTotals").innerHTML = `<div class="line"><span>الإجمالي:</span><span>${fmt(subtotal)}</span></div><div class="line"><span>الخصم:</span><span style="color:red;">-${fmt(discount)}</span></div><div class="line grand"><span>الصافي:</span><span>${fmt(inv.net_total)}</span></div>`;
         const supplier = suppliersCache.find(s => String(s.supplier_id) === String(inv.supplier_id));
         const phone = supplier ? supplier.phone : "";
         const waBtn = $("sharePurchaseWhatsappBtn");
-        let waText = `*MeatManagement*\nفاتورة مشتريات رقم: ${inv.invoice_number}\nالتاريخ: ${new Date(inv.invoice_date).toLocaleDateString("ar-EG")}\nالمورد: ${supplierName(inv.supplier_id)}\n------------------------\n`;
+        let waText = `*MeatManagement*\nفاتورة مشتريات رقم: ${inv.invoice_number}\nالتاريخ: ${formatDate(inv.invoice_date)}\nالمورد: ${supplierName(inv.supplier_id)}\n------------------------\n`;
         (items || []).forEach(item => { 
           const p = productsCache.find(x => String(x.product_id) === String(item.product_id)); 
           waText += `▪️ ${p?.product_name || 'منتج'} - ${fmtQty(item.quantity)} × ${fmt(item.unit_price)}\n`; 
@@ -4248,6 +4269,7 @@ if($("purchaseForm")) $("purchaseForm").addEventListener("submit", async e => {
                 payload: requestPayload
             };
         }
+        // الاحتفاظ بنفس request_id عند إعادة المحاولة يمنع إنشاء نفس فاتورة الشراء مرتين إذا انقطع الاتصال بعد التنفيذ.
         localStorage.setItem(requestStorageKey, JSON.stringify(pendingRequest));
 
         const {data:invoiceId,error}=await db.rpc("create_purchase_invoice",{
@@ -4289,7 +4311,7 @@ async function loadSupplierPayments() {
     if(error) { box.innerHTML = `<div class="empty error">خطأ: ${err(error)}</div>`; return; } 
     supplierPaymentsCache = data || []; 
     if(!data || !data.length) { box.innerHTML = "<div class='empty'>لا توجد سدادات مطابقة للبحث.</div>"; return; } 
-    box.innerHTML = data.map(p => `<div class="product"><div class="pname">💸 ${p.suppliers?.supplier_name||'-'}</div><div class="details">المبلغ: ${fmt(p.amount)} | التاريخ: ${new Date(p.payment_date).toLocaleDateString("ar-EG")} | من: ${p.treasuries?.treasury_name||'-'}</div></div>`).join(""); 
+    box.innerHTML = data.map(p => `<div class="product"><div class="pname">💸 ${p.suppliers?.supplier_name||'-'}</div><div class="details">المبلغ: ${fmt(p.amount)} | التاريخ: ${formatDate(p.payment_date)} | من: ${p.treasuries?.treasury_name||'-'}</div></div>`).join(""); 
 }
 function createSupplierPaymentRequestId() {
     const bytes = new Uint8Array(16);
@@ -4375,14 +4397,14 @@ if($("viewSpStatementBtn")) $("viewSpStatementBtn").addEventListener("click", as
     if(error) { $("genericStatementHeader").innerHTML = "خطأ: "+err(error); return; }
     let total = 0; 
     let html = `<thead><tr><th>التاريخ</th><th>المورد</th><th>المبلغ</th></tr></thead><tbody>`;
-    (data||[]).forEach(row => { total += Number(row.amount); html += `<tr><td>${new Date(row.payment_date).toLocaleDateString("ar-EG")}</td><td>${row.suppliers?.supplier_name||'-'}</td><td>${fmt(row.amount)}</td></tr>`; });
+    (data||[]).forEach(row => { total += Number(row.amount); html += `<tr><td>${formatDate(row.payment_date)}</td><td>${row.suppliers?.supplier_name||'-'}</td><td>${fmt(row.amount)}</td></tr>`; });
     if(!data || !data.length) html += `<tr><td colspan="3">لا توجد سدادات</td></tr>`; 
     html += `</tbody>`;
     $("genericStatementItems").innerHTML = html; 
     $("genericStatementHeader").innerHTML = `<div><strong>المورد:</strong> ${supName}</div><div><strong>الفترة:</strong> ${periodText || "كل الفترات"}</div>`; 
     $("genericStatementSummary").innerHTML = `<div class="line grand"><span>إجمالي السدادات:</span><span>${fmt(total)}</span></div>`;
     let waText = `*كشف حركة السدادات*\nالمورد: ${supName}\n${periodText}\n------------------------\n`; 
-    (data||[]).forEach(row => { waText += `▪️ ${new Date(row.payment_date).toLocaleDateString("ar-EG")} | ${row.suppliers?.supplier_name||'-'} | ${fmt(row.amount)}\n`; }); 
+    (data||[]).forEach(row => { waText += `▪️ ${formatDate(row.payment_date)} | ${row.suppliers?.supplier_name||'-'} | ${fmt(row.amount)}\n`; }); 
     waText += `------------------------\n*إجمالي السدادات: ${fmt(total)}*`;
     $("shareGenericWhatsappBtn").onclick = () => { window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); };
     fillPrintHeaders();
@@ -4525,7 +4547,7 @@ async function loadPurchaseReturns() {
     const { data, error } = await query; 
     if(error) { box.innerHTML = `<div class="empty error">خطأ: ${err(error)}</div>`; return; } 
     if(!data || !data.length) { box.innerHTML = "<div class='empty'>لا توجد مرتجعات مطابقة للبحث.</div>"; return; } 
-    box.innerHTML = data.map(r => `<div class="product"><div class="pname">↩️ ${r.return_number}</div><div class="details">المورد: ${r.suppliers?.supplier_name} | المبلغ: ${fmt(r.total_return_amount)} | التاريخ: ${new Date(r.return_date).toLocaleDateString("ar-EG")}</div></div>`).join(""); 
+    box.innerHTML = data.map(r => `<div class="product"><div class="pname">↩️ ${r.return_number}</div><div class="details">المورد: ${r.suppliers?.supplier_name} | المبلغ: ${fmt(r.total_return_amount)} | التاريخ: ${formatDate(r.return_date)}</div></div>`).join(""); 
 }
 if($("refreshPrBtn")) $("refreshPrBtn").addEventListener("click", loadPurchaseReturns);
 if($("viewPrStatementBtn")) $("viewPrStatementBtn").addEventListener("click", async () => {
@@ -4548,14 +4570,14 @@ if($("viewPrStatementBtn")) $("viewPrStatementBtn").addEventListener("click", as
     if(error) { $("genericStatementHeader").innerHTML = "خطأ: "+err(error); return; }
     let total = 0; 
     let html = `<thead><tr><th>التاريخ</th><th>رقم المرتجع</th><th>المورد</th><th>المبلغ</th></tr></thead><tbody>`;
-    (data||[]).forEach(row => { total += Number(row.total_return_amount); html += `<tr><td>${new Date(row.return_date).toLocaleDateString("ar-EG")}</td><td>${row.return_number}</td><td>${row.suppliers?.supplier_name||'-'}</td><td>${fmt(row.total_return_amount)}</td></tr>`; });
+    (data||[]).forEach(row => { total += Number(row.total_return_amount); html += `<tr><td>${formatDate(row.return_date)}</td><td>${row.return_number}</td><td>${row.suppliers?.supplier_name||'-'}</td><td>${fmt(row.total_return_amount)}</td></tr>`; });
     if(!data || !data.length) html += `<tr><td colspan="4">لا توجد مرتجعات</td></tr>`; 
     html += `</tbody>`;
     $("genericStatementItems").innerHTML = html; 
     $("genericStatementHeader").innerHTML = `<div><strong>المورد:</strong> ${supName}</div><div><strong>الفترة:</strong> ${periodText || "كل الفترات"}</div>`; 
     $("genericStatementSummary").innerHTML = `<div class="line grand"><span>إجمالي المرتجعات:</span><span>${fmt(total)}</span></div>`;
     let waText = `*كشف حركة المرتجعات*\nالمورد: ${supName}\n${periodText}\n------------------------\n`; 
-    (data||[]).forEach(row => { waText += `▪️ ${new Date(row.return_date).toLocaleDateString("ar-EG")} | ${row.return_number} | ${fmt(row.total_return_amount)}\n`; }); 
+    (data||[]).forEach(row => { waText += `▪️ ${formatDate(row.return_date)} | ${row.return_number} | ${fmt(row.total_return_amount)}\n`; }); 
     waText += `------------------------\n*إجمالي المرتجعات: ${fmt(total)}*`;
     $("shareGenericWhatsappBtn").onclick = () => { window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); };
     fillPrintHeaders();
@@ -4940,7 +4962,7 @@ function renderCollections(){
     const card=document.createElement("div");card.className="product"; 
     const repName = col.sales_rep_name || "غير محدد"; 
     const trip = col.trip_id ? tripNumber(col.trip_id) : "بدون جولة"; 
-    card.innerHTML = `<div class="pname">💰 ${col.collection_number}</div><div class="details">عميل: ${customerName(col.customer_id)} | مبلغ: ${fmt(col.amount)}</div><div class="details">📅 التاريخ: ${new Date(col.collection_date).toLocaleDateString("ar-EG")} | 👤 المندوب: ${repName} | 🚐 الجولة: ${trip}</div>`; 
+    card.innerHTML = `<div class="pname">💰 ${col.collection_number}</div><div class="details">عميل: ${customerName(col.customer_id)} | مبلغ: ${fmt(col.amount)}</div><div class="details">📅 التاريخ: ${formatDate(col.collection_date)} | 👤 المندوب: ${repName} | 🚐 الجولة: ${trip}</div>`; 
     box.appendChild(card); 
   }); 
 }
@@ -4966,14 +4988,14 @@ if($("viewCollectionsStatementBtn")) $("viewCollectionsStatementBtn").addEventLi
     if(error) { $("genericStatementHeader").innerHTML = "خطأ: "+err(error); return; }
     let total = 0; 
     let html = `<thead><tr><th>التاريخ</th><th>رقم التحصيل</th><th>العميل</th><th>المندوب</th><th>المبلغ</th></tr></thead><tbody>`;
-    (data||[]).forEach(row => { total += Number(row.amount); html += `<tr><td>${new Date(row.collection_date).toLocaleDateString("ar-EG")}</td><td>${row.collection_number}</td><td>${customerName(row.customer_id)}</td><td>${row.sales_rep_name||'-'}</td><td>${fmt(row.amount)}</td></tr>`; });
+    (data||[]).forEach(row => { total += Number(row.amount); html += `<tr><td>${formatDate(row.collection_date)}</td><td>${row.collection_number}</td><td>${customerName(row.customer_id)}</td><td>${row.sales_rep_name||'-'}</td><td>${fmt(row.amount)}</td></tr>`; });
     if(!data || !data.length) html += `<tr><td colspan="5">لا توجد تحصيلات</td></tr>`; 
     html += `</tbody>`;
     $("genericStatementItems").innerHTML = html; 
     $("genericStatementHeader").innerHTML = `<div><strong>العميل:</strong> ${custName}</div><div><strong>الفترة:</strong> ${periodText || "كل الفترات"}</div>`; 
     $("genericStatementSummary").innerHTML = `<div class="line grand"><span>إجمالي التحصيلات:</span><span>${fmt(total)}</span></div>`;
     let waText = `*كشف حركة التحصيلات*\nالعميل: ${custName}\n${periodText}\n------------------------\n`; 
-    (data||[]).forEach(row => { waText += `▪️ ${new Date(row.collection_date).toLocaleDateString("ar-EG")} | ${customerName(row.customer_id)} | ${fmt(row.amount)}\n`; }); 
+    (data||[]).forEach(row => { waText += `▪️ ${formatDate(row.collection_date)} | ${customerName(row.customer_id)} | ${fmt(row.amount)}\n`; }); 
     waText += `------------------------\n*إجمالي التحصيلات: ${fmt(total)}*`;
     $("shareGenericWhatsappBtn").onclick = () => { window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); };
     fillPrintHeaders();
@@ -5086,7 +5108,7 @@ async function loadExpenses(){
     const {data, error} = await query; 
     if(error){ msg($("expensesMsg"),"تعذر التحميل: "+err(error),"error"); if(box) box.innerHTML=""; return; } 
     if(box) { 
-      box.innerHTML = (data||[]).map(e=>`<div class="product"><div class="pname">🧾 ${expenseTypeName(e.expense_type)}</div><div class="details">المبلغ: ${fmt(e.amount)} | التاريخ: ${new Date(e.expense_date).toLocaleDateString("ar-EG")}</div></div>`).join(""); 
+      box.innerHTML = (data||[]).map(e=>`<div class="product"><div class="pname">🧾 ${expenseTypeName(e.expense_type)}</div><div class="details">المبلغ: ${fmt(e.amount)} | التاريخ: ${formatDate(e.expense_date)}</div></div>`).join(""); 
       if(!data || !data.length) box.innerHTML = "<div class='empty'>لا توجد مصروفات مطابقة.</div>"; 
     } 
 }
@@ -5120,14 +5142,14 @@ if($("viewExpensesStatementBtn")) $("viewExpensesStatementBtn").addEventListener
     if(error) { $("genericStatementHeader").innerHTML = "خطأ: "+err(error); return; }
     let total = 0; 
     let html = `<thead><tr><th>التاريخ</th><th>البند</th><th>المبلغ</th></tr></thead><tbody>`;
-    (data||[]).forEach(row => { total += Number(row.amount); html += `<tr><td>${new Date(row.expense_date).toLocaleDateString("ar-EG")}</td><td>${expenseTypeName(row.expense_type)}</td><td>${fmt(row.amount)}</td></tr>`; });
+    (data||[]).forEach(row => { total += Number(row.amount); html += `<tr><td>${formatDate(row.expense_date)}</td><td>${expenseTypeName(row.expense_type)}</td><td>${fmt(row.amount)}</td></tr>`; });
     if(!data || !data.length) html += `<tr><td colspan="3">لا توجد مصروفات</td></tr>`; 
     html += `</tbody>`;
     $("genericStatementItems").innerHTML = html; 
     $("genericStatementHeader").innerHTML = `<div><strong>البند:</strong> ${typeNameStr}</div><div><strong>الفترة:</strong> ${periodText || "كل الفترات"}</div>`; 
     $("genericStatementSummary").innerHTML = `<div class="line grand"><span>إجمالي المصروفات:</span><span>${fmt(total)}</span></div>`;
     let waText = `*كشف حركة المصروفات*\nالبند: ${typeNameStr}\n${periodText}\n------------------------\n`; 
-    (data||[]).forEach(row => { waText += `▪️ ${new Date(row.expense_date).toLocaleDateString("ar-EG")} | ${expenseTypeName(row.expense_type)} | ${fmt(row.amount)}\n`; }); 
+    (data||[]).forEach(row => { waText += `▪️ ${formatDate(row.expense_date)} | ${expenseTypeName(row.expense_type)} | ${fmt(row.amount)}\n`; }); 
     waText += `------------------------\n*إجمالي المصروفات: ${fmt(total)}*`;
     $("shareGenericWhatsappBtn").onclick = () => { window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); };
     fillPrintHeaders();
@@ -5684,7 +5706,7 @@ async function loadPendingTripLoads(){
       const details=document.createElement("div");
       details.className="details";
       const statusText=item.load_status==="APPROVED"?"معتمد وينتظر الصرف الفعلي":"بانتظار الاعتماد";
-      details.textContent="الصنف: "+productName(item.product_id)+" | الكمية المطلوبة: "+Number(item.requested_quantity||0).toLocaleString("ar-EG")+" | الحالة: "+statusText+" | تاريخ الطلب: "+(item.created_at?new Date(item.created_at).toLocaleString("ar-EG"):"—");
+      details.textContent="الصنف: "+productName(item.product_id)+" | الكمية المطلوبة: "+Number(item.requested_quantity||0).toLocaleString("ar-EG")+" | الحالة: "+statusText+" | تاريخ الطلب: "+(item.created_at?formatDateTime(item.created_at):"—");
       const qtyLabel=document.createElement("label");
       qtyLabel.textContent=item.load_status==="APPROVED"?"الكمية التي خرجت فعليًا من المخزن":"الكمية المعتمدة";
       const qty=document.createElement("input");
@@ -5848,7 +5870,7 @@ async function viewTripSummary(t){
     let tripDateStr = "-";
     if (t.trip_date) {
       const d = new Date(t.trip_date);
-      if (!isNaN(d.getTime())) tripDateStr = d.toLocaleDateString("ar-EG");
+      if (!isNaN(d.getTime())) tripDateStr = formatDate(d);
     }
 
     let html = `<div style="font-size:14px;line-height:1.9;"><div><strong>الجولة:</strong> ${t.trip_number}</div><div><strong>المندوب:</strong> ${t.rep_name||"-"}</div><div><strong>السيارة:</strong> ${locationName(t.vehicle_location_id)}</div><div><strong>التاريخ:</strong> ${tripDateStr}</div></div>`;
@@ -5892,7 +5914,7 @@ async function viewTripSummary(t){
 
     html += `<h4 style="color:var(--g);margin-top:20px;">🧾 المصروفات (${expenses.length})</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>النوع</th><th>الخزنة</th><th>المبلغ</th><th>التاريخ</th></tr></thead><tbody>`;
     expenses.forEach(e => {
-      html += `<tr><td>${expenseTypeName(e.expense_type)}</td><td>${e.treasury_id || "-"}</td><td>${fmt(e.amount)}</td><td>${new Date(e.expense_date).toLocaleDateString("ar-EG")}</td></tr>`;
+      html += `<tr><td>${expenseTypeName(e.expense_type)}</td><td>${e.treasury_id || "-"}</td><td>${fmt(e.amount)}</td><td>${formatDate(e.expense_date)}</td></tr>`;
     });
     if(!expenses.length) html += `<tr><td colspan="4">لا توجد مصروفات</td></tr>`;
     html += `</tbody></table></div><div class="mini-summary"><div class="line"><span>إجمالي مصروفات الجولة:</span><span style="font-weight:bold;">${fmt(totalExpenses)}</span></div><div class="line"><span>المخصوم من خزنة المناديب:</span><span style="font-weight:bold;">${fmt(cashExpenses)}</span></div></div>`;
@@ -6041,7 +6063,7 @@ async function viewPartnerStatement(p) {
         runningBalance += inAmt; 
         totalIn += inAmt; 
       } 
-      html += `<tr><td>${new Date(t.transaction_date).toLocaleDateString("ar-EG")}</td><td>${typeMap[t.transaction_type]||t.transaction_type}</td><td style="color:red">${outAmt>0?fmt(outAmt):'-'}</td><td style="color:green">${inAmt>0?fmt(inAmt):'-'}</td><td>${fmt(runningBalance)}</td></tr>`; 
+      html += `<tr><td>${formatDate(t.transaction_date)}</td><td>${typeMap[t.transaction_type]||t.transaction_type}</td><td style="color:red">${outAmt>0?fmt(outAmt):'-'}</td><td style="color:green">${inAmt>0?fmt(inAmt):'-'}</td><td>${fmt(runningBalance)}</td></tr>`; 
     }); 
     html += `</tbody>`; 
     $("modalStatementItems").innerHTML = html; 
@@ -6141,7 +6163,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
           tbodyJournal.innerHTML = "";
           if(journalData && journalData.length > 0) { 
             journalData.forEach(row => { 
-              tbodyJournal.innerHTML += `<tr><td>${new Date(row.entry_date).toLocaleDateString("ar-EG")}</td><td>${row.description}</td><td>${row.account_name}</td><td>${fmt(row.debit)}</td><td>${fmt(row.credit)}</td></tr>`; 
+              tbodyJournal.innerHTML += `<tr><td>${formatDate(row.entry_date)}</td><td>${row.description}</td><td>${row.account_name}</td><td>${fmt(row.debit)}</td><td>${fmt(row.credit)}</td></tr>`; 
             }); 
           } else { 
             tbodyJournal.innerHTML = "<tr><td colspan='5' style='text-align:center;'>لا توجد قيود في هذه الفترة.</td></tr>"; 
@@ -6268,7 +6290,9 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
         const { data: aged, error: agedErr } = await db.rpc("get_aged_receivables"); 
         if(agedErr) {
             console.warn("[AGED]", agedErr);
-            if(tbodyAged) tbodyAged.innerHTML = `<tr><td colspan='7' style="color:red;">خطأ: ${err(agedErr)}</td></tr>`;
+            const agedMessage=String(agedErr.message||agedErr.details||agedErr.code||"");
+            const rpcMissing=agedErr.code==="PGRST202" || /could not find the function|function .* does not exist|schema cache/i.test(agedMessage);
+            if(tbodyAged) tbodyAged.innerHTML = `<tr><td colspan='7' style="color:#8a5a00;">${rpcMissing?"تقرير أعمار الديون غير متاح: دالة get_aged_receivables غير موجودة في قاعدة البيانات حاليًا. لم يتم تخمين معاملات أو تغيير قاعدة البيانات.":"تعذر تحميل تقرير أعمار الديون: "+err(agedErr)}</td></tr>`;
         } else if(aged && aged.length > 0) { 
             let totalBalance = 0, d0_30 = 0, d31_60 = 0, d61_90 = 0, dOver90 = 0;
             const rows = aged.map(a => {
@@ -6376,7 +6400,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
         const { data, error } = await db.rpc("get_slow_moving_stock", { p_days: days }); 
         if(error) throw error;
         const tbody = $("slowTable").querySelector("tbody"); 
-        if(data && data.length) tbody.innerHTML = data.map(i => `<tr><td>${i.product_name}</td><td>${i.location_name}</td><td>${fmtQty(i.quantity)}</td><td>${i.last_movement_date ? new Date(i.last_movement_date).toLocaleDateString('ar-EG') : 'لا يوجد'}</td></tr>`).join(""); 
+        if(data && data.length) tbody.innerHTML = data.map(i => `<tr><td>${i.product_name}</td><td>${i.location_name}</td><td>${fmtQty(i.quantity)}</td><td>${i.last_movement_date ? formatDate(i.last_movement_date) : 'لا يوجد'}</td></tr>`).join(""); 
         else tbody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>لا توجد بيانات.</td></tr>";
       } catch(e){ alert(err(e)); }
   }
@@ -6444,8 +6468,11 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
   }
 
   // ========== تسجيل الدخول ==========
+  let loginInProgress=false;
   if($("loginForm")) $("loginForm").addEventListener("submit",async e=>{
-    e.preventDefault(); 
+    e.preventDefault();
+    if(loginInProgress) return;
+    loginInProgress=true;
     clear($("loginMsg"));
     const loginValue=$("email").value.trim(); 
     const password=$("password").value;
@@ -6470,6 +6497,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
       msg($("loginMsg"),"تعذر الدخول: "+err(loginErr),"error"); 
     }
     finally { 
+      loginInProgress=false;
       busy($("loginBtn"),false,"","تسجيل الدخول"); 
     }
   });
@@ -6529,36 +6557,55 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
 
   if($("logoutBtn")) $("logoutBtn").onclick=async()=>{ 
     logUserAction("LOGIN","تسجيل خروج"); 
-    await db.auth.signOut(); 
-    localStorage.clear(); 
+    await db.auth.signOut();
+    bootedUserId=null;
+    appBootPromise=null;
+    taxWarningShownForUserId=null;
+    localStorage.clear();
     showLogin(); 
   };
   document.querySelectorAll(".navbtn").forEach(b=>{ b.onclick=()=>page(b.dataset.page); });
 
   // ========== تهيئة التطبيق ==========
+  let appBootPromise=null;
+  let bootedUserId=null;
+  let taxWarningShownForUserId=null;
   async function bootAppAfterLogin(user){
-    // تحميل الدور والصلاحيات قبل إظهار أي لوحة بيانات حتى لا تظهر مؤشرات عامة لحساب المندوب أثناء التهيئة.
-    try { await loadCompanySettings(); } catch(e){ console.error("[BOOT settings]", e); }
-    try { await userInfo(user); } catch(e){ console.error("[BOOT userInfo]", e); }
-    showApp();
-    try { await loadLookups(); } catch(e){ console.error("[BOOT lookups]", e); }
-    try { await loadProducts(); } catch(e){ console.error("[BOOT products]", e); }
-    if(canViewLocations || canViewStockTransfers){ try{ await loadLocations(); }catch(e){console.error("[BOOT locations]",e);} }
-    if(canViewTreasuries){ try{ await loadTreasuries(); }catch(e){console.error("[BOOT treasuries]",e);} }
-    if(canViewStock){ try{ await loadStock(); }catch(e){console.error("[BOOT stock]",e);} }
-    if(canViewRecipes){ try{ await loadRecipes(); }catch(e){console.error("[BOOT recipes]",e);} }
-    if(canViewProduction){ try{ await loadProduction(); }catch(e){console.error("[BOOT production]",e);} }
-    if(canViewTrips){ try{ await loadTrips(); }catch(e){console.error("[BOOT trips]",e);} }
-    if(canViewCustomers){ try{ await loadCustomers(); }catch(e){console.error("[BOOT customers]",e);} }
-    if(canViewSales){ try{ await loadSales(); }catch(e){console.error("[BOOT sales]",e);} }
-    if(canViewCollections){ try{ await loadCollections(); }catch(e){console.error("[BOOT collections]",e);} }
-    if(canViewSuppliers){ try{ await loadSuppliers(); }catch(e){console.error("[BOOT suppliers]",e);} }
-    if(canViewPurchases){ try{ await loadPurchases(); }catch(e){console.error("[BOOT purchases]",e);} }
-    if(canViewPartners){ try{ await loadPartners(); }catch(e){console.error("[BOOT partners]",e);} }
-    try { await loadHomeDashboard(); } catch(e){ console.error("[BOOT home]", e); }
-    setTimeout(() => {
-      if(companySettings.company_tax_number === "000000000") showToast("⚠️ لم يتم تعيين الرقم الضريبي للشركة، يمكنك ضبطه من إعدادات الشركة", "warn", 6000);
-    }, 2000);
+    if(!user || !user.id) throw new Error("تعذر تحديد المستخدم بعد تسجيل الدخول.");
+    if(bootedUserId===user.id) return;
+    if(appBootPromise){
+      await appBootPromise;
+      if(bootedUserId===user.id) return;
+    }
+    appBootPromise=(async()=>{
+      // تحميل الدور والصلاحيات قبل إظهار أي لوحة بيانات.
+      try { await loadCompanySettings(); } catch(e){ console.error("[BOOT settings]", e); }
+      try { await userInfo(user); } catch(e){ console.error("[BOOT userInfo]", e); }
+      showApp();
+      try { await loadLookups(); } catch(e){ console.error("[BOOT lookups]", e); }
+      try { await loadProducts(); } catch(e){ console.error("[BOOT products]", e); }
+      if(canViewLocations || canViewStockTransfers){ try{ await loadLocations(); }catch(e){console.error("[BOOT locations]",e);} }
+      if(canViewTreasuries){ try{ await loadTreasuries(); }catch(e){console.error("[BOOT treasuries]",e);} }
+      if(canViewStock){ try{ await loadStock(); }catch(e){console.error("[BOOT stock]",e);} }
+      if(canViewRecipes){ try{ await loadRecipes(); }catch(e){console.error("[BOOT recipes]",e);} }
+      if(canViewProduction){ try{ await loadProduction(); }catch(e){console.error("[BOOT production]",e);} }
+      if(canViewTrips){ try{ await loadTrips(); }catch(e){console.error("[BOOT trips]",e);} }
+      if(canViewCustomers){ try{ await loadCustomers(); }catch(e){console.error("[BOOT customers]",e);} }
+      if(canViewSales){ try{ await loadSales(); }catch(e){console.error("[BOOT sales]",e);} }
+      if(canViewCollections){ try{ await loadCollections(); }catch(e){console.error("[BOOT collections]",e);} }
+      if(canViewSuppliers){ try{ await loadSuppliers(); }catch(e){console.error("[BOOT suppliers]",e);} }
+      if(canViewPurchases){ try{ await loadPurchases(); }catch(e){console.error("[BOOT purchases]",e);} }
+      if(canViewPartners){ try{ await loadPartners(); }catch(e){console.error("[BOOT partners]",e);} }
+      try { await loadHomeDashboard(); } catch(e){ console.error("[BOOT home]", e); }
+      bootedUserId=user.id;
+      if(taxWarningShownForUserId!==user.id && companySettings.company_tax_number === "000000000"){
+        taxWarningShownForUserId=user.id;
+        showToast("⚠️ لم يتم تعيين الرقم الضريبي للشركة، يمكنك ضبطه من إعدادات الشركة", "warn", 6000);
+      }
+    })();
+    try { await appBootPromise; }
+    catch(e){ bootedUserId=null; throw e; }
+    finally { appBootPromise=null; }
   }
 
   // ========== بدء التشغيل ==========
