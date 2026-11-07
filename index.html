@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v29</title>
+<title>MeatManagement v30</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -275,7 +275,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 <header>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v29]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v30]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 </header>
 <main>
@@ -1546,7 +1546,7 @@ try {
   let canViewStock=false, canManageStock=false;
   let canViewRecipes=false, canManageRecipes=false;
   let canViewProduction=false, canManageProduction=false;
-  let canViewTrips=false, canManageTrips=false, canRequestTripLoads=false, canApproveTripLoads=false;
+  let canViewTrips=false, canManageTrips=false, canRequestTripLoads=false, canApproveTripLoads=false, canDispatchTripLoads=false;
   let canViewCustomers=false, canManageCustomers=false;
   let canViewSales=false, canManageSales=false;
   let canViewCollections=false, canPostCollections=false, canManageCollections=false;
@@ -1888,12 +1888,13 @@ async function userInfo(user){
     try{
       canRequestTripLoads=await permission("TRIP_LOAD_MANAGE") || isSystemAdmin;
       canApproveTripLoads=await permission("TRIP_LOAD_APPROVE") || isSystemAdmin;
+      canDispatchTripLoads=await permission("TRIP_LOAD_DISPATCH") || isSystemAdmin;
       canViewTrips=await permission("TRIPS_VIEW") || isSystemAdmin || canApproveTripLoads;
       canManageTrips=await permission("TRIPS_MANAGE") || isSystemAdmin;
       if($("menuTrips")) $("menuTrips").classList.toggle("hidden",!canViewTrips);
       if($("tripsCard")) $("tripsCard").classList.toggle("hidden",!canViewTrips);
       if($("addTripBtn")) $("addTripBtn").classList.toggle("hidden",!canManageTrips);
-      if($("tripLoadApprovals")) $("tripLoadApprovals").classList.toggle("hidden",!canApproveTripLoads);
+      if($("tripLoadApprovals")) $("tripLoadApprovals").classList.toggle("hidden",!(canApproveTripLoads || canDispatchTripLoads));
     }catch(e){}
     try{ canViewExpenses=await permission("EXPENSES_VIEW") || isSystemAdmin; canManageExpenses=await permission("EXPENSES_MANAGE") || isSystemAdmin; if($("menuExpenses")) $("menuExpenses").classList.toggle("hidden",!canViewExpenses); if($("expensesCard")) $("expensesCard").classList.toggle("hidden",!canViewExpenses); if($("addExpenseBtn")) $("addExpenseBtn").classList.toggle("hidden",!canManageExpenses); }catch(e){}
     try{ canViewPartners=await permission("PARTNERS_VIEW") || isSystemAdmin; canManagePartners=await permission("PARTNERS_MANAGE") || isSystemAdmin; if($("menuPartners")) $("menuPartners").classList.toggle("hidden",!canViewPartners); if($("partnersCard")) $("partnersCard").classList.toggle("hidden",!canViewPartners); if($("addPartnerBtn")) $("addPartnerBtn").classList.toggle("hidden",!canManagePartners); if($("addPartnerTransactionBtn")) $("addPartnerTransactionBtn").classList.toggle("hidden",!canManagePartners); }catch(e){}
@@ -1923,8 +1924,8 @@ async function userInfo(user){
       if($("collectionTreasury")) { $("collectionTreasury").classList.remove("hidden"); $("collectionTreasury").required=true; }
     }
 
-    // إتاحة شاشة الجولات لمن يملك صلاحية اعتماد طلبات تحميل السيارات.
-    if(canApproveTripLoads){
+    // إتاحة شاشة الجولات لمن يملك اعتماد أو صرف تحميل السيارات.
+    if(canApproveTripLoads || canDispatchTripLoads){
       canViewTrips=true;
       if($("menuTrips")) $("menuTrips").classList.remove("hidden");
       if($("tripsCard")) $("tripsCard").classList.remove("hidden");
@@ -5472,10 +5473,11 @@ if($("tripLoadForm")) $("tripLoadForm").addEventListener("submit", async e => {
     const productId=Number($("loadProduct").value);
     const quantity=Number($("loadQty").value);
     if(!tripId || !productId || !Number.isFinite(quantity) || quantity<=0) throw new Error("راجع الصنف والكمية المطلوبة.");
-    const { data, error } = await db.rpc("request_trip_load", {
+    const { data, error } = await db.rpc("request_trip_load_v2", {
       p_trip_id: tripId,
       p_product_id: productId,
-      p_quantity: quantity
+      p_quantity: quantity,
+      p_package_option_id: null
     });
     if(error) throw error;
     showToast("تم تسجيل طلب التحميل. الطلب بانتظار الاعتماد.", "success");
@@ -5494,46 +5496,58 @@ if($("tripLoadForm")) $("tripLoadForm").addEventListener("submit", async e => {
 async function loadPendingTripLoads(){
   const card=$("tripLoadApprovals");
   const box=$("tripLoadApprovalsList");
-  if(!card || !box || !canApproveTripLoads) return;
+  if(!card || !box || !(canApproveTripLoads || canDispatchTripLoads)) return;
   card.classList.remove("hidden");
-  box.innerHTML='<div class="empty">جارٍ تحميل الطلبات...</div>';
+  box.innerHTML='<div class="empty">جارٍ تحميل طلبات تحميل السيارات...</div>';
   try{
     const {data,error}=await db.from("trip_loads")
-      .select("load_id,trip_id,product_id,requested_quantity,quantity_loaded,load_status,created_at")
-      .eq("load_status","REQUESTED")
+      .select("load_id,trip_id,product_id,requested_quantity,quantity_loaded,approved_quantity,approved_weight_kg,actual_package_count,load_status,created_at")
+      .in("load_status",["REQUESTED","APPROVED"])
       .order("created_at",{ascending:true});
     if(error) throw error;
     const requests=data||[];
     box.replaceChildren();
     if(!requests.length){
-      box.innerHTML='<div class="empty">لا توجد طلبات تحميل بانتظار الاعتماد.</div>';
+      box.innerHTML='<div class="empty">لا توجد طلبات تحميل تحتاج إلى إجراء.</div>';
       return;
     }
     requests.forEach(item=>{
       const row=document.createElement("div");
       row.className="product";
+      const trip=tripsCache.find(t=>Number(t.trip_id)===Number(item.trip_id));
       const title=document.createElement("div");
       title.className="pname";
-      const trip=tripsCache.find(t=>Number(t.trip_id)===Number(item.trip_id));
       title.textContent="الجولة: "+(trip?.trip_number||("#"+item.trip_id));
       const details=document.createElement("div");
       details.className="details";
-      details.textContent="الصنف: "+productName(item.product_id)+" | الكمية المطلوبة: "+Number(item.requested_quantity||0).toLocaleString("ar-EG")+" | تاريخ الطلب: "+(item.created_at?new Date(item.created_at).toLocaleString("ar-EG"):"—");
+      const statusText=item.load_status==="APPROVED"?"معتمد وينتظر الصرف الفعلي":"بانتظار الاعتماد";
+      details.textContent="الصنف: "+productName(item.product_id)+" | الكمية المطلوبة: "+Number(item.requested_quantity||0).toLocaleString("ar-EG")+" | الحالة: "+statusText+" | تاريخ الطلب: "+(item.created_at?new Date(item.created_at).toLocaleString("ar-EG"):"—");
       const qtyLabel=document.createElement("label");
-      qtyLabel.textContent="الكمية الفعلية التي تم تحميلها";
+      qtyLabel.textContent=item.load_status==="APPROVED"?"الكمية التي خرجت فعليًا من المخزن":"الكمية المعتمدة";
       const qty=document.createElement("input");
       qty.type="number";
       qty.min="0.0001";
       qty.step="0.0001";
-      qty.max=String(item.requested_quantity);
-      qty.value=String(item.requested_quantity);
+      qty.max=String(item.requested_quantity||0);
+      qty.value=String(item.approved_quantity||item.requested_quantity||0);
       qty.required=true;
-      const approve=document.createElement("button");
-      approve.type="button";
-      approve.className="btn";
-      approve.textContent="اعتماد وتنفيذ التحميل";
-      approve.addEventListener("click",()=>approveTripLoad(item.load_id,qty,approve));
-      row.append(title,details,qtyLabel,qty,approve);
+      row.append(title,details,qtyLabel,qty);
+      if(item.load_status==="REQUESTED" && canApproveTripLoads){
+        const approve=document.createElement("button");
+        approve.type="button";
+        approve.className="btn";
+        approve.textContent="اعتماد طلب التحميل";
+        approve.addEventListener("click",()=>approveTripLoadV2(item.load_id,qty,approve));
+        row.appendChild(approve);
+      }
+      if(item.load_status==="APPROVED" && canDispatchTripLoads){
+        const dispatch=document.createElement("button");
+        dispatch.type="button";
+        dispatch.className="btn";
+        dispatch.textContent="تأكيد صرف التحميل الفعلي";
+        dispatch.addEventListener("click",()=>confirmTripLoadDispatch(item.load_id,qty,dispatch));
+        row.appendChild(dispatch);
+      }
       box.appendChild(row);
     });
   }catch(e){
@@ -5545,32 +5559,61 @@ async function loadPendingTripLoads(){
   }
 }
 
-async function approveTripLoad(loadId,quantityInput,button){
+async function approveTripLoadV2(loadId,quantityInput,button){
   if(!canApproveTripLoads){
     showToast("ليس لديك صلاحية اعتماد طلبات التحميل.","error");
     return;
   }
   const quantity=Number(quantityInput?.value);
   if(!Number.isFinite(quantity)||quantity<=0){
-    showToast("أدخل الكمية الفعلية التي تم تحميلها بشكل صحيح.","error");
+    showToast("أدخل الكمية المعتمدة بشكل صحيح.","error");
     return;
   }
-  busy(button,true,"جارٍ الاعتماد...","اعتماد وتنفيذ التحميل");
+  busy(button,true,"جارٍ اعتماد الطلب...","اعتماد طلب التحميل");
   try{
-    const {data,error}=await db.rpc("approve_trip_load",{
+    const {data,error}=await db.rpc("approve_trip_load_v2",{
       p_load_id:Number(loadId),
-      p_quantity:quantity
+      p_approved_quantity:quantity
     });
     if(error) throw error;
-    showToast("تم اعتماد طلب التحميل وتنفيذ النقل للمخزن الخاص بالسيارة.","success");
+    showToast("تم اعتماد طلب التحميل. لم يتم صرف المخزون بعد.","success");
     logUserAction("TRIP","اعتماد طلب تحميل رقم "+loadId+" بكمية "+quantity);
     await loadPendingTripLoads();
-    if(canViewStock) await loadStock();
     await loadTrips();
   }catch(e){
     showToast("تعذر اعتماد طلب التحميل: "+err(e),"error",7000);
   }finally{
-    busy(button,false,"","اعتماد وتنفيذ التحميل");
+    busy(button,false,"","اعتماد طلب التحميل");
+  }
+}
+
+async function confirmTripLoadDispatch(loadId,quantityInput,button){
+  if(!canDispatchTripLoads){
+    showToast("ليس لديك صلاحية تأكيد صرف التحميل.","error");
+    return;
+  }
+  const quantity=Number(quantityInput?.value);
+  if(!Number.isFinite(quantity)||quantity<=0){
+    showToast("أدخل الكمية التي خرجت فعليًا من المخزن.","error");
+    return;
+  }
+  busy(button,true,"جارٍ تأكيد الصرف...","تأكيد صرف التحميل الفعلي");
+  try{
+    const {data,error}=await db.rpc("confirm_trip_load_dispatch",{
+      p_load_id:Number(loadId),
+      p_actual_quantity:quantity,
+      p_created_by:null
+    });
+    if(error) throw error;
+    showToast("تم تأكيد صرف التحميل ونقل البضاعة إلى السيارة.","success");
+    logUserAction("TRIP","تأكيد صرف تحميل رقم "+loadId+" بكمية "+quantity);
+    await loadPendingTripLoads();
+    if(canViewStock) await loadStock();
+    await loadTrips();
+  }catch(e){
+    showToast("تعذر تأكيد صرف التحميل: "+err(e),"error",7000);
+  }finally{
+    busy(button,false,"","تأكيد صرف التحميل الفعلي");
   }
 }
 
