@@ -5528,7 +5528,7 @@ async function loadPendingTripLoads(){
       qty.type="number";
       qty.min="0.0001";
       qty.step="0.0001";
-      qty.max=String(item.requested_quantity||0);
+      qty.max=String(item.load_status==="APPROVED"?(item.approved_quantity||0):(item.requested_quantity||0));
       qty.value=String(item.approved_quantity||item.requested_quantity||0);
       qty.required=true;
       row.append(title,details,qtyLabel,qty);
