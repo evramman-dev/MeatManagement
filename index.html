@@ -609,7 +609,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <label for="expenseType">نوع المصروف *</label>
 <select id="expenseType" required><option value="FUEL">وقود (بنزين/سولار)</option><option value="MAINTENANCE">صيانة وإصلاح</option><option value="RENT">إيجارات</option><option value="SALARY">رواتب وأجور</option><option value="OTHER">مصروفات أخرى</option></select>
 <label for="expenseDate">التاريخ *</label><input id="expenseDate" type="date" required>
-<label for="expenseTreasury">من خزنة *</label><select id="expenseTreasury" required><option value="">اختر الخزنة</option></select>
+<label for="expenseTreasury">من خزنة *</label><select id="expenseTreasury" required><option value="">اختر الخزنة</option></select><div id="expenseTripTreasuryInfo" class="item-hint hidden">مصروف الجولة يُخصم من خزنة المناديب تلقائيًا.</div>
 <label for="expenseAmount">المبلغ *</label><input id="expenseAmount" type="number" min="0.01" step="0.01" required>
 <label for="expenseTrip">ربط بجولة (اختياري)</label><select id="expenseTrip"><option value="">بدون ربط</option></select>
 <label for="expenseNotes">ملاحظات</label><textarea id="expenseNotes" rows="2"></textarea>
@@ -880,7 +880,8 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="modal-header"><h3>إنشاء جولة جديدة</h3><button class="close-btn" onclick="document.getElementById('tripFormModal').classList.remove('active')">&times;</button></div>
 <div class="modal-body">
 <form id="tripForm" onsubmit="event.preventDefault();">
-<label for="tripRepName">اسم المندوب *</label><input id="tripRepName" required>
+<label for="tripRepSelect">المندوب *</label><select id="tripRepSelect" required><option value="">اختر المندوب</option></select>
+<label for="tripSource">مخزن المصدر *</label><select id="tripSource" required><option value="">اختر مخزن المصدر</option></select>
 <label for="tripVehicle">السيارة *</label><select id="tripVehicle" required><option value="">اختر السيارة</option></select>
 <label for="tripDate">تاريخ الجولة *</label><input id="tripDate" type="date" required>
 <label for="tripInitialCash">العهدة النقدية (اختياري)</label><input id="tripInitialCash" type="number" min="0" step="0.01" value="0">
@@ -994,7 +995,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 <div class="row"><input id="salesSearch" type="search" placeholder="ابحث..."><button id="refreshSalesBtn" class="btn secondary" type="button">تحديث</button></div>
 <div id="salesMsg" class="status hidden"></div>
-<div id="salesList"><div class="empty">جارٍ تحميل الفواتير...</div></div>
+<div id="salesList"><div class="empty">جارٍ تحميل الفواتير...</div></div><div class="card" style="margin-top:14px;"><div class="row" style="justify-content:space-between"><h3 style="margin:0;color:var(--g);">↩️ مرتجعات البيع</h3><button id="refreshSalesReturnsBtn" class="btn secondary" type="button" style="width:auto;margin:0;">تحديث</button></div><div id="salesReturnsMsg" class="status hidden"></div><div id="salesReturnsList"><div class="empty">جارٍ تحميل المرتجعات...</div></div></div>
 </div>
 </div>
 <div id="invoiceFormModal" class="modal-form">
@@ -1034,13 +1035,14 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="modal-body">
 <form id="returnForm" onsubmit="event.preventDefault();" novalidate>
 <label for="returnCustomer">العميل *</label><select id="returnCustomer" required><option value="">اختر العميل</option></select>
+<label for="returnDate">تاريخ المرتجع *</label><input id="returnDate" type="date" required>
 <label for="returnTrip">الجولة *</label><select id="returnTrip" required><option value="">اختر الجولة</option></select>
 <label for="returnInvoice">الفاتورة الأصلية *</label><select id="returnInvoice" required><option value="">اختر الفاتورة</option></select>
 <label for="returnType">نوع المرتجع *</label>
 <select id="returnType" required onchange="document.getElementById('exchangeSection').classList.toggle('hidden', this.value !== 'EXCHANGE')">
 <option value="RETURN">مرتجع فقط</option>
-<option value="EXCHANGE">استبدال</option>
 </select>
+<label for="returnReason">سبب المرتجع</label><textarea id="returnReason" rows="2"></textarea>
 <label for="returnCashAction">حركة الفلوس *</label>
 <select id="returnCashAction" required>
 <option value="NONE">بدون حركة فلوس</option>
@@ -1048,7 +1050,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <option value="CUSTOMER_PAYS_CREDIT">العميل يضيف فرق آجل</option>
 <option value="DEDUCT_DEBT">خصم من المديونية</option>
 <option value="CASH_BACK">إرجاع كاش للعميل</option>
-<option value="CREDIT_BALANCE">رصيد دائن للعميل</option>
+
 </select>
 <label for="returnTreasury">الخزنة (لو فيه حركة كاش)</label><select id="returnTreasury"><option value="">بدون خزنة</option></select>
 <label style="margin-top:16px">البضاعة المرتجعة *</label>
@@ -1331,8 +1333,9 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="row"><input id="search" type="search" placeholder="ابحث..."><button id="refreshBtn" class="btn secondary" type="button">تحديث</button></div>
 <div id="listMsg" class="status hidden"></div>
 <div id="products"><div class="empty">جارٍ تحميل المنتجات...</div></div>
+<div id="packagingManagement" class="card" style="margin-top:14px;display:none;"><div class="row" style="justify-content:space-between"><h3 style="margin:0;color:var(--g);">📦 خيارات التعبئة</h3><button id="addPackageOptionBtn" class="btn" type="button" style="width:auto;margin:0;">＋ خيار تعبئة</button></div><div class="row" style="margin-top:10px;"><select id="packageProductFilter"><option value="">كل المنتجات</option></select><button id="refreshPackageOptionsBtn" class="btn secondary" type="button">تحديث</button></div><div id="packageOptionsMsg" class="status hidden"></div><div id="packageOptionsList"><div class="empty">جارٍ تحميل خيارات التعبئة...</div></div></div>
 </div>
-</div>
+<div id="packageOptionFormModal" class="modal-form"><div class="modal-form-content"><div class="modal-header"><h3 id="packageOptionFormTitle">إضافة خيار تعبئة</h3><button class="close-btn" type="button" onclick="document.getElementById('packageOptionFormModal').classList.remove('active')">&times;</button></div><div class="modal-body"><form id="packageOptionForm" onsubmit="event.preventDefault();"><input id="packageOptionEditId" type="hidden"><label>المنتج *</label><select id="packageOptionProduct" required></select><label>وحدة التعبئة *</label><select id="packageOptionUnit" required></select><label>اسم خيار التعبئة *</label><input id="packageOptionName" required><label>وزن العبوة الواحدة بالكيلوجرام *</label><input id="packageOptionWeight" type="number" min="0.0001" step="0.0001" required><label>الترتيب</label><input id="packageOptionSort" type="number" step="1" value="0"><label class="check"><input id="packageOptionActive" type="checkbox" checked>الخيار نشط</label><button id="savePackageOptionBtn" class="btn" type="submit">حفظ</button><div id="packageOptionFormMsg" class="status hidden"></div></form></div></div></div>
 <div id="productFormModal" class="modal-form">
 <div class="modal-form-content">
 <div class="modal-header"><h3 id="formTitle">إضافة منتج جديد</h3><button class="close-btn" onclick="document.getElementById('productFormModal').classList.remove('active')">&times;</button></div>
@@ -1501,6 +1504,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div id="loadRequestFields">
 <div id="loadSourceInfo" class="info"></div>
 <label for="loadProduct">المنتج *</label><select id="loadProduct" required><option value="">اختر المنتج</option></select>
+<label for="loadPackageOption">خيار التعبئة</label><div id="loadPackageOptionWrap"><select id="loadPackageOption"><option value="">بدون خيار تعبئة</option></select></div>
 <label for="loadQty">الكمية المطلوبة *</label><input id="loadQty" type="number" min="0.0001" step="0.0001" required>
 <button id="saveLoadBtn" class="btn" type="submit">إرسال طلب التحميل</button>
 </div>
@@ -1546,9 +1550,9 @@ try {
   let canViewStock=false, canManageStock=false;
   let canViewRecipes=false, canManageRecipes=false;
   let canViewProduction=false, canManageProduction=false;
-  let canViewTrips=false, canManageTrips=false, canRequestTripLoads=false, canApproveTripLoads=false, canDispatchTripLoads=false;
+  let canViewTrips=false, canManageTrips=false, canCreateTrips=false, canRequestTripLoads=false, canApproveTripLoads=false, canDispatchTripLoads=false;
   let canViewCustomers=false, canManageCustomers=false;
-  let canViewSales=false, canManageSales=false;
+  let canViewSales=false, canManageSales=false, canCreateReturns=false, canApproveReturns=false, canManageReturns=false;
   let canViewCollections=false, canPostCollections=false, canManageCollections=false;
   let canViewSuppliers=false, canManageSuppliers=false;
   let canViewPurchases=false, canManagePurchases=false;
@@ -1560,7 +1564,7 @@ try {
   let canManageReservations=false;
   let companySettings={};
 
-  let productsCache=[], categories=[], units=[], cartonUnitId=null;
+  let productsCache=[], categories=[], units=[], cartonUnitId=null, packagingOptionsCache=[];
   let locationsCache=[], treasuriesCache=[], stockCache=[], customersCache=[], salesCache=[], collectionsCache=[], suppliersCache=[], purchasesCache=[], recipesCache=[], productionCache=[], tripsCache=[], partnersCache=[], usersCache=[], purchaseReturnsCache=[], supplierPaymentsCache=[], reservationsCache=[];
   let customerGovernoratesCache=[], customerCitiesCache=[], customerAreasCache=[];
   let customerGeoLoaded=false;
@@ -1825,11 +1829,14 @@ function fillReturnCustomerSelect(){ const el=$("returnCustomer"); if(!el)return
 function fillStockFormSelects(){ const locEl=$("stockLocation");if(locEl){ const curLoc=locEl.value;locEl.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر الموقع";locEl.appendChild(first); locationsCache.filter(l=>l.is_active).forEach(l=>{ const op=document.createElement("option");op.value=String(l.location_id);op.textContent=l.location_name+" ("+l.location_code+")";locEl.appendChild(op); }); locEl.value=curLoc; } const prodEl=$("stockProduct");if(prodEl){ const curProd=prodEl.value;prodEl.replaceChildren(); const firstP=document.createElement("option");firstP.value="";firstP.textContent="اختر المنتج";prodEl.appendChild(firstP); productsCache.filter(p=>p.is_active).forEach(p=>{ const op=document.createElement("option");op.value=String(p.product_id);op.textContent=p.product_name+" ("+p.product_code+")";prodEl.appendChild(op); }); prodEl.value=curProd; } }
 function fillProductionLocationSelect(){ const el=$("productionLocation");if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر موقع المصنع";el.appendChild(first); locationsCache.filter(l=>l.is_active&&l.location_type==="FACTORY").forEach(l=>{ const op=document.createElement("option");op.value=String(l.location_id);op.textContent=l.location_name+" ("+l.location_code+")";el.appendChild(op); }); el.value=cur; }
 function fillProductionRecipeSelect(){ const el=$("productionRecipe"); if(!el)return; const cur=el.value; el.replaceChildren(); const first=document.createElement("option"); first.value=""; first.textContent="اختر الوصفة"; el.appendChild(first); recipesCache.filter(r=>r.is_active).forEach(r=>{ const op=document.createElement("option"); op.value=String(r.recipe_id); op.textContent=r.recipe_name; el.appendChild(op); }); el.value=cur; }
+function fillTripSourceSelect(){ const el=$("tripSource"); if(!el) return; const cur=el.value; el.replaceChildren(); const first=document.createElement("option"); first.value=""; first.textContent="اختر مخزن المصدر"; el.appendChild(first); locationsCache.filter(l=>l.is_active && ["MAIN_WAREHOUSE","FRIDGE"].includes(l.location_type)).forEach(l=>{ const op=document.createElement("option"); op.value=String(l.location_id); op.textContent=l.location_name+" ("+l.location_code+")"; el.appendChild(op); }); el.value=cur; }
 function fillTripVehicleSelect(){ const el=$("tripVehicle"); if(!el) return; const cur=el.value; el.replaceChildren(); const first=document.createElement("option"); first.value=""; first.textContent="اختر السيارة"; el.appendChild(first); locationsCache.filter(l=>l.is_active && l.location_type==="VEHICLE").forEach(l=>{ const op=document.createElement("option"); op.value=String(l.location_id); op.textContent=l.location_name+" ("+l.location_code+")"; el.appendChild(op); }); el.value=cur; }
+async function fillTripRepSelect(){ const el=$("tripRepSelect"); if(!el) return; el.replaceChildren(); const first=document.createElement("option"); first.value=""; first.textContent="جارٍ تحميل المندوبين..."; el.appendChild(first); const {data,error}=await db.from("sales_reps").select("sales_rep_id,name,rep_name,is_active").eq("is_active",true).order("sales_rep_id"); if(error) throw error; el.replaceChildren(); const choose=document.createElement("option"); choose.value=""; choose.textContent="اختر المندوب"; el.appendChild(choose); (data||[]).forEach(r=>{ const op=document.createElement("option"); op.value=String(r.sales_rep_id); op.textContent=r.name||r.rep_name||("مندوب رقم "+r.sales_rep_id); el.appendChild(op); }); if(!data||!data.length) choose.textContent="لا يوجد مندوبون نشطون"; }
 function fillStockTransferSelects(){ const s=$("stSource"); const d=$("stDest"); if(s&&d){ const cs=s.value, cd=d.value; s.replaceChildren(); d.replaceChildren(); const f1=document.createElement("option");f1.value="";f1.textContent="اختر الموقع";s.appendChild(f1); const f2=document.createElement("option");f2.value="";f2.textContent="اختر الموقع";d.appendChild(f2); locationsCache.filter(l=>l.is_active).forEach(l=>{ const op1=document.createElement("option");op1.value=String(l.location_id);op1.textContent=l.location_name;s.appendChild(op1); const op2=document.createElement("option");op2.value=String(l.location_id);op2.textContent=l.location_name;d.appendChild(op2); }); s.value=cs; d.value=cd; } }
 function fillPartnerSelect(){ const el=$("ptPartner"); if(!el)return; const cur=el.value; el.replaceChildren(); const first=document.createElement("option"); first.value=""; first.textContent="اختر الشريك"; el.appendChild(first); partnersCache.filter(p=>p.is_active).forEach(p=>{ const op=document.createElement("option"); op.value=String(p.partner_id); op.textContent=p.partner_name; el.appendChild(op); }); el.value=cur; }
 function fillPartnerTreasurySelect(){ const el=$("ptTreasury"); if(!el)return; const cur=el.value; el.replaceChildren(); const first=document.createElement("option"); first.value=""; first.textContent="بدون خزنة (مساهمة عينية)"; el.appendChild(first); treasuriesCache.filter(t=>t.is_active).forEach(t=>{ const op=document.createElement("option"); op.value=String(t.treasury_id); op.textContent=t.treasury_name; el.appendChild(op); }); el.value=cur; }
-function fillExpenseTripSelect() { const el = $("expenseTrip"); if(!el) return; const cur = el.value; el.replaceChildren(); const first = document.createElement("option"); first.value = ""; first.textContent = "بدون ربط"; el.appendChild(first); tripsCache.filter(t => t.status !== 'COMPLETED').forEach(t => { const op = document.createElement("option"); op.value = String(t.trip_id); op.textContent = t.trip_number + " (" + (t.rep_name||"") + ")"; el.appendChild(op); }); el.value = cur; }
+function fillExpenseTripSelect() { const el = $("expenseTrip"); if(!el) return; const cur = el.value; el.replaceChildren(); const first = document.createElement("option"); first.value = ""; first.textContent = "بدون ربط"; el.appendChild(first); tripsCache.filter(t => t.status === "ACTIVE").forEach(t => { const op = document.createElement("option"); op.value = String(t.trip_id); op.textContent = t.trip_number + " (" + (t.rep_name||"") + ")"; el.appendChild(op); }); el.value = cur; syncExpenseTreasuryForTrip(); }
+function syncExpenseTreasuryForTrip(){ const tripEl=$("expenseTrip"), treasuryEl=$("expenseTreasury"); if(!tripEl||!treasuryEl) return; const linked=!!tripEl.value; if(linked && !Array.from(treasuryEl.options).some(o=>o.value==="8")){ const op=document.createElement("option"); op.value="8"; op.textContent="خزنة المناديب (8)"; treasuryEl.appendChild(op); } if(linked){ treasuryEl.value="8"; treasuryEl.disabled=true; if($("expenseTripTreasuryInfo")) $("expenseTripTreasuryInfo").classList.remove("hidden"); } else { treasuryEl.disabled=false; if($("expenseTripTreasuryInfo")) $("expenseTripTreasuryInfo").classList.add("hidden"); } }
 function fillPurchaseReturnInvoiceSelect() { const el = $("prInvoice"); if(!el) return; const cur = el.value; el.replaceChildren(); const first = document.createElement("option"); first.value = ""; first.textContent = "اختر الفاتورة"; el.appendChild(first); purchasesCache.filter(inv => inv.status === "POSTED").forEach(inv => { const op = document.createElement("option"); op.value = String(inv.purchase_invoice_id); op.textContent = inv.invoice_number + " - " + supplierName(inv.supplier_id); el.appendChild(op); }); el.value = cur; }
 function fillSupplierFilterSelects() { const ids = ["spSupplierFilter", "prSupplierFilter"]; ids.forEach(id => { const el = $(id); if(!el) return; const cur = el.value; el.replaceChildren(); const first = document.createElement("option"); first.value = ""; first.textContent = "كل الموردين"; el.appendChild(first); suppliersCache.filter(s=>s.is_active).forEach(s => { const op = document.createElement("option"); op.value = String(s.supplier_id); op.textContent = s.supplier_name; el.appendChild(op); }); el.value = cur; }); }
 function fillCollectionsCustomerFilter() { const el = $("collectionsCustomerFilter"); if(!el) return; const cur = el.value; el.replaceChildren(); const first = document.createElement("option"); first.value = ""; first.textContent = "كل العملاء"; el.appendChild(first); customersCache.filter(c=>c.is_active).forEach(c => { const op = document.createElement("option"); op.value = String(c.customer_id); op.textContent = c.customer_name; el.appendChild(op); }); el.value = cur; }
@@ -1871,13 +1878,14 @@ async function userInfo(user){
     await db.from("app_users").update({ last_login: new Date().toISOString() }).eq("user_id", user.id);
     logUserAction("LOGIN", "تسجيل دخول");
 
-    canManage=await permission("PRODUCTS_MANAGE") || isSystemAdmin; if($("menuProducts")) $("menuProducts").classList.toggle("hidden", !canManage); if($("addBtn")) $("addBtn").classList.toggle("hidden",!canManage);
+    canManage=await permission("PRODUCTS_MANAGE") || isSystemAdmin; if($("menuProducts")) $("menuProducts").classList.toggle("hidden", !canManage); if($("addBtn")) $("addBtn").classList.toggle("hidden",!canManage); if($("packagingManagement")) $("packagingManagement").style.display=canManage?"block":"none";
     try{ canViewLocations=await permission("LOCATIONS_VIEW") || isSystemAdmin; canManageLocations=await permission("LOCATIONS_MANAGE") || isSystemAdmin; if($("menuLocations")) $("menuLocations").classList.toggle("hidden",!canViewLocations); if($("locationsCard")) $("locationsCard").classList.toggle("hidden",!canViewLocations); if($("addLocationBtn")) $("addLocationBtn").classList.toggle("hidden",!canManageLocations); }catch(e){}
     try{ canViewTreasuries=await permission("TREASURIES_VIEW") || isSystemAdmin; canManageTreasuries=await permission("TREASURIES_MANAGE") || isSystemAdmin; if($("menuTreasuries")) $("menuTreasuries").classList.toggle("hidden",!canViewTreasuries); if($("treasuriesCard")) $("treasuriesCard").classList.toggle("hidden",!canViewTreasuries); if($("addTreasuryBtn")) $("addTreasuryBtn").classList.toggle("hidden",!canManageTreasuries); }catch(e){}
     try{ canViewTreasuryTransfers=await permission("TREASURIES_MANAGE") || isSystemAdmin; if($("menuTreasuryTransfers")) $("menuTreasuryTransfers").classList.toggle("hidden",!canViewTreasuryTransfers); }catch(e){}
     try{ canViewStock=await permission("STOCK_VIEW") || await permission("INVENTORY_VIEW") || isSystemAdmin; canManageStock=await permission("STOCK_MANAGE") || isSystemAdmin; if($("menuStock")) $("menuStock").classList.toggle("hidden",!canViewStock); if($("stockCard")) $("stockCard").classList.toggle("hidden",!canViewStock); if($("adjustStockBtn")) $("adjustStockBtn").classList.toggle("hidden",!canManageStock); }catch(e){}
     try{ canViewStockTransfers=await permission("INVENTORY_TRANSFER") || isSystemAdmin; if($("menuStockTransfers")) $("menuStockTransfers").classList.toggle("hidden",!canViewStockTransfers); }catch(e){}
-    try{ canViewSales=await permission("SALES_VIEW") || isSystemAdmin; canManageSales=await permission("SALES_MANAGE") || isSystemAdmin; if($("menuSales")) $("menuSales").classList.toggle("hidden",!canViewSales); if($("salesCard")) $("salesCard").classList.toggle("hidden",!canViewSales); if($("addInvoiceBtn")) $("addInvoiceBtn").classList.toggle("hidden",!canManageSales); if($("addReturnBtn")) $("addReturnBtn").classList.toggle("hidden",!canManageSales);}catch(e){}
+    try{ canViewSales=await permission("SALES_VIEW") || isSystemAdmin; canManageSales=await permission("SALES_MANAGE") || isSystemAdmin; if($("menuSales")) $("menuSales").classList.toggle("hidden",!canViewSales); if($("salesCard")) $("salesCard").classList.toggle("hidden",!canViewSales); if($("addInvoiceBtn")) $("addInvoiceBtn").classList.toggle("hidden",!canManageSales); }catch(e){}
+    try{ canCreateReturns=await permission("RETURNS_CREATE") || isSystemAdmin; canApproveReturns=await permission("RETURNS_APPROVE") || isSystemAdmin; canManageReturns=await permission("RETURNS_MANAGE") || isSystemAdmin; if($("addReturnBtn")) $("addReturnBtn").classList.toggle("hidden",!canCreateReturns); }catch(e){}
     try{ canViewSupplierPayments=await permission("PURCHASES_MANAGE") || isSystemAdmin; if($("menuSupplierPayments")) $("menuSupplierPayments").classList.toggle("hidden",!canViewSupplierPayments); }catch(e){}
     try{ canViewPurchaseReturns=await permission("PURCHASES_MANAGE") || isSystemAdmin; if($("menuPurchaseReturns")) $("menuPurchaseReturns").classList.toggle("hidden",!canViewPurchaseReturns); }catch(e){}
     try{ canViewReports=await permission("SALES_VIEW") || isSystemAdmin; if($("menuReports")) $("menuReports").classList.toggle("hidden",!canViewReports); }catch(e){}
@@ -1891,9 +1899,10 @@ async function userInfo(user){
       canDispatchTripLoads=await permission("TRIP_LOAD_DISPATCH") || isSystemAdmin;
       canViewTrips=await permission("TRIPS_VIEW") || isSystemAdmin || canApproveTripLoads;
       canManageTrips=await permission("TRIPS_MANAGE") || isSystemAdmin;
+      canCreateTrips=await permission("TRIPS_SETUP") || isSystemAdmin;
       if($("menuTrips")) $("menuTrips").classList.toggle("hidden",!canViewTrips);
       if($("tripsCard")) $("tripsCard").classList.toggle("hidden",!canViewTrips);
-      if($("addTripBtn")) $("addTripBtn").classList.toggle("hidden",!canManageTrips);
+      if($("addTripBtn")) $("addTripBtn").classList.toggle("hidden",!canCreateTrips);
       if($("tripLoadApprovals")) $("tripLoadApprovals").classList.toggle("hidden",!(canApproveTripLoads || canDispatchTripLoads));
     }catch(e){}
     try{ canViewExpenses=await permission("EXPENSES_VIEW") || isSystemAdmin; canManageExpenses=await permission("EXPENSES_MANAGE") || isSystemAdmin; if($("menuExpenses")) $("menuExpenses").classList.toggle("hidden",!canViewExpenses); if($("expensesCard")) $("expensesCard").classList.toggle("hidden",!canViewExpenses); if($("addExpenseBtn")) $("addExpenseBtn").classList.toggle("hidden",!canManageExpenses); }catch(e){}
@@ -1941,8 +1950,7 @@ async function userInfo(user){
 
     // إنشاء الجولة من اختصاص مدير المبيعات فقط، بالإضافة إلى مدير النظام.
     if($("addTripBtn")){
-      const canCreateTrip = isSystemAdmin || currentRoleCode === "SALES_MANAGER";
-      $("addTripBtn").classList.toggle("hidden", !canCreateTrip);
+      $("addTripBtn").classList.toggle("hidden", !canCreateTrips);
     }
 
     if(isSystemAdmin){
@@ -2403,8 +2411,9 @@ async function loadLocations(){
   renderLocations(); 
   fillInvoiceLocationSelect(); 
   fillPurchaseLocationSelect(); 
-  fillProductionLocationSelect(); 
-  fillTripVehicleSelect(); 
+  fillProductionLocationSelect();
+  fillTripSourceSelect();
+  fillTripVehicleSelect();
   fillStockTransferSelects(); 
   fillStockFormSelects(); 
   renderStockLocationTabs(); 
@@ -2614,7 +2623,8 @@ async function loadProducts(){
   const {data}=await db.from("products").select("*").order("product_id"); 
   productsCache=data||[]; 
   saveCache('products', productsCache); 
-  renderProducts(); 
+  renderProducts();
+  if($("packagingManagement")){ $("packagingManagement").style.display=canManage?"block":"none"; fillPackageProductSelects(); await loadPackagingOptions(); }
   fillStockFormSelects(); 
   fillReservationSelects(); 
 }
@@ -2670,6 +2680,16 @@ window.openNewProductForm=function(){
   if($("productFormModal")) $("productFormModal").classList.add("active");
   if($("formMsg")) clear($("formMsg"));
 };
+
+// ========== خيارات التعبئة ==========
+function packageOptionsForProduct(productId,unitId=null){return packagingOptionsCache.filter(x=>x.is_active&&String(x.product_id)===String(productId)&&(!unitId||String(x.unit_id)===String(unitId)));}
+async function loadPackagingOptions(){const box=$("packageOptionsList");if(!box)return;if(!navigator.onLine){box.innerHTML="<div class='empty'>أنت أوفلاين.</div>";return;}const {data,error}=await db.from("product_packaging_options").select("*,products(product_name,product_code),units(unit_name)").order("product_id").order("sort_order").order("package_option_id");if(error){msg($("packageOptionsMsg"),"تعذر تحميل خيارات التعبئة: "+err(error),"error");return;}packagingOptionsCache=data||[];const filter=$("packageProductFilter")?.value||"";const found=packagingOptionsCache.filter(x=>!filter||String(x.product_id)===String(filter));box.replaceChildren();if(!found.length){box.innerHTML="<div class='empty'>لا توجد خيارات تعبئة مسجلة.</div>";return;}found.forEach(x=>{const c=document.createElement("div");c.className="product";c.innerHTML=`<div class="pname">📦 ${x.products?.product_name||productName(x.product_id)}</div><div class="details">الخيار: ${x.option_name} | الوحدة: ${x.units?.unit_name||unitName(x.unit_id)} | الوزن: ${fmtQty(x.weight_kg)} كجم | الحالة: ${x.is_active?"نشط":"غير نشط"}</div>`;const a=document.createElement("div");a.className="actions";if(canManage){const e=document.createElement("button");e.className="btn secondary";e.textContent="تعديل";e.onclick=()=>openPackageOptionForm(x);a.appendChild(e);const t=document.createElement("button");t.className="btn";t.textContent=x.is_active?"تعطيل":"تفعيل";t.onclick=()=>togglePackageOption(x);a.appendChild(t);}c.appendChild(a);box.appendChild(c);});}
+function fillPackageProductSelects(){["packageProductFilter","packageOptionProduct"].forEach(id=>{const el=$(id);if(!el)return;const cur=el.value;el.replaceChildren();const f=document.createElement("option");f.value="";f.textContent=id==="packageProductFilter"?"كل المنتجات":"اختر المنتج";el.appendChild(f);productsCache.filter(p=>p.is_active).forEach(p=>{const o=document.createElement("option");o.value=String(p.product_id);o.textContent=p.product_name+" ("+p.product_code+")";el.appendChild(o);});el.value=cur;});}
+function fillPackageUnitSelect(){const el=$("packageOptionUnit");if(!el)return;el.replaceChildren();const f=document.createElement("option");f.value="";f.textContent="اختر وحدة التعبئة";el.appendChild(f);units.filter(u=>u.is_active&&u.is_package_unit).forEach(u=>{const o=document.createElement("option");o.value=String(u.unit_id);o.textContent=u.unit_name;el.appendChild(o);});}
+function openPackageOptionForm(row=null){if(!canManage)return;$("packageOptionForm").reset();$("packageOptionEditId").value=row?row.package_option_id:"";$("packageOptionFormTitle").textContent=row?"تعديل خيار تعبئة":"إضافة خيار تعبئة";fillPackageProductSelects();fillPackageUnitSelect();if(row){$("packageOptionProduct").value=String(row.product_id);$("packageOptionUnit").value=String(row.unit_id);$("packageOptionName").value=row.option_name||"";$("packageOptionWeight").value=row.weight_kg||"";$("packageOptionSort").value=row.sort_order||0;$("packageOptionActive").checked=!!row.is_active;}clear($("packageOptionFormMsg"));$("packageOptionFormModal").classList.add("active");}
+async function togglePackageOption(row){try{const {error}=await db.from("product_packaging_options").update({is_active:!row.is_active,updated_at:new Date().toISOString()}).eq("package_option_id",row.package_option_id);if(error)throw error;await loadPackagingOptions();}catch(e){showToast("تعذر تحديث خيار التعبئة: "+err(e),"error",7000);}}
+if($("addPackageOptionBtn"))$("addPackageOptionBtn").onclick=()=>openPackageOptionForm();if($("refreshPackageOptionsBtn"))$("refreshPackageOptionsBtn").onclick=loadPackagingOptions;if($("packageProductFilter"))$("packageProductFilter").onchange=loadPackagingOptions;
+if($("packageOptionForm"))$("packageOptionForm").addEventListener("submit",async e=>{e.preventDefault();if(!canManage)return;const btn=$("savePackageOptionBtn");busy(btn,true,"جارٍ...","حفظ");const id=$("packageOptionEditId").value;const payload={product_id:Number($("packageOptionProduct").value),unit_id:Number($("packageOptionUnit").value),option_name:$("packageOptionName").value.trim(),weight_kg:Number($("packageOptionWeight").value),sort_order:Number($("packageOptionSort").value||0),is_active:$("packageOptionActive").checked,updated_at:new Date().toISOString()};try{if(!payload.product_id||!payload.unit_id||!payload.option_name||!(payload.weight_kg>0))throw new Error("أكمل بيانات خيار التعبئة.");const user=(await db.auth.getUser()).data.user;const q=id?db.from("product_packaging_options").update(payload).eq("package_option_id",id):db.from("product_packaging_options").insert({...payload,created_by:user?.id||null});const {error}=await q;if(error)throw error;$("packageOptionFormModal").classList.remove("active");await loadPackagingOptions();}catch(e){msg($("packageOptionFormMsg"),"خطأ: "+err(e),"error");}finally{busy(btn,false,"","حفظ");}});
 
 if($("productForm")) $("productForm").addEventListener("submit", async e => { 
   e.preventDefault(); 
@@ -3686,6 +3706,7 @@ function resetInvoiceForm(){
 }
 if($("addInvoiceBtn")) $("addInvoiceBtn").addEventListener("click",()=>resetInvoiceForm());
 
+function addPackageSelectToRow(row,productId,unitId){let w=row.querySelector(".package-option-wrap");if(!w){w=document.createElement("div");w.className="package-option-wrap";const l=document.createElement("label");l.textContent="خيار التعبئة";const sel=document.createElement("select");sel.className="item-package-option";w.append(l,sel);row.insertBefore(w,row.querySelector(".item-line-total")||row.lastElementChild);}const sel=w.querySelector("select");const cur=sel.value;sel.replaceChildren();const f=document.createElement("option");f.value="";f.textContent="بدون خيار تعبئة";sel.appendChild(f);packageOptionsForProduct(productId,unitId).forEach(x=>{const o=document.createElement("option");o.value=String(x.package_option_id);o.textContent=x.option_name+" — "+fmtQty(x.weight_kg)+" كجم";sel.appendChild(o);});if([...sel.options].some(o=>o.value===cur))sel.value=cur;}
 function addInvoiceItemRow() {
   invoiceItemCounter++; 
   const id="item_"+invoiceItemCounter;
@@ -3782,10 +3803,11 @@ function addInvoiceItemRow() {
       const op=document.createElement("option");op.value=String(cartonUnitId);op.textContent="كرتونة ("+unitsCarton+")";unitSel.appendChild(op); 
     } 
     if(baseUnitId)unitSel.value=baseUnitId; 
+    addPackageSelectToRow(wrap,prodSel.value,unitSel.value);
     recalc(); 
   };
   prodSel.addEventListener("change",()=>{ const opt=prodSel.selectedOptions[0]; if(opt?.dataset.price&&!price.value)price.value=opt.dataset.price; populateUnits(); }); 
-  unitSel.addEventListener("change",recalc); 
+  unitSel.addEventListener("change",()=>{ addPackageSelectToRow(wrap,prodSel.value,unitSel.value); recalc(); }); 
   qty.addEventListener("input",recalc); 
   price.addEventListener("input",recalc); 
   populateUnits();
@@ -3912,7 +3934,7 @@ if($("invoiceForm")) $("invoiceForm").addEventListener("submit", async e => {
     const qty = Number(row.querySelector(".item-qty").value||0); 
     const price = Number(row.querySelector(".item-price").value||0); 
     if(!pId || !uId || qty<=0) valid = false; 
-    else items.push({ product_id: Number(pId), sale_unit_id: Number(uId), quantity: qty, unit_price: price }); 
+    else items.push({ product_id: Number(pId), sale_unit_id: Number(uId), quantity: qty, unit_price: price, package_option_id: row.querySelector(".item-package-option")?.value ? Number(row.querySelector(".item-package-option").value) : null }); 
   });
   if(!items.length || !valid) { msg($("invoiceFormMsg"), "أكمل بيانات الأصناف.", "error"); return; }
   let subTotal = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
@@ -4363,6 +4385,17 @@ if($("viewSpStatementBtn")) $("viewSpStatementBtn").addEventListener("click", as
     $("shareGenericWhatsappBtn").onclick = () => { window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); };
     fillPrintHeaders();
 });
+
+// ========== مرتجعات البيع ==========
+function fillReturnTripSelect(){const el=$("returnTrip");if(!el)return;el.replaceChildren();const f=document.createElement("option");f.value="";f.textContent="اختر الجولة";el.appendChild(f);tripsCache.filter(t=>!['COMPLETED','CANCELLED'].includes(t.status)&&(currentRoleCode!=="SALES_REP"||Number(t.sales_rep_id)===Number(currentSalesRepId))).forEach(t=>{const o=document.createElement("option");o.value=String(t.trip_id);o.textContent=t.trip_number+" - "+(t.rep_name||"");el.appendChild(o);});}
+function fillReturnInvoiceSelect(){const el=$("returnInvoice");if(!el)return;el.replaceChildren();const f=document.createElement("option");f.value="";f.textContent="بدون فاتورة";el.appendChild(f);salesCache.filter(i=>i.status!=="CANCELLED").forEach(i=>{const o=document.createElement("option");o.value=String(i.sales_invoice_id);o.textContent=i.invoice_number+" - "+customerName(i.customer_id);o.dataset.customer=i.customer_id;o.dataset.trip=i.trip_id||"";el.appendChild(o);});}
+function resetSalesReturnForm(){$("returnForm").reset();$("returnItems").replaceChildren();$("exchangeItems").replaceChildren();returnItemCounter=0;$("returnDate").value=todayISO();fillReturnCustomerSelect();fillReturnTripSelect();fillReturnInvoiceSelect();fillTreasurySelects();addSalesReturnItemRow($("returnItems"));updateSalesReturnTotals();clear($("returnFormMsg"));$("returnFormModal").classList.add("active");}
+function addSalesReturnItemRow(container){const row=document.createElement("div");row.className="item-row";const p=document.createElement("select");p.className="return-product";p.required=true;const pf=document.createElement("option");pf.value="";pf.textContent="اختر المنتج";p.appendChild(pf);productsCache.filter(x=>x.is_active&&x.can_be_sold).forEach(x=>{const o=document.createElement("option");o.value=String(x.product_id);o.textContent=x.product_name;p.appendChild(o);});const u=document.createElement("select");u.className="return-unit";u.required=true;const q=document.createElement("input");q.type="number";q.className="return-qty";q.min="0.0001";q.step="0.0001";q.required=true;const price=document.createElement("input");price.type="number";price.className="return-price";price.min="0";price.step="0.01";price.required=true;const w=document.createElement("div");w.className="grid";[["المنتج *",p],["الوحدة *",u],["الكمية *",q],["سعر الوحدة *",price]].forEach(([t,x])=>{const d=document.createElement("div");const l=document.createElement("label");l.textContent=t;d.append(l,x);w.appendChild(d);});const total=document.createElement("div");total.className="item-line-total";const del=document.createElement("button");del.type="button";del.className="btn danger";del.textContent="حذف الصنف";del.onclick=()=>{row.remove();updateSalesReturnTotals();};row.append(w,total,del);container.appendChild(row);function fill(){const pr=productsCache.find(x=>String(x.product_id)===String(p.value));u.replaceChildren();const f=document.createElement("option");f.value="";f.textContent="اختر الوحدة";u.appendChild(f);if(pr){[pr.sales_unit_id,pr.base_unit_id].filter(Boolean).forEach(id=>{if([...u.options].some(o=>o.value===String(id)))return;const un=units.find(x=>Number(x.unit_id)===Number(id));if(un){const o=document.createElement("option");o.value=String(id);o.textContent=un.unit_name;u.appendChild(o);}});u.value=String(pr.sales_unit_id||pr.base_unit_id);}recalc();}function recalc(){total.textContent="الإجمالي: "+fmt(Number(q.value||0)*Number(price.value||0));updateSalesReturnTotals();}p.onchange=fill;u.onchange=recalc;q.oninput=recalc;price.oninput=recalc;fill();}
+function updateSalesReturnTotals(){let a=0;document.querySelectorAll("#returnItems .item-row").forEach(r=>a+=Number(r.querySelector(".return-qty")?.value||0)*Number(r.querySelector(".return-price")?.value||0));$("returnTotalDisplay").textContent=fmt(a);$("exchangeTotalDisplay").textContent="0";$("diffDisplay").textContent=fmt(-a);}
+async function loadSalesReturns(){const box=$("salesReturnsList");if(!box)return;const {data,error}=await db.from("sales_returns").select("*").order("sales_return_id",{ascending:false}).limit(200);if(error){msg($("salesReturnsMsg"),"تعذر تحميل المرتجعات: "+err(error),"error");return;}box.replaceChildren();if(!data?.length){box.innerHTML="<div class='empty'>لا توجد مرتجعات.</div>";return;}data.forEach(r=>{const c=document.createElement("div");c.className="product";c.innerHTML=`<div class="pname">↩️ ${r.return_number}</div><div class="details">العميل: ${customerName(r.customer_id)} | القيمة: ${fmt(r.net_total||r.total_returned_value||0)} | الحالة: ${r.status}</div><div class="details">السبب: ${r.reason||r.notes||"-"}</div>`;if(canManageReturns&&["APPROVED","POSTED"].includes(r.status)){const b=document.createElement("button");b.className="btn danger";b.textContent="إلغاء المرتجع";b.onclick=async()=>{const reason=prompt("اكتب سبب إلغاء المرتجع:");if(!reason)return;const {error}=await db.rpc("cancel_sales_return",{p_sales_return_id:Number(r.sales_return_id),p_reason:reason.trim()});if(error)showToast("تعذر إلغاء المرتجع: "+err(error),"error",7000);else{showToast("تم إلغاء المرتجع","success");loadSalesReturns();loadSales();}};c.appendChild(b);}box.appendChild(c);});}
+if($("refreshSalesReturnsBtn"))$("refreshSalesReturnsBtn").onclick=loadSalesReturns;if($("addReturnBtn"))$("addReturnBtn").onclick=resetSalesReturnForm;if($("addReturnItemBtn"))$("addReturnItemBtn").onclick=()=>addSalesReturnItemRow($("returnItems"));
+if($("returnInvoice"))$("returnInvoice").onchange=()=>{const o=$("returnInvoice").selectedOptions[0];if(o?.dataset?.customer)$("returnCustomer").value=o.dataset.customer;if(o?.dataset?.trip)$("returnTrip").value=o.dataset.trip;};
+if($("returnForm"))$("returnForm").addEventListener("submit",async e=>{e.preventDefault();if(!canCreateReturns)return;const btn=$("saveReturnBtn");busy(btn,true,"جارٍ...","حفظ المرتجع");try{const user=(await db.auth.getUser()).data.user;const tripId=Number($("returnTrip").value),customerId=Number($("returnCustomer").value),invoiceId=$("returnInvoice").value?Number($("returnInvoice").value):null;const trip=tripsCache.find(t=>Number(t.trip_id)===tripId);const {data:id,error}=await db.rpc("create_sales_return",{p_return_number:"RET-"+Date.now(),p_customer_id:customerId,p_trip_id:tripId,p_sales_rep_id:Number(trip?.sales_rep_id||currentSalesRepId),p_sales_invoice_id:invoiceId,p_return_type:"CUSTOMER_RETURN",p_return_date:new Date($("returnDate").value||todayISO()).toISOString(),p_reason:$("returnReason").value.trim()||null,p_notes:$("returnNotes").value.trim()||null,p_created_by:user.id});if(error)throw error;for(const row of document.querySelectorAll("#returnItems .item-row")){const {error:e1}=await db.rpc("add_sales_return_item",{p_sales_return_id:Number(id),p_product_id:Number(row.querySelector(".return-product").value),p_unit_id:Number(row.querySelector(".return-unit").value),p_quantity:Number(row.querySelector(".return-qty").value),p_unit_price:Number(row.querySelector(".return-price").value),p_discount_amount:0,p_lot_id:null,p_notes:null});if(e1)throw e1;}const {error:e2}=await db.rpc("validate_sales_return",{p_sales_return_id:Number(id)});if(e2)throw e2;const {error:e3}=await db.rpc("post_sales_return",{p_sales_return_id:Number(id),p_created_by:user.id});if(e3)throw e3;await loadSalesReturns();$("returnFormModal").classList.remove("active");showToast("تم تسجيل المرتجع","success");}catch(e){msg($("returnFormMsg"),"تعذر الحفظ: "+err(e),"error");}finally{busy(btn,false,"","حفظ المرتجع");}});
 
 // ========== مرتجع مشتريات ==========
 async function loadPurchaseReturns() { 
@@ -4922,7 +4955,8 @@ function resetExpenseForm(){
   $("expenseFormModal").classList.remove('active'); 
   clear($("expenseFormMsg")); 
   fillTreasurySelects(); 
-  fillExpenseTripSelect(); 
+  fillExpenseTripSelect();
+  syncExpenseTreasuryForTrip(); 
 }
 async function loadExpenses(){ 
     if(!canViewExpenses)return; 
@@ -4948,8 +4982,10 @@ if($("addExpenseBtn")) $("addExpenseBtn").addEventListener("click",async()=>{
   if(!treasuriesCache.length)await loadTreasuries(); 
   if(!tripsCache.length)await loadTrips(); 
   resetExpenseForm(); 
+  syncExpenseTreasuryForTrip();
   $("expenseFormModal").classList.add('active'); 
 });
+if($("expenseTrip")) $("expenseTrip").addEventListener("change",syncExpenseTreasuryForTrip);
 if($("refreshExpensesBtn")) $("refreshExpensesBtn").addEventListener("click",loadExpenses);
 if($("viewExpensesStatementBtn")) $("viewExpensesStatementBtn").addEventListener("click", async () => {
     const modal = $("genericStatementModal"); 
@@ -4983,33 +5019,21 @@ if($("viewExpensesStatementBtn")) $("viewExpensesStatementBtn").addEventListener
     $("shareGenericWhatsappBtn").onclick = () => { window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); };
     fillPrintHeaders();
 });
-if($("expenseForm")) $("expenseForm").addEventListener("submit",async e=>{ 
-    e.preventDefault(); 
-    clear($("expenseFormMsg")); 
-    if(!canManageExpenses)return; 
-    const type=$("expenseType").value; 
-    const date=$("expenseDate").value; 
-    const treasuryId=$("expenseTreasury").value; 
-    const amount=Number($("expenseAmount").value||0); 
-    const notes=$("expenseNotes").value.trim(); 
-    const tripId = $("expenseTrip").value; 
-    if(!type||!date||!treasuryId||amount<=0){ msg($("expenseFormMsg"),"أكمل البيانات.","error");return; } 
-    const button=$("saveExpenseBtn"); 
-    busy(button,true,"جارٍ...","حفظ"); 
-    try{ 
-        const {data:s,error:se}=await db.auth.getSession(); 
-        if(se)throw se; 
-        const {error}=await db.from("expenses").insert({ expense_type:type, amount, treasury_id:Number(treasuryId), expense_date:date, notes:notes||null, created_by:s.session.user.id, trip_id: tripId ? Number(tripId) : null }); 
-        if(error)throw error; 
-        await db.rpc("adjust_treasury_balance", { p_treasury_id: Number(treasuryId), p_amount: -amount, p_notes: 'مصرف' }); 
-        showToast("✅ تم تسجيل المصروف", "success"); 
-        logUserAction("CREATE", "مصروف: " + type); 
-        $("expenseFormModal").classList.remove('active'); 
-        resetExpenseForm(); 
-        await loadExpenses(); 
-        if(canViewTreasuries)await loadTreasuries(); 
+if($("expenseForm")) $("expenseForm").addEventListener("submit",async e=>{
+    e.preventDefault(); clear($("expenseFormMsg")); if(!canManageExpenses)return;
+    const type=$("expenseType").value, date=$("expenseDate").value, tripId=$("expenseTrip").value;
+    syncExpenseTreasuryForTrip();
+    const treasuryId=tripId?8:Number($("expenseTreasury").value);
+    const amount=Number($("expenseAmount").value||0), notes=$("expenseNotes").value.trim();
+    if(!type||!date||!treasuryId||!Number.isFinite(amount)||amount<=0){ msg($("expenseFormMsg"),"أكمل البيانات.","error"); return; }
+    const button=$("saveExpenseBtn"); busy(button,true,"جارٍ...","حفظ");
+    try{
+      const {error}=await db.rpc("create_expense",{p_expense_type:type,p_expense_date:date,p_treasury_id:treasuryId,p_amount:amount,p_notes:notes||null,p_trip_id:tripId?Number(tripId):null});
+      if(error) throw error;
+      showToast("تم تسجيل المصروف","success"); logUserAction("CREATE","مصروف: "+type);
+      $("expenseFormModal").classList.remove('active'); resetExpenseForm(); await loadExpenses(); if(canViewTreasuries) await loadTreasuries();
     }catch(e){ msg($("expenseFormMsg"),"خطأ: "+err(e),"error"); }
-    finally{ busy(button,false,"","حفظ"); } 
+    finally{ busy(button,false,"","حفظ"); }
 });
 
 // ========== الوصفات ==========
@@ -5371,7 +5395,7 @@ function renderTrips(){
   const q=($("tripSearch")?.value||"").toLowerCase(); 
   const found = tripsCache.filter(t=> String(t.trip_number||"").toLowerCase().includes(q) || String(t.rep_name||"").toLowerCase().includes(q)); 
   if(!found.length){ box.innerHTML="<div class='empty'>لا توجد جولات.</div>"; return; } 
-  const statusMap={ DRAFT:"مسودة", LOADED:"محملة", COMPLETED:"منتهية", CANCELLED:"ملغاة" }; 
+  const statusMap={ DRAFT:"مسودة", ACTIVE:"نشطة", LOADED:"محملة", COMPLETED:"منتهية", CANCELLED:"ملغاة" }; 
   found.forEach(t=>{ 
     const card=document.createElement("div"); card.className="product"; 
     const title=document.createElement("div"); title.className="pname"; title.textContent="🚐 "+t.trip_number; 
@@ -5381,8 +5405,12 @@ function renderTrips(){
     summary.className="btn secondary"; 
     summary.textContent="📄 كشف حساب الجولة"; 
     summary.onclick=()=>viewTripSummary(t); 
-    actions.appendChild(summary); 
-    if(canRequestTripLoads && t.status!=="COMPLETED"){ 
+    actions.appendChild(summary);
+    if(canManageTrips && ["DRAFT","ACTIVE"].includes(t.status) && t.source_location_id){
+      const settle=document.createElement("button"); settle.className="btn"; settle.textContent="إنهاء وتسوية الجولة";
+      settle.addEventListener("click",()=>settleTrip(t,settle)); actions.appendChild(settle);
+    }
+    if(canRequestTripLoads && !["COMPLETED","CANCELLED"].includes(t.status)){ 
       const load=document.createElement("button"); 
       load.className="btn secondary"; 
       load.textContent="طلب تحميل بضاعة"; 
@@ -5393,46 +5421,41 @@ function renderTrips(){
     box.appendChild(card); 
   }); 
 }
+async function settleTrip(trip,button){
+  if(!canManageTrips || !trip?.trip_id || !trip?.source_location_id) return;
+  if(!confirm("سيتم إرجاع الكميات المتبقية من السيارة إلى مخزن المصدر وتسوية عهدة هذه الجولة. لا يمكن التراجع عن التسوية. هل تريد المتابعة؟")) return;
+  busy(button,true,"جارٍ التسوية...","إنهاء وتسوية الجولة");
+  try{ const {error}=await db.rpc("settle_trip",{p_trip_id:Number(trip.trip_id),p_target_location_id:Number(trip.source_location_id)}); if(error) throw error;
+    showToast("تمت تسوية الجولة","success"); await loadTrips(); if(canViewTreasuries) await loadTreasuries();
+  }catch(e){ showToast("تعذر تسوية الجولة: "+err(e),"error",7000); }
+  finally{ busy(button,false,"","إنهاء وتسوية الجولة"); }
+}
 if($("refreshTripsBtn")) $("refreshTripsBtn").addEventListener("click",loadTrips);
 if($("tripSearch")) $("tripSearch").addEventListener("input",renderTrips);
-if($("addTripBtn")) $("addTripBtn").addEventListener("click",()=>{ 
+if($("addTripBtn")) $("addTripBtn").addEventListener("click",async()=>{ 
+  if(!canCreateTrips) return;
   $("tripForm").reset(); 
   $("tripDate").value=todayISO(); 
   $("tripInitialCash").value=0; 
-  fillTripVehicleSelect(); 
-  clear($("tripFormMsg")); 
-  $("tripFormModal").classList.add('active'); 
+  fillTripSourceSelect();
+  fillTripVehicleSelect();
+  clear($("tripFormMsg"));
+  $("tripFormModal").classList.add('active');
+  try{ await fillTripRepSelect(); }catch(e){ msg($("tripFormMsg"),"تعذر تحميل قائمة المندوبين: "+err(e),"error"); }
 });
 if($("tripForm")) $("tripForm").addEventListener("submit", async e => { 
-  e.preventDefault(); 
-  clear($("tripFormMsg")); 
-  const btn = $("saveTripBtn"); 
-  busy(btn, true, "جارٍ...", "حفظ"); 
-  const rep = $("tripRepName").value.trim(); 
-  const veh = $("tripVehicle").value; 
-  const date = $("tripDate").value; 
-  const cash = Number($("tripInitialCash").value||0); 
-  const notes = $("tripNotes").value; 
-  if(!rep || !veh || !date){ 
-    msg($("tripFormMsg"),"أكمل البيانات","error"); 
-    busy(btn,false,"","حفظ"); 
-    return; 
-  } 
-  try { 
-    const { data, error } = await db.rpc("create_trip", { p_rep_name: rep, p_vehicle_location_id: Number(veh), p_trip_date: date, p_initial_cash: cash, p_notes: notes||null }); 
-    if(error) throw error; 
-    showToast("✅ تم إنشاء الجولة", "success"); 
-    logUserAction("TRIP", "جولة جديدة: " + (data||"")); 
-    setTimeout(()=>{ 
-      $("tripFormModal").classList.remove('active'); 
-      $("tripForm").reset(); 
-      loadTrips(); 
-    }, 600); 
-  } catch(e) { 
-    msg($("tripFormMsg"), "خطأ: " + err(e), "error"); 
-  } finally { 
-    busy(btn, false, "", "حفظ"); 
-  } 
+  e.preventDefault(); clear($("tripFormMsg"));
+  const btn=$("saveTripBtn"); busy(btn,true,"جارٍ...","حفظ");
+  const repId=$("tripRepSelect").value, source=$("tripSource").value, veh=$("tripVehicle").value;
+  const date=$("tripDate").value, cash=Number($("tripInitialCash").value||0), notes=$("tripNotes").value;
+  if(!repId||!source||!veh||!date||!Number.isFinite(cash)||cash<0){ msg($("tripFormMsg"),"اختر المندوب ومخزن المصدر والسيارة وأكمل التاريخ والعهدة بشكل صحيح.","error"); busy(btn,false,"","حفظ"); return; }
+  try{
+    const {data,error}=await db.rpc("create_trip",{p_sales_rep_id:Number(repId),p_source_location_id:Number(source),p_vehicle_location_id:Number(veh),p_trip_date:date,p_initial_cash:cash,p_notes:notes||null});
+    if(error) throw error;
+    showToast("تم إنشاء الجولة","success"); logUserAction("TRIP","جولة جديدة: "+(data||""));
+    $("tripFormModal").classList.remove('active'); $("tripForm").reset(); await loadTrips();
+  }catch(e){ msg($("tripFormMsg"),"خطأ: "+err(e),"error"); }
+  finally{ busy(btn,false,"","حفظ"); }
 });
 function openTripLoad(t){
   $("tripLoadForm").reset();
@@ -5456,6 +5479,10 @@ function openTripLoad(t){
       prodEl.appendChild(op);
     });
   }
+  const packageWrap=$("loadPackageOptionWrap"), packageSel=$("loadPackageOption");
+  if(packageWrap)packageWrap.classList.add("hidden");
+  if(packageSel){packageSel.replaceChildren();const f=document.createElement("option");f.value="";f.textContent="بدون خيار تعبئة";packageSel.appendChild(f);}
+  if(prodEl)prodEl.onchange=()=>{const opts=packageOptionsForProduct(prodEl.value);if(packageWrap)packageWrap.classList.toggle("hidden",opts.length===0);if(packageSel){packageSel.replaceChildren();const f=document.createElement("option");f.value="";f.textContent="اختر خيار التعبئة";packageSel.appendChild(f);opts.forEach(x=>{const o=document.createElement("option");o.value=String(x.package_option_id);o.textContent=x.option_name+" — "+fmtQty(x.weight_kg)+" كجم";packageSel.appendChild(o);});}};
   clear($("loadMsg"));
   $("tripLoadModal").classList.remove("hidden");
 }
@@ -5477,7 +5504,7 @@ if($("tripLoadForm")) $("tripLoadForm").addEventListener("submit", async e => {
       p_trip_id: tripId,
       p_product_id: productId,
       p_quantity: quantity,
-      p_package_option_id: null
+      p_package_option_id: $("loadPackageOption").value ? Number($("loadPackageOption").value) : null
     });
     if(error) throw error;
     showToast("تم تسجيل طلب التحميل. الطلب بانتظار الاعتماد.", "success");
