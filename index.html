@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v30</title>
+<title>MeatManagement v31</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -5602,7 +5602,7 @@ async function confirmTripLoadDispatch(loadId,quantityInput,button){
     const {data,error}=await db.rpc("confirm_trip_load_dispatch",{
       p_load_id:Number(loadId),
       p_actual_quantity:quantity,
-      p_created_by:null
+      p_created_by:user.id
     });
     if(error) throw error;
     showToast("تم تأكيد صرف التحميل ونقل البضاعة إلى السيارة.","success");
