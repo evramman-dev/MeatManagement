@@ -314,9 +314,6 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 const timeFormatter = new Intl.DateTimeFormat("en-US", {
   hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true
 });
-  const timeFormatter = new Intl.DateTimeFormat("ar-EG", {
-    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false
-  });
   function updateHeaderClock(){
     const now = new Date();
     dayDate.textContent = dateFormatter.format(now);
