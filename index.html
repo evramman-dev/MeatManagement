@@ -18,8 +18,9 @@ button{cursor:pointer}
 header{background:var(--g);color:white;padding:22px 18px;border-bottom:4px solid var(--gold)}
 header h1{margin:0 0 8px;font-size:23px}
 header p{margin:0;font-size:13px;color:#e3eae4}
-#headerClock{margin-top:12px;padding-top:10px;border-top:1px solid #ffffff35;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:13px;color:#f4ead4;direction:ltr;justify-content:space-between}
-#headerClock .clock-time{font-size:18px;font-weight:bold;direction:ltr;font-variant-numeric:tabular-nums}
+#headerClock{margin-top:12px;padding-top:10px;border-top:1px solid #ffffff35;display:flex;flex-wrap:nowrap;justify-content:space-between;gap:6px 14px;align-items:center;font-size:13px;color:#f4ead4;direction:rtl}
+#headerClock #headerDayDate{direction:ltr;text-align:right;white-space:nowrap}
+#headerClock .clock-time{font-size:18px;font-weight:bold;direction:ltr;text-align:left;white-space:nowrap;font-variant-numeric:tabular-nums}
 
 main{width:min(100% - 24px,760px);margin:16px auto 100px}
 .card{background:white;border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 3px 12px #142d1908}
@@ -300,8 +301,8 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v35]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
-  <span id="headerDayDate">جارٍ تحميل التاريخ...</span>
-  <span id="headerTime" class="clock-time">--:--:--</span>
+  <span id="headerDayDate">Loading date...</span>
+  <span id="headerTime" class="clock-time">--:-- AM</span>
 </div>
 <script>
 (function(){
@@ -309,11 +310,11 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
   const time = document.getElementById("headerTime");
   if (!dayDate || !time) return;
   const dateFormatter = new Intl.DateTimeFormat("en-US", {
-  weekday: "long", year: "numeric", month: "long", day: "numeric"
-});
-const timeFormatter = new Intl.DateTimeFormat("en-US", {
-  hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true
-});
+    weekday: "long", year: "numeric", month: "long", day: "numeric"
+  });
+  const timeFormatter = new Intl.DateTimeFormat("en-US", {
+    hour: "2-digit", minute: "2-digit", hour12: true
+  });
   function updateHeaderClock(){
     const now = new Date();
     dayDate.textContent = dateFormatter.format(now);
@@ -4296,8 +4297,9 @@ function addPurchaseItemRow() {
   const first=document.createElement("option"); first.value=""; first.textContent="اختر المنتج"; prodSel.appendChild(first);
   productsCache.filter(p=>p.is_active&&p.can_be_purchased).forEach(p=>{ 
     const op=document.createElement("option");op.value=String(p.product_id);op.textContent=p.product_name+" ("+p.product_code+")"; 
-    op.dataset.baseUnit=String(p.base_unit_id||""); 
-    op.dataset.unitsCarton=String(p.units_per_carton||""); 
+    op.dataset.baseUnit=String(p.base_unit_id||"");
+    op.dataset.purchaseUnit=String(p.purchase_unit_id||"");
+    op.dataset.unitsCarton=String(p.units_per_carton||"");
     prodSel.appendChild(op); 
   });
   const grid3=document.createElement("div"); grid3.className="grid3";
@@ -4327,30 +4329,38 @@ function addPurchaseItemRow() {
     lineTotal.textContent="الإجمالي: "+fmt(t); 
     const unitId=Number(unitSel.value||0); 
     const opt=prodSel.selectedOptions[0]; 
-    const baseUnitId=Number(opt?.dataset?.baseUnit||0); 
-    const unitsCarton=Number(opt?.dataset?.unitsCarton||0); 
-    if(unitId&&baseUnitId&&q>0){ 
-      if(unitId===baseUnitId){ hint.textContent="يدخل: "+fmtQty(q)+" "+unitName(baseUnitId); }
-      else if(unitId===cartonUnitId&&unitsCarton>0){ 
-        const baseQty=q*unitsCarton; 
-        hint.textContent="يدخل: "+fmtQty(baseQty)+" "+unitName(baseUnitId); 
-      }else{hint.textContent="";} 
+    const baseUnitId=Number(opt?.dataset?.baseUnit||0);
+    const purchaseUnitId=Number(opt?.dataset?.purchaseUnit||0);
+    const unitsCarton=Number(opt?.dataset?.unitsCarton||0);
+    if(unitId&&baseUnitId&&q>0){
+      if(unitId===baseUnitId){
+        hint.textContent="يدخل: "+fmtQty(q)+" "+unitName(baseUnitId);
+      }else if(unitId===purchaseUnitId&&purchaseUnitId===cartonUnitId&&unitsCarton>0){
+        const baseQty=q*unitsCarton;
+        hint.textContent="يدخل: "+fmtQty(baseQty)+" "+unitName(baseUnitId);
+      }else{
+        hint.textContent="وحدة الشراء: "+unitName(unitId);
+      }
     }else{hint.textContent="";} 
     updatePurchaseTotals(); 
   };
   const populateUnits=()=>{ 
     const opt=prodSel.selectedOptions[0]; 
-    const baseUnitId=opt?.dataset?.baseUnit||""; 
-    const unitsCarton=Number(opt?.dataset?.unitsCarton||0); 
-    unitSel.replaceChildren(); 
-    const firstU=document.createElement("option");firstU.value="";firstU.textContent="اختر الوحدة";unitSel.appendChild(firstU); 
-    if(baseUnitId){ 
-      const op=document.createElement("option");op.value=baseUnitId;op.textContent=unitName(baseUnitId);unitSel.appendChild(op); 
-    } 
-    if(unitsCarton>0&&cartonUnitId){ 
-      const op=document.createElement("option");op.value=String(cartonUnitId);op.textContent="كرتونة ("+unitsCarton+")";unitSel.appendChild(op); 
-    } 
-    if(baseUnitId)unitSel.value=baseUnitId; 
+    const baseUnitId=String(opt?.dataset?.baseUnit||"");
+    const purchaseUnitId=String(opt?.dataset?.purchaseUnit||"");
+    const unitsCarton=Number(opt?.dataset?.unitsCarton||0);
+    unitSel.replaceChildren();
+    const firstU=document.createElement("option");firstU.value="";firstU.textContent="اختر الوحدة";unitSel.appendChild(firstU);
+    // اعرض وحدة الشراء المحددة لهذا المنتج أولاً، ثم الوحدة الأساسية كبديل عند الحاجة.
+    const preferredUnitId=purchaseUnitId||baseUnitId;
+    [preferredUnitId,baseUnitId].filter((v,i,a)=>v&&a.indexOf(v)===i).forEach(id=>{
+      const op=document.createElement("option");
+      op.value=id;
+      const isCarton=id===purchaseUnitId&&Number(id)===cartonUnitId&&unitsCarton>0;
+      op.textContent=unitName(id)+(isCarton?" ("+unitsCarton+")":(id===preferredUnitId?" (وحدة الشراء)":" (الوحدة الأساسية)"));
+      unitSel.appendChild(op);
+    });
+    if(preferredUnitId)unitSel.value=preferredUnitId;
     recalc(); 
   };
   prodSel.addEventListener("change",()=>{ populateUnits(); }); 
