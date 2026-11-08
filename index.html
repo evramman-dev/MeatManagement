@@ -410,6 +410,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="dashboard-grid">
 <div class="dash-item hidden" id="menuCustomers" onclick="window.openSection('customers')"><div class="dash-icon">👥</div><div class="dash-title">العملاء</div></div>
 <div class="dash-item hidden" id="menuSales" onclick="window.openSection('sales')"><div class="dash-icon">🧾</div><div class="dash-title">فواتير البيع</div></div>
+<div class="dash-item hidden" id="menuPriceLists" onclick="window.openSection('priceLists')"><div class="dash-icon">🏷️</div><div class="dash-title">قوائم الأسعار</div></div>
 <div class="dash-item hidden" id="menuCollections" onclick="window.openSection('collections')"><div class="dash-icon">💰</div><div class="dash-title">التحصيلات</div></div>
 <div class="dash-item hidden" id="menuTrips" onclick="window.openSection('trips')"><div class="dash-icon">🚐</div><div class="dash-title">الجولات</div></div>
 <div class="dash-item hidden" id="menuSalesReps" onclick="window.openSection('salesReps')"><div class="dash-icon">🧑‍💼</div><div class="dash-title">إدارة المندوبين</div></div>
@@ -723,6 +724,12 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <button class="tab-btn" onclick="switchAccTab('accTrial')">ميزان المراجعة</button>
 <button class="tab-btn" onclick="switchAccTab('accJournal')">اليومية</button>
 </div>
+
+<div id="accountingPeriodsPanel" class="card" style="margin:15px 0;">
+<h3>الفترات المحاسبية</h3><div id="accountingPeriodsMsg" class="status hidden"></div>
+<div id="accountingPeriodManageArea">
+<form id="accountingPeriodForm" class="form-grid"><label>اسم الفترة<input id="periodName" required></label><label>من<input id="periodStart" type="date" required></label><label>إلى<input id="periodEnd" type="date" required></label><label>ملاحظات<textarea id="periodNotes"></textarea></label><button class="btn" type="submit">إنشاء فترة</button></form>
+</div><div id="accountingPeriodsList"></div></div>
 <div id="accSummary" class="acc-tab">
 <div class="total-box" style="background:var(--g);color:white;margin-bottom:15px;">
 <div class="line"><span>إيرادات الفترة:</span><span id="accRevPeriod">0</span></div>
@@ -1022,6 +1029,60 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div id="salesMsg" class="status hidden"></div>
 <div id="salesList"><div class="empty">جارٍ تحميل الفواتير...</div></div><div class="card" style="margin-top:14px;"><div class="row" style="justify-content:space-between"><h3 style="margin:0;color:var(--g);">↩️ مرتجعات البيع</h3><button id="refreshSalesReturnsBtn" class="btn secondary" type="button" style="width:auto;margin:0;">تحديث</button></div><div id="salesReturnsMsg" class="status hidden"></div><div id="salesReturnsList"><div class="empty">جارٍ تحميل المرتجعات...</div></div></div>
 </div>
+</div>
+
+<div id="sectionPriceLists" class="section hidden">
+  <div class="card">
+    <h2>قوائم الأسعار</h2>
+    <div id="priceListsMsg" class="status hidden"></div>
+    <div id="priceListManageArea">
+      <form id="priceListForm" class="form-grid">
+        <input id="priceListEditId" type="hidden">
+        <label>الكود<input id="priceListCode" required></label>
+        <label>اسم القائمة<input id="priceListName" required></label>
+        <label>من تاريخ<input id="priceListFrom" type="date" required></label>
+        <label>حتى تاريخ<input id="priceListTo" type="date"></label>
+        <label>قائمة افتراضية<input id="priceListDefault" type="checkbox"></label>
+        <label>ملاحظات<textarea id="priceListNotes"></textarea></label>
+        <button id="savePriceListBtn" class="btn" type="submit">حفظ مسودة</button>
+      </form>
+      <hr>
+      <h3>إضافة سعر</h3>
+      <form id="priceListItemForm" class="form-grid">
+        <label>القائمة<select id="priceItemList" required></select></label>
+        <label>المنتج<select id="priceItemProduct" required></select></label>
+        <label>الوحدة<select id="priceItemUnit" required></select></label>
+        <label>سعر البيع<input id="priceItemSelling" type="number" min="0.01" step="0.01" required></label>
+        <label>الحد الأدنى<input id="priceItemMin" type="number" min="0" step="0.01"></label>
+        <label>الحد الأقصى<input id="priceItemMax" type="number" min="0" step="0.01"></label>
+        <button class="btn" type="submit">إضافة السعر</button>
+      </form>
+      <hr>
+      <h3>مجموعات العملاء</h3>
+      <form id="customerGroupForm" class="form-grid">
+        <label>الكود<input id="customerGroupCode" required></label>
+        <label>اسم المجموعة<input id="customerGroupName" required></label>
+        <label>ملاحظات<textarea id="customerGroupNotes"></textarea></label>
+        <button class="btn" type="submit">إضافة المجموعة</button>
+      </form>
+      <hr>
+      <h3>ربط قائمة بعميل أو مجموعة</h3>
+      <form id="priceAssignmentForm" class="form-grid">
+        <label>القائمة<select id="assignmentList" required></select></label>
+        <label>النوع<select id="assignmentType"><option value="CUSTOMER">عميل</option><option value="GROUP">مجموعة</option></select></label>
+        <label id="assignmentCustomerWrap">العميل<select id="assignmentCustomer"></select></label>
+        <label id="assignmentGroupWrap" class="hidden">المجموعة<select id="assignmentGroup"></select></label>
+        <label>الأولوية<input id="assignmentPriority" type="number" value="10"></label>
+        <label>من تاريخ<input id="assignmentFrom" type="date" required></label>
+        <label>حتى تاريخ<input id="assignmentTo" type="date"></label>
+        <button class="btn" type="submit">حفظ الربط</button>
+      </form>
+    </div>
+    <h3>القوائم</h3><div id="priceListsList"></div>
+    <h3>أصناف القائمة</h3><div id="priceListItemsList"></div>
+    <h3>الروابط</h3><div id="priceAssignmentsList"></div>
+    <h3>المجموعات</h3><div id="customerGroupsList"></div>
+  </div>
 </div>
 <div id="invoiceFormModal" class="modal-form">
 <div class="modal-form-content">
@@ -1587,7 +1648,8 @@ try {
   let canViewStockTransfers=false;
   let canViewTreasuryTransfers=false;
   let canViewReports=false;
-  let canManageReservations=false;
+  let canViewReservations=false, canManageReservations=false;
+  let canViewPriceLists=false, canManagePriceLists=false;
   let companySettings={};
 
   let productsCache=[], categories=[], units=[], cartonUnitId=null, packagingOptionsCache=[];
@@ -1632,6 +1694,18 @@ try {
   function formatWaPhone(phone) { if (!phone) return ""; let p = String(phone).replace(/\D/g, ''); if (p.startsWith('0')) p = '20' + p.substring(1); return p; }
   function saveCache(key, data) { try { localStorage.setItem(key, JSON.stringify(data)); } catch(e){} }
   function getCache(key) { try { return JSON.parse(localStorage.getItem(key)) || []; } catch(e){ return []; } }
+
+  function getRequestId(storageKey,payload){
+    const normalized=JSON.stringify(payload);
+    let pending=null;
+    try{ pending=JSON.parse(localStorage.getItem(storageKey)||"null"); }catch(e){}
+    if(!pending || !pending.request_id || pending.payload!==normalized){
+      pending={request_id:(crypto.randomUUID?crypto.randomUUID():Date.now()+"-"+Math.random().toString(36).slice(2)),payload:normalized};
+      try{ localStorage.setItem(storageKey,JSON.stringify(pending)); }catch(e){}
+    }
+    return pending.request_id;
+  }
+  function clearRequestId(storageKey){ try{ localStorage.removeItem(storageKey); }catch(e){} }
 
   // ========== الإشعارات (Toast) ==========
   function showToast(message, type="info", duration=4000) {
@@ -1697,7 +1771,7 @@ function showLogin(){ hideSections(); if($("login")) $("login").classList.remove
 function showApp(){ hideSections(); if($("nav")) $("nav").classList.remove("hidden"); page("home"); }
 
 window.openSection = function(name) {
-  const sectionMenuMap = { products:"menuProducts", locations:"menuLocations", stock:"menuStock", stockTransfers:"menuStockTransfers", recipes:"menuRecipes", production:"menuProduction", reservations:"menuReservations", suppliers:"menuSuppliers", purchases:"menuPurchases", purchaseReturns:"menuPurchaseReturns", supplierPayments:"menuSupplierPayments", expenses:"menuExpenses", customers:"menuCustomers", sales:"menuSales", collections:"menuCollections", trips:"menuTrips", salesReps:"menuSalesReps", treasuries:"menuTreasuries", treasuryTransfers:"menuTreasuryTransfers", partners:"menuPartners", accounting:"menuAccounting", reports:"menuReports", users:"menuUsers", settings:"menuSettings" };
+  const sectionMenuMap = { products:"menuProducts", locations:"menuLocations", stock:"menuStock", stockTransfers:"menuStockTransfers", recipes:"menuRecipes", production:"menuProduction", reservations:"menuReservations", suppliers:"menuSuppliers", purchases:"menuPurchases", purchaseReturns:"menuPurchaseReturns", supplierPayments:"menuSupplierPayments", expenses:"menuExpenses", customers:"menuCustomers", sales:"menuSales", priceLists:"menuPriceLists", collections:"menuCollections", trips:"menuTrips", salesReps:"menuSalesReps", treasuries:"menuTreasuries", treasuryTransfers:"menuTreasuryTransfers", partners:"menuPartners", accounting:"menuAccounting", reports:"menuReports", users:"menuUsers", settings:"menuSettings" };
   const allowedIds = getRoleMenuIds(currentRoleCode);
   const requestedMenuId = sectionMenuMap[name];
   if(!isSystemAdmin && (!requestedMenuId || !allowedIds.has(requestedMenuId))) {
@@ -1718,7 +1792,8 @@ window.openSection = function(name) {
   }
   window.scrollTo(0, 0);
   
-  if (name === "accounting") loadFinancialSummary();
+  if (name === "accounting") { loadFinancialSummary(); loadAccountingPeriods(); }
+  if (name === "priceLists") loadPriceLists();
   if (name === "expenses") loadExpenses();
   if (name === "users") loadUsersList();
   if (name === "salesReps") loadSalesReps();
@@ -1928,14 +2003,14 @@ async function userInfo(user){
     canManage=await permission("PRODUCTS_MANAGE") || isSystemAdmin; if($("menuProducts")) $("menuProducts").classList.toggle("hidden", !canManage); if($("addBtn")) $("addBtn").classList.toggle("hidden",!canManage); if($("packagingManagement")) $("packagingManagement").style.display=canManage?"block":"none";
     try{ canViewLocations=await permission("LOCATIONS_VIEW") || isSystemAdmin; canManageLocations=await permission("LOCATIONS_MANAGE") || isSystemAdmin; if($("menuLocations")) $("menuLocations").classList.toggle("hidden",!canViewLocations); if($("locationsCard")) $("locationsCard").classList.toggle("hidden",!canViewLocations); if($("addLocationBtn")) $("addLocationBtn").classList.toggle("hidden",!canManageLocations); }catch(e){}
     try{ canViewTreasuries=await permission("TREASURIES_VIEW") || isSystemAdmin; canManageTreasuries=await permission("TREASURIES_MANAGE") || isSystemAdmin; if($("menuTreasuries")) $("menuTreasuries").classList.toggle("hidden",!canViewTreasuries); if($("treasuriesCard")) $("treasuriesCard").classList.toggle("hidden",!canViewTreasuries); if($("addTreasuryBtn")) $("addTreasuryBtn").classList.toggle("hidden",!canManageTreasuries); }catch(e){}
-    try{ canViewTreasuryTransfers=await permission("TREASURIES_MANAGE") || isSystemAdmin; if($("menuTreasuryTransfers")) $("menuTreasuryTransfers").classList.toggle("hidden",!canViewTreasuryTransfers); }catch(e){}
+    try{ canViewTreasuryTransfers=await permission("TREASURIES_MANAGE") || await permission("ACCOUNTING_MANAGE") || isSystemAdmin; if($("menuTreasuryTransfers")) $("menuTreasuryTransfers").classList.toggle("hidden",!canViewTreasuryTransfers); }catch(e){}
     try{ canViewStock=await permission("STOCK_VIEW") || await permission("INVENTORY_VIEW") || isSystemAdmin; canManageStock=await permission("STOCK_MANAGE") || isSystemAdmin; if($("menuStock")) $("menuStock").classList.toggle("hidden",!canViewStock); if($("stockCard")) $("stockCard").classList.toggle("hidden",!canViewStock); if($("adjustStockBtn")) $("adjustStockBtn").classList.toggle("hidden",!canManageStock); }catch(e){}
     try{ canViewStockTransfers=await permission("INVENTORY_TRANSFER") || isSystemAdmin; if($("menuStockTransfers")) $("menuStockTransfers").classList.toggle("hidden",!canViewStockTransfers); }catch(e){}
-    try{ canViewSales=await permission("SALES_VIEW") || isSystemAdmin; canManageSales=await permission("SALES_MANAGE") || isSystemAdmin; if($("menuSales")) $("menuSales").classList.toggle("hidden",!canViewSales); if($("salesCard")) $("salesCard").classList.toggle("hidden",!canViewSales); if($("addInvoiceBtn")) $("addInvoiceBtn").classList.toggle("hidden",!canManageSales); }catch(e){}
+    try{ canViewSales=await permission("SALES_VIEW") || await permission("INVOICES_VIEW") || await permission("INVOICES_CREATE") || isSystemAdmin; canManageSales=await permission("SALES_MANAGE") || isSystemAdmin; if($("menuSales")) $("menuSales").classList.toggle("hidden",!canViewSales); if($("salesCard")) $("salesCard").classList.toggle("hidden",!canViewSales); if($("addInvoiceBtn")) $("addInvoiceBtn").classList.toggle("hidden",!(await permission("INVOICES_CREATE") || canManageSales)); }catch(e){}
     try{ canCreateReturns=await permission("RETURNS_CREATE") || await permission("RETURNS_MANAGE") || isSystemAdmin; canApproveReturns=await permission("RETURNS_APPROVE") || await permission("RETURNS_MANAGE") || isSystemAdmin; canManageReturns=await permission("RETURNS_MANAGE") || isSystemAdmin; if($("addReturnBtn")) $("addReturnBtn").classList.toggle("hidden",!canCreateReturns); }catch(e){}
     try{ canViewSupplierPayments=await permission("PURCHASES_MANAGE") || isSystemAdmin; if($("menuSupplierPayments")) $("menuSupplierPayments").classList.toggle("hidden",!canViewSupplierPayments); }catch(e){}
     try{ canViewPurchaseReturns=await permission("PURCHASES_MANAGE") || isSystemAdmin; if($("menuPurchaseReturns")) $("menuPurchaseReturns").classList.toggle("hidden",!canViewPurchaseReturns); }catch(e){}
-    try{ canViewReports=await permission("SALES_VIEW") || isSystemAdmin; if($("menuReports")) $("menuReports").classList.toggle("hidden",!canViewReports); }catch(e){}
+    try{ canViewReports=await permission("REPORTS_VIEW") || isSystemAdmin; if($("menuReports")) $("menuReports").classList.toggle("hidden",!canViewReports); }catch(e){}
     try{ canViewCustomers=await permission("CUSTOMERS_VIEW") || isSystemAdmin; canManageCustomers=await permission("CUSTOMERS_MANAGE") || isSystemAdmin; if($("menuCustomers")) $("menuCustomers").classList.toggle("hidden",!canViewCustomers); if($("customersCard")) $("customersCard").classList.toggle("hidden",!canViewCustomers); if($("addCustomerBtn")) $("addCustomerBtn").classList.toggle("hidden",!canManageCustomers); }catch(e){}
     try{ canViewSuppliers=await permission("SUPPLIERS_VIEW") || isSystemAdmin; canManageSuppliers=await permission("SUPPLIERS_MANAGE") || isSystemAdmin; if($("menuSuppliers")) $("menuSuppliers").classList.toggle("hidden",!canViewSuppliers); if($("suppliersCard")) $("suppliersCard").classList.toggle("hidden",!canViewSuppliers); if($("addSupplierBtn")) $("addSupplierBtn").classList.toggle("hidden",!canManageSuppliers); }catch(e){}
     try{ canViewPurchases=await permission("PURCHASES_VIEW") || isSystemAdmin; canManagePurchases=await permission("PURCHASES_MANAGE") || isSystemAdmin; if($("menuPurchases")) $("menuPurchases").classList.toggle("hidden",!canViewPurchases); if($("purchasesCard")) $("purchasesCard").classList.toggle("hidden",!canViewPurchases); if($("addPurchaseBtn")) $("addPurchaseBtn").classList.toggle("hidden",!canManagePurchases); }catch(e){}
@@ -1944,7 +2019,7 @@ async function userInfo(user){
       canRequestTripLoads=await permission("TRIP_LOAD_MANAGE") || isSystemAdmin;
       const approvalRoleAllowed=["SALES_MANAGER","ACCOUNTANT","GENERAL_MANAGER"].includes(currentRoleCode);
       canApproveTripLoads=isSystemAdmin || (approvalRoleAllowed && await permission("TRIP_LOAD_APPROVE"));
-      canDispatchTripLoads=isSystemAdmin || (currentRoleCode==="WAREHOUSE_KEEPER" && await permission("TRIP_LOAD_DISPATCH"));
+      canDispatchTripLoads=(currentRoleCode==="WAREHOUSE_KEEPER" && await permission("TRIP_LOAD_DISPATCH"));
       canViewTrips=await permission("TRIPS_VIEW") || isSystemAdmin || canApproveTripLoads;
       canManageTrips=await permission("TRIPS_MANAGE") || isSystemAdmin;
       canCreateTrips=await permission("TRIPS_SETUP") || isSystemAdmin;
@@ -1958,7 +2033,9 @@ async function userInfo(user){
     try{ canViewRecipes=await permission("RECIPES_VIEW") || isSystemAdmin; canManageRecipes=await permission("RECIPES_MANAGE") || isSystemAdmin; if($("menuRecipes")) $("menuRecipes").classList.toggle("hidden",!canViewRecipes); if($("recipesCard")) $("recipesCard").classList.toggle("hidden",!canViewRecipes); if($("addRecipeBtn")) $("addRecipeBtn").classList.toggle("hidden",!canManageRecipes); }catch(e){}
     try{ canViewProduction=await permission("PRODUCTION_VIEW") || isSystemAdmin; canManageProduction=await permission("PRODUCTION_MANAGE") || isSystemAdmin; if($("menuProduction")) $("menuProduction").classList.toggle("hidden",!canViewProduction); if($("productionCard")) $("productionCard").classList.toggle("hidden",!canViewProduction); if($("addProductionBtn")) $("addProductionBtn").classList.toggle("hidden",!canManageProduction); }catch(e){}
     try{ canViewAccounting=await permission("ACCOUNTING_VIEW") || isSystemAdmin; canManageAccounting=await permission("ACCOUNTING_MANAGE") || isSystemAdmin; if($("menuAccounting")) $("menuAccounting").classList.toggle("hidden",!canViewAccounting); if($("accountingCard")) $("accountingCard").classList.toggle("hidden",!canViewAccounting); if($("btnPostEntries")) $("btnPostEntries").classList.toggle("hidden",!canManageAccounting); if($("btnAdjustment")) $("btnAdjustment").classList.toggle("hidden",!canManageAccounting); if($("btnBackup")) $("btnBackup").classList.toggle("hidden",!isSystemAdmin); }catch(e){}
-    try{ canManageReservations=await permission("STOCK_MANAGE") || isSystemAdmin; if($("menuReservations")) $("menuReservations").classList.toggle("hidden",!canManageReservations); }catch(e){}
+    try{ canViewReservations=await permission("RESERVATIONS_VIEW") || isSystemAdmin; canManageReservations=await permission("RESERVATIONS_MANAGE") || isSystemAdmin; if($("menuReservations")) $("menuReservations").classList.toggle("hidden",!canViewReservations); if($("addReservationBtn")) $("addReservationBtn").classList.toggle("hidden",!canManageReservations); }catch(e){}
+    try{ canViewPriceLists=await permission("PRICES_VIEW") || await permission("PRICES_MANAGE") || isSystemAdmin; canManagePriceLists=await permission("PRICES_MANAGE") || isSystemAdmin; }catch(e){ canViewPriceLists=false; canManagePriceLists=false; }
+    if($("menuPriceLists")) $("menuPriceLists").classList.toggle("hidden",!canViewPriceLists);
 
     // صلاحيات واجهة مندوب المبيعات: السماح بفتح نماذج إنشاء العميل والفاتورة والتحصيل.
     // تظل صلاحيات قاعدة البيانات هي المرجع النهائي لقبول العمليات.
@@ -2024,12 +2101,12 @@ async function userInfo(user){
 
 function getRoleMenuIds(roleCode){
   const roleMenus = {
-    SALES_REP: ["menuProducts","menuCustomers","menuSales","menuCollections","menuTrips"],
-    SALES_MANAGER: ["menuProducts","menuCustomers","menuSales","menuCollections","menuTrips","menuReports"],
+    SALES_REP: ["menuProducts","menuCustomers","menuSales","menuPriceLists","menuCollections","menuTrips"],
+    SALES_MANAGER: ["menuProducts","menuCustomers","menuSales","menuPriceLists","menuCollections","menuTrips","menuReports"],
     WAREHOUSE_KEEPER: ["menuProducts","menuLocations","menuStock","menuStockTransfers","menuTrips"],
     PRODUCTION_MANAGER: ["menuProducts","menuLocations","menuStock","menuRecipes","menuProduction"],
-    ACCOUNTANT: ["menuSuppliers","menuPurchases","menuPurchaseReturns","menuSupplierPayments","menuExpenses","menuCustomers","menuSales","menuCollections","menuTrips","menuTreasuries","menuTreasuryTransfers","menuPartners","menuAccounting","menuReports"],
-    GENERAL_MANAGER: ["menuProducts","menuLocations","menuStock","menuStockTransfers","menuRecipes","menuProduction","menuReservations","menuSuppliers","menuPurchases","menuPurchaseReturns","menuSupplierPayments","menuExpenses","menuCustomers","menuSales","menuCollections","menuTrips","menuTreasuries","menuTreasuryTransfers","menuPartners","menuAccounting","menuReports"]
+    ACCOUNTANT: ["menuSuppliers","menuPurchases","menuPurchaseReturns","menuSupplierPayments","menuExpenses","menuCustomers","menuSales","menuPriceLists","menuCollections","menuTrips","menuTreasuries","menuTreasuryTransfers","menuPartners","menuAccounting","menuReports"],
+    GENERAL_MANAGER: ["menuProducts","menuLocations","menuStock","menuStockTransfers","menuRecipes","menuProduction","menuReservations","menuSuppliers","menuPurchases","menuPurchaseReturns","menuSupplierPayments","menuExpenses","menuCustomers","menuSales","menuPriceLists","menuCollections","menuTrips","menuTreasuries","menuTreasuryTransfers","menuPartners","menuAccounting","menuReports"]
   };
   return new Set(roleMenus[roleCode] || []);
 }
@@ -2666,6 +2743,45 @@ async function viewTreasuryStatement(t) {
     } catch(e) { alert(err(e)); }
 }
 
+
+// ========== قوائم الأسعار ==========
+async function loadPriceLists(){
+  if(!canViewPriceLists && !isSystemAdmin)return;
+  try{
+    const [{data:lists,error:lerr},{data:items,error:ierr},{data:groups,error:gerr},{data:assign,error:aerr}]=await Promise.all([
+      db.from("price_lists").select("*").order("price_list_id",{ascending:false}),
+      db.from("price_list_items").select("*,products(product_name),units(unit_name)").order("price_list_item_id",{ascending:false}),
+      db.from("customer_groups").select("*").eq("is_active",true).order("group_name"),
+      db.from("customer_price_lists").select("*,price_lists(price_list_name),customers(customer_name),customer_groups(group_name)").order("customer_price_list_id",{ascending:false})
+    ]);
+    if(lerr||ierr||gerr||aerr)throw(lerr||ierr||gerr||aerr);
+    priceListsCache=lists||[]; priceListItemsCache=items||[]; customerGroupsCache=groups||[];
+    renderPriceLists(); fillPriceListForms(); renderPriceAssignments(assign||[]); renderCustomerGroups();
+  }catch(e){msg($("priceListsMsg"),"تعذر تحميل قوائم الأسعار: "+err(e),"error");}
+}
+function renderPriceLists(){const box=$("priceListsList");if(!box)return;box.replaceChildren();if(!priceListsCache.length){box.innerHTML='<div class="empty">لا توجد قوائم أسعار.</div>';return;}priceListsCache.forEach(x=>{const c=document.createElement("div");c.className="product";c.innerHTML=`<div class="pname">${x.price_list_name} (${x.price_list_code})</div><div class="details">الحالة: ${x.approval_status} | من ${formatDate(x.valid_from)}${x.valid_to?' إلى '+formatDate(x.valid_to):''}</div>`;const a=document.createElement("div");a.className="actions";if(canManagePriceLists&&x.approval_status!=="APPROVED"){const b=document.createElement("button");b.className="btn";b.textContent="اعتماد";b.onclick=()=>approvePriceList(x.price_list_id);a.appendChild(b);}c.appendChild(a);box.appendChild(c);});const il=$("priceListItemsList");if(il){const active=priceListItemsCache.filter(i=>i.is_active);il.innerHTML=active.length?active.map(i=>`<div class="product"><div class="pname">${i.products?.product_name||productName(i.product_id)}</div><div class="details">${i.units?.unit_name||unitName(i.unit_id)} | ${fmt(i.selling_price)} | حد ${fmt(i.minimum_price)} - ${fmt(i.maximum_price)}</div></div>`).join(""): '<div class="empty">لا توجد أسعار.</div>';}}
+function fillPriceListForms(){
+  const lists=priceListsCache.filter(x=>x.is_active); const lp=["priceItemList","assignmentList"];lp.forEach(id=>{const el=$(id);if(!el)return;const cur=el.value;el.replaceChildren();lists.forEach(x=>{const o=document.createElement("option");o.value=x.price_list_id;o.textContent=x.price_list_name+" - "+x.approval_status;el.appendChild(o);});el.value=cur||"";});
+  const ps=$("priceItemProduct");if(ps){ps.replaceChildren();productsCache.filter(p=>p.is_active).forEach(p=>{const o=document.createElement("option");o.value=p.product_id;o.textContent=p.product_name;ps.appendChild(o);});fillPriceItemUnits();}
+  const cs=$("assignmentCustomer");if(cs){cs.replaceChildren();customersCache.filter(c=>c.is_active!==false).forEach(c=>{const o=document.createElement("option");o.value=c.customer_id;o.textContent=c.customer_name;cs.appendChild(o);});}
+  const gs=$("assignmentGroup");if(gs){gs.replaceChildren();customerGroupsCache.forEach(g=>{const o=document.createElement("option");o.value=g.customer_group_id;o.textContent=g.group_name;gs.appendChild(o);});}
+}
+function fillPriceItemUnits(){const p=productsCache.find(x=>String(x.product_id)===String($("priceItemProduct")?.value));const u=$("priceItemUnit");if(!u)return;u.replaceChildren();[p?.sales_unit_id,p?.base_unit_id,p?.purchase_unit_id].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i).forEach(id=>{const x=units.find(y=>Number(y.unit_id)===Number(id));if(x){const o=document.createElement("option");o.value=id;o.textContent=x.unit_name;u.appendChild(o);}});}
+function renderPriceAssignments(rows){const b=$("priceAssignmentsList");if(!b)return;b.innerHTML=rows.length?rows.map(x=>`<div class="product"><div class="pname">${x.price_lists?.price_list_name||"قائمة"}</div><div class="details">${x.customers?.customer_name||x.customer_groups?.group_name||"-"} | أولوية ${x.priority} | من ${formatDate(x.valid_from)}</div></div>`).join(""):'<div class="empty">لا توجد روابط.</div>';}
+function renderCustomerGroups(){const b=$("customerGroupsList");if(!b)return;b.innerHTML=customerGroupsCache.length?customerGroupsCache.map(x=>`<div class="product"><div class="pname">${x.group_name}</div><div class="details">${x.group_code}</div></div>`).join(""):'<div class="empty">لا توجد مجموعات.</div>';}
+async function approvePriceList(id){if(!canManagePriceLists)return;try{const {error}=await db.rpc("approve_price_list",{p_price_list_id:Number(id)});if(error)throw error;showToast("تم اعتماد قائمة الأسعار","success");await loadPriceLists();}catch(e){showToast("تعذر اعتماد القائمة: "+err(e),"error",7000);}}
+if($("priceListForm"))$("priceListForm").addEventListener("submit",async e=>{e.preventDefault();if(!canManagePriceLists)return;const payload={price_list_code:$("priceListCode").value.trim(),price_list_name:$("priceListName").value.trim(),is_default:$("priceListDefault").checked,valid_from:$("priceListFrom").value,valid_to:$("priceListTo").value||null,approval_status:"DRAFT",is_active:true,notes:$("priceListNotes").value.trim()||null};try{const {data:u}=await db.auth.getUser();payload.created_by=u?.user?.id||null;const {error}=await db.from("price_lists").insert(payload);if(error)throw error;$("priceListForm").reset();await loadPriceLists();showToast("تم إنشاء مسودة قائمة الأسعار","success");}catch(e){msg($("priceListsMsg"),"خطأ: "+err(e),"error");}});
+if($("priceItemProduct"))$("priceItemProduct").addEventListener("change",fillPriceItemUnits);
+if($("priceListItemForm"))$("priceListItemForm").addEventListener("submit",async e=>{e.preventDefault();if(!canManagePriceLists)return;const payload={price_list_id:Number($("priceItemList").value),product_id:Number($("priceItemProduct").value),unit_id:Number($("priceItemUnit").value),selling_price:Number($("priceItemSelling").value),minimum_price:$("priceItemMin").value?Number($("priceItemMin").value):null,maximum_price:$("priceItemMax").value?Number($("priceItemMax").value):null,is_active:true};try{const {error}=await db.from("price_list_items").insert(payload);if(error)throw error;$("priceListItemForm").reset();await loadPriceLists();showToast("تم إضافة السعر","success");}catch(e){msg($("priceListsMsg"),"خطأ: "+err(e),"error");}});
+if($("customerGroupForm"))$("customerGroupForm").addEventListener("submit",async e=>{e.preventDefault();if(!canManagePriceLists)return;try{const {data:u}=await db.auth.getUser();const {error}=await db.from("customer_groups").insert({group_code:$("customerGroupCode").value.trim(),group_name:$("customerGroupName").value.trim(),notes:$("customerGroupNotes").value.trim()||null,is_active:true,created_by:u?.user?.id||null});if(error)throw error;$("customerGroupForm").reset();await loadPriceLists();showToast("تم إضافة المجموعة","success");}catch(e){msg($("priceListsMsg"),"خطأ: "+err(e),"error");}});
+if($("assignmentType"))$("assignmentType").addEventListener("change",()=>{$("assignmentCustomerWrap").classList.toggle("hidden",$("assignmentType").value!=="CUSTOMER");$("assignmentGroupWrap").classList.toggle("hidden",$("assignmentType").value!=="GROUP");});
+if($("priceAssignmentForm"))$("priceAssignmentForm").addEventListener("submit",async e=>{e.preventDefault();if(!canManagePriceLists)return;const type=$("assignmentType").value;const payload={price_list_id:Number($("assignmentList").value),customer_id:type==="CUSTOMER"?Number($("assignmentCustomer").value):null,customer_group_id:type==="GROUP"?Number($("assignmentGroup").value):null,priority:Number($("assignmentPriority").value||10),valid_from:$("assignmentFrom").value,valid_to:$("assignmentTo").value||null,is_active:true};try{const {data:u}=await db.auth.getUser();payload.created_by=u?.user?.id||null;const {error}=await db.from("customer_price_lists").insert(payload);if(error)throw error;$("priceAssignmentForm").reset();await loadPriceLists();showToast("تم ربط القائمة","success");}catch(e){msg($("priceListsMsg"),"خطأ: "+err(e),"error");}});
+
+// ========== الفترات المحاسبية ==========
+async function loadAccountingPeriods(){if(!canViewAccounting&&!isSystemAdmin)return;const b=$("accountingPeriodsList");if(!b)return;try{const {data,error}=await db.from("accounting_periods").select("*").order("start_date",{ascending:false});if(error)throw error;b.innerHTML=data?.length?data.map(x=>`<div class="product"><div class="pname">${x.period_name}</div><div class="details">${formatDate(x.start_date)} إلى ${formatDate(x.end_date)} | الحالة: ${x.status}</div>${canManageAccounting&&x.status!=="CLOSED"?`<button class="btn danger" onclick="closeAccountingPeriod(${x.period_id})">إغلاق الفترة</button>`:""}</div>`).join(""):'<div class="empty">لا توجد فترات.</div>';}catch(e){msg($("accountingPeriodsMsg"),"تعذر تحميل الفترات: "+err(e),"error");}}
+window.closeAccountingPeriod=async function(id){if(!canManageAccounting)return;if(!confirm("سيتم إغلاق الفترة ولن تقبل قيودًا جديدة داخلها. هل تريد المتابعة؟"))return;try{const {error}=await db.rpc("close_accounting_period",{p_period_id:Number(id),p_notes:"إغلاق من شاشة المحاسبة"});if(error)throw error;showToast("تم إغلاق الفترة","success");await loadAccountingPeriods();}catch(e){showToast("تعذر إغلاق الفترة: "+err(e),"error",7000);}};
+if($("accountingPeriodForm"))$("accountingPeriodForm").addEventListener("submit",async e=>{e.preventDefault();if(!canManageAccounting)return;try{const {data,error}=await db.rpc("create_accounting_period",{p_period_name:$("periodName").value.trim(),p_start_date:$("periodStart").value,p_end_date:$("periodEnd").value,p_notes:$("periodNotes").value.trim()||null});if(error)throw error;$("accountingPeriodForm").reset();await loadAccountingPeriods();showToast("تم إنشاء الفترة","success");}catch(e){msg($("accountingPeriodsMsg"),"خطأ: "+err(e),"error");}});
+
 // ========== المنتجات ==========
 async function loadProducts(){ 
   if(!navigator.onLine) { productsCache=getCache('products'); renderProducts(); return; } 
@@ -3171,6 +3287,9 @@ if($("quickCollectForm")) $("quickCollectForm").addEventListener("submit", async
         const notes = $("qcNotes").value;
         if(!canPostCollections) throw new Error("ليس لديك صلاحية تسجيل التحصيل.");
         if(!treasuryId) throw new Error("اختر الخزنة.");
+        const requestStorageKey="mm_quick_collection_pending";
+        const requestPayload={customer_id:custId,amount,date,treasury_id:treasuryId,notes:notes||null};
+        const requestId=getRequestId(requestStorageKey,requestPayload);
         const { data: colId, error } = await db.rpc("create_collection_v3", {
           p_customer_id: custId,
           p_sales_invoice_id: null,
@@ -3182,8 +3301,10 @@ if($("quickCollectForm")) $("quickCollectForm").addEventListener("submit", async
           p_treasury_id: treasuryId,
           p_reference_number: null,
           p_bank_name: null,
-          p_due_date: null
+          p_due_date: null,
+          p_request_id: requestId
         });
+        if(!error) clearRequestId(requestStorageKey);
         if(error) throw error;
         showToast("تم تسجيل التحصيل بنجاح", "success");
         logUserAction("COLLECTION", "تحصيل سريع من عميل: " + custId);
@@ -3557,7 +3678,11 @@ if($("stockTransferForm")) $("stockTransferForm").addEventListener("submit", asy
   if(!items.length) return alert("أضف أصناف"); 
   const btn = $("saveStBtn"); 
   busy(btn, true, "جارٍ التحويل...", "تنفيذ"); 
-  const { error } = await db.rpc("create_stock_transfer", { p_source_location_id: Number($("stSource").value), p_destination_location_id: Number($("stDest").value), p_transfer_date: $("stDate").value, p_items: items, p_notes: $("stNotes").value }); 
+  const requestStorageKey="mm_stock_transfer_pending";
+  const requestPayload={source:Number($("stSource").value),destination:Number($("stDest").value),date:$("stDate").value,items:items.slice().sort((a,b)=>a.product_id-b.product_id),notes:$("stNotes").value||null};
+  const requestId=getRequestId(requestStorageKey,requestPayload);
+  const { error } = await db.rpc("create_stock_transfer", { p_source_location_id: Number($("stSource").value), p_destination_location_id: Number($("stDest").value), p_transfer_date: $("stDate").value, p_items: items, p_notes: $("stNotes").value, p_request_id:requestId });
+  if(!error) clearRequestId(requestStorageKey); 
   if(error) alert(err(error)); 
   else { showToast("تم التحويل","success"); $("stockTransferForm").reset(); $("stItems").innerHTML=""; loadStock(); } 
   busy(btn, false, "", "تنفيذ"); 
@@ -4037,6 +4162,9 @@ if($("invoiceForm")) $("invoiceForm").addEventListener("submit", async e => {
   const btn = $("saveInvoiceBtn"); 
   busy(btn, true, "جارٍ التحقق...", "حفظ");
   try {
+      const requestStorageKey="mm_sales_invoice_pending";
+      const requestPayload={customer_id:Number(customerId),location_id:Number(locationId),invoice_date:$("invoiceDate").value,discount:(subTotal*(discount/100)),notes:$("invoiceNotes").value||null,items:items,trip_id:tripId,payments:payments};
+      const requestId=getRequestId(requestStorageKey,requestPayload);
       const { data: invoiceId, error } = await db.rpc("create_sales_invoice_v2", {
         p_customer_id: Number(customerId),
         p_location_id: Number(locationId),
@@ -4045,8 +4173,10 @@ if($("invoiceForm")) $("invoiceForm").addEventListener("submit", async e => {
         p_notes: $("invoiceNotes").value || null,
         p_items: items,
         p_trip_id: tripId,
-        p_payments: payments
+        p_payments: payments,
+        p_request_id: requestId
       });
+      if(!error) clearRequestId(requestStorageKey);
       if(error) throw error;
       showToast("✅ تم حفظ الفاتورة بنجاح", "success");
       logUserAction("INVOICE", "فاتورة بيع #" + invoiceId);
@@ -4490,7 +4620,8 @@ async function loadSalesReturns(){
           const current=(await db.auth.getUser()).data.user;
           const {error:e1}=await db.rpc("validate_sales_return",{p_sales_return_id:Number(r.sales_return_id)});if(e1)throw e1;
           const {error:e2}=await db.rpc("post_sales_return",{p_sales_return_id:Number(r.sales_return_id),p_created_by:current.id});if(e2)throw e2;
-          showToast("تم اعتماد وترحيل المرتجع","success");await loadSalesReturns();await loadSales();await loadStock();
+          clearRequestId(returnRequestKey);
+      showToast("تم اعتماد وترحيل المرتجع","success");await loadSalesReturns();await loadSales();await loadStock();
         }catch(e){showToast("تعذر اعتماد المرتجع: "+err(e),"error",7000);}
       };
       c.appendChild(approve);
@@ -4530,25 +4661,30 @@ if($("returnForm"))$("returnForm").addEventListener("submit",async e=>{
     if(cashAction==="CASH_BACK"&&invoiceDebt>0.01)throw new Error("لا يمكن رد النقدية مع وجود مديونية على الفاتورة. اخصم المرتجع من المديونية أولاً.");
     $("returnCashAction").value=cashAction;
     const treasuryId=cashAction==="CASH_BACK"?8:null;
-    const {data:id,error}=await db.rpc("create_sales_return",{
+    const returnRequestKey="mm_sales_return_pending_"+invoiceId;
+    const returnPayload={invoice_id:invoiceId,customer_id:customerId,trip_id:tripId,return_type:"RETURN",return_date:$("returnDate").value,reason:$("returnReason").value.trim()||null,notes:$("returnNotes").value.trim()||null,cash_action:cashAction,treasury_id:treasuryId,items:rows.map(r=>({product_id:r.querySelector(".return-product").value,unit_id:r.querySelector(".return-unit").value,quantity:r.querySelector(".return-qty").value,unit_price:r.querySelector(".return-price").value}))};
+    const returnRequestId=getRequestId(returnRequestKey,returnPayload);
+    const {data:id,error}=await db.rpc("create_sales_return_v2",{
       p_return_number:"RET-"+Date.now(),p_customer_id:customerId,p_trip_id:tripId,
       p_sales_rep_id:Number(trip?.sales_rep_id||currentSalesRepId),p_sales_invoice_id:invoiceId,
       p_return_type:"RETURN",p_return_date:new Date(($("returnDate").value||todayISO())+"T12:00:00").toISOString(),
       p_reason:$("returnReason").value.trim()||null,p_notes:$("returnNotes").value.trim()||null,
-      p_created_by:current.id,p_cash_action:cashAction,p_treasury_id:treasuryId
+      p_created_by:current.id,p_cash_action:cashAction,p_treasury_id:treasuryId,p_request_id:returnRequestId
     });
     if(error)throw error;
     for(const row of rows){
-      const {error:itemError}=await db.rpc("add_sales_return_item",{
+      const itemRequestId=(crypto.randomUUID?crypto.randomUUID():Date.now()+"-"+Math.random().toString(36).slice(2));
+      const {error:itemError}=await db.rpc("add_sales_return_item_v2",{
         p_sales_return_id:Number(id),p_product_id:Number(row.querySelector(".return-product").value),
         p_unit_id:Number(row.querySelector(".return-unit").value),p_quantity:Number(row.querySelector(".return-qty").value),
-        p_unit_price:Number(row.querySelector(".return-price").value),p_discount_amount:0,p_lot_id:null,p_notes:null,p_package_option_id:row.querySelector(".return-package-option")?.value?Number(row.querySelector(".return-package-option").value):null
+        p_unit_price:Number(row.querySelector(".return-price").value),p_discount_amount:0,p_lot_id:null,p_notes:null,p_package_option_id:row.querySelector(".return-package-option")?.value?Number(row.querySelector(".return-package-option").value):null,p_request_id:itemRequestId
       });
       if(itemError)throw itemError;
     }
     if(canApproveReturns||canManageReturns){
       const {error:validationError}=await db.rpc("validate_sales_return",{p_sales_return_id:Number(id)});if(validationError)throw validationError;
       const {error:postError}=await db.rpc("post_sales_return",{p_sales_return_id:Number(id),p_created_by:current.id});if(postError)throw postError;
+      clearRequestId(returnRequestKey);
       showToast("تم اعتماد وترحيل المرتجع","success");
     }else{
       showToast("تم حفظ طلب المرتجع. ينتظر اعتماد مدير المبيعات أو المحاسب.","success",7000);
@@ -5066,6 +5202,9 @@ if($("collectionForm")) $("collectionForm").addEventListener("submit", async e =
         if(method === "CASH" && currentRoleCode !== "SALES_REP" && !selectedTreasuryId) throw new Error("اختر خزنة استلام المبلغ النقدي.");
         const referenceNumber = $("collectionReferenceNumber").value.trim();
         if(method === "CHEQUE" && !referenceNumber) throw new Error("اكتب رقم الشيك.");
+        const collectionRequestKey="mm_collection_pending";
+        const collectionPayload={customer_id:Number($("collectionCustomer").value),invoice_id:$("collectionInvoice").value?Number($("collectionInvoice").value):null,amount:Number($("collectionAmount").value),method,date:$("collectionDate").value,notes:$("collectionNotes").value||null,trip_id:tripId,treasury_id:selectedTreasuryId,reference:referenceNumber||null,bank:$("collectionBankName").value.trim()||null,due:$("collectionDueDate").value||null};
+        const collectionRequestId=getRequestId(collectionRequestKey,collectionPayload);
         const {data:id,error}=await db.rpc("create_collection_v3",{
           p_customer_id:Number($("collectionCustomer").value),
           p_sales_invoice_id:$("collectionInvoice").value?Number($("collectionInvoice").value):null,
@@ -5077,8 +5216,10 @@ if($("collectionForm")) $("collectionForm").addEventListener("submit", async e =
           p_treasury_id:selectedTreasuryId,
           p_reference_number:referenceNumber || null,
           p_bank_name:$("collectionBankName").value.trim() || null,
-          p_due_date:$("collectionDueDate").value || null
+          p_due_date:$("collectionDueDate").value || null,
+          p_request_id:collectionRequestId
         });
+        if(!error) clearRequestId(collectionRequestKey);
         if(error) throw error;
         showToast("✅ تم الحفظ", "success");
         logUserAction("COLLECTION", "تحصيل من عميل #" + $("collectionCustomer").value);
@@ -5524,7 +5665,10 @@ if($("productionForm")) $("productionForm").addEventListener("submit", async e =
     return; 
   } 
   try { 
-    const { data, error } = await db.rpc("create_production_order", { p_recipe_id: Number(rid), p_target_quantity: qty, p_location_id: Number(loc), p_notes: notes||null }); 
+    const productionKey="mm_production_order_pending";
+    const productionRequestId=getRequestId(productionKey,{recipe_id:Number(rid),quantity:qty,location_id:Number(loc),notes:notes||null});
+    const { data, error } = await db.rpc("create_production_order_v2", { p_recipe_id: Number(rid), p_target_quantity: qty, p_location_id: Number(loc), p_notes: notes||null, p_request_id:productionRequestId });
+    if(!error) clearRequestId(productionKey); 
     if(error) throw error; 
     showToast("✅ تم إنشاء أمر التشغيل", "success"); 
     logUserAction("PRODUCTION", "أمر تشغيل جديد: " + (data||"")); 
@@ -5636,7 +5780,10 @@ if($("tripForm")) $("tripForm").addEventListener("submit", async e => {
   const date=$("tripDate").value, cash=Number($("tripInitialCash").value||0), notes=$("tripNotes").value;
   if(!repId||!source||!veh||!date||!Number.isFinite(cash)||cash<0){ msg($("tripFormMsg"),"اختر المندوب ومخزن المصدر والسيارة وأكمل التاريخ والعهدة بشكل صحيح.","error"); busy(btn,false,"","حفظ"); return; }
   try{
-    const {data,error}=await db.rpc("create_trip",{p_sales_rep_id:Number(repId),p_source_location_id:Number(source),p_vehicle_location_id:Number(veh),p_trip_date:date,p_initial_cash:cash,p_notes:notes||null});
+    const tripKey="mm_trip_pending";
+    const tripRequestId=getRequestId(tripKey,{rep_id:Number(repId),source:Number(source),vehicle:Number(veh),date,initial_cash:cash,notes:notes||null});
+    const {data,error}=await db.rpc("create_trip_v2",{p_sales_rep_id:Number(repId),p_source_location_id:Number(source),p_vehicle_location_id:Number(veh),p_trip_date:date,p_initial_cash:cash,p_notes:notes||null,p_request_id:tripRequestId});
+    if(!error) clearRequestId(tripKey);
     if(error) throw error;
     showToast("تم إنشاء الجولة","success"); logUserAction("TRIP","جولة جديدة: "+(data||""));
     $("tripFormModal").classList.remove('active'); $("tripForm").reset(); await loadTrips();
@@ -6105,7 +6252,10 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
   const btn=$("savePartnerTransactionBtn"); 
   busy(btn,true,"جارٍ...","حفظ"); 
   try { 
-    const {error}=await db.rpc("create_partner_transaction",{ p_partner_id:Number($("ptPartner").value), p_transaction_type:$("ptType").value, p_amount:Number($("ptAmount").value), p_transaction_date:$("ptDate").value, p_treasury_id:$("ptTreasury").value?Number($("ptTreasury").value):null, p_notes:$("ptNotes").value }); 
+    const partnerKey="mm_partner_transaction_pending";
+    const partnerRequestId=getRequestId(partnerKey,{partner_id:Number($("ptPartner").value),type:$("ptType").value,amount:Number($("ptAmount").value),date:$("ptDate").value,treasury_id:$("ptTreasury").value?Number($("ptTreasury").value):null,notes:$("ptNotes").value||null});
+    const {error}=await db.rpc("create_partner_transaction_v2",{ p_partner_id:Number($("ptPartner").value), p_transaction_type:$("ptType").value, p_amount:Number($("ptAmount").value), p_transaction_date:$("ptDate").value, p_treasury_id:$("ptTreasury").value?Number($("ptTreasury").value):null, p_notes:$("ptNotes").value, p_request_id:partnerRequestId });
+    if(!error) clearRequestId(partnerKey); 
     if(error) throw error; 
     showToast("✅ تم الحفظ", "success"); 
     logUserAction("PAYMENT", "حركة شريك: " + $("ptType").value); 
