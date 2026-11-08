@@ -308,9 +308,12 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
   const dayDate = document.getElementById("headerDayDate");
   const time = document.getElementById("headerTime");
   if (!dayDate || !time) return;
-  const dateFormatter = new Intl.DateTimeFormat("ar-EG", {
-    weekday: "long", year: "numeric", month: "long", day: "numeric"
-  });
+  const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  weekday: "long", year: "numeric", month: "long", day: "numeric"
+});
+const timeFormatter = new Intl.DateTimeFormat("en-US", {
+  hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true
+});
   const timeFormatter = new Intl.DateTimeFormat("ar-EG", {
     hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false
   });
