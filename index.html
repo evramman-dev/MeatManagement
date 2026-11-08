@@ -3574,7 +3574,7 @@ async function viewSupplierStatement(s) {
         let rowsHtml = `<thead><tr><th>التاريخ</th><th>المستند</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead><tbody>`;
 
         timeline.forEach(t => {
-            runningBalance = runningBalance - t.credit + t.debit;
+            runningBalance = runningBalance + t.credit - t.debit;
             const balanceLabel = runningBalance > 0
                 ? "مستحق للمورد " + fmt(runningBalance)
                 : runningBalance < 0
