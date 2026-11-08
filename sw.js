@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'meat-v70';
+const CACHE_VERSION = 'meat-v71';
 const CORE_CACHE = [
   './',
   './index.html',
@@ -13,7 +13,14 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k)))).then(() => self.clients.claim()));
+  event.waitUntil(
+    caches.keys()
+      .then((keys) => Promise.all(
+        keys.filter((key) => key.startsWith('meat-') && key !== CACHE_VERSION)
+          .map((key) => caches.delete(key))
+      ))
+      .then(() => self.clients.claim())
+  );
 });
 
 self.addEventListener('fetch', (event) => {
@@ -21,7 +28,7 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.hostname.includes('supabase.co')) return;
-  
+
   event.respondWith(
     fetch(req).then((res) => {
       if (res && res.ok && url.origin === self.location.origin) {
