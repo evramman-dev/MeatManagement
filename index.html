@@ -18,6 +18,9 @@ button{cursor:pointer}
 header{background:var(--g);color:white;padding:22px 18px;border-bottom:4px solid var(--gold)}
 header h1{margin:0 0 8px;font-size:23px}
 header p{margin:0;font-size:13px;color:#e3eae4}
+#headerClock{margin-top:12px;padding-top:10px;border-top:1px solid #ffffff35;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:13px;color:#f4ead4}
+#headerClock .clock-time{font-size:18px;font-weight:bold;direction:ltr;font-variant-numeric:tabular-nums}
+
 main{width:min(100% - 24px,760px);margin:16px auto 100px}
 .card{background:white;border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 3px 12px #142d1908}
 h2{font-size:19px;margin:0 0 14px}
@@ -296,6 +299,30 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <header>
 <h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v35]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
+<div id="headerClock" aria-live="off">
+  <span id="headerDayDate">جارٍ تحميل التاريخ...</span>
+  <span id="headerTime" class="clock-time">--:--:--</span>
+</div>
+<script>
+(function(){
+  const dayDate = document.getElementById("headerDayDate");
+  const time = document.getElementById("headerTime");
+  if (!dayDate || !time) return;
+  const dateFormatter = new Intl.DateTimeFormat("ar-EG", {
+    weekday: "long", year: "numeric", month: "long", day: "numeric"
+  });
+  const timeFormatter = new Intl.DateTimeFormat("ar-EG", {
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false
+  });
+  function updateHeaderClock(){
+    const now = new Date();
+    dayDate.textContent = dateFormatter.format(now);
+    time.textContent = timeFormatter.format(now);
+  }
+  updateHeaderClock();
+  window.setInterval(updateHeaderClock, 1000);
+})();
+</script>
 </header>
 <main>
 <section id="login" class="card">
@@ -6781,14 +6808,20 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
     }
   });
 
-  if($("logoutBtn")) $("logoutBtn").onclick=async()=>{ 
-    logUserAction("LOGIN","تسجيل خروج"); 
-    await db.auth.signOut();
-    bootedUserId=null;
-    appBootPromise=null;
-    taxWarningShownForUserId=null;
-    localStorage.clear();
-    showLogin(); 
+  if($("logoutBtn")) $("logoutBtn").onclick=async()=>{
+    if(!window.confirm("هل تريد تسجيل الخروج من حسابك؟")) return;
+    try {
+      const { error } = await db.auth.signOut();
+      if(error) throw error;
+      logUserAction("LOGIN","تسجيل خروج");
+      bootedUserId=null;
+      appBootPromise=null;
+      taxWarningShownForUserId=null;
+      localStorage.clear();
+      showLogin();
+    } catch(e) {
+      alert("تعذر تسجيل الخروج: " + err(e));
+    }
   };
   document.querySelectorAll(".navbtn").forEach(b=>{ b.onclick=()=>page(b.dataset.page); });
 
