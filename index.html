@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v35</title>
+<title>MeatManagement v36</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -15,7 +15,8 @@
 body{margin:0;background:var(--bg);color:#202820;font-family:Arial,Tahoma,sans-serif}
 button,input,select,textarea{font:inherit}
 button{cursor:pointer}
-header{background:var(--g);color:white;padding:22px 18px;border-bottom:4px solid var(--gold)}
+header{background:var(--g);color:white;padding:22px 18px;border-bottom:4px solid var(--gold);position:relative}
+.header-exit-btn{position:absolute;left:18px;top:16px;width:auto;margin:0;padding:7px 13px;border:1px solid #ffffff70;border-radius:8px;background:#ffffff18;color:#fff;font-size:13px}
 header h1{margin:0 0 8px;font-size:23px}
 header p{margin:0;font-size:13px;color:#e3eae4}
 #headerClock{margin-top:12px;padding-top:10px;border-top:1px solid #ffffff35;display:flex;flex-wrap:nowrap;justify-content:space-between;gap:6px 14px;align-items:center;font-size:13px;color:#f4ead4;direction:rtl}
@@ -298,7 +299,8 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 <header>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v35]</span></h1>
+<button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v36]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -481,6 +483,18 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="row"><input id="salesRepSearch" type="search" placeholder="ابحث باسم المندوب..."><button id="refreshSalesRepsBtn" class="btn secondary" type="button">تحديث</button></div>
 <div id="salesRepsMsg" class="status hidden"></div>
 <div id="salesRepsList"><div class="empty">جارٍ تحميل المندوبين...</div></div>
+<hr>
+<h3>توزيع المناطق على المندوبين</h3>
+<div id="salesRepAreasMsg" class="status hidden"></div>
+<form id="salesRepAreaForm" class="form-grid">
+<label>المندوب<select id="salesRepAreaRep" required><option value="">اختر المندوب</option></select></label>
+<label>المحافظة<select id="salesRepAreaGovernorate" required><option value="">اختر المحافظة</option></select></label>
+<label>المركز أو القسم<select id="salesRepAreaCity" required disabled><option value="">اختر المركز أو القسم</option></select></label>
+<label>المنطقة<select id="salesRepAreaSelect" required disabled><option value="">اختر المنطقة</option></select></label>
+<label>ملاحظات<textarea id="salesRepAreaNotes" rows="2"></textarea></label>
+<button id="saveSalesRepAreaBtn" class="btn" type="submit">إسناد المنطقة</button>
+</form>
+<div id="salesRepAreasList"><div class="empty">جارٍ تحميل التوزيعات...</div></div>
 </div>
 </div>
 <div id="salesRepFormModal" class="modal-form">
@@ -915,9 +929,10 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 <div id="productionFormModal" class="modal-form">
 <div class="modal-form-content">
-<div class="modal-header"><h3>إنشاء أمر تشغيل</h3><button class="close-btn" onclick="document.getElementById('productionFormModal').classList.remove('active')">&times;</button></div>
+<div class="modal-header"><h3 id="productionFormTitle">إنشاء أمر تشغيل</h3><button class="close-btn" onclick="document.getElementById('productionFormModal').classList.remove('active')">&times;</button></div>
 <div class="modal-body">
 <form id="productionForm" onsubmit="event.preventDefault();">
+<input id="productionEditOrderId" type="hidden">
 <label for="productionRecipe">الوصفة *</label><select id="productionRecipe" required><option value="">اختر الوصفة</option></select>
 <label for="productionTargetQty">الكمية المطلوبة *</label><input id="productionTargetQty" type="number" min="0.0001" step="0.0001" required>
 <div class="info" id="productionOutputInfo">المنتج الناتج: -</div>
@@ -927,6 +942,34 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <label for="productionNotes">ملاحظات</label><textarea id="productionNotes" rows="2"></textarea>
 <button id="saveProductionBtn" class="btn" type="submit">حفظ</button>
 <div id="productionFormMsg" class="status hidden"></div>
+</form>
+</div>
+</div>
+</div>
+<div id="productionExecutionModal" class="modal-form">
+<div class="modal-form-content">
+<div class="modal-header"><h3>تنفيذ أمر التشغيل والتكلفة الفعلية</h3><button class="close-btn" type="button" onclick="document.getElementById('productionExecutionModal').classList.remove('active')">&times;</button></div>
+<div class="modal-body">
+<form id="productionExecutionForm" onsubmit="event.preventDefault();">
+<div id="productionExecutionOrderInfo" class="info"></div>
+<label for="productionExecutionDate">تاريخ التنفيذ</label><input id="productionExecutionDate" type="date" readonly>
+<label for="productionExecutionOutput">كمية الناتج الفعلية *</label><input id="productionExecutionOutput" type="number" min="0.000001" step="0.000001" required>
+<h4>الخامات المستهلكة فعليًا</h4>
+<div id="productionExecutionMaterials"></div>
+<div class="info">أدخل الكمية المستهلكة لكل خامة بوحدة أمر التشغيل. اترك صفرًا إذا لم تُستهلك الخامة.</div>
+<hr>
+<h4>المواد المسترجعة</h4>
+<div class="info">لكل مادة مسترجعة حدد الخامة المصدر، وكمية المصدر المخصصة لها بوحدتها الأساسية، وكمية الناتج المسترجع وتكلفته.</div>
+<div id="productionRecoveredRows"></div>
+<button id="addProductionRecoveredBtn" class="btn secondary" type="button">إضافة مادة مسترجعة</button>
+<hr>
+<h4>الفاقد غير الطبيعي</h4>
+<div class="info">سجل كمية الفاقد بوحدة الخامة الأساسية والتكلفة المخصصة له. لا تسجل الفاقد الطبيعي هنا.</div>
+<div id="productionWasteRows"></div>
+<button id="addProductionWasteBtn" class="btn secondary" type="button">إضافة فاقد</button>
+<div class="info">يجب توزيع تكلفة المسترجعات والفاقد بقيم فعلية. لا يحسب البرنامج نسبة توزيع تلقائية.</div>
+<button id="saveProductionExecutionBtn" class="btn" type="submit">تنفيذ وتسجيل التكلفة</button>
+<div id="productionExecutionMsg" class="status hidden"></div>
 </form>
 </div>
 </div>
@@ -1126,6 +1169,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="modal-body">
 <form id="invoiceForm" onsubmit="event.preventDefault();">
 <label for="invoiceCustomer">العميل *</label><select id="invoiceCustomer" required><option value="">اختر العميل</option></select>
+<div id="invoicePriceListInfo" class="info">اختر العميل لعرض قائمة الأسعار المعتمدة السارية.</div>
 <label for="invoiceLocation">الموقع *</label><select id="invoiceLocation" required><option value="">اختر الموقع</option></select>
 <label for="invoiceDate">التاريخ *</label><input id="invoiceDate" type="date" required>
 <div class="info">يمكنك تسجيل أكثر من وسيلة دفع للفاتورة. أضف المبالغ التي دفعها العميل الآن، وسيظل الفرق المتبقي آجلًا. اترك قائمة الدفعات فارغة إذا لم يدفع العميل وقت إصدار الفاتورة.</div>
@@ -2255,9 +2299,28 @@ async function loadSalesReps(){
     const {data,error}=await db.from("sales_reps").select("sales_rep_id,name,is_active,auth_user_id").order("sales_rep_id");
     if(error) throw error;
     salesRepsCache=data||[]; renderSalesReps();
+    await loadCustomerGeoData();
+    fillSalesRepAreaFormSelects();
+    await loadSalesRepAreas();
     if($("salesRepsMsg")) clear($("salesRepsMsg"));
   }catch(e){ if(box) box.innerHTML=`<div class="empty error">تعذر تحميل المندوبين: ${salesRepText(err(e))}</div>`; }
 }
+let salesRepAreasCache=[];
+function fillSalesRepAreaFormSelects(){
+ const rep=$("salesRepAreaRep"),gov=$("salesRepAreaGovernorate");if(!rep||!gov)return;
+ const oldRep=rep.value,oldGov=gov.value;rep.replaceChildren(new Option("اختر المندوب",""));salesRepsCache.filter(x=>x.is_active).forEach(x=>rep.add(new Option(x.name,String(x.sales_rep_id))));rep.value=oldRep;
+ gov.replaceChildren(new Option("اختر المحافظة",""));customerGovernoratesCache.forEach(x=>gov.add(new Option(x.name,String(x.governorate_id))));gov.value=oldGov;
+ fillSalesRepAreaCities();
+}
+function fillSalesRepAreaCities(){const gov=$("salesRepAreaGovernorate"),city=$("salesRepAreaCity"),area=$("salesRepAreaSelect");if(!gov||!city||!area)return;const oldCity=city.value;city.replaceChildren(new Option("اختر المركز أو القسم",""));customerCitiesCache.filter(x=>!gov.value||String(x.governorate_id)===gov.value).forEach(x=>city.add(new Option(x.name,String(x.city_id))));city.disabled=!gov.value;city.value=oldCity;fillSalesRepAreaOptions();}
+function fillSalesRepAreaOptions(){const city=$("salesRepAreaCity"),area=$("salesRepAreaSelect");if(!city||!area)return;const old=area.value;area.replaceChildren(new Option("اختر المنطقة",""));customerAreasCache.filter(x=>String(x.city_id)===String(city.value)).forEach(x=>area.add(new Option(x.name,String(x.area_id))));area.disabled=!city.value;area.value=old;}
+function renderSalesRepAreas(){const box=$("salesRepAreasList");if(!box)return;const rows=[...salesRepAreasCache].sort((a,b)=>Number(b.is_active)-Number(a.is_active)||Number(a.sales_rep_id)-Number(b.sales_rep_id)||Number(a.area_id)-Number(b.area_id));if(!rows.length){box.innerHTML='<div class="empty">لا توجد مناطق مسندة حتى الآن.</div>';return;}box.replaceChildren();rows.forEach(r=>{const rep=salesRepsCache.find(x=>String(x.sales_rep_id)===String(r.sales_rep_id));const area=customerAreasCache.find(x=>String(x.area_id)===String(r.area_id));const city=customerCitiesCache.find(x=>String(x.city_id)===String(area?.city_id));const gov=customerGovernoratesCache.find(x=>String(x.governorate_id)===String(city?.governorate_id));const card=document.createElement("div");card.className="product";const title=document.createElement("div");title.className="pname";title.textContent=(area?.name||("منطقة رقم "+r.area_id))+" — "+(rep?.name||("مندوب رقم "+r.sales_rep_id));const details=document.createElement("div");details.className="details";details.textContent=[gov?.name,city?.name,r.is_active?"نشط":"موقوف",r.notes].filter(Boolean).join(" | ");card.append(title,details);if(r.is_active){const btn=document.createElement("button");btn.type="button";btn.className="btn secondary";btn.textContent="إيقاف الإسناد";btn.onclick=()=>toggleSalesRepArea(r,false);card.appendChild(btn);}else{const btn=document.createElement("button");btn.type="button";btn.className="btn secondary";btn.textContent="إعادة التفعيل";btn.onclick=()=>toggleSalesRepArea(r,true);card.appendChild(btn);}box.appendChild(card);});}
+async function loadSalesRepAreas(){const box=$("salesRepAreasList");if(box)box.innerHTML='<div class="empty">جارٍ تحميل التوزيعات...</div>';const {data,error}=await db.from("sales_rep_areas").select("sales_rep_area_id,sales_rep_id,area_id,is_active,notes,created_at,created_by").order("sales_rep_id").order("area_id");if(error)throw error;salesRepAreasCache=data||[];renderSalesRepAreas();}
+async function toggleSalesRepArea(row,active){if(!isSystemAdmin)return;try{const {error}=await db.from("sales_rep_areas").update({is_active:active}).eq("sales_rep_area_id",row.sales_rep_area_id);if(error)throw error;await loadSalesRepAreas();showToast(active?"تم تفعيل إسناد المنطقة":"تم إيقاف إسناد المنطقة","success");}catch(e){showToast("تعذر تحديث الإسناد: "+err(e),"error",7000);}}
+if($("salesRepAreaGovernorate"))$("salesRepAreaGovernorate").addEventListener("change",()=>{const city=$("salesRepAreaCity");if(city)city.value="";fillSalesRepAreaCities();});
+if($("salesRepAreaCity"))$("salesRepAreaCity").addEventListener("change",fillSalesRepAreaOptions);
+if($("salesRepAreaForm"))$("salesRepAreaForm").addEventListener("submit",async e=>{e.preventDefault();if(!isSystemAdmin)return;clear($("salesRepAreasMsg"));const repId=Number($("salesRepAreaRep").value),areaId=Number($("salesRepAreaSelect").value);if(!(repId>0&&areaId>0))return msg($("salesRepAreasMsg"),"اختر المندوب والمنطقة.","error");try{const existing=salesRepAreasCache.find(x=>Number(x.sales_rep_id)===repId&&Number(x.area_id)===areaId);let result;if(existing){if(existing.is_active)throw new Error("هذه المنطقة مسندة بالفعل إلى هذا المندوب.");result=await db.from("sales_rep_areas").update({is_active:true,notes:$("salesRepAreaNotes").value.trim()||null}).eq("sales_rep_area_id",existing.sales_rep_area_id);}else{result=await db.from("sales_rep_areas").insert({sales_rep_id:repId,area_id:areaId,is_active:true,notes:$("salesRepAreaNotes").value.trim()||null});}if(result.error)throw result.error;$("salesRepAreaForm").reset();fillSalesRepAreaFormSelects();await loadSalesRepAreas();msg($("salesRepAreasMsg"),"تم إسناد المنطقة بنجاح.","success");}catch(e){msg($("salesRepAreasMsg"),"تعذر إسناد المنطقة: "+err(e),"error");}});
+
 window.openSalesRepForm=function(){
   if(!isSystemAdmin){ showToast("هذه العملية لمدير النظام فقط.","error"); return; }
   $("salesRepForm").reset(); $("salesRepEditId").value=""; $("salesRepActive").checked=true;
@@ -2789,10 +2852,16 @@ if($("treasuryTransferForm")) $("treasuryTransferForm").addEventListener("submit
   e.preventDefault(); 
   const btn = $("saveTtBtn"); 
   busy(btn, true, "جارٍ...", "تنفيذ"); 
-  const { error } = await db.rpc("transfer_treasury_funds", { p_source_treasury_id: Number($("ttSource").value), p_destination_treasury_id: Number($("ttDest").value), p_amount: Number($("ttAmount").value), p_notes: $("ttNotes").value }); 
-  if(error) alert(err(error)); 
-  else { showToast("تم التحويل بنجاح","success"); $("treasuryTransferForm").reset(); loadTreasuries(); } 
-  busy(btn, false, "", "تنفيذ"); 
+  try{
+    const payload={source_treasury_id:Number($("ttSource").value),destination_treasury_id:Number($("ttDest").value),amount:Number($("ttAmount").value),notes:$("ttNotes").value||null};
+    const requestKey="mm_treasury_transfer_pending";
+    const requestId=getRequestId(requestKey,payload);
+    const {error}=await db.rpc("transfer_treasury_funds_v2",{p_source_treasury_id:payload.source_treasury_id,p_destination_treasury_id:payload.destination_treasury_id,p_amount:payload.amount,p_notes:payload.notes,p_request_id:requestId});
+    if(error)throw error;
+    clearRequestId(requestKey);
+    showToast("تم التحويل بنجاح","success");$("treasuryTransferForm").reset();await loadTreasuries();
+  }catch(error){alert(err(error));}
+  finally{busy(btn,false,"","تنفيذ");}
 });
 
 async function viewTreasuryStatement(t) {
@@ -3574,7 +3643,7 @@ async function viewSupplierStatement(s) {
         let rowsHtml = `<thead><tr><th>التاريخ</th><th>المستند</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead><tbody>`;
 
         timeline.forEach(t => {
-            runningBalance = runningBalance + t.credit - t.debit;
+            runningBalance = runningBalance - t.credit + t.debit;
             const balanceLabel = runningBalance > 0
                 ? "مستحق للمورد " + fmt(runningBalance)
                 : runningBalance < 0
@@ -3949,6 +4018,7 @@ function resetInvoiceForm(){
   fillInvoiceLocationSelect(); 
   fillTreasurySelects(); 
   fillInvoiceTripSelect(); 
+  if($("invoicePriceListInfo"))$("invoicePriceListInfo").textContent="اختر العميل لعرض قائمة الأسعار المعتمدة السارية.";
   const tripField = $("invoiceTrip");
   if(tripField) tripField.required = currentRoleCode === "SALES_REP";
   $("invoiceFormModal").classList.add('active'); 
@@ -3957,6 +4027,26 @@ function resetInvoiceForm(){
 if($("addInvoiceBtn")) $("addInvoiceBtn").addEventListener("click",()=>resetInvoiceForm());
 
 function addPackageSelectToRow(row,productId,unitId){let w=row.querySelector(".package-option-wrap");if(!w){w=document.createElement("div");w.className="package-option-wrap";const l=document.createElement("label");l.textContent="خيار التعبئة";const sel=document.createElement("select");sel.className="item-package-option";w.append(l,sel);row.insertBefore(w,row.querySelector(".item-line-total")||row.lastElementChild);}const sel=w.querySelector("select");const cur=sel.value;sel.replaceChildren();const f=document.createElement("option");f.value="";f.textContent="بدون خيار تعبئة";sel.appendChild(f);packageOptionsForProduct(productId,unitId).forEach(x=>{const o=document.createElement("option");o.value=String(x.package_option_id);o.textContent=x.option_name+" — "+fmtQty(x.weight_kg)+" كجم";sel.appendChild(o);});if([...sel.options].some(o=>o.value===cur))sel.value=cur;}
+let invoicePriceListRequest=0;
+async function refreshInvoicePriceList(){
+ const customerId=Number($("invoiceCustomer")?.value||0),asOfDate=$("invoiceDate")?.value||todayISO(),info=$("invoicePriceListInfo");
+ const request=++invoicePriceListRequest;
+ if(!customerId){if(info)info.textContent="اختر العميل لعرض قائمة الأسعار المعتمدة السارية.";document.querySelectorAll("#invoiceItems .item-row").forEach(row=>{const price=row.querySelector(".item-price");if(price)price.value="";const hint=row.querySelector(".price-hint");if(hint)hint.textContent="اختر العميل أولًا.";});updateInvoiceTotals();return null;}
+ document.querySelectorAll("#invoiceItems .item-row").forEach(row=>{const price=row.querySelector(".item-price");if(price)price.value="";const hint=row.querySelector(".price-hint");if(hint)hint.textContent="جارٍ التحقق من قائمة الأسعار للعميل...";});updateInvoiceTotals();
+ try{const {data,error}=await db.rpc("get_customer_price_list",{p_customer_id:customerId,p_as_of_date:asOfDate});if(error)throw error;if(request!==invoicePriceListRequest)return null;const list=Array.isArray(data)?data[0]:data;if(!list)throw new Error("لا توجد قائمة أسعار معتمدة وسارية لهذا العميل في التاريخ المحدد.");if(info)info.textContent="قائمة الأسعار المعتمدة: "+list.price_list_name+" ("+list.price_list_code+") — سارية من "+formatDate(list.valid_from)+(list.valid_to?" إلى "+formatDate(list.valid_to):"");await Promise.all([...document.querySelectorAll("#invoiceItems .item-row")].map(row=>applyCustomerPriceToRow(row)));return list;}
+ catch(e){if(request!==invoicePriceListRequest)return null;if(info)info.textContent="تعذر تحديد قائمة الأسعار: "+err(e);document.querySelectorAll("#invoiceItems .item-row").forEach(row=>{const price=row.querySelector(".item-price");if(price)price.value="";const hint=row.querySelector(".price-hint");if(hint)hint.textContent="لا يمكن تسعير الصنف قبل تحديد قائمة معتمدة.";});updateInvoiceTotals();return null;}
+}
+async function applyCustomerPriceToRow(row){
+ if(!row)return;const customerId=Number($("invoiceCustomer")?.value||0),productId=Number(row.querySelector(".item-product")?.value||0),unitId=Number(row.querySelector(".item-unit")?.value||0),date=$("invoiceDate")?.value||todayISO();
+ const price=row.querySelector(".item-price"),hint=row.querySelector(".price-hint"),error=row.querySelector(".error-text");if(!price||!productId||!unitId||!customerId){if(price)price.value="";return;}
+ const request=Number(row.dataset.priceRequest||0)+1;row.dataset.priceRequest=String(request);price.value="";price.min="0";price.max="";row.dataset.minimumPrice="";row.dataset.maximumPrice="";if(hint)hint.textContent="جارٍ جلب سعر القائمة المعتمدة...";if(error){error.style.display="none";error.textContent="";}
+ try{const {data,error:rpcError}=await db.rpc("get_customer_product_price",{p_customer_id:customerId,p_product_id:productId,p_unit_id:unitId,p_as_of_date:date});if(rpcError)throw rpcError;if(Number(row.dataset.priceRequest)!==request)return;if(Number($("invoiceCustomer")?.value||0)!==customerId||($("invoiceDate")?.value||todayISO())!==date||Number(row.querySelector(".item-product")?.value||0)!==productId||Number(row.querySelector(".item-unit")?.value||0)!==unitId)return;const item=Array.isArray(data)?data[0]:data;if(!item)throw new Error("لا يوجد سعر معتمد لهذا المنتج بهذه الوحدة.");const product=productsCache.find(x=>String(x.product_id)===String(productId));const minValues=[item.minimum_price,product?.min_selling_price].filter(v=>v!==null&&v!==undefined&&v!=="").map(Number).filter(Number.isFinite);const maxValues=[item.maximum_price,product?.max_selling_price].filter(v=>v!==null&&v!==undefined&&v!=="").map(Number).filter(Number.isFinite);const lower=minValues.length?Math.max(...minValues):0;const upper=maxValues.length?Math.min(...maxValues):Infinity;if(lower>upper)throw new Error("لا يوجد نطاق سعر متاح؛ الحد الأدنى يتجاوز الحد الأقصى.");row.dataset.priceListId=String(item.price_list_id);row.dataset.minimumPrice=String(lower);row.dataset.maximumPrice=Number.isFinite(upper)?String(upper):"";price.min=String(lower);price.max=Number.isFinite(upper)?String(upper):"";const target=Number(item.selling_price);price.value=target>=lower-0.000001&&target<=upper+0.000001?String(target):"";if(hint)hint.textContent="القائمة: "+item.price_list_code+" | السعر المستهدف: "+fmt(target)+" | المسموح: "+fmt(lower)+" إلى "+(Number.isFinite(upper)?fmt(upper):"بدون حد أعلى")+" | يمكنك التفاوض داخل الحدود.";}
+ catch(e){if(Number(row.dataset.priceRequest)!==request||Number($("invoiceCustomer")?.value||0)!==customerId||($("invoiceDate")?.value||todayISO())!==date||Number(row.querySelector(".item-product")?.value||0)!==productId||Number(row.querySelector(".item-unit")?.value||0)!==unitId)return;price.value="";if(hint)hint.textContent="تعذر جلب السعر: "+err(e);if(error){error.style.display="block";error.textContent="لا يمكن إصدار الفاتورة دون سعر من قائمة معتمدة.";}}
+ const opt=row.querySelector(".item-product")?.selectedOptions[0];if(opt){opt.dataset.minPrice=row.dataset.minimumPrice||"";opt.dataset.maxPrice=row.dataset.maximumPrice||"";}if(typeof row._recalculateInvoiceLine==="function")row._recalculateInvoiceLine();else updateInvoiceTotals();
+}
+if($("invoiceCustomer"))$("invoiceCustomer").addEventListener("change",refreshInvoicePriceList);
+if($("invoiceDate"))$("invoiceDate").addEventListener("change",refreshInvoicePriceList);
+
 function addInvoiceItemRow() {
   invoiceItemCounter++; 
   const id="item_"+invoiceItemCounter;
@@ -3995,7 +4085,7 @@ function addInvoiceItemRow() {
   qtyWrap.append(qtyLabel,qty);
   const priceWrap=document.createElement("div"); 
   const priceLabel=document.createElement("label"); priceLabel.textContent="سعر الوحدة *"; 
-  const price=document.createElement("input"); price.type="number"; price.className="item-price"; price.min="0"; price.step="0.01"; price.required=true; 
+  const price=document.createElement("input"); price.type="number"; price.className="item-price"; price.min="0"; price.step="0.01"; price.required=true; price.readOnly=false; price.placeholder="السعر المستهدف قابل للتفاوض داخل الحدود"; 
   priceWrap.append(priceLabel,price);
   const hintDiv = document.createElement("div"); hintDiv.className = "price-hint"; 
   const errDiv = document.createElement("div"); errDiv.className = "error-text";
@@ -4012,8 +4102,8 @@ function addInvoiceItemRow() {
     const t=Math.round((q*p+Number.EPSILON)*100)/100; 
     lineTotal.textContent="الإجمالي: "+fmt(t); 
     const opt=prodSel.selectedOptions[0]; 
-    const minP = opt?.dataset?.minPrice ? Number(opt.dataset.minPrice) : 0; 
-    const maxP = opt?.dataset?.maxPrice ? Number(opt.dataset.maxPrice) : Infinity; 
+    const minP = row.dataset.minimumPrice ? Number(row.dataset.minimumPrice) : 0; 
+    const maxP = row.dataset.maximumPrice ? Number(row.dataset.maximumPrice) : Infinity; 
     if(p > 0 && (p < minP || p > maxP)) { 
       errDiv.style.display = "block"; 
       errDiv.textContent = `السعر غير مسموح! بين ${minP} و ${maxP}`; 
@@ -4034,16 +4124,12 @@ function addInvoiceItemRow() {
     }else{stockHint.textContent="";} 
     updateInvoiceTotals(); 
   };
+  wrap._recalculateInvoiceLine=recalc;
   const populateUnits=()=>{ 
     const opt=prodSel.selectedOptions[0]; 
     const baseUnitId=opt?.dataset?.baseUnit||""; 
     const unitsCarton=Number(opt?.dataset?.unitsCarton||0); 
-    const minP = opt?.dataset?.minPrice; 
-    const maxP = opt?.dataset?.maxPrice; 
-    const targetP = opt?.dataset?.price; 
-    if(minP || maxP || targetP) { 
-      hintDiv.textContent = `الحد الأدنى: ${minP || 0} | المستهدف: ${targetP || '-'} | الحد الأقصى: ${maxP || '-'}`; 
-    } else hintDiv.textContent = ""; 
+    hintDiv.textContent = "سيتم جلب السعر من قائمة العميل المعتمدة بعد اختيار الوحدة."; 
     unitSel.replaceChildren(); 
     const firstU=document.createElement("option");firstU.value="";firstU.textContent="اختر الوحدة";unitSel.appendChild(firstU); 
     if(baseUnitId){ 
@@ -4056,8 +4142,8 @@ function addInvoiceItemRow() {
     addPackageSelectToRow(wrap,prodSel.value,unitSel.value);
     recalc(); 
   };
-  prodSel.addEventListener("change",()=>{ const opt=prodSel.selectedOptions[0]; if(opt?.dataset.price&&!price.value)price.value=opt.dataset.price; populateUnits(); }); 
-  unitSel.addEventListener("change",()=>{ addPackageSelectToRow(wrap,prodSel.value,unitSel.value); recalc(); }); 
+  prodSel.addEventListener("change",()=>{ price.value=""; populateUnits(); applyCustomerPriceToRow(wrap); }); 
+  unitSel.addEventListener("change",()=>{ addPackageSelectToRow(wrap,prodSel.value,unitSel.value); applyCustomerPriceToRow(wrap); recalc(); }); 
   qty.addEventListener("input",recalc); 
   price.addEventListener("input",recalc); 
   populateUnits();
@@ -4183,10 +4269,12 @@ if($("invoiceForm")) $("invoiceForm").addEventListener("submit", async e => {
     const uId = row.querySelector(".item-unit").value; 
     const qty = Number(row.querySelector(".item-qty").value||0); 
     const price = Number(row.querySelector(".item-price").value||0); 
-    if(!pId || !uId || qty<=0) valid = false; 
+    const minAllowed=Number(row.dataset.minimumPrice||0); 
+    const maxAllowed=row.dataset.maximumPrice?Number(row.dataset.maximumPrice):Infinity; 
+    if(!pId || !uId || qty<=0 || price<=0 || price<minAllowed-0.000001 || price>maxAllowed+0.000001) valid = false; 
     else items.push({ product_id: Number(pId), sale_unit_id: Number(uId), quantity: qty, unit_price: price, package_option_id: row.querySelector(".item-package-option")?.value ? Number(row.querySelector(".item-package-option").value) : null }); 
   });
-  if(!items.length || !valid) { msg($("invoiceFormMsg"), "أكمل بيانات الأصناف.", "error"); return; }
+  if(!items.length || !valid) { msg($("invoiceFormMsg"), "أكمل بيانات الأصناف، وأدخل سعرًا داخل الحدين المعتمدين للمنتج والقائمة.", "error"); return; }
   let subTotal = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
   let netTotal = subTotal - (subTotal * (discount/100));
   const tripId = $("invoiceTrip").value ? Number($("invoiceTrip").value) : null;
@@ -4958,7 +5046,7 @@ function addPrItemRow(invoiceItem = null, rowIndex = null){
 
     const unitWrap = document.createElement("div");
     const unitLabel = document.createElement("label");
-    unitLabel.textContent = "وحدة المخزون";
+    unitLabel.textContent = "وحدة فاتورة الشراء";
     const unitDisplay = document.createElement("input");
     unitDisplay.type = "text";
     unitDisplay.readOnly = true;
@@ -4983,7 +5071,7 @@ function addPrItemRow(invoiceItem = null, rowIndex = null){
 
     const hint = document.createElement("div");
     hint.className = "item-hint";
-    hint.textContent = "السعر المعروض بعد توزيع خصم الفاتورة على الصنف. أدخل الكمية بوحدة الفاتورة.";
+    hint.textContent = "وحدة الفاتورة الأصلية ثابتة. إذا كانت الوحدة كرتونة، أدخل عدد كراتين صحيحًا.";
 
     const removeBtn = document.createElement("button");
     removeBtn.type = "button";
@@ -5003,9 +5091,15 @@ function addPrItemRow(invoiceItem = null, rowIndex = null){
         }
         unitDisplay.value = unitName(selected.unit_id);
         price.value = Number(selected.unit_price || 0).toFixed(4);
+        const isCarton=Number(selected.unit_id)===Number(cartonUnitId);
+        qty.step=isCarton?"1":"0.0001";
+        qty.min=isCarton?"1":"0.0001";
+        if(isCarton&&qty.value&&!Number.isInteger(Number(qty.value)))qty.value="";
+        qty.setCustomValidity(isCarton&&qty.value&&!Number.isInteger(Number(qty.value))?"كمية الكراتين يجب أن تكون عددًا صحيحًا.":"");
     }
 
     prodSel.addEventListener("change", applyInvoiceItem);
+    qty.addEventListener("input",()=>{const selected=prInvoiceItemsCache[Number(prodSel.value)];const isCarton=!!selected&&Number(selected.unit_id)===Number(cartonUnitId);const valid=!isCarton||!qty.value||Number.isInteger(Number(qty.value));qty.setCustomValidity(valid?"":"كمية الكراتين يجب أن تكون عددًا صحيحًا.");hint.textContent=valid?"وحدة الفاتورة الأصلية ثابتة. إذا كانت الوحدة كرتونة، أدخل عدد كراتين صحيحًا.":"الكمية الكسرية غير مسموحة عند إرجاع الكرتونة.";});
     wrap.append(prodLabel, prodSel, grid, hint, removeBtn);
     $("prItems").appendChild(wrap);
 
@@ -5095,7 +5189,7 @@ if($("purchaseReturnForm")) $("purchaseReturnForm").addEventListener("submit", a
         const quantity = Number(row.querySelector(".item-qty").value || 0);
         const unitPrice = Number(row.querySelector(".item-price").value || 0);
 
-        if(!invoiceItem || quantity <= 0 || unitPrice < 0){
+        if(!invoiceItem || quantity <= 0 || unitPrice < 0 || (Number(invoiceItem.unit_id)===Number(cartonUnitId) && !Number.isInteger(quantity))){
             invalidRow = true;
             return;
         }
@@ -5107,7 +5201,7 @@ if($("purchaseReturnForm")) $("purchaseReturnForm").addEventListener("submit", a
     });
 
     if(invalidRow || !items.length){
-        alert("راجع الأصناف والكميات وأسعار الوحدات.");
+        alert("راجع الأصناف. وحدة فاتورة الشراء ثابتة، وكمية الكرتونة يجب أن تكون عددًا صحيحًا.");
         return;
     }
 
@@ -5125,10 +5219,8 @@ if($("purchaseReturnForm")) $("purchaseReturnForm").addEventListener("submit", a
             supplier_id: Number(invoice.supplier_id),
             return_date: $("prDate").value,
             items: items.slice().sort((a, b) =>
-                a.product_id - b.product_id ||
-                a.unit_id - b.unit_id ||
-                a.quantity - b.quantity ||
-                a.unit_price - b.unit_price
+                a.purchase_invoice_item_id - b.purchase_invoice_item_id ||
+                a.quantity - b.quantity
             ),
             notes: $("prNotes").value || null,
             settlement_method: method,
@@ -5408,8 +5500,12 @@ if($("expenseForm")) $("expenseForm").addEventListener("submit",async e=>{
     if(!type||!date||!treasuryId||!Number.isFinite(amount)||amount<=0){ msg($("expenseFormMsg"),"أكمل البيانات.","error"); return; }
     const button=$("saveExpenseBtn"); busy(button,true,"جارٍ...","حفظ");
     try{
-      const {error}=await db.rpc("create_expense",{p_expense_type:type,p_expense_date:date,p_treasury_id:treasuryId,p_amount:amount,p_notes:notes||null,p_trip_id:tripId?Number(tripId):null});
+      const requestKey="mm_expense_pending";
+      const requestPayload={expense_type:type,expense_date:date,treasury_id:treasuryId,amount,notes:notes||null,trip_id:tripId?Number(tripId):null};
+      const requestId=getRequestId(requestKey,requestPayload);
+      const {error}=await db.rpc("create_expense_v2",{p_expense_type:type,p_expense_date:date,p_treasury_id:treasuryId,p_amount:amount,p_notes:notes||null,p_trip_id:tripId?Number(tripId):null,p_request_id:requestId});
       if(error) throw error;
+      clearRequestId(requestKey);
       showToast("تم تسجيل المصروف","success"); logUserAction("CREATE","مصروف: "+type);
       $("expenseFormModal").classList.remove('active'); resetExpenseForm(); await loadExpenses(); if(canViewTreasuries) await loadTreasuries();
     }catch(e){ msg($("expenseFormMsg"),"خطأ: "+err(e),"error"); }
@@ -5616,6 +5712,81 @@ async function loadProduction(){
     renderProduction(); 
   }catch(e){ if(box) box.innerHTML=err(e); } 
 }
+async function openProductionDraftEdit(order){
+ if(!canManageProduction||!order||order.status!=="DRAFT")return;
+ try{
+  $("productionForm").reset();$("productionEditOrderId").value=String(order.order_id);fillProductionRecipeSelect();fillProductionLocationSelect();
+  $("productionRecipe").value=String(order.recipe_id);$("productionRecipe").disabled=true;
+  $("productionTargetQty").value=String(order.target_quantity||"");
+  $("productionLocation").value=String(order.factory_location_id??order.location_id??"");
+  $("productionNotes").value=order.notes||"";
+  $("productionFormTitle").textContent="تعديل مسودة أمر التشغيل";$("saveProductionBtn").textContent="حفظ التعديلات";
+  $("productionOutputInfo").textContent="المنتج الناتج: "+productName(order.output_product_id)+" | الوحدة: "+unitName(order.output_unit_id);
+  await previewProductionMaterials();clear($("productionFormMsg"));$("productionFormModal").classList.add("active");
+ }catch(e){showToast("تعذر فتح تعديل أمر التشغيل: "+err(e),"error",7000);}
+}
+async function reverseProductionOrder(order){
+ if(!canManageProduction||!order||order.status!=="COMPLETED")return;
+ const reason=window.prompt("اكتب سبب عكس أمر التشغيل:","عكس أمر الإنتاج");if(reason===null)return;if(!reason.trim())return showToast("اكتب سبب العكس أولًا.","error");
+ if(!window.confirm("سيتم عكس حركات المخزون وقيد تكلفة الإنتاج لهذا الأمر. لن ينجح العكس إذا استُخدم الناتج في حركات لاحقة أو كان الرصيد غير كافٍ. هل تريد المتابعة؟"))return;
+ try{const {error}=await db.rpc("reverse_production_order",{p_order_id:Number(order.order_id),p_reason:reason.trim()});if(error)throw error;showToast("تم عكس أمر الإنتاج","success");logUserAction("PRODUCTION","عكس أمر: "+order.order_number);await loadProduction();await loadStock();}
+ catch(e){showToast("تعذر عكس أمر الإنتاج: "+err(e),"error",8000);}
+}
+
+let productionExecutionOrder=null;
+let productionExecutionMaterials=[];
+function productionExecOption(value,label){const o=document.createElement("option");o.value=String(value??"");o.textContent=label;return o;}
+function productionSourceLabel(m){const p=productsCache.find(x=>String(x.product_id)===String(m.raw_product_id));return (p?.product_name||productName(m.raw_product_id))+" — "+unitName(m.unit_id)+" (الأساسية: "+unitName(p?.base_unit_id)+")";}
+function fillProductionSourceSelect(el){el.replaceChildren(productionExecOption("","اختر الخامة المصدر"));productionExecutionMaterials.forEach(m=>el.appendChild(productionExecOption(m.material_id,productionSourceLabel(m))));}
+function fillProductionRecoveredProductSelect(el){el.replaceChildren(productionExecOption("","اختر المنتج المسترجع"));productsCache.filter(p=>p.is_active).forEach(p=>el.appendChild(productionExecOption(p.product_id,p.product_name+" — "+unitName(p.base_unit_id))));}
+function addProductionRecoveredRow(){
+ const row=document.createElement("div");row.className="item-row production-cost-row";
+ const source=document.createElement("select");source.className="production-recovered-source";source.required=true;fillProductionSourceSelect(source);
+ const product=document.createElement("select");product.className="production-recovered-product";product.required=true;fillProductionRecoveredProductSelect(product);
+ const sourceQty=document.createElement("input");sourceQty.className="production-recovered-source-qty";sourceQty.type="number";sourceQty.min="0.000001";sourceQty.step="0.000001";sourceQty.placeholder="كمية الخام المخصصة بوحدتها الأساسية";sourceQty.required=true;
+ const baseQty=document.createElement("input");baseQty.className="production-recovered-base-qty";baseQty.type="number";baseQty.min="0.000001";baseQty.step="0.000001";baseQty.placeholder="كمية المسترجع بوحدته الأساسية";baseQty.required=true;
+ const cost=document.createElement("input");cost.className="production-recovered-cost";cost.type="number";cost.min="0.000001";cost.step="0.000001";cost.placeholder="التكلفة المخصصة";cost.required=true;
+ const remove=document.createElement("button");remove.type="button";remove.className="btn secondary";remove.textContent="حذف";remove.onclick=()=>row.remove();
+ const fields=[ ["الخامة المصدر",source],["المنتج المسترجع",product],["كمية المصدر بالوحدة الأساسية",sourceQty],["كمية المسترجع بالوحدة الأساسية",baseQty],["التكلفة المخصصة",cost] ];
+ fields.forEach(([label,el])=>{const wrap=document.createElement("label");wrap.textContent=label;wrap.appendChild(el);row.appendChild(wrap);});row.appendChild(remove);$("productionRecoveredRows").appendChild(row);
+}
+function addProductionWasteRow(){
+ const row=document.createElement("div");row.className="item-row production-cost-row";
+ const source=document.createElement("select");source.className="production-waste-source";source.required=true;fillProductionSourceSelect(source);
+ const qty=document.createElement("input");qty.className="production-waste-qty";qty.type="number";qty.min="0.000001";qty.step="0.000001";qty.placeholder="كمية الفاقد بالوحدة الأساسية";qty.required=true;
+ const cost=document.createElement("input");cost.className="production-waste-cost";cost.type="number";cost.min="0.000001";cost.step="0.000001";cost.placeholder="التكلفة المخصصة";cost.required=true;
+ const remove=document.createElement("button");remove.type="button";remove.className="btn secondary";remove.textContent="حذف";remove.onclick=()=>row.remove();
+ [["الخامة المصدر",source],["كمية الفاقد بالوحدة الأساسية",qty],["التكلفة المخصصة",cost]].forEach(([label,el])=>{const wrap=document.createElement("label");wrap.textContent=label;wrap.appendChild(el);row.appendChild(wrap);});row.appendChild(remove);$("productionWasteRows").appendChild(row);
+}
+async function openProductionExecution(order){
+ if(!canManageProduction||!order||order.status!=="DRAFT")return;
+ try{
+  const {data,error}=await db.from("production_order_materials").select("material_id,raw_product_id,required_quantity,unit_id").eq("order_id",order.order_id).order("material_id");
+  if(error)throw error;if(!data?.length)throw new Error("أمر التشغيل لا يحتوي على خامات.");
+  productionExecutionOrder=order;productionExecutionMaterials=data;
+  $("productionExecutionForm").reset();$("productionExecutionDate").value=todayISO();$("productionExecutionOutput").value=String(order.target_quantity||"");
+  $("productionExecutionOrderInfo").textContent="أمر التشغيل: "+order.order_number+" | الناتج: "+productName(order.output_product_id)+" | الوحدة: "+unitName(order.output_unit_id);
+  const box=$("productionExecutionMaterials");box.replaceChildren();
+  data.forEach(m=>{const row=document.createElement("div");row.className="item-row";row.dataset.materialId=String(m.material_id);const label=document.createElement("label");label.textContent=productName(m.raw_product_id)+" — "+unitName(m.unit_id)+" (المطلوب: "+fmtQty(m.required_quantity)+")";const input=document.createElement("input");input.className="production-actual-material";input.type="number";input.min="0";input.step="0.000001";input.value=String(m.required_quantity??0);input.required=true;label.appendChild(input);row.appendChild(label);box.appendChild(row);});
+  $("productionRecoveredRows").replaceChildren();$("productionWasteRows").replaceChildren();clear($("productionExecutionMsg"));$("productionExecutionModal").classList.add("active");
+ }catch(e){showToast("تعذر فتح تنفيذ أمر التشغيل: "+err(e),"error",7000);}
+}
+if($("addProductionRecoveredBtn"))$("addProductionRecoveredBtn").addEventListener("click",addProductionRecoveredRow);
+if($("addProductionWasteBtn"))$("addProductionWasteBtn").addEventListener("click",addProductionWasteRow);
+if($("productionExecutionForm"))$("productionExecutionForm").addEventListener("submit",async e=>{
+ e.preventDefault();if(!canManageProduction||!productionExecutionOrder)return;
+ const output=Number($("productionExecutionOutput").value);if(!(output>0))return msg($("productionExecutionMsg"),"كمية الناتج الفعلية يجب أن تكون أكبر من صفر.","error");
+ const materials=[];for(const row of $("productionExecutionMaterials").querySelectorAll(".item-row")){const qty=Number(row.querySelector(".production-actual-material").value);if(!Number.isFinite(qty)||qty<0)return msg($("productionExecutionMsg"),"راجع كميات الخامات المستهلكة.","error");materials.push({material_id:Number(row.dataset.materialId),actual_quantity:qty});}
+ const recovered=[];for(const row of $("productionRecoveredRows").querySelectorAll(".production-cost-row")){const source=Number(row.querySelector(".production-recovered-source").value),product=Number(row.querySelector(".production-recovered-product").value),sourceQty=Number(row.querySelector(".production-recovered-source-qty").value),baseQty=Number(row.querySelector(".production-recovered-base-qty").value),cost=Number(row.querySelector(".production-recovered-cost").value);if(!(source>0&&product>0&&sourceQty>0&&baseQty>0&&cost>0))return msg($("productionExecutionMsg"),"أكمل بيانات كل مادة مسترجعة، بما فيها كمية المصدر والتكلفة.","error");recovered.push({product_id:product,source_material_id:source,source_base_quantity:sourceQty,base_quantity:baseQty,allocated_cost:cost});}
+ const waste=[];for(const row of $("productionWasteRows").querySelectorAll(".production-cost-row")){const source=Number(row.querySelector(".production-waste-source").value),qty=Number(row.querySelector(".production-waste-qty").value),cost=Number(row.querySelector(".production-waste-cost").value);if(!(source>0&&qty>0&&cost>0))return msg($("productionExecutionMsg"),"أكمل بيانات كل بند فاقد، بما فيها الكمية والتكلفة.","error");waste.push({material_id:source,base_quantity:qty,allocated_cost:cost});}
+ if($("productionExecutionDate").value!==todayISO())return msg($("productionExecutionMsg"),"تاريخ التنفيذ يجب أن يساوي تاريخ اليوم.","error");
+ if(!confirm("سيتم تسجيل صرف الخامات والناتج والمسترجعات والفاقد بالقيم التي أدخلتها. راجع الكميات والتكاليف قبل التأكيد. هل تريد التنفيذ؟"))return;
+ const btn=$("saveProductionExecutionBtn");busy(btn,true,"جارٍ التنفيذ...","تنفيذ وتسجيل التكلفة");clear($("productionExecutionMsg"));
+ try{const {error}=await db.rpc("execute_production_order_v5",{p_order_id:Number(productionExecutionOrder.order_id),p_actual_output_quantity:output,p_materials:materials,p_recovered_materials:recovered,p_abnormal_waste:waste,p_execution_date:$("productionExecutionDate").value});if(error)throw error;showToast("تم تنفيذ أمر التشغيل وتسجيل التكلفة الفعلية","success");logUserAction("PRODUCTION","تنفيذ فعلي لأمر: "+productionExecutionOrder.order_number);$("productionExecutionModal").classList.remove("active");await loadProduction();await loadStock();}
+ catch(error){msg($("productionExecutionMsg"),"تعذر تنفيذ أمر التشغيل: "+err(error),"error");}
+ finally{busy(btn,false,"","تنفيذ وتسجيل التكلفة");}
+});
+
 function renderProduction(){ 
   const box=$("productionList"); if(!box) return; 
   box.replaceChildren(); 
@@ -5637,44 +5808,11 @@ function renderProduction(){
     const actions=document.createElement("div"); 
     actions.className="actions"; 
     if(canManageProduction && p.status === "DRAFT"){ 
-      const exec=document.createElement("button"); 
-      exec.className="btn"; 
-      exec.textContent="✅ تنفيذ"; 
-      exec.onclick=async ()=>{ 
-        try {
-          const {data:materials,error:materialsError}=await db.from("production_order_materials")
-            .select("material_id,raw_product_id,required_quantity,unit_id")
-            .eq("order_id",p.order_id).order("material_id");
-          if(materialsError) throw materialsError;
-          if(!materials || !materials.length) throw new Error("أمر التشغيل لا يحتوي على خامات.");
-          const outputInput=prompt("أدخل كمية الإنتاج الفعلية من " + productName(p.output_product_id) + " بوحدة " + unitName(p.output_unit_id),String(p.target_quantity));
-          if(outputInput===null) return;
-          const actualOutput=Number(outputInput);
-          if(!Number.isFinite(actualOutput) || actualOutput<=0) throw new Error("كمية الإنتاج الفعلية يجب أن تكون أكبر من صفر.");
-          const actualMaterials=[];
-          for(const m of materials){
-            const label=productName(m.raw_product_id)+" - "+unitName(m.unit_id);
-            const input=prompt("أدخل الكمية الفعلية المستهلكة من: "+label,String(m.required_quantity));
-            if(input===null) return;
-            const actualQty=Number(input);
-            if(!Number.isFinite(actualQty) || actualQty<0) throw new Error("كمية الاستهلاك غير صحيحة للصنف: "+label);
-            actualMaterials.push({material_id:m.material_id,actual_quantity:actualQty});
-          }
-          if(!confirm("سيتم صرف الكميات الفعلية المدخلة وإضافة الناتج الفعلي وتسجيل تكلفة الخامات. هل تريد التنفيذ؟")) return;
-          const {data,error}=await db.rpc("execute_production_order_v2",{
-            p_order_id:p.order_id,
-            p_actual_output_quantity:actualOutput,
-            p_materials:actualMaterials
-          });
-          if(error) throw error;
-          showToast("تم تنفيذ أمر التشغيل وتسجيل التكلفة الفعلية", "success");
-          logUserAction("PRODUCTION", "تنفيذ فعلي لأمر: " + p.order_number);
-          await loadProduction();
-          await loadStock();
-        } catch(e){ alert(err(e)); } 
-      }; 
-      actions.appendChild(exec); 
-    } 
+      const edit=document.createElement("button");edit.className="btn secondary";edit.textContent="تعديل المسودة";edit.onclick=()=>openProductionDraftEdit(p);actions.appendChild(edit);
+      const exec=document.createElement("button");exec.className="btn";exec.textContent="تنفيذ وتسجيل التكلفة";exec.onclick=()=>openProductionExecution(p);actions.appendChild(exec); 
+    } else if(canManageProduction && p.status === "COMPLETED"){
+      const reverse=document.createElement("button");reverse.className="btn danger";reverse.textContent="عكس أمر الإنتاج";reverse.onclick=()=>reverseProductionOrder(p);actions.appendChild(reverse);
+    }
     card.append(title,details,actions); 
     box.appendChild(card); 
   }); 
@@ -5683,6 +5821,7 @@ if($("refreshProductionBtn")) $("refreshProductionBtn").addEventListener("click"
 if($("productionSearch")) $("productionSearch").addEventListener("input",renderProduction);
 if($("addProductionBtn")) $("addProductionBtn").addEventListener("click",()=>{ 
   $("productionForm").reset(); 
+  $("productionEditOrderId").value="";$("productionRecipe").disabled=false;$("productionFormTitle").textContent="إنشاء أمر تشغيل";$("saveProductionBtn").textContent="حفظ";
   $("productionFormModal").classList.add('active'); 
   clear($("productionFormMsg")); 
   fillProductionRecipeSelect(); 
@@ -5741,22 +5880,31 @@ if($("productionForm")) $("productionForm").addEventListener("submit", async e =
     return; 
   } 
   try { 
-    const productionKey="mm_production_order_pending";
-    const productionRequestId=getRequestId(productionKey,{recipe_id:Number(rid),quantity:qty,location_id:Number(loc),notes:notes||null});
-    const { data, error } = await db.rpc("create_production_order_v2", { p_recipe_id: Number(rid), p_target_quantity: qty, p_location_id: Number(loc), p_notes: notes||null, p_request_id:productionRequestId });
-    if(!error) clearRequestId(productionKey); 
-    if(error) throw error; 
-    showToast("✅ تم إنشاء أمر التشغيل", "success"); 
-    logUserAction("PRODUCTION", "أمر تشغيل جديد: " + (data||"")); 
+    const editOrderId=Number($("productionEditOrderId").value||0);
+    let data,error;
+    if(editOrderId){
+      ({data,error}=await db.rpc("update_production_order_draft",{p_order_id:editOrderId,p_target_quantity:qty,p_factory_location_id:Number(loc),p_notes:notes||null}));
+      if(error)throw error;
+      showToast("تم تعديل مسودة أمر التشغيل","success");
+      logUserAction("UPDATE","تعديل مسودة أمر تشغيل: "+editOrderId);
+    }else{
+      const productionKey="mm_production_order_pending";
+      const productionRequestId=getRequestId(productionKey,{recipe_id:Number(rid),quantity:qty,location_id:Number(loc),notes:notes||null});
+      ({data,error}=await db.rpc("create_production_order_v2",{p_recipe_id:Number(rid),p_target_quantity:qty,p_location_id:Number(loc),p_notes:notes||null,p_request_id:productionRequestId}));
+      if(!error)clearRequestId(productionKey);
+      if(error)throw error;
+      showToast("تم إنشاء أمر التشغيل","success");
+      logUserAction("PRODUCTION","أمر تشغيل جديد: "+(data||""));
+    }
     setTimeout(()=>{ 
       $("productionFormModal").classList.remove('active'); 
-      $("productionForm").reset(); 
+      $("productionForm").reset();$("productionEditOrderId").value="";$("productionRecipe").disabled=false;$("productionFormTitle").textContent="إنشاء أمر تشغيل";$("saveProductionBtn").textContent="حفظ";
       loadProduction(); 
     }, 600); 
   } catch(e) { 
     msg($("productionFormMsg"), "خطأ: " + err(e), "error"); 
   } finally { 
-    busy(btn, false, "", "حفظ"); 
+    busy(btn, false, "", $("productionEditOrderId").value ? "حفظ التعديلات" : "حفظ"); 
   } 
 });
 
@@ -6809,6 +6957,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
     }
   });
 
+  if($("exitAppBtn"))$("exitAppBtn").addEventListener("click",()=>{if(!window.confirm("هل تريد الخروج من التطبيق؟ سيظل حسابك مسجل الدخول."))return;window.close();window.setTimeout(()=>{if(!window.closed)showToast("إذا لم يُغلق التطبيق، أغلق نافذته من شاشة التطبيقات المفتوحة بجهازك.","info",6000);},350);});
   if($("logoutBtn")) $("logoutBtn").onclick=async()=>{
     if(!window.confirm("هل تريد تسجيل الخروج من حسابك؟")) return;
     try {
