@@ -3574,7 +3574,7 @@ async function viewSupplierStatement(s) {
         let rowsHtml = `<thead><tr><th>التاريخ</th><th>المستند</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead><tbody>`;
 
         timeline.forEach(t => {
-            runningBalance = runningBalance + t.credit - t.debit;
+            runningBalance = runningBalance - t.credit + t.debit;
             const balanceLabel = runningBalance > 0
                 ? "مستحق للمورد " + fmt(runningBalance)
                 : runningBalance < 0
@@ -4868,7 +4868,7 @@ async function loadPurchaseReturnInvoiceItems(){
 
     const {data, error} = await db
         .from("purchase_invoice_items")
-        .select("item_id,purchase_invoice_id,product_id,unit_id,quantity,base_quantity,unit_price,line_total,products(product_name,base_unit_id)")
+        .select("item_id,purchase_invoice_id,product_id,unit_id,quantity,base_quantity,unit_price,line_total,conversion_factor,products(product_name,base_unit_id)")
         .eq("purchase_invoice_id", invoiceId)
         .order("item_id");
 
@@ -4876,38 +4876,31 @@ async function loadPurchaseReturnInvoiceItems(){
     const sourceItems = Array.isArray(data) ? data : [];
     const invoiceSubtotal = Number(invoice.subtotal || 0);
     const invoiceDiscount = Number(invoice.discount || 0);
-    const grouped = new Map();
-    sourceItems.forEach(item => {
-        const product = productsCache.find(p => Number(p.product_id) === Number(item.product_id));
-        const baseUnitId = Number(item.products?.base_unit_id || product?.base_unit_id || 0);
-        const baseQuantity = Number(item.base_quantity || 0);
-        if(!baseUnitId || baseQuantity <= 0) return;
-        const key = String(item.product_id);
-        if(!grouped.has(key)){
-            grouped.set(key, {
+
+    prInvoiceItemsCache = sourceItems
+        .filter(item => Number(item.item_id) > 0 && Number(item.quantity) > 0 && Number(item.base_quantity) > 0)
+        .map(item => {
+            const product = productsCache.find(p => Number(p.product_id) === Number(item.product_id));
+            const grossTotal = Number(item.line_total || (Number(item.quantity || 0) * Number(item.unit_price || 0)));
+            const discountShare = invoiceSubtotal > 0
+                ? invoiceDiscount * grossTotal / invoiceSubtotal
+                : 0;
+            const netTotal = Math.max(0, grossTotal - discountShare);
+            const quantity = Number(item.quantity || 0);
+            return {
+                item_id: Number(item.item_id),
                 product_id: Number(item.product_id),
-                unit_id: baseUnitId,
-                quantity: 0,
-                gross_total: 0,
+                unit_id: Number(item.unit_id),
+                quantity,
+                base_quantity: Number(item.base_quantity || 0),
+                conversion_factor: Number(item.conversion_factor || 0),
+                gross_total: grossTotal,
+                discount_share: discountShare,
+                net_total: netTotal,
+                unit_price: quantity > 0 ? netTotal / quantity : 0,
                 products: item.products || {product_name: product?.product_name}
-            });
-        }
-        const group = grouped.get(key);
-        group.quantity += baseQuantity;
-        group.gross_total += Number(item.line_total || (Number(item.quantity || 0) * Number(item.unit_price || 0)));
-    });
-    prInvoiceItemsCache = Array.from(grouped.values()).map(item => {
-        const discountShare = invoiceSubtotal > 0
-            ? invoiceDiscount * item.gross_total / invoiceSubtotal
-            : 0;
-        const netTotal = Math.max(0, item.gross_total - discountShare);
-        return {
-            ...item,
-            discount_share: discountShare,
-            net_total: netTotal,
-            unit_price: item.quantity > 0 ? netTotal / item.quantity : 0
-        };
-    });
+            };
+        });
 
     if(!prInvoiceItemsCache.length){
         $("prItems").innerHTML = '<div class="empty">لا توجد أصناف قابلة للمرتجع في فاتورة الشراء.</div>';
@@ -4990,7 +4983,7 @@ function addPrItemRow(invoiceItem = null, rowIndex = null){
 
     const hint = document.createElement("div");
     hint.className = "item-hint";
-    hint.textContent = "السعر المعروض بعد توزيع خصم الفاتورة على الأصناف. أدخل الكمية بوحدة المخزون.";
+    hint.textContent = "السعر المعروض بعد توزيع خصم الفاتورة على الصنف. أدخل الكمية بوحدة الفاتورة.";
 
     const removeBtn = document.createElement("button");
     removeBtn.type = "button";
@@ -5108,10 +5101,8 @@ if($("purchaseReturnForm")) $("purchaseReturnForm").addEventListener("submit", a
         }
 
         items.push({
-            product_id: Number(invoiceItem.product_id),
-            unit_id: Number(invoiceItem.unit_id),
-            quantity,
-            unit_price: unitPrice
+            purchase_invoice_item_id: Number(invoiceItem.item_id),
+            quantity
         });
     });
 
