@@ -321,3 +321,347 @@ WHERE sm.movement_id=96
 
 -- Keep helper functions SECURITY INVOKER. Trigger execution is performed in
 -- the caller's transaction context and must not add SECURITY DEFINER access.
+
+
+-- Applied 2026-11-10: correct vehicle stock reconciliation during trip settlement.
+-- Customer returns count as vehicle stock only when their return location is the vehicle.
+-- Surplus already received by the trip source warehouse is deducted to prevent a second return.
+CREATE OR REPLACE FUNCTION public.settle_trip(p_trip_id bigint, p_target_location_id bigint)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+AS $function$
+DECLARE
+    v_trip public.trips%ROWTYPE;
+    v_stock record;
+    v_vehicle_balance numeric;
+    v_vehicle_after numeric;
+    v_target_balance numeric;
+    v_vehicle_unit_cost numeric;
+    v_transfer_cost numeric;
+    v_cash_collections numeric := 0;
+    v_trip_expenses numeric := 0;
+    v_cash_back numeric := 0;
+    v_cash_due numeric := 0;
+    v_sub_balance numeric;
+BEGIN
+    IF auth.uid() IS NULL THEN
+        RAISE EXCEPTION 'يجب تسجيل الدخول أولاً';
+    END IF;
+
+    IF NOT (public.has_permission('TRIPS_SETTLE') OR public.has_permission('TRIPS_MANAGE')) THEN
+        RAISE EXCEPTION 'ليس لديك صلاحية تسوية الجولات';
+    END IF;
+
+    PERFORM pg_advisory_xact_lock(947351);
+    PERFORM public.assert_accounting_period_open(CURRENT_DATE);
+
+    SELECT * INTO v_trip
+    FROM public.trips
+    WHERE trip_id = p_trip_id
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'الجولة غير موجودة';
+    END IF;
+
+    IF v_trip.status NOT IN ('DRAFT', 'ACTIVE') THEN
+        RAISE EXCEPTION 'لا يمكن تسوية جولة مكتملة أو ملغاة';
+    END IF;
+
+    IF v_trip.source_location_id IS NULL
+       OR p_target_location_id <> v_trip.source_location_id THEN
+        RAISE EXCEPTION 'مخزن الإرجاع يجب أن يطابق مخزن المصدر المسجل في الجولة';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM public.locations
+        WHERE location_id = p_target_location_id
+          AND is_active = true
+          AND location_type IN ('MAIN_WAREHOUSE', 'FRIDGE')
+    ) THEN
+        RAISE EXCEPTION 'مخزن الإرجاع غير نشط أو ليس مخزنًا صالحًا';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1 FROM public.trip_loads
+        WHERE trip_id = p_trip_id
+          AND load_status IN ('REQUESTED', 'APPROVED')
+    ) THEN
+        RAISE EXCEPTION 'لا يمكن تسوية الجولة قبل إنهاء طلبات التحميل المعلقة';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1
+        FROM public.sales_invoice_items sii
+        JOIN public.sales_invoices si ON si.sales_invoice_id = sii.sales_invoice_id
+        WHERE si.trip_id = p_trip_id
+          AND si.status NOT IN ('DRAFT', 'CANCELLED')
+          AND sii.base_quantity IS NULL
+    ) THEN
+        RAISE EXCEPTION 'توجد بنود فواتير لهذه الجولة دون كمية أساسية محفوظة بالكيلوجرام. لا يمكن التسوية قبل تصحيحها.';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1
+        FROM public.sales_return_items sri
+        JOIN public.sales_returns sr ON sr.sales_return_id = sri.sales_return_id
+        WHERE sr.trip_id = p_trip_id
+          AND sr.status IN ('POSTED', 'APPROVED')
+          AND sri.base_quantity IS NULL
+    ) THEN
+        RAISE EXCEPTION 'توجد بنود مرتجعات لهذه الجولة دون كمية أساسية محفوظة بالكيلوجرام. لا يمكن التسوية قبل تصحيحها.';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1
+        FROM public.sales_return_exchange_items sei
+        JOIN public.sales_returns sr ON sr.sales_return_id = sei.sales_return_id
+        WHERE sr.trip_id = p_trip_id
+          AND sr.status IN ('POSTED', 'APPROVED')
+          AND sei.base_quantity IS NULL
+    ) THEN
+        RAISE EXCEPTION 'توجد بنود استبدال لهذه الجولة دون كمية أساسية محفوظة بالكيلوجرام. لا يمكن التسوية قبل تصحيحها.';
+    END IF;
+
+    PERFORM 1 FROM public.treasuries
+    WHERE treasury_id = 5 AND is_active = true
+      AND treasury_type = 'CASH' AND account_id = 3
+    FOR UPDATE;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'الخزنة الرئيسية رقم 5 غير موجودة أو غير صالحة';
+    END IF;
+
+    PERFORM 1 FROM public.treasuries
+    WHERE treasury_id = 8 AND is_active = true
+      AND treasury_type = 'CASH' AND account_id = 3
+    FOR UPDATE;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'خزنة المناديب رقم 8 غير موجودة أو غير صالحة';
+    END IF;
+
+    SELECT COALESCE(SUM(amount), 0)
+    INTO v_cash_collections
+    FROM public.customer_collections
+    WHERE trip_id = p_trip_id
+      AND status = 'POSTED'
+      AND payment_method = 'CASH'
+      AND treasury_id = 8;
+
+    SELECT COALESCE(SUM(amount), 0)
+    INTO v_trip_expenses
+    FROM public.expenses
+    WHERE trip_id = p_trip_id
+      AND treasury_id = 8;
+
+    SELECT COALESCE(SUM(-price_difference), 0)
+    INTO v_cash_back
+    FROM public.sales_returns
+    WHERE trip_id = p_trip_id
+      AND status IN ('POSTED', 'APPROVED')
+      AND cash_action = 'CASH_BACK'
+      AND treasury_id = 8;
+
+    v_cash_due := COALESCE(v_trip.initial_cash, 0)
+                  + v_cash_collections
+                  - v_trip_expenses
+                  - v_cash_back;
+
+    IF v_cash_due < 0 THEN
+        RAISE EXCEPTION 'حساب الجولة يظهر عجزًا نقديًا قدره % ولا يمكن إتمام التسوية', ABS(v_cash_due);
+    END IF;
+
+    SELECT current_balance INTO v_sub_balance
+    FROM public.treasuries
+    WHERE treasury_id = 8;
+
+    IF v_sub_balance < v_cash_due THEN
+        RAISE EXCEPTION 'رصيد خزنة المناديب لا يكفي لتسوية هذه الجولة. رصيد الخزنة: %، مستحق الجولة: %',
+            v_sub_balance, v_cash_due;
+    END IF;
+
+    FOR v_stock IN
+        WITH product_ids AS (
+            SELECT product_id
+            FROM public.trip_loads
+            WHERE trip_id = p_trip_id
+              AND load_status = 'LOADED'
+            UNION
+            SELECT sii.product_id
+            FROM public.sales_invoice_items sii
+            JOIN public.sales_invoices si ON si.sales_invoice_id = sii.sales_invoice_id
+            WHERE si.trip_id = p_trip_id
+              AND si.status NOT IN ('DRAFT', 'CANCELLED')
+            UNION
+            SELECT sri.product_id
+            FROM public.sales_return_items sri
+            JOIN public.sales_returns sr ON sr.sales_return_id = sri.sales_return_id
+            WHERE sr.trip_id = p_trip_id
+              AND sr.status IN ('POSTED', 'APPROVED')
+            UNION
+            SELECT sei.product_id
+            FROM public.sales_return_exchange_items sei
+            JOIN public.sales_returns sr ON sr.sales_return_id = sei.sales_return_id
+            WHERE sr.trip_id = p_trip_id
+              AND sr.status IN ('POSTED', 'APPROVED')
+        ),
+        loaded AS (
+            SELECT product_id, SUM(quantity_loaded) AS qty
+            FROM public.trip_loads
+            WHERE trip_id = p_trip_id
+              AND load_status = 'LOADED'
+            GROUP BY product_id
+        ),
+        sold AS (
+            SELECT sii.product_id, SUM(sii.base_quantity) AS qty
+            FROM public.sales_invoice_items sii
+            JOIN public.sales_invoices si ON si.sales_invoice_id = sii.sales_invoice_id
+            WHERE si.trip_id = p_trip_id
+              AND si.status NOT IN ('DRAFT', 'CANCELLED')
+            GROUP BY sii.product_id
+        ),
+        returned AS (
+            SELECT sri.product_id, SUM(sri.base_quantity) AS qty
+            FROM public.sales_return_items sri
+            JOIN public.sales_returns sr ON sr.sales_return_id = sri.sales_return_id
+            WHERE sr.trip_id = p_trip_id
+              AND sr.status IN ('POSTED', 'APPROVED')
+              AND sri.location_id = v_trip.vehicle_location_id
+            GROUP BY sri.product_id
+        ),
+        exchanged AS (
+            SELECT sei.product_id, SUM(sei.base_quantity) AS qty
+            FROM public.sales_return_exchange_items sei
+            JOIN public.sales_returns sr ON sr.sales_return_id = sei.sales_return_id
+            WHERE sr.trip_id = p_trip_id
+              AND sr.status IN ('POSTED', 'APPROVED')
+            GROUP BY sei.product_id
+        )
+        SELECT
+            ids.product_id,
+            COALESCE(l.qty, 0)
+              - COALESCE(s.qty, 0)
+              + COALESCE(r.qty, 0)
+              - COALESCE(e.qty, 0)
+              - COALESCE((
+                  SELECT SUM(sm.quantity_change)
+                  FROM public.stock_movements sm
+                  WHERE sm.trip_id = p_trip_id
+                    AND sm.product_id = ids.product_id
+                    AND sm.location_id = p_target_location_id
+                    AND sm.movement_type = 'RECEIVE'
+                    AND sm.notes LIKE 'استلام فائض جولة %'
+                ), 0) AS remaining_quantity
+        FROM product_ids ids
+        LEFT JOIN loaded l ON l.product_id = ids.product_id
+        LEFT JOIN sold s ON s.product_id = ids.product_id
+        LEFT JOIN returned r ON r.product_id = ids.product_id
+        LEFT JOIN exchanged e ON e.product_id = ids.product_id
+        ORDER BY ids.product_id
+    LOOP
+        IF v_stock.remaining_quantity < -0.000001 THEN
+            RAISE EXCEPTION 'كميات الجولة للصنف رقم % غير متوازنة. الرصيد المحسوب بالسالب: % كجم',
+                v_stock.product_id, v_stock.remaining_quantity;
+        END IF;
+
+        IF v_stock.remaining_quantity > 0.000001 THEN
+            SELECT quantity,COALESCE(average_unit_cost,0)
+              INTO v_vehicle_balance,v_vehicle_unit_cost
+            FROM public.stock_balances
+            WHERE location_id = v_trip.vehicle_location_id
+              AND product_id = v_stock.product_id
+            FOR UPDATE;
+
+            IF NOT FOUND OR v_vehicle_balance < v_stock.remaining_quantity THEN
+                RAISE EXCEPTION 'رصيد السيارة للصنف رقم % أقل من الكمية المتبقية المحسوبة للجولة. المتبقي: % كجم، رصيد السيارة: %',
+                    v_stock.product_id, v_stock.remaining_quantity, COALESCE(v_vehicle_balance, 0);
+            END IF;
+            IF v_vehicle_unit_cost<0 THEN
+                RAISE EXCEPTION 'تكلفة مخزون السيارة للصنف رقم % غير صحيحة',v_stock.product_id;
+            END IF;
+            v_transfer_cost:=ROUND(v_stock.remaining_quantity*v_vehicle_unit_cost,4);
+
+            v_vehicle_after := v_vehicle_balance - v_stock.remaining_quantity;
+
+            UPDATE public.stock_balances
+            SET quantity = v_vehicle_after, updated_at = now()
+            WHERE location_id = v_trip.vehicle_location_id
+              AND product_id = v_stock.product_id;
+
+            SELECT quantity INTO v_target_balance
+            FROM public.stock_balances
+            WHERE location_id = p_target_location_id
+              AND product_id = v_stock.product_id
+            FOR UPDATE;
+
+            IF NOT FOUND THEN
+                v_target_balance := 0;
+                INSERT INTO public.stock_balances (
+                    location_id, product_id, quantity, updated_at
+                )
+                VALUES (
+                    p_target_location_id, v_stock.product_id,
+                    v_stock.remaining_quantity, now()
+                );
+            ELSE
+                UPDATE public.stock_balances
+                SET quantity = quantity + v_stock.remaining_quantity,
+                    updated_at = now()
+                WHERE location_id = p_target_location_id
+                  AND product_id = v_stock.product_id;
+            END IF;
+
+            INSERT INTO public.stock_movements (
+                location_id, product_id, movement_type,
+                quantity_change, quantity_after, notes, created_by, trip_id, unit_cost, total_cost
+            )
+            VALUES (
+                v_trip.vehicle_location_id, v_stock.product_id, 'ISSUE',
+                -v_stock.remaining_quantity, v_vehicle_after,
+                'إرجاع فائض جولة ' || v_trip.trip_number, auth.uid(), p_trip_id,
+                v_vehicle_unit_cost, v_transfer_cost
+            );
+
+            INSERT INTO public.stock_movements (
+                location_id, product_id, movement_type,
+                quantity_change, quantity_after, notes, created_by, trip_id, unit_cost, total_cost
+            )
+            VALUES (
+                p_target_location_id, v_stock.product_id, 'RECEIVE',
+                v_stock.remaining_quantity,
+                v_target_balance + v_stock.remaining_quantity,
+                'استلام فائض جولة ' || v_trip.trip_number, auth.uid(), p_trip_id,
+                v_vehicle_unit_cost, v_transfer_cost
+            );
+        END IF;
+    END LOOP;
+
+    IF v_cash_due > 0 THEN
+        UPDATE public.treasuries
+        SET current_balance = current_balance - v_cash_due
+        WHERE treasury_id = 8;
+
+        UPDATE public.treasuries
+        SET current_balance = current_balance + v_cash_due
+        WHERE treasury_id = 5;
+
+        INSERT INTO public.treasury_transactions (
+            treasury_id, transaction_type, amount, reference_type,
+            reference_id, notes, transaction_date, created_by
+        )
+        VALUES
+        (8, 'WITHDRAW', v_cash_due, 'TRIP_SETTLEMENT', p_trip_id,
+         'تسوية نقدية للجولة ' || v_trip.trip_number, CURRENT_DATE, auth.uid()),
+        (5, 'DEPOSIT', v_cash_due, 'TRIP_SETTLEMENT', p_trip_id,
+         'استلام تسوية الجولة ' || v_trip.trip_number, CURRENT_DATE, auth.uid());
+    END IF;
+
+    UPDATE public.trips
+    SET status = 'COMPLETED',
+        end_date = CURRENT_DATE,
+        updated_at = now()
+    WHERE trip_id = p_trip_id;
+END;
+$function$
+
