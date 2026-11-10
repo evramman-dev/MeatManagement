@@ -123,3 +123,31 @@ restrict_sales_rep_customer_creation_financial_fields_20261110
 
 آخر commit لملف index.html: ed2915aeb6db2af8d87d83609f452985a5895eb5
 main وGitHub Pages لم يتغيرا، وما زالا v38.
+
+
+## مواءمة تحميل المواقع مع صلاحيات RLS — استمرار QA v42
+
+أظهر فحص أدوار المستخدمين وسياسة locations_select_access أن قراءة المواقع مسموحة عند امتلاك أي من:
+LOCATIONS_VIEW أو INVENTORY_VIEW أو INVENTORY_TRANSFER أو PRODUCTION_VIEW أو PRODUCTION_MANAGE.
+
+كان تحميل المواقع في بداية التطبيق يعتمد فقط على LOCATIONS_VIEW أو INVENTORY_TRANSFER. لذلك كان مسؤول الإنتاج يملك صلاحية قراءة المواقع في قاعدة البيانات، لكن الواجهة قد لا تحمّلها عند بدء التشغيل، رغم حاجته إلى موقع المصنع في أوامر التشغيل.
+
+تم تعديل index.html بإضافة canLoadLocations، ويعتمد الآن على الصلاحيات التي تسمح بها سياسة RLS نفسها:
+- LOCATIONS_VIEW
+- INVENTORY_VIEW
+- INVENTORY_TRANSFER
+- PRODUCTION_VIEW
+- PRODUCTION_MANAGE
+- SYSTEM_ADMIN
+
+تم ربط شرط التحميل في بداية التطبيق وفتح قسم البيانات بهذا المتغير. لم تتغير سياسة RLS أو تعيينات الأدوار.
+
+فحص ما بعد التعديل:
+- كتلتا JavaScript اجتازتا فحص الصياغة.
+- 878 معرف HTML دون تكرار.
+- تم التأكد من وجود شرط canLoadLocations في موضعي التحميل.
+- لم يتم اختبار تسجيل دخول فعلي من المتصفح.
+
+آخر commit لملف index.html: 4fa030281413416fa45a00c48e1dc02ca8280c23
+آخر blob SHA: a86cdf20d3f982c40ecbe104e9a6073227c9632c
+الإصدار: MeatManagement v42.
