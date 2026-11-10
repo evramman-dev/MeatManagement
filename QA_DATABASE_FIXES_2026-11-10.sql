@@ -1185,3 +1185,70 @@ WHERE product_id = 2
       )
     )
   );
+
+
+-- QA fixture applied 2026-11-10: minced-meat production recipe.
+-- This fixture is intentionally explicit: 1.000 kg of product 1 (لحمة كولاطة)
+-- yields 1.000 kg of product 2 (لحمة مفرومة), with zero assumed waste.
+-- It exists only to exercise production costing and the downstream sales flow.
+DO $qa$
+DECLARE
+  v_recipe_id bigint;
+BEGIN
+  SELECT recipe_id INTO v_recipe_id
+  FROM public.recipes
+  WHERE recipe_code='QA-MINCED-1KG-20261110';
+
+  IF v_recipe_id IS NULL THEN
+    INSERT INTO public.recipes(
+      product_id,recipe_code,recipe_name,version_number,yield_quantity,
+      yield_unit_id,preparation_notes,is_active,output_quantity,unit_id,
+      notes,created_by
+    )
+    VALUES(
+      2,'QA-MINCED-1KG-20261110','وصفة اختبار اللحمة المفرومة 1 كجم',
+      1,1,1,
+      'وصفة اختبار QA: 1 كجم خام لحمة كولاطة ينتج 1 كجم لحمة مفرومة، دون افتراض فاقد.',
+      true,1,1,'بيانات تجريبية لاختبار دورة الإنتاج',
+      '759df318-8315-44b6-832d-c51d3926bdb9'::uuid
+    )
+    RETURNING recipe_id INTO v_recipe_id;
+  END IF;
+
+  IF NOT EXISTS(
+    SELECT 1 FROM public.recipe_items
+    WHERE recipe_id=v_recipe_id
+      AND ingredient_product_id=1
+      AND raw_product_id=1
+      AND unit_id=1
+  ) THEN
+    INSERT INTO public.recipe_items(
+      recipe_id,ingredient_product_id,raw_product_id,unit_id,
+      quantity,waste_percentage,sequence_no,notes
+    )
+    VALUES(
+      v_recipe_id,1,1,1,1,0,1,
+      'اختبار تحويل 1 كجم خام إلى 1 كجم منتج مفروم دون فاقد مفترض'
+    );
+  END IF;
+
+  UPDATE public.products
+  SET can_be_produced=true,has_recipe=true,updated_at=now()
+  WHERE product_id=2
+    AND product_code='Row-002'
+    AND product_name='لحمة مفرومة'
+    AND is_active=true;
+END
+$qa$;
+
+-- QA full-cycle records created and verified on 2026-11-10:
+-- Production order PRD-20261110-000005: 5 kg minced meat; material cost EGP 242.3077.
+-- Sales invoice INV-000021: EGP 250, collected EGP 100 + EGP 150, fully paid.
+-- Vehicle trip TRIP-20261110-000019: 2 kg loaded, 1 kg sold, 0.5 kg customer return,
+-- and 1.5 kg returned from the vehicle during successful settlement.
+-- Sales return QA-TRIP-RETURN-20261110: EGP 125 cash refund from mandoub treasury 8.
+-- Purchase invoice PUR-000010: EGP 50 credit purchase of 1 kg raw material.
+-- Purchase return: 0.25 kg / EGP 12.50 credited to the supplier.
+-- Supplier payment: EGP 20.00 from treasury 5.
+-- Expense: EGP 10.00 (مواد النظافة), with exactly one linked journal entry.
+-- These records are intentionally retained as QA fixtures; do not delete them during testing.
