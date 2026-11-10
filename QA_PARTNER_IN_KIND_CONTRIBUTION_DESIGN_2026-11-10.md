@@ -105,3 +105,46 @@ Do not accept a generic "other asset" until a controlled asset-category-to-accou
 - No foreign key currently references `fixed_assets`; there is therefore no database-enforced downstream asset dependency graph to rely on for safe cancellation.
 - QA currently has one location of type VEHICLE, alongside FACTORY, FRIDGE, MAIN_WAREHOUSE, and SHOWROOM locations.
 - These findings strengthen the decision not to treat a vehicle as a fixed asset or to enable generic in-kind cancellation without first designing the vehicle register and its dependencies.
+
+## Implementation update — production equipment contribution (QA)
+Implemented in three database migrations:
+- `partner_equipment_in_kind_contribution_20261110`
+- `harden_partner_equipment_contribution_link_20261110`
+- `harden_partner_equipment_contribution_cancellation_20261110`
+
+### Database changes
+- Added `fixed_assets.partner_id` and `fixed_assets.partner_transaction_id`, with foreign keys and a unique constraint on the linked partner transaction.
+- Added `PARTNER_CONTRIBUTION` as a fixed-asset source, while retaining the existing `PRODUCTION_EQUIPMENT` asset category and account mapping.
+- Added an index on `fixed_assets.partner_id` after the performance advisor identified the missing foreign-key index.
+- Updated the partner in-kind trigger guard. A direct `CAPITAL_OUT` write is rejected unless it comes through the dedicated RPC, the user has `ACCOUNTING_MANAGE`, and a matching equipment asset exists.
+- Added a deferred constraint trigger that checks the asset and partner transaction match on partner, amount, date, request ID, and creator before transaction commit.
+- Added `create_partner_equipment_contribution(...)`. It requires an active authenticated user, `ACCOUNTING_MANAGE`, an active partner, an open accounting period, positive value, and a request UUID. It creates the equipment register record, partner `CAPITAL_OUT` record, increases the partner balance, and posts a balanced journal entry: debit `1510`, credit `3100`.
+- Added `cancel_partner_equipment_contribution(p_asset_id,p_reason,p_asset_returned_unused)`. Cancellation requires accounting permission and an explicit confirmation that the equipment was returned to the partner and was not put into operation, disposed of, or depreciated. It reverses the original journal, decreases the partner balance, and marks the asset CANCELLED.
+- New RPCs have pinned empty search paths, explicit authenticated grants, and no PUBLIC/anon execute grant.
+
+### UI changes on QA
+- Enabled the partner contribution source in the fixed-assets form.
+- Added an active-partner selector.
+- The form routes partner contributions through the dedicated RPC, not the generic partner transaction RPC.
+- The fixed-asset list identifies partner-contributed equipment and its partner.
+- The cancellation dialog requires an explicit return/unused confirmation and calls the dedicated reversal RPC.
+
+### Verification
+All write tests were executed inside transactions and rolled back. No permanent test records remain.
+- Authenticated QA tester successfully created a partner equipment contribution.
+- Repeating the same request returned the existing asset instead of duplicating it.
+- Reusing the same request UUID with a changed amount was rejected.
+- Calling the generic partner transaction RPC directly for `CAPITAL_OUT` was rejected.
+- The deferred asset-to-partner-transaction integrity trigger was forced to run immediately and passed.
+- Cancellation without the return/unused confirmation was rejected.
+- Cancellation with the confirmation succeeded in the test transaction. The asset became CANCELLED, partner balance returned to zero, and the reversal journal balanced exactly (debit 600, credit 600).
+- Post-rollback QA counts: `fixed_assets=0`, `partner_transactions=0`, partner contribution assets=0, linked contribution assets=0, negative partner balances=0.
+- Health advisor: 0 findings.
+- Performance advisor: 0 unindexed foreign keys; 92 unused-index informational findings remain.
+- Security advisor: 75 authenticated SECURITY DEFINER warnings (the previous 73 plus the two new RPCs, both with explicit auth/permission checks and pinned search paths), plus the existing leaked-password-protection warning on the Free plan.
+
+### Scope and remaining work
+- Only production equipment contributions are enabled.
+- Inventory, vehicles, and other asset classes remain disabled and require their own accounting, operational, and reversal workflows.
+- The QA HTML was updated and statically checked for the new form fields and RPC calls. No browser workflow run was returned for the latest push, so end-to-end UI interaction is not yet claimed as tested.
+- No changes were made to `main` or GitHub Pages.
