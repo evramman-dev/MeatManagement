@@ -2,6 +2,9 @@ name: MeatManagement cloud browser tests
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - qa/full-cycle-test
 
 permissions:
   contents: read
