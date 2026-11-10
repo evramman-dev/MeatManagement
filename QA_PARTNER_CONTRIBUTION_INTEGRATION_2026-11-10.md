@@ -206,3 +206,21 @@ RECIPES_MANAGE أو PRODUCTION_MANAGE أو SYSTEM_ADMIN.
 حجم الملف: 544,197 حرفًا.
 لم تتغير سياسات RLS أو تعيينات الأدوار في هذه الدفعة.
 main وGitHub Pages لم يتغيرا وما زالا v38.
+
+
+## متابعة مراجعة Security Advisor — 10 نوفمبر 2026
+
+أعيد فحص Security Advisor بعد إصلاحات v43:
+- 81 تحذيرًا من نوع authenticated_security_definer_function_executable.
+- تحذير واحد لأن Leaked Password Protection غير مفعّل.
+- لم تظهر نتيجة تثبت أن هذه التحذيرات تعني وحدها وجود تجاوز صلاحيات؛ كل دالة تحتاج مراجعة مستقلة للمنطق والصلاحيات وسبب استخدامها.
+
+تم فحص الدوال المساعدة:
+- has_permission وget_current_user_role وget_current_sales_rep_id تعتمد على auth.uid وتقرأ ربط المستخدم بالدور والصلاحيات.
+- create_notification يتحقق من تسجيل الدخول وصلاحية NOTIFICATIONS_MANAGE.
+- generate_due_invoice_notifications يتحقق من تسجيل الدخول وصلاحية NOTIFICATIONS_MANAGE، والصلاحية موجودة حاليًا لـ SYSTEM_ADMIN وSYSTEM_TESTER فقط.
+- لا يوجد استدعاء مباشر لـ generate_due_invoice_notifications داخل index.html، كما لم يظهر جدول cron.job في قاعدة البيانات. لم نسحب EXECUTE لأن احتمال وجود مستدعٍ خارجي لم يُحسم.
+
+قرار هذه الدفعة: لا تغيير جماعي لـ EXECUTE ولا تحويل عشوائي إلى SECURITY INVOKER، حتى لا تتعطل سياسات RLS أو وظائف الترحيل. يلزم جرد الدوال الـ81 حسب الاستخدام ومراجعة كل دالة قبل أي تضييق.
+
+تم تأكيد أن آخر نسخة QA هي v43، وأن main ما زال v38. لا توجد workflow runs أو commit statuses مرتبطة بآخر commit.
