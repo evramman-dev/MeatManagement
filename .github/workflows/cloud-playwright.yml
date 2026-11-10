@@ -21,9 +21,10 @@ jobs:
 
       - name: Install Playwright
         run: |
-          npm install --no-save playwright
+          npm install --no-save @playwright/test
           npx playwright install --with-deps chromium
-
+          mkdir -p test-results
+          
       - name: Run browser tests
         env:
           BASE_URL: https://evramman-dev.github.io/MeatManagement/
