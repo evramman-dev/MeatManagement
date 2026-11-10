@@ -774,3 +774,10 @@ BEFORE INSERT OR UPDATE OF location_id, movement_type, trip_id
 ON public.stock_movements
 FOR EACH ROW
 EXECUTE FUNCTION public.prevent_untracked_vehicle_stock_movement();
+
+
+-- Applied 2026-11-10: reconcile the derived sold/returned quantities for completed QA trip 16.
+-- The completed trip had one posted invoice line (1 kg) but its trip_loads summary
+-- still showed quantity_sold=0. Re-running the idempotent sync function corrected it to 1 kg.
+-- This does not create stock movements, treasury transactions, or journal entries.
+SELECT public.sync_trip_load_actual_quantities(16);
