@@ -787,7 +787,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <form id="partnerTransactionForm" onsubmit="event.preventDefault();">
 <label for="ptPartner">الشريك *</label><select id="ptPartner" required><option value="">اختر الشريك</option></select>
 <label for="ptType">نوع الحركة *</label>
-<select id="ptType" required><option value="CAPITAL_IN">مساهمة نقدية (إيداع)</option><option value="WITHDRAWAL">سحب شخصي</option><option value="PROFIT">توزيع أرباح</option><option value="CAPITAL_OUT">مساهمة عينية</option></select>
+<select id="ptType" required><option value="CAPITAL_IN">مساهمة نقدية (إيداع)</option><option value="WITHDRAWAL">سحب شخصي</option><option value="PROFIT">توزيع أرباح</option><option value="CAPITAL_OUT" disabled>مساهمة عينية (موقوفة لحين ربطها بحساب أصل)</option></select>
 <label for="ptAmount">المبلغ *</label><input id="ptAmount" type="number" min="0.01" step="0.01" required>
 <label for="ptDate">التاريخ *</label><input id="ptDate" type="date" required>
 <label for="ptTreasury">الخزنة (لو الحركة نقدية)</label><select id="ptTreasury"><option value="">بدون خزنة (مساهمة عينية)</option></select>
