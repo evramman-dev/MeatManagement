@@ -5385,7 +5385,7 @@ async function loadCollections(){
 function renderCollections(){ 
   const box=$("collectionsList"); if(!box) return; 
   box.replaceChildren(); 
-  const q=($("collectionsSearch").value||"").trim().toLowerCase(); 
+  const q=($("collectionsSearch")?.value||"").trim().toLowerCase();
   const found=collectionsCache.filter(col=> [col.collection_number, customerName(col.customer_id)].some(v=>String(v||"").toLowerCase().includes(q))); 
   if(!found.length){ box.innerHTML = `<div class="empty">لا توجد تحصيلات مطابقة.</div>`; return; } 
   found.forEach(col=>{ 
