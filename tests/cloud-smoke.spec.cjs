@@ -78,6 +78,7 @@ test('MeatManagement read-only navigation, permissions and session smoke test', 
   await page.locator('#loginBtn').click();
   await expect(page.locator('#home')).toBeVisible({ timeout: 60000 });
   await expect(page.locator('#userInfo')).not.toContainText('جارٍ تحميل بيانات الحساب', { timeout: 30000 });
+  await expect(page.locator('#notificationsList')).not.toContainText('جارٍ تحميل التنبيهات...', { timeout: 30000 });
   await page.screenshot({ path: 'test-results/home.png', fullPage: true });
 
   currentSection = 'session-restore';
@@ -88,6 +89,8 @@ test('MeatManagement read-only navigation, permissions and session smoke test', 
   currentSection = 'tasks';
   await page.locator('.navbtn[data-page="tasks"]').click();
   await expect(page.locator('#tasks')).toBeVisible();
+  await expect(page.locator('#tasksDashboard')).not.toContainText('صافي الربح');
+  await expect(page.locator('#tasksDashboard')).toContainText('غير محسوب');
   await page.screenshot({ path: 'test-results/tasks.png', fullPage: true });
 
   currentSection = 'data';
@@ -121,6 +124,13 @@ test('MeatManagement read-only navigation, permissions and session smoke test', 
 
     await expect(target, 'Section ' + section + ' should open when its menu is visible').toBeVisible({ timeout: 15000 });
     await page.waitForTimeout(800);
+    if (section === 'products') {
+      const productCards = page.locator('#products > .product');
+      if (await productCards.count()) {
+        await expect(productCards.first()).toContainText('الوحدات:');
+        await expect(productCards.first()).toContainText('حد إعادة الطلب:');
+      }
+    }
     await page.screenshot({ path: 'test-results/sections/' + section + '.png', fullPage: true });
     visitedSections.push(section);
   }
