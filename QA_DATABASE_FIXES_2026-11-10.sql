@@ -1321,6 +1321,9 @@ BEGIN
   IF auth.uid() IS NULL THEN
     RAISE EXCEPTION 'يجب تسجيل الدخول';
   END IF;
+  IF NOT public.has_permission('PURCHASES_MANAGE') THEN
+    RAISE EXCEPTION 'ليس لديك صلاحية إدارة تكلفة نقل الخامات';
+  END IF;
   IF p_request_id IS NULL THEN
     RAISE EXCEPTION 'رقم طلب تكلفة النقل مطلوب لمنع تكرار التسجيل';
   END IF;
@@ -1384,6 +1387,9 @@ BEGIN
   IF auth.uid() IS NULL THEN
     RAISE EXCEPTION 'يجب تسجيل الدخول';
   END IF;
+  IF NOT public.has_permission('ACCOUNTING_MANAGE') THEN
+    RAISE EXCEPTION 'ليس لديك صلاحية تسجيل شراء أصل ثابت';
+  END IF;
   IF p_request_id IS NULL THEN
     RAISE EXCEPTION 'رقم طلب شراء الأصل مطلوب لمنع تكرار التسجيل';
   END IF;
@@ -1435,3 +1441,9 @@ $function$;
 -- the underlying cash function updates the treasury. This keeps the treasury
 -- balance, treasury transaction, inventory allocation, and journal entry on
 -- the same rounded amount when an RPC request contains extra decimal places.
+
+
+-- Applied 2026-11-10: both SECURITY INVOKER retry wrappers now re-check the
+-- relevant business permission before returning an existing request result.
+-- This prevents a user without PURCHASES_MANAGE or ACCOUNTING_MANAGE from
+-- probing a previously-created request ID through the retry endpoint.
