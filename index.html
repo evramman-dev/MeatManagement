@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v37</title>
+<title>MeatManagement v38</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -300,7 +300,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v37]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v38]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1582,7 +1582,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v35</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v38</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -1786,7 +1786,7 @@ try {
   let customerGeoLoaded=false;
   let invoiceItemCounter=0, purchaseItemCounter=0, recipeItemCounter=0, returnItemCounter=0, exchangeItemCounter=0, stItemCounter=0, prItemCounter=0;
 
-  const allowedRoles={ SALES_MANAGER:"مدير المبيعات", SALES_REP:"مندوب المبيعات", WAREHOUSE_KEEPER:"أمين المخزن", PRODUCTION_MANAGER:"مسؤول الإنتاج", ACCOUNTANT:"المحاسب", GENERAL_MANAGER:"المدير العام" };
+  const allowedRoles={ SALES_MANAGER:"مدير المبيعات", SALES_REP:"مندوب المبيعات", WAREHOUSE_KEEPER:"أمين المخزن", PRODUCTION_MANAGER:"مسؤول الإنتاج", ACCOUNTANT:"المحاسب", GENERAL_MANAGER:"المدير العام", SYSTEM_TESTER:"مختبر النظام" };
 
   // ========== المساعدات ==========
   function msg(el,text,type=""){ if(!el) return; el.textContent=text; el.className="status"+(type?" "+type:""); }
@@ -2287,7 +2287,9 @@ function getRoleMenuIds(roleCode){
     WAREHOUSE_KEEPER: ["menuProducts","menuLocations","menuStock","menuStockTransfers","menuTrips"],
     PRODUCTION_MANAGER: ["menuProducts","menuLocations","menuStock","menuRecipes","menuProduction"],
     ACCOUNTANT: ["menuSuppliers","menuPurchases","menuPurchaseReturns","menuSupplierPayments","menuExpenses","menuLandedCosts","menuFixedAssets","menuCustomers","menuSales","menuPriceLists","menuCollections","menuTrips","menuTreasuries","menuTreasuryTransfers","menuPartners","menuAccounting","menuReports"],
-    GENERAL_MANAGER: ["menuProducts","menuLocations","menuStock","menuStockTransfers","menuRecipes","menuProduction","menuReservations","menuSuppliers","menuPurchases","menuPurchaseReturns","menuLandedCosts","menuFixedAssets","menuSupplierPayments","menuExpenses","menuCustomers","menuSales","menuPriceLists","menuCollections","menuTrips","menuTreasuries","menuTreasuryTransfers","menuPartners","menuAccounting","menuReports"]
+    GENERAL_MANAGER: ["menuProducts","menuLocations","menuStock","menuStockTransfers","menuRecipes","menuProduction","menuReservations","menuSuppliers","menuPurchases","menuPurchaseReturns","menuLandedCosts","menuFixedAssets","menuSupplierPayments","menuExpenses","menuCustomers","menuSales","menuPriceLists","menuCollections","menuTrips","menuTreasuries","menuTreasuryTransfers","menuPartners","menuAccounting","menuReports"],
+    // مختبر النظام يرى كل أقسام التشغيل والإعدادات، ولا يرى إدارة المستخدمين.
+    SYSTEM_TESTER: ["menuProducts","menuLocations","menuStock","menuStockTransfers","menuRecipes","menuProduction","menuReservations","menuSuppliers","menuPurchases","menuPurchaseReturns","menuLandedCosts","menuFixedAssets","menuSupplierPayments","menuExpenses","menuCustomers","menuSales","menuPriceLists","menuCollections","menuTrips","menuSalesReps","menuTreasuries","menuTreasuryTransfers","menuPartners","menuAccounting","menuReports","menuSettings"]
   };
   return new Set(roleMenus[roleCode] || []);
 }
@@ -2311,6 +2313,9 @@ function getRoleQuickLinks(roleCode){
     ],
     GENERAL_MANAGER: [
       ["reports","📈","التقارير"],["sales","🧾","المبيعات"],["purchases","🛒","المشتريات"],["landedCosts","🚚","تكلفة نقل الخامات"],["fixedAssets","🏭","الأصول الثابتة"],["production","🏭","الإنتاج"],["stock","📊","المخزون"],["accounting","🧮","المحاسبة"],["trips","🚐","الجولات"]
+    ],
+    SYSTEM_TESTER: [
+      ["products","📦","المنتجات"],["locations","🏭","المواقع والمخازن"],["stock","📊","أرصدة المخزون"],["stockTransfers","🔄","تحويل المخازن"],["recipes","📝","الوصفات"],["production","⚙️","أوامر التشغيل"],["reservations","📌","الحجوزات"],["suppliers","🚚","الموردون"],["purchases","🛒","فواتير المشتريات"],["purchaseReturns","↩️","مرتجع المشتريات"],["landedCosts","🚛","تكلفة نقل الخامات"],["fixedAssets","🏭","الأصول الثابتة"],["supplierPayments","💳","سداد الموردين"],["expenses","🧾","المصروفات"],["customers","👥","العملاء"],["sales","🧾","فواتير البيع"],["priceLists","🏷️","قوائم الأسعار"],["collections","💰","التحصيلات"],["trips","🚐","الجولات"],["salesReps","🧑‍💼","إدارة المندوبين"],["treasuries","💵","الخزائن"],["treasuryTransfers","↔️","تحويل بين الخزائن"],["partners","🤝","الشركاء"],["accounting","🧮","المحاسبة"],["reports","📈","التقارير"],["settings","⚙️","إعدادات الشركة"]
     ]
   };
   return links[roleCode] || [];
@@ -2457,8 +2462,10 @@ async function loadUsersList() {
   if(!isSystemAdmin) return; const box = $("usersList"); if(!box) return; box.innerHTML = "<div class='empty'>جارٍ التحميل...</div>";
   try {
     const { data: users, error: uErr } = await db.from("app_users").select("*"); if(uErr) throw uErr;
-    const { data: roles } = await db.from("app_roles").select("*");
-    const roleMap = {}; if(roles) roles.forEach(r => roleMap[r.role_id] = r.role_name);
+    const { data: roles, error: rolesError } = await db.from("app_roles").select("role_id,role_name,role_code");
+    if(rolesError) throw rolesError;
+    const roleMap = {}, roleCodeMap = {};
+    if(roles) roles.forEach(r => { roleMap[r.role_id] = r.role_name; roleCodeMap[r.role_id] = r.role_code; });
     usersCache = users || [];
     if(!users || users.length === 0) { box.innerHTML = "<div class='empty'>لا يوجد مستخدمون.</div>"; return; }
     let html = "";
@@ -2469,11 +2476,36 @@ async function loadUsersList() {
       const resetButton = String(u.username || '').toLowerCase() === 'rep-01' && u.is_active
         ? `<button class="btn secondary" type="button" onclick="window.openRepPasswordModal()">🔑 تغيير كلمة المرور</button>`
         : '';
-      html += `<div class="product"><div class="pname">${safeName} (${safeUsername})</div><div class="details">الدور: ${roleMap[u.role_id] || 'غير محدد'} ${status}</div><div class="actions"><button class="btn secondary" onclick="window.viewUserLogs('${u.user_id}','${safeName.replace(/'/g,'&#39;')}')">📋 سجل التتبع</button>${resetButton}</div></div>`;
+      const deleteTesterButton = roleCodeMap[u.role_id] === "SYSTEM_TESTER"
+        ? `<button class="btn secondary" style="background:#a52b2b;color:#fff;" type="button" onclick="window.deleteTesterAccount('${u.user_id}')">حذف حساب المختبر</button>`
+        : '';
+      html += `<div class="product"><div class="pname">${safeName} (${safeUsername})</div><div class="details">الدور: ${roleMap[u.role_id] || 'غير محدد'} ${status}</div><div class="actions"><button class="btn secondary" onclick="window.viewUserLogs('${u.user_id}','${safeName.replace(/'/g,'&#39;')}')">📋 سجل التتبع</button>${resetButton}${deleteTesterButton}</div></div>`;
     });
     box.innerHTML = html;
   } catch(e) { box.innerHTML = `<div class='empty error'>خطأ: ${e.message}</div>`; }
 }
+
+// حذف حساب مختبر النظام من شاشة مدير النظام فقط.
+window.deleteTesterAccount = async function(userId){
+  if(!isSystemAdmin){ showToast("حذف حساب المختبر لمدير النظام فقط.","error"); return; }
+  if(!userId || !confirm("سيتم حذف حساب مختبر النظام من تسجيل الدخول وقائمة المستخدمين. لن تُحذف الحركات أو البيانات التي أنشأها الحساب. هل تريد المتابعة؟")) return;
+  try{
+    const {data:sessionData,error:sessionError}=await db.auth.getSession();
+    if(sessionError) throw sessionError;
+    const session=sessionData?.session;
+    if(!session?.access_token) throw new Error("انتهت جلسة الدخول. سجّل الدخول مرة أخرى.");
+    const response=await fetch(MANAGE_USERS_URL,{
+      method:"POST",
+      headers:{"Content-Type":"application/json","apikey":KEY,"Authorization":"Bearer "+session.access_token},
+      body:JSON.stringify({action:"delete_tester",target_user_id:userId})
+    });
+    let result={}; try{ result=await response.json(); }catch(_){}
+    if(!response.ok || result.success!==true) throw new Error(result.error||"تعذر حذف حساب المختبر.");
+    logUserAction("DELETE","حذف حساب مختبر النظام: "+userId);
+    showToast("تم حذف حساب المختبر.","success");
+    await loadUsersList();
+  }catch(error){ showToast("تعذر حذف حساب المختبر: "+err(error),"error",7000); }
+};
 
 // تغيير كلمة مرور حساب Rep-01 من داخل التطبيق.
 window.openRepPasswordModal = function(){
