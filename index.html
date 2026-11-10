@@ -3002,6 +3002,8 @@ async function loadPriceLists(){
 function getPriceItemLimitIssue(item){
   const product=productsCache.find(p=>String(p.product_id)===String(item.product_id));
   if(!product)return "";
+  if(!product.is_active)return "المنتج غير نشط";
+  if(!product.can_be_sold)return "المنتج غير مسموح ببيعه";
   const min=Math.max(Number(item.minimum_price)||0,Number(product.min_selling_price)||0);
   const listMax=item.maximum_price==null?null:Number(item.maximum_price);
   const productMax=product.max_selling_price==null?null:Number(product.max_selling_price);
