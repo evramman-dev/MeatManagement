@@ -54,3 +54,26 @@ EXECUTE FUNCTION public.block_unaccounted_partner_in_kind_contribution();
 -- The cancellation/reversal path must reverse that exact journal and transaction.
 -- Do not assume every in-kind contribution is a fixed asset; it may be inventory,
 -- equipment, a vehicle, or another asset category.
+
+
+-- Migration: revoke_direct_partner_transaction_dml_20261110
+-- Direct table writes are not part of the frontend workflow. The UI reads
+-- partner_transactions and creates movements only through the permission-checked
+-- SECURITY DEFINER RPC create_partner_transaction_v2.
+REVOKE INSERT, UPDATE, DELETE
+ON TABLE public.partner_transactions
+FROM PUBLIC, anon, authenticated;
+
+-- Verification after the privilege change:
+-- authenticated SELECT=true; INSERT=false; UPDATE=false; DELETE=false.
+-- anon SELECT=false; no INSERT/UPDATE/DELETE RLS policies exist.
+-- The permission-checked partner RPC still completed a cash contribution,
+-- returned the same transaction ID on retry, and created its balanced journal
+-- inside a rollback-only test.
+-- Final persisted partner_transactions=0; treasury_id=5 balance=1065.000.
+
+-- QA UI corrections on qa/full-cycle-test:
+-- * The partner cash treasury selector is now required.
+-- * Its empty option now says "اختر الخزنة", not "بدون خزنة (مساهمة عينية)".
+-- * Partner statements now begin with partners.opening_balance and show it
+--   as a separate opening-balance row before subsequent movements.
