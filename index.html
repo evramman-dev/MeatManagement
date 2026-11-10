@@ -2999,7 +2999,47 @@ async function loadPriceLists(){
     renderPriceLists(); fillPriceListForms(); renderPriceAssignments(assign||[]); renderCustomerGroups();
   }catch(e){msg($("priceListsMsg"),"تعذر تحميل قوائم الأسعار: "+err(e),"error");}
 }
-function renderPriceLists(){const box=$("priceListsList");if(!box)return;box.replaceChildren();if(!priceListsCache.length){box.innerHTML='<div class="empty">لا توجد قوائم أسعار.</div>';return;}priceListsCache.forEach(x=>{const c=document.createElement("div");c.className="product";c.innerHTML=`<div class="pname">${x.price_list_name} (${x.price_list_code})</div><div class="details">الحالة: ${x.approval_status} | من ${formatDate(x.valid_from)}${x.valid_to?' إلى '+formatDate(x.valid_to):''}</div>`;const a=document.createElement("div");a.className="actions";if(canManagePriceLists&&x.approval_status==="DRAFT"){const b=document.createElement("button");b.className="btn";b.textContent="اعتماد";b.onclick=()=>approvePriceList(x.price_list_id);a.appendChild(b);}else if(x.approval_status==="REJECTED"){const state=document.createElement("span");state.className="details";state.textContent="مرفوضة - أنشئ قائمة جديدة بعد المراجعة";a.appendChild(state);}c.appendChild(a);box.appendChild(c);});const il=$("priceListItemsList");if(il){const active=priceListItemsCache.filter(i=>i.is_active);il.innerHTML=active.length?active.map(i=>`<div class="product"><div class="pname">${i.products?.product_name||productName(i.product_id)}</div><div class="details">${i.units?.unit_name||unitName(i.unit_id)} | ${fmt(i.selling_price)} | حد ${fmt(i.minimum_price)} - ${fmt(i.maximum_price)}</div></div>`).join(""): '<div class="empty">لا توجد أسعار.</div>';}}
+function getPriceItemLimitIssue(item){
+  const product=productsCache.find(p=>String(p.product_id)===String(item.product_id));
+  if(!product)return "";
+  const min=Math.max(Number(item.minimum_price)||0,Number(product.min_selling_price)||0);
+  const listMax=item.maximum_price==null?null:Number(item.maximum_price);
+  const productMax=product.max_selling_price==null?null:Number(product.max_selling_price);
+  const max=listMax!==null&&productMax!==null?Math.min(listMax,productMax):(listMax!==null?listMax:productMax);
+  if(max!==null&&min>max)return "حدود الأسعار متعارضة";
+  if(Number(item.selling_price)<min||(max!==null&&Number(item.selling_price)>max))
+    return "السعر خارج الحدود ("+fmt(min)+" إلى "+(max===null?"غير محدد":fmt(max))+")";
+  return "";
+}
+function renderPriceLists(){
+  const box=$("priceListsList");if(!box)return;box.replaceChildren();
+  if(!priceListsCache.length){box.innerHTML='<div class="empty">لا توجد قوائم أسعار.</div>';return;}
+  priceListsCache.forEach(x=>{
+    const c=document.createElement("div");c.className="product";
+    const invalidItems=priceListItemsCache.filter(i=>String(i.price_list_id)===String(x.price_list_id)&&i.is_active&&getPriceItemLimitIssue(i));
+    c.innerHTML=`<div class="pname">${x.price_list_name} (${x.price_list_code})</div><div class="details">الحالة: ${x.approval_status} | من ${formatDate(x.valid_from)}${x.valid_to?' إلى '+formatDate(x.valid_to):''}</div>`;
+    if(invalidItems.length){
+      const warning=document.createElement("div");warning.className="details";warning.style.color="var(--danger,#b42318)";
+      warning.textContent="تنبيه: "+invalidItems.length+" صنف خارج حدود سعر المنتج: "+invalidItems.map(i=>productName(i.product_id)).join("، ");
+      c.appendChild(warning);
+    }
+    const a=document.createElement("div");a.className="actions";
+    if(canManagePriceLists&&x.approval_status==="DRAFT"){
+      const b=document.createElement("button");b.className="btn";b.textContent="اعتماد";b.onclick=()=>approvePriceList(x.price_list_id);a.appendChild(b);
+    }else if(x.approval_status==="REJECTED"){
+      const state=document.createElement("span");state.className="details";state.textContent="مرفوضة - أنشئ قائمة جديدة بعد المراجعة";a.appendChild(state);
+    }
+    c.appendChild(a);box.appendChild(c);
+  });
+  const il=$("priceListItemsList");
+  if(il){
+    const active=priceListItemsCache.filter(i=>i.is_active);
+    il.innerHTML=active.length?active.map(i=>{
+      const issue=getPriceItemLimitIssue(i);
+      return `<div class="product"><div class="pname">${i.products?.product_name||productName(i.product_id)}</div><div class="details">${i.units?.unit_name||unitName(i.unit_id)} | ${fmt(i.selling_price)} | حد القائمة ${fmt(i.minimum_price)} - ${fmt(i.maximum_price)}${issue?' | تنبيه: '+issue:''}</div></div>`;
+    }).join(""):'<div class="empty">لا توجد أسعار.</div>';
+  }
+}
 function syncPriceAssignmentDates(resetStart=false){
   const list=priceListsCache.find(x=>String(x.price_list_id)===String($("assignmentList")?.value));
   const from=$("assignmentFrom"),to=$("assignmentTo");
