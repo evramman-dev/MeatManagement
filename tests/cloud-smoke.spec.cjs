@@ -100,19 +100,18 @@ test('MeatManagement read-only navigation, permissions and session smoke test', 
     await expect(page.locator('#menuUsers')).toBeHidden();
   }
 
+  const accessibleSections = await page.evaluate(ids => {
+    return Object.keys(ids).filter(section => {
+      const element = document.getElementById(ids[section]);
+      return !!element && !element.classList.contains('hidden') && element.getClientRects().length > 0;
+    });
+  }, menuIds);
   const visitedSections = [];
-  const restrictedSections = [];
+  const restrictedSections = sections.filter(section => !accessibleSections.includes(section));
 
-  for (const section of sections) {
-    const menuId = menuIds[section];
-    const menu = page.locator('#' + menuId);
+  for (const section of accessibleSections) {
     const targetId = '#section' + section.charAt(0).toUpperCase() + section.slice(1);
     const target = page.locator(targetId);
-
-    if (!(await menu.count()) || !(await menu.isVisible())) {
-      restrictedSections.push(section);
-      continue;
-    }
 
     currentSection = section;
     await page.evaluate(route => {
