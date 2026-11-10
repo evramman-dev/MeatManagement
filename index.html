@@ -6699,9 +6699,10 @@ async function viewPartnerStatement(p) {
   modal.classList.remove("hidden"); 
   try { 
     const { data: tx } = await db.from("partner_transactions").select("*").eq("partner_id", p.partner_id).order("transaction_date", {ascending: true}); 
-    let runningBalance = 0; 
-    let totalIn=0, totalOut=0; 
-    let html = `<thead><tr><th>التاريخ</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead><tbody>`; 
+    const openingBalance = Number(p.opening_balance||0);
+    let runningBalance = openingBalance;
+    let totalIn=0, totalOut=0;
+    let html = `<thead><tr><th>التاريخ</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead><tbody><tr><td>-</td><td>الرصيد الافتتاحي</td><td style="color:red">${openingBalance<0?fmt(Math.abs(openingBalance)):'-'}</td><td style="color:green">${openingBalance>0?fmt(openingBalance):'-'}</td><td>${fmt(runningBalance)}</td></tr>`; 
     const typeMap={CAPITAL_IN:"مساهمة نقدية",WITHDRAWAL:"سحب شخصي",PROFIT:"توزيع أرباح",CAPITAL_OUT:"مساهمة عينية"}; 
     (tx||[]).forEach(t => { 
       let inAmt = 0, outAmt = 0; 
@@ -6719,7 +6720,7 @@ async function viewPartnerStatement(p) {
     html += `</tbody>`; 
     $("modalStatementItems").innerHTML = html; 
     $("modalStatementHeader").innerHTML = `<div><strong>الشريك:</strong> ${p.partner_name}</div>`; 
-    $("modalStatementSummary").innerHTML = `<div class="line"><span>إجمالي الإيداعات:</span><span style="color:green;">${fmt(totalIn)}</span></div><div class="line"><span>إجمالي السحوبات:</span><span style="color:red;">${fmt(totalOut)}</span></div><div class="line grand"><span>الرصيد النهائي:</span><span>${fmt(runningBalance)}</span></div>`; 
+    $("modalStatementSummary").innerHTML = `<div class="line"><span>الرصيد الافتتاحي:</span><span>${fmt(openingBalance)}</span></div><div class="line"><span>إجمالي الإيداعات:</span><span style="color:green;">${fmt(totalIn)}</span></div><div class="line"><span>إجمالي السحوبات:</span><span style="color:red;">${fmt(totalOut)}</span></div><div class="line grand"><span>الرصيد النهائي:</span><span>${fmt(runningBalance)}</span></div>`; 
     fillPrintHeaders(); 
   } catch(e) { alert(err(e)); } 
 }
