@@ -1252,3 +1252,28 @@ $qa$;
 -- Supplier payment: EGP 20.00 from treasury 5.
 -- Expense: EGP 10.00 (مواد النظافة), with exactly one linked journal entry.
 -- These records are intentionally retained as QA fixtures; do not delete them during testing.
+
+
+-- QA fixture applied 2026-11-10: assign the approved test price list to all
+-- synthetic customers. Customers 3 (اميجوس) and 4 (الراعي الصالح) previously
+-- had no active list, which blocked invoice creation before any stock check.
+-- The approved TEST-20261110 list contains three active, validated products.
+INSERT INTO public.customer_price_lists(
+  price_list_id,customer_id,customer_group_id,priority,
+  valid_from,valid_to,is_active,created_by
+)
+SELECT 3,c.customer_id,NULL,1,CURRENT_DATE,NULL,true,
+       '759df318-8315-44b6-832d-c51d3926bdb9'::uuid
+FROM public.customers c
+WHERE c.customer_id IN (3,4)
+  AND c.is_active=true
+  AND NOT EXISTS(
+    SELECT 1 FROM public.customer_price_lists cpl
+    WHERE cpl.customer_id=c.customer_id
+      AND cpl.is_active=true
+      AND cpl.valid_from<=CURRENT_DATE
+      AND (cpl.valid_to IS NULL OR cpl.valid_to>=CURRENT_DATE)
+  );
+
+-- QA verification on 2026-11-10: customers 1-4 all resolve to approved
+-- TEST-20261110 with three active items each.
