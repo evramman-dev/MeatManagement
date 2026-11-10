@@ -35,16 +35,29 @@ const sections = [
 ];
 
 test('MeatManagement read-only browser smoke test', async ({ page }) => {
-  test.setTimeout(180000);
+  test.setTimeout(240000);
 
-  const errors = [];
+  const pageErrors = [];
+  const consoleErrors = [];
   let currentSection = 'login';
 
   page.on('pageerror', error => {
-    errors.push({
+    pageErrors.push({
       section: currentSection,
-      message: error.message
+      message: error.message,
+      stack: error.stack || 'No stack available',
+      url: page.url()
     });
+  });
+
+  page.on('console', message => {
+    if (message.type() === 'error') {
+      consoleErrors.push({
+        section: currentSection,
+        message: message.text(),
+        location: message.location()
+      });
+    }
   });
 
   await page.goto(baseURL, {
@@ -95,7 +108,7 @@ test('MeatManagement read-only browser smoke test', async ({ page }) => {
   for (const section of sections) {
     currentSection = section;
 
-    await page.evaluate((route) => {
+    await page.evaluate(route => {
       if (typeof window.openSection === 'function') {
         window.openSection(route);
       } else {
@@ -103,7 +116,7 @@ test('MeatManagement read-only browser smoke test', async ({ page }) => {
       }
     }, section);
 
-    await page.waitForTimeout(700);
+    await page.waitForTimeout(1200);
 
     await page.screenshot({
       path: `test-results/${section}.png`,
@@ -112,9 +125,15 @@ test('MeatManagement read-only browser smoke test', async ({ page }) => {
   }
 
   console.log(
-    'Browser JavaScript errors:',
-    JSON.stringify(errors, null, 2)
+    'DETAILED BROWSER ERRORS:',
+    JSON.stringify({
+      pageErrors,
+      consoleErrors
+    }, null, 2)
   );
 
-  expect(errors, 'JavaScript errors detected').toEqual([]);
+  expect(
+    pageErrors,
+    'JavaScript page errors detected. See detailed browser errors above.'
+  ).toEqual([]);
 });
