@@ -119,6 +119,7 @@ test('MeatManagement read-only navigation, permissions and session smoke test', 
   await page.screenshot({ path: 'test-results/data.png', fullPage: true });
 
   currentSection = 'permissions';
+  await expect(page.locator('#ptType option[value="CAPITAL_OUT"]')).toHaveJSProperty('disabled', true);
   if (await page.locator('#menuUsers').count()) {
     await expect(page.locator('#menuUsers')).toBeHidden();
   }
