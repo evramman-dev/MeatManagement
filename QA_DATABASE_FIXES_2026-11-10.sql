@@ -1286,3 +1286,143 @@ WHERE c.customer_id IN (3,4)
 -- Role-separation test: WAREHOUSE_KEEPER was rejected by approve_trip_load_v2
 -- with the expected permission error, while TRIP_LOAD_DISPATCH remained granted.
 -- The negative permission test used a transaction rolled back after verification.
+
+
+-- Applied 2026-11-10: require request identifiers for cash landed costs and fixed assets.
+-- Existing unique indexes on request_id remain in place. These NOT NULL constraints
+-- prevent legacy cash RPC calls from creating non-idempotent records without a token.
+-- QA had zero landed-cost and fixed-asset rows at application time.
+ALTER TABLE public.purchase_landed_costs
+  ALTER COLUMN request_id SET NOT NULL;
+
+ALTER TABLE public.fixed_assets
+  ALTER COLUMN request_id SET NOT NULL;
+
+-- Idempotent wrapper for cash/existing-expense landed costs.
+-- The wrapper checks request ownership and payload equality before delegating
+-- to the existing SECURITY DEFINER business function. It is SECURITY INVOKER.
+CREATE OR REPLACE FUNCTION public.create_purchase_landed_cost_v2(
+  p_invoice_id bigint,
+  p_source_type text,
+  p_amount numeric,
+  p_treasury_id bigint DEFAULT NULL,
+  p_expense_id bigint DEFAULT NULL,
+  p_request_id uuid DEFAULT NULL,
+  p_notes text DEFAULT NULL
+)
+RETURNS bigint
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_existing public.purchase_landed_costs%ROWTYPE;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'يجب تسجيل الدخول';
+  END IF;
+  IF p_request_id IS NULL THEN
+    RAISE EXCEPTION 'رقم طلب تكلفة النقل مطلوب لمنع تكرار التسجيل';
+  END IF;
+
+  PERFORM pg_advisory_xact_lock(
+    hashtextextended('landed-cost-request:' || p_request_id::text, 0)
+  );
+
+  SELECT *
+    INTO v_existing
+  FROM public.purchase_landed_costs
+  WHERE request_id = p_request_id;
+
+  IF FOUND THEN
+    IF v_existing.created_by IS DISTINCT FROM auth.uid()
+       OR v_existing.purchase_invoice_id IS DISTINCT FROM p_invoice_id
+       OR v_existing.source_type IS DISTINCT FROM p_source_type
+       OR v_existing.amount IS DISTINCT FROM round(p_amount, 2)
+       OR v_existing.treasury_id IS DISTINCT FROM p_treasury_id
+       OR v_existing.expense_id IS DISTINCT FROM p_expense_id
+       OR v_existing.notes IS DISTINCT FROM NULLIF(btrim(p_notes), '') THEN
+      RAISE EXCEPTION 'رقم طلب تكلفة النقل مستخدم من قبل مع بيانات مختلفة';
+    END IF;
+    IF v_existing.status <> 'ACTIVE' THEN
+      RAISE EXCEPTION 'سبق استخدام رقم الطلب في مستند تكلفة نقل تم إلغاؤه. أنشئ طلبًا جديدًا';
+    END IF;
+    RETURN v_existing.landed_cost_id;
+  END IF;
+
+  RETURN public.create_purchase_landed_cost(
+    p_invoice_id, p_source_type, p_amount, p_treasury_id,
+    p_expense_id, p_request_id, p_notes
+  );
+END;
+$function$;
+
+-- Idempotent wrapper for cash fixed-asset purchases.
+-- The wrapper is SECURITY INVOKER and delegates the financial posting to
+-- the existing SECURITY DEFINER function after validating any prior request.
+CREATE OR REPLACE FUNCTION public.create_fixed_asset_purchase_v2(
+  p_asset_name text,
+  p_acquisition_date date,
+  p_amount numeric,
+  p_treasury_id bigint,
+  p_location_description text DEFAULT NULL,
+  p_serial_number text DEFAULT NULL,
+  p_notes text DEFAULT NULL,
+  p_request_id uuid DEFAULT NULL
+)
+RETURNS bigint
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_existing public.fixed_assets%ROWTYPE;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'يجب تسجيل الدخول';
+  END IF;
+  IF p_request_id IS NULL THEN
+    RAISE EXCEPTION 'رقم طلب شراء الأصل مطلوب لمنع تكرار التسجيل';
+  END IF;
+
+  PERFORM pg_advisory_xact_lock(
+    hashtextextended('fixed-asset-request:' || p_request_id::text, 0)
+  );
+
+  SELECT *
+    INTO v_existing
+  FROM public.fixed_assets
+  WHERE request_id = p_request_id;
+
+  IF FOUND THEN
+    IF v_existing.created_by IS DISTINCT FROM auth.uid()
+       OR v_existing.asset_name IS DISTINCT FROM btrim(p_asset_name)
+       OR v_existing.acquisition_date IS DISTINCT FROM p_acquisition_date
+       OR v_existing.acquisition_cost IS DISTINCT FROM round(p_amount, 2)
+       OR v_existing.treasury_id IS DISTINCT FROM p_treasury_id
+       OR v_existing.source_type IS DISTINCT FROM 'TREASURY'
+       OR v_existing.location_description IS DISTINCT FROM NULLIF(btrim(p_location_description), '')
+       OR v_existing.serial_number IS DISTINCT FROM NULLIF(btrim(p_serial_number), '')
+       OR v_existing.notes IS DISTINCT FROM NULLIF(btrim(p_notes), '') THEN
+      RAISE EXCEPTION 'رقم طلب شراء الأصل مستخدم من قبل مع بيانات مختلفة';
+    END IF;
+    IF v_existing.status <> 'ACTIVE' THEN
+      RAISE EXCEPTION 'سبق استخدام رقم الطلب في أصل تم إلغاؤه. أنشئ طلبًا جديدًا';
+    END IF;
+    RETURN v_existing.asset_id;
+  END IF;
+
+  RETURN public.create_fixed_asset_purchase(
+    p_asset_name, p_acquisition_date, p_amount, p_treasury_id,
+    p_location_description, p_serial_number, p_notes, p_request_id
+  );
+END;
+$function$;
+
+-- QA verification: the wrapper was called twice with the same request_id
+-- for a new purchase invoice + cash landed cost, and for a cash fixed asset.
+-- Each retry returned the original document ID. Exactly one allocation,
+-- one treasury transaction and one posted journal entry were created per
+-- landed-cost document, and exactly one asset, treasury transaction and
+-- posted journal entry were created per asset. The complete test transaction
+-- was rolled back; no QA operational rows or balances were retained.
