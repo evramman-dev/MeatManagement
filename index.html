@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v36</title>
+<title>MeatManagement v37</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -300,7 +300,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v36]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v37]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -438,6 +438,8 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="dash-item hidden" id="menuSuppliers" onclick="window.openSection('suppliers')"><div class="dash-icon">🚚</div><div class="dash-title">الموردين</div></div>
 <div class="dash-item hidden" id="menuPurchases" onclick="window.openSection('purchases')"><div class="dash-icon">🛒</div><div class="dash-title">فواتير المشتريات</div></div>
 <div class="dash-item hidden" id="menuPurchaseReturns" onclick="window.openSection('purchaseReturns')"><div class="dash-icon">↩️</div><div class="dash-title">مرتجع مشتريات</div></div>
+<div class="dash-item hidden" id="menuLandedCosts" onclick="window.openSection('landedCosts')"><div class="dash-icon">🚚</div><div class="dash-title">تكلفة نقل الخامات</div></div>
+<div class="dash-item hidden" id="menuFixedAssets" onclick="window.openSection('fixedAssets')"><div class="dash-icon">🏭</div><div class="dash-title">الأصول الثابتة</div></div>
 <div class="dash-item hidden" id="menuSupplierPayments" onclick="window.openSection('supplierPayments')"><div class="dash-icon">💸</div><div class="dash-title">سداد موردين</div></div>
 <div class="dash-item hidden" id="menuExpenses" onclick="window.openSection('expenses')"><div class="dash-icon">🧾</div><div class="dash-title">المصروفات</div></div>
 </div>
@@ -659,14 +661,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div><label>إلى تاريخ</label><input type="date" id="expenseToDate"></div>
 </div>
 <label>بند المصروف</label>
-<select id="expenseTypeFilter">
-<option value="">كل البنود</option>
-<option value="FUEL">وقود (بنزين/سولار)</option>
-<option value="MAINTENANCE">صيانة وإصلاح</option>
-<option value="RENT">إيجارات</option>
-<option value="SALARY">رواتب وأجور</option>
-<option value="OTHER">مصروفات أخرى</option>
-</select>
+<select id="expenseTypeFilter"><option value="">كل البنود</option></select>
 <div class="row" style="margin-top:10px;">
 <button id="refreshExpensesBtn" class="btn secondary" type="button" style="flex:1;">تحديث البحث</button>
 <button id="viewExpensesStatementBtn" class="btn" type="button" style="flex:1; background:var(--gold); color:var(--g);">📄 كشف حركة</button>
@@ -682,7 +677,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="modal-body">
 <form id="expenseForm" onsubmit="event.preventDefault();">
 <label for="expenseType">نوع المصروف *</label>
-<select id="expenseType" required><option value="FUEL">وقود (بنزين/سولار)</option><option value="MAINTENANCE">صيانة وإصلاح</option><option value="RENT">إيجارات</option><option value="SALARY">رواتب وأجور</option><option value="OTHER">مصروفات أخرى</option></select>
+<select id="expenseType" required><option value="">اختر نوع المصروف</option></select>
 <label for="expenseDate">التاريخ *</label><input id="expenseDate" type="date" required>
 <label for="expenseTreasury">من خزنة *</label><select id="expenseTreasury" required><option value="">اختر الخزنة</option></select><div id="expenseTripTreasuryInfo" class="item-hint hidden">مصروف الجولة يُخصم من خزنة المناديب تلقائيًا.</div>
 <label for="expenseAmount">المبلغ *</label><input id="expenseAmount" type="number" min="0.01" step="0.01" required>
@@ -694,6 +689,56 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 </div>
 </div>
+
+<div id="sectionLandedCosts" class="sub-section hidden">
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<div class="card" id="landedCostsCard">
+<div class="row" style="justify-content:space-between"><h2>🚚 تكلفة نقل الخامات</h2><button id="addLandedCostBtn" class="btn" type="button" style="width:auto;">＋ تكلفة نقل جديدة</button></div>
+<p class="desc">تُوزع تكلفة النقل على أصناف فاتورة المشتريات حسب صافي قيمة كل صنف بعد الخصم.</p>
+<div id="landedCostsMsg" class="status hidden"></div>
+<div id="landedCostsList"><div class="empty">جارٍ تحميل مستندات النقل...</div></div>
+</div>
+</div>
+<div id="landedCostFormModal" class="modal-form">
+<div class="modal-form-content"><div class="modal-header"><h3>تسجيل تكلفة نقل خامات</h3><button class="close-btn" type="button" onclick="document.getElementById('landedCostFormModal').classList.remove('active')">&times;</button></div>
+<div class="modal-body"><form id="landedCostForm" onsubmit="event.preventDefault();">
+<label>فاتورة المشتريات المرحلة *</label><select id="landedInvoice" required><option value="">اختر فاتورة</option></select>
+<label>مصدر تكلفة النقل *</label><select id="landedSourceType" required><option value="EXTERNAL_TREASURY">نقل خارجي مدفوع من الخزنة</option><option value="VEHICLE_EXPENSE">تحميل جزء من مصروف سيارة المصنع</option><option value="EXTERNAL_SUPPLIER">نقل خارجي آجل على مورد</option></select>
+<div id="landedTreasuryWrap"><label>الخزنة التي دفعت النقل *</label><select id="landedTreasury"><option value="">اختر الخزنة</option></select></div>
+<div id="landedVehicleExpenseWrap" class="hidden"><label>مصروف السيارة المرتبط برحلة *</label><select id="landedVehicleExpense"><option value="">اختر مصروف السيارة</option></select><div id="landedVehicleExpenseHint" class="item-hint"></div></div>
+<div id="landedSupplierWrap" class="hidden"><label>مورد النقل *</label><select id="landedSupplier"><option value="">اختر المورد</option></select><label>تاريخ تكلفة النقل *</label><input id="landedCostDate" type="date"></div>
+<label>مبلغ النقل *</label><input id="landedAmount" type="number" min="0.01" step="0.01" required>
+<label>ملاحظات</label><textarea id="landedNotes" rows="2"></textarea>
+<button id="saveLandedCostBtn" class="btn" type="submit">حفظ تكلفة النقل</button><div id="landedCostFormMsg" class="status hidden"></div>
+</form></div></div></div>
+
+<div id="sectionFixedAssets" class="sub-section hidden">
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<div class="card" id="fixedAssetsCard">
+<div class="row" style="justify-content:space-between"><h2>🏭 الأصول الثابتة</h2><button id="addFixedAssetBtn" class="btn" type="button" style="width:auto;">＋ شراء معدة أو آلة</button></div>
+<p class="desc">تُسجل المعدات والآلات على حساب الأصول الثابتة، سواء تم الشراء نقدًا أو على حساب مورد.</p>
+<div id="fixedAssetsMsg" class="status hidden"></div><div id="fixedAssetsList"><div class="empty">جارٍ تحميل الأصول...</div></div>
+</div>
+</div>
+<div id="fixedAssetFormModal" class="modal-form"><div class="modal-form-content"><div class="modal-header"><h3>شراء معدة أو آلة إنتاج</h3><button class="close-btn" type="button" onclick="document.getElementById('fixedAssetFormModal').classList.remove('active')">&times;</button></div>
+<div class="modal-body"><form id="fixedAssetForm" onsubmit="event.preventDefault();">
+<label>طريقة الشراء *</label><select id="fixedAssetPurchaseType"><option value="CASH">نقدي من خزنة</option><option value="SUPPLIER_CREDIT">آجل على مورد</option></select>
+<div id="fixedAssetTreasuryWrap"><label>الخزنة *</label><select id="fixedAssetTreasury"><option value="">اختر الخزنة</option></select></div>
+<div id="fixedAssetSupplierWrap" class="hidden"><label>المورد *</label><select id="fixedAssetSupplier"><option value="">اختر المورد</option></select></div>
+<label>اسم المعدة أو الآلة *</label><input id="fixedAssetName" required maxlength="200">
+<label>تاريخ الشراء *</label><input id="fixedAssetDate" type="date" required>
+<label>قيمة الشراء *</label><input id="fixedAssetAmount" type="number" min="0.01" step="0.01" required>
+<label>مكان المعدة</label><input id="fixedAssetLocation" maxlength="200">
+<label>الرقم المسلسل</label><input id="fixedAssetSerial" maxlength="120">
+<label>ملاحظات</label><textarea id="fixedAssetNotes" rows="2"></textarea>
+<button id="saveFixedAssetBtn" class="btn" type="submit">حفظ الأصل الثابت</button><div id="fixedAssetFormMsg" class="status hidden"></div>
+</form></div></div></div>
+
+<div id="recordCancelModal" class="modal-form"><div class="modal-form-content"><div class="modal-header"><h3 id="recordCancelTitle">إلغاء المستند</h3><button class="close-btn" type="button" onclick="document.getElementById('recordCancelModal').classList.remove('active')">&times;</button></div><div class="modal-body"><form id="recordCancelForm" onsubmit="event.preventDefault();">
+<div id="cancelRefundTreasuryWrap"><label>خزنة استرداد المبلغ فعليًا *</label><select id="cancelRefundTreasury"><option value="">اختر خزنة الاسترداد</option></select></div>
+<label>سبب الإلغاء *</label><textarea id="recordCancelReason" rows="3" required></textarea>
+<button id="confirmRecordCancelBtn" class="btn danger" type="submit">تأكيد الإلغاء</button><div id="recordCancelMsg" class="status hidden"></div>
+</form></div></div></div>
 
 <div id="sectionPartners" class="sub-section hidden">
 <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
@@ -1725,6 +1770,7 @@ try {
   let canViewPurchases=false, canManagePurchases=false;
   let canViewSupplierPayments=false;
   let canViewPurchaseReturns=false;
+  let canViewFixedAssets=false, canManageFixedAssets=false, canViewLandedCosts=false, canManageLandedCosts=false;
   let canViewStockTransfers=false;
   let canViewTreasuryTransfers=false;
   let canViewReports=false;
@@ -1735,6 +1781,8 @@ try {
   let productsCache=[], categories=[], units=[], cartonUnitId=null, packagingOptionsCache=[];
   let locationsCache=[], treasuriesCache=[], stockCache=[], customersCache=[], salesCache=[], collectionsCache=[], suppliersCache=[], purchasesCache=[], recipesCache=[], productionCache=[], tripsCache=[], partnersCache=[], usersCache=[], purchaseReturnsCache=[], supplierPaymentsCache=[], reservationsCache=[];
   let customerGovernoratesCache=[], customerCitiesCache=[], customerAreasCache=[];
+  let expenseTypesCache=[], expenseAccountCodes={}, supplierPayablesCache=[], landedCostsCache=[], fixedAssetsCache=[], vehicleExpensesCache=[];
+  let activeCancelRequest=null;
   let customerGeoLoaded=false;
   let invoiceItemCounter=0, purchaseItemCounter=0, recipeItemCounter=0, returnItemCounter=0, exchangeItemCounter=0, stItemCounter=0, prItemCounter=0;
 
@@ -1851,13 +1899,15 @@ function showLogin(){ hideSections(); if($("login")) $("login").classList.remove
 function showApp(){ hideSections(); if($("nav")) $("nav").classList.remove("hidden"); page("home"); }
 
 window.openSection = function(name) {
-  const sectionMenuMap = { products:"menuProducts", locations:"menuLocations", stock:"menuStock", stockTransfers:"menuStockTransfers", recipes:"menuRecipes", production:"menuProduction", reservations:"menuReservations", suppliers:"menuSuppliers", purchases:"menuPurchases", purchaseReturns:"menuPurchaseReturns", supplierPayments:"menuSupplierPayments", expenses:"menuExpenses", customers:"menuCustomers", sales:"menuSales", priceLists:"menuPriceLists", collections:"menuCollections", trips:"menuTrips", salesReps:"menuSalesReps", treasuries:"menuTreasuries", treasuryTransfers:"menuTreasuryTransfers", partners:"menuPartners", accounting:"menuAccounting", reports:"menuReports", users:"menuUsers", settings:"menuSettings" };
+  const sectionMenuMap = { products:"menuProducts", locations:"menuLocations", stock:"menuStock", stockTransfers:"menuStockTransfers", recipes:"menuRecipes", production:"menuProduction", reservations:"menuReservations", suppliers:"menuSuppliers", purchases:"menuPurchases", purchaseReturns:"menuPurchaseReturns", landedCosts:"menuLandedCosts", fixedAssets:"menuFixedAssets", supplierPayments:"menuSupplierPayments", expenses:"menuExpenses", customers:"menuCustomers", sales:"menuSales", priceLists:"menuPriceLists", collections:"menuCollections", trips:"menuTrips", salesReps:"menuSalesReps", treasuries:"menuTreasuries", treasuryTransfers:"menuTreasuryTransfers", partners:"menuPartners", accounting:"menuAccounting", reports:"menuReports", users:"menuUsers", settings:"menuSettings" };
   const allowedIds = getRoleMenuIds(currentRoleCode);
   const requestedMenuId = sectionMenuMap[name];
   if(!isSystemAdmin && (!requestedMenuId || !allowedIds.has(requestedMenuId))) {
     showToast("هذا القسم غير متاح لحسابك.", "error");
     return;
   }
+  if(!isSystemAdmin && name==="landedCosts" && !canViewLandedCosts){showToast("ليس لديك صلاحية عرض تكاليف نقل الخامات.","error");return;}
+  if(!isSystemAdmin && name==="fixedAssets" && !canViewFixedAssets){showToast("ليس لديك صلاحية عرض الأصول الثابتة.","error");return;}
   if($("home")) $("home").classList.add("hidden"); 
   if($("tasks")) $("tasks").classList.add("hidden"); 
   if($("data")) $("data").classList.remove("hidden");
@@ -1880,6 +1930,8 @@ window.openSection = function(name) {
   if (name === "salesReps") loadSalesReps();
   if (name === "supplierPayments") loadSupplierPayments();
   if (name === "purchaseReturns") { loadPurchaseReturns(); fillPurchaseReturnInvoiceSelect(); }
+  if (name === "landedCosts") loadLandedCosts();
+  if (name === "fixedAssets") loadFixedAssets();
   if (name === "reports") loadReports();
   if (name === "stockTransfers") { fillStockTransferSelects(); if(!$("stItems").children.length) addStItemRow(); }
   if (name === "production") { fillProductionRecipeSelect(); fillProductionLocationSelect(); }
@@ -1974,7 +2026,10 @@ function supplierName(id){ return suppliersCache.find(x=>String(x.supplier_id)==
 function productName(id){ return productsCache.find(x=>String(x.product_id)===String(id))?.product_name||"غير محدد"; }
 function paymentTypeName(v){ return({CASH:"نقدي",CREDIT:"آجل",BANK_TRANSFER:"تحويل بنكي",INSTAPAY:"إنستاباي",CHEQUE:"شيك",MIXED:"مختلط"})[v]||v||"غير محدد"; }
 function tripNumber(id){ return tripsCache.find(x=>String(x.trip_id)===String(id))?.trip_number||"—"; }
-function expenseTypeName(v){ return({FUEL:"وقود",MAINTENANCE:"صيانة",RENT:"إيجارات",SALARY:"رواتب",OTHER:"أخرى"})[v]||v||"غير محدد"; }
+function expenseTypeName(v){ const found=expenseTypesCache.find(x=>String(x.expense_type)===String(v)); return found?.expense_type || ({FUEL:"وقود",MAINTENANCE:"صيانة",RENT:"إيجارات",SALARY:"رواتب",OTHER:"أخرى"})[v] || v || "غير محدد"; }
+function expenseGroupName(v){ return ({PRODUCTION:"مصروفات الإنتاج",SELLING_DISTRIBUTION:"مصروفات البيع والتوزيع",ADMIN_GENERAL:"المصروفات الإدارية والعامة"})[v]||v||"مصروفات أخرى"; }
+function expenseDisplayGroup(type,group){const vehicleNames=["سولار السيارات","كارتات السيارات","مصاريف الطريق","زيوت وتغيير زيت السيارات","صيانة السيارات","أجور مرافق السيارة"];return vehicleNames.includes(type)?"مصروفات السيارة":expenseGroupName(group);}
+function expenseAccountCode(v){ const x=expenseTypesCache.find(t=>String(t.expense_type)===String(v)); return x?.account_id ? (expenseAccountCodes[String(x.account_id)]||"") : ""; }
 const locationTypes={ MAIN_WAREHOUSE:"مخزن رئيسي",FRIDGE:"ثلاجة",VEHICLE:"سيارة",FACTORY:"مصنع",SHOWROOM:"معرض" };
 function locationTypeName(value){ return locationTypes[value]||value||"غير محدد"; }
 const treasuryTypes={CASH:"نقدية (كاش)", BANK:"حساب بنكي", INSTAPAY:"إنستاباي / محفظة", PARTNER:"خزنة شريك"};
@@ -2045,7 +2100,7 @@ async function loadCompanySettings() {
 
 // ========== قوائم الاختيار ==========
 function fillTreasurySelects() {
-  const selects = ["expenseTreasury", "purchaseTreasury", "collectionTreasury", "returnTreasury", "spTreasury", "ttSource", "ttDest", "ptTreasury", "qcTreasury"];
+  const selects = ["expenseTreasury", "purchaseTreasury", "collectionTreasury", "returnTreasury", "spTreasury", "ttSource", "ttDest", "ptTreasury", "qcTreasury", "landedTreasury", "fixedAssetTreasury", "cancelRefundTreasury"];
   selects.forEach(id => {
     const el = $(id); if (!el) return;
     const cur = el.value; el.replaceChildren();
@@ -2065,6 +2120,9 @@ function fillCollectionTripSelect(){ const el=$("collectionTrip");if(!el)return;
 function fillPurchaseSupplierSelect(){ const el=$("purchaseSupplier");if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر المورد";el.appendChild(first); suppliersCache.filter(c=>c.is_active).forEach(c=>{ const op=document.createElement("option");op.value=String(c.supplier_id);op.textContent=c.supplier_name+" ("+c.supplier_code+")";el.appendChild(op); }); el.value=cur; }
 function fillPurchaseLocationSelect(){ const el=$("purchaseLocation");if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر الموقع";el.appendChild(first); locationsCache.filter(l=>l.is_active).forEach(l=>{ const op=document.createElement("option");op.value=String(l.location_id);op.textContent=l.location_name+" ("+l.location_code+")";el.appendChild(op); }); el.value=cur; }
 function fillSupplierSelect(){ const el=$("spSupplier"); if(!el)return; const cur=el.value; el.replaceChildren(); const first=document.createElement("option"); first.value=""; first.textContent="اختر المورد"; el.appendChild(first); suppliersCache.filter(s=>s.is_active).forEach(s=>{ const op=document.createElement("option"); op.value=String(s.supplier_id); op.textContent=s.supplier_name; el.appendChild(op); }); el.value=cur; }
+function fillLandedSupplierSelect(){const el=$("landedSupplier");if(!el)return;const cur=el.value;el.replaceChildren();const f=document.createElement("option");f.value="";f.textContent="اختر المورد";el.appendChild(f);suppliersCache.filter(x=>x.is_active).forEach(x=>{const o=document.createElement("option");o.value=String(x.supplier_id);o.textContent=x.supplier_name;el.appendChild(o);});el.value=cur;}
+function fillFixedAssetSupplierSelect(){const el=$("fixedAssetSupplier");if(!el)return;const cur=el.value;el.replaceChildren();const f=document.createElement("option");f.value="";f.textContent="اختر المورد";el.appendChild(f);suppliersCache.filter(x=>x.is_active).forEach(x=>{const o=document.createElement("option");o.value=String(x.supplier_id);o.textContent=x.supplier_name;el.appendChild(o);});el.value=cur;}
+function fillLandedInvoiceSelect(){const el=$("landedInvoice");if(!el)return;const cur=el.value;el.replaceChildren();const f=document.createElement("option");f.value="";f.textContent="اختر فاتورة مشتريات مرحلة";el.appendChild(f);purchasesCache.filter(x=>x.status==="POSTED").forEach(x=>{const o=document.createElement("option");o.value=String(x.purchase_invoice_id);o.textContent=(x.invoice_number||("فاتورة "+x.purchase_invoice_id))+" | "+supplierName(x.supplier_id)+" | "+formatDate(x.invoice_date)+" | "+fmt(x.net_total);el.appendChild(o);});el.value=cur;}
 function fillCollectionCustomerSelect(){ const el=$("collectionCustomer"); if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر العميل";el.appendChild(first); customersCache.filter(c=>c.is_active).forEach(c=>{ const op=document.createElement("option");op.value=String(c.customer_id);op.textContent=c.customer_name;el.appendChild(op); }); el.value=cur; }
 function fillReturnCustomerSelect(){ const el=$("returnCustomer"); if(!el)return; const cur=el.value;el.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر العميل";el.appendChild(first); customersCache.filter(c=>c.is_active).forEach(c=>{ const op=document.createElement("option");op.value=String(c.customer_id);op.textContent=c.customer_name;el.appendChild(op); }); el.value=cur; }
 function fillStockFormSelects(){ const locEl=$("stockLocation");if(locEl){ const curLoc=locEl.value;locEl.replaceChildren(); const first=document.createElement("option");first.value="";first.textContent="اختر الموقع";locEl.appendChild(first); locationsCache.filter(l=>l.is_active).forEach(l=>{ const op=document.createElement("option");op.value=String(l.location_id);op.textContent=l.location_name+" ("+l.location_code+")";locEl.appendChild(op); }); locEl.value=curLoc; } const prodEl=$("stockProduct");if(prodEl){ const curProd=prodEl.value;prodEl.replaceChildren(); const firstP=document.createElement("option");firstP.value="";firstP.textContent="اختر المنتج";prodEl.appendChild(firstP); productsCache.filter(p=>p.is_active).forEach(p=>{ const op=document.createElement("option");op.value=String(p.product_id);op.textContent=p.product_name+" ("+p.product_code+")";prodEl.appendChild(op); }); prodEl.value=curProd; } }
@@ -2149,6 +2207,8 @@ async function userInfo(user){
       if($("tripLoadApprovals")) $("tripLoadApprovals").classList.toggle("hidden",!(canApproveTripLoads || canDispatchTripLoads));
     }catch(e){}
     try{ canViewExpenses=await permission("EXPENSES_VIEW") || isSystemAdmin; canManageExpenses=await permission("EXPENSES_MANAGE") || isSystemAdmin; if($("menuExpenses")) $("menuExpenses").classList.toggle("hidden",!canViewExpenses); if($("expensesCard")) $("expensesCard").classList.toggle("hidden",!canViewExpenses); if($("addExpenseBtn")) $("addExpenseBtn").classList.toggle("hidden",!canManageExpenses); }catch(e){}
+    try{ canManageLandedCosts=await permission("PURCHASES_MANAGE") || isSystemAdmin; canViewLandedCosts=await permission("PURCHASES_VIEW") || canManageLandedCosts || isSystemAdmin; if($("menuLandedCosts")) $("menuLandedCosts").classList.toggle("hidden",!canViewLandedCosts); if($("addLandedCostBtn")) $("addLandedCostBtn").classList.toggle("hidden",!canManageLandedCosts); }catch(e){}
+    try{ canManageFixedAssets=await permission("ACCOUNTING_MANAGE") || isSystemAdmin; canViewFixedAssets=await permission("ACCOUNTING_VIEW") || canManageFixedAssets || isSystemAdmin; if($("menuFixedAssets")) $("menuFixedAssets").classList.toggle("hidden",!canViewFixedAssets); if($("addFixedAssetBtn")) $("addFixedAssetBtn").classList.toggle("hidden",!canManageFixedAssets); }catch(e){}
     try{ canViewPartners=await permission("PARTNERS_VIEW") || isSystemAdmin; canManagePartners=await permission("PARTNERS_MANAGE") || isSystemAdmin; if($("menuPartners")) $("menuPartners").classList.toggle("hidden",!canViewPartners); if($("partnersCard")) $("partnersCard").classList.toggle("hidden",!canViewPartners); if($("addPartnerBtn")) $("addPartnerBtn").classList.toggle("hidden",!canManagePartners); if($("addPartnerTransactionBtn")) $("addPartnerTransactionBtn").classList.toggle("hidden",!canManagePartners); }catch(e){}
     try{ canViewRecipes=await permission("RECIPES_VIEW") || isSystemAdmin; canManageRecipes=await permission("RECIPES_MANAGE") || isSystemAdmin; if($("menuRecipes")) $("menuRecipes").classList.toggle("hidden",!canViewRecipes); if($("recipesCard")) $("recipesCard").classList.toggle("hidden",!canViewRecipes); if($("addRecipeBtn")) $("addRecipeBtn").classList.toggle("hidden",!canManageRecipes); }catch(e){}
     try{ canViewProduction=await permission("PRODUCTION_VIEW") || isSystemAdmin; canManageProduction=await permission("PRODUCTION_MANAGE") || isSystemAdmin; if($("menuProduction")) $("menuProduction").classList.toggle("hidden",!canViewProduction); if($("productionCard")) $("productionCard").classList.toggle("hidden",!canViewProduction); if($("addProductionBtn")) $("addProductionBtn").classList.toggle("hidden",!canManageProduction); }catch(e){}
@@ -2214,6 +2274,7 @@ async function userInfo(user){
       if($("menuSettings")) $("menuSettings").classList.add("hidden");
     }
 
+    if(canViewExpenses || canManageLandedCosts || isSystemAdmin){try{await loadExpenseTypes();}catch(e){console.warn("تعذر تحميل دليل أنواع المصروفات",e);}}
     applyRoleWorkspace();
     if($("tasks") && !$("tasks").classList.contains("hidden")) loadTasks();
   } catch(e) { if($("userInfo")) $("userInfo").textContent = "خطأ في الاتصال."; }
@@ -2225,8 +2286,8 @@ function getRoleMenuIds(roleCode){
     SALES_MANAGER: ["menuProducts","menuCustomers","menuSales","menuPriceLists","menuCollections","menuTrips","menuReports"],
     WAREHOUSE_KEEPER: ["menuProducts","menuLocations","menuStock","menuStockTransfers","menuTrips"],
     PRODUCTION_MANAGER: ["menuProducts","menuLocations","menuStock","menuRecipes","menuProduction"],
-    ACCOUNTANT: ["menuSuppliers","menuPurchases","menuPurchaseReturns","menuSupplierPayments","menuExpenses","menuCustomers","menuSales","menuPriceLists","menuCollections","menuTrips","menuTreasuries","menuTreasuryTransfers","menuPartners","menuAccounting","menuReports"],
-    GENERAL_MANAGER: ["menuProducts","menuLocations","menuStock","menuStockTransfers","menuRecipes","menuProduction","menuReservations","menuSuppliers","menuPurchases","menuPurchaseReturns","menuSupplierPayments","menuExpenses","menuCustomers","menuSales","menuPriceLists","menuCollections","menuTrips","menuTreasuries","menuTreasuryTransfers","menuPartners","menuAccounting","menuReports"]
+    ACCOUNTANT: ["menuSuppliers","menuPurchases","menuPurchaseReturns","menuSupplierPayments","menuExpenses","menuLandedCosts","menuFixedAssets","menuCustomers","menuSales","menuPriceLists","menuCollections","menuTrips","menuTreasuries","menuTreasuryTransfers","menuPartners","menuAccounting","menuReports"],
+    GENERAL_MANAGER: ["menuProducts","menuLocations","menuStock","menuStockTransfers","menuRecipes","menuProduction","menuReservations","menuSuppliers","menuPurchases","menuPurchaseReturns","menuLandedCosts","menuFixedAssets","menuSupplierPayments","menuExpenses","menuCustomers","menuSales","menuPriceLists","menuCollections","menuTrips","menuTreasuries","menuTreasuryTransfers","menuPartners","menuAccounting","menuReports"]
   };
   return new Set(roleMenus[roleCode] || []);
 }
@@ -2246,10 +2307,10 @@ function getRoleQuickLinks(roleCode){
       ["production","🏭","أوامر التشغيل"],["recipes","📝","الوصفات"],["stock","📊","أرصدة المخزون"],["locations","🏭","المواقع والمخازن"]
     ],
     ACCOUNTANT: [
-      ["accounting","🧮","المحاسبة"],["treasuries","💵","الخزائن"],["customers","👥","العملاء"],["suppliers","🚚","الموردون"],["sales","🧾","فواتير البيع"],["purchases","🛒","المشتريات"],["expenses","🧾","المصروفات"],["reports","📈","التقارير"]
+      ["accounting","🧮","المحاسبة"],["treasuries","💵","الخزائن"],["customers","👥","العملاء"],["suppliers","🚚","الموردون"],["sales","🧾","فواتير البيع"],["purchases","🛒","المشتريات"],["expenses","🧾","المصروفات"],["landedCosts","🚚","تكلفة نقل الخامات"],["fixedAssets","🏭","الأصول الثابتة"],["reports","📈","التقارير"]
     ],
     GENERAL_MANAGER: [
-      ["reports","📈","التقارير"],["sales","🧾","المبيعات"],["purchases","🛒","المشتريات"],["production","🏭","الإنتاج"],["stock","📊","المخزون"],["accounting","🧮","المحاسبة"],["trips","🚐","الجولات"]
+      ["reports","📈","التقارير"],["sales","🧾","المبيعات"],["purchases","🛒","المشتريات"],["landedCosts","🚚","تكلفة نقل الخامات"],["fixedAssets","🏭","الأصول الثابتة"],["production","🏭","الإنتاج"],["stock","📊","المخزون"],["accounting","🧮","المحاسبة"],["trips","🚐","الجولات"]
     ]
   };
   return links[roleCode] || [];
@@ -2263,7 +2324,10 @@ function applyRoleWorkspace(){
   }
   const allowedMenuIds = getRoleMenuIds(currentRoleCode);
   document.querySelectorAll("#dataDashboard .dash-item").forEach(el=>{
-    el.classList.toggle("hidden", !allowedMenuIds.has(el.id));
+    let allowed=allowedMenuIds.has(el.id);
+    if(el.id==="menuLandedCosts")allowed=allowed&&canViewLandedCosts;
+    if(el.id==="menuFixedAssets")allowed=allowed&&canViewFixedAssets;
+    el.classList.toggle("hidden", !allowed);
   });
   document.querySelectorAll("#dataDashboard .dashboard-group").forEach(group=>{
     const hasVisibleItem = Array.from(group.querySelectorAll(".dash-item")).some(item=>!item.classList.contains("hidden"));
@@ -3462,13 +3526,14 @@ if($("quickCollectForm")) $("quickCollectForm").addEventListener("submit", async
 
 // ========== الموردين ==========
 async function loadSuppliers(){ 
-  if(!navigator.onLine) { suppliersCache=getCache('suppliers'); renderSuppliers(); return; } 
+  if(!navigator.onLine) { supplierPayablesCache=[]; suppliersCache=getCache('suppliers'); renderSuppliers(); return; } 
   const {data}=await db.from("suppliers").select("*").order("supplier_id"); 
   suppliersCache=data||[]; 
   saveCache('suppliers', suppliersCache); 
+  supplierPayablesCache=[];try{const payable=await db.rpc("get_supplier_payable_balances");if(!payable.error)supplierPayablesCache=payable.data||[];}catch(e){supplierPayablesCache=[];}
   renderSuppliers(); 
   fillPurchaseSupplierSelect(); 
-  fillSupplierSelect(); 
+  fillSupplierSelect(); fillLandedSupplierSelect(); fillFixedAssetSupplierSelect();
   fillSupplierFilterSelects(); 
 }
 function renderSuppliers(){ 
@@ -3480,7 +3545,8 @@ function renderSuppliers(){
   found.forEach(s=>{ 
     const card=document.createElement("div");
     card.className="product";
-    card.innerHTML=`<div class="pname">${s.supplier_name}</div><div class="details">كود: ${s.supplier_code||'-'} | موبايل: ${s.phone||'-'}</div>`; 
+    const payable=supplierPayablesCache.find(x=>String(x.supplier_id)===String(s.supplier_id));
+    card.innerHTML=`<div class="pname">${s.supplier_name}</div><div class="details">كود: ${s.supplier_code||'-'} | موبايل: ${s.phone||'-'} | الرصيد المستحق: ${payable?fmt(payable.current_payable):"غير متاح"}</div>`; 
     const actions=document.createElement("div"); 
     actions.className="actions"; 
     const stmt=document.createElement("button"); 
@@ -4480,7 +4546,7 @@ async function loadPurchases(){
   purchasesCache=data||[]; 
   saveCache('purchases', purchasesCache); 
   renderPurchases(); 
-  fillPurchaseReturnInvoiceSelect(); 
+  fillPurchaseReturnInvoiceSelect(); fillLandedInvoiceSelect(); 
 }
 function renderPurchases(){ 
   const box=$("purchasesList"); if(!box) return; 
@@ -5421,6 +5487,33 @@ if($("addCollectionBtn")) $("addCollectionBtn").addEventListener("click",()=>{
 });
 
 // ========== المصروفات ==========
+async function loadExpenseTypes(){
+  if(!navigator.onLine)return;
+  const {data,error}=await db.from("expense_types").select("expense_type,account_id,category_group,cost_treatment,is_active").eq("is_active",true).order("category_group").order("expense_type");
+  if(error)throw error;
+  expenseTypesCache=(data||[]).filter(x=>x.cost_treatment==="PERIOD_EXPENSE" && x.account_id);
+  const ids=[...new Set(expenseTypesCache.map(x=>Number(x.account_id)).filter(Boolean))];
+  expenseAccountCodes={};
+  if(ids.length){const a=await db.from("chart_of_accounts").select("account_id,account_code").in("account_id",ids);if(!a.error)(a.data||[]).forEach(x=>expenseAccountCodes[String(x.account_id)]=x.account_code);}
+  fillExpenseTypeSelects();
+}
+function fillExpenseTypeSelects(){
+  ["expenseType","expenseTypeFilter"].forEach(id=>{
+    const el=$(id);if(!el)return;const current=el.value;el.replaceChildren();
+    const first=document.createElement("option");first.value="";first.textContent=id==="expenseType"?"اختر نوع المصروف":"كل البنود";el.appendChild(first);
+    const vehicleNames=["سولار السيارات","كارتات السيارات","مصاريف الطريق","زيوت وتغيير زيت السيارات","صيانة السيارات","أجور مرافق السيارة"];
+    const groups=["PRODUCTION","SELLING_DISTRIBUTION","ADMIN_GENERAL"];
+    groups.forEach(group=>{
+      const types=expenseTypesCache.filter(x=>x.category_group===group && !(group==="SELLING_DISTRIBUTION" && vehicleNames.includes(x.expense_type)));if(!types.length)return;
+      const og=document.createElement("optgroup");og.label=expenseGroupName(group);
+      types.forEach(x=>{const op=document.createElement("option");op.value=x.expense_type;op.textContent=x.expense_type+(expenseAccountCode(x.expense_type)?" — "+expenseAccountCode(x.expense_type):"");og.appendChild(op);});
+      el.appendChild(og);
+    });
+    const vehicle=expenseTypesCache.filter(x=>vehicleNames.includes(x.expense_type));
+    if(vehicle.length){const og=document.createElement("optgroup");og.label="مصروفات السيارة";vehicle.forEach(x=>{const op=document.createElement("option");op.value=x.expense_type;op.textContent=x.expense_type+(expenseAccountCode(x.expense_type)?" — "+expenseAccountCode(x.expense_type):"");og.appendChild(op);});el.appendChild(og);}
+    if([...el.options].some(o=>o.value===current))el.value=current;
+  });
+}
 function resetExpenseForm(){ 
   $("expenseForm").reset(); 
   $("expenseDate").value=todayISO(); 
@@ -5433,6 +5526,7 @@ function resetExpenseForm(){
 async function loadExpenses(){ 
     if(!canViewExpenses)return; 
     clear($("expensesMsg")); 
+    try{await loadExpenseTypes();}catch(e){msg($("expensesMsg"),"تعذر تحميل أنواع المصروفات: "+err(e),"error");return;}
     const box = $("expensesList"); if(box) box.innerHTML = "جارٍ التحميل..."; 
     if(!navigator.onLine){ if(box) box.innerHTML="<div class='empty'>أنت أوفلاين.</div>"; return; } 
     const from = $("expenseFromDate").value; 
@@ -5445,7 +5539,7 @@ async function loadExpenses(){
     const {data, error} = await query; 
     if(error){ msg($("expensesMsg"),"تعذر التحميل: "+err(error),"error"); if(box) box.innerHTML=""; return; } 
     if(box) { 
-      box.innerHTML = (data||[]).map(e=>`<div class="product"><div class="pname">🧾 ${expenseTypeName(e.expense_type)}</div><div class="details">المبلغ: ${fmt(e.amount)} | التاريخ: ${formatDate(e.expense_date)}</div></div>`).join(""); 
+      box.innerHTML = (data||[]).map(e=>{const t=expenseTypesCache.find(x=>x.expense_type===e.expense_type);return `<div class="product"><div class="pname">🧾 ${expenseTypeName(e.expense_type)}</div><div class="details">المجموعة: ${expenseDisplayGroup(e.expense_type,t?.category_group)} | الحساب: ${expenseAccountCode(e.expense_type)||"—"} | المبلغ: ${fmt(e.amount)} | التاريخ: ${formatDate(e.expense_date)}</div></div>`;}).join(""); 
       if(!data || !data.length) box.innerHTML = "<div class='empty'>لا توجد مصروفات مطابقة.</div>"; 
     } 
 }
@@ -5478,9 +5572,9 @@ if($("viewExpensesStatementBtn")) $("viewExpensesStatementBtn").addEventListener
     const { data, error } = await query; 
     if(error) { $("genericStatementHeader").innerHTML = "خطأ: "+err(error); return; }
     let total = 0; 
-    let html = `<thead><tr><th>التاريخ</th><th>البند</th><th>المبلغ</th></tr></thead><tbody>`;
-    (data||[]).forEach(row => { total += Number(row.amount); html += `<tr><td>${formatDate(row.expense_date)}</td><td>${expenseTypeName(row.expense_type)}</td><td>${fmt(row.amount)}</td></tr>`; });
-    if(!data || !data.length) html += `<tr><td colspan="3">لا توجد مصروفات</td></tr>`; 
+    let html = `<thead><tr><th>التاريخ</th><th>البند</th><th>الحساب</th><th>المبلغ</th></tr></thead><tbody>`;
+    (data||[]).forEach(row => { total += Number(row.amount); html += `<tr><td>${formatDate(row.expense_date)}</td><td>${expenseTypeName(row.expense_type)}</td><td>${expenseAccountCode(row.expense_type)||"—"}</td><td>${fmt(row.amount)}</td></tr>`; });
+    if(!data || !data.length) html += `<tr><td colspan="4">لا توجد مصروفات</td></tr>`; 
     html += `</tbody>`;
     $("genericStatementItems").innerHTML = html; 
     $("genericStatementHeader").innerHTML = `<div><strong>البند:</strong> ${typeNameStr}</div><div><strong>الفترة:</strong> ${periodText || "كل الفترات"}</div>`; 
@@ -5511,6 +5605,53 @@ if($("expenseForm")) $("expenseForm").addEventListener("submit",async e=>{
     }catch(e){ msg($("expenseFormMsg"),"خطأ: "+err(e),"error"); }
     finally{ busy(button,false,"","حفظ"); }
 });
+
+// ========== تكلفة نقل الخامات والأصول الثابتة ==========
+function setLandedSourceFields(){
+  const type=$("landedSourceType")?.value||"EXTERNAL_TREASURY";
+  $("landedTreasuryWrap")?.classList.toggle("hidden",type!=="EXTERNAL_TREASURY");
+  $("landedVehicleExpenseWrap")?.classList.toggle("hidden",type!=="VEHICLE_EXPENSE");
+  $("landedSupplierWrap")?.classList.toggle("hidden",type!=="EXTERNAL_SUPPLIER");
+  if($("landedTreasury"))$("landedTreasury").required=type==="EXTERNAL_TREASURY";
+  if($("landedVehicleExpense"))$("landedVehicleExpense").required=type==="VEHICLE_EXPENSE";
+  if($("landedSupplier"))$("landedSupplier").required=type==="EXTERNAL_SUPPLIER";
+  if($("landedCostDate"))$("landedCostDate").required=type==="EXTERNAL_SUPPLIER";
+}
+function fillLandedVehicleExpenses(){
+  const el=$("landedVehicleExpense");if(!el)return;const cur=el.value;el.replaceChildren();const f=document.createElement("option");f.value="";f.textContent="اختر مصروف سيارة مرتبطًا برحلة";el.appendChild(f);
+  const allowed=["سولار السيارات","كارتات السيارات","مصاريف الطريق","أجور مرافق السيارة"];
+  vehicleExpensesCache.forEach(x=>{const allocated=landedCostsCache.filter(c=>Number(c.expense_id)===Number(x.expense_id)&&c.status==="ACTIVE").reduce((a,c)=>a+Number(c.amount||0),0);const remaining=Number(x.amount||0)-allocated;if(remaining<=0)return;const o=document.createElement("option");o.value=String(x.expense_id);o.textContent=expenseTypeName(x.expense_type)+" | "+formatDate(x.expense_date)+" | المتبقي "+fmt(remaining);o.dataset.remaining=String(remaining);el.appendChild(o);});el.value=cur;
+  if($("landedVehicleExpenseHint"))$("landedVehicleExpenseHint").textContent="تظهر المصروفات المرتبطة برحلة فقط. لا يمكن تحميل مبلغ يتجاوز المتبقي من المصروف.";
+}
+async function loadLandedCosts(){
+  if(!canViewLandedCosts)return;const box=$("landedCostsList");if(box)box.innerHTML="جارٍ التحميل...";clear($("landedCostsMsg"));
+  if(!navigator.onLine){if(box)box.innerHTML="<div class='empty'>اتصل بالإنترنت لعرض مستندات النقل.</div>";return;}
+  try{
+    const [lc,ex]=await Promise.all([db.from("purchase_landed_costs").select("*").order("landed_cost_id",{ascending:false}).limit(200),db.from("expenses").select("expense_id,expense_type,amount,trip_id,expense_date").in("expense_type",["سولار السيارات","كارتات السيارات","مصاريف الطريق","أجور مرافق السيارة"]).not("trip_id","is",null).order("expense_id",{ascending:false}).limit(300)]);
+    if(lc.error)throw lc.error;if(ex.error)throw ex.error;landedCostsCache=lc.data||[];vehicleExpensesCache=ex.data||[];
+    if(!purchasesCache.length)await loadPurchases();if(!suppliersCache.length)await loadSuppliers();if(!treasuriesCache.length)await loadTreasuries();
+    fillLandedInvoiceSelect();fillLandedSupplierSelect();fillTreasurySelects();fillLandedVehicleExpenses();renderLandedCosts();
+  }catch(e){msg($("landedCostsMsg"),"تعذر تحميل مستندات النقل: "+err(e),"error");if(box)box.innerHTML="";}
+}
+function landedSourceName(x){return ({EXTERNAL_TREASURY:"نقل خارجي من الخزنة",VEHICLE_EXPENSE:"تحميل من مصروف سيارة المصنع",EXTERNAL_SUPPLIER:"نقل خارجي آجل على مورد"})[x]||x||"غير محدد";}
+function renderLandedCosts(){
+  const box=$("landedCostsList");if(!box)return;box.replaceChildren();if(!landedCostsCache.length){box.innerHTML="<div class='empty'>لا توجد مستندات تكلفة نقل.</div>";return;}
+  landedCostsCache.forEach(x=>{const inv=purchasesCache.find(i=>String(i.purchase_invoice_id)===String(x.purchase_invoice_id));const card=document.createElement("div");card.className="product";const title=document.createElement("div");title.className="pname";title.textContent="🚚 تكلفة نقل رقم "+x.landed_cost_id;const details=document.createElement("div");details.className="details";const source=x.source_type==="EXTERNAL_SUPPLIER"?"المورد: "+supplierName(x.supplier_id):x.source_type==="EXTERNAL_TREASURY"?"المصدر: خزنة "+treasuryName(x.treasury_id):"المصدر: مصروف سيارة رقم "+(x.expense_id||"-");details.textContent="فاتورة: "+(inv?.invoice_number||x.purchase_invoice_id)+" | "+source+" | التاريخ: "+formatDate(x.cost_date)+" | المبلغ: "+fmt(x.amount)+" | الحالة: "+(x.status==="ACTIVE"?"نشط":"ملغي");card.append(title,details);const actions=document.createElement("div");actions.className="actions";const dist=document.createElement("button");dist.className="btn secondary";dist.textContent="عرض توزيع التكلفة";dist.onclick=()=>showLandedCostAllocation(x.landed_cost_id,card);actions.appendChild(dist);if(x.status==="ACTIVE"&&canManageLandedCosts){const b=document.createElement("button");b.className="btn danger";b.textContent="إلغاء المستند";b.onclick=()=>openRecordCancel("LANDED_COST",x.landed_cost_id,x.source_type);actions.appendChild(b);}card.appendChild(actions);box.appendChild(card);});
+}
+async function showLandedCostAllocation(id,card){let area=card.querySelector(".landed-allocation");if(area){area.remove();return;}area=document.createElement("div");area.className="landed-allocation";area.style.marginTop="10px";area.textContent="جارٍ تحميل توزيع التكلفة...";card.appendChild(area);try{const {data,error}=await db.from("purchase_landed_cost_allocations").select("product_id,allocated_amount,invoice_base_quantity,allocated_cost_per_base_unit").eq("landed_cost_id",id).order("product_id");if(error)throw error;if(!data?.length){area.textContent="لا توجد تفاصيل توزيع.";return;}const table=document.createElement("div");table.className="table-responsive";table.innerHTML="<table class='print-table'><thead><tr><th>الصنف</th><th>نصيب النقل</th><th>كمية الأساس</th><th>تكلفة النقل للوحدة</th></tr></thead><tbody></tbody></table>";const body=table.querySelector("tbody");data.forEach(a=>{const tr=document.createElement("tr");const name=productsCache.find(p=>String(p.product_id)===String(a.product_id))?.product_name||("صنف "+a.product_id);[name,fmt(a.allocated_amount),fmtQty(a.invoice_base_quantity),fmt(a.allocated_cost_per_base_unit)].forEach(v=>{const td=document.createElement("td");td.textContent=v;tr.appendChild(td);});body.appendChild(tr);});area.replaceChildren(table);}catch(e){area.textContent="تعذر عرض التوزيع: "+err(e);}}
+if($("addLandedCostBtn"))$("addLandedCostBtn").addEventListener("click",async()=>{if(!canManageLandedCosts)return;try{if(!purchasesCache.length)await loadPurchases();if(!suppliersCache.length)await loadSuppliers();if(!treasuriesCache.length)await loadTreasuries();await loadExpenseTypes();if(!landedCostsCache.length)await loadLandedCosts();fillLandedInvoiceSelect();fillLandedSupplierSelect();fillTreasurySelects();fillLandedVehicleExpenses();$("landedCostForm").reset();$("landedCostDate")&&($("landedCostDate").value=todayISO());$("landedCostFormMsg").className="status hidden";$("landedCostFormModal").classList.add("active");setLandedSourceFields();}catch(e){showToast("تعذر تجهيز النموذج: "+err(e),"error",7000);}});
+if($("landedSourceType"))$("landedSourceType").addEventListener("change",setLandedSourceFields);
+if($("landedCostForm"))$("landedCostForm").addEventListener("submit",async e=>{e.preventDefault();if(!canManageLandedCosts)return;const btn=$("saveLandedCostBtn");const invoiceId=Number($("landedInvoice").value),source=$("landedSourceType").value,amount=Number($("landedAmount").value),notes=$("landedNotes").value.trim();if(!invoiceId||!Number.isFinite(amount)||amount<=0){msg($("landedCostFormMsg"),"اختر الفاتورة وأدخل مبلغًا صحيحًا.","error");return;}busy(btn,true,"جارٍ الحفظ...","حفظ تكلفة النقل");try{let rpc,args;const payload={invoiceId,source,amount,treasuryId:source==="EXTERNAL_TREASURY"?Number($("landedTreasury").value)||null:null,expenseId:source==="VEHICLE_EXPENSE"?Number($("landedVehicleExpense").value)||null:null,supplierId:source==="EXTERNAL_SUPPLIER"?Number($("landedSupplier").value)||null:null,costDate:$("landedCostDate").value||todayISO(),notes};if(source==="EXTERNAL_SUPPLIER"){if(!payload.supplierId)throw new Error("اختر مورد النقل.");rpc="create_purchase_landed_cost_on_credit";const key="mm_landed_cost_pending";const rid=getRequestId(key,payload);args={p_invoice_id:invoiceId,p_supplier_id:payload.supplierId,p_amount:amount,p_cost_date:payload.costDate,p_request_id:rid,p_notes:notes||null};const r=await db.rpc(rpc,args);if(r.error)throw r.error;clearRequestId(key);}else{if(source==="EXTERNAL_TREASURY"&&!payload.treasuryId)throw new Error("اختر خزنة الدفع.");if(source==="VEHICLE_EXPENSE"&&!payload.expenseId)throw new Error("اختر مصروف السيارة.");rpc="create_purchase_landed_cost";const key="mm_landed_cost_pending";const rid=getRequestId(key,payload);args={p_invoice_id:invoiceId,p_source_type:source,p_amount:amount,p_treasury_id:payload.treasuryId,p_expense_id:payload.expenseId,p_request_id:rid,p_notes:notes||null};const r=await db.rpc(rpc,args);if(r.error)throw r.error;clearRequestId(key);}$("landedCostFormModal").classList.remove("active");showToast("تم تسجيل تكلفة النقل وتوزيعها على أصناف الفاتورة","success");await loadLandedCosts();await loadStock();if(canViewTreasuries)await loadTreasuries();}catch(e){msg($("landedCostFormMsg"),"تعذر حفظ تكلفة النقل: "+err(e),"error");}finally{busy(btn,false,"","حفظ تكلفة النقل");}});
+
+function setFixedAssetPurchaseFields(){const credit=$("fixedAssetPurchaseType")?.value==="SUPPLIER_CREDIT";$("fixedAssetTreasuryWrap")?.classList.toggle("hidden",credit);$("fixedAssetSupplierWrap")?.classList.toggle("hidden",!credit);if($("fixedAssetTreasury"))$("fixedAssetTreasury").required=!credit;if($("fixedAssetSupplier"))$("fixedAssetSupplier").required=credit;}
+async function loadFixedAssets(){if(!canViewFixedAssets)return;const box=$("fixedAssetsList");if(box)box.innerHTML="جارٍ التحميل...";clear($("fixedAssetsMsg"));if(!navigator.onLine){if(box)box.innerHTML="<div class='empty'>اتصل بالإنترنت لعرض الأصول.</div>";return;}try{const {data,error}=await db.from("fixed_assets").select("*").order("asset_id",{ascending:false}).limit(300);if(error)throw error;fixedAssetsCache=data||[];if(!suppliersCache.length)await loadSuppliers();if(!treasuriesCache.length)await loadTreasuries();renderFixedAssets();fillFixedAssetSupplierSelect();fillTreasurySelects();}catch(e){msg($("fixedAssetsMsg"),"تعذر تحميل الأصول: "+err(e),"error");if(box)box.innerHTML="";}}
+function renderFixedAssets(){const box=$("fixedAssetsList");if(!box)return;box.replaceChildren();if(!fixedAssetsCache.length){box.innerHTML="<div class='empty'>لا توجد أصول ثابتة مسجلة.</div>";return;}fixedAssetsCache.forEach(x=>{const card=document.createElement("div");card.className="product";const title=document.createElement("div");title.className="pname";title.textContent="🏭 "+x.asset_name+" ("+(x.asset_code||x.asset_id)+")";const details=document.createElement("div");details.className="details";const source=x.source_type==="SUPPLIER_CREDIT"?"شراء آجل من "+supplierName(x.supplier_id):"شراء نقدي من "+treasuryName(x.treasury_id);details.textContent=source+" | التاريخ: "+formatDate(x.acquisition_date)+" | التكلفة: "+fmt(x.acquisition_cost)+" | المكان: "+(x.location_description||"-")+" | الحالة: "+(x.status==="ACTIVE"?"نشط":"ملغي");card.append(title,details);if(x.status==="ACTIVE"&&canManageFixedAssets){const actions=document.createElement("div");actions.className="actions";const b=document.createElement("button");b.className="btn danger";b.textContent="إلغاء الأصل";b.onclick=()=>openRecordCancel("FIXED_ASSET",x.asset_id,x.source_type);actions.appendChild(b);card.appendChild(actions);}box.appendChild(card);});}
+if($("addFixedAssetBtn"))$("addFixedAssetBtn").addEventListener("click",async()=>{if(!canManageFixedAssets)return;try{if(!treasuriesCache.length)await loadTreasuries();if(!suppliersCache.length)await loadSuppliers();fillTreasurySelects();fillFixedAssetSupplierSelect();$("fixedAssetForm").reset();$("fixedAssetDate").value=todayISO();clear($("fixedAssetFormMsg"));setFixedAssetPurchaseFields();$("fixedAssetFormModal").classList.add("active");}catch(e){showToast("تعذر تجهيز نموذج الأصل: "+err(e),"error");}});
+if($("fixedAssetPurchaseType"))$("fixedAssetPurchaseType").addEventListener("change",setFixedAssetPurchaseFields);
+if($("fixedAssetForm"))$("fixedAssetForm").addEventListener("submit",async e=>{e.preventDefault();if(!canManageFixedAssets)return;const btn=$("saveFixedAssetBtn"),type=$("fixedAssetPurchaseType").value,name=$("fixedAssetName").value.trim(),date=$("fixedAssetDate").value,amount=Number($("fixedAssetAmount").value),treasury=Number($("fixedAssetTreasury").value)||null,supplier=Number($("fixedAssetSupplier").value)||null,location=$("fixedAssetLocation").value.trim(),serial=$("fixedAssetSerial").value.trim(),notes=$("fixedAssetNotes").value.trim();if(!name||!date||!Number.isFinite(amount)||amount<=0||(type==="CASH"&&!treasury)||(type==="SUPPLIER_CREDIT"&&!supplier)){msg($("fixedAssetFormMsg"),"أكمل بيانات الأصل وطريقة السداد.","error");return;}busy(btn,true,"جارٍ الحفظ...","حفظ الأصل الثابت");try{const payload={type,name,date,amount,treasury,supplier,location,serial,notes};const key="mm_fixed_asset_pending";const rid=getRequestId(key,payload);const rpc=type==="SUPPLIER_CREDIT"?"create_fixed_asset_purchase_on_credit":"create_fixed_asset_purchase";const args=type==="SUPPLIER_CREDIT"?{p_asset_name:name,p_supplier_id:supplier,p_acquisition_date:date,p_amount:amount,p_location_description:location||null,p_serial_number:serial||null,p_notes:notes||null,p_request_id:rid}:{p_asset_name:name,p_acquisition_date:date,p_amount:amount,p_treasury_id:treasury,p_location_description:location||null,p_serial_number:serial||null,p_notes:notes||null,p_request_id:rid};const {error}=await db.rpc(rpc,args);if(error)throw error;clearRequestId(key);$("fixedAssetFormModal").classList.remove("active");showToast("تم تسجيل الأصل الثابت","success");await loadFixedAssets();if(canViewTreasuries)await loadTreasuries();}catch(e){msg($("fixedAssetFormMsg"),"تعذر تسجيل الأصل: "+err(e),"error");}finally{busy(btn,false,"","حفظ الأصل الثابت");}});
+
+function openRecordCancel(kind,id,source){activeCancelRequest={kind,id,source};const needsRefund=(kind==="LANDED_COST"&&source==="EXTERNAL_TREASURY")||(kind==="FIXED_ASSET"&&source!=="SUPPLIER_CREDIT");$("recordCancelTitle").textContent=kind==="LANDED_COST"?"إلغاء مستند تكلفة النقل":"إلغاء شراء أصل ثابت";$("cancelRefundTreasuryWrap").classList.toggle("hidden",!needsRefund);$("cancelRefundTreasury").required=needsRefund;$("recordCancelForm").reset();fillTreasurySelects();clear($("recordCancelMsg"));$("recordCancelModal").classList.add("active");}
+if($("recordCancelForm"))$("recordCancelForm").addEventListener("submit",async e=>{e.preventDefault();if(!activeCancelRequest)return;const {kind,id,source}=activeCancelRequest,reason=$("recordCancelReason").value.trim(),refund=Number($("cancelRefundTreasury").value)||null,btn=$("confirmRecordCancelBtn");if(!reason){msg($("recordCancelMsg"),"اكتب سبب الإلغاء.","error");return;}const needsRefund=(kind==="LANDED_COST"&&source==="EXTERNAL_TREASURY")||(kind==="FIXED_ASSET"&&source!=="SUPPLIER_CREDIT");if(needsRefund&&!refund){msg($("recordCancelMsg"),"اختر خزنة الاسترداد الفعلي.","error");return;}if(!confirm("سيتم إلغاء المستند وعكس أثره المحاسبي وتكلفة المخزون حسب ضوابط النظام. هل تم استرداد المبلغ فعليًا عند الحاجة؟"))return;busy(btn,true,"جارٍ الإلغاء...","تأكيد الإلغاء");try{let rpc,args;if(kind==="LANDED_COST"){if(source==="EXTERNAL_SUPPLIER"){rpc="cancel_purchase_landed_cost_on_credit";args={p_landed_cost_id:id,p_reason:reason};}else{rpc="cancel_purchase_landed_cost";args={p_landed_cost_id:id,p_reason:reason,p_refund_treasury_id:refund};}}else{if(source==="SUPPLIER_CREDIT"){rpc="cancel_fixed_asset_purchase_on_credit";args={p_asset_id:id,p_reason:reason};}else{rpc="cancel_fixed_asset_purchase";args={p_asset_id:id,p_reason:reason,p_refund_treasury_id:refund};}}const {error}=await db.rpc(rpc,args);if(error)throw error;$("recordCancelModal").classList.remove("active");activeCancelRequest=null;showToast("تم إلغاء المستند وعكس أثره","success");if(kind==="LANDED_COST")await loadLandedCosts();else await loadFixedAssets();if(canViewTreasuries)await loadTreasuries();}catch(e){msg($("recordCancelMsg"),"تعذر الإلغاء: "+err(e),"error");}finally{busy(btn,false,"","تأكيد الإلغاء");}});
 
 // ========== الوصفات ==========
 async function loadRecipes(){ 
@@ -6311,9 +6452,9 @@ async function viewTripSummary(t){
     });
     html += `<div class="line"><span>إجمالي التحصيلات:</span><span style="font-weight:bold;">${fmt(totalCollections)}</span></div></div>`;
 
-    html += `<h4 style="color:var(--g);margin-top:20px;">🧾 المصروفات (${expenses.length})</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>النوع</th><th>الخزنة</th><th>المبلغ</th><th>التاريخ</th></tr></thead><tbody>`;
+    html += `<h4 style="color:var(--g);margin-top:20px;">🧾 المصروفات (${expenses.length})</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>النوع</th><th>الحساب</th><th>الخزنة</th><th>المبلغ</th><th>التاريخ</th></tr></thead><tbody>`;
     expenses.forEach(e => {
-      html += `<tr><td>${expenseTypeName(e.expense_type)}</td><td>${e.treasury_id || "-"}</td><td>${fmt(e.amount)}</td><td>${formatDate(e.expense_date)}</td></tr>`;
+      html += `<tr><td>${expenseTypeName(e.expense_type)}</td><td>${expenseAccountCode(e.expense_type)||"—"}</td><td>${e.treasury_id || "-"}</td><td>${fmt(e.amount)}</td><td>${formatDate(e.expense_date)}</td></tr>`;
     });
     if(!expenses.length) html += `<tr><td colspan="4">لا توجد مصروفات</td></tr>`;
     html += `</tbody></table></div><div class="mini-summary"><div class="line"><span>إجمالي مصروفات الجولة:</span><span style="font-weight:bold;">${fmt(totalExpenses)}</span></div><div class="line"><span>المخصوم من خزنة المناديب:</span><span style="font-weight:bold;">${fmt(cashExpenses)}</span></div></div>`;
@@ -6773,9 +6914,9 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
           });
 
           csv += "\n=== تقرير المصروفات ===\n";
-          csv += "النوع,التاريخ,المبلغ\n";
+          csv += "النوع,الحساب,التاريخ,المبلغ\n";
           (expRes.data || []).forEach(e => {
-              csv += `"${expenseTypeName(e.expense_type)}","${e.expense_date}","${num(e.amount)}"\n`;
+              csv += `"${expenseTypeName(e.expense_type)}","${expenseAccountCode(e.expense_type)||""}","${e.expense_date}","${num(e.amount)}"\n`;
           });
 
           const fileName = `MeatManagement_Report_${todayISO()}.csv`;
