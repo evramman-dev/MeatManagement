@@ -1,3 +1,4 @@
+
 const { test, expect } = require('@playwright/test');
 
 const baseURL = process.env.BASE_URL;
@@ -37,20 +38,18 @@ test('MeatManagement read-only browser smoke test', async ({ page }) => {
   test.setTimeout(180000);
 
   const errors = [];
-let currentSection = 'login';
-
-page.on('pageerror', error => {
-  errors.push({
-    section: currentSection,
-    message: error.message
-  });
-});
+  let currentSection = 'login';
 
   page.on('pageerror', error => {
-    errors.push(error.message);
+    errors.push({
+      section: currentSection,
+      message: error.message
+    });
   });
 
-  await page.goto(baseURL, { waitUntil: 'domcontentloaded' });
+  await page.goto(baseURL, {
+    waitUntil: 'domcontentloaded'
+  });
 
   await expect(page.locator('#loginForm')).toBeVisible();
 
@@ -67,6 +66,8 @@ page.on('pageerror', error => {
     fullPage: true
   });
 
+  currentSection = 'tasks';
+
   await page.locator('.navbtn[data-page="tasks"]').click();
   await expect(page.locator('#tasks')).toBeVisible();
 
@@ -74,6 +75,8 @@ page.on('pageerror', error => {
     path: 'test-results/tasks.png',
     fullPage: true
   });
+
+  currentSection = 'data';
 
   await page.locator('.navbtn[data-page="data"]').click();
   await expect(page.locator('#data')).toBeVisible();
@@ -90,7 +93,8 @@ page.on('pageerror', error => {
   }
 
   for (const section of sections) {
-  currentSection = section;
+    currentSection = section;
+
     await page.evaluate((route) => {
       if (typeof window.openSection === 'function') {
         window.openSection(route);
@@ -107,11 +111,10 @@ page.on('pageerror', error => {
     });
   }
 
-  await page.evaluate((errorList) => {
-    console.log('Browser JavaScript errors:', errorList);
-  }, errors);
+  console.log(
+    'Browser JavaScript errors:',
+    JSON.stringify(errors, null, 2)
+  );
 
-  console.log('Browser JavaScript errors:', JSON.stringify(errors, null, 2));
-
-expect(errors, 'JavaScript errors detected').toEqual([]);
+  expect(errors, 'JavaScript errors detected').toEqual([]);
 });
