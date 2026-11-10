@@ -1324,6 +1324,9 @@ BEGIN
   IF p_request_id IS NULL THEN
     RAISE EXCEPTION 'رقم طلب تكلفة النقل مطلوب لمنع تكرار التسجيل';
   END IF;
+  IF p_amount IS NULL OR p_amount <= 0 THEN
+    RAISE EXCEPTION 'قيمة تكلفة النقل يجب أن تكون أكبر من صفر';
+  END IF;
 
   PERFORM pg_advisory_xact_lock(
     hashtextextended('landed-cost-request:' || p_request_id::text, 0)
@@ -1351,7 +1354,7 @@ BEGIN
   END IF;
 
   RETURN public.create_purchase_landed_cost(
-    p_invoice_id, p_source_type, p_amount, p_treasury_id,
+    p_invoice_id, p_source_type, round(p_amount, 2), p_treasury_id,
     p_expense_id, p_request_id, p_notes
   );
 END;
@@ -1426,3 +1429,9 @@ $function$;
 -- landed-cost document, and exactly one asset, treasury transaction and
 -- posted journal entry were created per asset. The complete test transaction
 -- was rolled back; no QA operational rows or balances were retained.
+
+
+-- Applied 2026-11-10: normalize landed-cost amounts to two decimals before
+-- the underlying cash function updates the treasury. This keeps the treasury
+-- balance, treasury transaction, inventory allocation, and journal entry on
+-- the same rounded amount when an RPC request contains extra decimal places.
