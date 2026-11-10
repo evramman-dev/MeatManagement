@@ -77,3 +77,12 @@ FROM PUBLIC, anon, authenticated;
 -- * Its empty option now says "اختر الخزنة", not "بدون خزنة (مساهمة عينية)".
 -- * Partner statements now begin with partners.opening_balance and show it
 --   as a separate opening-balance row before subsequent movements.
+
+
+-- Additional test on 2026-11-10:
+-- A real SET LOCAL ROLE authenticated call to create_partner_transaction_v2
+-- succeeded after direct table DML privileges were revoked. It updated the
+-- treasury and partner balance and was then rolled back.
+-- A temporary partner with opening_balance=20 produced current_balance=20
+-- and exactly one balanced OPENING_BALANCE_PARTNER journal; this test was
+-- also rolled back.
