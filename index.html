@@ -3469,6 +3469,20 @@ window.openCustomerForm=async function(c=null){
     $("customerOpeningBalance").value=c?.opening_balance||0;
     $("customerAddress").value=c?.address||"";
     $("customerActive").checked=c?.is_active!==false;
+    const isSalesRepCustomerCreate=currentRoleCode==="SALES_REP" && !c;
+    ["customerCreditLimit","customerOpeningBalance"].forEach(id=>{
+      const input=$(id);
+      const label=document.querySelector(`label[for="${id}"]`);
+      if(input){ input.classList.toggle("hidden",isSalesRepCustomerCreate); if(isSalesRepCustomerCreate) input.value="0"; }
+      if(label) label.classList.toggle("hidden",isSalesRepCustomerCreate);
+    });
+    if($("customerActive")){
+      $("customerActive").disabled=isSalesRepCustomerCreate;
+      if(isSalesRepCustomerCreate) $("customerActive").checked=true;
+    }
+    const customerAreaLabel=document.querySelector('label[for="customerArea"]');
+    if(customerAreaLabel) customerAreaLabel.textContent=isSalesRepCustomerCreate?"المنطقة / القرية *":"المنطقة / القرية";
+    if($("customerArea")) $("customerArea").required=isSalesRepCustomerCreate;
     $("customerLegacyCity").value=c?.city||"";
     $("customerLegacyArea").value=c?.area||"";
     const area=c?.area_id?customerAreasCache.find(a=>String(a.area_id)===String(c.area_id)):null;
@@ -3578,15 +3592,15 @@ if($("customerForm")) $("customerForm").addEventListener("submit", async e => {
     whatsapp:$("customerWhatsapp").value,
     tax_number:$("customerTaxNumber").value||null,
     customer_type:$("customerType").value,
-    credit_limit:Number($("customerCreditLimit").value||0),
-    opening_balance:Number($("customerOpeningBalance").value||0),
+    credit_limit:currentRoleCode==="SALES_REP"?0:Number($("customerCreditLimit").value||0),
+    opening_balance:currentRoleCode==="SALES_REP"?0:Number($("customerOpeningBalance").value||0),
     address:$("customerAddress").value||null,
     governorate_id:Number(governorateId),
     city_id:Number(cityId),
     city:$("customerLegacyCity").value||null,
     area:$("customerLegacyArea").value||null,
     area_id:areaId,
-    is_active:$("customerActive").checked
+    is_active:currentRoleCode==="SALES_REP"?true:$("customerActive").checked
   }; 
   try{ 
     const result=id ? await db.from("customers").update(payload).eq("customer_id",id) : await db.from("customers").insert(payload);
