@@ -171,3 +171,52 @@ test('MeatManagement read-only navigation, permissions and session smoke test', 
   expect(consoleErrors, 'Browser console errors detected.').toEqual([]);
   expect(networkErrors, 'Application or Supabase network errors detected.').toEqual([]);
 });
+
+
+test('MeatManagement Android-sized layout and horizontal overflow check', async ({ page }) => {
+  test.setTimeout(240000);
+  if (!baseURL || !username || !password) {
+    throw new Error('BASE_URL, TEST_USERNAME and TEST_PASSWORD must be configured as environment variables.');
+  }
+
+  const deployedUrl = new URL(baseURL);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route('**/*', async route => {
+    const request = route.request();
+    const requestUrl = new URL(request.url());
+    if (request.isNavigationRequest() && requestUrl.origin === deployedUrl.origin && requestUrl.pathname === deployedUrl.pathname) {
+      await route.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: qaHtml });
+    } else {
+      await route.continue();
+    }
+  });
+
+  await page.goto(baseURL, { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#loginForm')).toBeVisible({ timeout: 60000 });
+  await page.locator('#email').fill(username);
+  await page.locator('#password').fill(password);
+  await page.locator('#loginBtn').click();
+  await expect(page.locator('#home')).toBeVisible({ timeout: 60000 });
+
+  const widths = [];
+  for (const viewport of [{ width: 390, height: 844 }, { width: 360, height: 800 }]) {
+    await page.setViewportSize(viewport);
+    for (const section of ['home', 'tasks', 'data']) {
+      await page.locator('.navbtn[data-page="' + section + '"]').click();
+      await expect(page.locator('#' + section)).toBeVisible();
+      await page.waitForTimeout(300);
+      const metrics = await page.evaluate(() => ({
+        viewport: document.documentElement.clientWidth,
+        document: document.documentElement.scrollWidth,
+        body: document.body.scrollWidth
+      }));
+      widths.push({ ...viewport, section, ...metrics });
+      await page.screenshot({ path: 'test-results/mobile-' + viewport.width + '-' + section + '.png', fullPage: true });
+      expect(metrics.document, 'Horizontal page overflow at ' + viewport.width + 'px in ' + section).toBeLessThanOrEqual(metrics.viewport + 2);
+      expect(metrics.body, 'Horizontal body overflow at ' + viewport.width + 'px in ' + section).toBeLessThanOrEqual(metrics.viewport + 2);
+    }
+  }
+
+  const report = { mobileWidths: widths };
+  console.log('MEATMANAGEMENT_MOBILE_LAYOUT_REPORT:', JSON.stringify(report, null, 2));
+});
