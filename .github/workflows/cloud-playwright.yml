@@ -33,21 +33,9 @@ jobs:
           npx playwright install --with-deps chromium
           mkdir -p test-results/sections
 
-      - name: Serve the checked-out QA application
-        run: |
-          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/meatmanagement-qa-server.log 2>&1 &
-          for attempt in $(seq 1 30); do
-            if curl -fsS http://127.0.0.1:4173/ > /dev/null; then
-              exit 0
-            fi
-            sleep 1
-          done
-          cat /tmp/meatmanagement-qa-server.log
-          exit 1
-
       - name: Run read-only browser tests
         env:
-          BASE_URL: http://127.0.0.1:4173/
+          BASE_URL: https://evramman-dev.github.io/MeatManagement/
           TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
           PLAYWRIGHT_HTML_OPEN: never
