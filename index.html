@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v39</title>
+<title>MeatManagement v40</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -300,7 +300,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v39]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v40]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -769,6 +769,12 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div id="partnerInventoryContributionsMsg" class="status hidden"></div>
 <div id="partnerInventoryContributionsList"><div class="empty">جارٍ تحميل المساهمات...</div></div>
 </div>
+<div id="partnerVehicleContributionsCard" class="card hidden" style="margin-top:20px;">
+<div class="row" style="justify-content:space-between;align-items:center;"><h2>🚚 مساهمات السيارات من الشركاء</h2><div class="row"><button id="refreshPartnerVehicleContributionsBtn" class="btn secondary" type="button" style="margin:0;width:auto;">تحديث</button><button id="addPartnerVehicleContributionBtn" class="btn hidden" type="button" style="margin:0;width:auto;">＋ مساهمة سيارة</button></div></div>
+<p class="desc">تسجيل السيارة كأصل ثابت وربطها بموقع سيارة مستقل لاستخدامها في الجولات.</p>
+<div id="partnerVehicleContributionsMsg" class="status hidden"></div>
+<div id="partnerVehicleContributionsList"><div class="empty">جارٍ تحميل مساهمات السيارات...</div></div>
+</div>
 </div>
 </div>
 <div id="partnerFormModal" class="modal-form">
@@ -824,6 +830,24 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <label>سبب الإلغاء *</label><textarea id="picCancelReason" rows="3" required></textarea>
 <label class="check"><input id="picCancelReturnedConfirm" type="checkbox"> أؤكد أن البضاعة رُدت للشريك ولم تدخل التشغيل أو البيع أو التصرف.</label>
 <button id="confirmPartnerInventoryContributionCancelBtn" class="btn danger" type="submit">تأكيد الإلغاء</button><div id="partnerInventoryContributionCancelMsg" class="status hidden"></div>
+</form></div></div></div>
+<div id="partnerVehicleContributionFormModal" class="modal-form"><div class="modal-form-content"><div class="modal-header"><h3>تسجيل مساهمة سيارة من شريك</h3><button class="close-btn" type="button" onclick="document.getElementById('partnerVehicleContributionFormModal').classList.remove('active')">&times;</button></div><div class="modal-body"><form id="partnerVehicleContributionForm" onsubmit="event.preventDefault();">
+<label>الشريك *</label><select id="pvcPartner" required><option value="">اختر الشريك</option></select>
+<label>اسم السيارة / النوع *</label><input id="pvcName" maxlength="150" required>
+<label>رقم اللوحة *</label><input id="pvcPlate" maxlength="80" required>
+<label>قيمة السيارة بالجنيه *</label><input id="pvcValue" type="number" min="0.01" step="0.01" required>
+<label>تاريخ المساهمة *</label><input id="pvcDate" type="date" required>
+<label>مكان وجود السيارة *</label><input id="pvcLocation" maxlength="200" placeholder="مثال: جراج المصنع">
+<label>ملاحظات</label><textarea id="pvcNotes" rows="2"></textarea>
+<div class="info">سيُنشئ النظام أصلًا ثابتًا على حساب السيارات 1520، وموقع سيارة مرتبطًا به لاستخدامه في الجولات.</div>
+<button id="savePartnerVehicleContributionBtn" class="btn" type="submit">حفظ مساهمة السيارة</button><div id="partnerVehicleContributionFormMsg" class="status hidden"></div>
+</form></div></div></div>
+<div id="partnerVehicleContributionCancelModal" class="modal-form"><div class="modal-form-content"><div class="modal-header"><h3>إلغاء مساهمة السيارة</h3><button class="close-btn" type="button" onclick="document.getElementById('partnerVehicleContributionCancelModal').classList.remove('active')">&times;</button></div><div class="modal-body"><form id="partnerVehicleContributionCancelForm" onsubmit="event.preventDefault();">
+<input id="pvcCancelAssetId" type="hidden">
+<div class="info">لا يسمح النظام بالإلغاء بعد ربط السيارة بأي جولة أو تسجيل حركة مخزون على موقعها.</div>
+<label>سبب الإلغاء *</label><textarea id="pvcCancelReason" rows="3" required></textarea>
+<label class="check"><input id="pvcCancelReturnedConfirm" type="checkbox"> أؤكد أن السيارة رُدت للشريك ولم تستخدم في أي جولة.</label>
+<button id="confirmPartnerVehicleContributionCancelBtn" class="btn danger" type="submit">تأكيد الإلغاء</button><div id="partnerVehicleContributionCancelMsg" class="status hidden"></div>
 </form></div></div></div>
 <div id="sectionAccounting" class="sub-section hidden">
 <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
@@ -1800,6 +1824,7 @@ try {
   let canViewFixedAssets=false, canManageFixedAssets=false, canViewLandedCosts=false, canManageLandedCosts=false;
   let canViewPartnerInventoryContributions=false, canManagePartnerInventoryContributions=false, canCancelPartnerInventoryContributions=false;
   let partnerInventoryContributionsCache=[];
+  let partnerVehicleContributionsCache=[];
   let canViewStockTransfers=false;
   let canViewTreasuryTransfers=false;
   let canViewReports=false;
@@ -2239,7 +2264,7 @@ async function userInfo(user){
     try{ canManageLandedCosts=await permission("PURCHASES_MANAGE") || isSystemAdmin; canViewLandedCosts=await permission("PURCHASES_VIEW") || canManageLandedCosts || isSystemAdmin; if($("menuLandedCosts")) $("menuLandedCosts").classList.toggle("hidden",!canViewLandedCosts); if($("addLandedCostBtn")) $("addLandedCostBtn").classList.toggle("hidden",!canManageLandedCosts); }catch(e){}
     try{ canManageFixedAssets=await permission("ACCOUNTING_MANAGE") || isSystemAdmin; canViewFixedAssets=await permission("ACCOUNTING_VIEW") || canManageFixedAssets || isSystemAdmin; if($("menuFixedAssets")) $("menuFixedAssets").classList.toggle("hidden",!canViewFixedAssets); if($("addFixedAssetBtn")) $("addFixedAssetBtn").classList.toggle("hidden",!canManageFixedAssets); }catch(e){}
     try{ canViewPartners=await permission("PARTNERS_VIEW") || isSystemAdmin; canManagePartners=await permission("PARTNERS_MANAGE") || isSystemAdmin; if($("menuPartners")) $("menuPartners").classList.toggle("hidden",!canViewPartners); if($("partnersCard")) $("partnersCard").classList.toggle("hidden",!canViewPartners); if($("addPartnerBtn")) $("addPartnerBtn").classList.toggle("hidden",!canManagePartners); if($("addPartnerTransactionBtn")) $("addPartnerTransactionBtn").classList.toggle("hidden",!canManagePartners); }catch(e){}
-    try{ canManagePartnerInventoryContributions=await permission("ACCOUNTING_MANAGE") || await permission("PARTNERS_TRANSACTIONS_MANAGE") || isSystemAdmin; canViewPartnerInventoryContributions=await permission("ACCOUNTING_VIEW") || await permission("PARTNERS_TRANSACTIONS_VIEW") || canManagePartnerInventoryContributions; canCancelPartnerInventoryContributions=await permission("ACCOUNTING_MANAGE") || isSystemAdmin; if($("partnerInventoryContributionsCard")) $("partnerInventoryContributionsCard").classList.toggle("hidden",!canViewPartnerInventoryContributions); if($("addPartnerInventoryContributionBtn")) $("addPartnerInventoryContributionBtn").classList.toggle("hidden",!canManagePartnerInventoryContributions); }catch(e){}
+    try{ canManagePartnerInventoryContributions=await permission("ACCOUNTING_MANAGE") || await permission("PARTNERS_TRANSACTIONS_MANAGE") || isSystemAdmin; canViewPartnerInventoryContributions=await permission("ACCOUNTING_VIEW") || await permission("PARTNERS_TRANSACTIONS_VIEW") || canManagePartnerInventoryContributions; canCancelPartnerInventoryContributions=await permission("ACCOUNTING_MANAGE") || isSystemAdmin; if($("partnerInventoryContributionsCard")) $("partnerInventoryContributionsCard").classList.toggle("hidden",!canViewPartnerInventoryContributions); if($("addPartnerInventoryContributionBtn")) $("addPartnerInventoryContributionBtn").classList.toggle("hidden",!canManagePartnerInventoryContributions); if($("partnerVehicleContributionsCard")) $("partnerVehicleContributionsCard").classList.toggle("hidden",!canViewPartnerInventoryContributions); if($("addPartnerVehicleContributionBtn")) $("addPartnerVehicleContributionBtn").classList.toggle("hidden",!canManagePartnerInventoryContributions); }catch(e){}
     try{ canViewRecipes=await permission("RECIPES_VIEW") || isSystemAdmin; canManageRecipes=await permission("RECIPES_MANAGE") || isSystemAdmin; if($("menuRecipes")) $("menuRecipes").classList.toggle("hidden",!canViewRecipes); if($("recipesCard")) $("recipesCard").classList.toggle("hidden",!canViewRecipes); if($("addRecipeBtn")) $("addRecipeBtn").classList.toggle("hidden",!canManageRecipes); }catch(e){}
     try{ canViewProduction=await permission("PRODUCTION_VIEW") || isSystemAdmin; canManageProduction=await permission("PRODUCTION_MANAGE") || isSystemAdmin; if($("menuProduction")) $("menuProduction").classList.toggle("hidden",!canViewProduction); if($("productionCard")) $("productionCard").classList.toggle("hidden",!canViewProduction); if($("addProductionBtn")) $("addProductionBtn").classList.toggle("hidden",!canManageProduction); }catch(e){}
     try{ canViewAccounting=await permission("ACCOUNTING_VIEW") || isSystemAdmin; canManageAccounting=await permission("ACCOUNTING_MANAGE") || isSystemAdmin; if($("menuAccounting")) $("menuAccounting").classList.toggle("hidden",!canViewAccounting); if($("accountingCard")) $("accountingCard").classList.toggle("hidden",!canViewAccounting); if($("btnPostEntries")) $("btnPostEntries").classList.toggle("hidden",!canManageAccounting); if($("btnAdjustment")) $("btnAdjustment").classList.toggle("hidden",!canManageAccounting); if($("btnBackup")) $("btnBackup").classList.toggle("hidden",!isSystemAdmin); }catch(e){}
@@ -6649,6 +6674,7 @@ async function loadPartners(){
   fillPartnerSelect(); 
   fillPartnerTreasurySelect();
   if(canViewPartnerInventoryContributions) await loadPartnerInventoryContributions();
+  if(canViewPartnerInventoryContributions) await loadPartnerVehicleContributions();
 }
 async function loadPartnerTransactions(){ 
   if(!canViewPartners)return; 
@@ -6712,6 +6738,61 @@ async function loadPartnerInventoryContributions(){
     });
   }catch(e){msg($("partnerInventoryContributionsMsg"),"تعذر تحميل مساهمات المخزون: "+err(e),"error");box.innerHTML="<div class='empty'>تعذر تحميل المساهمات.</div>";}
 }
+async function fillPartnerVehicleContributionForm(){
+  if(!partnersCache.length){const {data,error}=await db.from("partners").select("partner_id,partner_name,is_active").eq("is_active",true).order("partner_id");if(error)throw error;partnersCache=data||[];}
+  const el=$("pvcPartner");el.replaceChildren();const first=document.createElement("option");first.value="";first.textContent="اختر الشريك";el.appendChild(first);
+  partnersCache.filter(p=>p.is_active!==false).forEach(p=>{const op=document.createElement("option");op.value=String(p.partner_id);op.textContent=p.partner_name;el.appendChild(op);});
+}
+async function loadPartnerVehicleContributions(){
+  const box=$("partnerVehicleContributionsList");if(!box||!canViewPartnerInventoryContributions)return;
+  if(!navigator.onLine){box.innerHTML="<div class='empty'>اتصل بالإنترنت لعرض مساهمات السيارات.</div>";return;}
+  box.innerHTML="<div class='empty'>جارٍ تحميل مساهمات السيارات...</div>";clear($("partnerVehicleContributionsMsg"));
+  try{
+    const {data,error}=await db.from("fixed_assets").select("*").eq("source_type","PARTNER_CONTRIBUTION").eq("asset_category","VEHICLE").order("asset_id",{ascending:false}).limit(200);if(error)throw error;
+    partnerVehicleContributionsCache=data||[];box.replaceChildren();
+    if(!partnerVehicleContributionsCache.length){box.innerHTML="<div class='empty'>لا توجد مساهمات سيارات مسجلة.</div>";return;}
+    const ids=partnerVehicleContributionsCache.map(x=>x.asset_id);
+    const {data:locations,error:locError}=await db.from("locations").select("location_id,location_name,location_code,vehicle_asset_id,is_active").in("vehicle_asset_id",ids);if(locError)throw locError;
+    const locByAsset=new Map((locations||[]).map(l=>[String(l.vehicle_asset_id),l]));
+    partnerVehicleContributionsCache.forEach(x=>{
+      const partner=partnersCache.find(p=>Number(p.partner_id)===Number(x.partner_id));
+      const location=locByAsset.get(String(x.asset_id));
+      const card=document.createElement("div");card.className="product";
+      const title=document.createElement("div");title.className="pname";title.textContent=x.asset_name+" - "+(partner?.partner_name||("شريك "+x.partner_id));
+      const details=document.createElement("div");details.className="details";
+      details.textContent="رقم اللوحة: "+(x.serial_number||"-")+" | القيمة: "+fmt(x.acquisition_cost)+" | التاريخ: "+x.acquisition_date+" | الموقع التشغيلي: "+(location?.location_name||"غير مرتبط")+" ("+(location?.location_code||"-")+") | "+(location?.is_active?"نشط":"متوقف")+" | الحالة المحاسبية: "+(x.status==="ACTIVE"?"نشطة":"ملغاة");
+      card.append(title,details);
+      if(x.status==="ACTIVE"&&canCancelPartnerInventoryContributions){const actions=document.createElement("div");actions.className="actions";const b=document.createElement("button");b.className="btn danger";b.textContent="إلغاء المساهمة";b.onclick=()=>{$("partnerVehicleContributionCancelForm").reset();$("pvcCancelAssetId").value=String(x.asset_id);clear($("partnerVehicleContributionCancelMsg"));$("partnerVehicleContributionCancelModal").classList.add("active");};actions.appendChild(b);card.appendChild(actions);}
+      box.appendChild(card);
+    });
+  }catch(e){msg($("partnerVehicleContributionsMsg"),"تعذر تحميل مساهمات السيارات: "+err(e),"error");box.innerHTML="<div class='empty'>تعذر تحميل المساهمات.</div>";}
+}
+if($("addPartnerVehicleContributionBtn"))$("addPartnerVehicleContributionBtn").addEventListener("click",async()=>{
+  if(!canManagePartnerInventoryContributions)return;
+  try{await fillPartnerVehicleContributionForm();$("partnerVehicleContributionForm").reset();$("pvcDate").value=todayISO();clear($("partnerVehicleContributionFormMsg"));$("partnerVehicleContributionFormModal").classList.add("active");}
+  catch(e){showToast("تعذر تجهيز نموذج السيارة: "+err(e),"error",7000);}
+});
+if($("refreshPartnerVehicleContributionsBtn"))$("refreshPartnerVehicleContributionsBtn").addEventListener("click",loadPartnerVehicleContributions);
+if($("partnerVehicleContributionForm"))$("partnerVehicleContributionForm").addEventListener("submit",async e=>{
+  e.preventDefault();if(!canManagePartnerInventoryContributions)return;
+  const btn=$("savePartnerVehicleContributionBtn"),partner=Number($("pvcPartner").value),name=$("pvcName").value.trim(),plate=$("pvcPlate").value.trim(),value=Number($("pvcValue").value),date=$("pvcDate").value,location=$("pvcLocation").value.trim(),notes=$("pvcNotes").value.trim();
+  if(!partner||!name||!plate||!Number.isFinite(value)||value<=0||!date){msg($("partnerVehicleContributionFormMsg"),"أكمل الشريك واسم السيارة ورقم اللوحة والقيمة والتاريخ.","error");return;}
+  busy(btn,true,"جارٍ الحفظ...","حفظ مساهمة السيارة");
+  const payload={partner,name,plate,value,date,location,notes},key="mm_partner_vehicle_contribution_pending";
+  try{const requestId=getRequestId(key,payload);const {data,error}=await db.rpc("create_partner_vehicle_contribution",{p_partner_id:partner,p_vehicle_name:name,p_acquisition_date:date,p_amount:value,p_plate_number:plate,p_location_description:location||null,p_notes:notes||null,p_request_id:requestId});if(error)throw error;clearRequestId(key);$("partnerVehicleContributionFormModal").classList.remove("active");showToast("تم تسجيل السيارة كأصل ثابت وربطها بموقع تشغيل.","success");await loadPartners();}
+  catch(e){msg($("partnerVehicleContributionFormMsg"),"تعذر تسجيل مساهمة السيارة: "+err(e),"error");}
+  finally{busy(btn,false,"","حفظ مساهمة السيارة");}
+});
+if($("partnerVehicleContributionCancelForm"))$("partnerVehicleContributionCancelForm").addEventListener("submit",async e=>{
+  e.preventDefault();if(!canCancelPartnerInventoryContributions)return;
+  const id=Number($("pvcCancelAssetId").value),reason=$("pvcCancelReason").value.trim(),confirmed=$("pvcCancelReturnedConfirm").checked,btn=$("confirmPartnerVehicleContributionCancelBtn");
+  if(!id||!reason||!confirmed){msg($("partnerVehicleContributionCancelMsg"),"اكتب سبب الإلغاء وأكد رد السيارة وعدم استخدامها.","error");return;}
+  if(!confirm("سيتم عكس قيد السيارة ورصيد الشريك وإيقاف موقعها التشغيلي. هل تم رد السيارة ولم تستخدم في أي جولة؟"))return;
+  busy(btn,true,"جارٍ الإلغاء...","تأكيد الإلغاء");
+  try{const payload={id,reason},requestId=getRequestId("mm_partner_vehicle_cancel_pending",payload);const {error}=await db.rpc("cancel_partner_vehicle_contribution",{p_asset_id:id,p_reason:reason,p_vehicle_returned_unused:true,p_cancellation_request_id:requestId});if(error)throw error;clearRequestId("mm_partner_vehicle_cancel_pending");$("partnerVehicleContributionCancelModal").classList.remove("active");showToast("تم إلغاء مساهمة السيارة وعكس أثرها.","success");await loadPartners();}
+  catch(e){msg($("partnerVehicleContributionCancelMsg"),"تعذر إلغاء مساهمة السيارة: "+err(e),"error");}
+  finally{busy(btn,false,"","تأكيد الإلغاء");}
+});
 if($("addPartnerInventoryContributionBtn"))$("addPartnerInventoryContributionBtn").addEventListener("click",async()=>{
   if(!canManagePartnerInventoryContributions)return;
   try{await fillPartnerInventoryContributionForm();$("partnerInventoryContributionForm").reset();$("picDate").value=todayISO();await fillPartnerInventoryUnits();clear($("partnerInventoryContributionFormMsg"));$("partnerInventoryContributionFormModal").classList.add("active");}
