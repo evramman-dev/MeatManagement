@@ -1277,3 +1277,12 @@ WHERE c.customer_id IN (3,4)
 
 -- QA verification on 2026-11-10: customers 1-4 all resolve to approved
 -- TEST-20261110 with three active items each.
+
+
+-- Additional QA verification on 2026-11-10:
+-- Customer 3 (اميجوس): invoice INV-000024, EGP 62.50, fully paid.
+-- Customer 4 (الراعي الصالح): invoice INV-000025, EGP 62.50, fully paid.
+-- Both invoices resolved to approved TEST-20261110 without bypassing price validation.
+-- Role-separation test: WAREHOUSE_KEEPER was rejected by approve_trip_load_v2
+-- with the expected permission error, while TRIP_LOAD_DISPATCH remained granted.
+-- The negative permission test used a transaction rolled back after verification.
