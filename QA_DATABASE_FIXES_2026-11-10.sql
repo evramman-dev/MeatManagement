@@ -815,3 +815,106 @@ EXECUTE FUNCTION public.trg_sync_trip_load_after_load_change();
 -- The function recalculates only derived trip_loads quantities; it creates
 -- no stock movement, treasury transaction, or journal entry.
 SELECT public.sync_trip_load_actual_quantities(16);
+
+
+-- Applied 2026-11-10: prevent approval of price lists whose item prices
+-- conflict with the product-level minimum/maximum selling-price limits.
+-- The validation matches validate_sales_invoice_item_price(), so a list
+-- cannot be approved when its items would later be rejected on an invoice.
+CREATE OR REPLACE FUNCTION public.approve_price_list(p_price_list_id bigint)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_list public.price_lists%ROWTYPE;
+  v_invalid_product_id bigint;
+BEGIN
+  IF auth.uid() IS NULL OR NOT public.has_permission('PRICES_MANAGE') THEN
+    RAISE EXCEPTION 'لا توجد صلاحية لاعتماد قائمة الأسعار.';
+  END IF;
+
+  PERFORM pg_advisory_xact_lock(hashtextextended('meatmanagement_default_price_list_approval',0));
+
+  SELECT * INTO v_list
+  FROM public.price_lists
+  WHERE price_list_id=p_price_list_id
+    AND approval_status='DRAFT'
+    AND is_active=true
+    AND (valid_to IS NULL OR valid_to >= CURRENT_DATE)
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'قائمة الأسعار غير موجودة أو ليست مسودة أو انتهت صلاحيتها.';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM public.price_list_items
+    WHERE price_list_id=p_price_list_id AND is_active=true
+  ) THEN
+    RAISE EXCEPTION 'لا يمكن اعتماد قائمة أسعار دون أصناف فعالة.';
+  END IF;
+
+  SELECT p.product_id
+  INTO v_invalid_product_id
+  FROM public.price_list_items pli
+  JOIN public.products p ON p.product_id=pli.product_id
+  WHERE pli.price_list_id=p_price_list_id
+    AND pli.is_active=true
+    AND (
+      GREATEST(COALESCE(pli.minimum_price,0),COALESCE(p.min_selling_price,0))
+        > CASE
+            WHEN pli.maximum_price IS NOT NULL AND p.max_selling_price IS NOT NULL
+              THEN LEAST(pli.maximum_price,p.max_selling_price)
+            ELSE COALESCE(pli.maximum_price,p.max_selling_price)
+          END
+      OR pli.selling_price < GREATEST(COALESCE(pli.minimum_price,0),COALESCE(p.min_selling_price,0))
+      OR (
+        CASE
+          WHEN pli.maximum_price IS NOT NULL AND p.max_selling_price IS NOT NULL
+            THEN LEAST(pli.maximum_price,p.max_selling_price)
+          ELSE COALESCE(pli.maximum_price,p.max_selling_price)
+        END IS NOT NULL
+        AND pli.selling_price >
+          CASE
+            WHEN pli.maximum_price IS NOT NULL AND p.max_selling_price IS NOT NULL
+              THEN LEAST(pli.maximum_price,p.max_selling_price)
+            ELSE COALESCE(pli.maximum_price,p.max_selling_price)
+          END
+      )
+    )
+  ORDER BY p.product_id
+  LIMIT 1;
+
+  IF v_invalid_product_id IS NOT NULL THEN
+    RAISE EXCEPTION
+      'لا يمكن اعتماد القائمة: سعر المنتج رقم % خارج حدود السعر المسموح. راجع سعر القائمة وحدود المنتج.',
+      v_invalid_product_id;
+  END IF;
+
+  IF v_list.is_default AND EXISTS (
+    SELECT 1
+    FROM public.price_lists other_list
+    WHERE other_list.price_list_id<>p_price_list_id
+      AND other_list.is_default=true
+      AND other_list.is_active=true
+      AND other_list.approval_status='APPROVED'
+      AND other_list.valid_from<=COALESCE(v_list.valid_to,'infinity'::date)
+      AND COALESCE(other_list.valid_to,'infinity'::date)>=v_list.valid_from
+  ) THEN
+    RAISE EXCEPTION 'توجد قائمة افتراضية معتمدة تتداخل صلاحيتها مع هذه القائمة.';
+  END IF;
+
+  UPDATE public.price_lists
+  SET approval_status='APPROVED',
+      approved_by=auth.uid(),
+      approved_at=now()
+  WHERE price_list_id=p_price_list_id;
+END;
+$function$;
+
+-- QA finding: approved price list TEST-20261110 has one item outside
+-- product price limits (product_id=2: list price 250, product max=150).
+-- Existing approved data was not changed. Review the intended business price
+-- or the product-level limit before creating a corrected replacement list.
