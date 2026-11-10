@@ -817,10 +817,10 @@ EXECUTE FUNCTION public.trg_sync_trip_load_after_load_change();
 SELECT public.sync_trip_load_actual_quantities(16);
 
 
--- Applied 2026-11-10: prevent approval of price lists whose item prices
--- conflict with the product-level minimum/maximum selling-price limits.
--- The validation matches validate_sales_invoice_item_price(), so a list
--- cannot be approved when its items would later be rejected on an invoice.
+-- Applied 2026-11-10: prevent approval of price lists containing
+-- unsellable/inactive products, inactive or incompatible units, or prices
+-- outside the combined product and price-list min/max limits.
+-- Validation follows the same product/unit/price rules used by invoice creation.
 CREATE OR REPLACE FUNCTION public.approve_price_list(p_price_list_id bigint)
 RETURNS void
 LANGUAGE plpgsql
@@ -860,10 +860,25 @@ BEGIN
   INTO v_invalid_product_id
   FROM public.price_list_items pli
   JOIN public.products p ON p.product_id=pli.product_id
+  LEFT JOIN public.units u ON u.unit_id=pli.unit_id
   WHERE pli.price_list_id=p_price_list_id
     AND pli.is_active=true
     AND (
-      GREATEST(COALESCE(pli.minimum_price,0),COALESCE(p.min_selling_price,0))
+      NOT COALESCE(p.is_active,false)
+      OR NOT COALESCE(p.can_be_sold,false)
+      OR NOT COALESCE(u.is_active,false)
+      OR NOT (
+        pli.unit_id=p.base_unit_id
+        OR pli.unit_id=p.sales_unit_id
+        OR EXISTS (
+          SELECT 1 FROM public.product_unit_conversions puc
+          WHERE puc.product_id=p.product_id
+            AND puc.unit_id=pli.unit_id
+            AND puc.is_active=true
+        )
+        OR (COALESCE(u.is_package_unit,false)=true AND COALESCE(p.units_per_carton,0)>0)
+      )
+      OR GREATEST(COALESCE(pli.minimum_price,0),COALESCE(p.min_selling_price,0))
         > CASE
             WHEN pli.maximum_price IS NOT NULL AND p.max_selling_price IS NOT NULL
               THEN LEAST(pli.maximum_price,p.max_selling_price)
@@ -889,7 +904,7 @@ BEGIN
 
   IF v_invalid_product_id IS NOT NULL THEN
     RAISE EXCEPTION
-      'لا يمكن اعتماد القائمة: سعر المنتج رقم % خارج حدود السعر المسموح. راجع سعر القائمة وحدود المنتج.',
+      'لا يمكن اعتماد القائمة: المنتج رقم % غير قابل للبيع أو وحدته غير صالحة أو سعره خارج الحدود. راجع إعدادات المنتج وسعر القائمة.',
       v_invalid_product_id;
   END IF;
 
@@ -914,7 +929,8 @@ BEGIN
 END;
 $function$;
 
--- QA finding: approved price list TEST-20261110 has one item outside
--- product price limits (product_id=2: list price 250, product max=150).
--- Existing approved data was not changed. Review the intended business price
--- or the product-level limit before creating a corrected replacement list.
+-- QA finding: approved price list TEST-20261110 contains product_id=2
+-- (لحمة مفرومة) while can_be_sold=false and its price 250 exceeds product
+-- max_selling_price=150. Existing approved data was not changed. Confirm the
+-- product's sale eligibility and correct business price limits before replacing
+-- this list or enabling the product for sale.
