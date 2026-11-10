@@ -120,6 +120,8 @@ test('MeatManagement read-only navigation, permissions and session smoke test', 
 
   currentSection = 'permissions';
   await expect(page.locator('#ptType option[value="CAPITAL_OUT"]')).toHaveJSProperty('disabled', true);
+  await expect(page.locator('#ptTreasury')).toHaveJSProperty('required', true);
+  await expect(page.locator('#ptTreasury option').first()).toHaveText('اختر الخزنة');
   if (await page.locator('#menuUsers').count()) {
     await expect(page.locator('#menuUsers')).toBeHidden();
   }
