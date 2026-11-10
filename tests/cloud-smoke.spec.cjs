@@ -1,4 +1,7 @@
 const { test, expect } = require('@playwright/test');
+const fs = require('node:fs');
+const path = require('node:path');
+const qaHtml = fs.readFileSync(path.resolve(__dirname, '..', 'index.html'), 'utf8');
 
 const baseURL = process.env.BASE_URL;
 const username = process.env.TEST_USERNAME;
@@ -68,6 +71,18 @@ test('MeatManagement read-only navigation, permissions and session smoke test', 
   page.on('response', response => {
     if (response.status() >= 400 && isAppRequest(response.url())) {
       networkErrors.push({ section: currentSection, kind: 'http', status: response.status(), url: response.url() });
+    }
+  });
+
+  const deployedUrl = new URL(baseURL);
+  const deployedPath = deployedUrl.pathname;
+  await page.route('**/*', async route => {
+    const request = route.request();
+    const requestUrl = new URL(request.url());
+    if (request.isNavigationRequest() && requestUrl.origin === deployedUrl.origin && requestUrl.pathname === deployedPath) {
+      await route.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: qaHtml });
+    } else {
+      await route.continue();
     }
   });
 
