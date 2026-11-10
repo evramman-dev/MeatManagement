@@ -3044,8 +3044,7 @@ function renderProducts(){
     const card=document.createElement("div");
     card.className="product";
     const category=categories.find(c=>String(c.category_id)===String(p.category_id))?.category_name||"غير محدد";
-    const unitDetails=`المخزون: ${esc(unitName(p.base_unit_id))} | الشراء: ${esc(unitName(p.purchase_unit_id))} | البيع: ${esc(unitName(p.sales_unit_id))}`;
-    const priceValues=[p.min_selling_price,p.target_selling_price,p.max_selling_price].map(Number);
+    const unitDetails=`الوحدات: مخزون ${esc(unitName(p.base_unit_id))} | شراء ${esc(unitName(p.purchase_unit_id))} | بيع ${esc(unitName(p.sales_unit_id))}`;
     const hasPrices=[p.min_selling_price,p.target_selling_price,p.max_selling_price].some(v=>v!==null&&v!==undefined&&v!=="");
     const priceDetails=hasPrices?`<div class="details">أسعار البيع — أدنى: ${p.min_selling_price==null?"—":fmt(p.min_selling_price)} | مستهدف: ${p.target_selling_price==null?"—":fmt(p.target_selling_price)} | أقصى: ${p.max_selling_price==null?"—":fmt(p.max_selling_price)}</div>`:"";
     const uses=[["can_be_purchased","شراء"],["can_be_produced","إنتاج"],["can_be_sold","بيع"],["can_be_loaded","تحميل"]].filter(([key])=>p[key]).map(([,label])=>label);
