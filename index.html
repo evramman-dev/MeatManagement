@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v38</title>
+<title>MeatManagement v39</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -300,7 +300,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v38]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v39]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -6725,7 +6725,7 @@ if($("partnerInventoryContributionForm"))$("partnerInventoryContributionForm").a
   if(!partner||!product||!location||!unit||!Number.isFinite(quantity)||quantity<=0||!Number.isFinite(value)||value<=0||!date){msg($("partnerInventoryContributionFormMsg"),"أكمل الشريك والصنف والموقع والوحدة والكمية والقيمة والتاريخ.","error");return;}
   busy(btn,true,"جارٍ الحفظ...","حفظ المساهمة");
   const payload={partner,product,location,unit,quantity,value,date,notes},key="mm_partner_inventory_contribution_pending";
-  try{const requestId=getRequestId(key,payload);const {data,error}=await db.rpc("create_partner_inventory_contribution",{p_partner_id:partner,p_product_id:product,p_location_id:location,p_unit_id:unit,p_quantity:quantity,p_total_value:value,p_contribution_date:date,p_notes:notes||null,p_request_id:requestId});if(error)throw error;clearRequestId(key);$("partnerInventoryContributionFormModal").classList.remove("active");showToast("تم تسجيل مساهمة المخزون وربطها بحساب الشريك.","success");await loadPartners();await loadPartnerInventoryContributions();}
+  try{const requestId=getRequestId(key,payload);const {data,error}=await db.rpc("create_partner_inventory_contribution",{p_partner_id:partner,p_product_id:product,p_location_id:location,p_unit_id:unit,p_quantity:quantity,p_total_value:value,p_contribution_date:date,p_notes:notes||null,p_request_id:requestId});if(error)throw error;clearRequestId(key);$("partnerInventoryContributionFormModal").classList.remove("active");showToast("تم تسجيل مساهمة المخزون وربطها بحساب الشريك.","success");await loadPartners();}
   catch(e){msg($("partnerInventoryContributionFormMsg"),"تعذر تسجيل المساهمة: "+err(e),"error");}
   finally{busy(btn,false,"","حفظ المساهمة");}
 });
