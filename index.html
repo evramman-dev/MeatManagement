@@ -2672,7 +2672,6 @@ async function loadTasks() {
     const totalColl = (collRes.data||[]).reduce((a,b)=>a+Number(b.amount||0),0);
     const totalPurRet = (retRes.data||[]).reduce((a,b)=>a+Number(b.total_return_amount||0),0);
     const totalSalRet = (retRes.data||[]).reduce((a,b)=>a+Number(b.total_returned_value||0),0);
-    const netProfit = totalSales - totalPurRet - totalPurch - totalExp;
 
     const tasksDash = $("tasksDashboard");
     if(tasksDash) tasksDash.innerHTML = `
@@ -2682,7 +2681,7 @@ async function loadTasks() {
       <div class="home-card"><div class="hc-label">💸 التحصيلات</div><div class="hc-value">${fmt(totalColl)}</div></div>
       <div class="home-card"><div class="hc-label">↩️ مرتجع مشتريات</div><div class="hc-value">${fmt(totalPurRet)}</div></div>
       <div class="home-card"><div class="hc-label">↩️ مرتجع بيع</div><div class="hc-value">${fmt(totalSalRet)}</div></div>
-      <div class="home-card ${netProfit >= 0 ? 'green' : 'red'}"><div class="hc-label">📊 صافي الربح</div><div class="hc-value">${fmt(netProfit)}</div></div>
+      <div class="home-card"><div class="hc-label">📊 صافي الربح</div><div class="hc-value">غير محسوب</div><div class="details">لا نعرض الربح قبل احتساب تكلفة المبيعات الفعلية وتسوية المخزون والإنتاج.</div></div>
     `;
 
     const dailySales = {};
@@ -3040,10 +3039,23 @@ function renderProducts(){
   const q=($("search").value||"").toLowerCase(); 
   const found=productsCache.filter(p=> [p.product_name,p.product_code,p.barcode].some(v=>String(v||"").toLowerCase().includes(q))); 
   if(!found.length){ box.innerHTML = `<div class="empty">لا توجد منتجات.</div>`; return; } 
+  const esc=v=>String(v??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
   found.forEach(p=>{ 
     const card=document.createElement("div");
     card.className="product";
-    card.innerHTML=`<div class="pname">${p.product_name}</div><div class="details">كود: ${p.product_code} | نوع: ${typeName(p.product_type)}${p.barcode?" | باركود: "+p.barcode:""}</div>`; 
+    const category=categories.find(c=>String(c.category_id)===String(p.category_id))?.category_name||"غير محدد";
+    const unitDetails=`المخزون: ${esc(unitName(p.base_unit_id))} | الشراء: ${esc(unitName(p.purchase_unit_id))} | البيع: ${esc(unitName(p.sales_unit_id))}`;
+    const priceValues=[p.min_selling_price,p.target_selling_price,p.max_selling_price].map(Number);
+    const hasPrices=[p.min_selling_price,p.target_selling_price,p.max_selling_price].some(v=>v!==null&&v!==undefined&&v!=="");
+    const priceDetails=hasPrices?`<div class="details">أسعار البيع — أدنى: ${p.min_selling_price==null?"—":fmt(p.min_selling_price)} | مستهدف: ${p.target_selling_price==null?"—":fmt(p.target_selling_price)} | أقصى: ${p.max_selling_price==null?"—":fmt(p.max_selling_price)}</div>`:"";
+    const uses=[["can_be_purchased","شراء"],["can_be_produced","إنتاج"],["can_be_sold","بيع"],["can_be_loaded","تحميل"]].filter(([key])=>p[key]).map(([,label])=>label);
+    const statusBadge=p.is_active?'<span class="badge badge-paid">نشط</span>':'<span class="badge badge-cancel">موقوف</span>';
+    const usageBadges=uses.length?uses.map(label=>'<span class="badge">'+label+'</span>').join(""):'<span class="badge">لا توجد استخدامات مفعلة</span>';
+    card.innerHTML=`<div class="pname">${esc(p.product_name)}</div>
+      <div class="details">الكود: ${esc(p.product_code||"—")} | النوع: ${esc(typeName(p.product_type))} | التصنيف: ${esc(category)}${p.barcode?" | الباركود: "+esc(p.barcode):""}</div>
+      <div class="details">${unitDetails}${p.units_per_carton? " | عدد الوحدات بالكرتونة: "+esc(fmtQty(p.units_per_carton)):""}</div>
+      <div class="details">حد إعادة الطلب: ${p.minimum_stock==null?"—":esc(fmtQty(p.minimum_stock))}</div>
+      ${priceDetails}<div>${statusBadge}${usageBadges}</div>`;
     if(canManage){ 
       const btn=document.createElement("button");
       btn.className="btn secondary";
