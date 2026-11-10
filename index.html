@@ -6769,7 +6769,7 @@ async function loadPartnerVehicleContributions(){
   }catch(e){msg($("partnerVehicleContributionsMsg"),"تعذر تحميل مساهمات السيارات: "+err(e),"error");box.innerHTML="<div class='empty'>تعذر تحميل المساهمات.</div>";}
 }
 if($("addPartnerVehicleContributionBtn"))$("addPartnerVehicleContributionBtn").addEventListener("click",async()=>{
-  if(!canManagePartnerInventoryContributions)return;
+  if(!canManagePartnerVehicleContributions)return;
   try{await fillPartnerVehicleContributionForm();$("partnerVehicleContributionForm").reset();$("pvcDate").value=todayISO();clear($("partnerVehicleContributionFormMsg"));$("partnerVehicleContributionFormModal").classList.add("active");}
   catch(e){showToast("تعذر تجهيز نموذج السيارة: "+err(e),"error",7000);}
 });
