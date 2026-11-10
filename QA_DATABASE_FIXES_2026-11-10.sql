@@ -781,3 +781,37 @@ EXECUTE FUNCTION public.prevent_untracked_vehicle_stock_movement();
 -- still showed quantity_sold=0. Re-running the idempotent sync function corrected it to 1 kg.
 -- This does not create stock movements, treasury transactions, or journal entries.
 SELECT public.sync_trip_load_actual_quantities(16);
+
+
+-- Applied 2026-11-10: keep trip_loads sold/returned summaries synchronized
+-- when a load row is first inserted or its trip/product/package key changes.
+-- This covers a load row created after an invoice already exists.
+CREATE OR REPLACE FUNCTION public.trg_sync_trip_load_after_load_change()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+AS $function$
+BEGIN
+  IF TG_OP <> 'INSERT' AND OLD.trip_id IS DISTINCT FROM NEW.trip_id THEN
+    PERFORM public.sync_trip_load_actual_quantities(OLD.trip_id);
+  END IF;
+
+  PERFORM public.sync_trip_load_actual_quantities(NEW.trip_id);
+  RETURN NEW;
+END;
+$function$;
+
+DROP TRIGGER IF EXISTS trg_sync_trip_load_after_load_change
+ON public.trip_loads;
+
+CREATE TRIGGER trg_sync_trip_load_after_load_change
+AFTER INSERT OR UPDATE OF trip_id, product_id, package_option_id
+ON public.trip_loads
+FOR EACH ROW
+EXECUTE FUNCTION public.trg_sync_trip_load_after_load_change();
+
+-- One-time reconciliation of completed QA trip 16, already applied.
+-- The function recalculates only derived trip_loads quantities; it creates
+-- no stock movement, treasury transaction, or journal entry.
+SELECT public.sync_trip_load_actual_quantities(16);
