@@ -151,3 +151,25 @@ LOCATIONS_VIEW أو INVENTORY_VIEW أو INVENTORY_TRANSFER أو PRODUCTION_VIEW 
 آخر commit لملف index.html: 4fa030281413416fa45a00c48e1dc02ca8280c23
 آخر blob SHA: a86cdf20d3f982c40ecbe104e9a6073227c9632c
 الإصدار: MeatManagement v42.
+
+
+## مواءمة تحميل الوصفات مع صلاحيات الإنتاج — QA v42
+
+أظهر فحص أدوار الإنتاج وسياسات RLS أن PRODUCTION_VIEW وPRODUCTION_MANAGE يسمحان بقراءة recipes وrecipe_items. لكن الواجهة كانت تشترط RECIPES_VIEW فقط لتحميل الوصفات.
+
+كان ذلك يمنع مسؤول الإنتاج من رؤية الوصفات داخل نموذج أمر التشغيل، رغم أن لديه صلاحية إنشاء وتنفيذ أوامر الإنتاج، ورغم سماح RLS بقراءة الوصفات.
+
+تم تعديل canViewRecipes ليشمل RECIPES_VIEW أو PRODUCTION_VIEW أو PRODUCTION_MANAGE. لم تتغير canManageRecipes، لذلك لم نمنح مسؤول الإنتاج صلاحية تعديل الوصفات.
+
+اختبار قراءة فعلي داخل معاملة بدور PRODUCTION_MANAGER:
+- الوصفات الظاهرة: 2.
+- مكونات الوصفات الظاهرة: 2.
+- المواقع الظاهرة: 5.
+- انتهت المعاملة دون أي كتابة.
+
+آخر commit لملف index.html: fda0f803669b3a52a2956f2b494dea894c1ccf6a
+آخر blob SHA: ec25c8e235d821e9a702d0e5853dbb860bef891b
+الإصدار: MeatManagement v42.
+فحص JavaScript: نجحت الكتلتان.
+معرفات HTML: 878 دون تكرار.
+لم يتم اختبار المتصفح.
