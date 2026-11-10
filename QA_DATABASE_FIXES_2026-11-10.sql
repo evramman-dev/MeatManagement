@@ -720,3 +720,57 @@ BEFORE INSERT OR UPDATE OF location_id
 ON public.purchase_invoices
 FOR EACH ROW
 EXECUTE FUNCTION public.prevent_vehicle_purchase_invoice();
+
+
+-- Applied 2026-11-10: prevent untracked stock movements on vehicle locations.
+-- Vehicle stock may only move through a trip-linked workflow.
+CREATE OR REPLACE FUNCTION public.prevent_untracked_vehicle_stock_movement()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_location_type text;
+  v_vehicle_location_id bigint;
+BEGIN
+  SELECT l.location_type
+  INTO v_location_type
+  FROM public.locations l
+  WHERE l.location_id = NEW.location_id;
+
+  IF v_location_type = 'VEHICLE' THEN
+    IF NEW.trip_id IS NULL THEN
+      RAISE EXCEPTION 'لا يمكن تسجيل حركة مخزون مباشرة على موقع سيارة بدون ربطها بجولة.';
+    END IF;
+
+    SELECT t.vehicle_location_id
+    INTO v_vehicle_location_id
+    FROM public.trips t
+    WHERE t.trip_id = NEW.trip_id;
+
+    IF v_vehicle_location_id IS NULL THEN
+      RAISE EXCEPTION 'الجولة المرتبطة بحركة مخزون السيارة غير موجودة أو لا تحتوي على موقع سيارة.';
+    END IF;
+
+    IF v_vehicle_location_id IS DISTINCT FROM NEW.location_id THEN
+      RAISE EXCEPTION 'موقع السيارة في حركة المخزون لا يطابق موقع السيارة المسجل في الجولة.';
+    END IF;
+
+    IF NEW.movement_type NOT IN ('ISSUE','TRANSFER_IN','RETURN') THEN
+      RAISE EXCEPTION 'نوع حركة المخزون غير مسموح به على موقع سيارة.';
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$function$;
+
+DROP TRIGGER IF EXISTS trg_block_untracked_vehicle_stock_movements
+ON public.stock_movements;
+
+CREATE TRIGGER trg_block_untracked_vehicle_stock_movements
+BEFORE INSERT OR UPDATE OF location_id, movement_type, trip_id
+ON public.stock_movements
+FOR EACH ROW
+EXECUTE FUNCTION public.prevent_untracked_vehicle_stock_movement();
