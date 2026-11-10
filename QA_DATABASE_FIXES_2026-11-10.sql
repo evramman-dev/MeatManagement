@@ -665,3 +665,24 @@ BEGIN
 END;
 $function$
 
+
+
+-- Applied 2026-11-10: cover all nine foreign keys reported by the database performance advisor.
+CREATE INDEX IF NOT EXISTS idx_expense_types_account_id
+  ON public.expense_types (account_id);
+CREATE INDEX IF NOT EXISTS idx_fixed_assets_account_id
+  ON public.fixed_assets (account_id);
+CREATE INDEX IF NOT EXISTS idx_fixed_assets_cancelled_by
+  ON public.fixed_assets (cancelled_by);
+CREATE INDEX IF NOT EXISTS idx_fixed_assets_created_by
+  ON public.fixed_assets (created_by);
+CREATE INDEX IF NOT EXISTS idx_fixed_assets_treasury_id
+  ON public.fixed_assets (treasury_id);
+CREATE INDEX IF NOT EXISTS idx_purchase_landed_costs_cancelled_by
+  ON public.purchase_landed_costs (cancelled_by);
+CREATE INDEX IF NOT EXISTS idx_purchase_landed_costs_created_by
+  ON public.purchase_landed_costs (created_by);
+CREATE INDEX IF NOT EXISTS idx_purchase_landed_costs_expense_id
+  ON public.purchase_landed_costs (expense_id);
+CREATE INDEX IF NOT EXISTS idx_purchase_landed_costs_treasury_id
+  ON public.purchase_landed_costs (treasury_id);
