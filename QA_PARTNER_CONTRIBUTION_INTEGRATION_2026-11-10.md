@@ -49,3 +49,15 @@
 تم فحص وجود GitHub Actions مرتبط بهذا commit ولم توجد workflow runs.
 
 لم يتم تغيير main ولم يتم النشر على GitHub Pages.
+
+## مراجعة لاحقة لصلاحيات زر إلغاء السيارة
+
+في مراجعة إضافية لملف index.html، تم توحيد حارس زر إلغاء مساهمة السيارة ليستخدم canCancelPartnerVehicleContributions بدلًا من canCancelPartnerInventoryContributions. القيمتان متساويتان حاليًا في إعداد الصلاحيات، لذلك لم يكن هناك اختلاف فعلي في الوصول، لكن أصبح مسار السيارة يعتمد متغيره المخصص.
+
+تم فحص عناصر HTML في index.html بعد التعديل: 878 معرفًا فريدًا دون تكرار، و45 نموذجًا دون تكرار في المعرفات. هذا فحص بنيوي للمعرفات وليس اختبار تشغيل للمتصفح أو فحصًا نحويًا كاملًا لـ JavaScript.
+
+آخر commit لملف index.html: 0bc7e81da7d4c136637d8fa200a770fb9a543f50
+آخر blob SHA: 9794342ed6adcf810b35348149545dae7382e35a
+نسخة QA: MeatManagement v41
+main وGitHub Pages لم يتغيرا، وما زالا v38.
+لم توجد GitHub Actions workflow runs مرتبطة بالـ commit الأخير.
