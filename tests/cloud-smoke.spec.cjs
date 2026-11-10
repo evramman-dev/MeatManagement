@@ -59,7 +59,11 @@ test('MeatManagement read-only navigation, permissions and session smoke test', 
 
   page.on('console', message => {
     if (message.type() === 'error') {
-      consoleErrors.push({ section: currentSection, message: message.text(), location: message.location() });
+      const text = message.text();
+      // Playwright blocks service workers so QA HTML cannot be served from the deployed PWA cache.
+      // Ignore only the resulting registration-scope TypeError; keep collecting all other console errors.
+      if (text.startsWith("[PWA] failed TypeError: Cannot read properties of undefined (reading 'scope')")) return;
+      consoleErrors.push({ section: currentSection, message: text, location: message.location() });
     }
   });
 
