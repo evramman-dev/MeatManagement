@@ -99,3 +99,9 @@ Do not accept a generic "other asset" until a controlled asset-category-to-accou
 - No UI behavior was changed.
 - The existing CAPITAL_OUT guard and disabled UI option remain in place.
 - This document records the verified blockers and the implementation gate.
+
+## Additional lifecycle inspection
+- No public base table with a name containing `vehicle` or `fleet` was found in the current QA schema.
+- No foreign key currently references `fixed_assets`; there is therefore no database-enforced downstream asset dependency graph to rely on for safe cancellation.
+- QA currently has one location of type VEHICLE, alongside FACTORY, FRIDGE, MAIN_WAREHOUSE, and SHOWROOM locations.
+- These findings strengthen the decision not to treat a vehicle as a fixed asset or to enable generic in-kind cancellation without first designing the vehicle register and its dependencies.
