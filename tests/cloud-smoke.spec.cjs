@@ -37,6 +37,14 @@ test('MeatManagement read-only browser smoke test', async ({ page }) => {
   test.setTimeout(180000);
 
   const errors = [];
+let currentSection = 'login';
+
+page.on('pageerror', error => {
+  errors.push({
+    section: currentSection,
+    message: error.message
+  });
+});
 
   page.on('pageerror', error => {
     errors.push(error.message);
@@ -82,6 +90,7 @@ test('MeatManagement read-only browser smoke test', async ({ page }) => {
   }
 
   for (const section of sections) {
+  currentSection = section;
     await page.evaluate((route) => {
       if (typeof window.openSection === 'function') {
         window.openSection(route);
@@ -102,5 +111,7 @@ test('MeatManagement read-only browser smoke test', async ({ page }) => {
     console.log('Browser JavaScript errors:', errorList);
   }, errors);
 
-  expect(errors, 'JavaScript errors detected').toEqual([]);
+  console.log('Browser JavaScript errors:', JSON.stringify(errors, null, 2));
+
+expect(errors, 'JavaScript errors detected').toEqual([]);
 });
