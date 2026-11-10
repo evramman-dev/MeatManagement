@@ -686,3 +686,37 @@ CREATE INDEX IF NOT EXISTS idx_purchase_landed_costs_expense_id
   ON public.purchase_landed_costs (expense_id);
 CREATE INDEX IF NOT EXISTS idx_purchase_landed_costs_treasury_id
   ON public.purchase_landed_costs (treasury_id);
+
+-- Applied 2026-11-10: block direct purchase invoices into vehicle locations.
+-- Vehicle inventory must enter through the approved trip-load workflow.
+CREATE OR REPLACE FUNCTION public.prevent_vehicle_purchase_invoice()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_location_type text;
+BEGIN
+  SELECT location_type
+  INTO v_location_type
+  FROM public.locations
+  WHERE location_id = NEW.location_id
+    AND is_active = true;
+
+  IF v_location_type = 'VEHICLE' THEN
+    RAISE EXCEPTION 'لا يمكن تسجيل فاتورة مشتريات مباشرة على موقع سيارة. استخدم مسار تحميل السيارة المعتمد.';
+  END IF;
+
+  RETURN NEW;
+END;
+$function$;
+
+DROP TRIGGER IF EXISTS trg_block_vehicle_purchase_invoice
+ON public.purchase_invoices;
+
+CREATE TRIGGER trg_block_vehicle_purchase_invoice
+BEFORE INSERT OR UPDATE OF location_id
+ON public.purchase_invoices
+FOR EACH ROW
+EXECUTE FUNCTION public.prevent_vehicle_purchase_invoice();
