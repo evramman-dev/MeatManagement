@@ -3002,16 +3002,19 @@ async function loadPriceLists(){
 function getPriceItemLimitIssue(item){
   const product=productsCache.find(p=>String(p.product_id)===String(item.product_id));
   if(!product)return "";
-  if(!product.is_active)return "المنتج غير نشط";
-  if(!product.can_be_sold)return "المنتج غير مسموح ببيعه";
+  const issues=[];
+  if(!product.is_active)issues.push("المنتج غير نشط");
+  if(!product.can_be_sold)issues.push("المنتج غير مسموح ببيعه");
+  const unit=units.find(u=>String(u.unit_id)===String(item.unit_id));
+  if(!unit||!unit.is_active)issues.push("وحدة البيع غير نشطة");
   const min=Math.max(Number(item.minimum_price)||0,Number(product.min_selling_price)||0);
   const listMax=item.maximum_price==null?null:Number(item.maximum_price);
   const productMax=product.max_selling_price==null?null:Number(product.max_selling_price);
   const max=listMax!==null&&productMax!==null?Math.min(listMax,productMax):(listMax!==null?listMax:productMax);
-  if(max!==null&&min>max)return "حدود الأسعار متعارضة";
-  if(Number(item.selling_price)<min||(max!==null&&Number(item.selling_price)>max))
-    return "السعر خارج الحدود ("+fmt(min)+" إلى "+(max===null?"غير محدد":fmt(max))+")";
-  return "";
+  if(max!==null&&min>max)issues.push("حدود الأسعار متعارضة");
+  else if(Number(item.selling_price)<min||(max!==null&&Number(item.selling_price)>max))
+    issues.push("السعر خارج الحدود ("+fmt(min)+" إلى "+(max===null?"غير محدد":fmt(max))+")");
+  return issues.join("، ");
 }
 function renderPriceLists(){
   const box=$("priceListsList");if(!box)return;box.replaceChildren();
