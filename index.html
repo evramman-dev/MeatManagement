@@ -763,6 +763,12 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div id="partnerTransactionsMsg" class="status hidden"></div>
 <div id="partnerTransactionsList"><div class="empty">جارٍ تحميل حركات الشركاء...</div></div>
 </div>
+<div id="partnerInventoryContributionsCard" class="card hidden" style="margin-top:20px;">
+<div class="row" style="justify-content:space-between;align-items:center;"><h2>📦 مساهمات المخزون من الشركاء</h2><div class="row"><button id="refreshPartnerInventoryContributionsBtn" class="btn secondary" type="button" style="margin:0;width:auto;">تحديث</button><button id="addPartnerInventoryContributionBtn" class="btn hidden" type="button" style="margin:0;width:auto;">＋ مساهمة مخزون</button></div></div>
+<p class="desc">تسجيل البضاعة التي يقدمها الشريك للمخزون مع تحويل الوحدة وتقييمها وربطها بحساب الشريك.</p>
+<div id="partnerInventoryContributionsMsg" class="status hidden"></div>
+<div id="partnerInventoryContributionsList"><div class="empty">جارٍ تحميل المساهمات...</div></div>
+</div>
 </div>
 </div>
 <div id="partnerFormModal" class="modal-form">
@@ -800,6 +806,25 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 </div>
 </div>
+<div id="partnerInventoryContributionFormModal" class="modal-form"><div class="modal-form-content"><div class="modal-header"><h3>تسجيل مساهمة مخزون من شريك</h3><button class="close-btn" type="button" onclick="document.getElementById('partnerInventoryContributionFormModal').classList.remove('active')">&times;</button></div><div class="modal-body"><form id="partnerInventoryContributionForm" onsubmit="event.preventDefault();">
+<label>الشريك *</label><select id="picPartner" required><option value="">اختر الشريك</option></select>
+<label>الصنف *</label><select id="picProduct" required><option value="">اختر الصنف</option></select>
+<label>موقع الاستلام *</label><select id="picLocation" required><option value="">اختر المخزن أو الثلاجة</option></select>
+<label>وحدة الكمية *</label><select id="picUnit" required><option value="">اختر الوحدة</option></select>
+<label>الكمية المقدمة *</label><input id="picQuantity" type="number" min="0.000001" step="0.000001" required>
+<label>القيمة الإجمالية للمساهمة بالجنيه *</label><input id="picTotalValue" type="number" min="0.01" step="0.01" required>
+<label>تاريخ المساهمة *</label><input id="picDate" type="date" required>
+<label>ملاحظات</label><textarea id="picNotes" rows="2"></textarea>
+<div class="info">سيحوّل النظام الكمية إلى وحدة الأساس الخاصة بالصنف، ويضيف القيمة إلى تكلفة المخزون ورصيد الشريك.</div>
+<button id="savePartnerInventoryContributionBtn" class="btn" type="submit">حفظ المساهمة</button><div id="partnerInventoryContributionFormMsg" class="status hidden"></div>
+</form></div></div></div>
+<div id="partnerInventoryContributionCancelModal" class="modal-form"><div class="modal-form-content"><div class="modal-header"><h3>إلغاء مساهمة المخزون</h3><button class="close-btn" type="button" onclick="document.getElementById('partnerInventoryContributionCancelModal').classList.remove('active')">&times;</button></div><div class="modal-body"><form id="partnerInventoryContributionCancelForm" onsubmit="event.preventDefault();">
+<input id="picCancelId" type="hidden">
+<div class="info">لا يسمح النظام بالإلغاء إذا حدثت حركة لاحقة على الصنف في موقع الاستلام. يجب رد البضاعة للشريك وعدم استخدامها أو بيعها.</div>
+<label>سبب الإلغاء *</label><textarea id="picCancelReason" rows="3" required></textarea>
+<label class="check"><input id="picCancelReturnedConfirm" type="checkbox"> أؤكد أن البضاعة رُدت للشريك ولم تدخل التشغيل أو البيع أو التصرف.</label>
+<button id="confirmPartnerInventoryContributionCancelBtn" class="btn danger" type="submit">تأكيد الإلغاء</button><div id="partnerInventoryContributionCancelMsg" class="status hidden"></div>
+</form></div></div></div>
 <div id="sectionAccounting" class="sub-section hidden">
 <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
 <div id="accountingCard" class="card hidden">
@@ -1773,6 +1798,8 @@ try {
   let canViewSupplierPayments=false;
   let canViewPurchaseReturns=false;
   let canViewFixedAssets=false, canManageFixedAssets=false, canViewLandedCosts=false, canManageLandedCosts=false;
+  let canViewPartnerInventoryContributions=false, canManagePartnerInventoryContributions=false, canCancelPartnerInventoryContributions=false;
+  let partnerInventoryContributionsCache=[];
   let canViewStockTransfers=false;
   let canViewTreasuryTransfers=false;
   let canViewReports=false;
@@ -2212,6 +2239,7 @@ async function userInfo(user){
     try{ canManageLandedCosts=await permission("PURCHASES_MANAGE") || isSystemAdmin; canViewLandedCosts=await permission("PURCHASES_VIEW") || canManageLandedCosts || isSystemAdmin; if($("menuLandedCosts")) $("menuLandedCosts").classList.toggle("hidden",!canViewLandedCosts); if($("addLandedCostBtn")) $("addLandedCostBtn").classList.toggle("hidden",!canManageLandedCosts); }catch(e){}
     try{ canManageFixedAssets=await permission("ACCOUNTING_MANAGE") || isSystemAdmin; canViewFixedAssets=await permission("ACCOUNTING_VIEW") || canManageFixedAssets || isSystemAdmin; if($("menuFixedAssets")) $("menuFixedAssets").classList.toggle("hidden",!canViewFixedAssets); if($("addFixedAssetBtn")) $("addFixedAssetBtn").classList.toggle("hidden",!canManageFixedAssets); }catch(e){}
     try{ canViewPartners=await permission("PARTNERS_VIEW") || isSystemAdmin; canManagePartners=await permission("PARTNERS_MANAGE") || isSystemAdmin; if($("menuPartners")) $("menuPartners").classList.toggle("hidden",!canViewPartners); if($("partnersCard")) $("partnersCard").classList.toggle("hidden",!canViewPartners); if($("addPartnerBtn")) $("addPartnerBtn").classList.toggle("hidden",!canManagePartners); if($("addPartnerTransactionBtn")) $("addPartnerTransactionBtn").classList.toggle("hidden",!canManagePartners); }catch(e){}
+    try{ canManagePartnerInventoryContributions=await permission("ACCOUNTING_MANAGE") || await permission("PARTNERS_TRANSACTIONS_MANAGE") || isSystemAdmin; canViewPartnerInventoryContributions=await permission("ACCOUNTING_VIEW") || await permission("PARTNERS_TRANSACTIONS_VIEW") || canManagePartnerInventoryContributions; canCancelPartnerInventoryContributions=await permission("ACCOUNTING_MANAGE") || isSystemAdmin; if($("partnerInventoryContributionsCard")) $("partnerInventoryContributionsCard").classList.toggle("hidden",!canViewPartnerInventoryContributions); if($("addPartnerInventoryContributionBtn")) $("addPartnerInventoryContributionBtn").classList.toggle("hidden",!canManagePartnerInventoryContributions); }catch(e){}
     try{ canViewRecipes=await permission("RECIPES_VIEW") || isSystemAdmin; canManageRecipes=await permission("RECIPES_MANAGE") || isSystemAdmin; if($("menuRecipes")) $("menuRecipes").classList.toggle("hidden",!canViewRecipes); if($("recipesCard")) $("recipesCard").classList.toggle("hidden",!canViewRecipes); if($("addRecipeBtn")) $("addRecipeBtn").classList.toggle("hidden",!canManageRecipes); }catch(e){}
     try{ canViewProduction=await permission("PRODUCTION_VIEW") || isSystemAdmin; canManageProduction=await permission("PRODUCTION_MANAGE") || isSystemAdmin; if($("menuProduction")) $("menuProduction").classList.toggle("hidden",!canViewProduction); if($("productionCard")) $("productionCard").classList.toggle("hidden",!canViewProduction); if($("addProductionBtn")) $("addProductionBtn").classList.toggle("hidden",!canManageProduction); }catch(e){}
     try{ canViewAccounting=await permission("ACCOUNTING_VIEW") || isSystemAdmin; canManageAccounting=await permission("ACCOUNTING_MANAGE") || isSystemAdmin; if($("menuAccounting")) $("menuAccounting").classList.toggle("hidden",!canViewAccounting); if($("accountingCard")) $("accountingCard").classList.toggle("hidden",!canViewAccounting); if($("btnPostEntries")) $("btnPostEntries").classList.toggle("hidden",!canManageAccounting); if($("btnAdjustment")) $("btnAdjustment").classList.toggle("hidden",!canManageAccounting); if($("btnBackup")) $("btnBackup").classList.toggle("hidden",!isSystemAdmin); }catch(e){}
@@ -6587,12 +6615,13 @@ async function viewTripSummary(t){
 // ========== الشركاء ==========
 async function loadPartners(){ 
   if(!navigator.onLine) return; 
-  const {data}=await db.from("partners").select("*").order("partner_id"); 
+  const {data,error}=await db.from("partners").select("*").order("partner_id"); 
+  if(error) throw error;
   partnersCache=data||[]; 
   const box=$("partnersList"); if(!box) return; 
   box.replaceChildren(); 
-  if(!partnersCache.length){ box.innerHTML="<div class='empty'>لا يوجد شركاء مسجلون.</div>"; return; } 
-  partnersCache.forEach(p=>{ 
+  if(!partnersCache.length){ box.innerHTML="<div class='empty'>لا يوجد شركاء مسجلون.</div>"; } 
+  else partnersCache.forEach(p=>{ 
     const card=document.createElement("div");card.className="product"; 
     const title=document.createElement("div");title.className="pname";title.textContent="🤝 "+p.partner_name; 
     const details=document.createElement("div");details.className="details";details.textContent="الرصيد الحالي: "+fmt(p.current_balance); 
@@ -6618,7 +6647,8 @@ async function loadPartners(){
   }); 
   await loadPartnerTransactions(); 
   fillPartnerSelect(); 
-  fillPartnerTreasurySelect(); 
+  fillPartnerTreasurySelect();
+  if(canViewPartnerInventoryContributions) await loadPartnerInventoryContributions();
 }
 async function loadPartnerTransactions(){ 
   if(!canViewPartners)return; 
@@ -6639,6 +6669,76 @@ async function loadPartnerTransactions(){
     } 
   }catch(e){ msg($("partnerTransactionsMsg"),"تعذر التحميل: "+err(e),"error"); } 
 }
+async function fillPartnerInventoryContributionForm(){
+  if(!partnersCache.length){const {data,error}=await db.from("partners").select("partner_id,partner_name,is_active").eq("is_active",true).order("partner_id");if(error)throw error;partnersCache=data||[];}
+  if(!productsCache.length) await loadProducts();
+  if(!locationsCache.length) await loadLocations();
+  if(!units.length) await loadLookups();
+  const fill=(id,rows,key,label,placeholder)=>{const el=$(id);if(!el)return;el.replaceChildren();const first=document.createElement("option");first.value="";first.textContent=placeholder;el.appendChild(first);rows.forEach(x=>{const op=document.createElement("option");op.value=String(x[key]);op.textContent=x[label];el.appendChild(op);});};
+  fill("picPartner",partnersCache.filter(x=>x.is_active!==false),"partner_id","partner_name","اختر الشريك");
+  fill("picProduct",productsCache.filter(x=>x.is_active!==false),"product_id","product_name","اختر الصنف");
+  fill("picLocation",locationsCache.filter(x=>x.is_active!==false&&x.location_type!=="VEHICLE"),"location_id","location_name","اختر المخزن أو الثلاجة");
+  await fillPartnerInventoryUnits();
+}
+async function fillPartnerInventoryUnits(){
+  const productId=Number($("picProduct")?.value)||null,el=$("picUnit");if(!el)return;
+  const rows=[];
+  const product=productsCache.find(x=>Number(x.product_id)===productId);
+  if(product?.base_unit_id){const u=units.find(x=>Number(x.unit_id)===Number(product.base_unit_id));if(u)rows.push(u);}
+  if(productId){const {data,error}=await db.from("product_unit_conversions").select("unit_id").eq("product_id",productId).eq("is_active",true);if(error)throw error;(data||[]).forEach(c=>{const u=units.find(x=>Number(x.unit_id)===Number(c.unit_id));if(u&&!rows.some(z=>Number(z.unit_id)===Number(u.unit_id)))rows.push(u);});}
+  const cur=el.value;el.replaceChildren();const first=document.createElement("option");first.value="";first.textContent=rows.length?"اختر الوحدة":"لا توجد وحدات تحويل معتمدة";el.appendChild(first);
+  rows.forEach(u=>{const op=document.createElement("option");op.value=String(u.unit_id);op.textContent=u.unit_name;el.appendChild(op);});el.value=cur&&rows.some(u=>String(u.unit_id)===cur)?cur:(rows[0]?String(rows[0].unit_id):"");
+}
+async function loadPartnerInventoryContributions(){
+  const box=$("partnerInventoryContributionsList");if(!box||!canViewPartnerInventoryContributions)return;
+  if(!navigator.onLine){box.innerHTML="<div class='empty'>اتصل بالإنترنت لعرض مساهمات المخزون.</div>";return;}
+  box.innerHTML="<div class='empty'>جارٍ تحميل المساهمات...</div>";clear($("partnerInventoryContributionsMsg"));
+  try{
+    const {data,error}=await db.from("partner_inventory_contributions").select("*").order("contribution_id",{ascending:false}).limit(200);if(error)throw error;
+    partnerInventoryContributionsCache=data||[];box.replaceChildren();
+    if(!partnerInventoryContributionsCache.length){box.innerHTML="<div class='empty'>لا توجد مساهمات مخزون مسجلة.</div>";return;}
+    partnerInventoryContributionsCache.forEach(x=>{
+      const partner=partnersCache.find(p=>Number(p.partner_id)===Number(x.partner_id));
+      const product=productsCache.find(p=>Number(p.product_id)===Number(x.product_id));
+      const location=locationsCache.find(l=>Number(l.location_id)===Number(x.location_id));
+      const unit=units.find(u=>Number(u.unit_id)===Number(x.unit_id));
+      const card=document.createElement("div");card.className="product";
+      const title=document.createElement("div");title.className="pname";title.textContent=(product?.product_name||("صنف "+x.product_id))+" - "+(partner?.partner_name||("شريك "+x.partner_id));
+      const details=document.createElement("div");details.className="details";
+      details.textContent="الكمية: "+fmtQty(x.entered_quantity)+" "+(unit?.unit_name||"وحدة")+" | كمية الأساس: "+fmtQty(x.base_quantity)+" | القيمة: "+fmt(x.total_value)+" | الموقع: "+(location?.location_name||x.location_id)+" | التاريخ: "+x.contribution_date+" | الحالة: "+(x.status==="ACTIVE"?"نشطة":"ملغاة");
+      card.append(title,details);
+      if(x.status==="ACTIVE"&&canCancelPartnerInventoryContributions){const actions=document.createElement("div");actions.className="actions";const b=document.createElement("button");b.className="btn danger";b.textContent="إلغاء المساهمة";b.onclick=()=>{ $("picCancelId").value=String(x.contribution_id);$("partnerInventoryContributionCancelForm").reset();$("picCancelId").value=String(x.contribution_id);clear($("partnerInventoryContributionCancelMsg"));$("partnerInventoryContributionCancelModal").classList.add("active");};actions.appendChild(b);card.appendChild(actions);}
+      box.appendChild(card);
+    });
+  }catch(e){msg($("partnerInventoryContributionsMsg"),"تعذر تحميل مساهمات المخزون: "+err(e),"error");box.innerHTML="<div class='empty'>تعذر تحميل المساهمات.</div>";}
+}
+if($("addPartnerInventoryContributionBtn"))$("addPartnerInventoryContributionBtn").addEventListener("click",async()=>{
+  if(!canManagePartnerInventoryContributions)return;
+  try{await fillPartnerInventoryContributionForm();$("partnerInventoryContributionForm").reset();$("picDate").value=todayISO();await fillPartnerInventoryUnits();clear($("partnerInventoryContributionFormMsg"));$("partnerInventoryContributionFormModal").classList.add("active");}
+  catch(e){showToast("تعذر تجهيز نموذج المساهمة: "+err(e),"error",7000);}
+});
+if($("picProduct"))$("picProduct").addEventListener("change",()=>fillPartnerInventoryUnits().catch(e=>msg($("partnerInventoryContributionFormMsg"),err(e),"error")));
+if($("refreshPartnerInventoryContributionsBtn"))$("refreshPartnerInventoryContributionsBtn").addEventListener("click",loadPartnerInventoryContributions);
+if($("partnerInventoryContributionForm"))$("partnerInventoryContributionForm").addEventListener("submit",async e=>{
+  e.preventDefault();if(!canManagePartnerInventoryContributions)return;
+  const btn=$("savePartnerInventoryContributionBtn"),partner=Number($("picPartner").value),product=Number($("picProduct").value),location=Number($("picLocation").value),unit=Number($("picUnit").value),quantity=Number($("picQuantity").value),value=Number($("picTotalValue").value),date=$("picDate").value,notes=$("picNotes").value.trim();
+  if(!partner||!product||!location||!unit||!Number.isFinite(quantity)||quantity<=0||!Number.isFinite(value)||value<=0||!date){msg($("partnerInventoryContributionFormMsg"),"أكمل الشريك والصنف والموقع والوحدة والكمية والقيمة والتاريخ.","error");return;}
+  busy(btn,true,"جارٍ الحفظ...","حفظ المساهمة");
+  const payload={partner,product,location,unit,quantity,value,date,notes},key="mm_partner_inventory_contribution_pending";
+  try{const requestId=getRequestId(key,payload);const {data,error}=await db.rpc("create_partner_inventory_contribution",{p_partner_id:partner,p_product_id:product,p_location_id:location,p_unit_id:unit,p_quantity:quantity,p_total_value:value,p_contribution_date:date,p_notes:notes||null,p_request_id:requestId});if(error)throw error;clearRequestId(key);$("partnerInventoryContributionFormModal").classList.remove("active");showToast("تم تسجيل مساهمة المخزون وربطها بحساب الشريك.","success");await loadPartners();await loadPartnerInventoryContributions();}
+  catch(e){msg($("partnerInventoryContributionFormMsg"),"تعذر تسجيل المساهمة: "+err(e),"error");}
+  finally{busy(btn,false,"","حفظ المساهمة");}
+});
+if($("partnerInventoryContributionCancelForm"))$("partnerInventoryContributionCancelForm").addEventListener("submit",async e=>{
+  e.preventDefault();if(!canCancelPartnerInventoryContributions)return;
+  const id=Number($("picCancelId").value),reason=$("picCancelReason").value.trim(),confirmed=$("picCancelReturnedConfirm").checked,btn=$("confirmPartnerInventoryContributionCancelBtn");
+  if(!id||!reason||!confirmed){msg($("partnerInventoryContributionCancelMsg"),"اكتب سبب الإلغاء وأكد رد البضاعة دون استخدامها.","error");return;}
+  if(!confirm("سيتم عكس كمية المخزون وقيمته ورصيد الشريك والقيد المحاسبي. هل تم رد البضاعة كاملة ولم تستخدم؟"))return;
+  busy(btn,true,"جارٍ الإلغاء...","تأكيد الإلغاء");
+  try{const payload={id,reason},requestId=getRequestId("mm_partner_inventory_cancel_pending",payload);const {error}=await db.rpc("cancel_partner_inventory_contribution",{p_contribution_id:id,p_reason:reason,p_stock_returned_unused:true,p_cancellation_request_id:requestId});if(error)throw error;clearRequestId("mm_partner_inventory_cancel_pending");$("partnerInventoryContributionCancelModal").classList.remove("active");showToast("تم إلغاء مساهمة المخزون وعكس أثرها.","success");await loadPartners();await loadPartnerInventoryContributions();}
+  catch(e){msg($("partnerInventoryContributionCancelMsg"),"تعذر إلغاء المساهمة: "+err(e),"error");}
+  finally{busy(btn,false,"","تأكيد الإلغاء");}
+});
 if($("refreshPartnersBtn")) $("refreshPartnersBtn").addEventListener("click",loadPartners);
 if($("refreshPartnerTransactionsBtn")) $("refreshPartnerTransactionsBtn").addEventListener("click",loadPartnerTransactions);
 if($("partnerForm")) $("partnerForm").addEventListener("submit", async e => { 
