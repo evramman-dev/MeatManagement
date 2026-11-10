@@ -1815,7 +1815,7 @@ try {
   let canViewProduction=false, canManageProduction=false;
   let canViewAccounting=false, canManageAccounting=false;
   let canViewTrips=false, canManageTrips=false, canCreateTrips=false, canRequestTripLoads=false, canApproveTripLoads=false, canDispatchTripLoads=false;
-  let canViewCustomers=false, canManageCustomers=false;
+  let canViewCustomers=false, canManageCustomers=false, canCreateCustomers=false;
   let canViewSales=false, canManageSales=false, canCreateReturns=false, canApproveReturns=false, canManageReturns=false;
   let canViewCollections=false, canPostCollections=false, canManageCollections=false;
   let canViewSuppliers=false, canManageSuppliers=false;
@@ -2239,12 +2239,12 @@ async function userInfo(user){
     try{ canViewTreasuryTransfers=await permission("TREASURIES_MANAGE") || await permission("ACCOUNTING_MANAGE") || isSystemAdmin; if($("menuTreasuryTransfers")) $("menuTreasuryTransfers").classList.toggle("hidden",!canViewTreasuryTransfers); }catch(e){}
     try{ canViewStock=await permission("STOCK_VIEW") || await permission("INVENTORY_VIEW") || isSystemAdmin; canManageStock=await permission("STOCK_MANAGE") || isSystemAdmin; if($("menuStock")) $("menuStock").classList.toggle("hidden",!canViewStock); if($("stockCard")) $("stockCard").classList.toggle("hidden",!canViewStock); if($("adjustStockBtn")) $("adjustStockBtn").classList.toggle("hidden",!canManageStock); }catch(e){}
     try{ canViewStockTransfers=await permission("INVENTORY_TRANSFER") || isSystemAdmin; if($("menuStockTransfers")) $("menuStockTransfers").classList.toggle("hidden",!canViewStockTransfers); }catch(e){}
-    try{ canViewSales=await permission("SALES_VIEW") || await permission("INVOICES_VIEW") || await permission("INVOICES_CREATE") || isSystemAdmin; canManageSales=await permission("SALES_MANAGE") || isSystemAdmin; if($("menuSales")) $("menuSales").classList.toggle("hidden",!canViewSales); if($("salesCard")) $("salesCard").classList.toggle("hidden",!canViewSales); if($("addInvoiceBtn")) $("addInvoiceBtn").classList.toggle("hidden",!(await permission("INVOICES_CREATE") || canManageSales)); }catch(e){}
+    try{ canViewSales=await permission("SALES_VIEW") || await permission("INVOICES_VIEW") || isSystemAdmin; canManageSales=await permission("SALES_MANAGE") || isSystemAdmin; if($("menuSales")) $("menuSales").classList.toggle("hidden",!canViewSales); if($("salesCard")) $("salesCard").classList.toggle("hidden",!canViewSales); if($("addInvoiceBtn")) $("addInvoiceBtn").classList.toggle("hidden",!(await permission("INVOICES_CREATE") || canManageSales)); }catch(e){}
     try{ canCreateReturns=await permission("RETURNS_CREATE") || await permission("RETURNS_MANAGE") || isSystemAdmin; canApproveReturns=await permission("RETURNS_APPROVE") || await permission("RETURNS_MANAGE") || isSystemAdmin; canManageReturns=await permission("RETURNS_MANAGE") || isSystemAdmin; if($("addReturnBtn")) $("addReturnBtn").classList.toggle("hidden",!canCreateReturns); }catch(e){}
-    try{ canViewSupplierPayments=await permission("PURCHASES_MANAGE") || isSystemAdmin; if($("menuSupplierPayments")) $("menuSupplierPayments").classList.toggle("hidden",!canViewSupplierPayments); }catch(e){}
-    try{ canViewPurchaseReturns=await permission("PURCHASES_MANAGE") || isSystemAdmin; if($("menuPurchaseReturns")) $("menuPurchaseReturns").classList.toggle("hidden",!canViewPurchaseReturns); }catch(e){}
+    try{ canViewSupplierPayments=await permission("PURCHASES_VIEW") || await permission("SUPPLIERS_VIEW") || isSystemAdmin; if($("menuSupplierPayments")) $("menuSupplierPayments").classList.toggle("hidden",!canViewSupplierPayments); }catch(e){}
+    try{ canViewPurchaseReturns=await permission("RETURNS_VIEW") || await permission("PURCHASES_VIEW") || isSystemAdmin; if($("menuPurchaseReturns")) $("menuPurchaseReturns").classList.toggle("hidden",!canViewPurchaseReturns); }catch(e){}
     try{ canViewReports=await permission("REPORTS_VIEW") || isSystemAdmin; if($("menuReports")) $("menuReports").classList.toggle("hidden",!canViewReports); }catch(e){}
-    try{ canViewCustomers=await permission("CUSTOMERS_VIEW") || isSystemAdmin; canManageCustomers=await permission("CUSTOMERS_MANAGE") || isSystemAdmin; if($("menuCustomers")) $("menuCustomers").classList.toggle("hidden",!canViewCustomers); if($("customersCard")) $("customersCard").classList.toggle("hidden",!canViewCustomers); if($("addCustomerBtn")) $("addCustomerBtn").classList.toggle("hidden",!canManageCustomers); }catch(e){}
+    try{ canViewCustomers=await permission("CUSTOMERS_VIEW") || isSystemAdmin; canManageCustomers=await permission("CUSTOMERS_MANAGE") || isSystemAdmin; canCreateCustomers=canManageCustomers; if($("menuCustomers")) $("menuCustomers").classList.toggle("hidden",!canViewCustomers); if($("customersCard")) $("customersCard").classList.toggle("hidden",!canViewCustomers); if($("addCustomerBtn")) $("addCustomerBtn").classList.toggle("hidden",!canCreateCustomers); }catch(e){}
     try{ canViewSuppliers=await permission("SUPPLIERS_VIEW") || isSystemAdmin; canManageSuppliers=await permission("SUPPLIERS_MANAGE") || isSystemAdmin; if($("menuSuppliers")) $("menuSuppliers").classList.toggle("hidden",!canViewSuppliers); if($("suppliersCard")) $("suppliersCard").classList.toggle("hidden",!canViewSuppliers); if($("addSupplierBtn")) $("addSupplierBtn").classList.toggle("hidden",!canManageSuppliers); }catch(e){}
     try{ canViewPurchases=await permission("PURCHASES_VIEW") || isSystemAdmin; canManagePurchases=await permission("PURCHASES_MANAGE") || isSystemAdmin; if($("menuPurchases")) $("menuPurchases").classList.toggle("hidden",!canViewPurchases); if($("purchasesCard")) $("purchasesCard").classList.toggle("hidden",!canViewPurchases); if($("addPurchaseBtn")) $("addPurchaseBtn").classList.toggle("hidden",!canManagePurchases); }catch(e){}
     try{ canViewCollections=await permission("COLLECTIONS_VIEW") || isSystemAdmin; canPostCollections=await permission("COLLECTIONS_POST") || isSystemAdmin; canManageCollections=await permission("COLLECTIONS_MANAGE") || isSystemAdmin; if($("menuCollections")) $("menuCollections").classList.toggle("hidden",!canViewCollections); if($("collectionsCard")) $("collectionsCard").classList.toggle("hidden",!canViewCollections); if($("addCollectionBtn")) $("addCollectionBtn").classList.toggle("hidden",!canPostCollections); }catch(e){}
@@ -2276,12 +2276,12 @@ async function userInfo(user){
     // صلاحيات واجهة مندوب المبيعات: السماح بفتح نماذج إنشاء العميل والفاتورة والتحصيل.
     // تظل صلاحيات قاعدة البيانات هي المرجع النهائي لقبول العمليات.
     if(currentRoleCode === "SALES_REP"){
-      canManageCustomers = true;
+      canCreateCustomers = await permission("CUSTOMERS_VIEW");
       canManageSales = true;
       canPostCollections = true;
       canViewTrips = true;
       canManageTrips = false;
-      if($("addCustomerBtn")) $("addCustomerBtn").classList.remove("hidden");
+      if($("addCustomerBtn")) $("addCustomerBtn").classList.toggle("hidden",!canCreateCustomers);
       if($("addInvoiceBtn")) $("addInvoiceBtn").classList.remove("hidden");
       if($("addCollectionBtn")) $("addCollectionBtn").classList.toggle("hidden",!canPostCollections);
       const treasuryLabel = document.querySelector('label[for="collectionTreasury"]');
@@ -2994,8 +2994,13 @@ if($("treasuryForm")) $("treasuryForm").addEventListener("submit", async e => {
     $("treasuryForm").reset(); 
     loadTreasuries(); 
     showToast("تم الحفظ","success"); 
-  }catch(e){ alert(err(e)); } 
-  finally{ busy(btn,false,"","حفظ"); } 
+  }catch(e){
+    const message=currentRoleCode==="SALES_REP" && e?.code==="42501"
+      ? "لا يمكن إضافة العميل إلا داخل منطقة مسندة إليك. اختر المنطقة التابعة لك ثم أعد الحفظ."
+      : err(e);
+    msg(formMsg,message,"error");
+  }
+  finally{ busy(btn,false,"","حفظ"); }
 });
 if($("refreshTreasuriesBtn")) $("refreshTreasuriesBtn").addEventListener("click",loadTreasuries);
 if($("treasurySearch")) $("treasurySearch").addEventListener("input",renderTreasuries);
@@ -3447,6 +3452,8 @@ function syncCustomerLegacyGeo(){
   if($("customerLegacyArea")) $("customerLegacyArea").value=area?.name||"";
 }
 window.openCustomerForm=async function(c=null){
+  if(c && !canManageCustomers){ showToast("لا تملك صلاحية تعديل بيانات العملاء.","error"); return; }
+  if(!c && !canCreateCustomers){ showToast("لا تملك صلاحية إضافة عميل.","error"); return; }
   try{
     await loadCustomerGeoData();
     const form=$("customerForm"); if(form) form.reset();
@@ -3555,6 +3562,10 @@ if($("customerForm")) $("customerForm").addEventListener("submit", async e => {
   }
   if(areaId&&!customerAreasCache.some(a=>String(a.area_id)===String(areaId)&&String(a.city_id)===String(cityId))){
     msg(formMsg,"المنطقة المختارة لا تتبع الوحدة الإدارية. اختر المنطقة من جديد.","error");
+    return;
+  }
+  if(currentRoleCode==="SALES_REP" && !areaId){
+    msg(formMsg,"اختر المنطقة المسندة إليك قبل إضافة العميل.","error");
     return;
   }
   busy(btn,true,"جارٍ...","حفظ");
