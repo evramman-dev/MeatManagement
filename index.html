@@ -3609,8 +3609,13 @@ if($("customerForm")) $("customerForm").addEventListener("submit", async e => {
     $("customerForm").reset(); 
     loadCustomers(); 
     showToast("تم الحفظ","success"); 
-  }catch(e){ alert(err(e)); } 
-  finally{ busy(btn,false,"","حفظ"); } 
+  }catch(e){
+    const message=currentRoleCode==="SALES_REP" && e?.code==="42501"
+      ? "لا يمكن إضافة العميل إلا داخل منطقة مسندة إليك. اختر المنطقة التابعة لك ثم أعد الحفظ."
+      : err(e);
+    msg(formMsg,message,"error");
+  }
+  finally{ busy(btn,false,"","حفظ"); }
 });
 if($("refreshCustomersBtn")) $("refreshCustomersBtn").addEventListener("click",loadCustomers);
 if($("customerSearch")) $("customerSearch").addEventListener("input",renderCustomers);
