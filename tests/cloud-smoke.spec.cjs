@@ -3,6 +3,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const qaHtml = fs.readFileSync(path.resolve(__dirname, '..', 'index.html'), 'utf8');
 
+test.use({ serviceWorkers: 'block' });
+
 const baseURL = process.env.BASE_URL;
 const username = process.env.TEST_USERNAME;
 const password = process.env.TEST_PASSWORD;
