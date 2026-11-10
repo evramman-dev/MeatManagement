@@ -1806,7 +1806,7 @@ try {
 
   // ========== المتغيرات ==========
   let canManage=false, isSystemAdmin=false, currentRoleCode=null, currentSalesRepId=null, currentSalesRepName=null;
-  let canViewLocations=false, canManageLocations=false;
+  let canViewLocations=false, canManageLocations=false, canLoadLocations=false;
   let canViewTreasuries=false, canManageTreasuries=false;
   let canViewExpenses=false, canManageExpenses=false;
   let canViewPartners=false, canManagePartners=false;
@@ -2060,7 +2060,7 @@ function page(name){
   if(name==="data"){
     window.closeSection();
     if(navigator.onLine) { 
-        loadProducts(); if(canViewLocations || canViewStockTransfers)loadLocations(); if(canViewTreasuries)loadTreasuries(); if(canViewStock)loadStock(); 
+        loadProducts(); if(canLoadLocations)loadLocations(); if(canViewTreasuries)loadTreasuries(); if(canViewStock)loadStock(); 
         if(canViewSales)loadSales(); if(canViewCustomers)loadCustomers(); if(canViewSuppliers)loadSuppliers(); 
         if(canViewPurchases)loadPurchases(); if(canViewCollections)loadCollections(); if(canViewRecipes)loadRecipes(); 
         if(canViewProduction)loadProduction(); if(canViewTrips)loadTrips(); if(canViewPartners)loadPartners(); 
@@ -2267,7 +2267,7 @@ async function userInfo(user){
     try{ canViewPartners=await permission("PARTNERS_VIEW") || isSystemAdmin; canManagePartners=await permission("PARTNERS_MANAGE") || isSystemAdmin; if($("menuPartners")) $("menuPartners").classList.toggle("hidden",!canViewPartners); if($("partnersCard")) $("partnersCard").classList.toggle("hidden",!canViewPartners); if($("addPartnerBtn")) $("addPartnerBtn").classList.toggle("hidden",!canManagePartners); if($("addPartnerTransactionBtn")) $("addPartnerTransactionBtn").classList.toggle("hidden",!canManagePartners); }catch(e){}
     try{ canManagePartnerInventoryContributions=await permission("ACCOUNTING_MANAGE") || await permission("PARTNERS_TRANSACTIONS_MANAGE") || isSystemAdmin; canViewPartnerInventoryContributions=await permission("ACCOUNTING_VIEW") || await permission("PARTNERS_TRANSACTIONS_VIEW") || canManagePartnerInventoryContributions; canCancelPartnerInventoryContributions=await permission("ACCOUNTING_MANAGE") || isSystemAdmin; canManagePartnerVehicleContributions=await permission("ACCOUNTING_MANAGE") || isSystemAdmin; canCancelPartnerVehicleContributions=canManagePartnerVehicleContributions; canViewPartnerVehicleContributions=canViewFixedAssets; if($("partnerInventoryContributionsCard")) $("partnerInventoryContributionsCard").classList.toggle("hidden",!canViewPartnerInventoryContributions); if($("addPartnerInventoryContributionBtn")) $("addPartnerInventoryContributionBtn").classList.toggle("hidden",!canManagePartnerInventoryContributions); if($("partnerVehicleContributionsCard")) $("partnerVehicleContributionsCard").classList.toggle("hidden",!canViewPartnerVehicleContributions); if($("addPartnerVehicleContributionBtn")) $("addPartnerVehicleContributionBtn").classList.toggle("hidden",!canManagePartnerVehicleContributions); }catch(e){}
     try{ canViewRecipes=await permission("RECIPES_VIEW") || isSystemAdmin; canManageRecipes=await permission("RECIPES_MANAGE") || isSystemAdmin; if($("menuRecipes")) $("menuRecipes").classList.toggle("hidden",!canViewRecipes); if($("recipesCard")) $("recipesCard").classList.toggle("hidden",!canViewRecipes); if($("addRecipeBtn")) $("addRecipeBtn").classList.toggle("hidden",!canManageRecipes); }catch(e){}
-    try{ canViewProduction=await permission("PRODUCTION_VIEW") || isSystemAdmin; canManageProduction=await permission("PRODUCTION_MANAGE") || isSystemAdmin; if($("menuProduction")) $("menuProduction").classList.toggle("hidden",!canViewProduction); if($("productionCard")) $("productionCard").classList.toggle("hidden",!canViewProduction); if($("addProductionBtn")) $("addProductionBtn").classList.toggle("hidden",!canManageProduction); }catch(e){}
+    try{ canViewProduction=await permission("PRODUCTION_VIEW") || isSystemAdmin; canManageProduction=await permission("PRODUCTION_MANAGE") || isSystemAdmin; canLoadLocations=canViewLocations || canViewStockTransfers || await permission("INVENTORY_VIEW") || canViewProduction || canManageProduction || isSystemAdmin; if($("menuProduction")) $("menuProduction").classList.toggle("hidden",!canViewProduction); if($("productionCard")) $("productionCard").classList.toggle("hidden",!canViewProduction); if($("addProductionBtn")) $("addProductionBtn").classList.toggle("hidden",!canManageProduction); }catch(e){}
     try{ canViewAccounting=await permission("ACCOUNTING_VIEW") || isSystemAdmin; canManageAccounting=await permission("ACCOUNTING_MANAGE") || isSystemAdmin; if($("menuAccounting")) $("menuAccounting").classList.toggle("hidden",!canViewAccounting); if($("accountingCard")) $("accountingCard").classList.toggle("hidden",!canViewAccounting); if($("btnPostEntries")) $("btnPostEntries").classList.toggle("hidden",!canManageAccounting); if($("btnAdjustment")) $("btnAdjustment").classList.toggle("hidden",!canManageAccounting); if($("btnBackup")) $("btnBackup").classList.toggle("hidden",!isSystemAdmin); }catch(e){}
     try{ canViewReservations=await permission("RESERVATIONS_VIEW") || isSystemAdmin; canManageReservations=await permission("RESERVATIONS_MANAGE") || isSystemAdmin; if($("menuReservations")) $("menuReservations").classList.toggle("hidden",!canViewReservations); if($("addReservationBtn")) $("addReservationBtn").classList.toggle("hidden",!canManageReservations); }catch(e){}
     try{ canViewPriceLists=await permission("PRICES_VIEW") || await permission("PRICES_MANAGE") || isSystemAdmin; canManagePriceLists=await permission("PRICES_MANAGE") || isSystemAdmin; }catch(e){ canViewPriceLists=false; canManagePriceLists=false; }
@@ -7513,7 +7513,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
       showApp();
       try { await loadLookups(); } catch(e){ console.error("[BOOT lookups]", e); }
       try { await loadProducts(); } catch(e){ console.error("[BOOT products]", e); }
-      if(canViewLocations || canViewStockTransfers){ try{ await loadLocations(); }catch(e){console.error("[BOOT locations]",e);} }
+      if(canLoadLocations){ try{ await loadLocations(); }catch(e){console.error("[BOOT locations]",e);} }
       if(canViewTreasuries){ try{ await loadTreasuries(); }catch(e){console.error("[BOOT treasuries]",e);} }
       if(canViewStock){ try{ await loadStock(); }catch(e){console.error("[BOOT stock]",e);} }
       if(canViewRecipes){ try{ await loadRecipes(); }catch(e){console.error("[BOOT recipes]",e);} }
