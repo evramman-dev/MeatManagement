@@ -224,3 +224,37 @@ main وGitHub Pages لم يتغيرا وما زالا v38.
 قرار هذه الدفعة: لا تغيير جماعي لـ EXECUTE ولا تحويل عشوائي إلى SECURITY INVOKER، حتى لا تتعطل سياسات RLS أو وظائف الترحيل. يلزم جرد الدوال الـ81 حسب الاستخدام ومراجعة كل دالة قبل أي تضييق.
 
 تم تأكيد أن آخر نسخة QA هي v43، وأن main ما زال v38. لا توجد workflow runs أو commit statuses مرتبطة بآخر commit.
+
+
+## استكمال مراجعة دوال SECURITY DEFINER وEdge Functions — 10 نوفمبر 2026
+
+تم تنفيذ جرد مباشر لدوال public ذات SECURITY DEFINER:
+- إجمالي الدوال: 130.
+- الدوال القابلة للاستدعاء من authenticated: 81.
+- الدوال القابلة للاستدعاء من anon: صفر.
+- جميع الدوال الـ130 لديها search_path محدد صراحة.
+- لا توجد دالة authenticated-callable في العينة التي راجعتها بلا auth.uid أو تحقق صلاحية؛ الدوال التي لا تستدعي auth.uid مباشرة تعتمد على has_permission أو تحقق ملكية السجل.
+
+تمت مراجعة دوال التقارير التي لا تحتوي auth.uid مباشرة:
+- get_customer_returns: تشترط CUSTOMERS_VIEW، وتقيد مندوب المبيعات بمرتجعاته.
+- get_financial_summary وget_period_summary وget_journal_entries وget_profit_loss وget_trial_balance: تشترط ACCOUNTING_VIEW.
+- get_slow_moving_stock وget_stock_by_location: تشترطان STOCK_VIEW أو INVENTORY_VIEW.
+- get_total_cash وget_treasury_statement: تشترطان TREASURIES_VIEW أو ACCOUNTING_VIEW.
+- get_trip_summary: تشترط TRIPS_VIEW، وتقيد مندوب المبيعات بجولته.
+- mark_notification_read: تتحقق من auth.uid وتحدّث سجل التنبيه الخاص بالمستخدم الحالي فقط.
+
+لم يظهر سبب لتغيير هذه الدوال في هذه الدفعة. لم نسحب EXECUTE ولم نغير SECURITY DEFINER أو سياسات RLS.
+
+تمت مراجعة Edge Functions الخمس:
+- Manage-users: verify_jwt=false، لكنها تتحقق يدويًا من Bearer token عبر auth.getUser، ثم من نشاط الحساب ودور SYSTEM_ADMIN قبل أي إجراء. تشمل إنشاء مستخدم، حذف SYSTEM_TESTER فقط، ومسار إعادة تعيين كلمة مرور Rep-01. واجهة QA ترسل access_token في الطلب لمساري حذف المختبر وإعادة تعيين كلمة المرور.
+- username-login: verify_jwt=false لأن الوظيفة نقطة تسجيل الدخول قبل وجود جلسة. تستخدم service role للعثور على الحساب ثم تنفذ signInWithPassword، وتعيد رسالة موحدة لاسم المستخدم أو كلمة المرور غير الصحيحة.
+- set-username: verify_jwt=false، لكنها تتحقق يدويًا من الجلسة ثم من دور SYSTEM_ADMIN النشط قبل تعديل اسم المستخدم. لم يظهر استدعاء لها في index.html الحالي.
+- quick-worker وbright-responder: verify_jwt=true، وهما مثالان افتراضيان لا يحتويان منطقًا تشغيليًا أو كتابة على بيانات البرنامج.
+
+ملاحظات مفتوحة:
+- يلزم تقييم معدل محاولات username-login ومراقبة إساءة استخدام تسجيل الدخول. لم نغيّر الوظيفة أو حدود Auth في هذه الدفعة.
+- مسار reset_password الخاص بـ Rep-01 ما زال مسارًا خاصًا بمدير النظام، ويستحق إزالته بعد التأكد من انتهاء الحاجة التشغيلية إليه. لم تتم إزالته.
+- set-username لا يظهر له استدعاء في index.html؛ لم نحذفه لأن احتمال وجود مستهلك خارجي لم يُحسم.
+- لا يوجد اختبار طلبات HTTP حي لهذه الوظائف في هذه الدفعة؛ المراجعة كانت قراءة للكود وإعداد verify_jwt وربط الواجهة.
+
+النتيجة: لم يظهر مسار Edge Function يسمح باستعمال service role دون تحقق هوية وصلاحية مناسب في الكود الذي تمت مراجعته. لم تُجرَ أي كتابة على البيانات التشغيلية أو تغييرات في إعدادات Edge Functions أو صلاحيات قاعدة البيانات.
