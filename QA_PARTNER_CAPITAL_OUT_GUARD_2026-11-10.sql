@@ -86,3 +86,11 @@ FROM PUBLIC, anon, authenticated;
 -- A temporary partner with opening_balance=20 produced current_balance=20
 -- and exactly one balanced OPENING_BALANCE_PARTNER journal; this test was
 -- also rolled back.
+
+
+-- Final post-hardening end-to-end RPC check:
+-- With SET LOCAL ROLE authenticated, CAPITAL_IN=10, WITHDRAWAL=3 and PROFIT=2
+-- all succeeded through create_partner_transaction_v2 after direct DML was
+-- revoked. Treasury 5 moved 1065 -> 1070, partner balance 100 -> 105,
+-- exactly three PARTNER_MOVE journals were created, all balanced, and
+-- authenticated direct INSERT remained false. Entire test was rolled back.
