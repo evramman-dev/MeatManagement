@@ -6763,7 +6763,7 @@ async function loadPartnerVehicleContributions(){
       const details=document.createElement("div");details.className="details";
       details.textContent="رقم اللوحة: "+(x.serial_number||"-")+" | القيمة: "+fmt(x.acquisition_cost)+" | التاريخ: "+x.acquisition_date+" | الموقع التشغيلي: "+(location?.location_name||"غير مرتبط")+" ("+(location?.location_code||"-")+") | "+(location?.is_active?"نشط":"متوقف")+" | الحالة المحاسبية: "+(x.status==="ACTIVE"?"نشطة":"ملغاة");
       card.append(title,details);
-      if(x.status==="ACTIVE"&&canCancelPartnerInventoryContributions){const actions=document.createElement("div");actions.className="actions";const b=document.createElement("button");b.className="btn danger";b.textContent="إلغاء المساهمة";b.onclick=()=>{$("partnerVehicleContributionCancelForm").reset();$("pvcCancelAssetId").value=String(x.asset_id);clear($("partnerVehicleContributionCancelMsg"));$("partnerVehicleContributionCancelModal").classList.add("active");};actions.appendChild(b);card.appendChild(actions);}
+      if(x.status==="ACTIVE"&&canCancelPartnerVehicleContributions){const actions=document.createElement("div");actions.className="actions";const b=document.createElement("button");b.className="btn danger";b.textContent="إلغاء المساهمة";b.onclick=()=>{$("partnerVehicleContributionCancelForm").reset();$("pvcCancelAssetId").value=String(x.asset_id);clear($("partnerVehicleContributionCancelMsg"));$("partnerVehicleContributionCancelModal").classList.add("active");};actions.appendChild(b);card.appendChild(actions);}
       box.appendChild(card);
     });
   }catch(e){msg($("partnerVehicleContributionsMsg"),"تعذر تحميل مساهمات السيارات: "+err(e),"error");box.innerHTML="<div class='empty'>تعذر تحميل المساهمات.</div>";}
