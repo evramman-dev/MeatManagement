@@ -929,11 +929,12 @@ BEGIN
 END;
 $function$;
 
--- QA finding: approved price list TEST-20261110 contains product_id=2
--- (لحمة مفرومة) while can_be_sold=false and its price 250 exceeds product
--- max_selling_price=150. Existing approved data was not changed. Confirm the
--- product's sale eligibility and correct business price limits before replacing
--- this list or enabling the product for sale.
+-- QA finding resolved 2026-11-10: TEST-20261110 is a synthetic test price list.
+-- Product 2 (لحمة مفرومة) is intended to be sold at 250 EGP/kg in this fixture.
+-- The product was enabled for sale and vehicle loading; the 3% discount floor
+-- is 242.50 EGP/kg. Production remains disabled until an active recipe exists.
+-- No stock was fabricated; invoice tests must use available inventory or a
+-- legitimate purchase/production flow.
 
 
 -- Applied 2026-11-10: harden sales invoice cancellation.
@@ -1146,3 +1147,41 @@ BEGIN
   WHERE sales_invoice_id=p_invoice_id;
 END;
 $function$;
+
+
+-- Applied 2026-11-10: align the synthetic minced-meat QA product with its
+-- approved test price list. Safe to re-run; targets only the exact QA product.
+UPDATE public.products
+SET can_be_sold = true,
+    can_be_loaded = true,
+    min_selling_price = 242.50,
+    target_selling_price = 250.00,
+    max_selling_price = 250.00,
+    can_be_produced = CASE
+      WHEN EXISTS (
+        SELECT 1 FROM public.recipes r
+        WHERE r.product_id = public.products.product_id
+          AND r.is_active = true
+      ) THEN can_be_produced
+      ELSE false
+    END,
+    updated_at = now()
+WHERE product_id = 2
+  AND product_code = 'Row-002'
+  AND product_name = 'لحمة مفرومة'
+  AND is_active = true
+  AND (
+    can_be_sold IS DISTINCT FROM true
+    OR can_be_loaded IS DISTINCT FROM true
+    OR min_selling_price IS DISTINCT FROM 242.50
+    OR target_selling_price IS DISTINCT FROM 250.00
+    OR max_selling_price IS DISTINCT FROM 250.00
+    OR (
+      can_be_produced = true
+      AND NOT EXISTS (
+        SELECT 1 FROM public.recipes r
+        WHERE r.product_id = public.products.product_id
+          AND r.is_active = true
+      )
+    )
+  );
