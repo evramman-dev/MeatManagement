@@ -61,3 +61,15 @@
 نسخة QA: MeatManagement v41
 main وGitHub Pages لم يتغيرا، وما زالا v38.
 لم توجد GitHub Actions workflow runs مرتبطة بالـ commit الأخير.
+
+## مواءمة عرض مساهمات السيارات مع RLS
+
+أظهر فحص سياسات pg_policies أن SELECT على public.fixed_assets يقتصر على ACCOUNTING_VIEW أو ACCOUNTING_MANAGE. بينما كانت الواجهة تعرض بطاقة مساهمات السيارات لكل من يملك PARTNERS_TRANSACTIONS_VIEW، ثم تحاول قراءة fixed_assets، ما قد ينتج عنه خطأ صلاحيات للمستخدم الذي لا يملك صلاحية عرض الأصول.
+
+تم إصلاح ذلك في index.html بإضافة canViewPartnerVehicleContributions وربطها بصلاحية عرض الأصول الثابتة الحالية canViewFixedAssets. أصبحت البطاقة والتحميل يعتمدان على هذا المتغير، مع بقاء مساهمات المخزون على صلاحياتها المستقلة. لم تتغير RLS أو أي صلاحية في Supabase.
+
+تمت إعادة فحص المواضع الخمسة: تعريف المتغير، تعيينه، إظهار البطاقة، استدعاء التحميل من loadPartners، وحارس loadPartnerVehicleContributions. جميعها تستخدم الصلاحية المخصصة. لم يعد مسار السيارات يعتمد على canViewPartnerInventoryContributions.
+
+آخر تعديل للواجهة: 7918b1fc824fe74f04e9f5578d1051103e5efde0
+Blob SHA: 6ae331cc671081f9224f2defd6f31dfaf773bf03
+إصدار QA ما زال v41. main وGitHub Pages ما زالا v38.
