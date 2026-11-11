@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v87</title>
+<title>MeatManagement v88</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1385,7 +1385,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <form id="returnForm" onsubmit="event.preventDefault();" novalidate>
 <label for="returnCustomer">العميل *</label><select id="returnCustomer" required><option value="">اختر العميل</option></select>
 <label for="returnDate">تاريخ المرتجع *</label><input id="returnDate" type="date" required>
-<label for="returnTrip">الجولة *</label><select id="returnTrip" required><option value="">اختر الجولة</option></select>
+<label for="returnTrip">الجولة <span class="muted">(تُحدد تلقائيًا من الفاتورة إن كانت مرتبطة بجولة)</span></label><select id="returnTrip"><option value="">اختر الجولة</option></select>
 <label for="returnInvoice">الفاتورة الأصلية *</label><select id="returnInvoice" required><option value="">اختر الفاتورة</option></select>
 <label for="returnType">نوع المرتجع *</label>
 <select id="returnType" required onchange="document.getElementById('exchangeSection').classList.toggle('hidden', this.value !== 'EXCHANGE')">
@@ -6007,19 +6007,18 @@ if($("srFromDate"))$("srFromDate").addEventListener("change",loadSalesReturns);
 if($("srToDate"))$("srToDate").addEventListener("change",loadSalesReturns);
 if($("addReturnBtn"))$("addReturnBtn").onclick=resetSalesReturnForm;
 if($("addReturnItemBtn"))$("addReturnItemBtn").onclick=()=>addSalesReturnItemRow($("returnItems"));
-if($("returnInvoice"))$("returnInvoice").onchange=()=>{const o=$("returnInvoice").selectedOptions[0];if(o?.dataset?.customer)$("returnCustomer").value=o.dataset.customer;if(o?.dataset?.trip)$("returnTrip").value=o.dataset.trip;};
+if($("returnInvoice"))$("returnInvoice").onchange=()=>{const o=$("returnInvoice").selectedOptions[0];if(o?.dataset?.customer)$("returnCustomer").value=o.dataset.customer;$("returnTrip").value=o?.dataset?.trip||"";$("returnTrip").disabled=!!$("returnInvoice").value;};
 if($("returnForm"))$("returnForm").addEventListener("submit",async e=>{
   e.preventDefault();if(!canCreateReturns)return;
   const btn=$("saveReturnBtn");busy(btn,true,"جارٍ...","حفظ المرتجع");
   try{
     await salesReturnLotOptionsPromise;
     const current=(await db.auth.getUser()).data.user;
-    const tripId=Number($("returnTrip").value),customerId=Number($("returnCustomer").value),invoiceId=Number($("returnInvoice").value);
-    const trip=tripsCache.find(t=>Number(t.trip_id)===tripId);
+    const customerId=Number($("returnCustomer").value),invoiceId=Number($("returnInvoice").value);
     const rows=[...document.querySelectorAll("#returnItems .item-row")];
     if(!rows.length)throw new Error("أضف صنفًا واحدًا على الأقل للمرتجع.");
     const returnTotal=rows.reduce((sum,row)=>sum+Number(row.querySelector(".return-qty")?.value||0)*Number(row.querySelector(".return-price")?.value||0),0);
-    const {data:invoice,error:invoiceError}=await db.from("sales_invoices").select("remaining_amount,status").eq("sales_invoice_id",invoiceId).single();
+    const {data:invoice,error:invoiceError}=await db.from("sales_invoices").select("remaining_amount,status,trip_id,sales_rep_id").eq("sales_invoice_id",invoiceId).single();
     if(invoiceError)throw invoiceError;
     if(!invoice||invoice.status==="CANCELLED")throw new Error("الفاتورة الأصلية غير صالحة.");
     let cashAction=$("returnCashAction").value;
@@ -6035,11 +6034,12 @@ if($("returnForm"))$("returnForm").addEventListener("submit",async e=>{
     $("returnCashAction").value=cashAction;
     const treasuryId=cashAction==="CASH_BACK"?8:null;
     const returnRequestKey="mm_sales_return_pending_"+invoiceId;
-    const returnPayload={invoice_id:invoiceId,customer_id:customerId,trip_id:tripId,return_type:"RETURN",return_date:$("returnDate").value,reason:$("returnReason").value.trim()||null,notes:$("returnNotes").value.trim()||null,cash_action:cashAction,treasury_id:treasuryId,items:rows.map(r=>({product_id:r.querySelector(".return-product").value,unit_id:r.querySelector(".return-unit").value,quantity:r.querySelector(".return-qty").value,unit_price:r.querySelector(".return-price").value}))};
+    const returnTripId=invoice.trip_id?Number(invoice.trip_id):null;
+    const returnPayload={invoice_id:invoiceId,customer_id:customerId,trip_id:returnTripId,return_type:"RETURN",return_date:$("returnDate").value,reason:$("returnReason").value.trim()||null,notes:$("returnNotes").value.trim()||null,cash_action:cashAction,treasury_id:treasuryId,items:rows.map(r=>({product_id:r.querySelector(".return-product").value,unit_id:r.querySelector(".return-unit").value,quantity:r.querySelector(".return-qty").value,unit_price:r.querySelector(".return-price").value}))};
     const returnRequestId=getRequestId(returnRequestKey,returnPayload);
     const {data:id,error}=await db.rpc("create_sales_return_v2",{
-      p_return_number:"RET-"+Date.now(),p_customer_id:customerId,p_trip_id:tripId,
-      p_sales_rep_id:Number(trip?.sales_rep_id||currentSalesRepId),p_sales_invoice_id:invoiceId,
+      p_return_number:"RET-"+Date.now(),p_customer_id:customerId,p_trip_id:returnTripId,
+      p_sales_rep_id:invoice.sales_rep_id?Number(invoice.sales_rep_id):null,p_sales_invoice_id:invoiceId,
       p_return_type:"RETURN",p_return_date:new Date(($("returnDate").value||todayISO())+"T12:00:00").toISOString(),
       p_reason:$("returnReason").value.trim()||null,p_notes:$("returnNotes").value.trim()||null,
       p_created_by:current.id,p_cash_action:cashAction,p_treasury_id:treasuryId,p_request_id:returnRequestId
