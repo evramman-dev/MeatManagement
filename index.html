@@ -3473,6 +3473,10 @@ window.openCustomerForm=async function(c=null){
     await loadCustomerGeoData();
     const form=$("customerForm"); if(form) form.reset();
     try{await loadCustomerSalesRepOptions(c?.sales_rep_id||"");}catch(repLoadError){console.warn("تعذر تحميل قائمة المندوبين المسؤولين:",repLoadError);}
+    const canAssignCustomerRep=currentRoleCode!=="SALES_REP";
+    const customerRepLabel=document.querySelector('label[for="customerSalesRep"]');
+    if(customerRepLabel) customerRepLabel.classList.toggle("hidden",!canAssignCustomerRep);
+    if($("customerSalesRep")) $("customerSalesRep").classList.toggle("hidden",!canAssignCustomerRep);
     $("customerEditId").value=c?.customer_id||"";
     $("customerFormTitle").textContent=c?"تعديل العميل":"إضافة عميل جديد";
     $("customerCode").value=c?.customer_code||"";
@@ -3616,7 +3620,7 @@ if($("customerForm")) $("customerForm").addEventListener("submit", async e => {
     city:$("customerLegacyCity").value||null,
     area:$("customerLegacyArea").value||null,
     area_id:areaId,
-    sales_rep_id:$("customerSalesRep").value?Number($("customerSalesRep").value):null,
+    sales_rep_id:currentRoleCode==="SALES_REP"?(customersCache.find(customer=>String(customer.customer_id)===String(id))?.sales_rep_id||null):($("customerSalesRep").value?Number($("customerSalesRep").value):null),
     is_active:currentRoleCode==="SALES_REP"?true:$("customerActive").checked
   }; 
   try{ 
