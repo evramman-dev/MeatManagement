@@ -75,6 +75,20 @@ test('Accounting summary uses ledger totals and does not show an inaccurate fall
   expect(qaHtml).toContain('if(journalErr) throw journalErr;');
 });
 
+test('Profit and loss report never substitutes purchase totals for cost of sales', () => {
+  const start = qaHtml.indexOf('window.loadProfitLoss = async function()');
+  const end = qaHtml.indexOf('window.switchReportTab = function(tabId)', start);
+  expect(start).toBeGreaterThanOrEqual(0);
+  expect(end).toBeGreaterThan(start);
+  const reportSource = qaHtml.slice(start, end);
+  expect(reportSource).toContain('db.rpc("get_profit_loss"');
+  expect(reportSource).toContain('if(!row)');
+  expect(reportSource).toContain('لا توجد بيانات محاسبية مسجلة في هذه الفترة');
+  expect(reportSource).not.toContain('purchase_invoices');
+  expect(reportSource).not.toContain('const cogs =');
+  expect(reportSource).not.toContain('تكلفة المبيعات (المشتريات)');
+});
+
 test('MeatManagement read-only navigation, permissions and session smoke test', async ({ page }) => {
   test.setTimeout(300000);
 
