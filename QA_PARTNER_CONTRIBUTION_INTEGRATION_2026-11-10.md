@@ -409,3 +409,9 @@ main وGitHub Pages لم يتغيرا وما زالا v38.
 - index.html blob SHA: 3f010120d211c2222006cb34cae8f3ca9f6d5c81
 - tests/cloud-smoke.spec.cjs commit: 2d564b2b947b9015b09a69c29051399dd4859d5d
 - tests/cloud-smoke.spec.cjs blob SHA: 2258fa84df1b068c076b83a570e6a7119dd43f01
+
+
+تصحيح نطاق اختبار الانحدار:
+- ملف Playwright يقرأ index.html فقط، لذلك أزيلت منه عبارتا التحقق من أسماء متغيرات SQL؛ لا يصح اختبار نص الدالة المخزن في Supabase من اختبار مصدر الواجهة.
+- يظل فحص منطق SQL مستندًا إلى تعريف الدالة الذي تمت قراءته مباشرة من قاعدة البيانات، بينما يختبر Playwright تطابق معادلة المعاينة في الواجهة فقط.
+- تحديث الاختبار: 40ee023fc4ae8c6396c2fddd1dfa017ae22d8bf2
