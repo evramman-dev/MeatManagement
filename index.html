@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v70</title>
+<title>MeatManagement v71</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1671,7 +1671,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v70</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v71</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -4119,6 +4119,53 @@ async function loadStockLots(){
     stockLotsCache=data||[];renderStockLots();
   }catch(e){box.innerHTML="<div class='empty error'>تعذر تحميل التشغيلات: "+err(e)+"</div>";}
 }
+async function showStockLotHistory(lot){
+  if(!lot?.lot_id)return;
+  let modal=document.getElementById("stockLotHistoryModal");
+  if(!modal){
+    modal=document.createElement("div");modal.id="stockLotHistoryModal";modal.className="modal hidden";
+    modal.innerHTML='<div class="modal-content"><div class="modal-header"><h3 id="stockLotHistoryTitle">حركة التشغيلة</h3><button type="button" class="close-btn" id="closeStockLotHistory">&times;</button></div><div class="modal-body"><div id="stockLotHistoryBody" class="desc">جارٍ تحميل الحركة...</div></div></div>';
+    document.body.appendChild(modal);
+    modal.querySelector("#closeStockLotHistory").addEventListener("click",()=>modal.classList.add("hidden"));
+    modal.addEventListener("click",e=>{if(e.target===modal)modal.classList.add("hidden");});
+  }
+  modal.querySelector("#stockLotHistoryTitle").textContent="حركة التشغيلة "+(lot.lot_code||lot.lot_id);
+  const body=modal.querySelector("#stockLotHistoryBody");body.replaceChildren();
+  const loading=document.createElement("div");loading.className="empty";loading.textContent="جارٍ تحميل الحركة...";body.appendChild(loading);
+  modal.classList.remove("hidden");
+  try{
+    const {data,error}=await db.from("stock_movement_lot_allocations")
+      .select("allocation_id,allocation_direction,quantity,created_at,stock_movements!inner(movement_id,movement_type,quantity_change,quantity_after,notes,created_at,sales_invoice_id,sales_invoice_item_id,purchase_invoice_id,purchase_return_id,sales_return_id,stock_transfer_id,trip_id,production_order_id,location_id)")
+      .eq("lot_id",Number(lot.lot_id)).order("created_at",{ascending:false}).limit(100);
+    if(error)throw error;
+    body.replaceChildren();
+    if(!data?.length){const empty=document.createElement("div");empty.className="empty";empty.textContent="لا توجد حركات مسجلة لهذه التشغيلة.";body.appendChild(empty);return;}
+    const labels={IN:"وارد",OUT:"منصرف",RECEIPT:"استلام",ISSUE:"صرف",TRANSFER_IN:"وارد تحويل",TRANSFER_OUT:"منصرف تحويل"};
+    data.forEach(row=>{
+      const movement=row.stock_movements||{};
+      const card=document.createElement("div");card.className="product";
+      const heading=document.createElement("div");heading.className="pname";
+      heading.textContent=(labels[row.allocation_direction]||row.allocation_direction||"حركة")+" — "+(labels[movement.movement_type]||movement.movement_type||"مخزون");
+      const details=document.createElement("div");details.className="details";
+      const date=movement.created_at||row.created_at;
+      const refs=[];
+      if(movement.purchase_invoice_id)refs.push("فاتورة شراء "+movement.purchase_invoice_id);
+      if(movement.purchase_return_id)refs.push("مرتجع مورد "+movement.purchase_return_id);
+      if(movement.sales_invoice_id)refs.push("فاتورة بيع "+movement.sales_invoice_id);
+      if(movement.sales_return_id)refs.push("مرتجع عميل "+movement.sales_return_id);
+      if(movement.stock_transfer_id)refs.push("تحويل "+movement.stock_transfer_id);
+      if(movement.trip_id)refs.push("جولة "+movement.trip_id);
+      if(movement.production_order_id)refs.push("أمر إنتاج "+movement.production_order_id);
+      details.textContent="التاريخ: "+(date?formatDateTime(date):"—")+" | الكمية: "+fmtQty(row.quantity)+" | الرصيد بعد الحركة: "+(movement.quantity_after==null?"—":fmtQty(movement.quantity_after))+(refs.length?" | المستند: "+refs.join("، "):"");
+      card.append(heading,details);
+      if(movement.notes){const note=document.createElement("div");note.className="item-hint";note.textContent=movement.notes;card.appendChild(note);}
+      body.appendChild(card);
+    });
+    if(data.length===100){const note=document.createElement("div");note.className="item-hint";note.textContent="تم عرض آخر 100 حركة فقط.";body.appendChild(note);}
+  }catch(e){
+    body.replaceChildren();const errorBox=document.createElement("div");errorBox.className="empty error";errorBox.textContent="تعذر تحميل حركة التشغيلة: "+err(e);body.appendChild(errorBox);
+  }
+}
 function renderStockLots(){
   const box=$("stockLotsList");if(!box)return;box.replaceChildren();
   const q=($("stockLotsSearch")?.value||"").trim().toLowerCase();
@@ -4152,6 +4199,8 @@ function renderStockLots(){
     else{status.textContent=lot.status==="ACTIVE"?"نشطة":(lot.status||"—");}
     card.append(title,details,status);
     if(lot.source_type==="OPENING"){const note=document.createElement("div");note.className="item-hint";note.textContent="رصيد سابق. لم يتوفر مصدر أو تاريخ صلاحية تاريخي مؤكد.";card.appendChild(note);}
+    const historyBtn=document.createElement("button");historyBtn.type="button";historyBtn.className="btn secondary";historyBtn.style.marginTop="8px";historyBtn.textContent="عرض حركة التشغيلة";historyBtn.addEventListener("click",()=>showStockLotHistory(lot));
+    card.append(historyBtn);
     box.appendChild(card);
   });
 }
