@@ -5298,16 +5298,18 @@ async function viewSalesReturn(ret){
     if(!itemsRes.data?.length)html+="<tr><td colspan='6'>لا توجد تفاصيل أصناف لهذا المرتجع.</td></tr>";
     html+="</tbody>";
     $("genericStatementItems").innerHTML=html;
+    const financialImpactLabel = ret.cash_action==="CASH_BACK" ? "المبلغ المردود من الخزنة" : ret.cash_action==="DEDUCT_DEBT" ? "المبلغ المخصوم من المديونية" : "الأثر المالي";
+    const financialImpactAmount = Number(ret.total_returned_value??ret.net_total??0);
     $("genericStatementSummary").innerHTML=
       "<div class='line'><span>قيمة الأصناف:</span><span>"+fmt(ret.subtotal??ret.total_returned_value??0)+"</span></div>"+
       "<div class='line'><span>الخصم:</span><span style='color:red;'>-"+fmt(ret.discount_amount||0)+"</span></div>"+
       "<div class='line grand'><span>إجمالي المرتجع:</span><span>"+fmt(ret.net_total??ret.total_returned_value??0)+"</span></div>"+
-      "<div class='line'><span>فرق السعر:</span><span>"+fmt(ret.price_difference||0)+"</span></div>";
+      "<div class='line'><span>"+financialImpactLabel+":</span><span>"+fmt(financialImpactAmount)+"</span></div>";
     const waLines=(itemsRes.data||[]).map(item=>{
       const p=productsCache.find(x=>String(x.product_id)===String(item.product_id));
       return (p?.product_name||("صنف "+item.product_id))+" - "+fmtQty(item.quantity)+" "+unitName(item.unit_id)+" - "+fmt(item.line_total);
     });
-    const waText=["تفاصيل مرتجع المبيعات","رقم: "+ret.return_number,"العميل: "+customerName(ret.customer_id),"التاريخ: "+formatDate(ret.return_date),"الفاتورة الأصلية: "+invoiceNumber,"حركة الفلوس: "+cashActionLabel,"الخزنة: "+(ret.treasury_id?treasuryName(ret.treasury_id):"—"),...waLines,"الإجمالي: "+fmt(ret.net_total??ret.total_returned_value??0)].join("\n");
+    const waText=["تفاصيل مرتجع المبيعات","رقم: "+ret.return_number,"العميل: "+customerName(ret.customer_id),"التاريخ: "+formatDate(ret.return_date),"الفاتورة الأصلية: "+invoiceNumber,"حركة الفلوس: "+cashActionLabel,"الخزنة: "+(ret.treasury_id?treasuryName(ret.treasury_id):"—"),...waLines,"الإجمالي: "+fmt(ret.net_total??ret.total_returned_value??0),financialImpactLabel+": "+fmt(financialImpactAmount)].join("\n");
     $("shareGenericWhatsappBtn").onclick=()=>window.open("https://wa.me/?text="+encodeURIComponent(waText),"_blank");
     fillPrintHeaders();
   }catch(e){$("genericStatementHeader").textContent="تعذر تحميل التفاصيل: "+err(e);}
@@ -6992,7 +6994,7 @@ async function viewTripSummary(t){
     );
     const cashBackReturns = returns
       .filter(r => r.cash_action === "CASH_BACK" && Number(r.treasury_id) === MANDOUB_TREASURY_ID)
-      .reduce((s, r) => s + Math.abs(Number(r.price_difference || 0)), 0);
+      .reduce((s, r) => s + Number(r.total_returned_value || 0), 0);
 
     const initialCash = Number(t.initial_cash || 0);
     const netCash = initialCash + cashCollections - cashExpenses - cashBackReturns;
@@ -7031,10 +7033,10 @@ async function viewTripSummary(t){
     if(!invoices.length) html += `<tr><td colspan="4">لا توجد فواتير</td></tr>`;
     html += `</tbody></table></div><div class="mini-summary"><div class="line"><span>إجمالي الفواتير غير الملغاة:</span><span style="font-weight:bold;">${fmt(totalSales)}</span></div></div>`;
 
-    html += `<h4 style="color:var(--g);margin-top:20px;">↩️ المرتجعات (${returns.length})</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>رقم</th><th>العميل</th><th>قيمة المرتجع</th><th>الإجراء النقدي</th><th>فرق السعر</th><th>الخزنة</th></tr></thead><tbody>`;
+    html += `<h4 style="color:var(--g);margin-top:20px;">↩️ المرتجعات (${returns.length})</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>رقم</th><th>العميل</th><th>قيمة المرتجع</th><th>الإجراء النقدي</th><th>الأثر المالي</th><th>الخزنة</th></tr></thead><tbody>`;
     returns.forEach(r => {
       const actionName = r.cash_action === "CASH_BACK" ? "رد نقدي" : r.cash_action === "CUSTOMER_PAYS_CASH" ? "تحصيل نقدي" : (r.cash_action || "-");
-      html += `<tr><td>${r.return_number}</td><td>${r.customer_name}</td><td>${fmt(r.total_returned_value)}</td><td>${actionName}</td><td>${fmt(r.price_difference)}</td><td>${r.treasury_id || "-"}</td></tr>`;
+      html += `<tr><td>${r.return_number}</td><td>${r.customer_name}</td><td>${fmt(r.total_returned_value)}</td><td>${actionName}</td><td>${fmt(r.total_returned_value)}</td><td>${r.treasury_id || "-"}</td></tr>`;
     });
     if(!returns.length) html += `<tr><td colspan="6">لا توجد مرتجعات</td></tr>`;
     html += `</tbody></table></div><div class="mini-summary"><div class="line"><span>إجمالي قيمة المرتجعات (لا تخصم من النقدية تلقائيًا):</span><span style="font-weight:bold;">${fmt(totalReturns)}</span></div><div class="line"><span>المردود نقدًا من خزنة المناديب:</span><span style="font-weight:bold;">${fmt(cashBackReturns)}</span></div></div>`;
