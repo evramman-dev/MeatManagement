@@ -3460,10 +3460,10 @@ async function loadCustomerSalesRepOptions(selectedId=""){
   const select=$("customerSalesRep"); if(!select) return;
   select.replaceChildren(new Option("بدون تعيين مندوب", ""));
   if(!navigator.onLine){select.value=selectedId?String(selectedId):"";return;}
-  const {data,error}=await db.from("sales_reps").select("sales_rep_id,name,is_active").eq("is_active",true).order("name");
+  const {data,error}=await db.from("sales_reps").select("sales_rep_id,name,is_active").order("name");
   if(error) throw error;
   customerSalesRepsCache=data||[];
-  customerSalesRepsCache.forEach(rep=>select.add(new Option(rep.name||("مندوب رقم "+rep.sales_rep_id),String(rep.sales_rep_id))));
+  customerSalesRepsCache.filter(rep=>rep.is_active||String(rep.sales_rep_id)===String(selectedId)).forEach(rep=>select.add(new Option((rep.name||("مندوب رقم "+rep.sales_rep_id))+(rep.is_active?"":" (موقوف)"),String(rep.sales_rep_id))));
   select.value=selectedId?String(selectedId):"";
 }
 window.openCustomerForm=async function(c=null){
