@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v55</title>
+<title>MeatManagement v56</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -302,7 +302,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v55]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v56]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1638,7 +1638,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v55</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v56</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -3188,6 +3188,15 @@ function renderProducts(){
       <div class="details">${unitDetails}${p.units_per_carton? " | عدد الوحدات بالكرتونة: "+esc(fmtQty(p.units_per_carton)):""}</div>
       <div class="details">حد إعادة الطلب: ${p.minimum_stock==null?"—":esc(fmtQty(p.minimum_stock))}</div>
       ${priceDetails}<div>${statusBadge}${usageBadges}</div>`;
+    if(canViewStock){
+      const historyBtn=document.createElement("button");
+      historyBtn.type="button";
+      historyBtn.className="btn secondary";
+      historyBtn.style.marginTop="10px";
+      historyBtn.textContent="📜 حركة الصنف / كارت الصنف";
+      historyBtn.onclick=()=>viewProductStockMovements(p.product_id);
+      card.appendChild(historyBtn);
+    }
     if(canManage){ 
       const btn=document.createElement("button");
       btn.className="btn secondary";
@@ -4117,16 +4126,23 @@ function openStockForm(locationId, productId) {
 
 async function viewStockMovements(productId, locationId) { 
     const p = productsCache.find(x => String(x.product_id) === String(productId)); 
-    const l = locationsCache.find(x => String(x.location_id) === String(locationId)); 
-    $("movementProductInfo").textContent = `المنتج: ${p?.product_name} | الموقع: ${l?.location_name}`; 
-    const tbody = $("movementsTable").querySelector("tbody"); tbody.innerHTML = "<tr><td colspan='5'>جارٍ التحميل...</td></tr>"; 
+    const l = locationId == null ? null : locationsCache.find(x => String(x.location_id) === String(locationId)); 
+    const allLocations = locationId == null;
+    $("movementProductInfo").textContent = `المنتج: ${p?.product_name} | الموقع: ${l?.location_name || "كل المواقع"}`; 
+    const table = $("movementsTable");
+    table.querySelector("thead").innerHTML = allLocations
+      ? "<tr><th>التاريخ</th><th>الموقع</th><th>الحركة</th><th>التغيير</th><th>الرصيد بعدها</th><th>البيان</th></tr>"
+      : "<tr><th>التاريخ</th><th>الحركة</th><th>التغيير</th><th>الرصيد بعدها</th><th>البيان</th></tr>";
+    const tbody = table.querySelector("tbody"); tbody.innerHTML = `<tr><td colspan='${allLocations?6:5}'>جارٍ التحميل...</td></tr>`; 
     $("movementSummary").innerHTML = ""; $("stockMovementsModal").classList.remove("hidden"); 
     try { 
-        const { data, error } = await db.from("stock_movements").select("movement_id, movement_type, quantity_change, quantity_after, notes, created_at").eq("product_id", Number(productId)).eq("location_id", Number(locationId)).order("movement_id", { ascending: true }); 
+        let movementQuery = db.from("stock_movements").select("movement_id, movement_type, quantity_change, quantity_after, notes, created_at, location_id").eq("product_id", Number(productId));
+        if(!allLocations) movementQuery = movementQuery.eq("location_id", Number(locationId));
+        const { data, error } = await movementQuery.order("movement_id", { ascending: true }); 
         if (error) throw error; 
-        if (!data || data.length === 0) { tbody.innerHTML = "<tr><td colspan='5'>لا توجد حركات مسجلة.</td></tr>"; return; } 
+        if (!data || data.length === 0) { tbody.innerHTML = `<tr><td colspan='${allLocations?6:5}'>لا توجد حركات مسجلة.</td></tr>`; return; } 
         let html = ""; 
-        let waText = `*كشف حركة صنف*\nالمنتج: ${p?.product_name}\nالموقع: ${l?.location_name}\n------------------------\n`;
+        let waText = `*كارت حركة صنف*\nالمنتج: ${p?.product_name}\nالموقع: ${l?.location_name || "كل المواقع"}\n------------------------\n`;
         let totalIn = 0, totalOut = 0, netChange = 0;
         data.forEach(m => { 
             let typeName = m.movement_type; 
@@ -4137,18 +4153,30 @@ async function viewStockMovements(productId, locationId) {
             const change = Number(m.quantity_change); 
             if(change > 0) totalIn += change; else if(change < 0) totalOut += Math.abs(change); netChange += change;
             const changeStr = (change > 0 ? '+' : '') + fmtQty(change); 
-            html += `<tr><td>${formatDateTime(m.created_at)}</td><td>${typeName}</td><td style="color:${change > 0 ? 'green' : 'red'};font-weight:bold;">${changeStr}</td><td>${fmtQty(m.quantity_after)}</td><td>${m.notes || '-'}</td></tr>`; 
-            waText += `▪️ ${formatDate(m.created_at)} | ${typeName} | ${changeStr} | رصيد: ${fmtQty(m.quantity_after)}\n`;
+            const movementLocation = locationsCache.find(x => String(x.location_id) === String(m.location_id));
+            const noteText = String(m.notes || "-").replace(/[&<>"]/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
+            html += allLocations
+              ? `<tr><td>${formatDateTime(m.created_at)}</td><td>${movementLocation?.location_name || m.location_id}</td><td>${typeName}</td><td style="color:${change > 0 ? 'green' : 'red'};font-weight:bold;">${changeStr}</td><td>${fmtQty(m.quantity_after)}</td><td>${noteText}</td></tr>`
+              : `<tr><td>${formatDateTime(m.created_at)}</td><td>${typeName}</td><td style="color:${change > 0 ? 'green' : 'red'};font-weight:bold;">${changeStr}</td><td>${fmtQty(m.quantity_after)}</td><td>${noteText}</td></tr>`;
+            waText += `▪️ ${formatDate(m.created_at)} | ${movementLocation?.location_name || l?.location_name || "-"} | ${typeName} | ${changeStr} | رصيد: ${fmtQty(m.quantity_after)}\n`;
         }); 
         tbody.innerHTML = html; 
         const unitLabel = unitName(p?.base_unit_id);
-        const lastBalance = Number(data[data.length-1].quantity_after || 0);
-        $("movementSummary").innerHTML = `<h4>ملخص حركة الصنف</h4><div class="line"><span>إجمالي الوارد:</span><span style="color:green;">${fmtQty(totalIn)} ${unitLabel}</span></div><div class="line"><span>إجمالي الصادر:</span><span style="color:red;">${fmtQty(totalOut)} ${unitLabel}</span></div><div class="line"><span>صافي الحركة:</span><span style="font-weight:bold;">${fmtQty(netChange)} ${unitLabel}</span></div><div class="line"><span>الرصيد الحالي:</span><span style="font-weight:bold;color:var(--g);">${fmtQty(lastBalance)} ${unitLabel}</span></div>`;
+        const lastBalance = allLocations
+          ? stockCache.filter(row => String(row.product_id) === String(productId)).reduce((sum,row) => sum + Number(row.quantity || 0),0)
+          : Number(data[data.length-1].quantity_after || 0);
+        $("movementSummary").innerHTML = `<h4>ملخص حركة الصنف</h4><div class="line"><span>إجمالي الوارد:</span><span style="color:green;">${fmtQty(totalIn)} ${unitLabel}</span></div><div class="line"><span>إجمالي الصادر:</span><span style="color:red;">${fmtQty(totalOut)} ${unitLabel}</span></div><div class="line"><span>صافي الحركة:</span><span style="font-weight:bold;">${fmtQty(netChange)} ${unitLabel}</span></div><div class="line"><span>${allLocations?"إجمالي الرصيد الحالي بكل المواقع:":"الرصيد الحالي:"}</span><span style="font-weight:bold;color:var(--g);">${fmtQty(lastBalance)} ${unitLabel}</span></div>`;
         waText += `------------------------\n*ملخص:*\nوارد: ${fmtQty(totalIn)}\nصادر: ${fmtQty(totalOut)}\nرصيد: ${fmtQty(lastBalance)}`;
         $("shareMovementWhatsappBtn").onclick = () => { window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); };
         fillPrintHeaders();
     } catch(e) { tbody.innerHTML = `<tr><td colspan='5' style="color:red;">خطأ: ${err(e)}</td></tr>`; } 
 }
+async function viewProductStockMovements(productId) {
+    if(!canViewStock) { showToast("ليس لديك صلاحية عرض حركة المخزون","error"); return; }
+    if(!navigator.onLine) { showToast("اتصل بالإنترنت لعرض كارت الصنف","error"); return; }
+    await viewStockMovements(productId, null);
+}
+
 if($("stockForm")) $("stockForm").addEventListener("submit", async e => { 
   e.preventDefault(); 
   const btn=$("saveStockBtn"); 
@@ -5249,7 +5277,71 @@ async function loadPurchaseReturns() {
     const { data, error } = await query; 
     if(error) { box.innerHTML = `<div class="empty error">خطأ: ${err(error)}</div>`; return; } 
     if(!data || !data.length) { box.innerHTML = "<div class='empty'>لا توجد مرتجعات مطابقة للبحث.</div>"; return; } 
-    box.innerHTML = data.map(r => `<div class="product"><div class="pname">↩️ ${r.return_number}</div><div class="details">المورد: ${r.suppliers?.supplier_name} | المبلغ: ${fmt(r.total_return_amount)} | التاريخ: ${formatDate(r.return_date)}</div></div>`).join(""); 
+    box.replaceChildren();
+    data.forEach(r => {
+        const card = document.createElement("div");
+        card.className = "product";
+        const title = document.createElement("div");
+        title.className = "pname";
+        title.textContent = "↩️ " + (r.return_number || "مرتجع");
+        const details = document.createElement("div");
+        details.className = "details";
+        details.textContent = "المورد: " + (r.suppliers?.supplier_name || supplierName(r.supplier_id)) + " | المبلغ: " + fmt(r.total_return_amount) + " | التاريخ: " + formatDate(r.return_date);
+        const actions = document.createElement("div");
+        actions.className = "actions";
+        const view = document.createElement("button");
+        view.type = "button";
+        view.className = "btn secondary";
+        view.textContent = "عرض التفاصيل";
+        view.onclick = () => viewPurchaseReturn(r);
+        actions.appendChild(view);
+        card.append(title, details, actions);
+        box.appendChild(card);
+    });
+}
+async function viewPurchaseReturn(ret) {
+    const modal = $("genericStatementModal");
+    $("genericStatementTitle").textContent = "تفاصيل مرتجع المشتريات";
+    $("genericStatementHeader").textContent = "جارٍ تحميل تفاصيل المرتجع...";
+    $("genericStatementItems").innerHTML = "";
+    $("genericStatementSummary").innerHTML = "";
+    modal.classList.remove("hidden");
+    try {
+        const {data: items, error} = await db.from("purchase_return_items")
+            .select("item_id,product_id,unit_id,quantity,unit_price,line_total,base_quantity,conversion_factor")
+            .eq("return_id", Number(ret.return_id))
+            .order("item_id", {ascending:true});
+        if(error) throw error;
+        const invoice = purchasesCache.find(x => String(x.purchase_invoice_id) === String(ret.purchase_invoice_id));
+        const escReturn = value => String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+        const supplier = ret.suppliers?.supplier_name || supplierName(ret.supplier_id);
+        $("genericStatementHeader").innerHTML =
+            `<div><strong>رقم المرتجع:</strong> ${escReturn(ret.return_number)}</div>
+             <div><strong>المورد:</strong> ${escReturn(supplier)}</div>
+             <div><strong>التاريخ:</strong> ${formatDate(ret.return_date)} | <strong>الفاتورة الأصلية:</strong> ${escReturn(invoice?.invoice_number || ret.purchase_invoice_id || "—")}</div>
+             <div><strong>طريقة التسوية:</strong> ${ret.settlement_method === "SUPPLIER_CREDIT" ? "خصم من حساب المورد" : ret.settlement_method === "CASH" ? "استرداد نقدي" : "استرداد بنكي / Instapay"}</div>
+             <div><strong>ملاحظات:</strong> ${escReturn(ret.notes || "—")}</div>`;
+        let html = "<thead><tr><th>الصنف</th><th>الكمية المرتجعة</th><th>الوحدة</th><th>سعر الوحدة</th><th>الإجمالي</th><th>كمية المخزون</th></tr></thead><tbody>";
+        (items || []).forEach(item => {
+            const product = productsCache.find(p => String(p.product_id) === String(item.product_id));
+            html += `<tr><td>${escReturn(product?.product_name || ("صنف " + item.product_id))}</td><td>${fmtQty(item.quantity)}</td><td>${escReturn(unitName(item.unit_id))}</td><td>${fmt(item.unit_price)}</td><td>${fmt(item.line_total)}</td><td>${fmtQty(item.base_quantity)} ${escReturn(unitName(product?.base_unit_id))}</td></tr>`;
+        });
+        if(!items?.length) html += "<tr><td colspan='6'>لا توجد تفاصيل أصناف لهذا المرتجع.</td></tr>";
+        html += "</tbody>";
+        $("genericStatementItems").innerHTML = html;
+        $("genericStatementSummary").innerHTML = `<div class="line grand"><span>إجمالي المرتجع:</span><span>${fmt(ret.total_return_amount)}</span></div>`;
+        $("shareGenericWhatsappBtn").onclick = () => {
+            const lines = (items || []).map(item => {
+                const product = productsCache.find(p => String(p.product_id) === String(item.product_id));
+                return (product?.product_name || ("صنف " + item.product_id)) + " - " + fmtQty(item.quantity) + " " + unitName(item.unit_id) + " - " + fmt(item.line_total);
+            });
+            const message = ["تفاصيل مرتجع المشتريات", "رقم: " + ret.return_number, "المورد: " + supplier, "التاريخ: " + formatDate(ret.return_date), ...lines, "الإجمالي: " + fmt(ret.total_return_amount)].join("\n");
+            window.open("https://wa.me/?text=" + encodeURIComponent(message), "_blank");
+        };
+        fillPrintHeaders();
+    } catch(e) {
+        $("genericStatementHeader").textContent = "تعذر تحميل التفاصيل: " + err(e);
+    }
 }
 if($("refreshPrBtn")) $("refreshPrBtn").addEventListener("click", loadPurchaseReturns);
 if($("viewPrStatementBtn")) $("viewPrStatementBtn").addEventListener("click", async () => {
