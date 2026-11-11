@@ -2935,3 +2935,117 @@ BEGIN
 END;
 $function$
 ;
+
+
+-- Function snapshot: prevent duplicate partner opening-balance posting
+CREATE OR REPLACE FUNCTION public.post_partner_opening_balance_adjustment()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_old_balance numeric:=0;
+  v_new_balance numeric:=COALESCE(NEW.opening_balance,0);
+  v_delta numeric;
+  v_reference_id bigint;
+  v_entry_id bigint;
+  v_lines jsonb;
+  v_description text;
+BEGIN
+  IF current_setting('app.partner_opening_balance_v2',true)='on' THEN
+    RETURN NEW;
+  END IF;
+
+  IF TG_OP='UPDATE' THEN
+    v_old_balance:=COALESCE(OLD.opening_balance,0);
+  END IF;
+
+  v_delta:=ROUND(v_new_balance-v_old_balance,2);
+  IF v_delta=0 THEN RETURN NEW; END IF;
+
+  IF auth.uid() IS NULL OR NOT public.has_permission('ACCOUNTING_MANAGE') THEN
+    RAISE EXCEPTION 'تعديل رصيد الشريك الافتتاحي يتطلب صلاحية إدارة الحسابات';
+  END IF;
+
+  IF v_delta>0 THEN
+    v_lines:=jsonb_build_array(
+      jsonb_build_object('account','3400','debit',v_delta,'credit',0),
+      jsonb_build_object('account','3100','debit',0,'credit',v_delta)
+    );
+  ELSE
+    v_lines:=jsonb_build_array(
+      jsonb_build_object('account','3300','debit',abs(v_delta),'credit',0),
+      jsonb_build_object('account','3400','debit',0,'credit',abs(v_delta))
+    );
+  END IF;
+
+  UPDATE public.partners
+  SET current_balance=COALESCE(current_balance,0)+v_delta
+  WHERE partner_id=NEW.partner_id;
+
+  v_reference_id:=nextval('public.opening_balance_adjustment_seq');
+  v_description:='تسوية رصيد افتتاحي شريك - '||NEW.partner_name||
+                 ' - فرق '||v_delta::text;
+
+  v_entry_id:=public.post_journal_entry(
+    now(),v_description,'OPENING_BALANCE_PARTNER',v_reference_id,v_lines
+  );
+
+  IF v_entry_id IS NULL THEN
+    RAISE EXCEPTION 'تعذر إنشاء القيد المحاسبي للرصيد الافتتاحي للشريك';
+  END IF;
+
+  RETURN NEW;
+END;
+$function$;
+
+-- Function snapshot: set_partner_opening_balance_v2 with guarded single posting
+CREATE OR REPLACE FUNCTION public.set_partner_opening_balance_v2(p_partner_id bigint, p_new_balance numeric, p_request_id uuid)
+ RETURNS numeric
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_old numeric(14,2);
+  v_new numeric(14,2);
+  v_delta numeric(14,2);
+  v_name text;
+  v_debit text;
+  v_credit text;
+BEGIN
+  IF auth.uid() IS NULL OR NOT public.has_permission('ACCOUNTING_MANAGE') THEN
+    RAISE EXCEPTION 'تعديل رصيد الشريك الافتتاحي يتطلب صلاحية إدارة الحسابات';
+  END IF;
+  IF p_partner_id IS NULL OR p_new_balance IS NULL OR p_new_balance<0 OR p_request_id IS NULL THEN
+    RAISE EXCEPTION 'بيانات الشريك أو الرصيد أو رقم الطلب غير صحيحة';
+  END IF;
+
+  PERFORM pg_advisory_xact_lock(947351);
+
+  v_new:=ROUND(p_new_balance,2);
+  SELECT partner_name,opening_balance INTO v_name,v_old
+  FROM public.partners WHERE partner_id=p_partner_id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'الشريك غير موجود'; END IF;
+  v_delta:=v_new-COALESCE(v_old,0);
+  IF v_delta=0 THEN RETURN v_new; END IF;
+
+  IF v_delta>0 THEN v_debit:='3400';v_credit:='3100';
+  ELSE v_debit:='3100';v_credit:='3400'; END IF;
+
+  PERFORM public.create_manual_journal_adjustment(
+    (now() at time zone 'Africa/Cairo')::date,
+    'تعديل الرصيد الافتتاحي للشريك - '||v_name,
+    v_debit,v_credit,ABS(v_delta),p_request_id
+  );
+
+  PERFORM set_config('app.partner_opening_balance_v2','on',true);
+  UPDATE public.partners
+  SET opening_balance=v_new,current_balance=COALESCE(current_balance,0)+v_delta
+  WHERE partner_id=p_partner_id;
+  PERFORM set_config('app.partner_opening_balance_v2','off',true);
+
+  RETURN v_new;
+END;
+$function$;
