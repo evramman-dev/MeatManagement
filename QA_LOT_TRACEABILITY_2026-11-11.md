@@ -194,3 +194,12 @@ Historical movements were not assigned fabricated lot allocations.
 - Added btree index public.idx_expenses_cancelled_by on public.expenses(cancelled_by) through migration index_expenses_cancelled_by_20261111.
 - Confirmed the index exists and the latest Supabase performance advisor no longer reports any unindexed foreign keys.
 - No existing indexes were dropped. The unused-index advisory count temporarily increased to 87 because the new index has not yet accumulated query usage.
+
+
+## Purchase return cancellation exact-lot and accounting regression (2026-11-11)
+- Executed a rollback-only purchase of 0.5 KG, followed by a supplier-credit purchase return of 0.2 KG and cancellation of that return.
+- The purchase return consumed the exact lot created by the original purchase. Cancellation referenced the original negative return movement and restored the same lot.
+- Original and reversal movement costs matched. Inventory value returned to its level immediately before the purchase return.
+- The purchase return was marked cancelled and one posted journal reversal was created for the original PURCHASE_RETURN entry.
+- During the transaction, the original lot returned to 0.5000 KG and warehouse product 1 returned to 9.2500 KG.
+- The full transaction rolled back; no test invoice, return, lot, movement, or journal entry persisted.
