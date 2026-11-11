@@ -4220,6 +4220,7 @@ async function openLotQrPreview(lot,product){
     });
   }
   const lotCode=String(lot.lot_code||"").trim();
+  const payload={product:product.product_name||productName(lot.product_id),lot:lotCode,manufactured_on:lot.manufactured_on||null,expires_on:lot.expires_on||null};
   const qrBox=$("lotQrCode"),errorBox=$("lotQrError");
   qrBox.replaceChildren();errorBox.classList.add("hidden");errorBox.textContent="";
   $("lotQrProduct").textContent=payload.product;
