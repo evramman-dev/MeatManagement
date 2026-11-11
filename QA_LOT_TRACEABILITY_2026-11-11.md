@@ -179,3 +179,12 @@ Historical movements were not assigned fabricated lot allocations.
 - The trip then settled successfully. The full 0.5 KG load returned from vehicle to source using the same lot.
 - Final in-transaction state: trip COMPLETED, main warehouse product 1 = 8.7500 KG, vehicle product 1 = 0.0000 KG, and lot balances matched.
 - The complete transaction was rolled back. Post-rollback counts remained 55 stock movements, 4 lots, 4 lot-balance rows, 4 trips, 10 sales invoices, 2 sales returns, 3 trip-load rows, and 65 journal entries. No QA lots remained.
+
+
+## Stock transfer reversal competing-lot regression (2026-11-11)
+- The first rollback-only test exposed a lot-identity defect: reversing a transfer used FEFO at the destination instead of reversing the exact original TRANSFER_IN allocation. With a competing destination lot expiring earlier, the reversal consumed the wrong lot.
+- Applied Supabase migration preserve_exact_lots_when_reversing_stock_transfers_20261111. The reverse TRANSFER_OUT now references the original TRANSFER_IN movement, and the reverse TRANSFER_IN references the original TRANSFER_OUT movement through reversal_of_movement_id. Original unit_cost and total_cost remain preserved.
+- Re-tested with a destination competing lot expiring in 1 day and a transferred source lot expiring in 30 days. The original transfer used source lot 31. Both reversal movements then used lot 31, and the competing destination lot was not consumed.
+- In-transaction balances after reversal: source warehouse 9.2500 KG, destination fridge 3.2500 KG, and the transferred lot was restored to 0.5000 KG at source with 0 at destination.
+- The full transaction was rolled back. Post-rollback counts remained 55 stock movements, 4 lots, 4 lot-balance rows, 6 stock transfers, 0 transfer-reversal records, and 6 purchase invoices. No QA lots remained. Main warehouse product 1 stayed at 8.7500 KG and fridge product 1 at 2.7500 KG.
+- This test specifically verifies that reversal does not consume an unrelated earlier-expiry lot.
