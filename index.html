@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v74</title>
+<title>MeatManagement v75</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -328,7 +328,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v74]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v75]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1700,7 +1700,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div><label for="purchaseUnit">وحدة الشراء</label><select id="purchaseUnit"><option value="">بدون تحديد</option></select></div>
 <div><label for="salesUnit">وحدة البيع</label><select id="salesUnit"><option value="">بدون تحديد</option></select></div>
 <div><label for="unitsCarton">وحدات بالكرتونة</label><input id="unitsCarton" type="number" min="0" step="0.0001"></div>
-<div><label for="shelfLifeDays">مدة الصلاحية بالأيام</label><input id="shelfLifeDays" type="number" min="1" step="1" placeholder="للمنتج الناتج من الإنتاج"></div>
+<div><label for="shelfLifeMonths">مدة الصلاحية بالشهور</label><input id="shelfLifeMonths" type="number" min="1" max="120" step="1" placeholder="مثال: 3 شهور"></div>
 <div><label for="minStock">الحد الأدنى</label><input id="minStock" type="number" min="0" step="0.0001" value="0"></div>
 <div><label for="minPrice">أقل سعر</label><input id="minPrice" type="number" min="0" step="0.01"></div>
 <div><label for="targetPrice">السعر المستهدف</label><input id="targetPrice" type="number" min="0" step="0.01"></div>
@@ -1722,7 +1722,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v74</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v75</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -3274,7 +3274,7 @@ function renderProducts(){
     const usageBadges=uses.length?uses.map(label=>'<span class="badge">'+label+'</span>').join(""):'<span class="badge">لا توجد استخدامات مفعلة</span>';
     card.innerHTML=`<div class="pname">${esc(p.product_name)}</div>
       <div class="details">الكود: ${esc(p.product_code||"—")} | النوع: ${esc(typeName(p.product_type))} | التصنيف: ${esc(category)}${p.barcode?" | الباركود: "+esc(p.barcode):""}</div>
-      <div class="details">${unitDetails}${p.units_per_carton? " | عدد الوحدات بالكرتونة: "+esc(fmtQty(p.units_per_carton)):""}${p.shelf_life_days? " | صلاحية الإنتاج: "+esc(p.shelf_life_days)+" يوم":""}</div>
+      <div class="details">${unitDetails}${p.units_per_carton? " | عدد الوحدات بالكرتونة: "+esc(fmtQty(p.units_per_carton)):""}${p.shelf_life_months? " | صلاحية الإنتاج: "+esc(p.shelf_life_months)+" شهر":(p.shelf_life_days? " | صلاحية الإنتاج: "+esc(p.shelf_life_days)+" يوم":"")}</div>
       <div class="details">حد إعادة الطلب: ${p.minimum_stock==null?"—":esc(fmtQty(p.minimum_stock))}</div>
       ${priceDetails}<div>${statusBadge}${usageBadges}</div>`;
     if(canViewStock){
@@ -3305,7 +3305,7 @@ function renderProducts(){
         $("targetPrice").value=p.target_selling_price||""; 
         $("maxPrice").value=p.max_selling_price||""; 
         $("unitsCarton").value=p.units_per_carton||""; 
-        $("shelfLifeDays").value=p.shelf_life_days||""; 
+        $("shelfLifeMonths").value=p.shelf_life_months||""; 
         $("active").checked=p.is_active; 
         $("canPurchase").checked=p.can_be_purchased; 
         $("canProduce").checked=p.can_be_produced; 
@@ -3356,7 +3356,8 @@ if($("productForm")) $("productForm").addEventListener("submit", async e => {
     sales_unit_id:$("salesUnit").value?Number($("salesUnit").value):null,
     minimum_stock:Number($("minStock").value||0), 
     units_per_carton:Number($("unitsCarton").value||0)||null,
-    shelf_life_days:$("shelfLifeDays").value?Number($("shelfLifeDays").value):null, 
+    shelf_life_months:$("shelfLifeMonths").value?Number($("shelfLifeMonths").value):null,
+    shelf_life_days:$("shelfLifeMonths").value?Number($("shelfLifeMonths").value)*30:null, 
     min_selling_price:$("minPrice").value?Number($("minPrice").value):null, 
     target_selling_price:$("targetPrice").value?Number($("targetPrice").value):null, 
     max_selling_price:$("maxPrice").value?Number($("maxPrice").value):null, 
