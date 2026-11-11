@@ -1692,6 +1692,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="print-header" id="invoicePrintHeader"></div>
 <div id="modalInvoiceHeader" style="font-size:14px;line-height:1.8;margin-bottom:15px;"></div>
 <div class="table-responsive"><table class="print-table" id="modalInvoiceItems"></table></div>
+<div id="modalInvoiceLots" class="total-box" style="margin-top:12px;background:#f9fbf9;border:1px solid #ddd;border-radius:10px;"></div>
 <div id="modalInvoiceTotals" class="total-box" style="background:none;border-top:1px solid #eee;border-radius:0;margin-top:10px;"></div>
 <div id="modalInvoiceAccountSummary" class="total-box" style="background:#f9fbf9;border:1px solid #ddd;border-radius:10px;margin-top:15px;font-size:14px;"></div>
 <div class="print-footer" id="invoicePrintFooter"></div>
@@ -4730,10 +4731,12 @@ if($("salesSearch")) $("salesSearch").addEventListener("input",renderSales);
 async function viewInvoice(inv) {
     const modal = $("invoiceDetailsModal"); 
     $("modalInvoiceHeader").innerHTML = "جارٍ التحميل..."; 
-    $("modalInvoiceItems").innerHTML = ""; 
+    $("modalInvoiceItems").innerHTML = "";
+    $("modalInvoiceLots").innerHTML = "<div class='empty'>جارٍ تحميل تخصيصات التشغيلات...</div>";
     modal.classList.remove("hidden");
     try {
-        const { data: items } = await db.from("sales_invoice_items").select("*").eq("sales_invoice_id", inv.sales_invoice_id);
+        const { data: items, error: itemsError } = await db.from("sales_invoice_items").select("*").eq("sales_invoice_id", inv.sales_invoice_id);
+        if(itemsError) throw itemsError;
         let html = `<thead><tr><th>الصنف</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr></thead><tbody>`;
         (items||[]).forEach(i => { 
           const p = productsCache.find(x => String(x.product_id) === String(i.product_id)); 
@@ -4741,6 +4744,48 @@ async function viewInvoice(inv) {
         });
         html += `</tbody>`;
         $("modalInvoiceItems").innerHTML = html;
+        try {
+          const {data: allocations, error: allocationError} = await db.rpc("get_sales_invoice_lot_allocations",{p_sales_invoice_id:Number(inv.sales_invoice_id)});
+          if(allocationError) throw allocationError;
+          const lotBox=$("modalInvoiceLots");
+          lotBox.replaceChildren();
+          const heading=document.createElement("h4");
+          heading.textContent="تخصيصات التشغيلات";
+          heading.style.cssText="margin:0 0 8px;color:#173c2c;";
+          lotBox.appendChild(heading);
+          if(!allocations?.length){
+            const empty=document.createElement("div");
+            empty.className="empty";
+            empty.textContent="لا توجد تخصيصات تشغيلات مسجلة لهذه الفاتورة.";
+            lotBox.appendChild(empty);
+          }else{
+            const table=document.createElement("div");
+            table.className="table-responsive";
+            const list=document.createElement("table");
+            list.className="print-table";
+            const head=document.createElement("thead");
+            const headRow=document.createElement("tr");
+            ["الصنف","رقم التشغيلة","الكمية المخصصة","تاريخ الصلاحية"].forEach(label=>{const th=document.createElement("th");th.textContent=label;headRow.appendChild(th);});
+            head.appendChild(headRow);list.appendChild(head);
+            const body=document.createElement("tbody");
+            allocations.forEach(allocation=>{
+              const row=document.createElement("tr");
+              const productCell=document.createElement("td");
+              productCell.textContent=productName(allocation.product_id);
+              const lotCell=document.createElement("td");
+              lotCell.textContent=allocation.lot_code||("تشغيلة "+allocation.lot_id);
+              const quantityCell=document.createElement("td");
+              quantityCell.textContent=fmtQty(allocation.allocated_quantity)+(allocation.unit_id?" "+unitName(allocation.unit_id):"");
+              const expiryCell=document.createElement("td");
+              expiryCell.textContent=allocation.expires_on?formatDate(allocation.expires_on):"غير محدد";
+              row.append(productCell,lotCell,quantityCell,expiryCell);
+              body.appendChild(row);
+            });
+            list.appendChild(body);table.appendChild(list);lotBox.appendChild(table);
+          }
+        } catch(allocationError) {
+          $("modalInvoiceLots").textContent="تعذر تحميل تخصيصات التشغيلات: "+err(allocationError);
+        }
         const invoiceTime = formatDateTime(inv.created_at || inv.invoice_date);
         $("modalInvoiceHeader").innerHTML = `<div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span><strong>فاتورة:</strong> ${inv.invoice_number}</span><span><strong>التاريخ:</strong> ${invoiceTime}</span></div><div style="display:flex;justify-content:space-between;"><span><strong>العميل:</strong> ${customerName(inv.customer_id)}</span><span><strong>الإجمالي:</strong> ${fmt(inv.net_total)}</span></div>`;
         const subtotal = Number(inv.subtotal); 
