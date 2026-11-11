@@ -42,8 +42,9 @@ Historical movements were not assigned fabricated lot allocations.
 4. Sales issue movement linked to its sales invoice item; secure lot lookup returned the consumed lot. All changes were rolled back.
 5. Customer return item accepted the exact lot sold on the invoice. The same tracked invoice rejected a return without selecting a lot. Both test returns were rolled back.
 6. Customer return cancellation movement consumed the exact lot previously received by that return. All changes were rolled back.
-7. Production receipt created a production lot, linked it to the production order, and calculated expiry from product shelf life. All changes were rolled back.
-8. Expired-only stock was rejected for outbound issue. All changes were rolled back.
+7. A customer return tied to a tracked sales invoice was rejected when no lot was selected, and accepted when the exact sold lot was selected. All test return headers/items were rolled back.
+8. Production receipt created a production lot, linked it to the production order, and calculated expiry from product shelf life. All changes were rolled back.
+9. Expired-only stock was rejected for outbound issue. All changes were rolled back.
 
 ## Final integrity checks
 - Stock movements: 55, unchanged.
