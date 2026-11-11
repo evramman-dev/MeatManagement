@@ -43,8 +43,12 @@ Historical movements were not assigned fabricated lot allocations.
 5. Customer return item accepted the exact lot sold on the invoice. The same tracked invoice rejected a return without selecting a lot. Both test returns were rolled back.
 6. Customer return cancellation movement consumed the exact lot previously received by that return. All changes were rolled back.
 7. A customer return tied to a tracked sales invoice was rejected when no lot was selected, and accepted when the exact sold lot was selected. All test return headers/items were rolled back.
-8. Production receipt created a production lot, linked it to the production order, and calculated expiry from product shelf life. All changes were rolled back.
-9. Expired-only stock was rejected for outbound issue. All changes were rolled back.
+8. Canceling a customer return consumed the exact lot that the return had received. All changes were rolled back.
+9. A purchase return consumed the exact lot linked to its purchase invoice item. The invoice, supplier credit, journal, stock, and lot changes were rolled back.
+10. A historical purchase return without a recorded source lot used the opening lot fallback. All changes were rolled back.
+11. Historical reversals without lot allocations used a safe untraced fallback. Historical transfer-in without source allocations created an untraced destination lot. All changes were rolled back.
+12. Production receipt created a production lot, linked it to the production order, and calculated expiry from product shelf life. All changes were rolled back.
+13. Expired-only stock was rejected for outbound issue. All changes were rolled back.
 
 ## Final integrity checks
 - Stock movements: 55, unchanged.
@@ -71,3 +75,11 @@ Historical movements were not assigned fabricated lot allocations.
 
 ## Deployment
 PR is the release candidate. GitHub Pages deployment/live UI has not been confirmed yet.
+
+
+## Compatibility and advisors
+- Existing pre-v70 purchase returns and stock reversals have no historical lot allocations. The trigger falls back to FEFO/opening lots for these legacy documents instead of blocking valid old workflows or inventing historical lot identities.
+- New supplier returns use the exact purchase invoice item lot when one exists.
+- New reversals use exact source movement allocations. Legacy reversals with no source allocations use the explicit untraced fallback.
+- Added indexes for all new lot-related foreign keys flagged by the Supabase performance advisor. The remaining unindexed foreign-key finding is the pre-existing `expenses.cancelled_by` relation.
+- The security advisor reports the new `get_sales_invoice_lot_allocations` RPC because it is SECURITY DEFINER and executable by authenticated users. This is intentional: the RPC checks both return-management and invoice-view permissions, and anonymous execution is revoked.
