@@ -302,7 +302,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v71]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v72]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -429,6 +429,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="dash-item hidden" id="menuProducts" onclick="window.openSection('products')"><div class="dash-icon">📦</div><div class="dash-title">المنتجات</div></div>
 <div class="dash-item hidden" id="menuLocations" onclick="window.openSection('locations')"><div class="dash-icon">🏭</div><div class="dash-title">المواقع والمخازن</div></div>
 <div class="dash-item hidden" id="menuStock" onclick="window.openSection('stock')"><div class="dash-icon">📊</div><div class="dash-title">أرصدة المخزون</div></div>
+<div class="dash-item hidden" id="menuStockLots" onclick="window.openSection('stockLots')"><div class="dash-icon">🏷️</div><div class="dash-title">تتبع التشغيلات</div></div>
 <div class="dash-item hidden" id="menuStockTransfers" onclick="window.openSection('stockTransfers')"><div class="dash-icon">🔄</div><div class="dash-title">تحويل المخازن</div></div>
 <div class="dash-item hidden" id="menuRecipes" onclick="window.openSection('recipes')"><div class="dash-icon">📝</div><div class="dash-title">الوصفات</div></div>
 <div class="dash-item hidden" id="menuProduction" onclick="window.openSection('production')"><div class="dash-icon">🏭</div><div class="dash-title">أوامر التشغيل</div></div>
@@ -951,12 +952,16 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="row"><input id="stockSearch" type="search" placeholder="ابحث..."><button id="refreshStockBtn" class="btn secondary" type="button">تحديث</button></div>
 <div id="stockMsg" class="status hidden"></div>
 <div id="stockList"><div class="empty">جارٍ تحميل الأرصدة...</div></div>
-<div class="card" id="stockLotsCard" style="margin-top:16px;">
-<h3>تتبع التشغيلات</h3>
-<p class="desc">رقم التشغيلة ومصدرها وموقعها وتاريخ صلاحيتها.</p>
+
+</div>
+</div>
+<div id="sectionStockLots" class="sub-section hidden">
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<div class="card" id="stockLotsCard">
+<h2>🏷️ تتبع التشغيلات</h2>
+<p class="desc">متابعة التشغيلات حسب المنتج والموقع والمصدر وتاريخ الإنتاج والصلاحية والرصيد المتبقي.</p>
 <div class="row"><input id="stockLotsSearch" type="search" placeholder="ابحث برقم التشغيلة أو المنتج أو المورد"><button id="refreshStockLotsBtn" class="btn secondary" type="button">تحديث التشغيلات</button></div>
 <div id="stockLotsList"><div class="empty">جارٍ تحميل التشغيلات...</div></div>
-</div>
 </div>
 </div>
 <div id="stockFormModal" class="modal-form">
@@ -1671,7 +1676,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v71</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v72</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -1991,7 +1996,7 @@ function showLogin(){ hideSections(); if($("login")) $("login").classList.remove
 function showApp(){ hideSections(); if($("nav")) $("nav").classList.remove("hidden"); page("home"); }
 
 window.openSection = function(name) {
-  const sectionMenuMap = { products:"menuProducts", locations:"menuLocations", stock:"menuStock", stockTransfers:"menuStockTransfers", recipes:"menuRecipes", production:"menuProduction", reservations:"menuReservations", suppliers:"menuSuppliers", purchases:"menuPurchases", purchaseReturns:"menuPurchaseReturns", landedCosts:"menuLandedCosts", fixedAssets:"menuFixedAssets", supplierPayments:"menuSupplierPayments", expenses:"menuExpenses", customers:"menuCustomers", sales:"menuSales", salesReturns:"menuSalesReturns", priceLists:"menuPriceLists", collections:"menuCollections", trips:"menuTrips", salesReps:"menuSalesReps", treasuries:"menuTreasuries", treasuryTransfers:"menuTreasuryTransfers", partners:"menuPartners", accounting:"menuAccounting", reports:"menuReports", users:"menuUsers", settings:"menuSettings" };
+  const sectionMenuMap = { products:"menuProducts", locations:"menuLocations", stock:"menuStock", stockLots:"menuStockLots", stockTransfers:"menuStockTransfers", recipes:"menuRecipes", production:"menuProduction", reservations:"menuReservations", suppliers:"menuSuppliers", purchases:"menuPurchases", purchaseReturns:"menuPurchaseReturns", landedCosts:"menuLandedCosts", fixedAssets:"menuFixedAssets", supplierPayments:"menuSupplierPayments", expenses:"menuExpenses", customers:"menuCustomers", sales:"menuSales", salesReturns:"menuSalesReturns", priceLists:"menuPriceLists", collections:"menuCollections", trips:"menuTrips", salesReps:"menuSalesReps", treasuries:"menuTreasuries", treasuryTransfers:"menuTreasuryTransfers", partners:"menuPartners", accounting:"menuAccounting", reports:"menuReports", users:"menuUsers", settings:"menuSettings" };
   const allowedIds = getRoleMenuIds(currentRoleCode);
   const requestedMenuId = sectionMenuMap[name];
   if(!isSystemAdmin && (!requestedMenuId || !allowedIds.has(requestedMenuId))) {
@@ -2039,6 +2044,7 @@ window.openSection = function(name) {
   if (name === "treasuries") loadTreasuries();
   if (name === "locations") loadLocations();
   if (name === "stock") loadStock();
+   if (name === "stockLots") loadStockLots();
   if (name === "reservations") loadReservations();
   if (name === "settings") loadSettings();
 }
@@ -2275,7 +2281,7 @@ async function userInfo(user){
     try{ canViewLocations=await permission("LOCATIONS_VIEW") || isSystemAdmin; canManageLocations=await permission("LOCATIONS_MANAGE") || isSystemAdmin; if($("menuLocations")) $("menuLocations").classList.toggle("hidden",!canViewLocations); if($("locationsCard")) $("locationsCard").classList.toggle("hidden",!canViewLocations); if($("addLocationBtn")) $("addLocationBtn").classList.toggle("hidden",!canManageLocations); }catch(e){}
     try{ canViewTreasuries=await permission("TREASURIES_VIEW") || isSystemAdmin; canManageTreasuries=await permission("TREASURIES_MANAGE") || isSystemAdmin; if($("menuTreasuries")) $("menuTreasuries").classList.toggle("hidden",!canViewTreasuries); if($("treasuriesCard")) $("treasuriesCard").classList.toggle("hidden",!canViewTreasuries); if($("addTreasuryBtn")) $("addTreasuryBtn").classList.toggle("hidden",!canManageTreasuries); }catch(e){}
     try{ canViewTreasuryTransfers=await permission("TREASURIES_MANAGE") || await permission("ACCOUNTING_MANAGE") || isSystemAdmin; if($("menuTreasuryTransfers")) $("menuTreasuryTransfers").classList.toggle("hidden",!canViewTreasuryTransfers); }catch(e){}
-    try{ canViewStock=await permission("STOCK_VIEW") || await permission("INVENTORY_VIEW") || isSystemAdmin; canManageStock=await permission("STOCK_MANAGE") || isSystemAdmin; if($("menuStock")) $("menuStock").classList.toggle("hidden",!canViewStock); if($("stockCard")) $("stockCard").classList.toggle("hidden",!canViewStock); if($("adjustStockBtn")) $("adjustStockBtn").classList.toggle("hidden",!canManageStock); }catch(e){}
+    try{ canViewStock=await permission("STOCK_VIEW") || await permission("INVENTORY_VIEW") || isSystemAdmin; canManageStock=await permission("STOCK_MANAGE") || isSystemAdmin; if($("menuStock")) $("menuStock").classList.toggle("hidden",!canViewStock); if($("menuStockLots")) $("menuStockLots").classList.toggle("hidden",!canViewStock); if($("stockCard")) $("stockCard").classList.toggle("hidden",!canViewStock); if($("adjustStockBtn")) $("adjustStockBtn").classList.toggle("hidden",!canManageStock); }catch(e){}
     try{ canViewStockTransfers=await permission("INVENTORY_TRANSFER") || isSystemAdmin; if($("menuStockTransfers")) $("menuStockTransfers").classList.toggle("hidden",!canViewStockTransfers); }catch(e){}
     try{ canViewSales=await permission("SALES_VIEW") || await permission("INVOICES_VIEW") || isSystemAdmin; canManageSales=await permission("SALES_MANAGE") || isSystemAdmin; canViewSalesReturns=canViewSales || await permission("RETURNS_VIEW") || isSystemAdmin; if($("menuSales")) $("menuSales").classList.toggle("hidden",!canViewSales); if($("salesCard")) $("salesCard").classList.toggle("hidden",!canViewSales); if($("menuSalesReturns")) $("menuSalesReturns").classList.toggle("hidden",!canViewSalesReturns); if($("addInvoiceBtn")) $("addInvoiceBtn").classList.toggle("hidden",!(await permission("INVOICES_CREATE") || canManageSales)); }catch(e){}
     try{ canCreateReturns=await permission("RETURNS_CREATE") || await permission("RETURNS_MANAGE") || isSystemAdmin; canApproveReturns=await permission("RETURNS_APPROVE") || await permission("RETURNS_MANAGE") || isSystemAdmin; canManageReturns=await permission("RETURNS_MANAGE") || isSystemAdmin; if($("addReturnBtn")) $("addReturnBtn").classList.toggle("hidden",!canCreateReturns); if($("addSalesReturnStandaloneBtn")) $("addSalesReturnStandaloneBtn").classList.toggle("hidden",!canCreateReturns); }catch(e){}
@@ -2378,12 +2384,12 @@ function getRoleMenuIds(roleCode){
   const roleMenus = {
     SALES_REP: ["menuProducts","menuCustomers","menuSales","menuSalesReturns","menuPriceLists","menuCollections","menuTrips"],
     SALES_MANAGER: ["menuProducts","menuCustomers","menuSales","menuSalesReturns","menuPriceLists","menuCollections","menuTrips","menuReports"],
-    WAREHOUSE_KEEPER: ["menuProducts","menuLocations","menuStock","menuStockTransfers","menuTrips"],
-    PRODUCTION_MANAGER: ["menuProducts","menuLocations","menuStock","menuRecipes","menuProduction"],
+    WAREHOUSE_KEEPER: ["menuProducts","menuLocations","menuStock","menuStockLots","menuStockTransfers","menuTrips"],
+    PRODUCTION_MANAGER: ["menuProducts","menuLocations","menuStock","menuStockLots","menuRecipes","menuProduction"],
     ACCOUNTANT: ["menuSuppliers","menuPurchases","menuPurchaseReturns","menuSupplierPayments","menuExpenses","menuLandedCosts","menuFixedAssets","menuCustomers","menuSales","menuSalesReturns","menuPriceLists","menuCollections","menuTrips","menuTreasuries","menuTreasuryTransfers","menuPartners","menuAccounting","menuReports"],
-    GENERAL_MANAGER: ["menuProducts","menuLocations","menuStock","menuStockTransfers","menuRecipes","menuProduction","menuReservations","menuSuppliers","menuPurchases","menuPurchaseReturns","menuLandedCosts","menuFixedAssets","menuSupplierPayments","menuExpenses","menuCustomers","menuSales","menuSalesReturns","menuPriceLists","menuCollections","menuTrips","menuTreasuries","menuTreasuryTransfers","menuPartners","menuAccounting","menuReports"],
+    GENERAL_MANAGER: ["menuProducts","menuLocations","menuStock","menuStockLots","menuStockTransfers","menuRecipes","menuProduction","menuReservations","menuSuppliers","menuPurchases","menuPurchaseReturns","menuLandedCosts","menuFixedAssets","menuSupplierPayments","menuExpenses","menuCustomers","menuSales","menuSalesReturns","menuPriceLists","menuCollections","menuTrips","menuTreasuries","menuTreasuryTransfers","menuPartners","menuAccounting","menuReports"],
     // مختبر النظام يرى كل أقسام التشغيل والإعدادات، ولا يرى إدارة المستخدمين.
-    SYSTEM_TESTER: ["menuProducts","menuLocations","menuStock","menuStockTransfers","menuRecipes","menuProduction","menuReservations","menuSuppliers","menuPurchases","menuPurchaseReturns","menuLandedCosts","menuFixedAssets","menuSupplierPayments","menuExpenses","menuCustomers","menuSales","menuSalesReturns","menuPriceLists","menuCollections","menuTrips","menuSalesReps","menuTreasuries","menuTreasuryTransfers","menuPartners","menuAccounting","menuReports","menuSettings"]
+    SYSTEM_TESTER: ["menuProducts","menuLocations","menuStock","menuStockLots","menuStockTransfers","menuRecipes","menuProduction","menuReservations","menuSuppliers","menuPurchases","menuPurchaseReturns","menuLandedCosts","menuFixedAssets","menuSupplierPayments","menuExpenses","menuCustomers","menuSales","menuSalesReturns","menuPriceLists","menuCollections","menuTrips","menuSalesReps","menuTreasuries","menuTreasuryTransfers","menuPartners","menuAccounting","menuReports","menuSettings"]
   };
   return new Set(roleMenus[roleCode] || []);
 }
@@ -4097,14 +4103,13 @@ async function viewSupplierStatement(s) {
 let currentStockLocationFilter = null;
 async function loadStock(){ 
     if(!canViewStock)return; 
-    if(!navigator.onLine) { stockCache=getCache('stock'); renderStockLocationTabs(); renderStock(); const lotBox=$("stockLotsList");if(lotBox)lotBox.innerHTML="<div class='empty'>اتصل بالإنترنت لعرض التشغيلات.</div>"; return; } 
+    if(!navigator.onLine) { stockCache=getCache('stock'); renderStockLocationTabs(); renderStock(); return; } 
     const box=$("stockList"); if(box) box.innerHTML = "جارٍ التحميل..."; 
     const {data,error}=await db.from("stock_balances").select("*, products(product_name, product_code, base_unit_id), locations(location_name)").limit(500); 
     if(error) { if(box) box.innerHTML = err(error); return; } 
     stockCache=data||[]; saveCache('stock', stockCache); 
     renderStockLocationTabs();
     renderStock();
-    await loadStockLots(); 
 }
 let stockLotsCache=[];
 async function loadStockLots(){
@@ -4172,7 +4177,6 @@ function renderStockLots(){
   const sourceNames={PURCHASE:"شراء",PRODUCTION:"إنتاج",OPENING:"رصيد افتتاحي",RETURN:"مرتجع",ADJUSTMENT:"تسوية",OTHER:"أخرى"};
   const today=todayISO();
   const found=stockLotsCache.filter(row=>{
-    if(currentStockLocationFilter!==null&&String(row.location_id)!==String(currentStockLocationFilter))return false;
     const lot=row.stock_lots||{};
     const p=productsCache.find(x=>String(x.product_id)===String(lot.product_id));
     const loc=locationsCache.find(x=>String(x.location_id)===String(row.location_id));
