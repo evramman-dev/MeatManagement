@@ -1,8 +1,8 @@
 -- MeatManagement Lot Traceability - applied function snapshot
 -- Date: 2026-11-11
--- Release: v70 / Service Worker meat-v103
--- Audit snapshot of the final function definitions after the listed migrations.
--- This is not a standalone reset script. Apply only through reviewed Supabase migrations.
+-- Release candidate: v70 / Service Worker meat-v103
+-- Audit snapshot of final definitions after the applied migrations.
+-- Not a standalone reset script. Apply through reviewed Supabase migrations only.
 
 -- Applied migrations:
 -- create_lot_traceability_foundation_20261111
@@ -12,17 +12,9 @@
 -- complete_purchase_lot_idempotency_and_production_expiry_20261111
 -- enable_sales_return_lot_selection_and_validation_20261111
 -- reverse_customer_return_lots_exactly_on_cancel_20261111
-
--- Main tables:
--- public.stock_lots
--- public.stock_lot_balances
--- public.stock_movement_lot_allocations
--- Key additions:
--- purchase_invoice_items.supplier_lot_code, manufactured_on, expires_on
--- products.shelf_life_days
--- production_orders.output_lot_id
--- stock_movements.sales_invoice_id, sales_invoice_item_id, sales_return_id, sales_return_item_id
--- sales_invoice_items.lot_id and sales_return_items.lot_id reference stock_lots.
+-- allow_legacy_purchase_return_without_historical_lot_20261111
+-- preserve_legacy_stock_reversals_without_lot_history_20261111
+-- validate_purchase_lot_dates_and_classify_trip_returns_20261111
 
 
 -- Function snapshot: add_sales_return_item
@@ -2018,6 +2010,12 @@ BEGIN
 
     -- Exact source lot for supplier returns.
     IF NEW.purchase_return_id IS NOT NULL THEN
+      SELECT COUNT(*) INTO v_source_total
+      FROM public.purchase_return_items pri
+      JOIN public.stock_lots l
+        ON l.source_purchase_invoice_item_id=pri.purchase_invoice_item_id
+      WHERE pri.return_id=NEW.purchase_return_id
+        AND pri.product_id=NEW.product_id;
       FOR v_item IN
         SELECT pri.product_id,pri.base_quantity,pri.purchase_invoice_item_id,
                l.lot_id,lb.quantity AS available_quantity
@@ -2048,6 +2046,9 @@ BEGIN
 
     -- Reverse an earlier movement using its exact lot allocations.
     IF v_remaining>0 AND NEW.reversal_of_movement_id IS NOT NULL THEN
+      SELECT COUNT(*) INTO v_source_total
+      FROM public.stock_movement_lot_allocations
+      WHERE movement_id=NEW.reversal_of_movement_id;
       FOR v_alloc IN
         SELECT a.lot_id,a.allocation_direction,a.quantity
         FROM public.stock_movement_lot_allocations a
@@ -2125,8 +2126,8 @@ BEGIN
     END IF;
 
     -- Otherwise consume eligible lots by FEFO (expiry first, then receipt date).
-    IF v_remaining>0 AND NEW.purchase_return_id IS NULL
-       AND NEW.reversal_of_movement_id IS NULL
+    IF v_remaining>0 AND (NEW.purchase_return_id IS NULL OR v_source_total=0)
+       AND (NEW.reversal_of_movement_id IS NULL OR v_source_total=0)
        AND (NEW.sales_return_id IS NULL OR v_source_total=0) THEN
       FOR v_balance IN
         SELECT lb.lot_id,lb.quantity
@@ -2170,35 +2171,40 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  -- Incoming reversal restores the exact original lots.
+  -- Incoming reversal restores exact original lots when the original movement was tracked.
   IF NEW.reversal_of_movement_id IS NOT NULL THEN
-    FOR v_alloc IN
-      SELECT a.lot_id,a.allocation_direction,a.quantity
-      FROM public.stock_movement_lot_allocations a
-      WHERE a.movement_id=NEW.reversal_of_movement_id
-      ORDER BY a.allocation_id
-    LOOP
-      IF v_alloc.allocation_direction='OUT' THEN
-        INSERT INTO public.stock_lot_balances(lot_id,location_id,quantity)
-        VALUES(v_alloc.lot_id,NEW.location_id,v_alloc.quantity)
-        ON CONFLICT(lot_id,location_id)
-        DO UPDATE SET quantity=public.stock_lot_balances.quantity+EXCLUDED.quantity,updated_at=now();
-        INSERT INTO public.stock_movement_lot_allocations(movement_id,lot_id,allocation_direction,quantity)
-        VALUES(NEW.movement_id,v_alloc.lot_id,'IN',v_alloc.quantity);
-      ELSE
-        UPDATE public.stock_lot_balances
-        SET quantity=quantity-v_alloc.quantity,updated_at=now()
-        WHERE lot_id=v_alloc.lot_id AND location_id=NEW.location_id
-          AND quantity>=v_alloc.quantity;
-        IF NOT FOUND THEN RAISE EXCEPTION 'لا يمكن عكس حركة الاستلام لأن كمية التشغيلة غير متاحة'; END IF;
-        INSERT INTO public.stock_movement_lot_allocations(movement_id,lot_id,allocation_direction,quantity)
-        VALUES(NEW.movement_id,v_alloc.lot_id,'OUT',v_alloc.quantity);
-      END IF;
-    END LOOP;
-    RETURN NEW;
+    SELECT COUNT(*) INTO v_source_total
+    FROM public.stock_movement_lot_allocations
+    WHERE movement_id=NEW.reversal_of_movement_id;
+    IF v_source_total>0 THEN
+      FOR v_alloc IN
+        SELECT a.lot_id,a.allocation_direction,a.quantity
+        FROM public.stock_movement_lot_allocations a
+        WHERE a.movement_id=NEW.reversal_of_movement_id
+        ORDER BY a.allocation_id
+      LOOP
+        IF v_alloc.allocation_direction='OUT' THEN
+          INSERT INTO public.stock_lot_balances(lot_id,location_id,quantity)
+          VALUES(v_alloc.lot_id,NEW.location_id,v_alloc.quantity)
+          ON CONFLICT(lot_id,location_id)
+          DO UPDATE SET quantity=public.stock_lot_balances.quantity+EXCLUDED.quantity,updated_at=now();
+          INSERT INTO public.stock_movement_lot_allocations(movement_id,lot_id,allocation_direction,quantity)
+          VALUES(NEW.movement_id,v_alloc.lot_id,'IN',v_alloc.quantity);
+        ELSE
+          UPDATE public.stock_lot_balances
+          SET quantity=quantity-v_alloc.quantity,updated_at=now()
+          WHERE lot_id=v_alloc.lot_id AND location_id=NEW.location_id
+            AND quantity>=v_alloc.quantity;
+          IF NOT FOUND THEN RAISE EXCEPTION 'لا يمكن عكس حركة الاستلام لأن كمية التشغيلة غير متاحة'; END IF;
+          INSERT INTO public.stock_movement_lot_allocations(movement_id,lot_id,allocation_direction,quantity)
+          VALUES(NEW.movement_id,v_alloc.lot_id,'OUT',v_alloc.quantity);
+        END IF;
+      END LOOP;
+      RETURN NEW;
+    END IF;
   END IF;
 
-  -- Transfer-in movements inherit the exact lots removed by the paired transfer-out.
+  -- Transfer-in movements inherit exact lots when the source movement is tracked.
   IF NEW.movement_type='TRANSFER_IN' THEN
     SELECT m.movement_id INTO v_source_movement_id
     FROM public.stock_movements m
@@ -2209,10 +2215,13 @@ BEGIN
         OR (NEW.trip_load_id IS NOT NULL AND m.trip_load_id=NEW.trip_load_id)
       )
     ORDER BY m.movement_id DESC LIMIT 1;
-    IF v_source_movement_id IS NOT NULL THEN
-      SELECT COALESCE(SUM(quantity),0) INTO v_source_total
-      FROM public.stock_movement_lot_allocations
-      WHERE movement_id=v_source_movement_id AND allocation_direction='OUT';
+    IF v_source_movement_id IS NULL THEN
+      RAISE EXCEPTION 'حركة التحويل الوارد لا ترتبط بحركة صرف صادرة';
+    END IF;
+    SELECT COALESCE(SUM(quantity),0) INTO v_source_total
+    FROM public.stock_movement_lot_allocations
+    WHERE movement_id=v_source_movement_id AND allocation_direction='OUT';
+    IF v_source_total>0 THEN
       IF abs(v_source_total-NEW.quantity_change)>0.0001 THEN
         RAISE EXCEPTION 'توزيع التشغيلات في حركة التحويل لا يطابق الكمية المحولة';
       END IF;
@@ -2228,12 +2237,11 @@ BEGIN
         VALUES(NEW.movement_id,v_alloc.lot_id,'IN',v_alloc.quantity);
       END LOOP;
       RETURN NEW;
-    ELSE
-      RAISE EXCEPTION 'حركة التحويل الوارد لا ترتبط بحركة صرف تشغيلات صادرة';
     END IF;
+    -- Historical source movement without allocations: destination lot will be untraced.
   END IF;
 
-  -- Return of unused vehicle stock reuses the lots consumed by the trip return issue.
+  -- Trip surplus return preserves known lots; legacy trips receive an untraced return lot.
   IF NEW.trip_id IS NOT NULL AND NEW.movement_type IN ('RECEIVE','RETURN') THEN
     SELECT m.movement_id INTO v_source_movement_id
     FROM public.stock_movements m
@@ -2241,18 +2249,26 @@ BEGIN
       AND m.quantity_change<0 AND m.notes ILIKE '%إرجاع فائض جولة%'
     ORDER BY m.movement_id DESC LIMIT 1;
     IF v_source_movement_id IS NOT NULL THEN
-      FOR v_alloc IN
-        SELECT lot_id,quantity FROM public.stock_movement_lot_allocations
-        WHERE movement_id=v_source_movement_id AND allocation_direction='OUT'
-      LOOP
-        INSERT INTO public.stock_lot_balances(lot_id,location_id,quantity)
-        VALUES(v_alloc.lot_id,NEW.location_id,v_alloc.quantity)
-        ON CONFLICT(lot_id,location_id)
-        DO UPDATE SET quantity=public.stock_lot_balances.quantity+EXCLUDED.quantity,updated_at=now();
-        INSERT INTO public.stock_movement_lot_allocations(movement_id,lot_id,allocation_direction,quantity)
-        VALUES(NEW.movement_id,v_alloc.lot_id,'IN',v_alloc.quantity);
-      END LOOP;
-      RETURN NEW;
+      SELECT COALESCE(SUM(quantity),0) INTO v_source_total
+      FROM public.stock_movement_lot_allocations
+      WHERE movement_id=v_source_movement_id AND allocation_direction='OUT';
+      IF v_source_total>0 THEN
+        IF abs(v_source_total-NEW.quantity_change)>0.0001 THEN
+          RAISE EXCEPTION 'كمية التشغيلات المرتجعة من السيارة لا تطابق الكمية المستلمة';
+        END IF;
+        FOR v_alloc IN
+          SELECT lot_id,quantity FROM public.stock_movement_lot_allocations
+          WHERE movement_id=v_source_movement_id AND allocation_direction='OUT'
+        LOOP
+          INSERT INTO public.stock_lot_balances(lot_id,location_id,quantity)
+          VALUES(v_alloc.lot_id,NEW.location_id,v_alloc.quantity)
+          ON CONFLICT(lot_id,location_id)
+          DO UPDATE SET quantity=public.stock_lot_balances.quantity+EXCLUDED.quantity,updated_at=now();
+          INSERT INTO public.stock_movement_lot_allocations(movement_id,lot_id,allocation_direction,quantity)
+          VALUES(NEW.movement_id,v_alloc.lot_id,'IN',v_alloc.quantity);
+        END LOOP;
+        RETURN NEW;
+      END IF;
     END IF;
   END IF;
 
@@ -2326,7 +2342,7 @@ BEGIN
   ELSE
     INSERT INTO public.stock_lots(product_id,source_type,received_at,created_by,notes)
     VALUES(NEW.product_id,
-      CASE WHEN NEW.movement_type='RETURN' THEN 'RETURN' ELSE 'OTHER' END,
+      CASE WHEN NEW.movement_type='RETURN' OR NEW.trip_id IS NOT NULL THEN 'RETURN' ELSE 'OTHER' END,
       NEW.created_at,NEW.created_by,
       COALESCE(NEW.notes,'حركة استلام دون مصدر تشغيلة مباشر'))
     RETURNING lot_id INTO v_lot_id;
