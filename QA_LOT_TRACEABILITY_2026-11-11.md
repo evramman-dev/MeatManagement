@@ -375,3 +375,12 @@ Historical movements were not assigned fabricated lot allocations.
 ## Deployment
 - Main index.html is v73. Latest index commit: be41b8cb79455cceb83af779dad7e448fd40fdce.
 - sw.js cache is meat-v107. Latest service worker commit: e64941cc7b7000b5a516f888cf724ca485bc3969.
+
+
+## توحيد عنوان إصدار التطبيق — 2026-11-11
+- اكتشفت مراجعة ما قبل التشغيل أن وسم عنوان المتصفح كان يعرض v71 بينما رأس التطبيق وتذييله يعرضان v73.
+- تم تصحيح عنوان الصفحة إلى MeatManagement v73 دون تغيير منطق التطبيق أو البيانات.
+- تم تحديث Service Worker إلى meat-v108 لإجبار العملاء على جلب نسخة الواجهة المعدلة.
+- GitHub index commit: `cc6295c7e28b939aa6c41c488bac5d2e16adfa9c`.
+- GitHub service worker commit: `d5f5f6c473610e0951c4b8cc597a55f313ad276a`.
+- لا تغييرات على Supabase أو البيانات أو الصلاحيات.
