@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v48</title>
+<title>MeatManagement v49</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -302,7 +302,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v48]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v49]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1637,7 +1637,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v48</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v49</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -4445,8 +4445,8 @@ function addInvoiceItemRow() {
     const t=Math.round((q*p+Number.EPSILON)*100)/100; 
     lineTotal.textContent="الإجمالي: "+fmt(t); 
     const opt=prodSel.selectedOptions[0]; 
-    const minP = row.dataset.minimumPrice ? Number(row.dataset.minimumPrice) : 0; 
-    const maxP = row.dataset.maximumPrice ? Number(row.dataset.maximumPrice) : Infinity; 
+    const minP = wrap.dataset.minimumPrice ? Number(wrap.dataset.minimumPrice) : 0; 
+    const maxP = wrap.dataset.maximumPrice ? Number(wrap.dataset.maximumPrice) : Infinity; 
     if(p > 0 && (p < minP || p > maxP)) { 
       errDiv.style.display = "block"; 
       errDiv.textContent = `السعر غير مسموح! بين ${minP} و ${maxP}`; 
