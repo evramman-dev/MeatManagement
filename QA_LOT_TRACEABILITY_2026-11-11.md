@@ -74,7 +74,12 @@ Historical movements were not assigned fabricated lot allocations.
 - Confirm each manufactured product's shelf life with the business before entering values.
 
 ## Deployment
-PR is the release candidate. GitHub Pages deployment/live UI has not been confirmed yet.
+- PR #27 was merged into main.
+- GitHub Pages deployment workflow succeeded: https://github.com/evramman-dev/MeatManagement/actions/runs/43043035247
+- JavaScript check workflow succeeded: https://github.com/evramman-dev/MeatManagement/actions/runs/43043035487
+- Main index.html is v70 (583,891 characters; blob SHA 5a4be7ed7642f76d45c775859cf326a43699a4d0).
+- sw.js cache is meat-v103 (blob SHA 58b5b5ed2e342fe720f79a4ee7c9cf02c2adaeda).
+- The live page has not been visually inspected in a browser session.
 
 
 ## Compatibility and advisors
@@ -83,3 +88,35 @@ PR is the release candidate. GitHub Pages deployment/live UI has not been confir
 - New reversals use exact source movement allocations. Legacy reversals with no source allocations use the explicit untraced fallback.
 - Added indexes for all new lot-related foreign keys flagged by the Supabase performance advisor. The remaining unindexed foreign-key finding is the pre-existing `expenses.cancelled_by` relation.
 - The security advisor reports the new `get_sales_invoice_lot_allocations` RPC because it is SECURITY DEFINER and executable by authenticated users. This is intentional: the RPC requires RETURNS_CREATE or RETURNS_MANAGE and verifies that the source invoice is posted/paid/partial. Anonymous execution is revoked.
+
+
+## End-to-end purchase → sale → customer return → cancellation test (2026-11-11)
+- Executed as an authenticated SYSTEM_ADMIN test context inside one explicit database transaction.
+- Created a rollback-only purchase invoice for product 1 (لحمة كولاطة), 0.5 KG, at location 3, with a supplier lot code, manufacture date, and expiry date. The purchase receipt created its linked lot.
+- Created a credit sales invoice for customer 3 from location 3, selling 0.25 KG of the same product. FEFO consumed the exact lot created by the test purchase.
+- Created a customer return linked to that sales invoice for 0.10 KG, explicitly selecting the same lot. Posting the return received the quantity into that exact lot.
+- Cancelled the customer return. The cancellation movement consumed the same lot that the return had received.
+- The lot balance after cancellation was 0.25 KG, matching the expected balance after the 0.25 KG sale and before return.
+- All assertions passed. The transaction was rolled back in full.
+
+### Post-rollback verification
+- Stock movements remained 55.
+- Stock lots remained 4.
+- Lot balance rows remained 4.
+- Purchase invoices remained 6.
+- Sales invoices remained 10.
+- Sales returns remained 2.
+- Product 1 at main warehouse location 3 remained 8.7500 KG.
+- No test invoice, return, movement, lot, journal entry, or treasury transaction from this end-to-end test persisted.
+
+### Existing QA production orders visible in the app
+- The two completed production orders visible to the user (PRD-20261110-000004 and PRD-20261110-000005) were created on 2026-11-10 before the lot-traceability migration was applied.
+- Their output_lot_id values are NULL because their historical production movements predate lot tracking. They were not modified or reversed, and no historical lot identity was fabricated.
+
+### Latest security and performance review
+- Public SECURITY DEFINER functions: 133 total.
+- SECURITY DEFINER functions executable by authenticated users: 83.
+- SECURITY DEFINER functions executable by anon: 0.
+- A targeted review found no authenticated-executable SECURITY DEFINER function lacking both an auth.uid() check and a has_permission(...) check. Supabase still reports the 83 authenticated SECURITY DEFINER functions as warnings for manual review; this is not treated as a reason to revoke application RPC access indiscriminately.
+- Performance advisor: one unindexed foreign key remains, expenses.cancelled_by, already tracked as a pre-existing item. It also reports 86 unused indexes; no indexes were dropped because current usage history is not sufficient evidence that they are unnecessary.
+- Health advisor returned no findings.
