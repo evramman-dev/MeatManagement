@@ -3049,3 +3049,32 @@ BEGIN
   RETURN v_new;
 END;
 $function$;
+
+
+-- Partner and fixed-asset accounting additions applied 2026-11-11
+-- Migrations:
+-- partner_and_fixed_asset_accounting_20261111
+-- complete_partner_asset_accounting_20261111
+-- partner_profit_transaction_types_20261111
+-- partner_profit_item_request_ids_20261111
+-- partner_profit_distribution_single_journal_20261111
+-- exact_profit_distribution_rounding_20261111
+-- fix_depreciation_mid_month_period_20261111
+-- allow_fixed_asset_disposed_status_20261111
+-- fix_fixed_asset_disposal_treasury_posting_20261111
+-- remove_duplicate_fixed_asset_select_policy_20261111
+-- index_partner_profit_distribution_fks_20261111
+--
+-- Final function signatures:
+-- get_partner_ledger(bigint)
+-- create_partner_profit_distribution(date,date,uuid)
+-- cancel_partner_profit_distribution(bigint,text,uuid)
+-- post_fixed_asset_depreciation(bigint,date,uuid)
+-- cancel_fixed_asset_depreciation(bigint,text,uuid)
+-- dispose_fixed_asset(bigint,numeric,date,text,uuid)
+-- dispose_fixed_asset(bigint,numeric,bigint,date,text,uuid)
+--
+-- New accounting tables:
+-- partner_profit_distributions
+-- partner_profit_distribution_items
+-- fixed_asset_depreciation_entries
