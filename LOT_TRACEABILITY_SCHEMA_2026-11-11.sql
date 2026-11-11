@@ -85,6 +85,34 @@ ALTER TABLE public.sales_return_items
   ADD CONSTRAINT sales_return_items_lot_fk
   FOREIGN KEY (lot_id) REFERENCES public.stock_lots(lot_id);
 
+ALTER TABLE public.purchase_invoice_items
+  ADD CONSTRAINT purchase_invoice_items_lot_dates_check
+  CHECK (expires_on IS NULL OR manufactured_on IS NULL OR expires_on>=manufactured_on);
+
+CREATE INDEX IF NOT EXISTS production_orders_output_lot_id_idx
+ON public.production_orders(output_lot_id)
+WHERE output_lot_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS sales_return_items_lot_id_idx
+ON public.sales_return_items(lot_id)
+WHERE lot_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS stock_lots_supplier_id_idx
+ON public.stock_lots(supplier_id)
+WHERE supplier_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS stock_movements_sales_invoice_item_id_idx
+ON public.stock_movements(sales_invoice_item_id)
+WHERE sales_invoice_item_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS stock_movements_sales_return_id_idx
+ON public.stock_movements(sales_return_id)
+WHERE sales_return_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS stock_movements_sales_return_item_id_idx
+ON public.stock_movements(sales_return_item_id)
+WHERE sales_return_item_id IS NOT NULL;
+
 CREATE INDEX IF NOT EXISTS stock_movements_sales_invoice_item_idx
 ON public.stock_movements(sales_invoice_id,sales_invoice_item_id)
 WHERE sales_invoice_id IS NOT NULL;
