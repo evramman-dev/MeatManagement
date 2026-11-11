@@ -4753,7 +4753,7 @@ function addPurchaseItemRow() {
   const recalc=()=>{ 
     const q=Number(qty.value||0);
     const p=Number(price.value||0);
-    const t=q*p; 
+    const t=Math.round((q*p+Number.EPSILON)*100)/100; 
     lineTotal.textContent="الإجمالي: "+fmt(t); 
     const unitId=Number(unitSel.value||0); 
     const opt=prodSel.selectedOptions[0]; 
@@ -4802,7 +4802,7 @@ function updatePurchaseTotals(){
   document.querySelectorAll("#purchaseItems .item-row").forEach(row=>{ 
     const q=Number(row.querySelector(".item-qty")?.value||0); 
     const p=Number(row.querySelector(".item-price")?.value||0); 
-    subtotal+=q*p; 
+    subtotal+=Math.round((q*p+Number.EPSILON)*100)/100; 
   }); 
   const discount=Number($("purchaseDiscount").value||0); 
   let total=subtotal-discount;
@@ -5309,14 +5309,20 @@ async function loadPurchaseReturnInvoiceItems(){
     const invoiceSubtotal = Number(invoice.subtotal || 0);
     const invoiceDiscount = Number(invoice.discount || 0);
 
+    let priorGrossTotal = 0;
     prInvoiceItemsCache = sourceItems
         .filter(item => Number(item.item_id) > 0 && Number(item.quantity) > 0 && Number(item.base_quantity) > 0)
         .map(item => {
             const product = productsCache.find(p => Number(p.product_id) === Number(item.product_id));
-            const grossTotal = Number(item.line_total || (Number(item.quantity || 0) * Number(item.unit_price || 0)));
-            const discountShare = invoiceSubtotal > 0
-                ? invoiceDiscount * grossTotal / invoiceSubtotal
+            const grossTotal = Number(item.line_total ?? (Number(item.quantity || 0) * Number(item.unit_price || 0)));
+            const discountBefore = invoiceSubtotal > 0
+                ? Math.round((priorGrossTotal * invoiceDiscount / invoiceSubtotal + Number.EPSILON) * 100) / 100
                 : 0;
+            const discountThrough = invoiceSubtotal > 0
+                ? Math.round(((priorGrossTotal + grossTotal) * invoiceDiscount / invoiceSubtotal + Number.EPSILON) * 100) / 100
+                : 0;
+            const discountShare = discountThrough - discountBefore;
+            priorGrossTotal += grossTotal;
             const netTotal = Math.max(0, grossTotal - discountShare);
             const quantity = Number(item.quantity || 0);
             return {
