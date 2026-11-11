@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v66</title>
+<title>MeatManagement v67</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -302,7 +302,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v66]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v67]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1664,7 +1664,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v66</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v67</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -6210,7 +6210,7 @@ async function loadExpenses(){
     const {data, error} = await query; 
     if(error){ msg($("expensesMsg"),"تعذر التحميل: "+err(error),"error"); if(box) box.innerHTML=""; return; } 
     if(box) { 
-      box.innerHTML = (data||[]).map(e=>{const t=expenseTypesCache.find(x=>x.expense_type===e.expense_type);const cancelled=!!e.is_cancelled;const reason=cancelled&&e.cancellation_reason?` | سبب الإلغاء: ${notificationEscape(e.cancellation_reason)}`:"";const action=!cancelled&&canManageExpenses?`<div style="margin-top:8px;"><button class="btn secondary" type="button" data-cancel-expense="${Number(e.expense_id)}" style="width:auto;">إلغاء المصروف</button></div>`:"";return `<div class="product"><div class="pname">🧾 ${expenseTypeName(e.expense_type)}${cancelled?" <span style=\"color:#a52b2b;\">— ملغى</span>":""}</div><div class="details">المجموعة: ${expenseDisplayGroup(e.expense_type,t?.category_group)} | الحساب: ${expenseAccountCode(e.expense_type)||"—"} | المبلغ: ${fmt(e.amount)} | التاريخ: ${formatDate(e.expense_date)} | الحالة: ${cancelled?"ملغى":"ساري"}${reason}</div>${action}</div>`;}).join(""); 
+      box.innerHTML = (data||[]).map(e=>{const t=expenseTypesCache.find(x=>x.expense_type===e.expense_type);const cancelled=!!e.is_cancelled;const reason=cancelled&&e.cancellation_reason?` | سبب الإلغاء: ${notificationEscape(e.cancellation_reason)}`:"";const cancelledMeta=cancelled?` | تاريخ الإلغاء: ${formatDate(e.cancelled_at)} | بواسطة: ${notificationEscape(e.cancelled_by_name||"—")}`:"";const action=!cancelled&&canManageExpenses?`<div style="margin-top:8px;"><button class="btn secondary" type="button" data-cancel-expense="${Number(e.expense_id)}" style="width:auto;">إلغاء المصروف</button></div>`:"";return `<div class="product"><div class="pname">🧾 ${expenseTypeName(e.expense_type)}${cancelled?" <span style=\"color:#a52b2b;\">— ملغى</span>":""}</div><div class="details">المجموعة: ${expenseDisplayGroup(e.expense_type,t?.category_group)} | الحساب: ${expenseAccountCode(e.expense_type)||"—"} | المبلغ: ${fmt(e.amount)} | التاريخ: ${formatDate(e.expense_date)} | الحالة: ${cancelled?"ملغى":"ساري"}${reason}${cancelledMeta}</div>${action}</div>`;}).join(""); 
       if(!data || !data.length) box.innerHTML = "<div class='empty'>لا توجد مصروفات مطابقة.</div>"; 
     } 
 }
