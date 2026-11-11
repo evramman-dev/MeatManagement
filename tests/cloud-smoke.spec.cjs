@@ -32,6 +32,20 @@ const menuIds = {
   accounting: 'menuAccounting', reports: 'menuReports', settings: 'menuSettings'
 };
 
+
+test('Supplier workflow guards: cancelled documents, supplier profile and payment idempotency', () => {
+  expect(qaHtml).toContain('address:$("supplierAddress").value.trim()||null');
+  expect(qaHtml).toContain('$("supplierAddress").value=s.address||""');
+  expect(qaHtml).toContain('if(result.error) throw result.error;');
+  expect(qaHtml).toContain('.eq("is_cancelled", false).order("payment_id", {ascending:false})');
+  expect(qaHtml).toContain('.eq("is_cancelled", false).order("payment_date", {ascending:true})');
+  expect(qaHtml).toContain('.eq("is_cancelled", false).order("return_id", {ascending:false})');
+  expect(qaHtml).toContain('.eq("is_cancelled", false).order("return_date", {ascending:true})');
+  expect(qaHtml).toContain('requestStorageKey += "_" + currentUserId');
+  expect(qaHtml).toContain('JSON.stringify(pendingRequest.payload) !== JSON.stringify(requestPayload)');
+  expect(qaHtml).toContain('notes: notes || null');
+});
+
 test('MeatManagement read-only navigation, permissions and session smoke test', async ({ page }) => {
   test.setTimeout(300000);
 
