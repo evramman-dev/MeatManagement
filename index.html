@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v77</title>
+<title>MeatManagement v78</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -328,7 +328,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v77]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v78]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1722,7 +1722,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v77</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v78</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -4219,7 +4219,7 @@ async function openLotQrPreview(lot,product){
       window.print();
     });
   }
-  const payload={product:product.product_name||productName(lot.product_id),lot:lot.lot_code||"",manufactured_on:lot.manufactured_on||null,expires_on:lot.expires_on||null};
+  const lotCode=String(lot.lot_code||"").trim();
   const qrBox=$("lotQrCode"),errorBox=$("lotQrError");
   qrBox.replaceChildren();errorBox.classList.add("hidden");errorBox.textContent="";
   $("lotQrProduct").textContent=payload.product;
@@ -4229,7 +4229,8 @@ async function openLotQrPreview(lot,product){
   modal.classList.remove("hidden");
   try{
     const QR=await ensureLotQrLibrary();
-    new QR(qrBox,{text:JSON.stringify(payload),width:150,height:150,correctLevel:QR.CorrectLevel?.M??0});
+    if(!lotCode)throw new Error("رقم التشغيلة غير متاح لإنشاء QR.");
+    new QR(qrBox,{text:lotCode,width:180,height:180,correctLevel:QR.CorrectLevel?.M??0});
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
     if(!qrBox.querySelector("canvas, img"))throw new Error("لم تنشأ صورة رمز QR.");
   }catch(e){
