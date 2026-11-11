@@ -67,6 +67,14 @@ test('Admin notifications support selected users and all active users', () => {
   expect(qaHtml).toContain('select.disabled=$("notificationSendAll").checked');
 });
 
+test('Accounting summary uses ledger totals and does not show an inaccurate fallback', () => {
+  expect(qaHtml).toContain('if(periodErr) throw periodErr;');
+  expect(qaHtml).toContain('if(!periodData) throw new Error("لم تُرجع قاعدة البيانات ملخص الفترة.")');
+  expect(qaHtml).not.toContain('fmt(rev - purch - exp)');
+  expect(qaHtml).toContain('if(trialErr) throw trialErr;');
+  expect(qaHtml).toContain('if(journalErr) throw journalErr;');
+});
+
 test('MeatManagement read-only navigation, permissions and session smoke test', async ({ page }) => {
   test.setTimeout(300000);
 
