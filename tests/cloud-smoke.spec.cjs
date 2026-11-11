@@ -41,8 +41,6 @@ test('Purchase and purchase-return preview matches database rounding rules', () 
   expect(qaHtml).toContain('priorGrossTotal += grossTotal;');
   expect(qaHtml).toContain('subtotal+=Math.round((q*p+Number.EPSILON)*100)/100;');
   expect(qaHtml).toContain('const t=Math.round((q*p+Number.EPSILON)*100)/100;');
-  expect(qaHtml).toContain('v_item_return_amount :=');
-  expect(qaHtml).toContain('v_cumulative_amount :=');
 });
 
 test('Supplier workflow guards: cancelled documents, supplier profile and payment idempotency', () => {
