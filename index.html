@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v65</title>
+<title>MeatManagement v66</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -302,7 +302,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v65]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v66]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1664,7 +1664,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v65</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v66</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -2743,7 +2743,7 @@ async function loadTasks() {
     const [salesRes, purchRes, expRes, collRes, retRes, prodRes, lowStockRes, unpaidInvRes, draftTripsRes, draftProdRes] = await Promise.all([
       db.from("sales_invoices").select("net_total, invoice_date").gte("invoice_date", from).lte("invoice_date", to).neq("status","CANCELLED"),
       db.from("purchase_invoices").select("net_total").gte("invoice_date", from).lte("invoice_date", to).neq("status","CANCELLED"),
-      db.from("expenses").select("amount, expense_type").gte("expense_date", from).lte("expense_date", to),
+      db.from("expenses").select("amount, expense_type").eq("is_cancelled",false).gte("expense_date", from).lte("expense_date", to),
       db.from("customer_collections").select("amount").gte("collection_date", from).lte("collection_date", to).eq("status","POSTED"),
       db.from("purchase_returns").select("total_return_amount").gte("return_date", from).lte("return_date", to),
       db.from("sales_returns").select("total_returned_value").gte("return_date", from).lte("return_date", to),
@@ -6210,10 +6210,32 @@ async function loadExpenses(){
     const {data, error} = await query; 
     if(error){ msg($("expensesMsg"),"تعذر التحميل: "+err(error),"error"); if(box) box.innerHTML=""; return; } 
     if(box) { 
-      box.innerHTML = (data||[]).map(e=>{const t=expenseTypesCache.find(x=>x.expense_type===e.expense_type);return `<div class="product"><div class="pname">🧾 ${expenseTypeName(e.expense_type)}</div><div class="details">المجموعة: ${expenseDisplayGroup(e.expense_type,t?.category_group)} | الحساب: ${expenseAccountCode(e.expense_type)||"—"} | المبلغ: ${fmt(e.amount)} | التاريخ: ${formatDate(e.expense_date)}</div></div>`;}).join(""); 
+      box.innerHTML = (data||[]).map(e=>{const t=expenseTypesCache.find(x=>x.expense_type===e.expense_type);const cancelled=!!e.is_cancelled;const reason=cancelled&&e.cancellation_reason?` | سبب الإلغاء: ${notificationEscape(e.cancellation_reason)}`:"";const action=!cancelled&&canManageExpenses?`<div style="margin-top:8px;"><button class="btn secondary" type="button" data-cancel-expense="${Number(e.expense_id)}" style="width:auto;">إلغاء المصروف</button></div>`:"";return `<div class="product"><div class="pname">🧾 ${expenseTypeName(e.expense_type)}${cancelled?" <span style=\"color:#a52b2b;\">— ملغى</span>":""}</div><div class="details">المجموعة: ${expenseDisplayGroup(e.expense_type,t?.category_group)} | الحساب: ${expenseAccountCode(e.expense_type)||"—"} | المبلغ: ${fmt(e.amount)} | التاريخ: ${formatDate(e.expense_date)} | الحالة: ${cancelled?"ملغى":"ساري"}${reason}</div>${action}</div>`;}).join(""); 
       if(!data || !data.length) box.innerHTML = "<div class='empty'>لا توجد مصروفات مطابقة.</div>"; 
     } 
 }
+if($("expensesList")) $("expensesList").addEventListener("click",async(event)=>{
+  const button=event.target.closest("[data-cancel-expense]");
+  if(!button||!canManageExpenses)return;
+  const expenseId=Number(button.dataset.cancelExpense);
+  if(!Number.isSafeInteger(expenseId)||expenseId<=0)return;
+  const reason=prompt("اكتب سبب إلغاء المصروف:");
+  if(reason===null)return;
+  if(!reason.trim()){alert("يجب كتابة سبب الإلغاء.");return;}
+  if(!confirm("سيتم رد المبلغ إلى نفس الخزنة وإنشاء قيد عكسي وحفظ سبب الإلغاء. إذا كان المصروف مستخدمًا في تكلفة نقل نشطة، يجب إلغاء تكلفة النقل أولًا. هل تريد المتابعة؟"))return;
+  busy(button,true,"جارٍ الإلغاء...","إلغاء المصروف");
+  try{
+    const {error}=await db.rpc("cancel_expense",{p_expense_id:expenseId,p_reason:reason.trim()});
+    if(error)throw error;
+    showToast("تم إلغاء المصروف ورد المبلغ إلى الخزنة وعكس القيد بنجاح","success");
+    await loadExpenses();
+    if(canViewTreasuries)await loadTreasuries();
+  }catch(e){
+    alert("تعذر إلغاء المصروف: "+err(e));
+  }finally{
+    busy(button,false,"","إلغاء المصروف");
+  }
+});
 if($("addExpenseBtn")) $("addExpenseBtn").addEventListener("click",async()=>{ 
   if(!canManageExpenses)return; 
   if(!treasuriesCache.length)await loadTreasuries(); 
@@ -6236,7 +6258,7 @@ if($("viewExpensesStatementBtn")) $("viewExpensesStatementBtn").addEventListener
     const type = $("expenseTypeFilter").value; 
     let typeNameStr = type ? expenseTypeName(type) : "كل البنود"; 
     let periodText = (from ? "من: " + from : "") + (to ? " إلى: " + to : "");
-    let query = db.from("expenses").select("*").order("expense_date", {ascending:true}); 
+    let query = db.from("expenses").select("*").eq("is_cancelled",false).order("expense_date", {ascending:true}); 
     if (from) query = query.gte("expense_date", from); 
     if (to) query = query.lte("expense_date", to); 
     if (type) query = query.eq("expense_type", type);
@@ -6298,7 +6320,7 @@ async function loadLandedCosts(){
   if(!canViewLandedCosts)return;const box=$("landedCostsList");if(box)box.innerHTML="جارٍ التحميل...";clear($("landedCostsMsg"));
   if(!navigator.onLine){if(box)box.innerHTML="<div class='empty'>اتصل بالإنترنت لعرض مستندات النقل.</div>";return;}
   try{
-    const [lc,ex]=await Promise.all([db.from("purchase_landed_costs").select("*").order("landed_cost_id",{ascending:false}).limit(200),db.from("expenses").select("expense_id,expense_type,amount,trip_id,expense_date").in("expense_type",["سولار السيارات","كارتات السيارات","مصاريف الطريق","أجور مرافق السيارة"]).not("trip_id","is",null).order("expense_id",{ascending:false}).limit(300)]);
+    const [lc,ex]=await Promise.all([db.from("purchase_landed_costs").select("*").order("landed_cost_id",{ascending:false}).limit(200),db.from("expenses").select("expense_id,expense_type,amount,trip_id,expense_date").eq("is_cancelled",false).in("expense_type",["سولار السيارات","كارتات السيارات","مصاريف الطريق","أجور مرافق السيارة"]).not("trip_id","is",null).order("expense_id",{ascending:false}).limit(300)]);
     if(lc.error)throw lc.error;if(ex.error)throw ex.error;landedCostsCache=lc.data||[];vehicleExpensesCache=ex.data||[];
     if(!purchasesCache.length)await loadPurchases();if(!suppliersCache.length)await loadSuppliers();if(!treasuriesCache.length)await loadTreasuries();
     fillLandedInvoiceSelect();fillLandedSupplierSelect();fillTreasurySelects();fillLandedVehicleExpenses();renderLandedCosts();
@@ -7022,7 +7044,7 @@ async function viewTripSummary(t){
     const [invoicesRes, collectionsRes, expensesRes, returnsRes] = await Promise.all([
       db.from("sales_invoices").select("*").eq("trip_id", t.trip_id),
       db.from("customer_collections").select("*").eq("trip_id", t.trip_id),
-      db.from("expenses").select("*").eq("trip_id", t.trip_id),
+      db.from("expenses").select("*").eq("is_cancelled",false).eq("trip_id", t.trip_id),
       db.rpc("get_trip_returns", { p_trip_id: t.trip_id })
     ]);
 
@@ -7647,7 +7669,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
               db.from("stock_balances").select("*, products(product_name, product_code)"),
               db.from("customers").select("*"),
               db.from("suppliers").select("*"),
-              db.from("expenses").select("*")
+              db.from("expenses").select("*").eq("is_cancelled",false)
           ]);
 
           const num = (n) => Number(n || 0).toFixed(2);
