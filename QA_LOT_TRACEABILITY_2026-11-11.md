@@ -261,3 +261,24 @@ Historical movements were not assigned fabricated lot allocations.
 - Latest performance advisor: no unindexed foreign-key finding; 86 unused-index informational findings remain. No index was removed.
 - Latest health advisor: no findings.
 - Migration history confirms `20261111174625 fix_partner_opening_balance_double_post_20261111` is applied.
+
+
+## Partner accounts and fixed-assets accounting completion (2026-11-11)
+- Implemented partner ledger reporting through `get_partner_ledger(partner_id)`. The ledger starts from the partner opening balance and calculates a deterministic running balance ordered by transaction date and transaction ID.
+- Added profit-distribution records and item detail tables. `create_partner_profit_distribution` calculates the period profit from the existing P&L report, distributes it by active partner ownership percentages, assigns any rounding remainder to the final partner, creates one balanced journal entry for the distribution, and records each partner allocation.
+- Added `PROFIT_ALLOCATION` and `PROFIT_ALLOCATION_REVERSAL` partner transaction types. Profit allocation increases the partner balance without withdrawing cash. Cancellation reverses the distribution journal and removes the allocated amount from partner balances.
+- Implemented straight-line fixed-asset depreciation. Assets now support useful life in months, residual value, depreciation method, accumulated depreciation, and depreciation history. Each asset can be depreciated once per month, with request-id idempotency. The monthly amount is capped at the remaining depreciable value.
+- Implemented depreciation cancellation using a posted reversal journal and reduction of accumulated depreciation.
+- Implemented fixed-asset disposal/sale. The workflow calculates net book value and gain/loss, records proceeds in the selected treasury, removes the asset cost and accumulated depreciation from the books, and marks the asset DISPOSED. Gain uses account 4400 and loss uses account 5700.
+- Added account 1580 for accumulated depreciation and 5800 for depreciation expense, plus 4400 for disposal gains and 5700 for disposal losses.
+- Expanded fixed-asset status to ACTIVE, CANCELLED, and DISPOSED.
+- Added RLS policies for the new accounting tables and restricted their reads to users with ACCOUNTING_VIEW. New write functions require ACCOUNTING_MANAGE.
+- Added indexes for the two new partner-profit foreign keys after the performance advisor identified them.
+- Fixed a mid-month accounting-period compatibility issue in depreciation: the period check uses the actual depreciation date while the stored depreciation month remains the calendar month.
+- Rollback-only partner tests passed for ledger movement, profit distribution with rounding, and distribution cancellation. Partner rows and transactions returned to zero after rollback.
+- Rollback-only fixed-asset tests passed for purchase, straight-line depreciation, idempotent depreciation retry, depreciation cancellation, disposal for a 20 EGP gain, treasury movement, and balanced disposal journal. Treasury 5 returned to 1065.00 after rollback.
+- Post-test database state: partners 0, partner_transactions 0, profit_distributions 0, depreciation_entries 0, fixed_assets 1, active fixed assets 0, treasury 5 = 1065.00.
+- Full journal-line reconciliation remains balanced at debit 10098.77, credit 10098.77, difference 0.00.
+- Latest performance advisor reports no remaining unindexed foreign keys from the new partner-profit tables. The existing unused-index findings remain informational and no indexes were removed.
+- Latest security advisor warnings are the existing authenticated SECURITY DEFINER review set plus the newly added accounting RPCs. The new RPCs require auth.uid() and ACCOUNTING_MANAGE or ACCOUNTING_VIEW as appropriate. Anonymous execution is revoked for the new write/report functions.
+- No index.html or sw.js change was required. Application remains v70 / meat-v103.
