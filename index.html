@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v78</title>
+<title>MeatManagement v79</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -307,11 +307,10 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 @page lotQrPage{size:70mm 50mm;margin:2mm}
 @media print{
   .modal:not(.hidden) #lotQrPrintArea,.modal:not(.hidden) #lotQrPrintArea *{visibility:visible}
-  .modal:not(.hidden) #lotQrPrintArea{page:lotQrPage;position:absolute;left:0;top:0;width:66mm;height:46mm;padding:1mm!important;border:0!important;border-radius:0!important;display:flex!important;gap:2mm!important}
-  .modal:not(.hidden) #lotQrPrintArea .lot-qr-code{width:34mm;height:34mm;flex:0 0 34mm}
-  .modal:not(.hidden) #lotQrPrintArea .lot-qr-code img,.modal:not(.hidden) #lotQrPrintArea .lot-qr-code canvas{width:34mm!important;height:34mm!important}
-  .modal:not(.hidden) #lotQrPrintArea .lot-qr-text{font-size:7pt;line-height:1.55}
-  .modal:not(.hidden) #lotQrPrintArea .lot-qr-product{font-size:9pt}
+  .modal:not(.hidden) #lotQrPrintArea{page:lotQrPage;position:absolute;left:0;top:0;width:66mm;height:46mm;padding:1mm!important;border:0!important;border-radius:0!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:0!important}
+  .modal:not(.hidden) #lotQrPrintArea .lot-qr-code{width:42mm;height:42mm;flex:0 0 42mm}
+  .modal:not(.hidden) #lotQrPrintArea .lot-qr-code img,.modal:not(.hidden) #lotQrPrintArea .lot-qr-code canvas{width:42mm!important;height:42mm!important}
+  .modal:not(.hidden) #lotQrPrintArea .lot-qr-text{display:none!important}
   .modal:not(.hidden) .lot-qr-actions{display:none!important}
   .modal:not(.hidden) #lotQrModalHeader{display:none!important}
 }
@@ -328,7 +327,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v78]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v79]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1722,7 +1721,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v78</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v79</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -4221,6 +4220,13 @@ async function openLotQrPreview(lot,product){
   }
   const lotCode=String(lot.lot_code||"").trim();
   const payload={product:product.product_name||productName(lot.product_id),lot:lotCode,manufactured_on:lot.manufactured_on||null,expires_on:lot.expires_on||null};
+  const qrText=[
+    "MEAT MANAGEMENT",
+    "المنتج: "+payload.product,
+    "التشغيلة: "+payload.lot,
+    "تاريخ الإنتاج: "+(payload.manufactured_on?formatDate(payload.manufactured_on):"غير محدد"),
+    "الصلاحية: "+(payload.expires_on?formatDate(payload.expires_on):"غير محددة")
+  ].join("\n");
   const qrBox=$("lotQrCode"),errorBox=$("lotQrError");
   qrBox.replaceChildren();errorBox.classList.add("hidden");errorBox.textContent="";
   $("lotQrProduct").textContent=payload.product;
@@ -4231,7 +4237,7 @@ async function openLotQrPreview(lot,product){
   try{
     const QR=await ensureLotQrLibrary();
     if(!lotCode)throw new Error("رقم التشغيلة غير متاح لإنشاء QR.");
-    new QR(qrBox,{text:lotCode,width:180,height:180,correctLevel:QR.CorrectLevel?.M??0});
+    new QR(qrBox,{text:qrText,width:240,height:240,typeNumber:0,correctLevel:QR.CorrectLevel?.L??1});
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
     if(!qrBox.querySelector("canvas, img"))throw new Error("لم تنشأ صورة رمز QR.");
   }catch(e){
@@ -4288,7 +4294,11 @@ async function openLotQrScanner(){
         await stopLotQrScanner();
         try{
           let payload={};
-          try{payload=JSON.parse(decodedText);}catch(e){payload={lot:String(decodedText||"").trim()};}
+          const rawQrText=String(decodedText||"").trim();
+          try{payload=JSON.parse(rawQrText);}catch(e){
+            const lotLine=rawQrText.split(/\r?\n/).find(line=>/^\s*التشغيلة\s*:/i.test(line));
+            payload={lot:lotLine?lotLine.replace(/^\s*التشغيلة\s*:\s*/i,"").trim():rawQrText};
+          }
           const lotCode=String(payload.lot||payload.lot_code||"").trim();
           if(!lotCode)throw new Error("رمز QR لا يحتوي على رقم تشغيلة صالح.");
           $("lotQrScanMsg").textContent="تمت القراءة. جارٍ تحميل بيانات التشغيلة...";
@@ -4304,15 +4314,20 @@ async function openLotQrScanner(){
           if(balanceError)throw balanceError;
           const detail=$("lotQrScanDetails");
           detail.replaceChildren();
+          const brand=document.createElement("div");brand.className="lot-qr-brand";brand.textContent="MEAT MANAGEMENT";
           const heading=document.createElement("div");heading.className="pname";
-          heading.textContent=(product?.product_name||productName(lot.product_id))+" — "+lot.lot_code;
+          heading.textContent="المنتج: "+(product?.product_name||productName(lot.product_id))+".";
+          const lotLine=document.createElement("div");lotLine.className="details";
+          lotLine.textContent="التشغيلة: "+lot.lot_code+".";
           const dates=document.createElement("div");dates.className="details";
-          dates.textContent="الإنتاج: "+(lot.manufactured_on?formatDate(lot.manufactured_on):"غير محدد")+" | الصلاحية: "+(lot.expires_on?formatDate(lot.expires_on):"غير محددة");
+          dates.textContent="تاريخ الإنتاج: "+(lot.manufactured_on?formatDate(lot.manufactured_on):"غير محدد")+".";
+          const expiry=document.createElement("div");expiry.className="details";
+          expiry.textContent="الصلاحية: "+(lot.expires_on?formatDate(lot.expires_on):"غير محددة")+".";
           const status=document.createElement("div");status.className="details";
           status.textContent="الحالة: "+(lot.status||"—")+" | المصدر: "+(lot.source_type||"—");
           const stock=document.createElement("div");stock.className="details";
-          stock.textContent=(balances||[]).length?"الأرصدة: "+balances.map(x=>(x.locations?.location_name||"موقع")+" "+fmtQty(x.quantity)).join("، "):"لا يوجد رصيد حالي لهذه التشغيلة.";
-          detail.append(heading,dates,status,stock);detail.classList.remove("hidden");
+          stock.textContent=(balances||[]).length?"الرصيد الحالي: "+balances.map(x=>fmtQty(x.quantity)+" "+(product?.base_unit_id?unitName(product.base_unit_id):"وحدة")+" في "+(x.locations?.location_name||"موقع")).join("، "):"الرصيد الحالي: لا يوجد رصيد لهذه التشغيلة.";
+          detail.append(brand,heading,lotLine,dates,expiry,status,stock);detail.classList.remove("hidden");
           $("lotQrScanMsg").textContent="تم العثور على بيانات التشغيلة.";
           $("lotQrScanMsg").className="status success";
           const historyBtn=$("lotQrScanHistoryBtn");historyBtn.classList.remove("hidden");
