@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v82</title>
+<title>MeatManagement v83</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -327,7 +327,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v82]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v83]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1721,7 +1721,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v82</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v83</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -5647,11 +5647,15 @@ function addSalesReturnItemRow(container){
   const u=document.createElement("select");u.className="return-unit";u.required=true;
   const pack=document.createElement("select");pack.className="return-package-option";
   const lot=document.createElement("select");lot.className="return-lot";
+  const lotWrap=document.createElement("div");lotWrap.style.display="grid";lotWrap.style.gap="6px";
+  const scanLotBtn=document.createElement("button");scanLotBtn.type="button";scanLotBtn.className="btn secondary";scanLotBtn.textContent="مسح QR للتشغيلة";scanLotBtn.style.width="100%";
+  scanLotBtn.onclick=()=>openSalesReturnQrScanner(row);
+  lotWrap.append(lot,scanLotBtn);
   const packWrap=document.createElement("div");const packLabel=document.createElement("label");packLabel.textContent="خيار التعبئة";packWrap.append(packLabel,pack);packWrap.classList.add("hidden");
   const q=document.createElement("input");q.type="number";q.className="return-qty";q.min="0.0001";q.step="0.0001";q.required=true;
   const price=document.createElement("input");price.type="number";price.className="return-price";price.min="0";price.step="0.01";price.required=true;
   const w=document.createElement("div");w.className="grid";
-  [["المنتج *",p],["الوحدة *",u],["خيار التعبئة",packWrap],["التشغيلة",lot],["الكمية *",q],["سعر الوحدة *",price]].forEach(([t,x])=>{const d=document.createElement("div");const l=document.createElement("label");l.textContent=t;if(x===packWrap){d.appendChild(x);}else{d.append(l,x);}w.appendChild(d);});
+  [["المنتج *",p],["الوحدة *",u],["خيار التعبئة",packWrap],["التشغيلة",lotWrap],["الكمية *",q],["سعر الوحدة *",price]].forEach(([t,x])=>{const d=document.createElement("div");const l=document.createElement("label");l.textContent=t;if(x===packWrap){d.appendChild(x);}else{d.append(l,x);}w.appendChild(d);});
   const total=document.createElement("div");total.className="item-line-total";
   const del=document.createElement("button");del.type="button";del.className="btn danger";del.textContent="حذف الصنف";del.onclick=()=>{row.remove();updateSalesReturnTotals();};
   row.append(w,total,del);container.appendChild(row);
@@ -5670,6 +5674,92 @@ function addSalesReturnItemRow(container){
   function recalc(){total.textContent="الإجمالي: "+fmt(Number(q.value||0)*Number(price.value||0));updateSalesReturnTotals();}
   p.onchange=fill;u.onchange=()=>{fillPackages();fillSalesReturnLotSelect(row);};pack.onchange=()=>fillSalesReturnLotSelect(row);q.oninput=recalc;price.oninput=recalc;fill();
 }
+let salesReturnQrScanner=null;
+let salesReturnQrRunning=false;
+let salesReturnQrLocked=false;
+async function stopSalesReturnQrScanner(){
+  if(salesReturnQrScanner&&salesReturnQrRunning){try{await salesReturnQrScanner.stop();}catch(e){}salesReturnQrRunning=false;}
+  if(salesReturnQrScanner){try{await salesReturnQrScanner.clear();}catch(e){}salesReturnQrScanner=null;}
+}
+function salesReturnLotCodeFromQr(decodedText){
+  const raw=String(decodedText||"").trim();
+  try{const p=JSON.parse(raw);return String(p.lot||p.lot_code||"").trim();}catch(e){}
+  const line=raw.split(/\\r?\\n/).find(x=>/^\\s*التشغيلة\\s*:/i.test(x));
+  return line?line.replace(/^\\s*التشغيلة\\s*:\\s*/i,"").trim():raw;
+}
+async function openSalesReturnQrScanner(row){
+  if(!row?.isConnected)return;
+  if(!navigator.onLine){showToast("اتصل بالإنترنت لقراءة بيانات التشغيلة.","error");return;}
+  if(!$("returnInvoice")?.value){showToast("اختر الفاتورة الأصلية أولًا حتى نتحقق من تشغيلاتها.","error");return;}
+  await salesReturnLotOptionsPromise;
+  const productId=Number(row.querySelector(".return-product")?.value||0);
+  if(!productId){showToast("اختر الصنف أولًا.","error");return;}
+  let modal=$("salesReturnQrModal");
+  if(!modal){
+    modal=document.createElement("div");modal.id="salesReturnQrModal";modal.className="modal hidden";
+    modal.innerHTML='<div class="modal-content"><div class="modal-header"><h3>مسح QR لمرتجع المبيعات</h3><button type="button" class="close-btn" id="salesReturnQrClose">&times;</button></div><div class="modal-body"><div id="salesReturnQrReader" style="width:100%;max-width:440px;margin:0 auto;"></div><div id="salesReturnQrMsg" class="status" style="margin-top:10px;">وجّه الكاميرا إلى ملصق التشغيلة.</div><button id="salesReturnQrStop" type="button" class="btn secondary" style="margin-top:10px;">إغلاق الكاميرا</button></div></div>';
+    document.body.appendChild(modal);
+    const close=async()=>{await stopSalesReturnQrScanner();modal.classList.add("hidden");};
+    $("salesReturnQrClose").addEventListener("click",close);
+    $("salesReturnQrStop").addEventListener("click",close);
+    modal.addEventListener("click",e=>{if(e.target===modal)close();});
+  }
+  const msgBox=$("salesReturnQrMsg");
+  msgBox.textContent="وجّه الكاميرا إلى ملصق التشغيلة.";
+  msgBox.className="status";
+  $("salesReturnQrReader").replaceChildren();
+  modal.classList.remove("hidden");
+  if(typeof Html5Qrcode==="undefined"){
+    msgBox.textContent="مكتبة قراءة QR غير متاحة. حدّث الصفحة مع الاتصال بالإنترنت.";
+    msgBox.className="status error";return;
+  }
+  try{
+    salesReturnQrLocked=false;
+    salesReturnQrScanner=new Html5Qrcode("salesReturnQrReader");
+    await salesReturnQrScanner.start(
+      {facingMode:"environment"},
+      {fps:10,qrbox:{width:240,height:240},aspectRatio:1,formatsToSupport:[Html5QrcodeSupportedFormats.QR_CODE]},
+      async decodedText=>{
+        if(salesReturnQrLocked)return;
+        salesReturnQrLocked=true;
+        msgBox.textContent="تمت القراءة. جارٍ التحقق من الفاتورة والصنف...";
+        try{
+          const lotCode=salesReturnLotCodeFromQr(decodedText);
+          if(!lotCode)throw new Error("رمز QR لا يحتوي على رقم تشغيلة صالح.");
+          await stopSalesReturnQrScanner();
+          const matches=salesReturnLotOptionsCache.filter(x=>
+            String(x.lot_code||"").trim().toLowerCase()===lotCode.toLowerCase()&&
+            Number(x.product_id)===Number(row.querySelector(".return-product")?.value||0)&&
+            Number(x.unit_id)===Number(row.querySelector(".return-unit")?.value||0)&&
+            (Number(x.package_option_id||0)||null)===(Number(row.querySelector(".return-package-option")?.value||0)||null)
+          );
+          if(!matches.length)throw new Error("التشغيلة "+lotCode+" غير مسجلة لهذا الصنف ضمن الفاتورة الأصلية أو لا تطابق وحدة البيع وخيار التعبئة.");
+          if(!row.isConnected)throw new Error("تم حذف سطر الصنف قبل إتمام المسح.");
+          const lotSelect=row.querySelector(".return-lot");
+          lotSelect.value=String(matches[0].lot_id);
+          if(lotSelect.value!==String(matches[0].lot_id))throw new Error("تعذر تحديد التشغيلة في سطر المرتجع.");
+          lotSelect.dispatchEvent(new Event("change",{bubbles:true}));
+          modal.classList.add("hidden");
+          showToast("تم تحديد التشغيلة "+lotCode+" من QR.","success");
+        }catch(e){
+          msgBox.textContent="تعذر استخدام QR: "+err(e);
+          msgBox.className="status error";
+          salesReturnQrLocked=false;
+          if(!salesReturnQrScanner&&modal.classList.contains("hidden")===false){
+            // يظل سبب الرفض ظاهرًا ويمكن إغلاق النافذة.
+          }
+        }
+      },
+      ()=>{}
+    );
+    salesReturnQrRunning=true;
+  }catch(e){
+    await stopSalesReturnQrScanner();
+    msgBox.textContent="تعذر تشغيل الكاميرا. اسمح للمتصفح باستخدام الكاميرا وتأكد من فتح التطبيق عبر HTTPS. "+err(e);
+    msgBox.className="status error";
+  }
+}
+
 function fillSalesReturnLotSelect(row){
   const lot=row?.querySelector(".return-lot");if(!lot)return;
   const productId=Number(row.querySelector(".return-product")?.value||0);
