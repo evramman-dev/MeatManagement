@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v81</title>
+<title>MeatManagement v82</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -327,7 +327,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v81]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v82]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1721,7 +1721,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v81</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v82</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -4186,22 +4186,29 @@ if($("refreshStockSummaryBtn"))$("refreshStockSummaryBtn").addEventListener("cli
 if($("stockSummarySearch"))$("stockSummarySearch").addEventListener("input",loadStockSummary);
 
 async function ensureLotQrLibrary(){
-  if(window.QRCode)return window.QRCode;
-  const sources=[
-    "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js",
-    "https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"
+  const hosts=[
+    "https://cdn.jsdelivr.net/npm/qrcode-generator@2.0.4/dist/",
+    "https://unpkg.com/qrcode-generator@2.0.4/dist/"
   ];
-  for(const src of sources){
+  const loadScript=src=>new Promise((resolve,reject)=>{
+    const script=document.createElement("script");
+    script.src=src;
+    script.onload=resolve;
+    script.onerror=()=>{script.remove();reject(new Error("تعذر تحميل مكتبة QR"));};
+    document.head.appendChild(script);
+  });
+  for(const base of hosts){
     try{
-      await new Promise((resolve,reject)=>{
-        const script=document.createElement("script");
-        script.src=src;script.onload=resolve;script.onerror=()=>reject(new Error("تعذر تحميل مكتبة QR"));
-        document.head.appendChild(script);
-      });
-      if(window.QRCode)return window.QRCode;
+      if(typeof window.qrcode!=="function")await loadScript(base+"qrcode.js");
+      if(typeof window.qrcode!=="function")throw new Error("مكتبة QR غير متاحة.");
+      const utf8=window.qrcode.stringToBytesFuncs?.["UTF-8"];
+      if(typeof utf8!=="function")throw new Error("دعم UTF-8 غير متاح.");
+      if(window.qrcode.stringToBytes!==utf8)await loadScript(base+"qrcode_UTF8.js");
+      if(window.qrcode.stringToBytes!==window.qrcode.stringToBytesFuncs["UTF-8"])throw new Error("تعذر تفعيل ترميز UTF-8.");
+      return window.qrcode;
     }catch(e){}
   }
-  throw new Error("مكتبة إنشاء QR غير متاحة. اتصل بالإنترنت ثم أعد فتح المعاينة.");
+  throw new Error("تعذر تحميل مكتبة QR الداعمة للعربية. اتصل بالإنترنت ثم أعد فتح المعاينة.");
 }
 async function openLotQrPreview(lot,product){
   if(!lot||!product)return;
@@ -4237,9 +4244,18 @@ async function openLotQrPreview(lot,product){
   try{
     const QR=await ensureLotQrLibrary();
     if(!lotCode)throw new Error("رقم التشغيلة غير متاح لإنشاء QR.");
-    new QR(qrBox,{text:qrText,width:320,height:320,typeNumber:15,correctLevel:QR.CorrectLevel?.L??1});
+    const qr=QR(0,"L");
+    qr.addData(qrText,"Byte");
+    qr.make();
+    const qrImage=document.createElement("img");
+    qrImage.alt="QR "+lotCode;
+    qrImage.src=qr.createDataURL(4,4);
+    qrImage.style.width="100%";
+    qrImage.style.height="100%";
+    qrImage.style.objectFit="contain";
+    qrBox.appendChild(qrImage);
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-    if(!qrBox.querySelector("canvas, img"))throw new Error("لم تنشأ صورة رمز QR.");
+    if(!qrBox.querySelector("img"))throw new Error("لم تنشأ صورة رمز QR.");
   }catch(e){
     qrBox.replaceChildren();
     errorBox.textContent=err(e);errorBox.classList.remove("hidden");

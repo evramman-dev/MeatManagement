@@ -1,11 +1,12 @@
-const CACHE_VERSION = 'meat-v116';
+const CACHE_VERSION = 'meat-v117';
 const CORE_CACHE = [
   './',
   './index.html',
   './manifest.json',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
   'https://cdn.jsdelivr.net/npm/chart.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'
+  'https://cdn.jsdelivr.net/npm/qrcode-generator@2.0.4/dist/qrcode.js',
+  'https://cdn.jsdelivr.net/npm/qrcode-generator@2.0.4/dist/qrcode_UTF8.js'
 ];
 
 self.addEventListener('install', (event) => {
