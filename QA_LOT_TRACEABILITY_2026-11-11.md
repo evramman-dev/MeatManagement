@@ -217,3 +217,15 @@ Historical movements were not assigned fabricated lot allocations.
 - Reconciliation: all 9 active treasury balances matched opening balance plus treasury transactions exactly (difference 0.00 for every treasury). The posted journal-entry lines contained 0 unbalanced entries.
 - All tests ran in explicit transactions and were rolled back. Post-test counts remained 55 stock movements, 4 lots, 6 purchase invoices, 10 sales invoices, 2 sales returns, 11 customer collections, 1 expense, 2 supplier payments, 29 treasury transactions, 65 journal entries, and 2 customer cheques. No test invoice, collection, expense, payment, transfer, cheque, or journal entry from this batch persisted.
 - No production database correction was required in this batch. Application remains v70 / meat-v103; no index.html or sw.js update was necessary.
+
+
+## Treasury statement running-balance ordering fix (2026-11-11)
+- Financial workflow regression covered customer cash collection and cancellation, bank transfer and cancellation, Instapay and cancellation, cheque receipt and clearing, expense creation/cancellation, supplier payment/cancellation, and cash-to-bank treasury transfer. All passed in rollback-only transactions.
+- Idempotency checks passed for customer collection, expense, supplier payment, and treasury transfer: retrying an identical request ID returned the original ID and created no duplicate transaction.
+- Reconciled all 9 active treasuries. Every current_balance exactly matched opening_balance plus the net of DEPOSIT, WITHDRAW, TRANSFER_IN, and TRANSFER_OUT movements; all differences were 0.00.
+- Posted journal-entry lines contained zero unbalanced entries.
+- Reviewing get_treasury_statement exposed a running-balance issue for multiple transactions sharing the same created_at timestamp. The prior window used the default RANGE frame and ordered only by created_at, causing peer rows to display the same cumulative balance.
+- Applied migration fix_treasury_statement_running_balance_order_20261111. The statement now orders by created_at and transaction_id and uses ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW, giving every transaction its own sequential balance.
+- Re-tested treasury 5. Two deposits sharing one timestamp now show 695.00 then 845.00, two withdrawals sharing one timestamp show 950.00 then 940.00, and the final running balance equals the live treasury balance 1065.00.
+- All financial workflow tests rolled back. Counts remained 55 stock movements, 4 lots, 6 purchases, 10 sales, 2 sales returns, 11 collections, 1 expense, 2 supplier payments, 29 treasury transactions, 65 journal entries, and 2 cheques. No test data persisted.
+- Database-only function correction. App remains v70 / meat-v103; no index.html or sw.js update was needed.
