@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v53</title>
+<title>MeatManagement v54</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -5684,7 +5684,7 @@ async function enrichCollectionRepNames(rows){
     const areaCustomerRepName=repNames.get(String(areaRepId))||"";
     return {
       ...item,
-      resolved_sales_rep_name:item.trip_id?(tripName||directName||item.sales_rep_name||assignedCustomerRepName||areaCustomerRepName||"غير محدد"):(assignedCustomerRepName||areaCustomerRepName||item.sales_rep_name||directName||"غير محدد"),
+      resolved_sales_rep_name:item.trip_id?(tripName||directName||item.sales_rep_name||"غير محدد"):(assignedCustomerRepName||areaCustomerRepName||"غير محدد"),
       collection_channel_label:item.trip_id?"عن طريق المندوب":"مباشر من الشركة"
     };
   });
