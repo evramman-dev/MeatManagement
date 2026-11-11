@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v44</title>
+<title>MeatManagement v45</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -7058,49 +7058,20 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
       const to = $("accToDate").value;
 
       try { 
-          const { data: periodData, error: periodErr } = await db.rpc("get_period_summary", { p_from: from, p_to: to }); 
-          if(periodErr) console.warn("[SUM]", periodErr);
-          if(periodData) { 
-            $("accRevPeriod").textContent = fmt(periodData.rev); 
-            $("accPurchPeriod").textContent = fmt(periodData.purch); 
-            $("accExpPeriod").textContent = fmt(periodData.exp); 
-            $("accCollPeriod").textContent = fmt(periodData.coll || 0); 
-            $("accProfitPeriod").textContent = fmt(periodData.profit); 
-            $("accCash").textContent = fmt(periodData.cash); 
-            $("accAR").textContent = fmt(periodData.ar); 
-            $("accAP").textContent = fmt(periodData.ap); 
-          } else {
-            const [salesR, purchR, expR, collR, treasR, custR, suppR, spR] = await Promise.all([
-              db.from("sales_invoices").select("net_total").gte("invoice_date", from).lte("invoice_date", to).neq("status","CANCELLED"),
-              db.from("purchase_invoices").select("net_total").gte("invoice_date", from).lte("invoice_date", to).neq("status","CANCELLED"),
-              db.from("expenses").select("amount").gte("expense_date", from).lte("expense_date", to),
-              db.from("customer_collections").select("amount").gte("collection_date", from).lte("collection_date", to).eq("status","POSTED"),
-              db.from("treasuries").select("current_balance").eq("is_active", true),
-              db.from("sales_invoices").select("remaining_amount").eq("status","POSTED").gt("remaining_amount",0),
-              db.from("purchase_invoices").select("net_total").neq("status","CANCELLED"),
-              db.from("supplier_payments").select("amount")
-            ]);
-            const rev = (salesR.data||[]).reduce((s,i)=>s+Number(i.net_total||0),0);
-            const purch = (purchR.data||[]).reduce((s,i)=>s+Number(i.net_total||0),0);
-            const exp = (expR.data||[]).reduce((s,i)=>s+Number(i.amount||0),0);
-            const coll = (collR.data||[]).reduce((s,i)=>s+Number(i.amount||0),0);
-            const cash = (treasR.data||[]).reduce((s,t)=>s+Number(t.current_balance||0),0);
-            const ar = (custR.data||[]).reduce((s,i)=>s+Number(i.remaining_amount||0),0);
-            const totalPurchases = (suppR.data||[]).reduce((s,i)=>s+Number(i.net_total||0),0);
-            const totalPaid = (spR.data||[]).reduce((s,i)=>s+Number(i.amount||0),0);
-            const ap = totalPurchases - totalPaid;
-            $("accRevPeriod").textContent = fmt(rev); 
-            $("accPurchPeriod").textContent = fmt(purch); 
-            $("accExpPeriod").textContent = fmt(exp); 
-            $("accCollPeriod").textContent = fmt(coll); 
-            $("accProfitPeriod").textContent = fmt(rev - purch - exp); 
-            $("accCash").textContent = fmt(cash); 
-            $("accAR").textContent = fmt(ar); 
-            $("accAP").textContent = fmt(ap); 
-          }
+          const { data: periodData, error: periodErr } = await db.rpc("get_period_summary", { p_from: from, p_to: to });
+          if(periodErr) throw periodErr;
+          if(!periodData) throw new Error("لم تُرجع قاعدة البيانات ملخص الفترة.");
+          $("accRevPeriod").textContent = fmt(periodData.rev);
+          $("accPurchPeriod").textContent = fmt(periodData.purch);
+          $("accExpPeriod").textContent = fmt(periodData.exp);
+          $("accCollPeriod").textContent = fmt(periodData.coll || 0);
+          $("accProfitPeriod").textContent = fmt(periodData.profit);
+          $("accCash").textContent = fmt(periodData.cash);
+          $("accAR").textContent = fmt(periodData.ar);
+          $("accAP").textContent = fmt(periodData.ap);
 
           const { data: trialData, error: trialErr } = await db.rpc("get_trial_balance", { p_from: from, p_to: to });
-          if(trialErr) console.warn("[TRIAL]", trialErr);
+          if(trialErr) throw trialErr;
           const tbodyTrial = $("trialBalanceTable").querySelector("tbody"); 
           tbodyTrial.innerHTML = "";
           if(trialData && trialData.length > 0) { 
@@ -7118,7 +7089,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
           }
 
           const { data: journalData, error: journalErr } = await db.rpc("get_journal_entries", { p_from: from, p_to: to });
-          if(journalErr) console.warn("[JOURNAL]", journalErr);
+          if(journalErr) throw journalErr;
           const tbodyJournal = $("journalTable").querySelector("tbody"); 
           tbodyJournal.innerHTML = "";
           if(journalData && journalData.length > 0) { 
