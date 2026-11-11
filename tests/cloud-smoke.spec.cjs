@@ -56,6 +56,17 @@ test('Supplier workflow guards: cancelled documents, supplier profile and paymen
   expect(qaHtml).toContain('notes: notes || null');
 });
 
+test('Admin notifications support selected users and all active users', () => {
+  expect(qaHtml).toContain('id="notificationSendAll"');
+  expect(qaHtml).toContain('إرسال إشعار عام إلى جميع المستخدمين النشطين');
+  expect(qaHtml).toContain('sendAll=$("notificationSendAll")?.checked===true');
+  expect(qaHtml).toContain('Array.from(select?.options||[]).map(o=>o.value)');
+  expect(qaHtml).toContain('notificationType=sendAll?"GENERAL":"MANUAL"');
+  expect(qaHtml).toContain('audience:sendAll?"ALL_ACTIVE_USERS":"SELECTED_USERS"');
+  expect(qaHtml).toContain('if(!isSystemAdmin)throw new Error("إرسال التنبيهات متاح لمدير النظام فقط.")');
+  expect(qaHtml).toContain('select.disabled=$("notificationSendAll").checked');
+});
+
 test('MeatManagement read-only navigation, permissions and session smoke test', async ({ page }) => {
   test.setTimeout(300000);
 
