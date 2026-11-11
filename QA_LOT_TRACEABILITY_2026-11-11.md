@@ -118,7 +118,7 @@ Historical movements were not assigned fabricated lot allocations.
 - SECURITY DEFINER functions executable by authenticated users: 83.
 - SECURITY DEFINER functions executable by anon: 0.
 - A targeted review found no authenticated-executable SECURITY DEFINER function lacking both an auth.uid() check and a has_permission(...) check. Supabase still reports the 83 authenticated SECURITY DEFINER functions as warnings for manual review; this is not treated as a reason to revoke application RPC access indiscriminately.
-- Performance advisor: one unindexed foreign key remains, expenses.cancelled_by, already tracked as a pre-existing item. It also reports 86 unused indexes; no indexes were dropped because current usage history is not sufficient evidence that they are unnecessary.
+- Performance advisor initially identified expenses.cancelled_by as unindexed. Added index idx_expenses_cancelled_by via migration index_expenses_cancelled_by_20261111. The latest advisor no longer reports unindexed foreign keys. It reports 87 unused indexes, including the new index before it has accumulated usage; no indexes were dropped because current usage history is not sufficient evidence that they are unnecessary.
 - Health advisor returned no findings.
 
 
@@ -188,3 +188,9 @@ Historical movements were not assigned fabricated lot allocations.
 - In-transaction balances after reversal: source warehouse 9.2500 KG, destination fridge 3.2500 KG, and the transferred lot was restored to 0.5000 KG at source with 0 at destination.
 - The full transaction was rolled back. Post-rollback counts remained 55 stock movements, 4 lots, 4 lot-balance rows, 6 stock transfers, 0 transfer-reversal records, and 6 purchase invoices. No QA lots remained. Main warehouse product 1 stayed at 8.7500 KG and fridge product 1 at 2.7500 KG.
 - This test specifically verifies that reversal does not consume an unrelated earlier-expiry lot.
+
+
+## Foreign-key index cleanup (2026-11-11)
+- Added btree index public.idx_expenses_cancelled_by on public.expenses(cancelled_by) through migration index_expenses_cancelled_by_20261111.
+- Confirmed the index exists and the latest Supabase performance advisor no longer reports any unindexed foreign keys.
+- No existing indexes were dropped. The unused-index advisory count temporarily increased to 87 because the new index has not yet accumulated query usage.
