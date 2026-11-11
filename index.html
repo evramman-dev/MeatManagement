@@ -3807,7 +3807,7 @@ async function viewSupplierStatement(s) {
     modal.classList.remove("hidden");
 
     try {
-        const [invoiceResult, paymentResult, returnResult] = await Promise.all([
+        const [invoiceResult, paymentResult, returnResult, landedCostResult, assetResult] = await Promise.all([
             db.from("purchase_invoices")
                 .select("invoice_number, invoice_date, net_total, status, treasury_id")
                 .eq("supplier_id", s.supplier_id)
@@ -3822,16 +3822,32 @@ async function viewSupplierStatement(s) {
                 .select("return_number, return_date, total_return_amount, settlement_method, is_cancelled")
                 .eq("supplier_id", s.supplier_id)
                 .eq("is_cancelled", false)
-                .order("return_date", { ascending: true })
+                .order("return_date", { ascending: true }),
+            db.from("purchase_landed_costs")
+                .select("landed_cost_id, cost_date, amount, status, source_type")
+                .eq("supplier_id", s.supplier_id)
+                .eq("source_type", "EXTERNAL_SUPPLIER")
+                .eq("status", "ACTIVE")
+                .order("cost_date", { ascending: true }),
+            db.from("fixed_assets")
+                .select("asset_id, asset_name, acquisition_date, acquisition_cost, status, source_type")
+                .eq("supplier_id", s.supplier_id)
+                .eq("source_type", "SUPPLIER_CREDIT")
+                .eq("status", "ACTIVE")
+                .order("acquisition_date", { ascending: true })
         ]);
 
         if(invoiceResult.error) throw invoiceResult.error;
         if(paymentResult.error) throw paymentResult.error;
         if(returnResult.error) throw returnResult.error;
+        if(landedCostResult.error) throw landedCostResult.error;
+        if(assetResult.error) throw assetResult.error;
 
         const invoices = invoiceResult.data || [];
         const payments = paymentResult.data || [];
         const returns = returnResult.data || [];
+        const landedCosts = landedCostResult.data || [];
+        const supplierCreditAssets = assetResult.data || [];
         const timeline = [];
         const openingBalance = Number(s.opening_balance || 0);
         if (openingBalance !== 0) {
@@ -3848,6 +3864,8 @@ async function viewSupplierStatement(s) {
         let totalCreditPurchases = 0;
         let totalCashPurchases = 0;
         let totalSupplierCreditReturns = 0;
+        let totalExternalLandedCosts = 0;
+        let totalSupplierCreditAssets = 0;
         let totalPayments = 0;
 
         invoices.forEach(inv => {
@@ -3873,6 +3891,32 @@ async function viewSupplierStatement(s) {
                     credit: amount
                 });
             }
+        });
+
+        landedCosts.forEach(cost => {
+            const amount = Number(cost.amount || 0);
+            totalExternalLandedCosts += amount;
+            timeline.push({
+                date: cost.cost_date,
+                priority: 1,
+                ref: "تكلفة نقل " + cost.landed_cost_id,
+                desc: "تكلفة نقل آجلة على المورد",
+                debit: 0,
+                credit: amount
+            });
+        });
+
+        supplierCreditAssets.forEach(asset => {
+            const amount = Number(asset.acquisition_cost || 0);
+            totalSupplierCreditAssets += amount;
+            timeline.push({
+                date: asset.acquisition_date,
+                priority: 1,
+                ref: "أصل " + asset.asset_id,
+                desc: "شراء أصل ثابت آجل من المورد: " + (asset.asset_name || ""),
+                debit: 0,
+                credit: amount
+            });
         });
 
         returns.forEach(ret => {
@@ -3951,13 +3995,15 @@ async function viewSupplierStatement(s) {
             `<div class="line"><span>الرصيد الافتتاحي:</span><span>${fmt(openingBalance)}</span></div>` +
             `<div class="line"><span>المشتريات الآجلة:</span><span>${fmt(totalCreditPurchases)}</span></div>` +
             `<div class="line"><span>المشتريات النقدية (للعرض فقط):</span><span>${fmt(totalCashPurchases)}</span></div>` +
+            `<div class="line"><span>تكاليف نقل آجلة على المورد:</span><span>${fmt(totalExternalLandedCosts)}</span></div>` +
+            `<div class="line"><span>أصول مشتراة آجلًا من المورد:</span><span>${fmt(totalSupplierCreditAssets)}</span></div>` +
             `<div class="line"><span>مرتجعات مخصومة من حساب المورد:</span><span>${fmt(totalSupplierCreditReturns)}</span></div>` +
             `<div class="line"><span>دفعات المورد:</span><span style="color:green;">${fmt(totalPayments)}</span></div>` +
             `<div class="line grand"><span>الرصيد النهائي:</span><span style="color:${finalBalanceColor};">${finalBalanceLabel}</span></div>`;
 
         const waBtn = $("shareSupplierWhatsappBtn");
         waBtn.onclick = () => {
-            const waText = `كشف حساب مورد\nالمورد: ${s.supplier_name}\nالتاريخ: ${formatDate()}\n------------------------\nالمشتريات الآجلة: ${fmt(totalCreditPurchases)}\nمرتجعات مخصومة من حساب المورد: ${fmt(totalSupplierCreditReturns)}\nدفعات المورد: ${fmt(totalPayments)}\n------------------------\n${finalBalanceLabel}`;
+            const waText = `كشف حساب مورد\nالمورد: ${s.supplier_name}\nالتاريخ: ${formatDate()}\n------------------------\nالمشتريات الآجلة: ${fmt(totalCreditPurchases)}\nتكاليف نقل آجلة: ${fmt(totalExternalLandedCosts)}\nأصول مشتراة آجلًا: ${fmt(totalSupplierCreditAssets)}\nمرتجعات مخصومة من حساب المورد: ${fmt(totalSupplierCreditReturns)}\nدفعات المورد: ${fmt(totalPayments)}\n------------------------\n${finalBalanceLabel}`;
             const phone = formatWaPhone(s.phone);
             window.open(phone ? `https://wa.me/${phone}?text=${encodeURIComponent(waText)}` : `https://wa.me/?text=${encodeURIComponent(waText)}`, "_blank");
         };
