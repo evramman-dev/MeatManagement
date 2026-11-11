@@ -251,3 +251,13 @@ Historical movements were not assigned fabricated lot allocations.
 - All partner and fixed-asset test transactions were rolled back. No partner, asset, treasury, supplier, or journal test rows persisted.
 - No depreciation schedule, depreciation posting function, asset disposal/sale function, or partner summary view was found in the current public schema. Depreciation and disposal remain unimplemented follow-up scope; no unsupported accounting workflow was invented.
 - No `index.html` or `sw.js` change was required. Application release remains v70 / meat-v103.
+
+
+### Post-fix integrity and advisor checks
+- After all rollback-only tests, partners remained 0, partner_transactions 0, partner_inventory_contributions 0, fixed_assets remained 1 (the pre-existing cancelled QA asset), and active fixed assets remained 0.
+- Treasury 5 remained 1065.00. Journal entries remained 65. No test rows persisted.
+- Trial balance remained balanced: debit 10098.77, credit 10098.77, difference 0.00.
+- Latest Supabase security advisor: 83 existing authenticated SECURITY DEFINER RPC warnings and 1 leaked-password-protection warning. The latter is the previously documented Free-plan limitation. No new public/anon execution issue was introduced by this migration.
+- Latest performance advisor: no unindexed foreign-key finding; 86 unused-index informational findings remain. No index was removed.
+- Latest health advisor: no findings.
+- Migration history confirms `20261111174625 fix_partner_opening_balance_double_post_20261111` is applied.
