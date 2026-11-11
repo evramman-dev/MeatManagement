@@ -282,3 +282,14 @@ Historical movements were not assigned fabricated lot allocations.
 - Latest performance advisor reports no remaining unindexed foreign keys from the new partner-profit tables. The existing unused-index findings remain informational and no indexes were removed.
 - Latest security advisor warnings are the existing authenticated SECURITY DEFINER review set plus the newly added accounting RPCs. The new RPCs require auth.uid() and ACCOUNTING_MANAGE or ACCOUNTING_VIEW as appropriate. Anonymous execution is revoked for the new write/report functions.
 - No index.html or sw.js change was required. Application remains v70 / meat-v103.
+
+
+## Accounting UI integration (2026-11-11)
+- Updated index.html to expose the completed partner and fixed-asset accounting workflows inside the existing Android-first screens.
+- Partner screen now opens the deterministic partner ledger RPC, shows ownership percentage and current balance, and provides profit-distribution and cancellation actions for users with ACCOUNTING_MANAGE.
+- Fixed-asset screen now exposes depreciation configuration, monthly depreciation posting, disposal/sale, gain/loss handling, and book-value information.
+- Fixed-asset depreciation configuration is saved through the protected `configure_fixed_asset_depreciation` RPC and cannot be changed after depreciation has started.
+- Existing purchase and cancellation workflows were retained. No existing transaction or accounting UI was removed.
+- PWA cache was bumped from meat-v103 to meat-v104 so the new index.html is refreshed for clients.
+- No live accounting data was changed by the UI integration.
+- DB regression state remains: partners 0, partner_transactions 0, profit_distributions 0, depreciation_entries 0, fixed_assets 1, active fixed assets 0, treasury 5 = 1065.00, journal lines balanced with difference 0.00.
