@@ -8161,6 +8161,40 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
   console.error("CRITICAL ERROR:", globalError);
   alert("حدث خطأ فادح في تحميل البرنامج: " + globalError.message);
 }
+
+/* ===== واجهة الشركاء والأصول ===== */
+(function(){
+function mmModal(id,title,body){
+ let d=document.getElementById(id);
+ if(d)return d;
+ d=document.createElement("div");d.id=id;d.className="modal-form";d.innerHTML='<div class="modal-form-content"><div class="modal-header"><h3>'+title+'</h3><button class="close-btn" type="button">&times;</button></div><div class="modal-body">'+body+'</div></div>';
+ document.body.appendChild(d);d.querySelector(".close-btn").onclick=()=>d.classList.remove("active");return d;
+}
+async function mmPartnerLedger(p){
+ const modal=$("customerStatementModal");if(!modal)return;
+ try{const {data,error}=await db.rpc("get_partner_ledger",{p_partner_id:p.partner_id});if(error)throw error;
+ let html='<thead><tr><th>التاريخ</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead><tbody>';
+ const opening=Number(p.opening_balance||0);html+='<tr><td>-</td><td>الرصيد الافتتاحي</td><td>-</td><td>-</td><td>'+fmt(opening)+'</td></tr>';
+ (data||[]).forEach(x=>{const v=Number(x.signed_amount||0),a=Math.abs(v);html+='<tr><td>'+formatDate(x.transaction_date)+'</td><td>'+(x.description||x.transaction_type)+'</td><td>'+(v<0?fmt(a):"-")+'</td><td>'+(v>=0?fmt(a):"-")+'</td><td>'+fmt(x.running_balance)+'</td></tr>';});
+ html+='</tbody>';modal.classList.remove("hidden");$("modalStatementHeader").innerHTML='<strong>الشريك:</strong> '+p.partner_name;$("modalStatementItems").innerHTML=html;$("modalStatementSummary").innerHTML='<div class="line"><span>الرصيد الافتتاحي</span><span>'+fmt(opening)+'</span></div><div class="line grand"><span>الرصيد النهائي</span><span>'+fmt(data?.length?data[data.length-1].running_balance:opening)+'</span></div>';fillPrintHeaders();
+ }catch(e){showToast("تعذر تحميل كشف الشريك: "+err(e),"error");}
+}
+async function mmPartnerExtras(){
+ if(!canViewPartners)return;
+ const card=$("partnerProfitDistributionCard");
+ if(!card){const host=$("partnerTransactionsCard");if(host){const d=document.createElement("div");d.id="partnerProfitDistributionCard";d.className="card";d.style.marginTop="20px";d.innerHTML='<div class="row" style="justify-content:space-between"><h2>📊 توزيع الأرباح</h2><button id="mmProfitBtn" class="btn" style="width:auto;margin:0">توزيع الأرباح</button></div><div id="mmProfitList"><div class="empty">جارٍ التحميل...</div></div>';host.parentNode.insertBefore(d,host.nextSibling);}}
+ const b=$("mmProfitBtn");if(b){b.classList.toggle("hidden",!canManageAccounting);b.onclick=()=>{const m=mmModal("mmProfitModal","توزيع أرباح الفترة",'<form id="mmProfitForm"><label>من تاريخ<input id="mmProfitFrom" type="date" required></label><label>إلى تاريخ<input id="mmProfitTo" type="date" required></label><button class="btn" type="submit">تنفيذ توزيع الأرباح</button><div id="mmProfitMsg" class="status hidden"></div></form>');$("mmProfitFrom").value=monthStartISO();$("mmProfitTo").value=todayISO();m.classList.add("active");$("mmProfitForm").onsubmit=async e=>{e.preventDefault();try{const {error}=await db.rpc("create_partner_profit_distribution",{p_from:$("mmProfitFrom").value,p_to:$("mmProfitTo").value,p_request_id:crypto.randomUUID()});if(error)throw error;m.classList.remove("active");showToast("تم توزيع الأرباح","success");await loadPartners();}catch(x){msg($("mmProfitMsg"),err(x),"error");}};};}
+ const list=$("mmProfitList");if(list){const {data,error}=await db.from("partner_profit_distributions").select("*").order("distribution_id",{ascending:false}).limit(50);if(!error){list.innerHTML="";if(!data?.length)list.innerHTML="<div class='empty'>لا توجد توزيعات أرباح.</div>";(data||[]).forEach(d=>{const x=document.createElement("div");x.className="product";x.innerHTML='<div class="pname">توزيع أرباح '+formatDate(d.period_from)+' إلى '+formatDate(d.period_to)+'</div><div class="details">المبلغ: '+fmt(d.profit_amount)+' | '+(d.status==="POSTED"?"معتمد":"ملغى")+'</div>';if(d.status==="POSTED"&&canManageAccounting){const z=document.createElement("button");z.className="btn danger";z.textContent="إلغاء التوزيع";z.onclick=async()=>{const r=prompt("سبب الإلغاء");if(!r)return;const q=await db.rpc("cancel_partner_profit_distribution",{p_distribution_id:d.distribution_id,p_reason:r,p_request_id:crypto.randomUUID()});if(q.error)showToast("تعذر الإلغاء: "+err(q.error),"error");else{showToast("تم الإلغاء","success");await loadPartners();}};x.appendChild(z);}list.appendChild(x);});}}
+}
+async function mmAssetAction(x,mode){
+ if(mode==="config"){const m=mmModal("mmAssetConfig","إعداد إهلاك الأصل",'<label>العمر الإنتاجي بالشهور<input id="mmLife" type="number" min="1" value="'+(x.useful_life_months||60)+'"></label><label>القيمة التخريدية<input id="mmResidual" type="number" min="0" step="0.01" value="'+(x.residual_value||0)+'"></label><button id="mmSaveConfig" class="btn">حفظ</button><div id="mmConfigMsg" class="status hidden"></div>');m.classList.add("active");$("mmSaveConfig").onclick=async()=>{try{const {error}=await db.rpc("configure_fixed_asset_depreciation",{p_asset_id:x.asset_id,p_useful_life_months:Number($("mmLife").value),p_residual_value:Number($("mmResidual").value),p_depreciation_method:"STRAIGHT_LINE"});if(error)throw error;m.classList.remove("active");showToast("تم حفظ إعداد الإهلاك","success");await loadFixedAssets();}catch(e){msg($("mmConfigMsg"),err(e),"error");}};return;}
+ if(mode==="dep"){const m=mmModal("mmAssetDep","إثبات إهلاك الأصل",'<div class="info">'+x.asset_name+' | مجمع الإهلاك '+fmt(x.accumulated_depreciation||0)+'</div><label>التاريخ<input id="mmDepDate" type="date"></label><button id="mmPostDep" class="btn">إثبات الإهلاك</button><div id="mmDepMsg" class="status hidden"></div>');m.classList.add("active");$("mmDepDate").value=todayISO();$("mmPostDep").onclick=async()=>{try{const {error}=await db.rpc("post_fixed_asset_depreciation",{p_asset_id:x.asset_id,p_depreciation_month:$("mmDepDate").value,p_request_id:crypto.randomUUID()});if(error)throw error;m.classList.remove("active");showToast("تم إثبات الإهلاك","success");await loadFixedAssets();}catch(e){msg($("mmDepMsg"),err(e),"error");}};return;}
+ await loadTreasuries();const m=mmModal("mmAssetDispose","بيع أو استبعاد أصل",'<div class="info">'+x.asset_name+' | صافي القيمة '+fmt(Math.max(Number(x.acquisition_cost||0)-Number(x.accumulated_depreciation||0),0))+'</div><label>قيمة البيع<input id="mmProceeds" type="number" min="0" step="0.01" value="0"></label><label>الخزنة<select id="mmTreasury"><option value="">اختر الخزنة</option></select></label><label>التاريخ<input id="mmDispDate" type="date"></label><label>السبب<textarea id="mmReason" rows="3"></textarea></label><button id="mmDispose" class="btn danger">تنفيذ</button><div id="mmDispMsg" class="status hidden"></div>');const sel=$("mmTreasury");(treasuriesCache||[]).filter(t=>t.is_active!==false).forEach(t=>{const o=document.createElement("option");o.value=t.treasury_id;o.textContent=t.treasury_name;sel.appendChild(o);});$("mmDispDate").value=todayISO();m.classList.add("active");$("mmDispose").onclick=async()=>{try{const {error}=await db.rpc("dispose_fixed_asset",{p_asset_id:x.asset_id,p_proceeds:Number($("mmProceeds").value),p_disposal_treasury_id:Number(sel.value),p_disposal_date:$("mmDispDate").value,p_reason:$("mmReason").value.trim(),p_request_id:crypto.randomUUID()});if(error)throw error;m.classList.remove("active");showToast("تم بيع أو استبعاد الأصل","success");await loadFixedAssets();await loadTreasuries();}catch(e){msg($("mmDispMsg"),err(e),"error");}};
+}
+const originalPartners=loadPartners;loadPartners=async function(){await originalPartners();await mmPartnerExtras();};
+viewPartnerStatement=mmPartnerLedger;
+const originalAssets=loadFixedAssets;loadFixedAssets=async function(){await originalAssets();const box=$("fixedAssetsList");if(!box||!canManageFixedAssets)return;[...box.children].forEach((card,i)=>{if(card.dataset.mmAsset==="1")return;const x=fixedAssetsCache[i];if(!x||x.status!=="ACTIVE")return;card.dataset.mmAsset="1";const a=card.querySelector(".actions")||(()=>{const z=document.createElement("div");z.className="actions";card.appendChild(z);return z;})();const b=document.createElement("button");b.className="btn secondary";b.textContent=x.useful_life_months?"إثبات إهلاك":"إعداد الإهلاك";b.onclick=()=>mmAssetAction(x,x.useful_life_months?"dep":"config");a.appendChild(b);const d=document.createElement("button");d.className="btn secondary";d.textContent="بيع / استبعاد";d.onclick=()=>mmAssetAction(x,"dispose");a.appendChild(d);});};
+})();
 })();
 
 // ====== PWA ======
@@ -8170,71 +8204,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-<script>
-/* ===== الحسابات الجديدة: واجهة الشركاء والأصول ===== */
-(function(){
-"use strict";
-function mmAddModal(id,title,body){
- if(document.getElementById(id))return document.getElementById(id);
- const d=document.createElement("div");d.id=id;d.className="modal-form";d.innerHTML='<div class="modal-form-content"><div class="modal-header"><h3>'+title+'</h3><button class="close-btn" type="button">&times;</button></div><div class="modal-body">'+body+'</div></div>';
- document.body.appendChild(d);d.querySelector(".close-btn").onclick=()=>d.classList.remove("active");return d;
-}
-function mmShow(id){const d=document.getElementById(id);if(d)d.classList.add("active");}
-function mmHide(id){const d=document.getElementById(id);if(d)d.classList.remove("active");}
 
-async function mmPartnerLedger(p){
- const modal=$("customerStatementModal");if(!modal)return;
- try{
-  const {data,error}=await db.rpc("get_partner_ledger",{p_partner_id:p.partner_id});if(error)throw error;
-  let html='<thead><tr><th>التاريخ</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead><tbody>';
-  const opening=Number(p.opening_balance||0);html+='<tr><td>-</td><td>الرصيد الافتتاحي</td><td>-</td><td>-</td><td>'+fmt(opening)+'</td></tr>';
-  (data||[]).forEach(x=>{const v=Number(x.signed_amount||0),a=Math.abs(v);html+='<tr><td>'+formatDate(x.transaction_date)+'</td><td>'+(x.description||x.transaction_type)+'</td><td>'+(v<0?fmt(a):"-")+'</td><td>'+(v>=0?fmt(a):"-")+'</td><td>'+fmt(x.running_balance)+'</td></tr>';});
-  html+='</tbody>';modal.classList.remove("hidden");$("modalStatementHeader").innerHTML='<strong>الشريك:</strong> '+p.partner_name;$("modalStatementItems").innerHTML=html;
-  const last=(data&&data.length)?Number(data[data.length-1].running_balance):opening;
-  $("modalStatementSummary").innerHTML='<div class="line"><span>الرصيد الافتتاحي</span><span>'+fmt(opening)+'</span></div><div class="line grand"><span>الرصيد النهائي</span><span>'+fmt(last)+'</span></div>';fillPrintHeaders();
- }catch(e){showToast("تعذر تحميل كشف الشريك: "+err(e),"error");}
-}
-
-async function mmLoadPartnerExtras(){
- if(!canViewPartners)return;
- const card=$("partnerProfitDistributionCard");
- if(card)card.classList.remove("hidden");
- const head=$("partnersCard");
- if(!head)return;
- let btn=document.getElementById("mmProfitBtn");
- if(!btn){
-  btn=document.createElement("button");btn.id="mmProfitBtn";btn.className="btn hidden";btn.textContent="توزيع الأرباح";btn.style.width="auto";btn.style.margin="0 0 0 8px";
-  const row=head.querySelector(".row");if(row)row.appendChild(btn);
-  btn.onclick=()=>{if(!canManageAccounting)return;const m=mmAddModal("mmProfitModal","توزيع أرباح الفترة",'<form id="mmProfitForm"><label>من تاريخ<input id="mmProfitFrom" type="date" required></label><label>إلى تاريخ<input id="mmProfitTo" type="date" required></label><button class="btn" type="submit">تنفيذ توزيع الأرباح</button><div id="mmProfitMsg" class="status hidden"></div></form>');$("mmProfitFrom").value=monthStartISO();$("mmProfitTo").value=todayISO();m.querySelector("form").onsubmit=async e=>{e.preventDefault();const from=$("mmProfitFrom").value,to=$("mmProfitTo").value;if(from>to){msg($("mmProfitMsg"),"الفترة غير صحيحة","error");return;}try{const {error}=await db.rpc("create_partner_profit_distribution",{p_from:from,p_to:to,p_request_id:crypto.randomUUID()});if(error)throw error;mmHide("mmProfitModal");showToast("تم توزيع الأرباح","success");await loadPartners();}catch(x){msg($("mmProfitMsg"),"تعذر التوزيع: "+err(x),"error");}}; 
- }
- btn.classList.toggle("hidden",!canManageAccounting);
- const list=$("partnerProfitDistributionsList");if(list){const {data,error}=await db.from("partner_profit_distributions").select("*").order("distribution_id",{ascending:false}).limit(50);if(!error){list.innerHTML=data?.length?"":"<div class='empty'>لا توجد توزيعات أرباح.</div>";(data||[]).forEach(d=>{const x=document.createElement("div");x.className="product";x.innerHTML='<div class="pname">توزيع أرباح '+formatDate(d.period_from)+' إلى '+formatDate(d.period_to)+'</div><div class="details">المبلغ: '+fmt(d.profit_amount)+' | '+(d.status==="POSTED"?"معتمد":"ملغى")+'</div>';if(d.status==="POSTED"&&canManageAccounting){const b=document.createElement("button");b.className="btn danger";b.textContent="إلغاء التوزيع";b.onclick=async()=>{const r=prompt("سبب الإلغاء");if(!r)return;const z=await db.rpc("cancel_partner_profit_distribution",{p_distribution_id:d.distribution_id,p_reason:r,p_request_id:crypto.randomUUID()});if(z.error)showToast("تعذر الإلغاء: "+err(z.error),"error");else{showToast("تم الإلغاء","success");await loadPartners();}};x.appendChild(b);}list.appendChild(x);});}}
-}
-
-async function mmAssetAction(x,action){
- if(action==="dep"){
-  const m=mmAddModal("mmDepModal","إثبات إهلاك الأصل",'<div id="mmDepInfo" class="info"></div><label>تاريخ الإهلاك<input id="mmDepDate" type="date" required></label><button id="mmDepBtn" class="btn">إثبات الإهلاك</button><div id="mmDepMsg" class="status hidden"></div>');
-  $("mmDepInfo").textContent=x.asset_name+" | التكلفة "+fmt(x.acquisition_cost)+" | مجمع الإهلاك "+fmt(x.accumulated_depreciation||0);$("mmDepDate").value=todayISO();mmShow("mmDepModal");
-  $("mmDepBtn").onclick=async()=>{try{const {error}=await db.rpc("post_fixed_asset_depreciation",{p_asset_id:x.asset_id,p_depreciation_month:$("mmDepDate").value,p_request_id:crypto.randomUUID()});if(error)throw error;mmHide("mmDepModal");showToast("تم إثبات الإهلاك","success");await loadFixedAssets();}catch(e){msg($("mmDepMsg"),err(e),"error");}};
- }else if(action==="config"){
-  const m=mmAddModal("mmConfigDepModal","إعداد إهلاك الأصل",'<label>العمر الإنتاجي بالشهور<input id="mmLife" type="number" min="1" value="'+(x.useful_life_months||60)+'"></label><label>القيمة التخريدية<input id="mmResidual" type="number" min="0" step="0.01" value="'+(x.residual_value||0)+'"></label><button id="mmConfigBtn" class="btn">حفظ الإعداد</button><div id="mmConfigMsg" class="status hidden"></div>');mmShow("mmConfigDepModal");
-  $("mmConfigBtn").onclick=async()=>{try{const {error}=await db.rpc("configure_fixed_asset_depreciation",{p_asset_id:x.asset_id,p_useful_life_months:Number($("mmLife").value),p_residual_value:Number($("mmResidual").value),p_depreciation_method:"STRAIGHT_LINE"});if(error)throw error;mmHide("mmConfigDepModal");showToast("تم حفظ إعداد الإهلاك","success");await loadFixedAssets();}catch(e){msg($("mmConfigMsg"),err(e),"error");}};
- }else{
-  const m=mmAddModal("mmDisposeModal","بيع أو استبعاد أصل",'<div id="mmDispInfo" class="info"></div><label>قيمة البيع<input id="mmProceeds" type="number" min="0" step="0.01" value="0"></label><label>خزنة التحصيل<select id="mmDispTreasury"><option value="">اختر الخزنة</option></select></label><label>التاريخ<input id="mmDispDate" type="date"></label><label>السبب<textarea id="mmDispReason" rows="3"></textarea></label><button id="mmDispBtn" class="btn danger">تنفيذ</button><div id="mmDispMsg" class="status hidden"></div>');$("mmDispInfo").textContent=x.asset_name+" | صافي القيمة "+fmt(Math.max(Number(x.acquisition_cost||0)-Number(x.accumulated_depreciation||0),0));$("mmDispDate").value=todayISO();await loadTreasuries();fillTreasurySelects();const sel=$("mmDispTreasury");(treasuriesCache||[]).filter(t=>t.is_active!==false).forEach(t=>{const o=document.createElement("option");o.value=t.treasury_id;o.textContent=t.treasury_name;sel.appendChild(o);});mmShow("mmDisposeModal");
-  $("mmDispBtn").onclick=async()=>{try{const {error}=await db.rpc("dispose_fixed_asset",{p_asset_id:x.asset_id,p_proceeds:Number($("mmProceeds").value),p_disposal_treasury_id:Number(sel.value),p_disposal_date:$("mmDispDate").value,p_reason:$("mmDispReason").value.trim(),p_request_id:crypto.randomUUID()});if(error)throw error;mmHide("mmDisposeModal");showToast("تم بيع أو استبعاد الأصل","success");await loadFixedAssets();await loadTreasuries();}catch(e){msg($("mmDispMsg"),err(e),"error");}};
- }
-}
-
-const oldLoadFixed=window.loadFixedAssets||loadFixedAssets;
-window.loadFixedAssets=async function(){await oldLoadFixed();const box=$("fixedAssetsList");if(!box)return;[...box.children].forEach((card,i)=>{const x=fixedAssetsCache[i];if(!x||x.status!=="ACTIVE"||!canManageFixedAssets)return;const a=card.querySelector(".actions")||(()=>{const z=document.createElement("div");z.className="actions";card.appendChild(z);return z;})();if(!x.useful_life_months){const b=document.createElement("button");b.className="btn secondary";b.textContent="إعداد الإهلاك";b.onclick=()=>mmAssetAction(x,"config");a.appendChild(b);}else{const b=document.createElement("button");b.className="btn secondary";b.textContent="إثبات إهلاك";b.onclick=()=>mmAssetAction(x,"dep");a.appendChild(b);}const d=document.createElement("button");d.className="btn secondary";d.textContent="بيع / استبعاد";d.onclick=()=>mmAssetAction(x,"dispose");a.appendChild(d);});};
-
-const oldLoadPartners=window.loadPartners||loadPartners;
-window.loadPartners=async function(){await oldLoadPartners();await mmLoadPartnerExtras();};
-window.viewPartnerStatement=mmPartnerLedger;
-
-if($("sectionPartners")){const obs=new MutationObserver(()=>{if(!$("sectionPartners").classList.contains("hidden"))mmLoadPartnerExtras();});obs.observe($("sectionPartners"),{attributes:true,attributeFilter:["class"]});}
-})();
-</script>
 <script>
 (function(){
 const enhance=()=>{
