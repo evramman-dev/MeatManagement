@@ -5285,6 +5285,7 @@ if($("viewSpStatementBtn")) $("viewSpStatementBtn").addEventListener("click", as
 function fillReturnTripSelect(){const el=$("returnTrip");if(!el)return;el.replaceChildren();const f=document.createElement("option");f.value="";f.textContent="اختر الجولة";el.appendChild(f);tripsCache.filter(t=>!['COMPLETED','CANCELLED'].includes(t.status)&&(currentRoleCode!=="SALES_REP"||Number(t.sales_rep_id)===Number(currentSalesRepId))).forEach(t=>{const o=document.createElement("option");o.value=String(t.trip_id);o.textContent=t.trip_number+" - "+(t.rep_name||"");el.appendChild(o);});}
 function fillReturnInvoiceSelect(){const el=$("returnInvoice");if(!el)return;el.replaceChildren();const f=document.createElement("option");f.value="";f.textContent="بدون فاتورة";el.appendChild(f);salesCache.filter(i=>i.status!=="CANCELLED").forEach(i=>{const o=document.createElement("option");o.value=String(i.sales_invoice_id);o.textContent=i.invoice_number+" - "+customerName(i.customer_id);o.dataset.customer=i.customer_id;o.dataset.trip=i.trip_id||"";el.appendChild(o);});}
 function resetSalesReturnForm(){$("returnForm").reset();$("returnItems").replaceChildren();$("exchangeItems").replaceChildren();returnItemCounter=0;$("returnDate").value=todayISO();fillReturnCustomerSelect();fillReturnTripSelect();fillReturnInvoiceSelect();fillTreasurySelects();addSalesReturnItemRow($("returnItems"));updateSalesReturnTotals();clear($("returnFormMsg"));$("returnFormModal").classList.add("active");}
+let salesReturnLotOptionsCache=[];
 function addSalesReturnItemRow(container){
   const row=document.createElement("div");row.className="item-row";
   const p=document.createElement("select");p.className="return-product";p.required=true;
@@ -5292,11 +5293,12 @@ function addSalesReturnItemRow(container){
   productsCache.filter(x=>x.is_active&&x.can_be_sold).forEach(x=>{const o=document.createElement("option");o.value=String(x.product_id);o.textContent=x.product_name;p.appendChild(o);});
   const u=document.createElement("select");u.className="return-unit";u.required=true;
   const pack=document.createElement("select");pack.className="return-package-option";
+  const lot=document.createElement("select");lot.className="return-lot";
   const packWrap=document.createElement("div");const packLabel=document.createElement("label");packLabel.textContent="خيار التعبئة";packWrap.append(packLabel,pack);packWrap.classList.add("hidden");
   const q=document.createElement("input");q.type="number";q.className="return-qty";q.min="0.0001";q.step="0.0001";q.required=true;
   const price=document.createElement("input");price.type="number";price.className="return-price";price.min="0";price.step="0.01";price.required=true;
   const w=document.createElement("div");w.className="grid";
-  [["المنتج *",p],["الوحدة *",u],["خيار التعبئة",packWrap],["الكمية *",q],["سعر الوحدة *",price]].forEach(([t,x])=>{const d=document.createElement("div");const l=document.createElement("label");l.textContent=t;if(x===packWrap){d.appendChild(x);}else{d.append(l,x);}w.appendChild(d);});
+  [["المنتج *",p],["الوحدة *",u],["خيار التعبئة",packWrap],["التشغيلة",lot],["الكمية *",q],["سعر الوحدة *",price]].forEach(([t,x])=>{const d=document.createElement("div");const l=document.createElement("label");l.textContent=t;if(x===packWrap){d.appendChild(x);}else{d.append(l,x);}w.appendChild(d);});
   const total=document.createElement("div");total.className="item-line-total";
   const del=document.createElement("button");del.type="button";del.className="btn danger";del.textContent="حذف الصنف";del.onclick=()=>{row.remove();updateSalesReturnTotals();};
   row.append(w,total,del);container.appendChild(row);
@@ -5310,11 +5312,47 @@ function addSalesReturnItemRow(container){
     const pr=productsCache.find(x=>String(x.product_id)===String(p.value));u.replaceChildren();
     const f=document.createElement("option");f.value="";f.textContent="اختر الوحدة";u.appendChild(f);
     if(pr){[pr.sales_unit_id,pr.base_unit_id].filter(Boolean).forEach(id=>{if([...u.options].some(o=>o.value===String(id)))return;const un=units.find(x=>Number(x.unit_id)===Number(id));if(un){const o=document.createElement("option");o.value=String(id);o.textContent=un.unit_name;u.appendChild(o);}});u.value=String(pr.sales_unit_id||pr.base_unit_id);}
-    fillPackages();recalc();
+    fillPackages();fillSalesReturnLotSelect(row);recalc();
   }
   function recalc(){total.textContent="الإجمالي: "+fmt(Number(q.value||0)*Number(price.value||0));updateSalesReturnTotals();}
-  p.onchange=fill;u.onchange=fillPackages;q.oninput=recalc;price.oninput=recalc;fill();
+  p.onchange=fill;u.onchange=()=>{fillPackages();fillSalesReturnLotSelect(row);};pack.onchange=()=>fillSalesReturnLotSelect(row);q.oninput=recalc;price.oninput=recalc;fill();
 }
+function fillSalesReturnLotSelect(row){
+  const lot=row?.querySelector(".return-lot");if(!lot)return;
+  const productId=Number(row.querySelector(".return-product")?.value||0);
+  const unitId=Number(row.querySelector(".return-unit")?.value||0);
+  const packageId=Number(row.querySelector(".return-package-option")?.value||0)||null;
+  const previous=lot.value;
+  lot.replaceChildren();
+  const first=document.createElement("option");first.value="";
+  first.textContent="اختر تشغيلة الفاتورة الأصلية";
+  lot.appendChild(first);
+  const options=salesReturnLotOptionsCache.filter(x=>
+    Number(x.product_id)===productId&&Number(x.unit_id)===unitId&&
+    (Number(x.package_option_id||0)||null)===packageId
+  );
+  options.forEach(x=>{
+    const op=document.createElement("option");op.value=String(x.lot_id);
+    op.textContent=(x.lot_code||("تشغيلة "+x.lot_id))+" — الكمية المباعة: "+fmtQty(x.allocated_quantity)+(x.expires_on?" — الصلاحية: "+formatDate(x.expires_on):"");
+    lot.appendChild(op);
+  });
+  lot.required=options.length>0;
+  lot.disabled=!productId||!unitId||options.length===0;
+  if(!productId)first.textContent="اختر المنتج أولًا";
+  else if(options.length===0)first.textContent=$("returnInvoice")?.value?"لا توجد بيانات تشغيلات لهذه الفاتورة":"اختر الفاتورة الأصلية أولًا";
+  if(options.some(x=>String(x.lot_id)===previous))lot.value=previous;
+}
+async function loadSalesReturnLotOptions(){
+  const invoiceId=Number($("returnInvoice")?.value||0);
+  salesReturnLotOptionsCache=[];
+  if(invoiceId){
+    const {data,error}=await db.rpc("get_sales_invoice_lot_allocations",{p_sales_invoice_id:invoiceId});
+    if(error){msg($("returnFormMsg"),"تعذر تحميل تشغيلات الفاتورة: "+err(error),"error");}
+    else salesReturnLotOptionsCache=data||[];
+  }
+  document.querySelectorAll("#returnItems .item-row").forEach(fillSalesReturnLotSelect);
+}
+if($("returnInvoice"))$("returnInvoice").addEventListener("change",loadSalesReturnLotOptions);
 function updateSalesReturnTotals(){let a=0;document.querySelectorAll("#returnItems .item-row").forEach(r=>a+=Number(r.querySelector(".return-qty")?.value||0)*Number(r.querySelector(".return-price")?.value||0));$("returnTotalDisplay").textContent=fmt(a);$("exchangeTotalDisplay").textContent="0";$("diffDisplay").textContent=fmt(-a);}
 function fillSalesReturnCustomerFilter(){
   const el=$("srCustomerFilter"); if(!el)return;
@@ -5507,7 +5545,7 @@ if($("returnForm"))$("returnForm").addEventListener("submit",async e=>{
       const {error:itemError}=await db.rpc("add_sales_return_item_v2",{
         p_sales_return_id:Number(id),p_product_id:Number(row.querySelector(".return-product").value),
         p_unit_id:Number(row.querySelector(".return-unit").value),p_quantity:Number(row.querySelector(".return-qty").value),
-        p_unit_price:Number(row.querySelector(".return-price").value),p_discount_amount:0,p_lot_id:null,p_notes:null,p_package_option_id:row.querySelector(".return-package-option")?.value?Number(row.querySelector(".return-package-option").value):null,p_request_id:itemRequestId
+        p_unit_price:Number(row.querySelector(".return-price").value),p_discount_amount:0,p_lot_id:(Number(row.querySelector(".return-lot")?.value)||null),p_notes:null,p_package_option_id:row.querySelector(".return-package-option")?.value?Number(row.querySelector(".return-package-option").value):null,p_request_id:itemRequestId
       });
       if(itemError)throw itemError;
     }
