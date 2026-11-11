@@ -229,3 +229,12 @@ Historical movements were not assigned fabricated lot allocations.
 - Re-tested treasury 5. Two deposits sharing one timestamp now show 695.00 then 845.00, two withdrawals sharing one timestamp show 950.00 then 940.00, and the final running balance equals the live treasury balance 1065.00.
 - All financial workflow tests rolled back. Counts remained 55 stock movements, 4 lots, 6 purchases, 10 sales, 2 sales returns, 11 collections, 1 expense, 2 supplier payments, 29 treasury transactions, 65 journal entries, and 2 cheques. No test data persisted.
 - Database-only function correction. App remains v70 / meat-v103; no index.html or sw.js update was needed.
+
+
+## Financial reports and trial balance reconciliation (2026-11-11)
+- Called both get_aged_receivables and get_aged_receivables_v2 as SYSTEM_ADMIN. Both returned zero rows, consistent with no currently overdue/open receivable rows in these reports.
+- get_supplier_payable_balances returned supplier 1 payable 967.50 EGP; suppliers 2 and 3 returned 0.00 EGP. This agrees with the current supplier payable total of 967.50 EGP.
+- get_financial_summary returned revenue 1,265.00 EGP, COGS 239.8846 EGP, expenses 10.00 EGP, cash 1,145.00 EGP, accounts receivable 0.00 EGP, accounts payable 967.50 EGP, and net profit 1,015.1154 EGP. Net profit equals revenue minus COGS minus expenses.
+- get_trial_balance for 2000-01-01 through 2026-11-11 returned total debits 10,098.77 EGP and total credits 10,098.77 EGP; difference 0.00 EGP.
+- get_treasury_statement permission check: anon EXECUTE=false; authenticated EXECUTE=true. The function still requires TREASURIES_VIEW or ACCOUNTING_VIEW internally.
+- The earlier financial workflow QA and treasury statement fix are documented in this same QA record. No live financial data was changed.
