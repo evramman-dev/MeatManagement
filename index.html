@@ -5284,8 +5284,9 @@ if($("viewSpStatementBtn")) $("viewSpStatementBtn").addEventListener("click", as
 // ========== مرتجعات البيع ==========
 function fillReturnTripSelect(){const el=$("returnTrip");if(!el)return;el.replaceChildren();const f=document.createElement("option");f.value="";f.textContent="اختر الجولة";el.appendChild(f);tripsCache.filter(t=>!['COMPLETED','CANCELLED'].includes(t.status)&&(currentRoleCode!=="SALES_REP"||Number(t.sales_rep_id)===Number(currentSalesRepId))).forEach(t=>{const o=document.createElement("option");o.value=String(t.trip_id);o.textContent=t.trip_number+" - "+(t.rep_name||"");el.appendChild(o);});}
 function fillReturnInvoiceSelect(){const el=$("returnInvoice");if(!el)return;el.replaceChildren();const f=document.createElement("option");f.value="";f.textContent="بدون فاتورة";el.appendChild(f);salesCache.filter(i=>i.status!=="CANCELLED").forEach(i=>{const o=document.createElement("option");o.value=String(i.sales_invoice_id);o.textContent=i.invoice_number+" - "+customerName(i.customer_id);o.dataset.customer=i.customer_id;o.dataset.trip=i.trip_id||"";el.appendChild(o);});}
-function resetSalesReturnForm(){$("returnForm").reset();$("returnItems").replaceChildren();$("exchangeItems").replaceChildren();returnItemCounter=0;$("returnDate").value=todayISO();fillReturnCustomerSelect();fillReturnTripSelect();fillReturnInvoiceSelect();fillTreasurySelects();addSalesReturnItemRow($("returnItems"));updateSalesReturnTotals();clear($("returnFormMsg"));$("returnFormModal").classList.add("active");}
+function resetSalesReturnForm(){salesReturnLotOptionsCache=[];salesReturnLotOptionsPromise=Promise.resolve();$("returnForm").reset();$("returnItems").replaceChildren();$("exchangeItems").replaceChildren();returnItemCounter=0;$("returnDate").value=todayISO();fillReturnCustomerSelect();fillReturnTripSelect();fillReturnInvoiceSelect();fillTreasurySelects();addSalesReturnItemRow($("returnItems"));updateSalesReturnTotals();clear($("returnFormMsg"));$("returnFormModal").classList.add("active");}
 let salesReturnLotOptionsCache=[];
+let salesReturnLotOptionsPromise=Promise.resolve();
 function addSalesReturnItemRow(container){
   const row=document.createElement("div");row.className="item-row";
   const p=document.createElement("select");p.className="return-product";p.required=true;
@@ -5352,7 +5353,7 @@ async function loadSalesReturnLotOptions(){
   }
   document.querySelectorAll("#returnItems .item-row").forEach(fillSalesReturnLotSelect);
 }
-if($("returnInvoice"))$("returnInvoice").addEventListener("change",loadSalesReturnLotOptions);
+if($("returnInvoice"))$("returnInvoice").addEventListener("change",()=>{salesReturnLotOptionsPromise=loadSalesReturnLotOptions();});
 function updateSalesReturnTotals(){let a=0;document.querySelectorAll("#returnItems .item-row").forEach(r=>a+=Number(r.querySelector(".return-qty")?.value||0)*Number(r.querySelector(".return-price")?.value||0));$("returnTotalDisplay").textContent=fmt(a);$("exchangeTotalDisplay").textContent="0";$("diffDisplay").textContent=fmt(-a);}
 function fillSalesReturnCustomerFilter(){
   const el=$("srCustomerFilter"); if(!el)return;
@@ -5508,6 +5509,7 @@ if($("returnForm"))$("returnForm").addEventListener("submit",async e=>{
   e.preventDefault();if(!canCreateReturns)return;
   const btn=$("saveReturnBtn");busy(btn,true,"جارٍ...","حفظ المرتجع");
   try{
+    await salesReturnLotOptionsPromise;
     const current=(await db.auth.getUser()).data.user;
     const tripId=Number($("returnTrip").value),customerId=Number($("returnCustomer").value),invoiceId=Number($("returnInvoice").value);
     const trip=tripsCache.find(t=>Number(t.trip_id)===tripId);
