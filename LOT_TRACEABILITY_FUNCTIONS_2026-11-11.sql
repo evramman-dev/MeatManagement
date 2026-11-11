@@ -15,6 +15,7 @@
 -- allow_legacy_purchase_return_without_historical_lot_20261111
 -- preserve_legacy_stock_reversals_without_lot_history_20261111
 -- validate_purchase_lot_dates_and_classify_trip_returns_20261111
+-- scope_sales_lot_lookup_to_return_permissions_20261111
 
 
 -- Function snapshot: add_sales_return_item
@@ -1831,15 +1832,12 @@ BEGIN
      OR NOT (public.has_permission('RETURNS_CREATE') OR public.has_permission('RETURNS_MANAGE')) THEN
     RAISE EXCEPTION 'لا تملك صلاحية عرض تشغيلات الفاتورة للمرتجع';
   END IF;
-  IF NOT (
-    public.has_permission('INVOICES_VIEW')
-    OR public.has_permission('SALES_MANAGE')
-    OR public.has_permission('RETURNS_MANAGE')
+  IF NOT EXISTS (
+    SELECT 1 FROM public.sales_invoices si
+    WHERE si.sales_invoice_id=p_sales_invoice_id
+      AND si.status IN ('POSTED','PAID','PARTIAL')
   ) THEN
-    RAISE EXCEPTION 'لا تملك صلاحية عرض الفاتورة الأصلية';
-  END IF;
-  IF p_sales_invoice_id IS NULL THEN
-    RAISE EXCEPTION 'الفاتورة الأصلية مطلوبة';
+    RAISE EXCEPTION 'الفاتورة الأصلية غير موجودة أو غير صالحة للمرتجع';
   END IF;
 
   RETURN QUERY
