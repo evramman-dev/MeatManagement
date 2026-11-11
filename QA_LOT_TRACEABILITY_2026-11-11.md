@@ -145,3 +145,17 @@ Historical movements were not assigned fabricated lot allocations.
 - The entire test transaction was rolled back. Post-rollback counts remained 55 stock movements, 4 lots, 4 lot-balance rows, 4 trips, 10 sales invoices, 2 sales returns, and 3 trip-load rows. Product 1 stock remained 8.7500 KG in the main warehouse and 0.0000 KG in the vehicle.
 - The standalone surplus-only dispatch and settlement test also passed before the fix. The post-fix end-to-end test confirms surplus restoration still works while customer returns no longer enter that branch.
 - No index.html or sw.js change was needed. Application release remains v70 / meat-v103; this was a database trigger correction only.
+
+
+## Trip-load role separation regression (2026-11-11)
+- Tested with separate SYSTEM_ADMIN and WAREHOUSE_KEEPER authentication contexts inside a rollback-only transaction.
+- WAREHOUSE_KEEPER was denied when attempting to approve a load request.
+- SYSTEM_ADMIN was denied when attempting to confirm the physical dispatch.
+- SYSTEM_ADMIN successfully approved the request, and WAREHOUSE_KEEPER successfully confirmed the actual dispatch.
+- The two denied attempts created no stock movements and did not change the APPROVED load state. The authorized dispatch then created the expected two transfer movements and changed the load to LOADED.
+- All test rows and movements were rolled back.
+
+## Auth security advisor limitation (2026-11-11)
+- Supabase Auth advisor reports leaked-password protection disabled.
+- Supabase documentation confirms this feature is available on Pro and higher plans. The MeatManagement organization is currently on the Free plan, so this setting cannot be enabled without a paid plan change.
+- No plan upgrade or billing change was made. This remains a documented Free-plan limitation.
