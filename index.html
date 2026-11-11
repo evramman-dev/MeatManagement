@@ -5704,8 +5704,12 @@ async function stopSalesReturnQrScanner(){
 function salesReturnLotCodeFromQr(decodedText){
   const raw=String(decodedText||"").trim();
   try{const p=JSON.parse(raw);return String(p.lot||p.lot_code||"").trim();}catch(e){}
-  const line=raw.split(/\\r?\\n/).find(x=>/^\\s*التشغيلة\\s*:/i.test(x));
-  return line?line.replace(/^\\s*التشغيلة\\s*:\\s*/i,"").trim():raw;
+  const line=raw.split(/\r?\n/).find(x=>/^\s*التشغيلة\s*:/i.test(x));
+  if(line)return line.replace(/^\s*التشغيلة\s*:\s*/i,"").trim();
+  const inline=raw.match(/التشغيلة\s*:\s*(.+?)(?=\s+تاريخ الإنتاج\s*:|\s+الصلاحية\s*:|$)/i);
+  if(inline)return String(inline[1]||"").trim();
+  const fallback=raw.match(/(?:^|\s)(OPEN-\d+-\d+)(?:\s|$)/i);
+  return fallback?String(fallback[1]).trim():raw;
 }
 async function openSalesReturnQrScanner(row){
   if(!row?.isConnected)return;
