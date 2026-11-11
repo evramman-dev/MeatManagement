@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v63</title>
+<title>MeatManagement v64</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -4916,12 +4916,46 @@ function renderPurchases(){
   found.forEach(inv=>{ 
     const card=document.createElement("div");card.className="product"; 
     const title=document.createElement("div");title.className="pname";title.textContent="🛒 "+inv.invoice_number; 
-    const details=document.createElement("div");details.className="details";details.textContent="المورد: "+supplierName(inv.supplier_id)+" | التاريخ: "+formatDate(inv.invoice_date); 
+    const details=document.createElement("div");details.className="details";
+    const invoiceStatus = inv.status === "CANCELLED"
+      ? "الحالة: ملغاة" + (inv.cancellation_reason ? " | سبب الإلغاء: " + inv.cancellation_reason : "")
+      : "الحالة: " + (inv.status === "POSTED" ? "مرحلة" : (inv.status || "غير محددة"));
+    details.textContent="المورد: "+supplierName(inv.supplier_id)+" | التاريخ: "+formatDate(inv.invoice_date)+" | "+invoiceStatus; 
     const total=document.createElement("span");total.className="badge";total.textContent="الإجمالي: "+fmt(inv.net_total); 
     card.append(title,details,total); 
     const actions=document.createElement("div");actions.className="actions"; 
     const view=document.createElement("button");view.className="btn secondary";view.textContent="عرض التفاصيل";view.onclick=()=>viewPurchaseInvoice(inv); 
-    actions.appendChild(view); 
+    actions.appendChild(view);
+    if(inv.status === "POSTED" && canManagePurchases){
+      const cancel=document.createElement("button");
+      cancel.type="button";
+      cancel.className="btn danger";
+      cancel.textContent="إلغاء الفاتورة";
+      cancel.onclick=async()=>{
+        const reason=prompt("اكتب سبب إلغاء فاتورة المشتريات:");
+        if(reason===null) return;
+        if(!reason.trim()){alert("يجب كتابة سبب الإلغاء.");return;}
+        if(!confirm("سيتم عكس المخزون والقيد المحاسبي وحركة الخزنة إن وجدت. لا يمكن الإلغاء عند وجود مرتجع نشط أو حركة مخزون لاحقة أو تكلفة نقل نشطة. هل تريد المتابعة؟")) return;
+        busy(cancel,true,"جارٍ الإلغاء...","إلغاء الفاتورة");
+        try{
+          const {error}=await db.rpc("cancel_purchase_invoice",{
+            p_invoice_id:Number(inv.purchase_invoice_id),
+            p_reason:reason.trim()
+          });
+          if(error) throw error;
+          showToast("تم إلغاء فاتورة المشتريات وعكس آثارها بنجاح","success");
+          await loadPurchases();
+          if(canViewStock) await loadStock();
+          if(canViewTreasuries) await loadTreasuries();
+          if(canViewSuppliers) await loadSuppliers();
+        }catch(e){
+          alert("تعذر إلغاء فاتورة المشتريات: "+err(e));
+        }finally{
+          busy(cancel,false,"","إلغاء الفاتورة");
+        }
+      };
+      actions.appendChild(cancel);
+    }
     card.appendChild(actions); 
     box.appendChild(card); 
   }); 
