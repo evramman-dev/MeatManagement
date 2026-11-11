@@ -3471,8 +3471,8 @@ window.openCustomerForm=async function(c=null){
   if(!c && !canCreateCustomers){ showToast("لا تملك صلاحية إضافة عميل.","error"); return; }
   try{
     await loadCustomerGeoData();
-    try{await loadCustomerSalesRepOptions(c?.sales_rep_id||"");}catch(repLoadError){console.warn("تعذر تحميل قائمة المندوبين المسؤولين:",repLoadError);}
     const form=$("customerForm"); if(form) form.reset();
+    try{await loadCustomerSalesRepOptions(c?.sales_rep_id||"");}catch(repLoadError){console.warn("تعذر تحميل قائمة المندوبين المسؤولين:",repLoadError);}
     $("customerEditId").value=c?.customer_id||"";
     $("customerFormTitle").textContent=c?"تعديل العميل":"إضافة عميل جديد";
     $("customerCode").value=c?.customer_code||"";
