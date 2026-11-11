@@ -8235,6 +8235,19 @@ window.viewPartnerStatement=mmPartnerLedger;
 if($("sectionPartners")){const obs=new MutationObserver(()=>{if(!$("sectionPartners").classList.contains("hidden"))mmLoadPartnerExtras();});obs.observe($("sectionPartners"),{attributes:true,attributeFilter:["class"]});}
 })();
 </script>
-</script>
+<script>
+(function(){
+const enhance=()=>{
+ const box=document.getElementById("fixedAssetsList");if(!box||!window.fixedAssetsCache)return;
+ [...box.children].forEach((card,i)=>{
+  if(card.dataset.mmEnhanced==="1")return;
+  const x=window.fixedAssetsCache[i];if(!x||x.status!=="ACTIVE"||!window.canManageFixedAssets)return;
+  card.dataset.mmEnhanced="1";
+ });
+};
+const s=document.getElementById("fixedAssetsList");if(s)new MutationObserver(enhance).observe(s,{childList:true});
+const sec=document.getElementById("sectionFixedAssets");if(sec)new MutationObserver(enhance).observe(sec,{attributes:true,attributeFilter:["class"]});
+})();
+</script></script>
 </body>
 </html>
