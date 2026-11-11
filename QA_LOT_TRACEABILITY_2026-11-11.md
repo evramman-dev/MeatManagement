@@ -69,7 +69,7 @@ Historical movements were not assigned fabricated lot allocations.
 
 ## Remaining follow-up
 - Run a real end-to-end user acceptance test in the live app after Pages deploys.
-- Add optional lot-level history drill-down from the stock card and sales invoice detail screen.
+- Stock-card lot-history drill-down is implemented in v71. Lot-allocation display inside sales invoice details remains a follow-up, subject to role-safe read access and UI validation.
 - Review existing historical purchases and returns only where reliable source documents exist. Do not fabricate old lot data.
 - Confirm each manufactured product's shelf life with the business before entering values.
 
@@ -77,8 +77,8 @@ Historical movements were not assigned fabricated lot allocations.
 - PR #27 was merged into main.
 - GitHub Pages deployment workflow succeeded: https://github.com/evramman-dev/MeatManagement/actions/runs/43043035247
 - JavaScript check workflow succeeded: https://github.com/evramman-dev/MeatManagement/actions/runs/43043035487
-- Main index.html is v70 (583,891 characters; blob SHA 5a4be7ed7642f76d45c775859cf326a43699a4d0).
-- sw.js cache is meat-v103 (blob SHA 58b5b5ed2e342fe720f79a4ee7c9cf02c2adaeda).
+- Main index.html is v71 (597,245 characters; blob SHA bd689794eacce00b2bc825dff98067c269a0a78f).
+- sw.js cache is meat-v105 (blob SHA 246433b21875fd474ffb740f96a6206ba8bde154).
 - The live page has not been visually inspected in a browser session.
 
 
@@ -335,3 +335,10 @@ Historical movements were not assigned fabricated lot allocations.
 - رُفع رقم الواجهة إلى v71 ورقم ذاكرة PWA إلى meat-v105.
 - اجتازت كتل JavaScript المضمنة فحص التحليل بعد التعديل. لم تُنفذ أي كتابة في Supabase ولم تتغير الجداول أو البيانات أو الصلاحيات.
 - اختبار العرض الفعلي على جهاز المستخدم واختبار النقر على سجل تشغيلة حقيقي ما زالا مطلوبين بعد نشر GitHub Pages.
+
+
+## نشر v71 — 2026-11-11
+- تم رفع index.html v71 وإضافة سجل حركة التشغيلات من شاشة المخزون، ثم تحديث sw.js إلى meat-v105.
+- GitHub Pages workflow بدأ للنشر من commit `128b069c9175109751905cae83566fa746842a12`، وكانت حالته عند آخر مراجعة `in_progress`.
+- تم فحص كتل JavaScript المضمنة في index.html وعددها 2، واجتازت جميعها فحص التحليل دون أخطاء.
+- لم يتم فحص الصفحة بصريًا بعد اكتمال النشر. يلزم اختبار الزر من حساب يملك STOCK_VIEW أو INVENTORY_VIEW.
