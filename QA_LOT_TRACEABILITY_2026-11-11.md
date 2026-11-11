@@ -442,3 +442,5 @@ Historical movements were not assigned fabricated lot allocations.
 - تم سحب EXECUTE على دالة التنبيهات من PUBLIC وanon وauthenticated، وإتاحتها لدور postgres فقط لتشغيلها المجدول.
 - اختبار الدالة الأولي أعاد صفر تنبيهات لأن كل التشغيلات الحالية أبعد من 30 يومًا عن الصلاحية. لم يتم إنشاء أي بيانات اختبار أو حركات أو قيود.
 - تحديث الواجهة إلى v76 وService Worker إلى meat-v111.
+
+- توضيح توقيت انتهاء الصلاحية: يبدأ تنبيه "منتهية الصلاحية" في يوم تاريخ الصلاحية نفسه، وليس في اليوم التالي. تم ضبط ذلك في Migration `lot_expiry_alert_on_expiry_date`.
