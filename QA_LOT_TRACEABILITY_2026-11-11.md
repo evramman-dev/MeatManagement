@@ -1,7 +1,7 @@
 # MeatManagement - Lot Traceability QA
 Date: 2026-11-11
-Release candidate: v70
-Service Worker cache: meat-v103
+Release candidate: v73
+Service Worker cache: meat-v107
 
 ## Scope
 Implemented the first operational Lot traceability layer across purchasing, production, sales, customer returns, stock transfers, trip dispatch/settlement, and stock balance reporting.
@@ -360,3 +360,18 @@ Historical movements were not assigned fabricated lot allocations.
 - أصبح تحميل التشغيلات عند فتح شاشتها فقط، ولم يعد جزءًا من تحميل أرصدة المخزون.
 - رُفع إصدار الواجهة إلى v72 وذاكرة PWA إلى meat-v106. لم يتغير Supabase أو الجداول أو البيانات أو RLS أو الصلاحيات.
 - اجتازت كتل JavaScript المضمنة فحص التحليل بعد التعديل.
+
+
+## Sales invoice lot-allocation details (2026-11-11)
+- Updated the invoice-details modal to request lot allocations through the existing `get_sales_invoice_lot_allocations` RPC.
+- The modal now displays product, lot code, allocated quantity, and expiry date in a separate section below invoice items.
+- The section handles invoices with no recorded lot allocations and displays an access/read error without blocking the invoice's financial details.
+- The RPC already enforces its own RETURNS_CREATE or RETURNS_MANAGE permission checks and verifies the source invoice state. No database, RLS, function, or permission changes were made.
+- The RPC was already used by the customer-return workflow. This UI reuses that existing read path.
+- JavaScript syntax validation passed for both inline script blocks.
+- No invoices, returns, stock movements, lot balances, or financial records were created or changed.
+- Live visual validation is pending. Test with a role that has the required return permission and a posted invoice with lot allocations; also confirm the no-allocation and permission-denied states.
+
+## Deployment
+- Main index.html is v73. Latest index commit: be41b8cb79455cceb83af779dad7e448fd40fdce.
+- sw.js cache is meat-v107. Latest service worker commit: e64941cc7b7000b5a516f888cf724ca485bc3969.
