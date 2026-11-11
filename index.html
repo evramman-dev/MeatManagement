@@ -3743,7 +3743,11 @@ function renderSuppliers(){
     const card=document.createElement("div");
     card.className="product";
     const payable=supplierPayablesCache.find(x=>String(x.supplier_id)===String(s.supplier_id));
-    card.innerHTML=`<div class="pname">${s.supplier_name}</div><div class="details">كود: ${s.supplier_code||'-'} | موبايل: ${s.phone||'-'} | الرصيد المستحق: ${payable?fmt(payable.current_payable):"غير متاح"}</div>`; 
+    const supplierBalance = payable ? Number(payable.current_payable || 0) : null;
+    const supplierBalanceLabel = payable
+      ? (supplierBalance < 0 ? "رصيد مدين / دفعة مقدمة: " + fmt(Math.abs(supplierBalance)) : "الرصيد المستحق: " + fmt(supplierBalance))
+      : "الرصيد: غير متاح";
+    card.innerHTML=`<div class="pname">${s.supplier_name}</div><div class="details">كود: ${s.supplier_code||'-'} | موبايل: ${s.phone||'-'} | ${supplierBalanceLabel}</div>`; 
     const actions=document.createElement("div"); 
     actions.className="actions"; 
     const stmt=document.createElement("button"); 
@@ -3807,15 +3811,17 @@ async function viewSupplierStatement(s) {
             db.from("purchase_invoices")
                 .select("invoice_number, invoice_date, net_total, status, treasury_id")
                 .eq("supplier_id", s.supplier_id)
-                .neq("status", "CANCELLED")
+                .eq("status", "POSTED")
                 .order("invoice_date", { ascending: true }),
             db.from("supplier_payments")
-                .select("payment_date, amount, payment_id")
+                .select("payment_date, amount, payment_id, is_cancelled")
                 .eq("supplier_id", s.supplier_id)
+                .eq("is_cancelled", false)
                 .order("payment_date", { ascending: true }),
             db.from("purchase_returns")
-                .select("return_number, return_date, total_return_amount, settlement_method")
+                .select("return_number, return_date, total_return_amount, settlement_method, is_cancelled")
                 .eq("supplier_id", s.supplier_id)
+                .eq("is_cancelled", false)
                 .order("return_date", { ascending: true })
         ]);
 
@@ -3827,6 +3833,17 @@ async function viewSupplierStatement(s) {
         const payments = paymentResult.data || [];
         const returns = returnResult.data || [];
         const timeline = [];
+        const openingBalance = Number(s.opening_balance || 0);
+        if (openingBalance !== 0) {
+            timeline.push({
+                date: null,
+                priority: 0,
+                ref: "رصيد افتتاحي",
+                desc: "الرصيد الافتتاحي للمورد",
+                debit: openingBalance < 0 ? Math.abs(openingBalance) : 0,
+                credit: openingBalance > 0 ? openingBalance : 0
+            });
+        }
 
         let totalCreditPurchases = 0;
         let totalCashPurchases = 0;
@@ -3891,7 +3908,7 @@ async function viewSupplierStatement(s) {
                 date: payment.payment_date,
                 priority: 3,
                 ref: payment.payment_id ? "سداد " + payment.payment_id : "-",
-                desc: "دفعة للمورد",
+                desc: "سداد للمورد، والزيادة تظهر كدفعة مقدمة",
                 debit: amount,
                 credit: 0
             });
@@ -3931,6 +3948,7 @@ async function viewSupplierStatement(s) {
         }
 
         $("modalSupplierSummary").innerHTML =
+            `<div class="line"><span>الرصيد الافتتاحي:</span><span>${fmt(openingBalance)}</span></div>` +
             `<div class="line"><span>المشتريات الآجلة:</span><span>${fmt(totalCreditPurchases)}</span></div>` +
             `<div class="line"><span>المشتريات النقدية (للعرض فقط):</span><span>${fmt(totalCashPurchases)}</span></div>` +
             `<div class="line"><span>مرتجعات مخصومة من حساب المورد:</span><span>${fmt(totalSupplierCreditReturns)}</span></div>` +
