@@ -4186,26 +4186,56 @@ async function loadStockSummary(){
 if($("refreshStockSummaryBtn"))$("refreshStockSummaryBtn").addEventListener("click",loadStockSummary);
 if($("stockSummarySearch"))$("stockSummarySearch").addEventListener("input",loadStockSummary);
 
-function openLotQrPreview(lot,product){
+async function ensureLotQrLibrary(){
+  if(window.QRCode)return window.QRCode;
+  const sources=[
+    "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js",
+    "https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"
+  ];
+  for(const src of sources){
+    try{
+      await new Promise((resolve,reject)=>{
+        const script=document.createElement("script");
+        script.src=src;script.onload=resolve;script.onerror=()=>reject(new Error("تعذر تحميل مكتبة QR"));
+        document.head.appendChild(script);
+      });
+      if(window.QRCode)return window.QRCode;
+    }catch(e){}
+  }
+  throw new Error("مكتبة إنشاء QR غير متاحة. اتصل بالإنترنت ثم أعد فتح المعاينة.");
+}
+async function openLotQrPreview(lot,product){
   if(!lot||!product)return;
   let modal=$("lotQrModal");
   if(!modal){
     modal=document.createElement("div");modal.id="lotQrModal";modal.className="modal hidden";
-    modal.innerHTML='<div class="modal-content"><div class="modal-header" id="lotQrModalHeader"><h3>معاينة ملصق التشغيلة</h3><button type="button" class="close-btn" id="lotQrClose">&times;</button></div><div class="modal-body"><div id="lotQrPrintArea" class="lot-qr-label"><div id="lotQrCode" class="lot-qr-code"></div><div class="lot-qr-text"><div class="lot-qr-brand">MEAT MANAGEMENT</div><div id="lotQrProduct" class="lot-qr-product"></div><div id="lotQrLot"></div><div id="lotQrManufactured"></div><div id="lotQrExpires"></div></div></div><div class="lot-qr-actions no-print"><button type="button" class="btn" id="lotQrPrint">طباعة الملصق</button><button type="button" class="btn secondary" id="lotQrCloseBottom">إغلاق</button></div></div></div>';
+    modal.innerHTML='<div class="modal-content"><div class="modal-header" id="lotQrModalHeader"><h3>معاينة ملصق التشغيلة</h3><button type="button" class="close-btn" id="lotQrClose">&times;</button></div><div class="modal-body"><div id="lotQrPrintArea" class="lot-qr-label"><div id="lotQrCode" class="lot-qr-code"></div><div class="lot-qr-text"><div class="lot-qr-brand">MEAT MANAGEMENT</div><div id="lotQrProduct" class="lot-qr-product"></div><div id="lotQrLot"></div><div id="lotQrManufactured"></div><div id="lotQrExpires"></div></div></div><div id="lotQrError" class="status error hidden" style="margin-top:10px;"></div><div class="lot-qr-actions no-print"><button type="button" class="btn" id="lotQrPrint">طباعة الملصق</button><button type="button" class="btn secondary" id="lotQrCloseBottom">إغلاق</button></div></div></div>';
     document.body.appendChild(modal);
     const close=()=>modal.classList.add("hidden");
     $("lotQrClose").addEventListener("click",close);$("lotQrCloseBottom").addEventListener("click",close);
     modal.addEventListener("click",e=>{if(e.target===modal)close();});
-    $("lotQrPrint").addEventListener("click",()=>window.print());
+    $("lotQrPrint").addEventListener("click",()=>{
+      if(!$("lotQrCode").querySelector("canvas, img")){showToast("لا يوجد رمز QR جاهز للطباعة.","error");return;}
+      window.print();
+    });
   }
   const payload={product:product.product_name||productName(lot.product_id),lot:lot.lot_code||"",manufactured_on:lot.manufactured_on||null,expires_on:lot.expires_on||null};
-  $("lotQrCode").replaceChildren();$("lotQrProduct").textContent=payload.product;
+  const qrBox=$("lotQrCode"),errorBox=$("lotQrError");
+  qrBox.replaceChildren();errorBox.classList.add("hidden");errorBox.textContent="";
+  $("lotQrProduct").textContent=payload.product;
   $("lotQrLot").textContent="رقم التشغيلة: "+payload.lot;
   $("lotQrManufactured").textContent="الإنتاج: "+(payload.manufactured_on?formatDate(payload.manufactured_on):"غير محدد");
   $("lotQrExpires").textContent="الصلاحية: "+(payload.expires_on?formatDate(payload.expires_on):"غير محددة");
   modal.classList.remove("hidden");
-  if(typeof QRCode==="undefined"){$("lotQrCode").textContent="مكتبة QR غير متاحة. اتصل بالإنترنت ثم أعد المحاولة.";return;}
-  new QRCode($("lotQrCode"),{text:JSON.stringify(payload),width:150,height:150,correctLevel:QRCode.CorrectLevel.M});
+  try{
+    const QR=await ensureLotQrLibrary();
+    new QR(qrBox,{text:JSON.stringify(payload),width:150,height:150,correctLevel:QR.CorrectLevel?.M??0});
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    if(!qrBox.querySelector("canvas, img"))throw new Error("لم تنشأ صورة رمز QR.");
+  }catch(e){
+    qrBox.replaceChildren();
+    errorBox.textContent=err(e);errorBox.classList.remove("hidden");
+  }
 }
 
 let lotQrScanner=null;
