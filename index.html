@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v86</title>
+<title>MeatManagement v87</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -5692,7 +5692,7 @@ function addSalesReturnItemRow(container){
     fillPackages();fillSalesReturnLotSelect(row);recalc();
   }
   function recalc(){total.textContent="الإجمالي: "+fmt(Number(q.value||0)*Number(price.value||0));updateSalesReturnTotals();}
-  p.onchange=fill;u.onchange=()=>{fillPackages();fillSalesReturnLotSelect(row);};pack.onchange=()=>fillSalesReturnLotSelect(row);q.oninput=recalc;price.oninput=recalc;fill();
+  p.onchange=()=>{fill();applySalesReturnOriginalPrice(row);};u.onchange=()=>{fillPackages();fillSalesReturnLotSelect(row);applySalesReturnOriginalPrice(row);};pack.onchange=()=>{fillSalesReturnLotSelect(row);applySalesReturnOriginalPrice(row);};lot.onchange=()=>applySalesReturnOriginalPrice(row);q.oninput=recalc;price.oninput=recalc;price.readOnly=true;price.placeholder="يُحدد من الفاتورة الأصلية";fill();
 }
 let salesReturnQrScanner=null;
 let salesReturnQrRunning=false;
@@ -5809,15 +5809,51 @@ function fillSalesReturnLotSelect(row){
   else if(options.length===0)first.textContent=$("returnInvoice")?.value?"لا توجد بيانات تشغيلات لهذه الفاتورة":"اختر الفاتورة الأصلية أولًا";
   if(options.some(x=>String(x.lot_id)===previous))lot.value=previous;
 }
+let salesReturnInvoiceItemsCache=[];
 async function loadSalesReturnLotOptions(){
   const invoiceId=Number($("returnInvoice")?.value||0);
   salesReturnLotOptionsCache=[];
+  salesReturnInvoiceItemsCache=[];
   if(invoiceId){
-    const {data,error}=await db.rpc("get_sales_invoice_lot_allocations",{p_sales_invoice_id:invoiceId});
-    if(error){msg($("returnFormMsg"),"تعذر تحميل تشغيلات الفاتورة: "+err(error),"error");}
-    else salesReturnLotOptionsCache=data||[];
+    const [lotsResult,itemsResult]=await Promise.all([
+      db.rpc("get_sales_invoice_lot_allocations",{p_sales_invoice_id:invoiceId}),
+      db.from("sales_invoice_items").select("*").eq("sales_invoice_id",invoiceId)
+    ]);
+    if(lotsResult.error)msg($("returnFormMsg"),"تعذر تحميل تشغيلات الفاتورة: "+err(lotsResult.error),"error");
+    else salesReturnLotOptionsCache=lotsResult.data||[];
+    if(itemsResult.error)msg($("returnFormMsg"),"تعذر تحميل أسعار الفاتورة الأصلية: "+err(itemsResult.error),"error");
+    else salesReturnInvoiceItemsCache=itemsResult.data||[];
   }
-  document.querySelectorAll("#returnItems .item-row").forEach(fillSalesReturnLotSelect);
+  document.querySelectorAll("#returnItems .item-row").forEach(row=>{
+    fillSalesReturnLotSelect(row);
+    applySalesReturnOriginalPrice(row);
+  });
+}
+function applySalesReturnOriginalPrice(row){
+  const price=row?.querySelector(".return-price");
+  if(!price)return;
+  const productId=Number(row.querySelector(".return-product")?.value||0);
+  const unitId=Number(row.querySelector(".return-unit")?.value||0);
+  const packageId=Number(row.querySelector(".return-package-option")?.value||0)||null;
+  const lotId=Number(row.querySelector(".return-lot")?.value||0)||null;
+  price.value="";
+  if(!productId||!unitId||!lotId||!salesReturnInvoiceItemsCache.length)return;
+  const lot=salesReturnLotOptionsCache.find(x=>Number(x.lot_id)===lotId);
+  let matches=salesReturnInvoiceItemsCache.filter(item=>
+    Number(item.product_id)===productId&&
+    Number(item.sale_unit_id??item.unit_id)===unitId&&
+    (Number(item.package_option_id||0)||null)===packageId
+  );
+  const linkedItemId=Number(lot?.sales_invoice_item_id||lot?.invoice_item_id||0);
+  if(linkedItemId)matches=matches.filter(item=>Number(item.sales_invoice_item_id)===linkedItemId);
+  if(!matches.length)return;
+  const prices=[...new Set(matches.map(item=>Number(item.unit_price)).filter(Number.isFinite))];
+  if(prices.length===1){
+    price.value=prices[0].toFixed(2);
+    price.title="السعر من الفاتورة الأصلية";
+  }else price.title="تعذر تحديد سعر بند الفاتورة الأصلي بشكل منفرد";
+  price.readOnly=true;
+  row.querySelector(".return-qty")?.dispatchEvent(new Event("input",{bubbles:true}));
 }
 if($("returnInvoice"))$("returnInvoice").addEventListener("change",()=>{salesReturnLotOptionsPromise=loadSalesReturnLotOptions();});
 if($("returnCustomer"))$("returnCustomer").addEventListener("change",loadReturnInvoicesForCustomer);
