@@ -203,3 +203,17 @@ Historical movements were not assigned fabricated lot allocations.
 - The purchase return was marked cancelled and one posted journal reversal was created for the original PURCHASE_RETURN entry.
 - During the transaction, the original lot returned to 0.5000 KG and warehouse product 1 returned to 9.2500 KG.
 - The full transaction rolled back; no test invoice, return, lot, movement, or journal entry persisted.
+
+
+## Customer collections, payment methods, expenses, supplier payments, and treasury regression (2026-11-11)
+- Reviewed the existing QA record first. The prior recorded rollback tests covered purchase/sales/returns, production, trip dispatch/settlement, and lot reversals; this batch adds financial settlement coverage not previously recorded.
+- Cash customer collection: created a rollback-only sales invoice, collected 10 EGP against it, and cancelled the collection. Invoice paid amount returned to 0, remaining amount returned to 30 EGP, status returned to POSTED, treasury deposit and withdrawal both existed, and one posted journal reversal referenced the original COLLECTION journal.
+- Bank transfer and Instapay collections: each posted 10 EGP to its mapped treasury, then cancellation restored each treasury and created one posted journal reversal.
+- Cheque collection: received a 10 EGP cheque into treasury 10, then cleared it. The cheque status became CLEARED, 10 EGP moved from the cheque treasury to bank treasury 7, and one CHEQUE_CLEARING journal entry posted. After cancelling the bank and Instapay collections, the invoice retained exactly 10 EGP paid through the cleared cheque and 140 EGP remaining.
+- Expense: created and cancelled a 5 EGP hospitality expense. Treasury cash was restored and one posted journal reversal referenced the original EXPENSE entry.
+- Supplier payment: created and cancelled a 1 EGP supplier payment. The supplier outstanding balance returned exactly to its pre-test value of 0.00 EGP; treasury movements and one posted journal reversal were verified.
+- Treasury transfer: transferred 10 EGP from the main cash treasury (ID 5) to bank treasury (ID 7). The source and destination movements were paired, balances changed by the exact amount, and one posted inter-account journal was recorded.
+- Idempotency: repeated the same request ID for customer collection, expense, supplier payment, and treasury transfer. Each RPC returned the original record/transaction ID without duplicate rows; treasury transfer retained exactly two paired transactions.
+- Reconciliation: all 9 active treasury balances matched opening balance plus treasury transactions exactly (difference 0.00 for every treasury). The posted journal-entry lines contained 0 unbalanced entries.
+- All tests ran in explicit transactions and were rolled back. Post-test counts remained 55 stock movements, 4 lots, 6 purchase invoices, 10 sales invoices, 2 sales returns, 11 customer collections, 1 expense, 2 supplier payments, 29 treasury transactions, 65 journal entries, and 2 customer cheques. No test invoice, collection, expense, payment, transfer, cheque, or journal entry from this batch persisted.
+- No production database correction was required in this batch. Application remains v70 / meat-v103; no index.html or sw.js update was necessary.
