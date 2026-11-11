@@ -7350,34 +7350,15 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
           const { data, error } = await db.rpc("get_profit_loss", { p_from: from, p_to: to });
           if(error) throw error;
           const row = data && data[0];
-          
-          if(!row) { 
-              const [salesR, purchR, expR] = await Promise.all([
-                  db.from("sales_invoices").select("net_total").gte("invoice_date", from).lte("invoice_date", to).neq("status","CANCELLED"),
-                  db.from("purchase_invoices").select("net_total").gte("invoice_date", from).lte("invoice_date", to).neq("status","CANCELLED"),
-                  db.from("expenses").select("amount").gte("expense_date", from).lte("expense_date", to)
-              ]);
-              const revenue = (salesR.data||[]).reduce((s,i)=>s+Number(i.net_total||0),0);
-              const cogs = (purchR.data||[]).reduce((s,i)=>s+Number(i.net_total||0),0);
-              const expenses = (expR.data||[]).reduce((s,i)=>s+Number(i.amount||0),0);
-              const profit = revenue - cogs - expenses;
-              const margin = revenue > 0 ? ((profit / revenue) * 100).toFixed(2) : 0;
-              if(plBox) plBox.innerHTML = `
-                  <div class="line"><span>الإيرادات:</span><span style="color:green;">${fmt(revenue)}</span></div>
-                  <div class="line"><span>تكلفة المبيعات (المشتريات):</span><span style="color:red;">-${fmt(cogs)}</span></div>
-                  <div class="line"><span>المصروفات:</span><span style="color:red;">-${fmt(expenses)}</span></div>
-                  <div class="line grand" style="color:var(--g);"><span>صافي الربح:</span><span>${fmt(profit)}</span></div>
-                  <div class="line"><span>هامش الربح:</span><span>${margin}%</span></div>
-                  <div class="line" style="font-size:12px; color:var(--muted);"><span>من:</span><span>${from}</span></div>
-                  <div class="line" style="font-size:12px; color:var(--muted);"><span>إلى:</span><span>${to}</span></div>
-              `;
+          if(!row) {
+              if(plBox) plBox.innerHTML = "<div class='empty'>لا توجد بيانات محاسبية مسجلة في هذه الفترة.</div>";
               return;
           }
-          
+
           const margin = row.revenue > 0 ? ((row.profit / row.revenue) * 100).toFixed(2) : 0;
           if(plBox) plBox.innerHTML = `
               <div class="line"><span>الإيرادات:</span><span style="color:green;">${fmt(row.revenue)}</span></div>
-              <div class="line"><span>تكلفة المبيعات (المشتريات):</span><span style="color:red;">-${fmt(row.cogs)}</span></div>
+              <div class="line"><span>تكلفة المبيعات:</span><span style="color:red;">-${fmt(row.cogs)}</span></div>
               <div class="line"><span>المصروفات:</span><span style="color:red;">-${fmt(row.expenses)}</span></div>
               <div class="line grand" style="color:var(--g);"><span>صافي الربح:</span><span>${fmt(row.profit)}</span></div>
               <div class="line"><span>هامش الربح:</span><span>${margin}%</span></div>
