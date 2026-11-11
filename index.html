@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v69</title>
+<title>MeatManagement v70</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -302,7 +302,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v69]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v70]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -951,6 +951,12 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="row"><input id="stockSearch" type="search" placeholder="ابحث..."><button id="refreshStockBtn" class="btn secondary" type="button">تحديث</button></div>
 <div id="stockMsg" class="status hidden"></div>
 <div id="stockList"><div class="empty">جارٍ تحميل الأرصدة...</div></div>
+<div class="card" id="stockLotsCard" style="margin-top:16px;">
+<h3>تتبع التشغيلات</h3>
+<p class="desc">رقم التشغيلة ومصدرها وموقعها وتاريخ صلاحيتها.</p>
+<div class="row"><input id="stockLotsSearch" type="search" placeholder="ابحث برقم التشغيلة أو المنتج أو المورد"><button id="refreshStockLotsBtn" class="btn secondary" type="button">تحديث التشغيلات</button></div>
+<div id="stockLotsList"><div class="empty">جارٍ تحميل التشغيلات...</div></div>
+</div>
 </div>
 </div>
 <div id="stockFormModal" class="modal-form">
@@ -1643,6 +1649,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div><label for="purchaseUnit">وحدة الشراء</label><select id="purchaseUnit"><option value="">بدون تحديد</option></select></div>
 <div><label for="salesUnit">وحدة البيع</label><select id="salesUnit"><option value="">بدون تحديد</option></select></div>
 <div><label for="unitsCarton">وحدات بالكرتونة</label><input id="unitsCarton" type="number" min="0" step="0.0001"></div>
+<div><label for="shelfLifeDays">مدة الصلاحية بالأيام</label><input id="shelfLifeDays" type="number" min="1" step="1" placeholder="للمنتج الناتج من الإنتاج"></div>
 <div><label for="minStock">الحد الأدنى</label><input id="minStock" type="number" min="0" step="0.0001" value="0"></div>
 <div><label for="minPrice">أقل سعر</label><input id="minPrice" type="number" min="0" step="0.01"></div>
 <div><label for="targetPrice">السعر المستهدف</label><input id="targetPrice" type="number" min="0" step="0.01"></div>
@@ -1664,7 +1671,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v69</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v70</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -3212,7 +3219,7 @@ function renderProducts(){
     const usageBadges=uses.length?uses.map(label=>'<span class="badge">'+label+'</span>').join(""):'<span class="badge">لا توجد استخدامات مفعلة</span>';
     card.innerHTML=`<div class="pname">${esc(p.product_name)}</div>
       <div class="details">الكود: ${esc(p.product_code||"—")} | النوع: ${esc(typeName(p.product_type))} | التصنيف: ${esc(category)}${p.barcode?" | الباركود: "+esc(p.barcode):""}</div>
-      <div class="details">${unitDetails}${p.units_per_carton? " | عدد الوحدات بالكرتونة: "+esc(fmtQty(p.units_per_carton)):""}</div>
+      <div class="details">${unitDetails}${p.units_per_carton? " | عدد الوحدات بالكرتونة: "+esc(fmtQty(p.units_per_carton)):""}${p.shelf_life_days? " | صلاحية الإنتاج: "+esc(p.shelf_life_days)+" يوم":""}</div>
       <div class="details">حد إعادة الطلب: ${p.minimum_stock==null?"—":esc(fmtQty(p.minimum_stock))}</div>
       ${priceDetails}<div>${statusBadge}${usageBadges}</div>`;
     if(canViewStock){
@@ -3243,6 +3250,7 @@ function renderProducts(){
         $("targetPrice").value=p.target_selling_price||""; 
         $("maxPrice").value=p.max_selling_price||""; 
         $("unitsCarton").value=p.units_per_carton||""; 
+        $("shelfLifeDays").value=p.shelf_life_days||""; 
         $("active").checked=p.is_active; 
         $("canPurchase").checked=p.can_be_purchased; 
         $("canProduce").checked=p.can_be_produced; 
@@ -3292,7 +3300,8 @@ if($("productForm")) $("productForm").addEventListener("submit", async e => {
     purchase_unit_id:$("purchaseUnit").value?Number($("purchaseUnit").value):null,
     sales_unit_id:$("salesUnit").value?Number($("salesUnit").value):null,
     minimum_stock:Number($("minStock").value||0), 
-    units_per_carton:Number($("unitsCarton").value||0)||null, 
+    units_per_carton:Number($("unitsCarton").value||0)||null,
+    shelf_life_days:$("shelfLifeDays").value?Number($("shelfLifeDays").value):null, 
     min_selling_price:$("minPrice").value?Number($("minPrice").value):null, 
     target_selling_price:$("targetPrice").value?Number($("targetPrice").value):null, 
     max_selling_price:$("maxPrice").value?Number($("maxPrice").value):null, 
@@ -4088,14 +4097,67 @@ async function viewSupplierStatement(s) {
 let currentStockLocationFilter = null;
 async function loadStock(){ 
     if(!canViewStock)return; 
-    if(!navigator.onLine) { stockCache=getCache('stock'); renderStockLocationTabs(); renderStock(); return; } 
+    if(!navigator.onLine) { stockCache=getCache('stock'); renderStockLocationTabs(); renderStock(); const lotBox=$("stockLotsList");if(lotBox)lotBox.innerHTML="<div class='empty'>اتصل بالإنترنت لعرض التشغيلات.</div>"; return; } 
     const box=$("stockList"); if(box) box.innerHTML = "جارٍ التحميل..."; 
     const {data,error}=await db.from("stock_balances").select("*, products(product_name, product_code, base_unit_id), locations(location_name)").limit(500); 
     if(error) { if(box) box.innerHTML = err(error); return; } 
     stockCache=data||[]; saveCache('stock', stockCache); 
     renderStockLocationTabs();
-    renderStock(); 
+    renderStock();
+    await loadStockLots(); 
 }
+let stockLotsCache=[];
+async function loadStockLots(){
+  const box=$("stockLotsList");if(!box||!canViewStock)return;
+  if(!navigator.onLine){box.innerHTML="<div class='empty'>اتصل بالإنترنت لعرض التشغيلات.</div>";return;}
+  box.innerHTML="<div class='empty'>جارٍ تحميل التشغيلات...</div>";
+  try{
+    const {data,error}=await db.from("stock_lot_balances")
+      .select("lot_balance_id,lot_id,location_id,quantity,stock_lots(lot_id,lot_code,product_id,source_type,supplier_lot_code,manufactured_on,expires_on,status,received_at,notes),locations(location_name)")
+      .gt("quantity",0).order("lot_balance_id",{ascending:false}).limit(500);
+    if(error)throw error;
+    stockLotsCache=data||[];renderStockLots();
+  }catch(e){box.innerHTML="<div class='empty error'>تعذر تحميل التشغيلات: "+err(e)+"</div>";}
+}
+function renderStockLots(){
+  const box=$("stockLotsList");if(!box)return;box.replaceChildren();
+  const q=($("stockLotsSearch")?.value||"").trim().toLowerCase();
+  const sourceNames={PURCHASE:"شراء",PRODUCTION:"إنتاج",OPENING:"رصيد افتتاحي",RETURN:"مرتجع",ADJUSTMENT:"تسوية",OTHER:"أخرى"};
+  const today=todayISO();
+  const found=stockLotsCache.filter(row=>{
+    if(currentStockLocationFilter!==null&&String(row.location_id)!==String(currentStockLocationFilter))return false;
+    const lot=row.stock_lots||{};
+    const p=productsCache.find(x=>String(x.product_id)===String(lot.product_id));
+    const loc=locationsCache.find(x=>String(x.location_id)===String(row.location_id));
+    const hay=[lot.lot_code,lot.supplier_lot_code,p?.product_name,p?.product_code,loc?.location_name,sourceNames[lot.source_type]].join(" ").toLowerCase();
+    return Number(row.quantity)>0&&hay.includes(q);
+  });
+  if(!found.length){box.innerHTML="<div class='empty'>لا توجد تشغيلات مطابقة.</div>";return;}
+  found.forEach(row=>{
+    const lot=row.stock_lots||{};
+    const p=productsCache.find(x=>String(x.product_id)===String(lot.product_id));
+    const loc=locationsCache.find(x=>String(x.location_id)===String(row.location_id));
+    const card=document.createElement("div");card.className="product";
+    const title=document.createElement("div");title.className="pname";title.textContent=(lot.lot_code||"تشغيلة")+" — "+(p?.product_name||productName(lot.product_id));
+    const details=document.createElement("div");details.className="details";
+    const fields=["المصدر: "+(sourceNames[lot.source_type]||lot.source_type||"—"),"الموقع: "+(loc?.location_name||row.locations?.location_name||"—"),"الرصيد: "+fmtQty(row.quantity)+" "+unitName(p?.base_unit_id)];
+    if(lot.supplier_lot_code)fields.push("تشغيلة المورد: "+lot.supplier_lot_code);
+    if(lot.manufactured_on)fields.push("الإنتاج: "+formatDate(lot.manufactured_on));
+    if(lot.expires_on)fields.push("الصلاحية: "+formatDate(lot.expires_on));else fields.push("الصلاحية: غير محددة");
+    details.textContent=fields.join(" | ");
+    const status=document.createElement("span");status.className="badge";
+    if(lot.status==="QUARANTINE"){status.textContent="موقوفة";status.classList.add("badge-cancel");}
+    else if(lot.expires_on&&lot.expires_on<today){status.textContent="منتهية الصلاحية";status.classList.add("badge-cancel");}
+    else if(lot.expires_on&&Math.ceil((new Date(lot.expires_on+"T00:00:00")-new Date(today+"T00:00:00"))/86400000)<=30){status.textContent="تقترب من الصلاحية";status.classList.add("badge-partial");}
+    else{status.textContent=lot.status==="ACTIVE"?"نشطة":(lot.status||"—");}
+    card.append(title,details,status);
+    if(lot.source_type==="OPENING"){const note=document.createElement("div");note.className="item-hint";note.textContent="رصيد سابق. لم يتوفر مصدر أو تاريخ صلاحية تاريخي مؤكد.";card.appendChild(note);}
+    box.appendChild(card);
+  });
+}
+if($("stockLotsSearch"))$("stockLotsSearch").addEventListener("input",renderStockLots);
+if($("refreshStockLotsBtn"))$("refreshStockLotsBtn").addEventListener("click",loadStockLots);
+
 function renderStockLocationTabs() {
     const box = $("stockLocationTabs"); if(!box) return;
     box.innerHTML = "";
@@ -4826,11 +4888,25 @@ function addPurchaseItemRow() {
   const price=document.createElement("input"); price.type="number"; price.className="item-price"; price.min="0"; price.step="0.01"; price.required=true; 
   priceWrap.append(priceLabel,price);
   grid3.append(unitWrap,qtyWrap,priceWrap);
+  const lotGrid=document.createElement("div");lotGrid.className="grid3";
+  const supplierLotWrap=document.createElement("div");
+  const supplierLotLabel=document.createElement("label");supplierLotLabel.textContent="رقم تشغيلة المورد";
+  const supplierLot=document.createElement("input");supplierLot.type="text";supplierLot.className="item-supplier-lot-code";supplierLot.maxLength=100;supplierLot.placeholder="اختياري";
+  supplierLotWrap.append(supplierLotLabel,supplierLot);
+  const manufacturedWrap=document.createElement("div");
+  const manufacturedLabel=document.createElement("label");manufacturedLabel.textContent="تاريخ الإنتاج";
+  const manufactured=document.createElement("input");manufactured.type="date";manufactured.className="item-manufactured-on";
+  manufacturedWrap.append(manufacturedLabel,manufactured);
+  const expiresWrap=document.createElement("div");
+  const expiresLabel=document.createElement("label");expiresLabel.textContent="تاريخ الصلاحية";
+  const expires=document.createElement("input");expires.type="date";expires.className="item-expires-on";
+  expiresWrap.append(expiresLabel,expires);
+  lotGrid.append(supplierLotWrap,manufacturedWrap,expiresWrap);
   const lineTotal=document.createElement("div"); lineTotal.className="item-line-total"; lineTotal.textContent="الإجمالي: 0";
   const hint=document.createElement("div"); hint.className="item-hint"; hint.textContent="";
   const removeBtn=document.createElement("button"); removeBtn.type="button"; removeBtn.className="btn danger"; removeBtn.textContent="حذف الصنف"; 
   removeBtn.addEventListener("click",()=>{ wrap.remove();updatePurchaseTotals(); if(!$("purchaseItems").children.length)addPurchaseItemRow(); });
-  wrap.append(prodLabel,scanBtn,barcodeInput,prodSel,grid3,lineTotal,hint,removeBtn); 
+  wrap.append(prodLabel,scanBtn,barcodeInput,prodSel,grid3,lotGrid,lineTotal,hint,removeBtn); 
   $("purchaseItems").appendChild(wrap);
   const recalc=()=>{ 
     const q=Number(qty.value||0);
@@ -5021,7 +5097,11 @@ if($("purchaseForm")) $("purchaseForm").addEventListener("submit", async e => {
       const qty=Number(row.querySelector(".item-qty")?.value||0); 
       const price=Number(row.querySelector(".item-price")?.value||0); 
       if(!productId||!unitId||qty<=0||!Number.isFinite(price)||price<0){valid=false;return;} 
-      items.push({product_id:Number(productId),unit_id:unitId,quantity:qty,unit_price:price}); 
+      const supplierLotCode=row.querySelector(".item-supplier-lot-code")?.value.trim()||null;
+      const manufacturedOn=row.querySelector(".item-manufactured-on")?.value||null;
+      const expiresOn=row.querySelector(".item-expires-on")?.value||null;
+      if(manufacturedOn&&expiresOn&&expiresOn<manufacturedOn){valid=false;return;}
+      items.push({product_id:Number(productId),unit_id:unitId,quantity:qty,unit_price:price,supplier_lot_code:supplierLotCode,manufactured_on:manufacturedOn,expires_on:expiresOn}); 
     });
     if(!items.length||!valid){ msg($("purchaseFormMsg"),"أكمل بيانات الأصناف وتأكد من صحة الكمية والسعر.","error");return; }
     const subtotal=items.reduce((sum,item)=>sum+Math.round((item.quantity*item.unit_price+Number.EPSILON)*100)/100,0);
