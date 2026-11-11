@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'meat-v117';
+const CACHE_VERSION = 'meat-v118';
 const CORE_CACHE = [
   './',
   './index.html',
