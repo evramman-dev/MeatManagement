@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v58</title>
+<title>MeatManagement v59</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -302,7 +302,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v58]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v59]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1202,7 +1202,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="row" style="justify-content:space-between"><h2>🧾 فواتير البيع</h2>
 <div style="display:flex;gap:8px;">
 <button id="addInvoiceBtn" class="btn hidden" type="button" style="margin:0;width:auto;" onclick="document.getElementById('invoiceFormModal').classList.add('active')">＋ فاتورة</button>
-<button id="openSalesReturnsBtn" class="btn hidden" type="button" style="margin:0;width:auto;background:#a52b2b;" onclick="window.openSection('salesReturns')">↩️ مرتجعات البيع</button>
+
 </div>
 </div>
 <div class="row"><input id="salesSearch" type="search" placeholder="ابحث..."><button id="refreshSalesBtn" class="btn secondary" type="button">تحديث</button></div>
@@ -1664,7 +1664,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v58</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v59</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -2270,7 +2270,7 @@ async function userInfo(user){
     try{ canViewTreasuryTransfers=await permission("TREASURIES_MANAGE") || await permission("ACCOUNTING_MANAGE") || isSystemAdmin; if($("menuTreasuryTransfers")) $("menuTreasuryTransfers").classList.toggle("hidden",!canViewTreasuryTransfers); }catch(e){}
     try{ canViewStock=await permission("STOCK_VIEW") || await permission("INVENTORY_VIEW") || isSystemAdmin; canManageStock=await permission("STOCK_MANAGE") || isSystemAdmin; if($("menuStock")) $("menuStock").classList.toggle("hidden",!canViewStock); if($("stockCard")) $("stockCard").classList.toggle("hidden",!canViewStock); if($("adjustStockBtn")) $("adjustStockBtn").classList.toggle("hidden",!canManageStock); }catch(e){}
     try{ canViewStockTransfers=await permission("INVENTORY_TRANSFER") || isSystemAdmin; if($("menuStockTransfers")) $("menuStockTransfers").classList.toggle("hidden",!canViewStockTransfers); }catch(e){}
-    try{ canViewSales=await permission("SALES_VIEW") || await permission("INVOICES_VIEW") || isSystemAdmin; canManageSales=await permission("SALES_MANAGE") || isSystemAdmin; canViewSalesReturns=canViewSales || await permission("RETURNS_VIEW") || isSystemAdmin; if($("menuSales")) $("menuSales").classList.toggle("hidden",!canViewSales); if($("salesCard")) $("salesCard").classList.toggle("hidden",!canViewSales); if($("menuSalesReturns")) $("menuSalesReturns").classList.toggle("hidden",!canViewSalesReturns); if($("openSalesReturnsBtn")) $("openSalesReturnsBtn").classList.toggle("hidden",!canViewSalesReturns); if($("addInvoiceBtn")) $("addInvoiceBtn").classList.toggle("hidden",!(await permission("INVOICES_CREATE") || canManageSales)); }catch(e){}
+    try{ canViewSales=await permission("SALES_VIEW") || await permission("INVOICES_VIEW") || isSystemAdmin; canManageSales=await permission("SALES_MANAGE") || isSystemAdmin; canViewSalesReturns=canViewSales || await permission("RETURNS_VIEW") || isSystemAdmin; if($("menuSales")) $("menuSales").classList.toggle("hidden",!canViewSales); if($("salesCard")) $("salesCard").classList.toggle("hidden",!canViewSales); if($("menuSalesReturns")) $("menuSalesReturns").classList.toggle("hidden",!canViewSalesReturns); if($("addInvoiceBtn")) $("addInvoiceBtn").classList.toggle("hidden",!(await permission("INVOICES_CREATE") || canManageSales)); }catch(e){}
     try{ canCreateReturns=await permission("RETURNS_CREATE") || await permission("RETURNS_MANAGE") || isSystemAdmin; canApproveReturns=await permission("RETURNS_APPROVE") || await permission("RETURNS_MANAGE") || isSystemAdmin; canManageReturns=await permission("RETURNS_MANAGE") || isSystemAdmin; if($("addReturnBtn")) $("addReturnBtn").classList.toggle("hidden",!canCreateReturns); if($("addSalesReturnStandaloneBtn")) $("addSalesReturnStandaloneBtn").classList.toggle("hidden",!canCreateReturns); }catch(e){}
     try{ canViewSupplierPayments=await permission("PURCHASES_VIEW") || await permission("SUPPLIERS_VIEW") || isSystemAdmin; if($("menuSupplierPayments")) $("menuSupplierPayments").classList.toggle("hidden",!canViewSupplierPayments); }catch(e){}
     try{ canViewPurchaseReturns=await permission("RETURNS_VIEW") || await permission("PURCHASES_VIEW") || isSystemAdmin; if($("menuPurchaseReturns")) $("menuPurchaseReturns").classList.toggle("hidden",!canViewPurchaseReturns); }catch(e){}
