@@ -2287,7 +2287,7 @@ async function userInfo(user){
       const treasuryLabel = document.querySelector('label[for="collectionTreasury"]');
       if(treasuryLabel) treasuryLabel.classList.toggle("hidden",true);
       if($("collectionTreasury")) { $("collectionTreasury").classList.add("hidden"); $("collectionTreasury").required=false; }
-      if($("addReturnBtn")) $("addReturnBtn").classList.add("hidden");
+      if($("addReturnBtn")) $("addReturnBtn").classList.toggle("hidden", !canCreateReturns);
       if($("addTripBtn")) $("addTripBtn").classList.add("hidden");
     } else {
       const treasuryLabel = document.querySelector('label[for="collectionTreasury"]');
