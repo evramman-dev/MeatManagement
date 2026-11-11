@@ -82,4 +82,4 @@ PR is the release candidate. GitHub Pages deployment/live UI has not been confir
 - New supplier returns use the exact purchase invoice item lot when one exists.
 - New reversals use exact source movement allocations. Legacy reversals with no source allocations use the explicit untraced fallback.
 - Added indexes for all new lot-related foreign keys flagged by the Supabase performance advisor. The remaining unindexed foreign-key finding is the pre-existing `expenses.cancelled_by` relation.
-- The security advisor reports the new `get_sales_invoice_lot_allocations` RPC because it is SECURITY DEFINER and executable by authenticated users. This is intentional: the RPC checks both return-management and invoice-view permissions, and anonymous execution is revoked.
+- The security advisor reports the new `get_sales_invoice_lot_allocations` RPC because it is SECURITY DEFINER and executable by authenticated users. This is intentional: the RPC requires RETURNS_CREATE or RETURNS_MANAGE and verifies that the source invoice is posted/paid/partial. Anonymous execution is revoked.
