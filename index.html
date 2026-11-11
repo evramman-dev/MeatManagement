@@ -4140,6 +4140,12 @@ async function viewStockMovements(productId, locationId) {
         if(!allLocations) movementQuery = movementQuery.eq("location_id", Number(locationId));
         const { data, error } = await movementQuery.order("movement_id", { ascending: true }); 
         if (error) throw error; 
+        let currentAllLocationsBalance = null;
+        if(allLocations) {
+            const {data: balances, error: balanceError} = await db.from("stock_balances").select("quantity").eq("product_id", Number(productId));
+            if(balanceError) throw balanceError;
+            currentAllLocationsBalance = (balances || []).reduce((sum,row) => sum + Number(row.quantity || 0), 0);
+        }
         if (!data || data.length === 0) { tbody.innerHTML = `<tr><td colspan='${allLocations?6:5}'>لا توجد حركات مسجلة.</td></tr>`; return; } 
         let html = ""; 
         let waText = `*كارت حركة صنف*\nالمنتج: ${p?.product_name}\nالموقع: ${l?.location_name || "كل المواقع"}\n------------------------\n`;
@@ -4163,13 +4169,13 @@ async function viewStockMovements(productId, locationId) {
         tbody.innerHTML = html; 
         const unitLabel = unitName(p?.base_unit_id);
         const lastBalance = allLocations
-          ? stockCache.filter(row => String(row.product_id) === String(productId)).reduce((sum,row) => sum + Number(row.quantity || 0),0)
+          ? Number(currentAllLocationsBalance || 0)
           : Number(data[data.length-1].quantity_after || 0);
         $("movementSummary").innerHTML = `<h4>ملخص حركة الصنف</h4><div class="line"><span>إجمالي الوارد:</span><span style="color:green;">${fmtQty(totalIn)} ${unitLabel}</span></div><div class="line"><span>إجمالي الصادر:</span><span style="color:red;">${fmtQty(totalOut)} ${unitLabel}</span></div><div class="line"><span>صافي الحركة:</span><span style="font-weight:bold;">${fmtQty(netChange)} ${unitLabel}</span></div><div class="line"><span>${allLocations?"إجمالي الرصيد الحالي بكل المواقع:":"الرصيد الحالي:"}</span><span style="font-weight:bold;color:var(--g);">${fmtQty(lastBalance)} ${unitLabel}</span></div>`;
         waText += `------------------------\n*ملخص:*\nوارد: ${fmtQty(totalIn)}\nصادر: ${fmtQty(totalOut)}\nرصيد: ${fmtQty(lastBalance)}`;
         $("shareMovementWhatsappBtn").onclick = () => { window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); };
         fillPrintHeaders();
-    } catch(e) { tbody.innerHTML = `<tr><td colspan='5' style="color:red;">خطأ: ${err(e)}</td></tr>`; } 
+    } catch(e) { tbody.innerHTML = `<tr><td colspan='${allLocations?6:5}' style="color:red;">خطأ: ${err(e)}</td></tr>`; } 
 }
 async function viewProductStockMovements(productId) {
     if(!canViewStock) { showToast("ليس لديك صلاحية عرض حركة المخزون","error"); return; }
