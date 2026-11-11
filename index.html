@@ -5634,7 +5634,7 @@ if($("viewSpStatementBtn")) $("viewSpStatementBtn").addEventListener("click", as
 });
 
 // ========== مرتجعات البيع ==========
-function fillReturnTripSelect(){const el=$("returnTrip");if(!el)return;el.replaceChildren();const f=document.createElement("option");f.value="";f.textContent="اختر الجولة";el.appendChild(f);tripsCache.filter(t=>!['COMPLETED','CANCELLED'].includes(t.status)&&(currentRoleCode!=="SALES_REP"||Number(t.sales_rep_id)===Number(currentSalesRepId))).forEach(t=>{const o=document.createElement("option");o.value=String(t.trip_id);o.textContent=t.trip_number+" - "+(t.rep_name||"");el.appendChild(o);});}
+function fillReturnTripSelect(){const el=$("returnTrip");if(!el)return;el.replaceChildren();const f=document.createElement("option");f.value="";f.textContent="اختر الجولة";el.appendChild(f);tripsCache.filter(t=>t.status!=='CANCELLED'&&(currentRoleCode!=="SALES_REP"||Number(t.sales_rep_id)===Number(currentSalesRepId))).forEach(t=>{const o=document.createElement("option");o.value=String(t.trip_id);o.textContent=t.trip_number+" - "+(t.rep_name||"");el.appendChild(o);});}
 function fillReturnInvoiceSelect(){const el=$("returnInvoice");if(!el)return;el.replaceChildren();const f=document.createElement("option");f.value="";f.textContent="اختر العميل أولًا";el.appendChild(f);el.disabled=true;}
 async function loadReturnInvoicesForCustomer(){
  const customerId=Number($("returnCustomer")?.value||0),el=$("returnInvoice");
@@ -5642,7 +5642,7 @@ async function loadReturnInvoicesForCustomer(){
  el.replaceChildren();
  const first=document.createElement("option");first.value="";first.textContent=customerId?"جارٍ تحميل فواتير العميل...":"اختر العميل أولًا";el.appendChild(first);
  el.disabled=true;
- $("returnTrip").value="";
+ $("returnTrip").value="";$("returnTrip").disabled=true;
  if(!customerId)return;
  try{
   const {data,error}=await db.from("sales_invoices").select("sales_invoice_id,invoice_number,customer_id,trip_id,status,invoice_date,net_total").eq("customer_id",customerId).neq("status","CANCELLED").order("sales_invoice_id",{ascending:false}).limit(500);
@@ -5656,7 +5656,7 @@ async function loadReturnInvoicesForCustomer(){
   msg($("returnFormMsg"),"تعذر تحميل فواتير العميل: "+err(e),"error");
  }
 }
-function resetSalesReturnForm(){salesReturnLotOptionsCache=[];salesReturnLotOptionsPromise=Promise.resolve();$("returnForm").reset();$("returnItems").replaceChildren();$("exchangeItems").replaceChildren();returnItemCounter=0;$("returnDate").value=todayISO();fillReturnCustomerSelect();fillReturnTripSelect();fillReturnInvoiceSelect();fillTreasurySelects();addSalesReturnItemRow($("returnItems"));updateSalesReturnTotals();clear($("returnFormMsg"));$("returnFormModal").classList.add("active");}
+function resetSalesReturnForm(){salesReturnLotOptionsCache=[];salesReturnLotOptionsPromise=Promise.resolve();$("returnForm").reset();$("returnItems").replaceChildren();$("exchangeItems").replaceChildren();returnItemCounter=0;$("returnDate").value=todayISO();fillReturnCustomerSelect();fillReturnTripSelect();$("returnTrip").disabled=true;fillReturnInvoiceSelect();fillTreasurySelects();addSalesReturnItemRow($("returnItems"));updateSalesReturnTotals();clear($("returnFormMsg"));$("returnFormModal").classList.add("active");}
 let salesReturnLotOptionsCache=[];
 let salesReturnLotOptionsPromise=Promise.resolve();
 function addSalesReturnItemRow(container){
