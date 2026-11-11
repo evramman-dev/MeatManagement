@@ -159,3 +159,14 @@ Historical movements were not assigned fabricated lot allocations.
 - Supabase Auth advisor reports leaked-password protection disabled.
 - Supabase documentation confirms this feature is available on Pro and higher plans. The MeatManagement organization is currently on the Free plan, so this setting cannot be enabled without a paid plan change.
 - No plan upgrade or billing change was made. This remains a documented Free-plan limitation.
+
+
+## Sales invoice cancellation exact-lot and cost reversal regression (2026-11-11)
+- The first rollback-only test found that cancelling a sales invoice restored quantity into a newly created RETURN lot instead of the exact lot consumed by the invoice.
+- Applied Supabase migration restore_exact_sales_invoice_lots_and_cost_on_cancel_20261111. Each cancellation movement now links to the matching original ISSUE movement by sales_invoice_id and sales_invoice_item_id, and copies its original unit_cost and total_cost.
+- Re-tested with two separate invoice lines for the same product. Both cancellation movements linked to their own original ISSUE movement and restored the exact purchased lot. This also verified duplicate-product invoice lines are matched independently.
+- Both cancellation movements restored the exact original cost. The warehouse inventory value after cancellation matched the value immediately before the sale.
+- The existing invoice-status trigger created two posted SALES_COGS_LINE_REV journal entries. No original posted COGS entry remained unreversed.
+- The invoice reached CANCELLED status. During the transaction, product stock returned to 9.2500 KG and the original lot balance returned to 0.5000 KG.
+- The full test transaction was rolled back. Post-rollback counts remained 55 stock movements, 4 lots, 4 lot-balance rows, 6 purchase invoices, 10 sales invoices, 2 sales returns, and 65 journal entries. No QA-SC lot remained. Main warehouse product 1 stock remained 8.7500 KG with inventory value 424.0384.
+- No UI code changed. Application release remains v70 / meat-v103; this was a database cancellation correction only.
