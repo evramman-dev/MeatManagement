@@ -123,3 +123,11 @@ meatmanagement-browser-test-results
 - يعرض رسالة عدم وجود بيانات محاسبية بدلًا من نتيجة مالية غير صحيحة.
 
 تم تحديث نسخة QA إلى v46 وService Worker إلى `meat-v79`.
+
+
+## تشغيل النسخة v46 — 11 نوفمبر 2026
+
+- GitHub Actions run 124 نجح على commit `68fb3cb2becefdc2e5a2a4ddcf38a426c05ae8b1`.
+- اجتازت اختبارات Playwright السبعة التشغيل دون فشل، بما فيها اختبار عدم استخدام المشتريات بدل تكلفة المبيعات.
+- رابط التشغيل: https://github.com/evramman-dev/MeatManagement/actions/runs/42991183995.
+- نسخة Service Worker النهائية على الفرع `meat-v79`. تغيير رقم cache لا يغير منطق التطبيق.
