@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v75</title>
+<title>MeatManagement v76</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -328,7 +328,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v75]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v76]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -997,7 +997,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="card" id="stockLotsCard">
 <h2>🏷️ تتبع التشغيلات</h2>
 <p class="desc">متابعة التشغيلات حسب المنتج والموقع والمصدر وتاريخ الإنتاج والصلاحية والرصيد المتبقي.</p>
-<div class="row"><input id="stockLotsSearch" type="search" placeholder="ابحث برقم التشغيلة أو المنتج أو المورد"><button id="refreshStockLotsBtn" class="btn secondary" type="button">تحديث التشغيلات</button></div>
+<div class="row"><input id="stockLotsSearch" type="search" placeholder="ابحث برقم التشغيلة أو المنتج أو المورد"><button id="scanLotQrBtn" class="btn secondary" type="button">مسح QR بالكاميرا</button><button id="refreshStockLotsBtn" class="btn secondary" type="button">تحديث التشغيلات</button></div>
 <div id="stockLotsList"><div class="empty">جارٍ تحميل التشغيلات...</div></div>
 </div>
 </div>
@@ -1722,7 +1722,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v75</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v76</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -4208,6 +4208,98 @@ function openLotQrPreview(lot,product){
   new QRCode($("lotQrCode"),{text:JSON.stringify(payload),width:150,height:150,correctLevel:QRCode.CorrectLevel.M});
 }
 
+let lotQrScanner=null;
+let lotQrScannerRunning=false;
+let lotQrScanLocked=false;
+async function stopLotQrScanner(){
+  if(lotQrScanner&&lotQrScannerRunning){
+    try{await lotQrScanner.stop();}catch(e){}
+    lotQrScannerRunning=false;
+  }
+  if(lotQrScanner){
+    try{await lotQrScanner.clear();}catch(e){}
+    lotQrScanner=null;
+  }
+}
+async function openLotQrScanner(){
+  if(!canViewStock){showToast("ليس لديك صلاحية عرض التشغيلات.","error");return;}
+  if(!navigator.onLine){showToast("اتصل بالإنترنت لقراءة بيانات التشغيلة.","error");return;}
+  let modal=$("lotQrScanModal");
+  if(!modal){
+    modal=document.createElement("div");modal.id="lotQrScanModal";modal.className="modal hidden";
+    modal.innerHTML='<div class="modal-content"><div class="modal-header"><h3>مسح QR للتشغيلة</h3><button type="button" class="close-btn" id="lotQrScanClose">&times;</button></div><div class="modal-body"><div id="lotQrReader" style="width:100%;max-width:440px;margin:0 auto;"></div><div id="lotQrScanMsg" class="status" style="margin-top:10px;">وجّه الكاميرا إلى ملصق التشغيلة.</div><div id="lotQrScanDetails" class="product hidden" style="margin-top:12px;"></div><button id="lotQrScanHistoryBtn" type="button" class="btn secondary hidden" style="margin-top:10px;">عرض حركة التشغيلة</button><button id="lotQrScanStopBtn" type="button" class="btn secondary" style="margin-top:10px;">إيقاف الكاميرا</button></div></div>';
+    document.body.appendChild(modal);
+    const close=async()=>{await stopLotQrScanner();modal.classList.add("hidden");};
+    $("lotQrScanClose").addEventListener("click",close);
+    $("lotQrScanStopBtn").addEventListener("click",close);
+    modal.addEventListener("click",e=>{if(e.target===modal)close();});
+  }
+  $("lotQrScanMsg").textContent="وجّه الكاميرا إلى ملصق التشغيلة.";
+  $("lotQrScanMsg").className="status";
+  $("lotQrScanDetails").classList.add("hidden");
+  $("lotQrScanHistoryBtn").classList.add("hidden");
+  $("lotQrReader").replaceChildren();
+  modal.classList.remove("hidden");
+  if(typeof Html5Qrcode==="undefined"){
+    $("lotQrScanMsg").textContent="مكتبة قراءة QR غير متاحة. حدّث الصفحة مع الاتصال بالإنترنت.";
+    $("lotQrScanMsg").className="status error";return;
+  }
+  try{
+    lotQrScanLocked=false;
+    lotQrScanner=new Html5Qrcode("lotQrReader");
+    await lotQrScanner.start(
+      {facingMode:"environment"},
+      {fps:10,qrbox:{width:240,height:240},aspectRatio:1},
+      async decodedText=>{
+        if(lotQrScanLocked)return;
+        lotQrScanLocked=true;
+        await stopLotQrScanner();
+        try{
+          let payload={};
+          try{payload=JSON.parse(decodedText);}catch(e){payload={lot:String(decodedText||"").trim()};}
+          const lotCode=String(payload.lot||payload.lot_code||"").trim();
+          if(!lotCode)throw new Error("رمز QR لا يحتوي على رقم تشغيلة صالح.");
+          $("lotQrScanMsg").textContent="تمت القراءة. جارٍ تحميل بيانات التشغيلة...";
+          const {data:lot,error}=await db.from("stock_lots")
+            .select("lot_id,lot_code,product_id,source_type,manufactured_on,expires_on,status,received_at,notes")
+            .eq("lot_code",lotCode).maybeSingle();
+          if(error)throw error;
+          if(!lot)throw new Error("لم نعثر على التشغيلة "+lotCode+" في قاعدة البيانات.");
+          const product=productsCache.find(p=>String(p.product_id)===String(lot.product_id));
+          const {data:balances,error:balanceError}=await db.from("stock_lot_balances")
+            .select("quantity,locations(location_name)")
+            .eq("lot_id",lot.lot_id).gt("quantity",0);
+          if(balanceError)throw balanceError;
+          const detail=$("lotQrScanDetails");
+          detail.replaceChildren();
+          const heading=document.createElement("div");heading.className="pname";
+          heading.textContent=(product?.product_name||productName(lot.product_id))+" — "+lot.lot_code;
+          const dates=document.createElement("div");dates.className="details";
+          dates.textContent="الإنتاج: "+(lot.manufactured_on?formatDate(lot.manufactured_on):"غير محدد")+" | الصلاحية: "+(lot.expires_on?formatDate(lot.expires_on):"غير محددة");
+          const status=document.createElement("div");status.className="details";
+          status.textContent="الحالة: "+(lot.status||"—")+" | المصدر: "+(lot.source_type||"—");
+          const stock=document.createElement("div");stock.className="details";
+          stock.textContent=(balances||[]).length?"الأرصدة: "+balances.map(x=>(x.locations?.location_name||"موقع")+" "+fmtQty(x.quantity)).join("، "):"لا يوجد رصيد حالي لهذه التشغيلة.";
+          detail.append(heading,dates,status,stock);detail.classList.remove("hidden");
+          $("lotQrScanMsg").textContent="تم العثور على بيانات التشغيلة.";
+          $("lotQrScanMsg").className="status success";
+          const historyBtn=$("lotQrScanHistoryBtn");historyBtn.classList.remove("hidden");
+          historyBtn.onclick=()=>{modal.classList.add("hidden");showStockLotHistory(lot);};
+        }catch(e){
+          $("lotQrScanMsg").textContent="تعذر فتح بيانات QR: "+err(e);
+          $("lotQrScanMsg").className="status error";
+        }
+      },
+      ()=>{}
+    );
+    lotQrScannerRunning=true;
+  }catch(e){
+    await stopLotQrScanner();
+    $("lotQrScanMsg").textContent="تعذر تشغيل الكاميرا. اسمح للمتصفح باستخدام الكاميرا وتأكد من فتح التطبيق عبر HTTPS. "+err(e);
+    $("lotQrScanMsg").className="status error";
+  }
+}
+
 let stockLotsCache=[];
 async function loadStockLots(){
   const box=$("stockLotsList");if(!box||!canViewStock)return;
@@ -4309,6 +4401,7 @@ function renderStockLots(){
 }
 if($("stockLotsSearch"))$("stockLotsSearch").addEventListener("input",renderStockLots);
 if($("refreshStockLotsBtn"))$("refreshStockLotsBtn").addEventListener("click",loadStockLots);
+if($("scanLotQrBtn"))$("scanLotQrBtn").addEventListener("click",openLotQrScanner);
 
 function renderStockLocationTabs() {
     const box = $("stockLocationTabs"); if(!box) return;
