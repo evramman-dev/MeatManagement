@@ -4,11 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v73</title>
+<title>MeatManagement v74</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://unpkg.com/html5-qrcode"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root{--g:#173c2c;--g2:#24563e;--gold:#d5b16a;--bg:#f4f6f3;--line:#e0e6df;--muted:#68736a;--red:#a52b2b}
 *{box-sizing:border-box}
@@ -289,6 +290,31 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 .notification-broadcast{display:flex;align-items:center;gap:9px;margin:12px 0;padding:11px;border:1px solid var(--line);border-radius:10px;background:#f7f9f6;font-size:14px}
 .notification-broadcast input{width:20px;height:20px;margin:0;flex:0 0 auto}
 
+
+.summary-filter{display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin:10px 0 14px}
+.summary-filter label{flex:1;min-width:150px;margin:0}
+.summary-table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}
+.summary-table th,.summary-table td{border:1px solid var(--line);padding:9px;text-align:right;white-space:nowrap}
+.summary-table th{background:#edf2ed;color:var(--g)}
+.lot-qr-label{background:#fff;color:#111;width:330px;max-width:100%;margin:0 auto;padding:12px;border:1px solid #ddd;border-radius:8px;display:flex;align-items:center;gap:12px;direction:rtl}
+.lot-qr-code{width:150px;height:150px;flex:0 0 150px;display:flex;align-items:center;justify-content:center}
+.lot-qr-code img,.lot-qr-code canvas{max-width:100%;height:auto}
+.lot-qr-text{min-width:0;flex:1;font-size:12px;line-height:1.9;overflow-wrap:anywhere}
+.lot-qr-brand{font-size:10px;font-weight:bold;color:#173c2c;margin-bottom:5px}
+.lot-qr-product{font-size:14px;font-weight:bold;margin-bottom:6px}
+.lot-qr-actions{display:flex;gap:8px;margin-top:14px}
+.lot-qr-actions .btn{flex:1;margin:0}
+@page lotQrPage{size:70mm 50mm;margin:2mm}
+@media print{
+  .modal:not(.hidden) #lotQrPrintArea,.modal:not(.hidden) #lotQrPrintArea *{visibility:visible}
+  .modal:not(.hidden) #lotQrPrintArea{page:lotQrPage;position:absolute;left:0;top:0;width:66mm;height:46mm;padding:1mm!important;border:0!important;border-radius:0!important;display:flex!important;gap:2mm!important}
+  .modal:not(.hidden) #lotQrPrintArea .lot-qr-code{width:34mm;height:34mm;flex:0 0 34mm}
+  .modal:not(.hidden) #lotQrPrintArea .lot-qr-code img,.modal:not(.hidden) #lotQrPrintArea .lot-qr-code canvas{width:34mm!important;height:34mm!important}
+  .modal:not(.hidden) #lotQrPrintArea .lot-qr-text{font-size:7pt;line-height:1.55}
+  .modal:not(.hidden) #lotQrPrintArea .lot-qr-product{font-size:9pt}
+  .modal:not(.hidden) .lot-qr-actions{display:none!important}
+  .modal:not(.hidden) #lotQrModalHeader{display:none!important}
+}
 </style>
 </head>
 <body>
@@ -302,7 +328,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v73]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v74]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -429,10 +455,12 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="dash-item hidden" id="menuProducts" onclick="window.openSection('products')"><div class="dash-icon">📦</div><div class="dash-title">المنتجات</div></div>
 <div class="dash-item hidden" id="menuLocations" onclick="window.openSection('locations')"><div class="dash-icon">🏭</div><div class="dash-title">المواقع والمخازن</div></div>
 <div class="dash-item hidden" id="menuStock" onclick="window.openSection('stock')"><div class="dash-icon">📊</div><div class="dash-title">أرصدة المخزون</div></div>
+<div class="dash-item hidden" id="menuStockSummary" onclick="window.openSection('stockSummary')"><div class="dash-icon">📋</div><div class="dash-title">ملخص أرصدة الأصناف</div></div>
 <div class="dash-item hidden" id="menuStockLots" onclick="window.openSection('stockLots')"><div class="dash-icon">🏷️</div><div class="dash-title">تتبع التشغيلات</div></div>
 <div class="dash-item hidden" id="menuStockTransfers" onclick="window.openSection('stockTransfers')"><div class="dash-icon">🔄</div><div class="dash-title">تحويل المخازن</div></div>
 <div class="dash-item hidden" id="menuRecipes" onclick="window.openSection('recipes')"><div class="dash-icon">📝</div><div class="dash-title">الوصفات</div></div>
 <div class="dash-item hidden" id="menuProduction" onclick="window.openSection('production')"><div class="dash-icon">🏭</div><div class="dash-title">أوامر التشغيل</div></div>
+<div class="dash-item hidden" id="menuProductionDailySummary" onclick="window.openSection('productionDailySummary')"><div class="dash-icon">📅</div><div class="dash-title">ملخص الإنتاج اليومي</div></div>
 <div class="dash-item hidden" id="menuReservations" onclick="window.openSection('reservations')"><div class="dash-icon">🔒</div><div class="dash-title">الحجوزات</div></div>
 </div>
 </div>
@@ -955,6 +983,15 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 </div>
 </div>
+<div id="sectionStockSummary" class="sub-section hidden">
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">رجوع للقائمة</button>
+<div class="card">
+<h2>ملخص إجمالي أرصدة المخزون</h2>
+<p class="desc">إجمالي رصيد كل صنف في جميع المواقع، مع عدد المواقع التي يتوفر بها الصنف.</p>
+<div class="row"><input id="stockSummarySearch" type="search" placeholder="ابحث باسم الصنف"><button id="refreshStockSummaryBtn" class="btn secondary" type="button">تحديث</button></div>
+<div id="stockSummaryList"><div class="empty">جارٍ تحميل ملخص المخزون...</div></div>
+</div>
+</div>
 <div id="sectionStockLots" class="sub-section hidden">
 <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
 <div class="card" id="stockLotsCard">
@@ -1037,6 +1074,15 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="row"><input id="productionSearch" type="search" placeholder="ابحث..."><button id="refreshProductionBtn" class="btn secondary" type="button">تحديث</button></div>
 <div id="productionMsg" class="status hidden"></div>
 <div id="productionList"><div class="empty">جارٍ تحميل أوامر التشغيل...</div></div>
+</div>
+</div>
+<div id="sectionProductionDailySummary" class="sub-section hidden">
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">رجوع للقائمة</button>
+<div class="card">
+<h2>ملخص الإنتاج اليومي</h2>
+<p class="desc">الكميات التي اكتملت في التاريخ المحدد، مجمعة حسب الصنف.</p>
+<div class="summary-filter"><label>تاريخ الإنتاج<input id="productionSummaryDate" type="date"></label><button id="refreshProductionSummaryBtn" class="btn secondary" type="button" style="width:auto;margin:0">عرض</button></div>
+<div id="productionSummaryList"><div class="empty">اختر التاريخ لعرض الإنتاج.</div></div>
 </div>
 </div>
 <div id="productionFormModal" class="modal-form">
@@ -1676,7 +1722,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v73</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v74</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -1997,7 +2043,7 @@ function showLogin(){ hideSections(); if($("login")) $("login").classList.remove
 function showApp(){ hideSections(); if($("nav")) $("nav").classList.remove("hidden"); page("home"); }
 
 window.openSection = function(name) {
-  const sectionMenuMap = { products:"menuProducts", locations:"menuLocations", stock:"menuStock", stockLots:"menuStockLots", stockTransfers:"menuStockTransfers", recipes:"menuRecipes", production:"menuProduction", reservations:"menuReservations", suppliers:"menuSuppliers", purchases:"menuPurchases", purchaseReturns:"menuPurchaseReturns", landedCosts:"menuLandedCosts", fixedAssets:"menuFixedAssets", supplierPayments:"menuSupplierPayments", expenses:"menuExpenses", customers:"menuCustomers", sales:"menuSales", salesReturns:"menuSalesReturns", priceLists:"menuPriceLists", collections:"menuCollections", trips:"menuTrips", salesReps:"menuSalesReps", treasuries:"menuTreasuries", treasuryTransfers:"menuTreasuryTransfers", partners:"menuPartners", accounting:"menuAccounting", reports:"menuReports", users:"menuUsers", settings:"menuSettings" };
+  const sectionMenuMap = { products:"menuProducts", locations:"menuLocations", stock:"menuStock", stockSummary:"menuStock", stockLots:"menuStockLots", stockTransfers:"menuStockTransfers", recipes:"menuRecipes", production:"menuProduction", productionDailySummary:"menuProduction", reservations:"menuReservations", suppliers:"menuSuppliers", purchases:"menuPurchases", purchaseReturns:"menuPurchaseReturns", landedCosts:"menuLandedCosts", fixedAssets:"menuFixedAssets", supplierPayments:"menuSupplierPayments", expenses:"menuExpenses", customers:"menuCustomers", sales:"menuSales", salesReturns:"menuSalesReturns", priceLists:"menuPriceLists", collections:"menuCollections", trips:"menuTrips", salesReps:"menuSalesReps", treasuries:"menuTreasuries", treasuryTransfers:"menuTreasuryTransfers", partners:"menuPartners", accounting:"menuAccounting", reports:"menuReports", users:"menuUsers", settings:"menuSettings" };
   const allowedIds = getRoleMenuIds(currentRoleCode);
   const requestedMenuId = sectionMenuMap[name];
   if(!isSystemAdmin && (!requestedMenuId || !allowedIds.has(requestedMenuId))) {
@@ -2045,6 +2091,8 @@ window.openSection = function(name) {
   if (name === "treasuries") loadTreasuries();
   if (name === "locations") loadLocations();
   if (name === "stock") loadStock();
+  if (name === "stockSummary") loadStockSummary();
+  if (name === "productionDailySummary") loadProductionDailySummary();
    if (name === "stockLots") loadStockLots();
   if (name === "reservations") loadReservations();
   if (name === "settings") loadSettings();
@@ -2282,7 +2330,7 @@ async function userInfo(user){
     try{ canViewLocations=await permission("LOCATIONS_VIEW") || isSystemAdmin; canManageLocations=await permission("LOCATIONS_MANAGE") || isSystemAdmin; if($("menuLocations")) $("menuLocations").classList.toggle("hidden",!canViewLocations); if($("locationsCard")) $("locationsCard").classList.toggle("hidden",!canViewLocations); if($("addLocationBtn")) $("addLocationBtn").classList.toggle("hidden",!canManageLocations); }catch(e){}
     try{ canViewTreasuries=await permission("TREASURIES_VIEW") || isSystemAdmin; canManageTreasuries=await permission("TREASURIES_MANAGE") || isSystemAdmin; if($("menuTreasuries")) $("menuTreasuries").classList.toggle("hidden",!canViewTreasuries); if($("treasuriesCard")) $("treasuriesCard").classList.toggle("hidden",!canViewTreasuries); if($("addTreasuryBtn")) $("addTreasuryBtn").classList.toggle("hidden",!canManageTreasuries); }catch(e){}
     try{ canViewTreasuryTransfers=await permission("TREASURIES_MANAGE") || await permission("ACCOUNTING_MANAGE") || isSystemAdmin; if($("menuTreasuryTransfers")) $("menuTreasuryTransfers").classList.toggle("hidden",!canViewTreasuryTransfers); }catch(e){}
-    try{ canViewStock=await permission("STOCK_VIEW") || await permission("INVENTORY_VIEW") || isSystemAdmin; canManageStock=await permission("STOCK_MANAGE") || isSystemAdmin; if($("menuStock")) $("menuStock").classList.toggle("hidden",!canViewStock); if($("menuStockLots")) $("menuStockLots").classList.toggle("hidden",!canViewStock); if($("stockCard")) $("stockCard").classList.toggle("hidden",!canViewStock); if($("adjustStockBtn")) $("adjustStockBtn").classList.toggle("hidden",!canManageStock); }catch(e){}
+    try{ canViewStock=await permission("STOCK_VIEW") || await permission("INVENTORY_VIEW") || isSystemAdmin; canManageStock=await permission("STOCK_MANAGE") || isSystemAdmin; if($("menuStock")) $("menuStock").classList.toggle("hidden",!canViewStock); if($("menuStockSummary")) $("menuStockSummary").classList.toggle("hidden",!canViewStock); if($("menuStockLots")) $("menuStockLots").classList.toggle("hidden",!canViewStock); if($("stockCard")) $("stockCard").classList.toggle("hidden",!canViewStock); if($("adjustStockBtn")) $("adjustStockBtn").classList.toggle("hidden",!canManageStock); }catch(e){}
     try{ canViewStockTransfers=await permission("INVENTORY_TRANSFER") || isSystemAdmin; if($("menuStockTransfers")) $("menuStockTransfers").classList.toggle("hidden",!canViewStockTransfers); }catch(e){}
     try{ canViewSales=await permission("SALES_VIEW") || await permission("INVOICES_VIEW") || isSystemAdmin; canManageSales=await permission("SALES_MANAGE") || isSystemAdmin; canViewSalesReturns=canViewSales || await permission("RETURNS_VIEW") || isSystemAdmin; if($("menuSales")) $("menuSales").classList.toggle("hidden",!canViewSales); if($("salesCard")) $("salesCard").classList.toggle("hidden",!canViewSales); if($("menuSalesReturns")) $("menuSalesReturns").classList.toggle("hidden",!canViewSalesReturns); if($("addInvoiceBtn")) $("addInvoiceBtn").classList.toggle("hidden",!(await permission("INVOICES_CREATE") || canManageSales)); }catch(e){}
     try{ canCreateReturns=await permission("RETURNS_CREATE") || await permission("RETURNS_MANAGE") || isSystemAdmin; canApproveReturns=await permission("RETURNS_APPROVE") || await permission("RETURNS_MANAGE") || isSystemAdmin; canManageReturns=await permission("RETURNS_MANAGE") || isSystemAdmin; if($("addReturnBtn")) $("addReturnBtn").classList.toggle("hidden",!canCreateReturns); if($("addSalesReturnStandaloneBtn")) $("addSalesReturnStandaloneBtn").classList.toggle("hidden",!canCreateReturns); }catch(e){}
@@ -2311,7 +2359,7 @@ async function userInfo(user){
     try{ canManageFixedAssets=await permission("ACCOUNTING_MANAGE") || isSystemAdmin; canViewFixedAssets=await permission("ACCOUNTING_VIEW") || canManageFixedAssets || isSystemAdmin; if($("menuFixedAssets")) $("menuFixedAssets").classList.toggle("hidden",!canViewFixedAssets); if($("addFixedAssetBtn")) $("addFixedAssetBtn").classList.toggle("hidden",!canManageFixedAssets); }catch(e){}
     try{ canViewPartners=await permission("PARTNERS_VIEW") || isSystemAdmin; canManagePartners=await permission("PARTNERS_MANAGE") || isSystemAdmin; if($("menuPartners")) $("menuPartners").classList.toggle("hidden",!canViewPartners); if($("partnersCard")) $("partnersCard").classList.toggle("hidden",!canViewPartners); if($("addPartnerBtn")) $("addPartnerBtn").classList.toggle("hidden",!canManagePartners); if($("addPartnerTransactionBtn")) $("addPartnerTransactionBtn").classList.toggle("hidden",!canManagePartners); }catch(e){}
     try{ canManagePartnerInventoryContributions=await permission("ACCOUNTING_MANAGE") || await permission("PARTNERS_TRANSACTIONS_MANAGE") || isSystemAdmin; canViewPartnerInventoryContributions=await permission("ACCOUNTING_VIEW") || await permission("PARTNERS_TRANSACTIONS_VIEW") || canManagePartnerInventoryContributions; canCancelPartnerInventoryContributions=await permission("ACCOUNTING_MANAGE") || isSystemAdmin; canManagePartnerVehicleContributions=await permission("ACCOUNTING_MANAGE") || isSystemAdmin; canCancelPartnerVehicleContributions=canManagePartnerVehicleContributions; canViewPartnerVehicleContributions=canViewFixedAssets; if($("partnerInventoryContributionsCard")) $("partnerInventoryContributionsCard").classList.toggle("hidden",!canViewPartnerInventoryContributions); if($("addPartnerInventoryContributionBtn")) $("addPartnerInventoryContributionBtn").classList.toggle("hidden",!canManagePartnerInventoryContributions); if($("partnerVehicleContributionsCard")) $("partnerVehicleContributionsCard").classList.toggle("hidden",!canViewPartnerVehicleContributions); if($("addPartnerVehicleContributionBtn")) $("addPartnerVehicleContributionBtn").classList.toggle("hidden",!canManagePartnerVehicleContributions); }catch(e){}
-    try{ canViewProduction=await permission("PRODUCTION_VIEW") || isSystemAdmin; canManageProduction=await permission("PRODUCTION_MANAGE") || isSystemAdmin; canLoadLocations=canViewLocations || canViewStockTransfers || await permission("INVENTORY_VIEW") || canViewProduction || canManageProduction || isSystemAdmin; if($("menuProduction")) $("menuProduction").classList.toggle("hidden",!canViewProduction); if($("productionCard")) $("productionCard").classList.toggle("hidden",!canViewProduction); if($("addProductionBtn")) $("addProductionBtn").classList.toggle("hidden",!canManageProduction); }catch(e){}
+    try{ canViewProduction=await permission("PRODUCTION_VIEW") || isSystemAdmin; canManageProduction=await permission("PRODUCTION_MANAGE") || isSystemAdmin; canLoadLocations=canViewLocations || canViewStockTransfers || await permission("INVENTORY_VIEW") || canViewProduction || canManageProduction || isSystemAdmin; if($("menuProduction")) $("menuProduction").classList.toggle("hidden",!canViewProduction); if($("menuProductionDailySummary")) $("menuProductionDailySummary").classList.toggle("hidden",!canViewProduction); if($("productionCard")) $("productionCard").classList.toggle("hidden",!canViewProduction); if($("addProductionBtn")) $("addProductionBtn").classList.toggle("hidden",!canManageProduction); }catch(e){}
     try{ canViewRecipes=await permission("RECIPES_VIEW") || canViewProduction || canManageProduction || isSystemAdmin; canManageRecipes=await permission("RECIPES_MANAGE") || canManageProduction || isSystemAdmin; if($("menuRecipes")) $("menuRecipes").classList.toggle("hidden",!canViewRecipes); if($("recipesCard")) $("recipesCard").classList.toggle("hidden",!canViewRecipes); if($("addRecipeBtn")) $("addRecipeBtn").classList.toggle("hidden",!canManageRecipes); }catch(e){}
     try{ canViewAccounting=await permission("ACCOUNTING_VIEW") || isSystemAdmin; canManageAccounting=await permission("ACCOUNTING_MANAGE") || isSystemAdmin; if($("menuAccounting")) $("menuAccounting").classList.toggle("hidden",!canViewAccounting); if($("accountingCard")) $("accountingCard").classList.toggle("hidden",!canViewAccounting); if($("btnPostEntries")) $("btnPostEntries").classList.toggle("hidden",!canManageAccounting); if($("btnAdjustment")) $("btnAdjustment").classList.toggle("hidden",!canManageAccounting); if($("btnBackup")) $("btnBackup").classList.toggle("hidden",!isSystemAdmin); }catch(e){}
     try{ canViewReservations=await permission("RESERVATIONS_VIEW") || isSystemAdmin; canManageReservations=await permission("RESERVATIONS_MANAGE") || isSystemAdmin; if($("menuReservations")) $("menuReservations").classList.toggle("hidden",!canViewReservations); if($("addReservationBtn")) $("addReservationBtn").classList.toggle("hidden",!canManageReservations); }catch(e){}
@@ -4112,6 +4160,53 @@ async function loadStock(){
     renderStockLocationTabs();
     renderStock();
 }
+async function loadStockSummary(){
+  const box=$("stockSummaryList");if(!box||!canViewStock)return;
+  if(!navigator.onLine){box.innerHTML="<div class='empty'>اتصل بالإنترنت لعرض ملخص الأرصدة.</div>";return;}
+  box.innerHTML="<div class='empty'>جارٍ تحميل الأرصدة...</div>";
+  try{
+    const {data,error}=await db.from("stock_balances").select("product_id,quantity,products(product_name,base_unit_id),locations(location_name)").limit(2000);
+    if(error)throw error;
+    const totals=new Map();
+    (data||[]).forEach(row=>{
+      const key=String(row.product_id);const p=row.products||{};
+      if(!totals.has(key))totals.set(key,{product_id:row.product_id,name:p.product_name||productName(row.product_id),unit_id:p.base_unit_id,quantity:0,locations:new Set()});
+      const item=totals.get(key);item.quantity+=Number(row.quantity||0);
+      if(Number(row.quantity||0)>0&&row.locations?.location_name)item.locations.add(row.locations.location_name);
+    });
+    const q=($("stockSummarySearch")?.value||"").trim().toLowerCase();
+    const rows=[...totals.values()].filter(x=>x.name.toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name,"ar"));
+    if(!rows.length){box.innerHTML="<div class='empty'>لا توجد أرصدة مطابقة.</div>";return;}
+    box.innerHTML='<div class="table-responsive"><table class="summary-table"><thead><tr><th>الصنف</th><th>إجمالي الرصيد</th><th>الوحدة</th><th>عدد المواقع</th></tr></thead><tbody>'+
+      rows.map(x=>'<tr><td>'+esc(x.name)+'</td><td>'+fmtQty(x.quantity)+'</td><td>'+esc(unitName(x.unit_id))+'</td><td>'+x.locations.size+'</td></tr>').join("")+
+      '</tbody></table></div>';
+  }catch(e){box.innerHTML="<div class='empty error'>تعذر تحميل الملخص: "+esc(err(e))+"</div>";}
+}
+if($("refreshStockSummaryBtn"))$("refreshStockSummaryBtn").addEventListener("click",loadStockSummary);
+if($("stockSummarySearch"))$("stockSummarySearch").addEventListener("input",loadStockSummary);
+
+function openLotQrPreview(lot,product){
+  if(!lot||!product)return;
+  let modal=$("lotQrModal");
+  if(!modal){
+    modal=document.createElement("div");modal.id="lotQrModal";modal.className="modal hidden";
+    modal.innerHTML='<div class="modal-content"><div class="modal-header" id="lotQrModalHeader"><h3>معاينة ملصق التشغيلة</h3><button type="button" class="close-btn" id="lotQrClose">&times;</button></div><div class="modal-body"><div id="lotQrPrintArea" class="lot-qr-label"><div id="lotQrCode" class="lot-qr-code"></div><div class="lot-qr-text"><div class="lot-qr-brand">MEAT MANAGEMENT</div><div id="lotQrProduct" class="lot-qr-product"></div><div id="lotQrLot"></div><div id="lotQrManufactured"></div><div id="lotQrExpires"></div></div></div><div class="lot-qr-actions no-print"><button type="button" class="btn" id="lotQrPrint">طباعة الملصق</button><button type="button" class="btn secondary" id="lotQrCloseBottom">إغلاق</button></div></div></div>';
+    document.body.appendChild(modal);
+    const close=()=>modal.classList.add("hidden");
+    $("lotQrClose").addEventListener("click",close);$("lotQrCloseBottom").addEventListener("click",close);
+    modal.addEventListener("click",e=>{if(e.target===modal)close();});
+    $("lotQrPrint").addEventListener("click",()=>window.print());
+  }
+  const payload={product:product.product_name||productName(lot.product_id),lot:lot.lot_code||"",manufactured_on:lot.manufactured_on||null,expires_on:lot.expires_on||null};
+  $("lotQrCode").replaceChildren();$("lotQrProduct").textContent=payload.product;
+  $("lotQrLot").textContent="رقم التشغيلة: "+payload.lot;
+  $("lotQrManufactured").textContent="الإنتاج: "+(payload.manufactured_on?formatDate(payload.manufactured_on):"غير محدد");
+  $("lotQrExpires").textContent="الصلاحية: "+(payload.expires_on?formatDate(payload.expires_on):"غير محددة");
+  modal.classList.remove("hidden");
+  if(typeof QRCode==="undefined"){$("lotQrCode").textContent="مكتبة QR غير متاحة. اتصل بالإنترنت ثم أعد المحاولة.";return;}
+  new QRCode($("lotQrCode"),{text:JSON.stringify(payload),width:150,height:150,correctLevel:QRCode.CorrectLevel.M});
+}
+
 let stockLotsCache=[];
 async function loadStockLots(){
   const box=$("stockLotsList");if(!box||!canViewStock)return;
@@ -4203,9 +4298,11 @@ function renderStockLots(){
     else if(lot.expires_on&&Math.ceil((new Date(lot.expires_on+"T00:00:00")-new Date(today+"T00:00:00"))/86400000)<=30){status.textContent="تقترب من الصلاحية";status.classList.add("badge-partial");}
     else{status.textContent=lot.status==="ACTIVE"?"نشطة":(lot.status||"—");}
     card.append(title,details,status);
-    if(lot.source_type==="OPENING"){const note=document.createElement("div");note.className="item-hint";note.textContent="رصيد سابق. لم يتوفر مصدر أو تاريخ صلاحية تاريخي مؤكد.";card.appendChild(note);}
+    if(lot.source_type==="OPENING"){const note=document.createElement("div");note.className="item-hint";note.textContent="تشغيلة افتتاحية تجريبية. التواريخ المعروضة افتراضية وليست بيانات تاريخية موثقة.";card.appendChild(note);}
     const historyBtn=document.createElement("button");historyBtn.type="button";historyBtn.className="btn secondary";historyBtn.style.marginTop="8px";historyBtn.textContent="عرض حركة التشغيلة";historyBtn.addEventListener("click",()=>showStockLotHistory(lot));
     card.append(historyBtn);
+    const qrBtn=document.createElement("button");qrBtn.type="button";qrBtn.className="btn secondary";qrBtn.style.marginTop="8px";qrBtn.textContent="معاينة وطباعة QR";qrBtn.addEventListener("click",()=>openLotQrPreview(lot,p));
+    card.append(qrBtn);
     box.appendChild(card);
   });
 }
@@ -6753,6 +6850,33 @@ if($("recipeForm")) $("recipeForm").addEventListener("submit", async e => {
 });
 
 // ========== أوامر التشغيل ==========
+async function loadProductionDailySummary(){
+  const box=$("productionSummaryList");if(!box||!canViewProduction)return;
+  if(!navigator.onLine){box.innerHTML="<div class='empty'>اتصل بالإنترنت لعرض ملخص الإنتاج.</div>";return;}
+  const selected=$("productionSummaryDate")?.value||todayISO();
+  if($("productionSummaryDate")&&!$("productionSummaryDate").value)$("productionSummaryDate").value=selected;
+  const startDate=new Date(selected+"T00:00:00");const endDate=new Date(startDate);endDate.setDate(endDate.getDate()+1);
+  box.innerHTML="<div class='empty'>جارٍ تحميل الإنتاج...</div>";
+  try{
+    const {data,error}=await db.from("production_orders").select("order_id,order_number,output_product_id,actual_output_quantity,output_unit_id,completed_at").eq("status","COMPLETED").gte("completed_at",startDate.toISOString()).lt("completed_at",endDate.toISOString()).order("completed_at",{ascending:false});
+    if(error)throw error;
+    const totals=new Map();
+    (data||[]).forEach(row=>{
+      const key=String(row.output_product_id)+"-"+String(row.output_unit_id);
+      if(!totals.has(key))totals.set(key,{product_id:row.output_product_id,unit_id:row.output_unit_id,quantity:0,orders:0,last:row.completed_at});
+      const item=totals.get(key);item.quantity+=Number(row.actual_output_quantity||0);item.orders++;
+      if(row.completed_at&&(!item.last||row.completed_at>item.last))item.last=row.completed_at;
+    });
+    const rows=[...totals.values()].sort((a,b)=>productName(a.product_id).localeCompare(productName(b.product_id),"ar"));
+    if(!rows.length){box.innerHTML="<div class='empty'>لا يوجد إنتاج مكتمل في هذا التاريخ.</div>";return;}
+    box.innerHTML='<div class="table-responsive"><table class="summary-table"><thead><tr><th>الصنف</th><th>إجمالي الكمية</th><th>الوحدة</th><th>عدد الأوامر</th><th>آخر تنفيذ</th></tr></thead><tbody>'+
+      rows.map(x=>'<tr><td>'+esc(productName(x.product_id))+'</td><td>'+fmtQty(x.quantity)+'</td><td>'+esc(unitName(x.unit_id))+'</td><td>'+x.orders+'</td><td>'+formatDateTime(x.last)+'</td></tr>').join("")+
+      '</tbody></table></div>';
+  }catch(e){box.innerHTML="<div class='empty error'>تعذر تحميل ملخص الإنتاج: "+esc(err(e))+"</div>";}
+}
+if($("refreshProductionSummaryBtn"))$("refreshProductionSummaryBtn").addEventListener("click",loadProductionDailySummary);
+if($("productionSummaryDate"))$("productionSummaryDate").addEventListener("change",loadProductionDailySummary);
+
 async function loadProduction(){ 
   if(!canViewProduction)return; 
   if(!navigator.onLine) { productionCache=getCache('production'); renderProduction(); return; } 
