@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v83</title>
+<title>MeatManagement v84</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -327,7 +327,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v83]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v84]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1721,7 +1721,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v83</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v84</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -5635,7 +5635,27 @@ if($("viewSpStatementBtn")) $("viewSpStatementBtn").addEventListener("click", as
 
 // ========== مرتجعات البيع ==========
 function fillReturnTripSelect(){const el=$("returnTrip");if(!el)return;el.replaceChildren();const f=document.createElement("option");f.value="";f.textContent="اختر الجولة";el.appendChild(f);tripsCache.filter(t=>!['COMPLETED','CANCELLED'].includes(t.status)&&(currentRoleCode!=="SALES_REP"||Number(t.sales_rep_id)===Number(currentSalesRepId))).forEach(t=>{const o=document.createElement("option");o.value=String(t.trip_id);o.textContent=t.trip_number+" - "+(t.rep_name||"");el.appendChild(o);});}
-function fillReturnInvoiceSelect(){const el=$("returnInvoice");if(!el)return;el.replaceChildren();const f=document.createElement("option");f.value="";f.textContent="بدون فاتورة";el.appendChild(f);salesCache.filter(i=>i.status!=="CANCELLED").forEach(i=>{const o=document.createElement("option");o.value=String(i.sales_invoice_id);o.textContent=i.invoice_number+" - "+customerName(i.customer_id);o.dataset.customer=i.customer_id;o.dataset.trip=i.trip_id||"";el.appendChild(o);});}
+function fillReturnInvoiceSelect(){const el=$("returnInvoice");if(!el)return;el.replaceChildren();const f=document.createElement("option");f.value="";f.textContent="اختر العميل أولًا";el.appendChild(f);el.disabled=true;}
+async function loadReturnInvoicesForCustomer(){
+ const customerId=Number($("returnCustomer")?.value||0),el=$("returnInvoice");
+ if(!el)return;
+ el.replaceChildren();
+ const first=document.createElement("option");first.value="";first.textContent=customerId?"جارٍ تحميل فواتير العميل...":"اختر العميل أولًا";el.appendChild(first);
+ el.disabled=true;
+ $("returnTrip").value="";
+ if(!customerId)return;
+ try{
+  const {data,error}=await db.from("sales_invoices").select("sales_invoice_id,invoice_number,customer_id,trip_id,status,invoice_date,net_total").eq("customer_id",customerId).neq("status","CANCELLED").order("sales_invoice_id",{ascending:false}).limit(500);
+  if(error)throw error;
+  el.replaceChildren();
+  const prompt=document.createElement("option");prompt.value="";prompt.textContent=data?.length?"اختر الفاتورة":"لا توجد فواتير بيع متاحة لهذا العميل";el.appendChild(prompt);
+  (data||[]).forEach(i=>{const o=document.createElement("option");o.value=String(i.sales_invoice_id);o.textContent=(i.invoice_number||("فاتورة "+i.sales_invoice_id))+" — "+formatDate(i.invoice_date)+" — "+fmt(i.net_total);o.dataset.customer=i.customer_id;o.dataset.trip=i.trip_id||"";el.appendChild(o);});
+  el.disabled=!data?.length;
+ }catch(e){
+  el.replaceChildren();const opt=document.createElement("option");opt.value="";opt.textContent="تعذر تحميل الفواتير";el.appendChild(opt);
+  msg($("returnFormMsg"),"تعذر تحميل فواتير العميل: "+err(e),"error");
+ }
+}
 function resetSalesReturnForm(){salesReturnLotOptionsCache=[];salesReturnLotOptionsPromise=Promise.resolve();$("returnForm").reset();$("returnItems").replaceChildren();$("exchangeItems").replaceChildren();returnItemCounter=0;$("returnDate").value=todayISO();fillReturnCustomerSelect();fillReturnTripSelect();fillReturnInvoiceSelect();fillTreasurySelects();addSalesReturnItemRow($("returnItems"));updateSalesReturnTotals();clear($("returnFormMsg"));$("returnFormModal").classList.add("active");}
 let salesReturnLotOptionsCache=[];
 let salesReturnLotOptionsPromise=Promise.resolve();
@@ -5796,6 +5816,7 @@ async function loadSalesReturnLotOptions(){
   document.querySelectorAll("#returnItems .item-row").forEach(fillSalesReturnLotSelect);
 }
 if($("returnInvoice"))$("returnInvoice").addEventListener("change",()=>{salesReturnLotOptionsPromise=loadSalesReturnLotOptions();});
+if($("returnCustomer"))$("returnCustomer").addEventListener("change",loadReturnInvoicesForCustomer);
 function updateSalesReturnTotals(){let a=0;document.querySelectorAll("#returnItems .item-row").forEach(r=>a+=Number(r.querySelector(".return-qty")?.value||0)*Number(r.querySelector(".return-price")?.value||0));$("returnTotalDisplay").textContent=fmt(a);$("exchangeTotalDisplay").textContent="0";$("diffDisplay").textContent=fmt(-a);}
 function fillSalesReturnCustomerFilter(){
   const el=$("srCustomerFilter"); if(!el)return;
