@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v50</title>
+<title>MeatManagement v51</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -302,7 +302,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v50]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v51]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1637,7 +1637,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v50</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v51</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -5624,13 +5624,32 @@ if($("purchaseReturnForm")) $("purchaseReturnForm").addEventListener("submit", a
 async function enrichCollectionRepNames(rows){
   const items=Array.isArray(rows)?rows:[];
   const tripIds=[...new Set(items.map(x=>Number(x.trip_id)).filter(Number.isFinite).filter(x=>x>0))];
+  const customerIds=[...new Set(items.map(x=>Number(x.customer_id)).filter(Number.isFinite).filter(x=>x>0))];
   const tripRepMap=new Map(tripsCache.map(t=>[String(t.trip_id),Number(t.sales_rep_id)||null]));
   if(tripIds.length){
     const {data,error}=await db.from("trips").select("trip_id,sales_rep_id").in("trip_id",tripIds);
     if(error) console.warn("تعذر تحميل مندوبي جولات التحصيلات:",error);
     else (data||[]).forEach(t=>tripRepMap.set(String(t.trip_id),Number(t.sales_rep_id)||null));
   }
-  const repIds=[...new Set(items.map(x=>Number(x.sales_rep_id)).concat(items.map(x=>tripRepMap.get(String(x.trip_id)))).filter(Number.isFinite).filter(x=>x>0))];
+  const customerAreaMap=new Map();
+  if(customerIds.length){
+    const {data,error}=await db.from("customers").select("customer_id,area_id").in("customer_id",customerIds);
+    if(error) console.warn("تعذر تحميل مناطق عملاء التحصيلات:",error);
+    else (data||[]).forEach(customer=>customerAreaMap.set(String(customer.customer_id),Number(customer.area_id)||null));
+  }
+  const areaIds=[...new Set([...customerAreaMap.values()].filter(Number.isFinite).filter(x=>x>0))];
+  const areaRepMap=new Map();
+  if(areaIds.length){
+    const {data,error}=await db.from("sales_rep_areas").select("area_id,sales_rep_id").eq("is_active",true).in("area_id",areaIds);
+    if(error) console.warn("تعذر تحميل مندوبي مناطق العملاء:",error);
+    else (data||[]).forEach(assignment=>areaRepMap.set(String(assignment.area_id),Number(assignment.sales_rep_id)||null));
+  }
+  const repIds=[...new Set(
+    items.map(x=>Number(x.sales_rep_id))
+      .concat(items.map(x=>tripRepMap.get(String(x.trip_id))))
+      .concat(items.map(x=>areaRepMap.get(String(customerAreaMap.get(String(x.customer_id))))))
+      .filter(Number.isFinite).filter(x=>x>0)
+  )];
   const repNames=new Map();
   if(repIds.length){
     const {data,error}=await db.from("sales_reps").select("sales_rep_id,name,rep_name").in("sales_rep_id",repIds);
@@ -5640,7 +5659,13 @@ async function enrichCollectionRepNames(rows){
   return items.map(item=>{
     const directName=repNames.get(String(item.sales_rep_id))||"";
     const tripName=repNames.get(String(tripRepMap.get(String(item.trip_id))))||"";
-    return {...item,resolved_sales_rep_name:item.sales_rep_name||directName||tripName||"غير محدد"};
+    const areaRepId=areaRepMap.get(String(customerAreaMap.get(String(item.customer_id))));
+    const customerRepName=repNames.get(String(areaRepId))||"";
+    return {
+      ...item,
+      resolved_sales_rep_name:item.sales_rep_name||directName||tripName||customerRepName||"غير محدد",
+      collection_channel_label:item.trip_id?"عن طريق المندوب":"مباشر من الشركة"
+    };
   });
 }
 async function loadCollections(){ 
@@ -5667,9 +5692,10 @@ function renderCollections(){
   if(!found.length){ box.innerHTML = `<div class="empty">لا توجد تحصيلات مطابقة.</div>`; return; } 
   found.forEach(col=>{ 
     const card=document.createElement("div");card.className="product"; 
-    const repName = col.resolved_sales_rep_name || col.sales_rep_name || "غير محدد"; 
+    const repName = col.resolved_sales_rep_name || col.sales_rep_name || "غير محدد";
+    const channelLabel = col.collection_channel_label || (col.trip_id ? "عن طريق المندوب" : "مباشر من الشركة"); 
     const trip = col.trip_id ? tripNumber(col.trip_id) : "بدون جولة"; 
-    card.innerHTML = `<div class="pname">💰 ${col.collection_number}</div><div class="details">عميل: ${customerName(col.customer_id)} | مبلغ: ${fmt(col.amount)}</div><div class="details">📅 التاريخ: ${formatDate(col.collection_date)} | 👤 المندوب: ${repName} | 🚐 الجولة: ${trip}</div>`; 
+    card.innerHTML = `<div class="pname">💰 ${col.collection_number}</div><div class="details">عميل: ${customerName(col.customer_id)} | مبلغ: ${fmt(col.amount)}</div><div class="details">📅 التاريخ: ${formatDate(col.collection_date)} | 👤 المندوب المسؤول: ${repName} | طريقة التحصيل: ${channelLabel} | 🚐 الجولة: ${trip}</div>`; 
     box.appendChild(card); 
   }); 
 }
@@ -5695,15 +5721,15 @@ if($("viewCollectionsStatementBtn")) $("viewCollectionsStatementBtn").addEventLi
     if(error) { $("genericStatementHeader").innerHTML = "خطأ: "+err(error); return; }
     const statementRows=await enrichCollectionRepNames(data||[]);
     let total = 0; 
-    let html = `<thead><tr><th>التاريخ</th><th>رقم التحصيل</th><th>العميل</th><th>المندوب</th><th>المبلغ</th></tr></thead><tbody>`;
-    statementRows.forEach(row => { total += Number(row.amount); html += `<tr><td>${formatDate(row.collection_date)}</td><td>${row.collection_number}</td><td>${customerName(row.customer_id)}</td><td>${row.resolved_sales_rep_name||"غير محدد"}</td><td>${fmt(row.amount)}</td></tr>`; });
+    let html = `<thead><tr><th>التاريخ</th><th>رقم التحصيل</th><th>العميل</th><th>المندوب المسؤول / طريقة التحصيل</th><th>المبلغ</th></tr></thead><tbody>`;
+    statementRows.forEach(row => { total += Number(row.amount); html += `<tr><td>${formatDate(row.collection_date)}</td><td>${row.collection_number}</td><td>${customerName(row.customer_id)}</td><td>${row.resolved_sales_rep_name||"غير محدد"} — ${row.collection_channel_label|| (row.trip_id ? "عن طريق المندوب" : "مباشر من الشركة")}</td><td>${fmt(row.amount)}</td></tr>`; });
     if(!data || !data.length) html += `<tr><td colspan="5">لا توجد تحصيلات</td></tr>`; 
     html += `</tbody>`;
     $("genericStatementItems").innerHTML = html; 
     $("genericStatementHeader").innerHTML = `<div><strong>العميل:</strong> ${custName}</div><div><strong>الفترة:</strong> ${periodText || "كل الفترات"}</div>`; 
     $("genericStatementSummary").innerHTML = `<div class="line grand"><span>إجمالي التحصيلات:</span><span>${fmt(total)}</span></div>`;
     let waText = `*كشف حركة التحصيلات*\nالعميل: ${custName}\n${periodText}\n------------------------\n`; 
-    statementRows.forEach(row => { waText += `▪️ ${formatDate(row.collection_date)} | ${customerName(row.customer_id)} | المندوب: ${row.resolved_sales_rep_name||"غير محدد"} | ${fmt(row.amount)}\n`; }); 
+    statementRows.forEach(row => { waText += `▪️ ${formatDate(row.collection_date)} | ${customerName(row.customer_id)} | المندوب المسؤول: ${row.resolved_sales_rep_name||"غير محدد"} | ${row.collection_channel_label|| (row.trip_id ? "عن طريق المندوب" : "مباشر من الشركة")} | ${fmt(row.amount)}\n`; }); 
     waText += `------------------------\n*إجمالي التحصيلات: ${fmt(total)}*`;
     $("shareGenericWhatsappBtn").onclick = () => { window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); };
     fillPrintHeaders();
