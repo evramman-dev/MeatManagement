@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v51</title>
+<title>MeatManagement v52</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1139,6 +1139,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <label for="customerGovernorate">المحافظة *</label><select id="customerGovernorate" required><option value="">اختر المحافظة</option></select>
 <label for="customerCity">الوحدة الإدارية *</label><select id="customerCity" required disabled><option value="">اختر الوحدة الإدارية</option></select>
 <label for="customerArea">المنطقة / القرية</label><select id="customerArea" disabled><option value="">اختر المنطقة / القرية</option></select>
+<label for="customerSalesRep">المندوب المسؤول عن العميل</label><select id="customerSalesRep"><option value="">بدون تعيين مندوب</option></select>
 <label for="customerAddress">العنوان</label><textarea id="customerAddress" rows="2"></textarea>
 <label class="check"><input id="customerActive" type="checkbox" checked>العميل نشط</label>
 <button id="saveCustomerBtn" class="btn" type="submit">حفظ</button>
@@ -3454,12 +3455,28 @@ function syncCustomerLegacyGeo(){
   if($("customerLegacyCity")) $("customerLegacyCity").value=city?.name||"";
   if($("customerLegacyArea")) $("customerLegacyArea").value=area?.name||"";
 }
+let customerSalesRepsCache=[];
+async function loadCustomerSalesRepOptions(selectedId=""){
+  const select=$("customerSalesRep"); if(!select) return;
+  select.replaceChildren(new Option("بدون تعيين مندوب", ""));
+  if(!navigator.onLine){select.value=selectedId?String(selectedId):"";return;}
+  const {data,error}=await db.from("sales_reps").select("sales_rep_id,name,is_active").order("name");
+  if(error) throw error;
+  customerSalesRepsCache=data||[];
+  customerSalesRepsCache.filter(rep=>rep.is_active||String(rep.sales_rep_id)===String(selectedId)).forEach(rep=>select.add(new Option((rep.name||("مندوب رقم "+rep.sales_rep_id))+(rep.is_active?"":" (موقوف)"),String(rep.sales_rep_id))));
+  select.value=selectedId?String(selectedId):"";
+}
 window.openCustomerForm=async function(c=null){
   if(c && !canManageCustomers){ showToast("لا تملك صلاحية تعديل بيانات العملاء.","error"); return; }
   if(!c && !canCreateCustomers){ showToast("لا تملك صلاحية إضافة عميل.","error"); return; }
   try{
     await loadCustomerGeoData();
     const form=$("customerForm"); if(form) form.reset();
+    try{await loadCustomerSalesRepOptions(c?.sales_rep_id||"");}catch(repLoadError){console.warn("تعذر تحميل قائمة المندوبين المسؤولين:",repLoadError);}
+    const canAssignCustomerRep=currentRoleCode!=="SALES_REP";
+    const customerRepLabel=document.querySelector('label[for="customerSalesRep"]');
+    if(customerRepLabel) customerRepLabel.classList.toggle("hidden",!canAssignCustomerRep);
+    if($("customerSalesRep")) $("customerSalesRep").classList.toggle("hidden",!canAssignCustomerRep);
     $("customerEditId").value=c?.customer_id||"";
     $("customerFormTitle").textContent=c?"تعديل العميل":"إضافة عميل جديد";
     $("customerCode").value=c?.customer_code||"";
@@ -3603,6 +3620,7 @@ if($("customerForm")) $("customerForm").addEventListener("submit", async e => {
     city:$("customerLegacyCity").value||null,
     area:$("customerLegacyArea").value||null,
     area_id:areaId,
+    sales_rep_id:currentRoleCode==="SALES_REP"?(customersCache.find(customer=>String(customer.customer_id)===String(id))?.sales_rep_id||null):($("customerSalesRep").value?Number($("customerSalesRep").value):null),
     is_active:currentRoleCode==="SALES_REP"?true:$("customerActive").checked
   }; 
   try{ 
@@ -5632,10 +5650,11 @@ async function enrichCollectionRepNames(rows){
     else (data||[]).forEach(t=>tripRepMap.set(String(t.trip_id),Number(t.sales_rep_id)||null));
   }
   const customerAreaMap=new Map();
+  const customerRepMap=new Map();
   if(customerIds.length){
-    const {data,error}=await db.from("customers").select("customer_id,area_id").in("customer_id",customerIds);
+    const {data,error}=await db.from("customers").select("customer_id,area_id,sales_rep_id").in("customer_id",customerIds);
     if(error) console.warn("تعذر تحميل مناطق عملاء التحصيلات:",error);
-    else (data||[]).forEach(customer=>customerAreaMap.set(String(customer.customer_id),Number(customer.area_id)||null));
+    else (data||[]).forEach(customer=>{customerAreaMap.set(String(customer.customer_id),Number(customer.area_id)||null);customerRepMap.set(String(customer.customer_id),Number(customer.sales_rep_id)||null);});
   }
   const areaIds=[...new Set([...customerAreaMap.values()].filter(Number.isFinite).filter(x=>x>0))];
   const areaRepMap=new Map();
@@ -5647,6 +5666,7 @@ async function enrichCollectionRepNames(rows){
   const repIds=[...new Set(
     items.map(x=>Number(x.sales_rep_id))
       .concat(items.map(x=>tripRepMap.get(String(x.trip_id))))
+      .concat(items.map(x=>customerRepMap.get(String(x.customer_id))))
       .concat(items.map(x=>areaRepMap.get(String(customerAreaMap.get(String(x.customer_id))))))
       .filter(Number.isFinite).filter(x=>x>0)
   )];
@@ -5660,10 +5680,11 @@ async function enrichCollectionRepNames(rows){
     const directName=repNames.get(String(item.sales_rep_id))||"";
     const tripName=repNames.get(String(tripRepMap.get(String(item.trip_id))))||"";
     const areaRepId=areaRepMap.get(String(customerAreaMap.get(String(item.customer_id))));
-    const customerRepName=repNames.get(String(areaRepId))||"";
+    const assignedCustomerRepName=repNames.get(String(customerRepMap.get(String(item.customer_id))))||"";
+    const areaCustomerRepName=repNames.get(String(areaRepId))||"";
     return {
       ...item,
-      resolved_sales_rep_name:item.sales_rep_name||directName||tripName||customerRepName||"غير محدد",
+      resolved_sales_rep_name:item.sales_rep_name||directName||tripName||assignedCustomerRepName||areaCustomerRepName||"غير محدد",
       collection_channel_label:item.trip_id?"عن طريق المندوب":"مباشر من الشركة"
     };
   });
