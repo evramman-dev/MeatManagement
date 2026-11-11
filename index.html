@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v62</title>
+<title>MeatManagement v63</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1851,7 +1851,7 @@ try {
   let canViewSuppliers=false, canManageSuppliers=false;
   let canViewPurchases=false, canManagePurchases=false;
   let canViewSupplierPayments=false;
-  let canViewPurchaseReturns=false;
+  let canViewPurchaseReturns=false, canManagePurchaseReturns=false;
   let canViewFixedAssets=false, canManageFixedAssets=false, canViewLandedCosts=false, canManageLandedCosts=false;
   let canViewPartnerInventoryContributions=false, canManagePartnerInventoryContributions=false, canCancelPartnerInventoryContributions=false, canViewPartnerVehicleContributions=false, canManagePartnerVehicleContributions=false, canCancelPartnerVehicleContributions=false;
   let partnerInventoryContributionsCache=[];
@@ -2273,7 +2273,7 @@ async function userInfo(user){
     try{ canViewSales=await permission("SALES_VIEW") || await permission("INVOICES_VIEW") || isSystemAdmin; canManageSales=await permission("SALES_MANAGE") || isSystemAdmin; canViewSalesReturns=canViewSales || await permission("RETURNS_VIEW") || isSystemAdmin; if($("menuSales")) $("menuSales").classList.toggle("hidden",!canViewSales); if($("salesCard")) $("salesCard").classList.toggle("hidden",!canViewSales); if($("menuSalesReturns")) $("menuSalesReturns").classList.toggle("hidden",!canViewSalesReturns); if($("addInvoiceBtn")) $("addInvoiceBtn").classList.toggle("hidden",!(await permission("INVOICES_CREATE") || canManageSales)); }catch(e){}
     try{ canCreateReturns=await permission("RETURNS_CREATE") || await permission("RETURNS_MANAGE") || isSystemAdmin; canApproveReturns=await permission("RETURNS_APPROVE") || await permission("RETURNS_MANAGE") || isSystemAdmin; canManageReturns=await permission("RETURNS_MANAGE") || isSystemAdmin; if($("addReturnBtn")) $("addReturnBtn").classList.toggle("hidden",!canCreateReturns); if($("addSalesReturnStandaloneBtn")) $("addSalesReturnStandaloneBtn").classList.toggle("hidden",!canCreateReturns); }catch(e){}
     try{ canViewSupplierPayments=await permission("PURCHASES_VIEW") || await permission("SUPPLIERS_VIEW") || isSystemAdmin; if($("menuSupplierPayments")) $("menuSupplierPayments").classList.toggle("hidden",!canViewSupplierPayments); }catch(e){}
-    try{ canViewPurchaseReturns=await permission("RETURNS_VIEW") || await permission("PURCHASES_VIEW") || isSystemAdmin; if($("menuPurchaseReturns")) $("menuPurchaseReturns").classList.toggle("hidden",!canViewPurchaseReturns); }catch(e){}
+    try{ canViewPurchaseReturns=await permission("RETURNS_VIEW") || await permission("PURCHASES_VIEW") || isSystemAdmin; canManagePurchaseReturns=await permission("PURCHASES_MANAGE") || isSystemAdmin; if($("menuPurchaseReturns")) $("menuPurchaseReturns").classList.toggle("hidden",!canViewPurchaseReturns); }catch(e){}
     try{ canViewReports=await permission("REPORTS_VIEW") || isSystemAdmin; if($("menuReports")) $("menuReports").classList.toggle("hidden",!canViewReports); }catch(e){}
     try{ canViewCustomers=await permission("CUSTOMERS_VIEW") || isSystemAdmin; canManageCustomers=await permission("CUSTOMERS_MANAGE") || isSystemAdmin; canCreateCustomers=canManageCustomers; if($("menuCustomers")) $("menuCustomers").classList.toggle("hidden",!canViewCustomers); if($("customersCard")) $("customersCard").classList.toggle("hidden",!canViewCustomers); if($("addCustomerBtn")) $("addCustomerBtn").classList.toggle("hidden",!canCreateCustomers); }catch(e){}
     try{ canViewSuppliers=await permission("SUPPLIERS_VIEW") || isSystemAdmin; canManageSuppliers=await permission("SUPPLIERS_MANAGE") || isSystemAdmin; if($("menuSuppliers")) $("menuSuppliers").classList.toggle("hidden",!canViewSuppliers); if($("suppliersCard")) $("suppliersCard").classList.toggle("hidden",!canViewSuppliers); if($("addSupplierBtn")) $("addSupplierBtn").classList.toggle("hidden",!canManageSuppliers); }catch(e){}
@@ -5420,7 +5420,7 @@ async function loadPurchaseReturns() {
     const from = $("prFromDate").value; 
     const to = $("prToDate").value; 
     const supId = $("prSupplierFilter").value; 
-    let query = db.from("purchase_returns").select("*, suppliers(supplier_name)").eq("is_cancelled", false).order("return_id", {ascending:false}); 
+    let query = db.from("purchase_returns").select("*, suppliers(supplier_name)").order("return_id", {ascending:false}); 
     if (from) query = query.gte("return_date", from); 
     if (to) query = query.lte("return_date", to); 
     if (supId) query = query.eq("supplier_id", supId); 
@@ -5436,7 +5436,10 @@ async function loadPurchaseReturns() {
         title.textContent = "↩️ " + (r.return_number || "مرتجع");
         const details = document.createElement("div");
         details.className = "details";
-        details.textContent = "المورد: " + (r.suppliers?.supplier_name || supplierName(r.supplier_id)) + " | المبلغ: " + fmt(r.total_return_amount) + " | التاريخ: " + formatDate(r.return_date);
+        const statusText = r.is_cancelled
+            ? "الحالة: ملغي" + (r.cancellation_reason ? " | سبب الإلغاء: " + r.cancellation_reason : "")
+            : "الحالة: نشط";
+        details.textContent = "المورد: " + (r.suppliers?.supplier_name || supplierName(r.supplier_id)) + " | المبلغ: " + fmt(r.total_return_amount) + " | التاريخ: " + formatDate(r.return_date) + " | " + statusText;
         const actions = document.createElement("div");
         actions.className = "actions";
         const view = document.createElement("button");
@@ -5445,6 +5448,39 @@ async function loadPurchaseReturns() {
         view.textContent = "عرض التفاصيل";
         view.onclick = () => viewPurchaseReturn(r);
         actions.appendChild(view);
+        if(!r.is_cancelled && canManagePurchaseReturns){
+            const cancel = document.createElement("button");
+            cancel.type = "button";
+            cancel.className = "btn danger";
+            cancel.textContent = "إلغاء المرتجع";
+            cancel.onclick = async () => {
+                const reason = prompt("اكتب سبب إلغاء مرتجع المشتريات:");
+                if(reason === null) return;
+                if(!reason.trim()){
+                    alert("يجب كتابة سبب الإلغاء.");
+                    return;
+                }
+                if(!confirm("سيتم عكس كمية المخزون والقيد المحاسبي، كما سيتم عكس حركة الخزنة إذا كان المرتجع نقديًا أو بنكيًا. هل تريد المتابعة؟")) return;
+                busy(cancel, true, "جارٍ الإلغاء...", "إلغاء المرتجع");
+                try{
+                    const {error} = await db.rpc("cancel_purchase_return", {
+                        p_return_id: Number(r.return_id),
+                        p_reason: reason.trim()
+                    });
+                    if(error) throw error;
+                    showToast("تم إلغاء المرتجع وعكس آثاره بنجاح", "success");
+                    await loadPurchaseReturns();
+                    if(canViewStock) await loadStock();
+                    if(canViewTreasuries) await loadTreasuries();
+                    if(canViewSuppliers) await loadSuppliers();
+                }catch(e){
+                    alert("تعذر إلغاء المرتجع: " + err(e));
+                }finally{
+                    busy(cancel, false, "", "إلغاء المرتجع");
+                }
+            };
+            actions.appendChild(cancel);
+        }
         card.append(title, details, actions);
         box.appendChild(card);
     });
@@ -5470,6 +5506,8 @@ async function viewPurchaseReturn(ret) {
              <div><strong>المورد:</strong> ${escReturn(supplier)}</div>
              <div><strong>التاريخ:</strong> ${formatDate(ret.return_date)} | <strong>الفاتورة الأصلية:</strong> ${escReturn(invoice?.invoice_number || ret.purchase_invoice_id || "—")}</div>
              <div><strong>طريقة التسوية:</strong> ${ret.settlement_method === "SUPPLIER_CREDIT" ? "خصم من حساب المورد" : ret.settlement_method === "CASH" ? "استرداد نقدي" : "استرداد بنكي / Instapay"}</div>
+             <div><strong>الحالة:</strong> ${ret.is_cancelled ? "ملغي" : "نشط"}</div>
+             ${ret.is_cancelled ? `<div><strong>تاريخ الإلغاء:</strong> ${escReturn(ret.cancelled_at ? formatDate(String(ret.cancelled_at).slice(0,10)) : "—")}</div><div><strong>سبب الإلغاء:</strong> ${escReturn(ret.cancellation_reason || "—")}</div>` : ""}
              <div><strong>ملاحظات:</strong> ${escReturn(ret.notes || "—")}</div>`;
         let html = "<thead><tr><th>الصنف</th><th>الكمية المرتجعة</th><th>الوحدة</th><th>سعر الوحدة</th><th>الإجمالي</th><th>كمية الحركة من المخزون</th></tr></thead><tbody>";
         (items || []).forEach(item => {
