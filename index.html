@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v56</title>
+<title>MeatManagement v57</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -302,7 +302,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v56]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v57]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1206,7 +1206,24 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 <div class="row"><input id="salesSearch" type="search" placeholder="ابحث..."><button id="refreshSalesBtn" class="btn secondary" type="button">تحديث</button></div>
 <div id="salesMsg" class="status hidden"></div>
-<div id="salesList"><div class="empty">جارٍ تحميل الفواتير...</div></div><div class="card" style="margin-top:14px;"><div class="row" style="justify-content:space-between"><h3 style="margin:0;color:var(--g);">↩️ مرتجعات البيع</h3><button id="refreshSalesReturnsBtn" class="btn secondary" type="button" style="width:auto;margin:0;">تحديث</button></div><div id="salesReturnsMsg" class="status hidden"></div><div id="salesReturnsList"><div class="empty">جارٍ تحميل المرتجعات...</div></div></div>
+<div id="salesList"><div class="empty">جارٍ تحميل الفواتير...</div></div>
+<div class="card" style="margin-top:14px;">
+  <div class="row" style="justify-content:space-between"><h3 style="margin:0;color:var(--g);">↩️ مرتجعات البيع</h3></div>
+  <div class="filter-box">
+    <div class="grid">
+      <div><label>من تاريخ</label><input type="date" id="srFromDate"></div>
+      <div><label>إلى تاريخ</label><input type="date" id="srToDate"></div>
+    </div>
+    <label>العميل</label>
+    <select id="srCustomerFilter"><option value="">كل العملاء</option></select>
+    <div class="row" style="margin-top:10px;">
+      <button id="refreshSalesReturnsBtn" class="btn secondary" type="button" style="flex:1;">تحديث البحث</button>
+      <button id="viewSalesReturnStatementBtn" class="btn" type="button" style="flex:1;background:var(--gold);color:var(--g);">📄 كشف حركة</button>
+    </div>
+  </div>
+  <div id="salesReturnsMsg" class="status hidden"></div>
+  <div id="salesReturnsList"><div class="empty">جارٍ تحميل المرتجعات...</div></div>
+</div>
 </div>
 </div>
 
@@ -1638,7 +1655,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v56</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v57</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -1998,7 +2015,7 @@ window.openSection = function(name) {
   if (name === "trips") loadTrips();
   if (name === "customers") loadCustomers();
   if (name === "suppliers") loadSuppliers();
-  if (name === "sales") loadSales();
+  if (name === "sales") { fillSalesReturnCustomerFilter(); loadSales(); loadSalesReturns(); }
   if (name === "purchases") loadPurchases();
   if (name === "collections") loadCollections();
   if (name === "partners") loadPartners();
@@ -5175,38 +5192,152 @@ function addSalesReturnItemRow(container){
   p.onchange=fill;u.onchange=fillPackages;q.oninput=recalc;price.oninput=recalc;fill();
 }
 function updateSalesReturnTotals(){let a=0;document.querySelectorAll("#returnItems .item-row").forEach(r=>a+=Number(r.querySelector(".return-qty")?.value||0)*Number(r.querySelector(".return-price")?.value||0));$("returnTotalDisplay").textContent=fmt(a);$("exchangeTotalDisplay").textContent="0";$("diffDisplay").textContent=fmt(-a);}
+function fillSalesReturnCustomerFilter(){
+  const el=$("srCustomerFilter"); if(!el)return;
+  const cur=el.value; el.replaceChildren();
+  const first=document.createElement("option"); first.value=""; first.textContent="كل العملاء"; el.appendChild(first);
+  customersCache.filter(c=>c.is_active).forEach(c=>{
+    const op=document.createElement("option"); op.value=String(c.customer_id); op.textContent=c.customer_name; el.appendChild(op);
+  });
+  el.value=cur;
+}
+function salesReturnStatusName(v){return({DRAFT:"مسودة",APPROVED:"معتمد",POSTED:"مرحّل",CANCELLED:"ملغى"})[v]||v||"غير محدد";}
+function salesReturnCashActionName(v){return({DEDUCT_DEBT:"خصم من مديونية العميل",CASH_BACK:"رد نقدية من خزنة المناديب",CUSTOMER_PAYS_CASH:"تحصيل نقدي من العميل"})[v]||v||"غير محدد";}
+function salesReturnTypeName(v){return({RETURN:"مرتجع",EXCHANGE:"استبدال"})[v]||v||"غير محدد";}
+
 async function loadSalesReturns(){
   const box=$("salesReturnsList"); if(!box)return;
-  const {data,error}=await db.from("sales_returns").select("*").order("sales_return_id",{ascending:false}).limit(200);
+  if(!navigator.onLine){box.innerHTML="<div class='empty'>أنت أوفلاين.</div>";return;}
+  box.innerHTML="<div class='empty'>جارٍ التحميل...</div>";
+  const from=$("srFromDate")?.value||"";
+  const to=$("srToDate")?.value||"";
+  const customerId=$("srCustomerFilter")?.value||"";
+  let query=db.from("sales_returns").select("*").neq("status","CANCELLED").order("sales_return_id",{ascending:false}).limit(200);
+  if(from)query=query.gte("return_date",from);
+  if(to)query=query.lte("return_date",to);
+  if(customerId)query=query.eq("customer_id",Number(customerId));
+  const {data,error}=await query;
   if(error){msg($("salesReturnsMsg"),"تعذر تحميل المرتجعات: "+err(error),"error");return;}
   box.replaceChildren();
-  if(!data?.length){box.innerHTML="<div class='empty'>لا توجد مرتجعات.</div>";return;}
+  if(!data?.length){box.innerHTML="<div class='empty'>لا توجد مرتجعات مطابقة للبحث.</div>";return;}
   data.forEach(r=>{
-    const c=document.createElement("div");c.className="product";
-    c.innerHTML=`<div class="pname">↩️ ${r.return_number}</div><div class="details">العميل: ${customerName(r.customer_id)} | القيمة: ${fmt(r.net_total||r.total_returned_value||0)} | الحالة: ${r.status}</div><div class="details">السبب: ${r.reason||r.notes||"-"}</div>`;
+    const c=document.createElement("div"); c.className="product";
+    const title=document.createElement("div"); title.className="pname"; title.textContent="↩️ "+(r.return_number||"مرتجع");
+    const details=document.createElement("div"); details.className="details";
+    details.textContent="العميل: "+customerName(r.customer_id)+" | المبلغ: "+fmt(r.net_total||r.total_returned_value||0)+" | التاريخ: "+formatDate(r.return_date);
+    const status=document.createElement("span"); status.className="badge"+(r.status==="POSTED"||r.status==="APPROVED"?" badge-paid":r.status==="DRAFT"?" badge-partial":"");
+    status.textContent="الحالة: "+salesReturnStatusName(r.status);
+    const reason=document.createElement("div"); reason.className="details"; reason.textContent="السبب: "+(r.reason||r.notes||"-");
+    const actions=document.createElement("div"); actions.className="actions";
+    const view=document.createElement("button"); view.className="btn secondary"; view.textContent="عرض التفاصيل"; view.onclick=()=>viewSalesReturn(r); actions.appendChild(view);
     if((canApproveReturns||canManageReturns)&&r.status==="DRAFT"){
-      const approve=document.createElement("button");approve.className="btn";approve.textContent="اعتماد وترحيل المرتجع";
+      const approve=document.createElement("button"); approve.className="btn"; approve.textContent="اعتماد وترحيل المرتجع";
       approve.onclick=async()=>{
         if(!confirm("سيتم اعتماد المرتجع وإضافة البضاعة إلى مخزن السيارة وتسجيل أثره المالي. هل تريد المتابعة؟"))return;
         try{
           const current=(await db.auth.getUser()).data.user;
-          const {error:e1}=await db.rpc("validate_sales_return",{p_sales_return_id:Number(r.sales_return_id)});if(e1)throw e1;
-          const {error:e2}=await db.rpc("post_sales_return",{p_sales_return_id:Number(r.sales_return_id),p_created_by:current.id});if(e2)throw e2;
-          clearRequestId(returnRequestKey);
-      showToast("تم اعتماد وترحيل المرتجع","success");await loadSalesReturns();await loadSales();await loadStock();
+          const {error:e1}=await db.rpc("validate_sales_return",{p_sales_return_id:Number(r.sales_return_id)}); if(e1)throw e1;
+          const {error:e2}=await db.rpc("post_sales_return",{p_sales_return_id:Number(r.sales_return_id),p_created_by:current.id}); if(e2)throw e2;
+          showToast("تم اعتماد وترحيل المرتجع","success");
+          await loadSalesReturns(); await loadSales(); await loadStock();
         }catch(e){showToast("تعذر اعتماد المرتجع: "+err(e),"error",7000);}
       };
-      c.appendChild(approve);
+      actions.appendChild(approve);
     }
     if(canManageReturns&&["APPROVED","POSTED"].includes(r.status)){
-      const b=document.createElement("button");b.className="btn danger";b.textContent="إلغاء المرتجع";
-      b.onclick=async()=>{const reason=prompt("اكتب سبب إلغاء المرتجع:");if(!reason)return;const {error}=await db.rpc("cancel_sales_return",{p_sales_return_id:Number(r.sales_return_id),p_reason:reason.trim()});if(error)showToast("تعذر إلغاء المرتجع: "+err(error),"error",7000);else{showToast("تم إلغاء المرتجع","success");await loadSalesReturns();await loadSales();await loadStock();}};
-      c.appendChild(b);
+      const cancel=document.createElement("button"); cancel.className="btn danger"; cancel.textContent="إلغاء المرتجع";
+      cancel.onclick=async()=>{const reasonText=prompt("اكتب سبب إلغاء المرتجع:");if(!reasonText)return;const {error:e}=await db.rpc("cancel_sales_return",{p_sales_return_id:Number(r.sales_return_id),p_reason:reasonText.trim()});if(e)showToast("تعذر إلغاء المرتجع: "+err(e),"error",7000);else{showToast("تم إلغاء المرتجع","success");await loadSalesReturns();await loadSales();await loadStock();}};
+      actions.appendChild(cancel);
     }
-    box.appendChild(c);
+    c.append(title,details,status,reason,actions); box.appendChild(c);
   });
 }
-if($("refreshSalesReturnsBtn"))$("refreshSalesReturnsBtn").onclick=loadSalesReturns;if($("addReturnBtn"))$("addReturnBtn").onclick=resetSalesReturnForm;if($("addReturnItemBtn"))$("addReturnItemBtn").onclick=()=>addSalesReturnItemRow($("returnItems"));
+
+async function viewSalesReturn(ret){
+  const modal=$("genericStatementModal"); if(!modal)return;
+  $("genericStatementTitle").textContent="تفاصيل مرتجع المبيعات";
+  $("genericStatementHeader").textContent="جارٍ تحميل تفاصيل المرتجع...";
+  $("genericStatementItems").innerHTML="";
+  $("genericStatementSummary").innerHTML="";
+  modal.classList.remove("hidden");
+  try{
+    const [itemsRes,invoiceRes]=await Promise.all([
+      db.from("sales_return_items").select("return_item_id,product_id,unit_id,quantity,unit_price,line_total,location_id,base_quantity,conversion_factor,package_option_id,package_weight_kg,discount_amount,notes").eq("sales_return_id",Number(ret.sales_return_id)).order("return_item_id",{ascending:true}),
+      ret.sales_invoice_id?db.from("sales_invoices").select("invoice_number").eq("sales_invoice_id",Number(ret.sales_invoice_id)).maybeSingle():Promise.resolve({data:null,error:null})
+    ]);
+    if(itemsRes.error)throw itemsRes.error;
+    if(invoiceRes.error)throw invoiceRes.error;
+    const invoiceNumber=invoiceRes.data?.invoice_number||"—";
+    const trip=tripsCache.find(t=>Number(t.trip_id)===Number(ret.trip_id));
+    const esc=value=>String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+    $("genericStatementHeader").innerHTML=
+      "<div><strong>رقم المرتجع:</strong> "+esc(ret.return_number)+"</div>"+
+      "<div><strong>العميل:</strong> "+esc(customerName(ret.customer_id))+"</div>"+
+      "<div><strong>التاريخ:</strong> "+formatDate(ret.return_date)+" | <strong>الفاتورة الأصلية:</strong> "+esc(invoiceNumber)+"</div>"+
+      "<div><strong>الجولة:</strong> "+esc(trip?.trip_number||"بدون جولة")+" | <strong>المندوب:</strong> "+esc(trip?.rep_name||currentSalesRepName||"—")+"</div>"+
+      "<div><strong>نوع المرتجع:</strong> "+esc(salesReturnTypeName(ret.return_type))+" | <strong>حركة الفلوس:</strong> "+esc(salesReturnCashActionName(ret.cash_action))+"</div>"+
+      "<div><strong>الخزنة:</strong> "+esc(ret.treasury_id?treasuryName(ret.treasury_id):"—")+" | <strong>الحالة:</strong> "+esc(salesReturnStatusName(ret.status))+"</div>"+
+      "<div><strong>السبب:</strong> "+esc(ret.reason||"—")+"</div>"+
+      "<div><strong>ملاحظات:</strong> "+esc(ret.notes||"—")+"</div>";
+    let html="<thead><tr><th>الصنف</th><th>الكمية المرتجعة</th><th>الوحدة</th><th>سعر الوحدة</th><th>الإجمالي</th><th>كمية الحركة إلى المخزون</th></tr></thead><tbody>";
+    (itemsRes.data||[]).forEach(item=>{
+      const p=productsCache.find(x=>String(x.product_id)===String(item.product_id));
+      html+="<tr><td>"+esc(p?.product_name||("صنف "+item.product_id))+"</td><td>"+fmtQty(item.quantity)+"</td><td>"+esc(unitName(item.unit_id))+"</td><td>"+fmt(item.unit_price)+"</td><td>"+fmt(item.line_total)+"</td><td>"+fmtQty(item.base_quantity)+" "+esc(unitName(p?.base_unit_id))+"</td></tr>";
+    });
+    if(!itemsRes.data?.length)html+="<tr><td colspan='6'>لا توجد تفاصيل أصناف لهذا المرتجع.</td></tr>";
+    html+="</tbody>";
+    $("genericStatementItems").innerHTML=html;
+    $("genericStatementSummary").innerHTML=
+      "<div class='line'><span>قيمة الأصناف:</span><span>"+fmt(ret.subtotal??ret.total_returned_value??0)+"</span></div>"+
+      "<div class='line'><span>الخصم:</span><span style='color:red;'>-"+fmt(ret.discount_amount||0)+"</span></div>"+
+      "<div class='line grand'><span>إجمالي المرتجع:</span><span>"+fmt(ret.net_total??ret.total_returned_value??0)+"</span></div>"+
+      "<div class='line'><span>فرق السعر:</span><span>"+fmt(ret.price_difference||0)+"</span></div>";
+    const waLines=(itemsRes.data||[]).map(item=>{
+      const p=productsCache.find(x=>String(x.product_id)===String(item.product_id));
+      return (p?.product_name||("صنف "+item.product_id))+" - "+fmtQty(item.quantity)+" "+unitName(item.unit_id)+" - "+fmt(item.line_total);
+    });
+    const waText=["تفاصيل مرتجع المبيعات","رقم: "+ret.return_number,"العميل: "+customerName(ret.customer_id),"التاريخ: "+formatDate(ret.return_date),"الفاتورة الأصلية: "+invoiceNumber,"حركة الفلوس: "+salesReturnCashActionName(ret.cash_action),...waLines,"الإجمالي: "+fmt(ret.net_total??ret.total_returned_value??0)].join("\n");
+    $("shareGenericWhatsappBtn").onclick=()=>window.open("https://wa.me/?text="+encodeURIComponent(waText),"_blank");
+    fillPrintHeaders();
+  }catch(e){$("genericStatementHeader").textContent="تعذر تحميل التفاصيل: "+err(e);}
+}
+
+async function viewSalesReturnStatement(){
+  const modal=$("genericStatementModal");
+  $("genericStatementTitle").textContent="كشف حركة مرتجعات المبيعات";
+  $("genericStatementHeader").innerHTML="جارٍ التحميل...";
+  $("genericStatementItems").innerHTML="";
+  $("genericStatementSummary").innerHTML="";
+  modal.classList.remove("hidden");
+  const from=$("srFromDate")?.value||"",to=$("srToDate")?.value||"",customerId=$("srCustomerFilter")?.value||"";
+  let customerLabel=customerId?customerName(customerId):"كل العملاء";
+  let periodText=(from?"من: "+formatDate(from):"")+(to?" إلى: "+formatDate(to):"");
+  let query=db.from("sales_returns").select("*").neq("status","CANCELLED").order("return_date",{ascending:true});
+  if(from)query=query.gte("return_date",from);
+  if(to)query=query.lte("return_date",to);
+  if(customerId)query=query.eq("customer_id",Number(customerId));
+  const {data,error}=await query;
+  if(error){$("genericStatementHeader").innerHTML="خطأ: "+err(error);return;}
+  let total=0;
+  let html="<thead><tr><th>التاريخ</th><th>رقم المرتجع</th><th>العميل</th><th>المبلغ</th><th>الحالة</th></tr></thead><tbody>";
+  (data||[]).forEach(row=>{const amount=Number(row.net_total??row.total_returned_value??0);total+=amount;html+="<tr><td>"+formatDate(row.return_date)+"</td><td>"+row.return_number+"</td><td>"+customerName(row.customer_id)+"</td><td>"+fmt(amount)+"</td><td>"+salesReturnStatusName(row.status)+"</td></tr>";});
+  if(!data?.length)html+="<tr><td colspan='5'>لا توجد مرتجعات</td></tr>";
+  html+="</tbody>";
+  $("genericStatementItems").innerHTML=html;
+  $("genericStatementHeader").innerHTML="<div><strong>العميل:</strong> "+customerLabel+"</div><div><strong>الفترة:</strong> "+(periodText||"كل الفترات")+"</div>";
+  $("genericStatementSummary").innerHTML="<div class='line grand'><span>إجمالي المرتجعات:</span><span>"+fmt(total)+"</span></div>";
+  const waText=["كشف حركة مرتجعات المبيعات","العميل: "+customerLabel,periodText,...(data||[]).map(row=>formatDate(row.return_date)+" | "+row.return_number+" | "+customerName(row.customer_id)+" | "+fmt(row.net_total??row.total_returned_value??0)),"إجمالي المرتجعات: "+fmt(total)].filter(Boolean).join("\n");
+  $("shareGenericWhatsappBtn").onclick=()=>window.open("https://wa.me/?text="+encodeURIComponent(waText),"_blank");
+  fillPrintHeaders();
+}
+
+if($("srCustomerFilter"))$("srCustomerFilter").addEventListener("change",loadSalesReturns);
+if($("refreshSalesReturnsBtn"))$("refreshSalesReturnsBtn").onclick=loadSalesReturns;
+if($("viewSalesReturnStatementBtn"))$("viewSalesReturnStatementBtn").onclick=viewSalesReturnStatement;
+if($("srFromDate"))$("srFromDate").addEventListener("change",loadSalesReturns);
+if($("srToDate"))$("srToDate").addEventListener("change",loadSalesReturns);
+if($("addReturnBtn"))$("addReturnBtn").onclick=resetSalesReturnForm;
+if($("addReturnItemBtn"))$("addReturnItemBtn").onclick=()=>addSalesReturnItemRow($("returnItems"));
 if($("returnInvoice"))$("returnInvoice").onchange=()=>{const o=$("returnInvoice").selectedOptions[0];if(o?.dataset?.customer)$("returnCustomer").value=o.dataset.customer;if(o?.dataset?.trip)$("returnTrip").value=o.dataset.trip;};
 if($("returnForm"))$("returnForm").addEventListener("submit",async e=>{
   e.preventDefault();if(!canCreateReturns)return;
@@ -5327,7 +5458,7 @@ async function viewPurchaseReturn(ret) {
              <div><strong>التاريخ:</strong> ${formatDate(ret.return_date)} | <strong>الفاتورة الأصلية:</strong> ${escReturn(invoice?.invoice_number || ret.purchase_invoice_id || "—")}</div>
              <div><strong>طريقة التسوية:</strong> ${ret.settlement_method === "SUPPLIER_CREDIT" ? "خصم من حساب المورد" : ret.settlement_method === "CASH" ? "استرداد نقدي" : "استرداد بنكي / Instapay"}</div>
              <div><strong>ملاحظات:</strong> ${escReturn(ret.notes || "—")}</div>`;
-        let html = "<thead><tr><th>الصنف</th><th>الكمية المرتجعة</th><th>الوحدة</th><th>سعر الوحدة</th><th>الإجمالي</th><th>كمية المخزون</th></tr></thead><tbody>";
+        let html = "<thead><tr><th>الصنف</th><th>الكمية المرتجعة</th><th>الوحدة</th><th>سعر الوحدة</th><th>الإجمالي</th><th>كمية الحركة من المخزون</th></tr></thead><tbody>";
         (items || []).forEach(item => {
             const product = productsCache.find(p => String(p.product_id) === String(item.product_id));
             html += `<tr><td>${escReturn(product?.product_name || ("صنف " + item.product_id))}</td><td>${fmtQty(item.quantity)}</td><td>${escReturn(unitName(item.unit_id))}</td><td>${fmt(item.unit_price)}</td><td>${fmt(item.line_total)}</td><td>${fmtQty(item.base_quantity)} ${escReturn(unitName(product?.base_unit_id))}</td></tr>`;
