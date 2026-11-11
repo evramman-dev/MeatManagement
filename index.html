@@ -2015,7 +2015,7 @@ window.openSection = function(name) {
   if (name === "trips") loadTrips();
   if (name === "customers") loadCustomers();
   if (name === "suppliers") loadSuppliers();
-  if (name === "sales") loadSales();
+  if (name === "sales") { fillSalesReturnCustomerFilter(); loadSales(); loadSalesReturns(); }
   if (name === "purchases") loadPurchases();
   if (name === "collections") loadCollections();
   if (name === "partners") loadPartners();
