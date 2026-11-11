@@ -84,3 +84,18 @@ meatmanagement-browser-test-results
 
 الاختباران الجديدان يفحصان مصدر الواجهة فقط ولا ينفذان عمليات مالية.
 تم تأكيد تشغيل GitHub Actions رقم 108 على commit c47be7dcf824050ad1609e4825624df19618c6e4 بنتيجة success. اجتازت الاختبارات الأربعة التشغيل: 4 passed، دون فشل. رابط التشغيل: https://github.com/evramman-dev/MeatManagement/actions/runs/42986822147.
+
+
+## اختبار إشعارات المدير العام — 11 نوفمبر 2026
+
+أضيف الاختبار الخامس إلى Playwright للتحقق من:
+- وجود خيار إرسال إشعار عام لجميع المستخدمين النشطين.
+- جمع كل حسابات app_users النشطة عند اختيار الإرسال العام.
+- استخدام النوع GENERAL للإشعار العام والنوع MANUAL للمستلمين المحددين.
+- إبقاء الإرسال محميًا بشرط SYSTEM_ADMIN في الواجهة.
+
+الاختبار يفحص مصدر الواجهة. اختبار صلاحية قاعدة البيانات الفعلي تم منفصلًا داخل rollback، ورفض SYSTEM_TESTER وقبل SYSTEM_ADMIN.
+تم تشغيل GitHub Actions رقم 109 على commit `08fb6f3ccd120b1c74deca1e306ce20a4fb93661` بنتيجة success. اجتازت الاختبارات الخمسة التشغيل دون فشل.
+رابط التشغيل: https://github.com/evramman-dev/MeatManagement/actions/runs/42988976064.
+
+تم تحديث نسخة الواجهة إلى v44 وService Worker إلى meat-v77 على فرع QA فقط.
