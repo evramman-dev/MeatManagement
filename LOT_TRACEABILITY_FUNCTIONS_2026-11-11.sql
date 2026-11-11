@@ -2,6 +2,7 @@
 -- Date: 2026-11-11
 -- Release candidate: v70 / Service Worker meat-v103
 -- Audit snapshot of final definitions after the applied migrations.
+-- Includes migration scope_trip_surplus_lot_restore_to_surplus_receipt (2026-11-11).
 -- Not a standalone reset script. Apply through reviewed Supabase migrations only.
 
 -- Applied migrations:
@@ -2240,7 +2241,7 @@ BEGIN
   END IF;
 
   -- Trip surplus return preserves known lots; legacy trips receive an untraced return lot.
-  IF NEW.trip_id IS NOT NULL AND NEW.movement_type IN ('RECEIVE','RETURN') THEN
+  IF NEW.trip_id IS NOT NULL AND NEW.sales_return_id IS NULL AND NEW.movement_type IN ('RECEIVE','RETURN') AND COALESCE(NEW.notes,'') LIKE 'استلام فائض جولة %' THEN
     SELECT m.movement_id INTO v_source_movement_id
     FROM public.stock_movements m
     WHERE m.trip_id=NEW.trip_id AND m.product_id=NEW.product_id
@@ -2357,4 +2358,5 @@ BEGIN
   RETURN NEW;
 END;
 $function$
+
 ;

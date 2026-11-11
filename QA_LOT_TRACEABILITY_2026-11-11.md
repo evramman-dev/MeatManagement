@@ -135,3 +135,13 @@ Historical movements were not assigned fabricated lot allocations.
 - Production orders remained 2. The temporary order PRD-20261111-000006 did not persist.
 - No temporary QA-PRD lot, production journal, or production order remained.
 - Factory raw product 1 and finished product 2 balances both remained 0.0000 KG.
+
+
+## Trip sale, settlement, and completed-trip customer return regression (2026-11-11)
+- The first end-to-end attempt exposed a trigger-order bug: the trip-surplus branch treated every RETURN movement with a trip_id as a surplus receipt. A customer return after trip settlement therefore compared the customer-return quantity against the earlier surplus movement quantity and raised a false mismatch.
+- Applied Supabase migration scope_trip_surplus_lot_restore_to_surplus_receipt. The surplus-lot restoration branch now requires sales_return_id IS NULL and a receipt note beginning with the exact prefix 'استلام فائض جولة '. Customer-return movements proceed to the dedicated customer-return lot restoration branch.
+- Re-ran the full rollback-only path: management requested and approved 0.5 KG, WAREHOUSE_KEEPER confirmed dispatch, a trip invoice sold 0.2 KG from the dispatched lot, settlement returned 0.3 KG surplus, a completed-trip customer return received 0.1 KG into the same lot, and cancellation consumed that same lot.
+- All assertions passed. The trip completed, the invoice balance returned to 60.000 after return cancellation, warehouse stock was 8.5500 KG during the transaction, and vehicle stock was 0.0000 KG. The lot balances matched each movement exactly.
+- The entire test transaction was rolled back. Post-rollback counts remained 55 stock movements, 4 lots, 4 lot-balance rows, 4 trips, 10 sales invoices, 2 sales returns, and 3 trip-load rows. Product 1 stock remained 8.7500 KG in the main warehouse and 0.0000 KG in the vehicle.
+- The standalone surplus-only dispatch and settlement test also passed before the fix. The post-fix end-to-end test confirms surplus restoration still works while customer returns no longer enter that branch.
+- No index.html or sw.js change was needed. Application release remains v70 / meat-v103; this was a database trigger correction only.
