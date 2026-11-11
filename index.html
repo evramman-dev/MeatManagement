@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v52</title>
+<title>MeatManagement v53</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -3472,7 +3472,7 @@ window.openCustomerForm=async function(c=null){
   try{
     await loadCustomerGeoData();
     const form=$("customerForm"); if(form) form.reset();
-    try{await loadCustomerSalesRepOptions(c?.sales_rep_id||"");}catch(repLoadError){console.warn("تعذر تحميل قائمة المندوبين المسؤولين:",repLoadError);}
+    await loadCustomerSalesRepOptions(c?.sales_rep_id||"");
     const canAssignCustomerRep=currentRoleCode!=="SALES_REP";
     const customerRepLabel=document.querySelector('label[for="customerSalesRep"]');
     if(customerRepLabel) customerRepLabel.classList.toggle("hidden",!canAssignCustomerRep);
@@ -3517,7 +3517,7 @@ window.openCustomerForm=async function(c=null){
     $("customerFormModal").classList.add("active");
   }catch(e){
     const msg=$("customerFormMsg");
-    if(msg){ msg.textContent="تعذر تحميل بيانات التقسيم الجغرافي: "+err(e); msg.classList.remove("hidden"); }
+    if(msg){ msg.textContent="تعذر تحميل بيانات نموذج العميل: "+err(e); msg.classList.remove("hidden"); }
     else alert(err(e));
   }
 };
@@ -5684,7 +5684,7 @@ async function enrichCollectionRepNames(rows){
     const areaCustomerRepName=repNames.get(String(areaRepId))||"";
     return {
       ...item,
-      resolved_sales_rep_name:item.sales_rep_name||directName||tripName||assignedCustomerRepName||areaCustomerRepName||"غير محدد",
+      resolved_sales_rep_name:item.trip_id?(tripName||directName||item.sales_rep_name||assignedCustomerRepName||areaCustomerRepName||"غير محدد"):(assignedCustomerRepName||areaCustomerRepName||item.sales_rep_name||directName||"غير محدد"),
       collection_channel_label:item.trip_id?"عن طريق المندوب":"مباشر من الشركة"
     };
   });
