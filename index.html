@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v43</title>
+<title>MeatManagement v44</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -286,6 +286,8 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 .notification-actions button{width:auto;margin:0;padding:8px 12px}
 .notification-send{border-top:1px solid var(--line);margin-top:16px;padding-top:14px}
 #notificationUsers{min-height:130px}
+.notification-broadcast{display:flex;align-items:center;gap:9px;margin:12px 0;padding:11px;border:1px solid var(--line);border-radius:10px;background:#f7f9f6;font-size:14px}
+.notification-broadcast input{width:20px;height:20px;margin:0;flex:0 0 auto}
 
 </style>
 </head>
@@ -375,8 +377,9 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
     <h3>إرسال تنبيه للمستخدمين</h3>
     <label for="notificationTitle">عنوان التنبيه</label><input id="notificationTitle" maxlength="180" placeholder="اكتب عنوان التنبيه">
     <label for="notificationBody">نص التنبيه</label><textarea id="notificationBody" rows="3" maxlength="3000" placeholder="اكتب تفاصيل التنبيه"></textarea>
+    <label class="notification-broadcast" for="notificationSendAll"><input id="notificationSendAll" type="checkbox">إرسال إشعار عام إلى جميع المستخدمين النشطين</label>
     <label for="notificationUsers">المستلمون</label><select id="notificationUsers" multiple></select>
-    <div class="desc">يمكنك اختيار أكثر من مستخدم من القائمة. اضغط مطولًا أو استخدم اختيار متعدد حسب هاتفك.</div>
+    <div class="desc">اختر مستخدمًا أو أكثر لإرسال تنبيه خاص. عند تفعيل الإرسال العام تصل الرسالة إلى كل المستخدمين النشطين.</div>
     <button id="sendNotificationBtn" class="btn" type="button">إرسال التنبيه</button>
     <div id="notificationSendMsg" class="status hidden"></div>
   </div>
@@ -7571,18 +7574,25 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
     }catch(e){showToast("تعذر تعليم الكل كمقروء: "+err(e),"error",7000);if(btn)btn.disabled=false;}
   }
   async function sendManualNotification(){
-    const btn=$("sendNotificationBtn"),title=$("notificationTitle")?.value.trim(),body=$("notificationBody")?.value.trim(),users=Array.from($("notificationUsers")?.selectedOptions||[]).map(o=>o.value);
-    if(!title||!body||!users.length){msg($("notificationSendMsg"),"اكتب العنوان والنص واختر مستلمًا واحدًا على الأقل.","error");return;}
+    const btn=$("sendNotificationBtn"),title=$("notificationTitle")?.value.trim(),body=$("notificationBody")?.value.trim(),sendAll=$("notificationSendAll")?.checked===true,select=$("notificationUsers");
+    const users=sendAll?Array.from(select?.options||[]).map(o=>o.value):Array.from(select?.selectedOptions||[]).map(o=>o.value);
+    if(!title||!body||!users.length){msg($("notificationSendMsg"),sendAll?"لا يوجد مستخدمون نشطون لإرسال الإشعار إليهم.":"اكتب العنوان والنص واختر مستلمًا واحدًا على الأقل.","error");return;}
     busy(btn,true,"جارٍ الإرسال...","إرسال التنبيه");
     try{
       if(!isSystemAdmin)throw new Error("إرسال التنبيهات متاح لمدير النظام فقط.");
-      const eventKey="MANUAL:"+(crypto.randomUUID?crypto.randomUUID():Date.now()+":"+Math.random().toString(36).slice(2));
-      const {error}=await db.rpc("create_notification",{p_notification_type:"MANUAL",p_title:title,p_body:body,p_event_key:eventKey,p_user_ids:users,p_entity_type:null,p_entity_id:null,p_due_at:null,p_metadata:{source:"admin_panel"}});
+      const notificationType=sendAll?"GENERAL":"MANUAL";
+      const eventKey=notificationType+":"+(crypto.randomUUID?crypto.randomUUID():Date.now()+":"+Math.random().toString(36).slice(2));
+      const {error}=await db.rpc("create_notification",{p_notification_type:notificationType,p_title:title,p_body:body,p_event_key:eventKey,p_user_ids:users,p_entity_type:null,p_entity_id:null,p_due_at:null,p_metadata:{source:"admin_panel",audience:sendAll?"ALL_ACTIVE_USERS":"SELECTED_USERS"}});
       if(error)throw error;
-      msg($("notificationSendMsg"),"تم إرسال التنبيه.","success");$("notificationTitle").value="";$("notificationBody").value="";Array.from($("notificationUsers").options).forEach(o=>o.selected=false);showToast("تم إرسال التنبيه للمستخدمين المحددين.","success");
+      msg($("notificationSendMsg"),sendAll?"تم إرسال الإشعار العام إلى جميع المستخدمين النشطين.":"تم إرسال التنبيه للمستخدمين المحددين.","success");
+      $("notificationTitle").value="";$("notificationBody").value="";
+      if(select){Array.from(select.options).forEach(o=>o.selected=false);select.disabled=false;}
+      if($("notificationSendAll"))$("notificationSendAll").checked=false;
+      showToast(sendAll?"تم إرسال الإشعار العام لجميع المستخدمين النشطين.":"تم إرسال التنبيه للمستخدمين المحددين.","success");
     }catch(e){msg($("notificationSendMsg"),"تعذر إرسال التنبيه: "+err(e),"error");}
     finally{busy(btn,false,"","إرسال التنبيه");}
   }
+  if($("notificationSendAll"))$("notificationSendAll").addEventListener("change",()=>{const select=$("notificationUsers");if(select){select.disabled=$("notificationSendAll").checked;if($("notificationSendAll").checked)Array.from(select.options).forEach(o=>o.selected=false);}});
   if($("refreshNotificationsBtn"))$("refreshNotificationsBtn").addEventListener("click",loadNotifications);
   if($("markAllNotificationsReadBtn"))$("markAllNotificationsReadBtn").addEventListener("click",markAllNotificationsRead);
   if($("sendNotificationBtn"))$("sendNotificationBtn").addEventListener("click",sendManualNotification);
