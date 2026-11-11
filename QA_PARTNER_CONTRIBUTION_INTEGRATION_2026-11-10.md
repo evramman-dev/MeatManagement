@@ -512,3 +512,15 @@ GitHub Actions:
 - الجولات المفتوحة: صفر.
 - طلبات التحميل غير المكتملة: صفر.
 - هذه مراجعة لحالة بيانات QA الحالية، ولا تثبت وحدها صحة كل التقارير المالية على جميع أنواع البيانات.
+
+
+### إغلاق تحذير أداء سياسات العملاء — 11 نوفمبر 2026
+- أظهر Performance Advisor سياسة INSERT مزدوجة على جدول customers.
+- دمجت policy الخاصة بصلاحية CUSTOMERS_MANAGE مع policy الخاصة بمندوب المبيعات داخل policy واحدة، مع الحفاظ على شرطي السماح الأصليين.
+- migration: `consolidate_customer_insert_rls_policy_20261111`.
+- ملف SQL: `QA_CUSTOMER_INSERT_RLS_CONSOLIDATION_2026-11-11.sql`.
+- بعد التعديل اختفى تحذير Multiple Permissive Policies. بقيت 88 ملاحظة unused_index بمستوى INFO فقط، ولم أزل أي فهرس لأن ذلك يحتاج قياس استخدام فعليًا.
+
+### ملاحظات الخطة المجانية
+- Security Advisor ما زال يعرض تحذير Leaked Password Protection Disabled.
+- وثائق Supabase الحالية توضح أن فحص كلمات المرور المسربة متاح على Pro وما فوق، لذلك لا يمكن تفعيله ضمن خطة المشروع المجانية الحالية. الرابط: https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection.
