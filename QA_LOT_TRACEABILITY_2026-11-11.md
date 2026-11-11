@@ -120,3 +120,18 @@ Historical movements were not assigned fabricated lot allocations.
 - A targeted review found no authenticated-executable SECURITY DEFINER function lacking both an auth.uid() check and a has_permission(...) check. Supabase still reports the 83 authenticated SECURITY DEFINER functions as warnings for manual review; this is not treated as a reason to revoke application RPC access indiscriminately.
 - Performance advisor: one unindexed foreign key remains, expenses.cancelled_by, already tracked as a pre-existing item. It also reports 86 unused indexes; no indexes were dropped because current usage history is not sufficient evidence that they are unnecessary.
 - Health advisor returned no findings.
+
+
+## End-to-end production execution and reversal test (2026-11-11)
+- Executed in a separate authenticated SYSTEM_ADMIN transaction and rolled back in full.
+- Received 1.0 KG of raw product 1 into factory location 2 through a rollback-only purchase invoice. The receipt created raw lot 23.
+- Created a draft production order from recipe 2 (ground meat, 1 KG output) and executed it using production RPC v5.
+- Production consumed 1.0 KG from the exact raw purchase lot 23 and created output lot 24, linked to the production order output_lot_id.
+- Reversed the completed production order. The reversal restored the exact raw lot 23 and consumed the exact output lot 24. The production cost journal reversal also succeeded.
+- Before transaction rollback, the raw lot balance returned to 1.0000 KG, output lot balance returned to 0.0000 KG, and order status changed to CANCELLED.
+
+### Post-rollback verification for production test
+- Stock movements remained 55, stock lots remained 4, and stock lot balance rows remained 4.
+- Production orders remained 2. The temporary order PRD-20261111-000006 did not persist.
+- No temporary QA-PRD lot, production journal, or production order remained.
+- Factory raw product 1 and finished product 2 balances both remained 0.0000 KG.
