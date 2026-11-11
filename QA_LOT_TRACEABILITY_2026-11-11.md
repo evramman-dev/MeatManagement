@@ -293,3 +293,11 @@ Historical movements were not assigned fabricated lot allocations.
 - PWA cache was bumped from meat-v103 to meat-v104 so the new index.html is refreshed for clients.
 - No live accounting data was changed by the UI integration.
 - DB regression state remains: partners 0, partner_transactions 0, profit_distributions 0, depreciation_entries 0, fixed_assets 1, active fixed assets 0, treasury 5 = 1065.00, journal lines balanced with difference 0.00.
+
+
+## إصلاح توقف تسجيل الدخول — 2026-11-11
+- السبب: وسم `<script>` زائد داخل سكربت JavaScript الرئيسي في نهاية `index.html`، مع وسم إغلاق زائد. تسبب ذلك في خطأ تحليل `Unexpected token '<'` ومنع المتصفح من تنفيذ السكربت الرئيسي، بما فيه ربط حدث إرسال نموذج تسجيل الدخول.
+- الإصلاح: إزالة وسم الفتح الداخلي ووسم الإغلاق الزائد مع الإبقاء على كود تهيئة تحسين قائمة الأصول داخل السكربت الرئيسي.
+- GitHub commit: `a0b77f6a3017e19d206789b29e01752f7130cbe0`.
+- التحقق: جميع كتل JavaScript الخمس اجتازت فحص التحليل `new Function` دون أخطاء. لم يتم تعديل قاعدة بيانات Supabase أو بيانات المستخدمين.
+- المتبقي: إعادة تحميل التطبيق والتحقق من تسجيل الدخول الفعلي على جهاز المستخدم.
