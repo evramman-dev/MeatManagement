@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v38</title>
+<title>MeatManagement v46</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -286,6 +286,8 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 .notification-actions button{width:auto;margin:0;padding:8px 12px}
 .notification-send{border-top:1px solid var(--line);margin-top:16px;padding-top:14px}
 #notificationUsers{min-height:130px}
+.notification-broadcast{display:flex;align-items:center;gap:9px;margin:12px 0;padding:11px;border:1px solid var(--line);border-radius:10px;background:#f7f9f6;font-size:14px}
+.notification-broadcast input{width:20px;height:20px;margin:0;flex:0 0 auto}
 
 </style>
 </head>
@@ -300,7 +302,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v38]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v43]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -375,8 +377,9 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
     <h3>إرسال تنبيه للمستخدمين</h3>
     <label for="notificationTitle">عنوان التنبيه</label><input id="notificationTitle" maxlength="180" placeholder="اكتب عنوان التنبيه">
     <label for="notificationBody">نص التنبيه</label><textarea id="notificationBody" rows="3" maxlength="3000" placeholder="اكتب تفاصيل التنبيه"></textarea>
+    <label class="notification-broadcast" for="notificationSendAll"><input id="notificationSendAll" type="checkbox">إرسال إشعار عام إلى جميع المستخدمين النشطين</label>
     <label for="notificationUsers">المستلمون</label><select id="notificationUsers" multiple></select>
-    <div class="desc">يمكنك اختيار أكثر من مستخدم من القائمة. اضغط مطولًا أو استخدم اختيار متعدد حسب هاتفك.</div>
+    <div class="desc">اختر مستخدمًا أو أكثر لإرسال تنبيه خاص. عند تفعيل الإرسال العام تصل الرسالة إلى كل المستخدمين النشطين.</div>
     <button id="sendNotificationBtn" class="btn" type="button">إرسال التنبيه</button>
     <div id="notificationSendMsg" class="status hidden"></div>
   </div>
@@ -716,17 +719,19 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
 <div class="card" id="fixedAssetsCard">
 <div class="row" style="justify-content:space-between"><h2>🏭 الأصول الثابتة</h2><button id="addFixedAssetBtn" class="btn" type="button" style="width:auto;">＋ شراء معدة أو آلة</button></div>
-<p class="desc">تُسجل المعدات والآلات على حساب الأصول الثابتة، سواء تم الشراء نقدًا أو على حساب مورد.</p>
+<p class="desc">تُسجل معدات الإنتاج المشتراة أو المقدمة كمساهمة عينية من شريك، مع ربط كل حركة بقيدها المحاسبي.</p>
 <div id="fixedAssetsMsg" class="status hidden"></div><div id="fixedAssetsList"><div class="empty">جارٍ تحميل الأصول...</div></div>
 </div>
 </div>
-<div id="fixedAssetFormModal" class="modal-form"><div class="modal-form-content"><div class="modal-header"><h3>شراء معدة أو آلة إنتاج</h3><button class="close-btn" type="button" onclick="document.getElementById('fixedAssetFormModal').classList.remove('active')">&times;</button></div>
+<div id="fixedAssetFormModal" class="modal-form"><div class="modal-form-content"><div class="modal-header"><h3 id="fixedAssetFormTitle">شراء معدة أو آلة إنتاج</h3><button class="close-btn" type="button" onclick="document.getElementById('fixedAssetFormModal').classList.remove('active')">&times;</button></div>
 <div class="modal-body"><form id="fixedAssetForm" onsubmit="event.preventDefault();">
-<label>طريقة الشراء *</label><select id="fixedAssetPurchaseType"><option value="CASH">نقدي من خزنة</option><option value="SUPPLIER_CREDIT">آجل على مورد</option></select>
+<label>طريقة الشراء *</label><select id="fixedAssetPurchaseType"><option value="CASH">شراء نقدي من خزنة</option><option value="SUPPLIER_CREDIT">شراء آجل على مورد</option><option value="PARTNER_CONTRIBUTION">مساهمة عينية من شريك</option></select>
 <div id="fixedAssetTreasuryWrap"><label>الخزنة *</label><select id="fixedAssetTreasury"><option value="">اختر الخزنة</option></select></div>
 <div id="fixedAssetSupplierWrap" class="hidden"><label>المورد *</label><select id="fixedAssetSupplier"><option value="">اختر المورد</option></select></div>
-<label>اسم المعدة أو الآلة *</label><input id="fixedAssetName" required maxlength="200">
-<label>تاريخ الشراء *</label><input id="fixedAssetDate" type="date" required>
+<div id="fixedAssetPartnerWrap" class="hidden"><label>الشريك صاحب المساهمة *</label><select id="fixedAssetPartner"><option value="">اختر الشريك</option></select></div>
+<div id="fixedAssetCategoryWrap" class="hidden"><label>نوع الأصل المساهم به *</label><select id="fixedAssetCategory"><option value="PRODUCTION_EQUIPMENT">معدات إنتاج</option><option value="VEHICLE">سيارة أو مركبة</option><option value="FURNITURE">أثاث وتجهيزات</option><option value="OFFICE_EQUIPMENT">أجهزة ومعدات مكتبية</option><option value="OTHER_FIXED_ASSET">أصول ثابتة أخرى</option></select></div>
+<label>اسم الأصل *</label><input id="fixedAssetName" required maxlength="200">
+<label>تاريخ الشراء أو المساهمة *</label><input id="fixedAssetDate" type="date" required>
 <label>قيمة الشراء *</label><input id="fixedAssetAmount" type="number" min="0.01" step="0.01" required>
 <label>مكان المعدة</label><input id="fixedAssetLocation" maxlength="200">
 <label>الرقم المسلسل</label><input id="fixedAssetSerial" maxlength="120">
@@ -736,6 +741,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <div id="recordCancelModal" class="modal-form"><div class="modal-form-content"><div class="modal-header"><h3 id="recordCancelTitle">إلغاء المستند</h3><button class="close-btn" type="button" onclick="document.getElementById('recordCancelModal').classList.remove('active')">&times;</button></div><div class="modal-body"><form id="recordCancelForm" onsubmit="event.preventDefault();">
 <div id="cancelRefundTreasuryWrap"><label>خزنة استرداد المبلغ فعليًا *</label><select id="cancelRefundTreasury"><option value="">اختر خزنة الاسترداد</option></select></div>
+<div id="cancelPartnerAssetConfirmWrap" class="hidden"><label><input id="cancelPartnerAssetConfirm" type="checkbox"> أؤكد أن المعدة رُدت للشريك ولم تدخل التشغيل أو يتم التصرف فيها أو تحميل إهلاك عليها.</label></div>
 <label>سبب الإلغاء *</label><textarea id="recordCancelReason" rows="3" required></textarea>
 <button id="confirmRecordCancelBtn" class="btn danger" type="submit">تأكيد الإلغاء</button><div id="recordCancelMsg" class="status hidden"></div>
 </form></div></div></div>
@@ -760,6 +766,18 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 <div id="partnerTransactionsMsg" class="status hidden"></div>
 <div id="partnerTransactionsList"><div class="empty">جارٍ تحميل حركات الشركاء...</div></div>
+</div>
+<div id="partnerInventoryContributionsCard" class="card hidden" style="margin-top:20px;">
+<div class="row" style="justify-content:space-between;align-items:center;"><h2>📦 مساهمات المخزون من الشركاء</h2><div class="row"><button id="refreshPartnerInventoryContributionsBtn" class="btn secondary" type="button" style="margin:0;width:auto;">تحديث</button><button id="addPartnerInventoryContributionBtn" class="btn hidden" type="button" style="margin:0;width:auto;">＋ مساهمة مخزون</button></div></div>
+<p class="desc">تسجيل البضاعة التي يقدمها الشريك للمخزون مع تحويل الوحدة وتقييمها وربطها بحساب الشريك.</p>
+<div id="partnerInventoryContributionsMsg" class="status hidden"></div>
+<div id="partnerInventoryContributionsList"><div class="empty">جارٍ تحميل المساهمات...</div></div>
+</div>
+<div id="partnerVehicleContributionsCard" class="card hidden" style="margin-top:20px;">
+<div class="row" style="justify-content:space-between;align-items:center;"><h2>🚚 مساهمات السيارات من الشركاء</h2><div class="row"><button id="refreshPartnerVehicleContributionsBtn" class="btn secondary" type="button" style="margin:0;width:auto;">تحديث</button><button id="addPartnerVehicleContributionBtn" class="btn hidden" type="button" style="margin:0;width:auto;">＋ مساهمة سيارة</button></div></div>
+<p class="desc">تسجيل السيارة كأصل ثابت وربطها بموقع سيارة مستقل لاستخدامها في الجولات.</p>
+<div id="partnerVehicleContributionsMsg" class="status hidden"></div>
+<div id="partnerVehicleContributionsList"><div class="empty">جارٍ تحميل مساهمات السيارات...</div></div>
 </div>
 </div>
 </div>
@@ -787,10 +805,10 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <form id="partnerTransactionForm" onsubmit="event.preventDefault();">
 <label for="ptPartner">الشريك *</label><select id="ptPartner" required><option value="">اختر الشريك</option></select>
 <label for="ptType">نوع الحركة *</label>
-<select id="ptType" required><option value="CAPITAL_IN">مساهمة نقدية (إيداع)</option><option value="WITHDRAWAL">سحب شخصي</option><option value="PROFIT">توزيع أرباح</option><option value="CAPITAL_OUT">مساهمة عينية</option></select>
+<select id="ptType" required><option value="CAPITAL_IN">مساهمة نقدية (إيداع)</option><option value="WITHDRAWAL">سحب شخصي</option><option value="PROFIT">توزيع أرباح</option><option value="CAPITAL_OUT" disabled>مساهمة عينية (موقوفة لحين ربطها بحساب أصل)</option></select>
 <label for="ptAmount">المبلغ *</label><input id="ptAmount" type="number" min="0.01" step="0.01" required>
 <label for="ptDate">التاريخ *</label><input id="ptDate" type="date" required>
-<label for="ptTreasury">الخزنة (لو الحركة نقدية)</label><select id="ptTreasury"><option value="">بدون خزنة (مساهمة عينية)</option></select>
+<label for="ptTreasury">الخزنة (لو الحركة نقدية)</label><select id="ptTreasury" required><option value="">اختر الخزنة</option></select>
 <label for="ptNotes">ملاحظات</label><textarea id="ptNotes" rows="2"></textarea>
 <button id="savePartnerTransactionBtn" class="btn" type="submit">حفظ الحركة</button>
 <div id="partnerTransactionFormMsg" class="status hidden"></div>
@@ -798,6 +816,43 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 </div>
 </div>
+<div id="partnerInventoryContributionFormModal" class="modal-form"><div class="modal-form-content"><div class="modal-header"><h3>تسجيل مساهمة مخزون من شريك</h3><button class="close-btn" type="button" onclick="document.getElementById('partnerInventoryContributionFormModal').classList.remove('active')">&times;</button></div><div class="modal-body"><form id="partnerInventoryContributionForm" onsubmit="event.preventDefault();">
+<label>الشريك *</label><select id="picPartner" required><option value="">اختر الشريك</option></select>
+<label>الصنف *</label><select id="picProduct" required><option value="">اختر الصنف</option></select>
+<label>موقع الاستلام *</label><select id="picLocation" required><option value="">اختر المخزن أو الثلاجة</option></select>
+<label>وحدة الكمية *</label><select id="picUnit" required><option value="">اختر الوحدة</option></select>
+<label>الكمية المقدمة *</label><input id="picQuantity" type="number" min="0.000001" step="0.000001" required>
+<label>القيمة الإجمالية للمساهمة بالجنيه *</label><input id="picTotalValue" type="number" min="0.01" step="0.01" required>
+<label>تاريخ المساهمة *</label><input id="picDate" type="date" required>
+<label>ملاحظات</label><textarea id="picNotes" rows="2"></textarea>
+<div class="info">سيحوّل النظام الكمية إلى وحدة الأساس الخاصة بالصنف، ويضيف القيمة إلى تكلفة المخزون ورصيد الشريك.</div>
+<button id="savePartnerInventoryContributionBtn" class="btn" type="submit">حفظ المساهمة</button><div id="partnerInventoryContributionFormMsg" class="status hidden"></div>
+</form></div></div></div>
+<div id="partnerInventoryContributionCancelModal" class="modal-form"><div class="modal-form-content"><div class="modal-header"><h3>إلغاء مساهمة المخزون</h3><button class="close-btn" type="button" onclick="document.getElementById('partnerInventoryContributionCancelModal').classList.remove('active')">&times;</button></div><div class="modal-body"><form id="partnerInventoryContributionCancelForm" onsubmit="event.preventDefault();">
+<input id="picCancelId" type="hidden">
+<div class="info">لا يسمح النظام بالإلغاء إذا حدثت حركة لاحقة على الصنف في موقع الاستلام. يجب رد البضاعة للشريك وعدم استخدامها أو بيعها.</div>
+<label>سبب الإلغاء *</label><textarea id="picCancelReason" rows="3" required></textarea>
+<label class="check"><input id="picCancelReturnedConfirm" type="checkbox"> أؤكد أن البضاعة رُدت للشريك ولم تدخل التشغيل أو البيع أو التصرف.</label>
+<button id="confirmPartnerInventoryContributionCancelBtn" class="btn danger" type="submit">تأكيد الإلغاء</button><div id="partnerInventoryContributionCancelMsg" class="status hidden"></div>
+</form></div></div></div>
+<div id="partnerVehicleContributionFormModal" class="modal-form"><div class="modal-form-content"><div class="modal-header"><h3>تسجيل مساهمة سيارة من شريك</h3><button class="close-btn" type="button" onclick="document.getElementById('partnerVehicleContributionFormModal').classList.remove('active')">&times;</button></div><div class="modal-body"><form id="partnerVehicleContributionForm" onsubmit="event.preventDefault();">
+<label>الشريك *</label><select id="pvcPartner" required><option value="">اختر الشريك</option></select>
+<label>اسم السيارة / النوع *</label><input id="pvcName" maxlength="150" required>
+<label>رقم اللوحة *</label><input id="pvcPlate" maxlength="80" required>
+<label>قيمة السيارة بالجنيه *</label><input id="pvcValue" type="number" min="0.01" step="0.01" required>
+<label>تاريخ المساهمة *</label><input id="pvcDate" type="date" required>
+<label>مكان وجود السيارة *</label><input id="pvcLocation" maxlength="200" placeholder="مثال: جراج المصنع">
+<label>ملاحظات</label><textarea id="pvcNotes" rows="2"></textarea>
+<div class="info">سيُنشئ النظام أصلًا ثابتًا على حساب السيارات 1520، وموقع سيارة مرتبطًا به لاستخدامه في الجولات.</div>
+<button id="savePartnerVehicleContributionBtn" class="btn" type="submit">حفظ مساهمة السيارة</button><div id="partnerVehicleContributionFormMsg" class="status hidden"></div>
+</form></div></div></div>
+<div id="partnerVehicleContributionCancelModal" class="modal-form"><div class="modal-form-content"><div class="modal-header"><h3>إلغاء مساهمة السيارة</h3><button class="close-btn" type="button" onclick="document.getElementById('partnerVehicleContributionCancelModal').classList.remove('active')">&times;</button></div><div class="modal-body"><form id="partnerVehicleContributionCancelForm" onsubmit="event.preventDefault();">
+<input id="pvcCancelAssetId" type="hidden">
+<div class="info">لا يسمح النظام بالإلغاء بعد ربط السيارة بأي جولة أو تسجيل حركة مخزون على موقعها.</div>
+<label>سبب الإلغاء *</label><textarea id="pvcCancelReason" rows="3" required></textarea>
+<label class="check"><input id="pvcCancelReturnedConfirm" type="checkbox"> أؤكد أن السيارة رُدت للشريك ولم تستخدم في أي جولة.</label>
+<button id="confirmPartnerVehicleContributionCancelBtn" class="btn danger" type="submit">تأكيد الإلغاء</button><div id="partnerVehicleContributionCancelMsg" class="status hidden"></div>
+</form></div></div></div>
 <div id="sectionAccounting" class="sub-section hidden">
 <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
 <div id="accountingCard" class="card hidden">
@@ -1114,7 +1169,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div id="sectionSuppliers" class="sub-section hidden">
 <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
 <div id="suppliersCard" class="card hidden">
-<div class="row" style="justify-content:space-between"><h2>🚚 الموردين</h2><button id="addSupplierBtn" class="btn hidden" type="button" onclick="document.getElementById('supplierFormModal').classList.add('active')">＋ إضافة مورد</button></div>
+<div class="row" style="justify-content:space-between"><h2>🚚 الموردين</h2><button id="addSupplierBtn" class="btn hidden" type="button" onclick="openNewSupplierForm()">＋ إضافة مورد</button></div>
 <div class="row"><input id="supplierSearch" type="search" placeholder="ابحث..."><button id="refreshSuppliersBtn" class="btn secondary" type="button">تحديث</button></div>
 <div id="suppliersMsg" class="status hidden"></div>
 <div id="suppliersList"><div class="empty">جارٍ تحميل الموردين...</div></div>
@@ -1754,7 +1809,7 @@ try {
 
   // ========== المتغيرات ==========
   let canManage=false, isSystemAdmin=false, currentRoleCode=null, currentSalesRepId=null, currentSalesRepName=null;
-  let canViewLocations=false, canManageLocations=false;
+  let canViewLocations=false, canManageLocations=false, canLoadLocations=false;
   let canViewTreasuries=false, canManageTreasuries=false;
   let canViewExpenses=false, canManageExpenses=false;
   let canViewPartners=false, canManagePartners=false;
@@ -1763,7 +1818,7 @@ try {
   let canViewProduction=false, canManageProduction=false;
   let canViewAccounting=false, canManageAccounting=false;
   let canViewTrips=false, canManageTrips=false, canCreateTrips=false, canRequestTripLoads=false, canApproveTripLoads=false, canDispatchTripLoads=false;
-  let canViewCustomers=false, canManageCustomers=false;
+  let canViewCustomers=false, canManageCustomers=false, canCreateCustomers=false;
   let canViewSales=false, canManageSales=false, canCreateReturns=false, canApproveReturns=false, canManageReturns=false;
   let canViewCollections=false, canPostCollections=false, canManageCollections=false;
   let canViewSuppliers=false, canManageSuppliers=false;
@@ -1771,6 +1826,9 @@ try {
   let canViewSupplierPayments=false;
   let canViewPurchaseReturns=false;
   let canViewFixedAssets=false, canManageFixedAssets=false, canViewLandedCosts=false, canManageLandedCosts=false;
+  let canViewPartnerInventoryContributions=false, canManagePartnerInventoryContributions=false, canCancelPartnerInventoryContributions=false, canViewPartnerVehicleContributions=false, canManagePartnerVehicleContributions=false, canCancelPartnerVehicleContributions=false;
+  let partnerInventoryContributionsCache=[];
+  let partnerVehicleContributionsCache=[];
   let canViewStockTransfers=false;
   let canViewTreasuryTransfers=false;
   let canViewReports=false;
@@ -2005,7 +2063,7 @@ function page(name){
   if(name==="data"){
     window.closeSection();
     if(navigator.onLine) { 
-        loadProducts(); if(canViewLocations || canViewStockTransfers)loadLocations(); if(canViewTreasuries)loadTreasuries(); if(canViewStock)loadStock(); 
+        loadProducts(); if(canLoadLocations)loadLocations(); if(canViewTreasuries)loadTreasuries(); if(canViewStock)loadStock(); 
         if(canViewSales)loadSales(); if(canViewCustomers)loadCustomers(); if(canViewSuppliers)loadSuppliers(); 
         if(canViewPurchases)loadPurchases(); if(canViewCollections)loadCollections(); if(canViewRecipes)loadRecipes(); 
         if(canViewProduction)loadProduction(); if(canViewTrips)loadTrips(); if(canViewPartners)loadPartners(); 
@@ -2133,7 +2191,7 @@ function fillTripVehicleSelect(){ const el=$("tripVehicle"); if(!el) return; con
 async function fillTripRepSelect(){ const el=$("tripRepSelect"); if(!el) return; el.replaceChildren(); const first=document.createElement("option"); first.value=""; first.textContent="جارٍ تحميل المندوبين..."; el.appendChild(first); const {data,error}=await db.from("sales_reps").select("sales_rep_id,name,rep_name,is_active").eq("is_active",true).order("sales_rep_id"); if(error) throw error; el.replaceChildren(); const choose=document.createElement("option"); choose.value=""; choose.textContent="اختر المندوب"; el.appendChild(choose); (data||[]).forEach(r=>{ const op=document.createElement("option"); op.value=String(r.sales_rep_id); op.textContent=r.name||r.rep_name||("مندوب رقم "+r.sales_rep_id); el.appendChild(op); }); if(!data||!data.length) choose.textContent="لا يوجد مندوبون نشطون"; }
 function fillStockTransferSelects(){ const s=$("stSource"); const d=$("stDest"); if(s&&d){ const cs=s.value, cd=d.value; s.replaceChildren(); d.replaceChildren(); const f1=document.createElement("option");f1.value="";f1.textContent="اختر الموقع";s.appendChild(f1); const f2=document.createElement("option");f2.value="";f2.textContent="اختر الموقع";d.appendChild(f2); locationsCache.filter(l=>l.is_active).forEach(l=>{ const op1=document.createElement("option");op1.value=String(l.location_id);op1.textContent=l.location_name;s.appendChild(op1); const op2=document.createElement("option");op2.value=String(l.location_id);op2.textContent=l.location_name;d.appendChild(op2); }); s.value=cs; d.value=cd; } }
 function fillPartnerSelect(){ const el=$("ptPartner"); if(!el)return; const cur=el.value; el.replaceChildren(); const first=document.createElement("option"); first.value=""; first.textContent="اختر الشريك"; el.appendChild(first); partnersCache.filter(p=>p.is_active).forEach(p=>{ const op=document.createElement("option"); op.value=String(p.partner_id); op.textContent=p.partner_name; el.appendChild(op); }); el.value=cur; }
-function fillPartnerTreasurySelect(){ const el=$("ptTreasury"); if(!el)return; const cur=el.value; el.replaceChildren(); const first=document.createElement("option"); first.value=""; first.textContent="بدون خزنة (مساهمة عينية)"; el.appendChild(first); treasuriesCache.filter(t=>t.is_active).forEach(t=>{ const op=document.createElement("option"); op.value=String(t.treasury_id); op.textContent=t.treasury_name; el.appendChild(op); }); el.value=cur; }
+function fillPartnerTreasurySelect(){ const el=$("ptTreasury"); if(!el)return; const cur=el.value; el.replaceChildren(); const first=document.createElement("option"); first.value=""; first.textContent="اختر الخزنة"; el.appendChild(first); treasuriesCache.filter(t=>t.is_active).forEach(t=>{ const op=document.createElement("option"); op.value=String(t.treasury_id); op.textContent=t.treasury_name; el.appendChild(op); }); el.value=cur; }
 function fillExpenseTripSelect() { const el = $("expenseTrip"); if(!el) return; const cur = el.value; el.replaceChildren(); const first = document.createElement("option"); first.value = ""; first.textContent = "بدون ربط"; el.appendChild(first); tripsCache.filter(t => t.status === "ACTIVE").forEach(t => { const op = document.createElement("option"); op.value = String(t.trip_id); op.textContent = t.trip_number + " (" + (t.rep_name||"") + ")"; el.appendChild(op); }); el.value = cur; syncExpenseTreasuryForTrip(); }
 function syncExpenseTreasuryForTrip(){ const tripEl=$("expenseTrip"), treasuryEl=$("expenseTreasury"); if(!tripEl||!treasuryEl) return; const linked=!!tripEl.value; if(linked && !Array.from(treasuryEl.options).some(o=>o.value==="8")){ const op=document.createElement("option"); op.value="8"; op.textContent="خزنة المناديب (8)"; treasuryEl.appendChild(op); } if(linked){ treasuryEl.value="8"; treasuryEl.disabled=true; if($("expenseTripTreasuryInfo")) $("expenseTripTreasuryInfo").classList.remove("hidden"); } else { treasuryEl.disabled=false; if($("expenseTripTreasuryInfo")) $("expenseTripTreasuryInfo").classList.add("hidden"); } }
 function fillPurchaseReturnInvoiceSelect() { const el = $("prInvoice"); if(!el) return; const cur = el.value; el.replaceChildren(); const first = document.createElement("option"); first.value = ""; first.textContent = "اختر الفاتورة"; el.appendChild(first); purchasesCache.filter(inv => inv.status === "POSTED").forEach(inv => { const op = document.createElement("option"); op.value = String(inv.purchase_invoice_id); op.textContent = inv.invoice_number + " - " + supplierName(inv.supplier_id); el.appendChild(op); }); el.value = cur; }
@@ -2184,12 +2242,12 @@ async function userInfo(user){
     try{ canViewTreasuryTransfers=await permission("TREASURIES_MANAGE") || await permission("ACCOUNTING_MANAGE") || isSystemAdmin; if($("menuTreasuryTransfers")) $("menuTreasuryTransfers").classList.toggle("hidden",!canViewTreasuryTransfers); }catch(e){}
     try{ canViewStock=await permission("STOCK_VIEW") || await permission("INVENTORY_VIEW") || isSystemAdmin; canManageStock=await permission("STOCK_MANAGE") || isSystemAdmin; if($("menuStock")) $("menuStock").classList.toggle("hidden",!canViewStock); if($("stockCard")) $("stockCard").classList.toggle("hidden",!canViewStock); if($("adjustStockBtn")) $("adjustStockBtn").classList.toggle("hidden",!canManageStock); }catch(e){}
     try{ canViewStockTransfers=await permission("INVENTORY_TRANSFER") || isSystemAdmin; if($("menuStockTransfers")) $("menuStockTransfers").classList.toggle("hidden",!canViewStockTransfers); }catch(e){}
-    try{ canViewSales=await permission("SALES_VIEW") || await permission("INVOICES_VIEW") || await permission("INVOICES_CREATE") || isSystemAdmin; canManageSales=await permission("SALES_MANAGE") || isSystemAdmin; if($("menuSales")) $("menuSales").classList.toggle("hidden",!canViewSales); if($("salesCard")) $("salesCard").classList.toggle("hidden",!canViewSales); if($("addInvoiceBtn")) $("addInvoiceBtn").classList.toggle("hidden",!(await permission("INVOICES_CREATE") || canManageSales)); }catch(e){}
+    try{ canViewSales=await permission("SALES_VIEW") || await permission("INVOICES_VIEW") || isSystemAdmin; canManageSales=await permission("SALES_MANAGE") || isSystemAdmin; if($("menuSales")) $("menuSales").classList.toggle("hidden",!canViewSales); if($("salesCard")) $("salesCard").classList.toggle("hidden",!canViewSales); if($("addInvoiceBtn")) $("addInvoiceBtn").classList.toggle("hidden",!(await permission("INVOICES_CREATE") || canManageSales)); }catch(e){}
     try{ canCreateReturns=await permission("RETURNS_CREATE") || await permission("RETURNS_MANAGE") || isSystemAdmin; canApproveReturns=await permission("RETURNS_APPROVE") || await permission("RETURNS_MANAGE") || isSystemAdmin; canManageReturns=await permission("RETURNS_MANAGE") || isSystemAdmin; if($("addReturnBtn")) $("addReturnBtn").classList.toggle("hidden",!canCreateReturns); }catch(e){}
-    try{ canViewSupplierPayments=await permission("PURCHASES_MANAGE") || isSystemAdmin; if($("menuSupplierPayments")) $("menuSupplierPayments").classList.toggle("hidden",!canViewSupplierPayments); }catch(e){}
-    try{ canViewPurchaseReturns=await permission("PURCHASES_MANAGE") || isSystemAdmin; if($("menuPurchaseReturns")) $("menuPurchaseReturns").classList.toggle("hidden",!canViewPurchaseReturns); }catch(e){}
+    try{ canViewSupplierPayments=await permission("PURCHASES_VIEW") || await permission("SUPPLIERS_VIEW") || isSystemAdmin; if($("menuSupplierPayments")) $("menuSupplierPayments").classList.toggle("hidden",!canViewSupplierPayments); }catch(e){}
+    try{ canViewPurchaseReturns=await permission("RETURNS_VIEW") || await permission("PURCHASES_VIEW") || isSystemAdmin; if($("menuPurchaseReturns")) $("menuPurchaseReturns").classList.toggle("hidden",!canViewPurchaseReturns); }catch(e){}
     try{ canViewReports=await permission("REPORTS_VIEW") || isSystemAdmin; if($("menuReports")) $("menuReports").classList.toggle("hidden",!canViewReports); }catch(e){}
-    try{ canViewCustomers=await permission("CUSTOMERS_VIEW") || isSystemAdmin; canManageCustomers=await permission("CUSTOMERS_MANAGE") || isSystemAdmin; if($("menuCustomers")) $("menuCustomers").classList.toggle("hidden",!canViewCustomers); if($("customersCard")) $("customersCard").classList.toggle("hidden",!canViewCustomers); if($("addCustomerBtn")) $("addCustomerBtn").classList.toggle("hidden",!canManageCustomers); }catch(e){}
+    try{ canViewCustomers=await permission("CUSTOMERS_VIEW") || isSystemAdmin; canManageCustomers=await permission("CUSTOMERS_MANAGE") || isSystemAdmin; canCreateCustomers=canManageCustomers; if($("menuCustomers")) $("menuCustomers").classList.toggle("hidden",!canViewCustomers); if($("customersCard")) $("customersCard").classList.toggle("hidden",!canViewCustomers); if($("addCustomerBtn")) $("addCustomerBtn").classList.toggle("hidden",!canCreateCustomers); }catch(e){}
     try{ canViewSuppliers=await permission("SUPPLIERS_VIEW") || isSystemAdmin; canManageSuppliers=await permission("SUPPLIERS_MANAGE") || isSystemAdmin; if($("menuSuppliers")) $("menuSuppliers").classList.toggle("hidden",!canViewSuppliers); if($("suppliersCard")) $("suppliersCard").classList.toggle("hidden",!canViewSuppliers); if($("addSupplierBtn")) $("addSupplierBtn").classList.toggle("hidden",!canManageSuppliers); }catch(e){}
     try{ canViewPurchases=await permission("PURCHASES_VIEW") || isSystemAdmin; canManagePurchases=await permission("PURCHASES_MANAGE") || isSystemAdmin; if($("menuPurchases")) $("menuPurchases").classList.toggle("hidden",!canViewPurchases); if($("purchasesCard")) $("purchasesCard").classList.toggle("hidden",!canViewPurchases); if($("addPurchaseBtn")) $("addPurchaseBtn").classList.toggle("hidden",!canManagePurchases); }catch(e){}
     try{ canViewCollections=await permission("COLLECTIONS_VIEW") || isSystemAdmin; canPostCollections=await permission("COLLECTIONS_POST") || isSystemAdmin; canManageCollections=await permission("COLLECTIONS_MANAGE") || isSystemAdmin; if($("menuCollections")) $("menuCollections").classList.toggle("hidden",!canViewCollections); if($("collectionsCard")) $("collectionsCard").classList.toggle("hidden",!canViewCollections); if($("addCollectionBtn")) $("addCollectionBtn").classList.toggle("hidden",!canPostCollections); }catch(e){}
@@ -2210,8 +2268,9 @@ async function userInfo(user){
     try{ canManageLandedCosts=await permission("PURCHASES_MANAGE") || isSystemAdmin; canViewLandedCosts=await permission("PURCHASES_VIEW") || canManageLandedCosts || isSystemAdmin; if($("menuLandedCosts")) $("menuLandedCosts").classList.toggle("hidden",!canViewLandedCosts); if($("addLandedCostBtn")) $("addLandedCostBtn").classList.toggle("hidden",!canManageLandedCosts); }catch(e){}
     try{ canManageFixedAssets=await permission("ACCOUNTING_MANAGE") || isSystemAdmin; canViewFixedAssets=await permission("ACCOUNTING_VIEW") || canManageFixedAssets || isSystemAdmin; if($("menuFixedAssets")) $("menuFixedAssets").classList.toggle("hidden",!canViewFixedAssets); if($("addFixedAssetBtn")) $("addFixedAssetBtn").classList.toggle("hidden",!canManageFixedAssets); }catch(e){}
     try{ canViewPartners=await permission("PARTNERS_VIEW") || isSystemAdmin; canManagePartners=await permission("PARTNERS_MANAGE") || isSystemAdmin; if($("menuPartners")) $("menuPartners").classList.toggle("hidden",!canViewPartners); if($("partnersCard")) $("partnersCard").classList.toggle("hidden",!canViewPartners); if($("addPartnerBtn")) $("addPartnerBtn").classList.toggle("hidden",!canManagePartners); if($("addPartnerTransactionBtn")) $("addPartnerTransactionBtn").classList.toggle("hidden",!canManagePartners); }catch(e){}
-    try{ canViewRecipes=await permission("RECIPES_VIEW") || isSystemAdmin; canManageRecipes=await permission("RECIPES_MANAGE") || isSystemAdmin; if($("menuRecipes")) $("menuRecipes").classList.toggle("hidden",!canViewRecipes); if($("recipesCard")) $("recipesCard").classList.toggle("hidden",!canViewRecipes); if($("addRecipeBtn")) $("addRecipeBtn").classList.toggle("hidden",!canManageRecipes); }catch(e){}
-    try{ canViewProduction=await permission("PRODUCTION_VIEW") || isSystemAdmin; canManageProduction=await permission("PRODUCTION_MANAGE") || isSystemAdmin; if($("menuProduction")) $("menuProduction").classList.toggle("hidden",!canViewProduction); if($("productionCard")) $("productionCard").classList.toggle("hidden",!canViewProduction); if($("addProductionBtn")) $("addProductionBtn").classList.toggle("hidden",!canManageProduction); }catch(e){}
+    try{ canManagePartnerInventoryContributions=await permission("ACCOUNTING_MANAGE") || await permission("PARTNERS_TRANSACTIONS_MANAGE") || isSystemAdmin; canViewPartnerInventoryContributions=await permission("ACCOUNTING_VIEW") || await permission("PARTNERS_TRANSACTIONS_VIEW") || canManagePartnerInventoryContributions; canCancelPartnerInventoryContributions=await permission("ACCOUNTING_MANAGE") || isSystemAdmin; canManagePartnerVehicleContributions=await permission("ACCOUNTING_MANAGE") || isSystemAdmin; canCancelPartnerVehicleContributions=canManagePartnerVehicleContributions; canViewPartnerVehicleContributions=canViewFixedAssets; if($("partnerInventoryContributionsCard")) $("partnerInventoryContributionsCard").classList.toggle("hidden",!canViewPartnerInventoryContributions); if($("addPartnerInventoryContributionBtn")) $("addPartnerInventoryContributionBtn").classList.toggle("hidden",!canManagePartnerInventoryContributions); if($("partnerVehicleContributionsCard")) $("partnerVehicleContributionsCard").classList.toggle("hidden",!canViewPartnerVehicleContributions); if($("addPartnerVehicleContributionBtn")) $("addPartnerVehicleContributionBtn").classList.toggle("hidden",!canManagePartnerVehicleContributions); }catch(e){}
+    try{ canViewProduction=await permission("PRODUCTION_VIEW") || isSystemAdmin; canManageProduction=await permission("PRODUCTION_MANAGE") || isSystemAdmin; canLoadLocations=canViewLocations || canViewStockTransfers || await permission("INVENTORY_VIEW") || canViewProduction || canManageProduction || isSystemAdmin; if($("menuProduction")) $("menuProduction").classList.toggle("hidden",!canViewProduction); if($("productionCard")) $("productionCard").classList.toggle("hidden",!canViewProduction); if($("addProductionBtn")) $("addProductionBtn").classList.toggle("hidden",!canManageProduction); }catch(e){}
+    try{ canViewRecipes=await permission("RECIPES_VIEW") || canViewProduction || canManageProduction || isSystemAdmin; canManageRecipes=await permission("RECIPES_MANAGE") || canManageProduction || isSystemAdmin; if($("menuRecipes")) $("menuRecipes").classList.toggle("hidden",!canViewRecipes); if($("recipesCard")) $("recipesCard").classList.toggle("hidden",!canViewRecipes); if($("addRecipeBtn")) $("addRecipeBtn").classList.toggle("hidden",!canManageRecipes); }catch(e){}
     try{ canViewAccounting=await permission("ACCOUNTING_VIEW") || isSystemAdmin; canManageAccounting=await permission("ACCOUNTING_MANAGE") || isSystemAdmin; if($("menuAccounting")) $("menuAccounting").classList.toggle("hidden",!canViewAccounting); if($("accountingCard")) $("accountingCard").classList.toggle("hidden",!canViewAccounting); if($("btnPostEntries")) $("btnPostEntries").classList.toggle("hidden",!canManageAccounting); if($("btnAdjustment")) $("btnAdjustment").classList.toggle("hidden",!canManageAccounting); if($("btnBackup")) $("btnBackup").classList.toggle("hidden",!isSystemAdmin); }catch(e){}
     try{ canViewReservations=await permission("RESERVATIONS_VIEW") || isSystemAdmin; canManageReservations=await permission("RESERVATIONS_MANAGE") || isSystemAdmin; if($("menuReservations")) $("menuReservations").classList.toggle("hidden",!canViewReservations); if($("addReservationBtn")) $("addReservationBtn").classList.toggle("hidden",!canManageReservations); }catch(e){}
     try{ canViewPriceLists=await permission("PRICES_VIEW") || await permission("PRICES_MANAGE") || isSystemAdmin; canManagePriceLists=await permission("PRICES_MANAGE") || isSystemAdmin; }catch(e){ canViewPriceLists=false; canManagePriceLists=false; }
@@ -2220,18 +2279,18 @@ async function userInfo(user){
     // صلاحيات واجهة مندوب المبيعات: السماح بفتح نماذج إنشاء العميل والفاتورة والتحصيل.
     // تظل صلاحيات قاعدة البيانات هي المرجع النهائي لقبول العمليات.
     if(currentRoleCode === "SALES_REP"){
-      canManageCustomers = true;
+      canCreateCustomers = await permission("CUSTOMERS_VIEW");
       canManageSales = true;
       canPostCollections = true;
       canViewTrips = true;
       canManageTrips = false;
-      if($("addCustomerBtn")) $("addCustomerBtn").classList.remove("hidden");
+      if($("addCustomerBtn")) $("addCustomerBtn").classList.toggle("hidden",!canCreateCustomers);
       if($("addInvoiceBtn")) $("addInvoiceBtn").classList.remove("hidden");
       if($("addCollectionBtn")) $("addCollectionBtn").classList.toggle("hidden",!canPostCollections);
       const treasuryLabel = document.querySelector('label[for="collectionTreasury"]');
       if(treasuryLabel) treasuryLabel.classList.toggle("hidden",true);
       if($("collectionTreasury")) { $("collectionTreasury").classList.add("hidden"); $("collectionTreasury").required=false; }
-      if($("addReturnBtn")) $("addReturnBtn").classList.add("hidden");
+      if($("addReturnBtn")) $("addReturnBtn").classList.toggle("hidden", !canCreateReturns);
       if($("addTripBtn")) $("addTripBtn").classList.add("hidden");
     } else {
       const treasuryLabel = document.querySelector('label[for="collectionTreasury"]');
@@ -2672,7 +2731,6 @@ async function loadTasks() {
     const totalColl = (collRes.data||[]).reduce((a,b)=>a+Number(b.amount||0),0);
     const totalPurRet = (retRes.data||[]).reduce((a,b)=>a+Number(b.total_return_amount||0),0);
     const totalSalRet = (retRes.data||[]).reduce((a,b)=>a+Number(b.total_returned_value||0),0);
-    const netProfit = totalSales - totalPurRet - totalPurch - totalExp;
 
     const tasksDash = $("tasksDashboard");
     if(tasksDash) tasksDash.innerHTML = `
@@ -2682,7 +2740,7 @@ async function loadTasks() {
       <div class="home-card"><div class="hc-label">💸 التحصيلات</div><div class="hc-value">${fmt(totalColl)}</div></div>
       <div class="home-card"><div class="hc-label">↩️ مرتجع مشتريات</div><div class="hc-value">${fmt(totalPurRet)}</div></div>
       <div class="home-card"><div class="hc-label">↩️ مرتجع بيع</div><div class="hc-value">${fmt(totalSalRet)}</div></div>
-      <div class="home-card ${netProfit >= 0 ? 'green' : 'red'}"><div class="hc-label">📊 صافي الربح</div><div class="hc-value">${fmt(netProfit)}</div></div>
+      <div class="home-card"><div class="hc-label">📊 صافي الربح</div><div class="hc-value">غير محسوب</div><div class="details">لا نعرض الربح قبل احتساب تكلفة المبيعات الفعلية وتسوية المخزون والإنتاج.</div></div>
     `;
 
     const dailySales = {};
@@ -2939,8 +2997,13 @@ if($("treasuryForm")) $("treasuryForm").addEventListener("submit", async e => {
     $("treasuryForm").reset(); 
     loadTreasuries(); 
     showToast("تم الحفظ","success"); 
-  }catch(e){ alert(err(e)); } 
-  finally{ busy(btn,false,"","حفظ"); } 
+  }catch(e){
+    const message=currentRoleCode==="SALES_REP" && e?.code==="42501"
+      ? "لا يمكن إضافة العميل إلا داخل منطقة مسندة إليك. اختر المنطقة التابعة لك ثم أعد الحفظ."
+      : err(e);
+    msg(formMsg,message,"error");
+  }
+  finally{ busy(btn,false,"","حفظ"); }
 });
 if($("refreshTreasuriesBtn")) $("refreshTreasuriesBtn").addEventListener("click",loadTreasuries);
 if($("treasurySearch")) $("treasurySearch").addEventListener("input",renderTreasuries);
@@ -3000,12 +3063,78 @@ async function loadPriceLists(){
     renderPriceLists(); fillPriceListForms(); renderPriceAssignments(assign||[]); renderCustomerGroups();
   }catch(e){msg($("priceListsMsg"),"تعذر تحميل قوائم الأسعار: "+err(e),"error");}
 }
-function renderPriceLists(){const box=$("priceListsList");if(!box)return;box.replaceChildren();if(!priceListsCache.length){box.innerHTML='<div class="empty">لا توجد قوائم أسعار.</div>';return;}priceListsCache.forEach(x=>{const c=document.createElement("div");c.className="product";c.innerHTML=`<div class="pname">${x.price_list_name} (${x.price_list_code})</div><div class="details">الحالة: ${x.approval_status} | من ${formatDate(x.valid_from)}${x.valid_to?' إلى '+formatDate(x.valid_to):''}</div>`;const a=document.createElement("div");a.className="actions";if(canManagePriceLists&&x.approval_status!=="APPROVED"){const b=document.createElement("button");b.className="btn";b.textContent="اعتماد";b.onclick=()=>approvePriceList(x.price_list_id);a.appendChild(b);}c.appendChild(a);box.appendChild(c);});const il=$("priceListItemsList");if(il){const active=priceListItemsCache.filter(i=>i.is_active);il.innerHTML=active.length?active.map(i=>`<div class="product"><div class="pname">${i.products?.product_name||productName(i.product_id)}</div><div class="details">${i.units?.unit_name||unitName(i.unit_id)} | ${fmt(i.selling_price)} | حد ${fmt(i.minimum_price)} - ${fmt(i.maximum_price)}</div></div>`).join(""): '<div class="empty">لا توجد أسعار.</div>';}}
+function getPriceItemLimitIssue(item){
+  const product=productsCache.find(p=>String(p.product_id)===String(item.product_id));
+  if(!product)return "";
+  const issues=[];
+  if(!product.is_active)issues.push("المنتج غير نشط");
+  if(!product.can_be_sold)issues.push("المنتج غير مسموح ببيعه");
+  const unit=units.find(u=>String(u.unit_id)===String(item.unit_id));
+  if(!unit||!unit.is_active)issues.push("وحدة البيع غير نشطة");
+  const min=Math.max(Number(item.minimum_price)||0,Number(product.min_selling_price)||0);
+  const listMax=item.maximum_price==null?null:Number(item.maximum_price);
+  const productMax=product.max_selling_price==null?null:Number(product.max_selling_price);
+  const max=listMax!==null&&productMax!==null?Math.min(listMax,productMax):(listMax!==null?listMax:productMax);
+  if(max!==null&&min>max)issues.push("حدود الأسعار متعارضة");
+  else if(Number(item.selling_price)<min||(max!==null&&Number(item.selling_price)>max))
+    issues.push("السعر خارج الحدود ("+fmt(min)+" إلى "+(max===null?"غير محدد":fmt(max))+")");
+  return issues.join("، ");
+}
+function renderPriceLists(){
+  const box=$("priceListsList");if(!box)return;box.replaceChildren();
+  if(!priceListsCache.length){box.innerHTML='<div class="empty">لا توجد قوائم أسعار.</div>';return;}
+  priceListsCache.forEach(x=>{
+    const c=document.createElement("div");c.className="product";
+    const invalidItems=priceListItemsCache.filter(i=>String(i.price_list_id)===String(x.price_list_id)&&i.is_active&&getPriceItemLimitIssue(i));
+    c.innerHTML=`<div class="pname">${x.price_list_name} (${x.price_list_code})</div><div class="details">الحالة: ${x.approval_status} | من ${formatDate(x.valid_from)}${x.valid_to?' إلى '+formatDate(x.valid_to):''}</div>`;
+    if(invalidItems.length){
+      const warning=document.createElement("div");warning.className="details";warning.style.color="var(--danger,#b42318)";
+      warning.textContent="تنبيه: "+invalidItems.length+" صنف خارج حدود سعر المنتج: "+invalidItems.map(i=>productName(i.product_id)).join("، ");
+      c.appendChild(warning);
+    }
+    const a=document.createElement("div");a.className="actions";
+    if(canManagePriceLists&&x.approval_status==="DRAFT"){
+      const b=document.createElement("button");b.className="btn";b.textContent="اعتماد";b.onclick=()=>approvePriceList(x.price_list_id);a.appendChild(b);
+    }else if(x.approval_status==="REJECTED"){
+      const state=document.createElement("span");state.className="details";state.textContent="مرفوضة - أنشئ قائمة جديدة بعد المراجعة";a.appendChild(state);
+    }
+    c.appendChild(a);box.appendChild(c);
+  });
+  const il=$("priceListItemsList");
+  if(il){
+    const active=priceListItemsCache.filter(i=>i.is_active);
+    il.innerHTML=active.length?active.map(i=>{
+      const issue=getPriceItemLimitIssue(i);
+      return `<div class="product"><div class="pname">${i.products?.product_name||productName(i.product_id)}</div><div class="details">${i.units?.unit_name||unitName(i.unit_id)} | ${fmt(i.selling_price)} | حد القائمة ${fmt(i.minimum_price)} - ${fmt(i.maximum_price)}${issue?' | تنبيه: '+issue:''}</div></div>`;
+    }).join(""):'<div class="empty">لا توجد أسعار.</div>';
+  }
+}
+function syncPriceAssignmentDates(resetStart=false){
+  const list=priceListsCache.find(x=>String(x.price_list_id)===String($("assignmentList")?.value));
+  const from=$("assignmentFrom"),to=$("assignmentTo");
+  if(!list||!from||!to)return;
+  from.min=list.valid_from||"";
+  from.max=list.valid_to||"";
+  to.max=list.valid_to||"";
+  if(resetStart||!from.value||from.value<(list.valid_from||"")||(list.valid_to&&from.value>list.valid_to)){
+    const today=todayISO();
+    from.value=today<(list.valid_from||"")?list.valid_from:today;
+  }
+  to.min=from.value||list.valid_from||"";
+  if(to.value&&to.value<to.min)to.value="";
+  if(list.valid_to&&to.value>list.valid_to)to.value=list.valid_to;
+}
 function fillPriceListForms(){
-  const lists=priceListsCache.filter(x=>x.is_active); const lp=["priceItemList","assignmentList"];lp.forEach(id=>{const el=$(id);if(!el)return;const cur=el.value;el.replaceChildren();lists.forEach(x=>{const o=document.createElement("option");o.value=x.price_list_id;o.textContent=x.price_list_name+" - "+x.approval_status;el.appendChild(o);});el.value=cur||"";});
+  const fillListSelect=(id,rows,emptyLabel)=>{const el=$(id);if(!el)return;const cur=el.value;el.replaceChildren();const empty=document.createElement("option");empty.value="";empty.textContent=emptyLabel;el.appendChild(empty);rows.forEach(x=>{const o=document.createElement("option");o.value=x.price_list_id;o.textContent=x.price_list_name+" - "+x.price_list_code;el.appendChild(o);});if(rows.some(x=>String(x.price_list_id)===String(cur)))el.value=cur;};
+  const today=todayISO();
+  const editableLists=priceListsCache.filter(x=>x.is_active&&["DRAFT","REJECTED"].includes(x.approval_status));
+  const assignableLists=priceListsCache.filter(x=>x.is_active&&x.approval_status==="APPROVED"&&(!x.valid_to||x.valid_to>=today));
+  fillListSelect("priceItemList",editableLists,"اختر مسودة لإضافة الأسعار");
+  fillListSelect("assignmentList",assignableLists,"اختر قائمة معتمدة أو يبدأ سريانها لاحقًا");
   const ps=$("priceItemProduct");if(ps){ps.replaceChildren();productsCache.filter(p=>p.is_active).forEach(p=>{const o=document.createElement("option");o.value=p.product_id;o.textContent=p.product_name;ps.appendChild(o);});fillPriceItemUnits();}
   const cs=$("assignmentCustomer");if(cs){cs.replaceChildren();customersCache.filter(c=>c.is_active!==false).forEach(c=>{const o=document.createElement("option");o.value=c.customer_id;o.textContent=c.customer_name;cs.appendChild(o);});}
-  const gs=$("assignmentGroup");if(gs){gs.replaceChildren();customerGroupsCache.forEach(g=>{const o=document.createElement("option");o.value=g.customer_group_id;o.textContent=g.group_name;gs.appendChild(o);});}
+  const gs=$("assignmentGroup");if(gs){gs.replaceChildren();customerGroupsCache.filter(g=>g.is_active!==false).forEach(g=>{const o=document.createElement("option");o.value=g.customer_group_id;o.textContent=g.group_name;gs.appendChild(o);});}
+  syncPriceAssignmentDates(true);
 }
 function fillPriceItemUnits(){const p=productsCache.find(x=>String(x.product_id)===String($("priceItemProduct")?.value));const u=$("priceItemUnit");if(!u)return;u.replaceChildren();[p?.sales_unit_id,p?.base_unit_id,p?.purchase_unit_id].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i).forEach(id=>{const x=units.find(y=>Number(y.unit_id)===Number(id));if(x){const o=document.createElement("option");o.value=id;o.textContent=x.unit_name;u.appendChild(o);}});}
 function renderPriceAssignments(rows){const b=$("priceAssignmentsList");if(!b)return;b.innerHTML=rows.length?rows.map(x=>`<div class="product"><div class="pname">${x.price_lists?.price_list_name||"قائمة"}</div><div class="details">${x.customers?.customer_name||x.customer_groups?.group_name||"-"} | أولوية ${x.priority} | من ${formatDate(x.valid_from)}</div></div>`).join(""):'<div class="empty">لا توجد روابط.</div>';}
@@ -3016,7 +3145,9 @@ if($("priceItemProduct"))$("priceItemProduct").addEventListener("change",fillPri
 if($("priceListItemForm"))$("priceListItemForm").addEventListener("submit",async e=>{e.preventDefault();if(!canManagePriceLists)return;const payload={price_list_id:Number($("priceItemList").value),product_id:Number($("priceItemProduct").value),unit_id:Number($("priceItemUnit").value),selling_price:Number($("priceItemSelling").value),minimum_price:$("priceItemMin").value?Number($("priceItemMin").value):null,maximum_price:$("priceItemMax").value?Number($("priceItemMax").value):null,is_active:true};try{const {error}=await db.from("price_list_items").insert(payload);if(error)throw error;$("priceListItemForm").reset();await loadPriceLists();showToast("تم إضافة السعر","success");}catch(e){msg($("priceListsMsg"),"خطأ: "+err(e),"error");}});
 if($("customerGroupForm"))$("customerGroupForm").addEventListener("submit",async e=>{e.preventDefault();if(!canManagePriceLists)return;try{const {data:u}=await db.auth.getUser();const {error}=await db.from("customer_groups").insert({group_code:$("customerGroupCode").value.trim(),group_name:$("customerGroupName").value.trim(),notes:$("customerGroupNotes").value.trim()||null,is_active:true,created_by:u?.user?.id||null});if(error)throw error;$("customerGroupForm").reset();await loadPriceLists();showToast("تم إضافة المجموعة","success");}catch(e){msg($("priceListsMsg"),"خطأ: "+err(e),"error");}});
 if($("assignmentType"))$("assignmentType").addEventListener("change",()=>{$("assignmentCustomerWrap").classList.toggle("hidden",$("assignmentType").value!=="CUSTOMER");$("assignmentGroupWrap").classList.toggle("hidden",$("assignmentType").value!=="GROUP");});
-if($("priceAssignmentForm"))$("priceAssignmentForm").addEventListener("submit",async e=>{e.preventDefault();if(!canManagePriceLists)return;const type=$("assignmentType").value;const payload={price_list_id:Number($("assignmentList").value),customer_id:type==="CUSTOMER"?Number($("assignmentCustomer").value):null,customer_group_id:type==="GROUP"?Number($("assignmentGroup").value):null,priority:Number($("assignmentPriority").value||10),valid_from:$("assignmentFrom").value,valid_to:$("assignmentTo").value||null,is_active:true};try{const {data:u}=await db.auth.getUser();payload.created_by=u?.user?.id||null;const {error}=await db.from("customer_price_lists").insert(payload);if(error)throw error;$("priceAssignmentForm").reset();await loadPriceLists();showToast("تم ربط القائمة","success");}catch(e){msg($("priceListsMsg"),"خطأ: "+err(e),"error");}});
+if($("assignmentList"))$("assignmentList").addEventListener("change",()=>syncPriceAssignmentDates(true));
+if($("assignmentFrom"))$("assignmentFrom").addEventListener("change",()=>syncPriceAssignmentDates(false));
+if($("priceAssignmentForm"))$("priceAssignmentForm").addEventListener("submit",async e=>{e.preventDefault();if(!canManagePriceLists)return;const type=$("assignmentType").value;const payload={price_list_id:Number($("assignmentList").value),customer_id:type==="CUSTOMER"?Number($("assignmentCustomer").value):null,customer_group_id:type==="GROUP"?Number($("assignmentGroup").value):null,priority:Number($("assignmentPriority").value||10),valid_from:$("assignmentFrom").value,valid_to:$("assignmentTo").value||null,is_active:true};try{const selectedList=priceListsCache.find(x=>Number(x.price_list_id)===payload.price_list_id);if(!selectedList||!selectedList.is_active||selectedList.approval_status!=="APPROVED")throw new Error("اختر قائمة أسعار معتمدة وفعالة.");if(!payload.valid_from||payload.valid_from<selectedList.valid_from||(selectedList.valid_to&&payload.valid_from>selectedList.valid_to))throw new Error("تاريخ بداية الربط يجب أن يقع داخل صلاحية قائمة الأسعار.");if(payload.valid_to&&(payload.valid_to<payload.valid_from||(selectedList.valid_to&&payload.valid_to>selectedList.valid_to)))throw new Error("تاريخ نهاية الربط يجب أن يكون بعد بدايته وداخل صلاحية قائمة الأسعار.");const {data:u}=await db.auth.getUser();payload.created_by=u?.user?.id||null;const {error}=await db.from("customer_price_lists").insert(payload);if(error)throw error;$("priceAssignmentForm").reset();await loadPriceLists();showToast("تم ربط القائمة","success");}catch(e){msg($("priceListsMsg"),"خطأ: "+err(e),"error");}});
 
 // ========== الفترات المحاسبية ==========
 async function loadAccountingPeriods(){if(!canViewAccounting&&!isSystemAdmin)return;const b=$("accountingPeriodsList");if(!b)return;try{const {data,error}=await db.from("accounting_periods").select("*").order("start_date",{ascending:false});if(error)throw error;b.innerHTML=data?.length?data.map(x=>`<div class="product"><div class="pname">${x.period_name}</div><div class="details">${formatDate(x.start_date)} إلى ${formatDate(x.end_date)} | الحالة: ${x.status}</div>${canManageAccounting&&x.status!=="CLOSED"?`<button class="btn danger" onclick="closeAccountingPeriod(${x.period_id})">إغلاق الفترة</button>`:""}</div>`).join(""):'<div class="empty">لا توجد فترات.</div>';}catch(e){msg($("accountingPeriodsMsg"),"تعذر تحميل الفترات: "+err(e),"error");}}
@@ -3040,10 +3171,22 @@ function renderProducts(){
   const q=($("search").value||"").toLowerCase(); 
   const found=productsCache.filter(p=> [p.product_name,p.product_code,p.barcode].some(v=>String(v||"").toLowerCase().includes(q))); 
   if(!found.length){ box.innerHTML = `<div class="empty">لا توجد منتجات.</div>`; return; } 
+  const esc=v=>String(v??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
   found.forEach(p=>{ 
     const card=document.createElement("div");
     card.className="product";
-    card.innerHTML=`<div class="pname">${p.product_name}</div><div class="details">كود: ${p.product_code} | نوع: ${typeName(p.product_type)}${p.barcode?" | باركود: "+p.barcode:""}</div>`; 
+    const category=categories.find(c=>String(c.category_id)===String(p.category_id))?.category_name||"غير محدد";
+    const unitDetails=`الوحدات: مخزون ${esc(unitName(p.base_unit_id))} | شراء ${esc(unitName(p.purchase_unit_id))} | بيع ${esc(unitName(p.sales_unit_id))}`;
+    const hasPrices=[p.min_selling_price,p.target_selling_price,p.max_selling_price].some(v=>v!==null&&v!==undefined&&v!=="");
+    const priceDetails=hasPrices?`<div class="details">أسعار البيع — أدنى: ${p.min_selling_price==null?"—":fmt(p.min_selling_price)} | مستهدف: ${p.target_selling_price==null?"—":fmt(p.target_selling_price)} | أقصى: ${p.max_selling_price==null?"—":fmt(p.max_selling_price)}</div>`:"";
+    const uses=[["can_be_purchased","شراء"],["can_be_produced","إنتاج"],["can_be_sold","بيع"],["can_be_loaded","تحميل"]].filter(([key])=>p[key]).map(([,label])=>label);
+    const statusBadge=p.is_active?'<span class="badge badge-paid">نشط</span>':'<span class="badge badge-cancel">موقوف</span>';
+    const usageBadges=uses.length?uses.map(label=>'<span class="badge">'+label+'</span>').join(""):'<span class="badge">لا توجد استخدامات مفعلة</span>';
+    card.innerHTML=`<div class="pname">${esc(p.product_name)}</div>
+      <div class="details">الكود: ${esc(p.product_code||"—")} | النوع: ${esc(typeName(p.product_type))} | التصنيف: ${esc(category)}${p.barcode?" | الباركود: "+esc(p.barcode):""}</div>
+      <div class="details">${unitDetails}${p.units_per_carton? " | عدد الوحدات بالكرتونة: "+esc(fmtQty(p.units_per_carton)):""}</div>
+      <div class="details">حد إعادة الطلب: ${p.minimum_stock==null?"—":esc(fmtQty(p.minimum_stock))}</div>
+      ${priceDetails}<div>${statusBadge}${usageBadges}</div>`;
     if(canManage){ 
       const btn=document.createElement("button");
       btn.className="btn secondary";
@@ -3312,6 +3455,8 @@ function syncCustomerLegacyGeo(){
   if($("customerLegacyArea")) $("customerLegacyArea").value=area?.name||"";
 }
 window.openCustomerForm=async function(c=null){
+  if(c && !canManageCustomers){ showToast("لا تملك صلاحية تعديل بيانات العملاء.","error"); return; }
+  if(!c && !canCreateCustomers){ showToast("لا تملك صلاحية إضافة عميل.","error"); return; }
   try{
     await loadCustomerGeoData();
     const form=$("customerForm"); if(form) form.reset();
@@ -3327,6 +3472,20 @@ window.openCustomerForm=async function(c=null){
     $("customerOpeningBalance").value=c?.opening_balance||0;
     $("customerAddress").value=c?.address||"";
     $("customerActive").checked=c?.is_active!==false;
+    const isSalesRepCustomerCreate=currentRoleCode==="SALES_REP" && !c;
+    ["customerCreditLimit","customerOpeningBalance"].forEach(id=>{
+      const input=$(id);
+      const label=document.querySelector(`label[for="${id}"]`);
+      if(input){ input.classList.toggle("hidden",isSalesRepCustomerCreate); if(isSalesRepCustomerCreate) input.value="0"; }
+      if(label) label.classList.toggle("hidden",isSalesRepCustomerCreate);
+    });
+    if($("customerActive")){
+      $("customerActive").disabled=isSalesRepCustomerCreate;
+      if(isSalesRepCustomerCreate) $("customerActive").checked=true;
+    }
+    const customerAreaLabel=document.querySelector('label[for="customerArea"]');
+    if(customerAreaLabel) customerAreaLabel.textContent=isSalesRepCustomerCreate?"المنطقة / القرية *":"المنطقة / القرية";
+    if($("customerArea")) $("customerArea").required=isSalesRepCustomerCreate;
     $("customerLegacyCity").value=c?.city||"";
     $("customerLegacyArea").value=c?.area||"";
     const area=c?.area_id?customerAreasCache.find(a=>String(a.area_id)===String(c.area_id)):null;
@@ -3422,6 +3581,10 @@ if($("customerForm")) $("customerForm").addEventListener("submit", async e => {
     msg(formMsg,"المنطقة المختارة لا تتبع الوحدة الإدارية. اختر المنطقة من جديد.","error");
     return;
   }
+  if(currentRoleCode==="SALES_REP" && !areaId){
+    msg(formMsg,"اختر المنطقة المسندة إليك قبل إضافة العميل.","error");
+    return;
+  }
   busy(btn,true,"جارٍ...","حفظ");
   const id=$("customerEditId").value;
   syncCustomerLegacyGeo();
@@ -3432,15 +3595,15 @@ if($("customerForm")) $("customerForm").addEventListener("submit", async e => {
     whatsapp:$("customerWhatsapp").value,
     tax_number:$("customerTaxNumber").value||null,
     customer_type:$("customerType").value,
-    credit_limit:Number($("customerCreditLimit").value||0),
-    opening_balance:Number($("customerOpeningBalance").value||0),
+    credit_limit:currentRoleCode==="SALES_REP"?0:Number($("customerCreditLimit").value||0),
+    opening_balance:currentRoleCode==="SALES_REP"?0:Number($("customerOpeningBalance").value||0),
     address:$("customerAddress").value||null,
     governorate_id:Number(governorateId),
     city_id:Number(cityId),
     city:$("customerLegacyCity").value||null,
     area:$("customerLegacyArea").value||null,
     area_id:areaId,
-    is_active:$("customerActive").checked
+    is_active:currentRoleCode==="SALES_REP"?true:$("customerActive").checked
   }; 
   try{ 
     const result=id ? await db.from("customers").update(payload).eq("customer_id",id) : await db.from("customers").insert(payload);
@@ -3449,8 +3612,13 @@ if($("customerForm")) $("customerForm").addEventListener("submit", async e => {
     $("customerForm").reset(); 
     loadCustomers(); 
     showToast("تم الحفظ","success"); 
-  }catch(e){ alert(err(e)); } 
-  finally{ busy(btn,false,"","حفظ"); } 
+  }catch(e){
+    const message=currentRoleCode==="SALES_REP" && e?.code==="42501"
+      ? "لا يمكن إضافة العميل إلا داخل منطقة مسندة إليك. اختر المنطقة التابعة لك ثم أعد الحفظ."
+      : err(e);
+    msg(formMsg,message,"error");
+  }
+  finally{ busy(btn,false,"","حفظ"); }
 });
 if($("refreshCustomersBtn")) $("refreshCustomersBtn").addEventListener("click",loadCustomers);
 if($("customerSearch")) $("customerSearch").addEventListener("input",renderCustomers);
@@ -3578,7 +3746,11 @@ function renderSuppliers(){
     const card=document.createElement("div");
     card.className="product";
     const payable=supplierPayablesCache.find(x=>String(x.supplier_id)===String(s.supplier_id));
-    card.innerHTML=`<div class="pname">${s.supplier_name}</div><div class="details">كود: ${s.supplier_code||'-'} | موبايل: ${s.phone||'-'} | الرصيد المستحق: ${payable?fmt(payable.current_payable):"غير متاح"}</div>`; 
+    const supplierBalance = payable ? Number(payable.current_payable || 0) : null;
+    const supplierBalanceLabel = payable
+      ? (supplierBalance < 0 ? "رصيد مدين / دفعة مقدمة: " + fmt(Math.abs(supplierBalance)) : "الرصيد المستحق: " + fmt(supplierBalance))
+      : "الرصيد: غير متاح";
+    card.innerHTML=`<div class="pname">${s.supplier_name}</div><div class="details">كود: ${s.supplier_code||'-'} | موبايل: ${s.phone||'-'} | ${supplierBalanceLabel}</div>`; 
     const actions=document.createElement("div"); 
     actions.className="actions"; 
     const stmt=document.createElement("button"); 
@@ -3596,6 +3768,8 @@ function renderSuppliers(){
         $("supplierName").value=s.supplier_name; 
         $("supplierPhone").value=s.phone||""; 
         $("supplierTaxNumber").value=s.tax_number||""; 
+        $("supplierAddress").value=s.address||""; 
+        $("supplierActive").checked=s.is_active!==false; 
         $("supplierFormTitle").textContent="تعديل المورد"; 
         $("supplierFormModal").classList.add('active'); 
       }; 
@@ -3604,6 +3778,14 @@ function renderSuppliers(){
     card.appendChild(actions); 
     box.appendChild(card); 
   }); 
+}
+function openNewSupplierForm(){
+    const form=$("supplierForm");
+    if(form) form.reset();
+    $("supplierEditId").value="";
+    $("supplierFormTitle").textContent="إضافة مورد جديد";
+    $("supplierActive").checked=true;
+    $("supplierFormModal").classList.add("active");
 }
 if($("supplierForm")) $("supplierForm").addEventListener("submit", async e => { 
   e.preventDefault(); 
@@ -3615,11 +3797,14 @@ if($("supplierForm")) $("supplierForm").addEventListener("submit", async e => {
     supplier_name:$("supplierName").value, 
     phone:$("supplierPhone").value, 
     tax_number:$("supplierTaxNumber").value||null, 
+    address:$("supplierAddress").value.trim()||null, 
     is_active:$("supplierActive").checked 
   }; 
   try{ 
-    if(id) await db.from("suppliers").update(payload).eq("supplier_id",id); 
-    else await db.from("suppliers").insert(payload); 
+    const result = id
+      ? await db.from("suppliers").update(payload).eq("supplier_id",id)
+      : await db.from("suppliers").insert(payload);
+    if(result.error) throw result.error; 
     $("supplierFormModal").classList.remove('active'); 
     $("supplierForm").reset(); 
     loadSuppliers(); 
@@ -3638,34 +3823,65 @@ async function viewSupplierStatement(s) {
     modal.classList.remove("hidden");
 
     try {
-        const [invoiceResult, paymentResult, returnResult] = await Promise.all([
+        const [invoiceResult, paymentResult, returnResult, landedCostResult, assetResult] = await Promise.all([
             db.from("purchase_invoices")
                 .select("invoice_number, invoice_date, net_total, status, treasury_id")
                 .eq("supplier_id", s.supplier_id)
-                .neq("status", "CANCELLED")
+                .eq("status", "POSTED")
                 .order("invoice_date", { ascending: true }),
             db.from("supplier_payments")
-                .select("payment_date, amount, payment_id")
+                .select("payment_date, amount, payment_id, is_cancelled")
                 .eq("supplier_id", s.supplier_id)
+                .eq("is_cancelled", false)
                 .order("payment_date", { ascending: true }),
             db.from("purchase_returns")
-                .select("return_number, return_date, total_return_amount, settlement_method")
+                .select("return_number, return_date, total_return_amount, settlement_method, is_cancelled")
                 .eq("supplier_id", s.supplier_id)
-                .order("return_date", { ascending: true })
+                .eq("is_cancelled", false)
+                .order("return_date", { ascending: true }),
+            db.from("purchase_landed_costs")
+                .select("landed_cost_id, cost_date, amount, status, source_type")
+                .eq("supplier_id", s.supplier_id)
+                .eq("source_type", "EXTERNAL_SUPPLIER")
+                .eq("status", "ACTIVE")
+                .order("cost_date", { ascending: true }),
+            db.from("fixed_assets")
+                .select("asset_id, asset_name, acquisition_date, acquisition_cost, status, source_type")
+                .eq("supplier_id", s.supplier_id)
+                .eq("source_type", "SUPPLIER_CREDIT")
+                .eq("status", "ACTIVE")
+                .order("acquisition_date", { ascending: true })
         ]);
 
         if(invoiceResult.error) throw invoiceResult.error;
         if(paymentResult.error) throw paymentResult.error;
         if(returnResult.error) throw returnResult.error;
+        if(landedCostResult.error) throw landedCostResult.error;
+        if(assetResult.error) throw assetResult.error;
 
         const invoices = invoiceResult.data || [];
         const payments = paymentResult.data || [];
         const returns = returnResult.data || [];
+        const landedCosts = landedCostResult.data || [];
+        const supplierCreditAssets = assetResult.data || [];
         const timeline = [];
+        const openingBalance = Number(s.opening_balance || 0);
+        if (openingBalance !== 0) {
+            timeline.push({
+                date: null,
+                priority: 0,
+                ref: "رصيد افتتاحي",
+                desc: "الرصيد الافتتاحي للمورد",
+                debit: openingBalance < 0 ? Math.abs(openingBalance) : 0,
+                credit: openingBalance > 0 ? openingBalance : 0
+            });
+        }
 
         let totalCreditPurchases = 0;
         let totalCashPurchases = 0;
         let totalSupplierCreditReturns = 0;
+        let totalExternalLandedCosts = 0;
+        let totalSupplierCreditAssets = 0;
         let totalPayments = 0;
 
         invoices.forEach(inv => {
@@ -3691,6 +3907,32 @@ async function viewSupplierStatement(s) {
                     credit: amount
                 });
             }
+        });
+
+        landedCosts.forEach(cost => {
+            const amount = Number(cost.amount || 0);
+            totalExternalLandedCosts += amount;
+            timeline.push({
+                date: cost.cost_date,
+                priority: 1,
+                ref: "تكلفة نقل " + cost.landed_cost_id,
+                desc: "تكلفة نقل آجلة على المورد",
+                debit: 0,
+                credit: amount
+            });
+        });
+
+        supplierCreditAssets.forEach(asset => {
+            const amount = Number(asset.acquisition_cost || 0);
+            totalSupplierCreditAssets += amount;
+            timeline.push({
+                date: asset.acquisition_date,
+                priority: 1,
+                ref: "أصل " + asset.asset_id,
+                desc: "شراء أصل ثابت آجل من المورد: " + (asset.asset_name || ""),
+                debit: 0,
+                credit: amount
+            });
         });
 
         returns.forEach(ret => {
@@ -3726,7 +3968,7 @@ async function viewSupplierStatement(s) {
                 date: payment.payment_date,
                 priority: 3,
                 ref: payment.payment_id ? "سداد " + payment.payment_id : "-",
-                desc: "دفعة للمورد",
+                desc: "سداد للمورد، والزيادة تظهر كدفعة مقدمة",
                 debit: amount,
                 credit: 0
             });
@@ -3766,15 +4008,18 @@ async function viewSupplierStatement(s) {
         }
 
         $("modalSupplierSummary").innerHTML =
+            `<div class="line"><span>الرصيد الافتتاحي:</span><span>${fmt(openingBalance)}</span></div>` +
             `<div class="line"><span>المشتريات الآجلة:</span><span>${fmt(totalCreditPurchases)}</span></div>` +
             `<div class="line"><span>المشتريات النقدية (للعرض فقط):</span><span>${fmt(totalCashPurchases)}</span></div>` +
+            `<div class="line"><span>تكاليف نقل آجلة على المورد:</span><span>${fmt(totalExternalLandedCosts)}</span></div>` +
+            `<div class="line"><span>أصول مشتراة آجلًا من المورد:</span><span>${fmt(totalSupplierCreditAssets)}</span></div>` +
             `<div class="line"><span>مرتجعات مخصومة من حساب المورد:</span><span>${fmt(totalSupplierCreditReturns)}</span></div>` +
             `<div class="line"><span>دفعات المورد:</span><span style="color:green;">${fmt(totalPayments)}</span></div>` +
             `<div class="line grand"><span>الرصيد النهائي:</span><span style="color:${finalBalanceColor};">${finalBalanceLabel}</span></div>`;
 
         const waBtn = $("shareSupplierWhatsappBtn");
         waBtn.onclick = () => {
-            const waText = `كشف حساب مورد\nالمورد: ${s.supplier_name}\nالتاريخ: ${formatDate()}\n------------------------\nالمشتريات الآجلة: ${fmt(totalCreditPurchases)}\nمرتجعات مخصومة من حساب المورد: ${fmt(totalSupplierCreditReturns)}\nدفعات المورد: ${fmt(totalPayments)}\n------------------------\n${finalBalanceLabel}`;
+            const waText = `كشف حساب مورد\nالمورد: ${s.supplier_name}\nالتاريخ: ${formatDate()}\n------------------------\nالمشتريات الآجلة: ${fmt(totalCreditPurchases)}\nتكاليف نقل آجلة: ${fmt(totalExternalLandedCosts)}\nأصول مشتراة آجلًا: ${fmt(totalSupplierCreditAssets)}\nمرتجعات مخصومة من حساب المورد: ${fmt(totalSupplierCreditReturns)}\nدفعات المورد: ${fmt(totalPayments)}\n------------------------\n${finalBalanceLabel}`;
             const phone = formatWaPhone(s.phone);
             window.open(phone ? `https://wa.me/${phone}?text=${encodeURIComponent(waText)}` : `https://wa.me/?text=${encodeURIComponent(waText)}`, "_blank");
         };
@@ -4511,7 +4756,7 @@ function addPurchaseItemRow() {
   const recalc=()=>{ 
     const q=Number(qty.value||0);
     const p=Number(price.value||0);
-    const t=q*p; 
+    const t=Math.round((q*p+Number.EPSILON)*100)/100; 
     lineTotal.textContent="الإجمالي: "+fmt(t); 
     const unitId=Number(unitSel.value||0); 
     const opt=prodSel.selectedOptions[0]; 
@@ -4560,7 +4805,7 @@ function updatePurchaseTotals(){
   document.querySelectorAll("#purchaseItems .item-row").forEach(row=>{ 
     const q=Number(row.querySelector(".item-qty")?.value||0); 
     const p=Number(row.querySelector(".item-price")?.value||0); 
-    subtotal+=q*p; 
+    subtotal+=Math.round((q*p+Number.EPSILON)*100)/100; 
   }); 
   const discount=Number($("purchaseDiscount").value||0); 
   let total=subtotal-discount;
@@ -4732,7 +4977,7 @@ async function loadSupplierPayments() {
     const from = $("spFromDate").value; 
     const to = $("spToDate").value; 
     const supId = $("spSupplierFilter").value; 
-    let query = db.from("supplier_payments").select("*, suppliers(supplier_name), treasuries(treasury_name)").order("payment_id", {ascending:false}); 
+    let query = db.from("supplier_payments").select("*, suppliers(supplier_name), treasuries(treasury_name)").eq("is_cancelled", false).order("payment_id", {ascending:false}); 
     if (from) query = query.gte("payment_date", from); 
     if (to) query = query.lte("payment_date", to); 
     if (supId) query = query.eq("supplier_id", supId); 
@@ -4754,8 +4999,13 @@ function createSupplierPaymentRequestId() {
 if($("supplierPaymentForm")) $("supplierPaymentForm").addEventListener("submit", async e => { 
     e.preventDefault(); 
     const btn = $("saveSpBtn"); busy(btn, true, "جارٍ...", "حفظ"); 
-    const requestStorageKey = "mm_supplier_payment_pending_request";
+    let requestStorageKey = "mm_supplier_payment_pending_request";
     try { 
+        const { data: authData, error: authError } = await db.auth.getUser();
+        if(authError) throw authError;
+        const currentUserId = authData?.user?.id;
+        if(!currentUserId) throw new Error("انتهت جلسة الدخول. سجل الدخول مرة أخرى.");
+        requestStorageKey += "_" + currentUserId;
         const supplierId = Number($("spSupplier").value);
         const amount = Math.round((Number($("spAmount").value) + Number.EPSILON) * 100) / 100;
         const paymentDate = $("spDate").value;
@@ -4769,18 +5019,17 @@ if($("supplierPaymentForm")) $("supplierPaymentForm").addEventListener("submit",
             supplier_id: supplierId,
             amount: amount,
             payment_date: paymentDate,
-            treasury_id: treasuryId
+            treasury_id: treasuryId,
+            notes: notes || null
         };
         let pendingRequest = null;
         try { pendingRequest = JSON.parse(localStorage.getItem(requestStorageKey) || "null"); } catch(storageReadError) {}
 
-        if(!pendingRequest || !pendingRequest.request_id) {
+        if(!pendingRequest || !pendingRequest.request_id || JSON.stringify(pendingRequest.payload) !== JSON.stringify(requestPayload)) {
             pendingRequest = {
                 request_id: createSupplierPaymentRequestId(),
                 payload: requestPayload
             };
-        } else {
-            pendingRequest.payload = requestPayload;
         }
         localStorage.setItem(requestStorageKey, JSON.stringify(pendingRequest));
 
@@ -4818,7 +5067,7 @@ if($("viewSpStatementBtn")) $("viewSpStatementBtn").addEventListener("click", as
     const supId = $("spSupplierFilter").value; 
     let supName = supId ? supplierName(supId) : "كل الموردين"; 
     let periodText = (from ? "من: " + from : "") + (to ? " إلى: " + to : "");
-    let query = db.from("supplier_payments").select("*, suppliers(supplier_name)").order("payment_date", {ascending:true}); 
+    let query = db.from("supplier_payments").select("*, suppliers(supplier_name)").eq("is_cancelled", false).order("payment_date", {ascending:true}); 
     if (from) query = query.gte("payment_date", from); 
     if (to) query = query.lte("payment_date", to); 
     if (supId) query = query.eq("supplier_id", supId);
@@ -4975,7 +5224,7 @@ async function loadPurchaseReturns() {
     const from = $("prFromDate").value; 
     const to = $("prToDate").value; 
     const supId = $("prSupplierFilter").value; 
-    let query = db.from("purchase_returns").select("*, suppliers(supplier_name)").order("return_id", {ascending:false}); 
+    let query = db.from("purchase_returns").select("*, suppliers(supplier_name)").eq("is_cancelled", false).order("return_id", {ascending:false}); 
     if (from) query = query.gte("return_date", from); 
     if (to) query = query.lte("return_date", to); 
     if (supId) query = query.eq("supplier_id", supId); 
@@ -4997,7 +5246,7 @@ if($("viewPrStatementBtn")) $("viewPrStatementBtn").addEventListener("click", as
     const supId = $("prSupplierFilter").value; 
     let supName = supId ? supplierName(supId) : "كل الموردين"; 
     let periodText = (from ? "من: " + from : "") + (to ? " إلى: " + to : "");
-    let query = db.from("purchase_returns").select("*, suppliers(supplier_name)").order("return_date", {ascending:true}); 
+    let query = db.from("purchase_returns").select("*, suppliers(supplier_name)").eq("is_cancelled", false).order("return_date", {ascending:true}); 
     if (from) query = query.gte("return_date", from); 
     if (to) query = query.lte("return_date", to); 
     if (supId) query = query.eq("supplier_id", supId);
@@ -5063,14 +5312,20 @@ async function loadPurchaseReturnInvoiceItems(){
     const invoiceSubtotal = Number(invoice.subtotal || 0);
     const invoiceDiscount = Number(invoice.discount || 0);
 
+    let priorGrossTotal = 0;
     prInvoiceItemsCache = sourceItems
         .filter(item => Number(item.item_id) > 0 && Number(item.quantity) > 0 && Number(item.base_quantity) > 0)
         .map(item => {
             const product = productsCache.find(p => Number(p.product_id) === Number(item.product_id));
-            const grossTotal = Number(item.line_total || (Number(item.quantity || 0) * Number(item.unit_price || 0)));
-            const discountShare = invoiceSubtotal > 0
-                ? invoiceDiscount * grossTotal / invoiceSubtotal
+            const grossTotal = Number(item.line_total ?? (Number(item.quantity || 0) * Number(item.unit_price || 0)));
+            const discountBefore = invoiceSubtotal > 0
+                ? Math.round((priorGrossTotal * invoiceDiscount / invoiceSubtotal + Number.EPSILON) * 100) / 100
                 : 0;
+            const discountThrough = invoiceSubtotal > 0
+                ? Math.round(((priorGrossTotal + grossTotal) * invoiceDiscount / invoiceSubtotal + Number.EPSILON) * 100) / 100
+                : 0;
+            const discountShare = discountThrough - discountBefore;
+            priorGrossTotal += grossTotal;
             const netTotal = Math.max(0, grossTotal - discountShare);
             const quantity = Number(item.quantity || 0);
             return {
@@ -5673,17 +5928,18 @@ function renderLandedCosts(){
 async function showLandedCostAllocation(id,card){let area=card.querySelector(".landed-allocation");if(area){area.remove();return;}area=document.createElement("div");area.className="landed-allocation";area.style.marginTop="10px";area.textContent="جارٍ تحميل توزيع التكلفة...";card.appendChild(area);try{const {data,error}=await db.from("purchase_landed_cost_allocations").select("product_id,allocated_amount,invoice_base_quantity,allocated_cost_per_base_unit").eq("landed_cost_id",id).order("product_id");if(error)throw error;if(!data?.length){area.textContent="لا توجد تفاصيل توزيع.";return;}const table=document.createElement("div");table.className="table-responsive";table.innerHTML="<table class='print-table'><thead><tr><th>الصنف</th><th>نصيب النقل</th><th>كمية الأساس</th><th>تكلفة النقل للوحدة</th></tr></thead><tbody></tbody></table>";const body=table.querySelector("tbody");data.forEach(a=>{const tr=document.createElement("tr");const name=productsCache.find(p=>String(p.product_id)===String(a.product_id))?.product_name||("صنف "+a.product_id);[name,fmt(a.allocated_amount),fmtQty(a.invoice_base_quantity),fmt(a.allocated_cost_per_base_unit)].forEach(v=>{const td=document.createElement("td");td.textContent=v;tr.appendChild(td);});body.appendChild(tr);});area.replaceChildren(table);}catch(e){area.textContent="تعذر عرض التوزيع: "+err(e);}}
 if($("addLandedCostBtn"))$("addLandedCostBtn").addEventListener("click",async()=>{if(!canManageLandedCosts)return;try{if(!purchasesCache.length)await loadPurchases();if(!suppliersCache.length)await loadSuppliers();if(!treasuriesCache.length)await loadTreasuries();await loadExpenseTypes();if(!landedCostsCache.length)await loadLandedCosts();fillLandedInvoiceSelect();fillLandedSupplierSelect();fillTreasurySelects();fillLandedVehicleExpenses();$("landedCostForm").reset();$("landedCostDate")&&($("landedCostDate").value=todayISO());$("landedCostFormMsg").className="status hidden";$("landedCostFormModal").classList.add("active");setLandedSourceFields();}catch(e){showToast("تعذر تجهيز النموذج: "+err(e),"error",7000);}});
 if($("landedSourceType"))$("landedSourceType").addEventListener("change",setLandedSourceFields);
-if($("landedCostForm"))$("landedCostForm").addEventListener("submit",async e=>{e.preventDefault();if(!canManageLandedCosts)return;const btn=$("saveLandedCostBtn");const invoiceId=Number($("landedInvoice").value),source=$("landedSourceType").value,amount=Number($("landedAmount").value),notes=$("landedNotes").value.trim();if(!invoiceId||!Number.isFinite(amount)||amount<=0){msg($("landedCostFormMsg"),"اختر الفاتورة وأدخل مبلغًا صحيحًا.","error");return;}busy(btn,true,"جارٍ الحفظ...","حفظ تكلفة النقل");try{let rpc,args;const payload={invoiceId,source,amount,treasuryId:source==="EXTERNAL_TREASURY"?Number($("landedTreasury").value)||null:null,expenseId:source==="VEHICLE_EXPENSE"?Number($("landedVehicleExpense").value)||null:null,supplierId:source==="EXTERNAL_SUPPLIER"?Number($("landedSupplier").value)||null:null,costDate:$("landedCostDate").value||todayISO(),notes};if(source==="EXTERNAL_SUPPLIER"){if(!payload.supplierId)throw new Error("اختر مورد النقل.");rpc="create_purchase_landed_cost_on_credit";const key="mm_landed_cost_pending";const rid=getRequestId(key,payload);args={p_invoice_id:invoiceId,p_supplier_id:payload.supplierId,p_amount:amount,p_cost_date:payload.costDate,p_request_id:rid,p_notes:notes||null};const r=await db.rpc(rpc,args);if(r.error)throw r.error;clearRequestId(key);}else{if(source==="EXTERNAL_TREASURY"&&!payload.treasuryId)throw new Error("اختر خزنة الدفع.");if(source==="VEHICLE_EXPENSE"&&!payload.expenseId)throw new Error("اختر مصروف السيارة.");rpc="create_purchase_landed_cost";const key="mm_landed_cost_pending";const rid=getRequestId(key,payload);args={p_invoice_id:invoiceId,p_source_type:source,p_amount:amount,p_treasury_id:payload.treasuryId,p_expense_id:payload.expenseId,p_request_id:rid,p_notes:notes||null};const r=await db.rpc(rpc,args);if(r.error)throw r.error;clearRequestId(key);}$("landedCostFormModal").classList.remove("active");showToast("تم تسجيل تكلفة النقل وتوزيعها على أصناف الفاتورة","success");await loadLandedCosts();await loadStock();if(canViewTreasuries)await loadTreasuries();}catch(e){msg($("landedCostFormMsg"),"تعذر حفظ تكلفة النقل: "+err(e),"error");}finally{busy(btn,false,"","حفظ تكلفة النقل");}});
+if($("landedCostForm"))$("landedCostForm").addEventListener("submit",async e=>{e.preventDefault();if(!canManageLandedCosts)return;const btn=$("saveLandedCostBtn");const invoiceId=Number($("landedInvoice").value),source=$("landedSourceType").value,amount=Number($("landedAmount").value),notes=$("landedNotes").value.trim();if(!invoiceId||!Number.isFinite(amount)||amount<=0){msg($("landedCostFormMsg"),"اختر الفاتورة وأدخل مبلغًا صحيحًا.","error");return;}busy(btn,true,"جارٍ الحفظ...","حفظ تكلفة النقل");try{let rpc,args;const payload={invoiceId,source,amount,treasuryId:source==="EXTERNAL_TREASURY"?Number($("landedTreasury").value)||null:null,expenseId:source==="VEHICLE_EXPENSE"?Number($("landedVehicleExpense").value)||null:null,supplierId:source==="EXTERNAL_SUPPLIER"?Number($("landedSupplier").value)||null:null,costDate:$("landedCostDate").value||todayISO(),notes};if(source==="EXTERNAL_SUPPLIER"){if(!payload.supplierId)throw new Error("اختر مورد النقل.");rpc="create_purchase_landed_cost_on_credit";const key="mm_landed_cost_pending";const rid=getRequestId(key,payload);args={p_invoice_id:invoiceId,p_supplier_id:payload.supplierId,p_amount:amount,p_cost_date:payload.costDate,p_request_id:rid,p_notes:notes||null};const r=await db.rpc(rpc,args);if(r.error)throw r.error;clearRequestId(key);}else{if(source==="EXTERNAL_TREASURY"&&!payload.treasuryId)throw new Error("اختر خزنة الدفع.");if(source==="VEHICLE_EXPENSE"&&!payload.expenseId)throw new Error("اختر مصروف السيارة.");rpc="create_purchase_landed_cost_v2";const key="mm_landed_cost_pending";const rid=getRequestId(key,payload);args={p_invoice_id:invoiceId,p_source_type:source,p_amount:amount,p_treasury_id:payload.treasuryId,p_expense_id:payload.expenseId,p_request_id:rid,p_notes:notes||null};const r=await db.rpc(rpc,args);if(r.error)throw r.error;clearRequestId(key);}$("landedCostFormModal").classList.remove("active");showToast("تم تسجيل تكلفة النقل وتوزيعها على أصناف الفاتورة","success");await loadLandedCosts();await loadStock();if(canViewTreasuries)await loadTreasuries();}catch(e){msg($("landedCostFormMsg"),"تعذر حفظ تكلفة النقل: "+err(e),"error");}finally{busy(btn,false,"","حفظ تكلفة النقل");}});
 
-function setFixedAssetPurchaseFields(){const credit=$("fixedAssetPurchaseType")?.value==="SUPPLIER_CREDIT";$("fixedAssetTreasuryWrap")?.classList.toggle("hidden",credit);$("fixedAssetSupplierWrap")?.classList.toggle("hidden",!credit);if($("fixedAssetTreasury"))$("fixedAssetTreasury").required=!credit;if($("fixedAssetSupplier"))$("fixedAssetSupplier").required=credit;}
+function setFixedAssetPurchaseFields(){const type=$("fixedAssetPurchaseType")?.value,credit=type==="SUPPLIER_CREDIT",partner=type==="PARTNER_CONTRIBUTION";$("fixedAssetTreasuryWrap")?.classList.toggle("hidden",credit||partner);$("fixedAssetSupplierWrap")?.classList.toggle("hidden",!credit);$("fixedAssetPartnerWrap")?.classList.toggle("hidden",!partner);$("fixedAssetCategoryWrap")?.classList.toggle("hidden",!partner);if($("fixedAssetTreasury"))$("fixedAssetTreasury").required=!credit&&!partner;if($("fixedAssetSupplier"))$("fixedAssetSupplier").required=credit;if($("fixedAssetPartner"))$("fixedAssetPartner").required=partner;if($("fixedAssetFormTitle"))$("fixedAssetFormTitle").textContent=partner?"تسجيل مساهمة عينية في أصل":"شراء معدة أو آلة إنتاج";if($("saveFixedAssetBtn"))$("saveFixedAssetBtn").textContent=partner?"حفظ المساهمة العينية":"حفظ الأصل الثابت";}
+async function fillFixedAssetPartnerSelect(){const el=$("fixedAssetPartner");if(!el)return;if(!partnersCache.length){const {data,error}=await db.from("partners").select("partner_id,partner_name,is_active").eq("is_active",true).order("partner_id");if(error)throw error;partnersCache=data||[];}const cur=el.value;el.replaceChildren();const first=document.createElement("option");first.value="";first.textContent="اختر الشريك";el.appendChild(first);partnersCache.filter(p=>p.is_active!==false).forEach(p=>{const op=document.createElement("option");op.value=String(p.partner_id);op.textContent=p.partner_name;el.appendChild(op);});el.value=cur;}
 async function loadFixedAssets(){if(!canViewFixedAssets)return;const box=$("fixedAssetsList");if(box)box.innerHTML="جارٍ التحميل...";clear($("fixedAssetsMsg"));if(!navigator.onLine){if(box)box.innerHTML="<div class='empty'>اتصل بالإنترنت لعرض الأصول.</div>";return;}try{const {data,error}=await db.from("fixed_assets").select("*").order("asset_id",{ascending:false}).limit(300);if(error)throw error;fixedAssetsCache=data||[];if(!suppliersCache.length)await loadSuppliers();if(!treasuriesCache.length)await loadTreasuries();renderFixedAssets();fillFixedAssetSupplierSelect();fillTreasurySelects();}catch(e){msg($("fixedAssetsMsg"),"تعذر تحميل الأصول: "+err(e),"error");if(box)box.innerHTML="";}}
-function renderFixedAssets(){const box=$("fixedAssetsList");if(!box)return;box.replaceChildren();if(!fixedAssetsCache.length){box.innerHTML="<div class='empty'>لا توجد أصول ثابتة مسجلة.</div>";return;}fixedAssetsCache.forEach(x=>{const card=document.createElement("div");card.className="product";const title=document.createElement("div");title.className="pname";title.textContent="🏭 "+x.asset_name+" ("+(x.asset_code||x.asset_id)+")";const details=document.createElement("div");details.className="details";const source=x.source_type==="SUPPLIER_CREDIT"?"شراء آجل من "+supplierName(x.supplier_id):"شراء نقدي من "+treasuryName(x.treasury_id);details.textContent=source+" | التاريخ: "+formatDate(x.acquisition_date)+" | التكلفة: "+fmt(x.acquisition_cost)+" | المكان: "+(x.location_description||"-")+" | الحالة: "+(x.status==="ACTIVE"?"نشط":"ملغي");card.append(title,details);if(x.status==="ACTIVE"&&canManageFixedAssets){const actions=document.createElement("div");actions.className="actions";const b=document.createElement("button");b.className="btn danger";b.textContent="إلغاء الأصل";b.onclick=()=>openRecordCancel("FIXED_ASSET",x.asset_id,x.source_type);actions.appendChild(b);card.appendChild(actions);}box.appendChild(card);});}
-if($("addFixedAssetBtn"))$("addFixedAssetBtn").addEventListener("click",async()=>{if(!canManageFixedAssets)return;try{if(!treasuriesCache.length)await loadTreasuries();if(!suppliersCache.length)await loadSuppliers();fillTreasurySelects();fillFixedAssetSupplierSelect();$("fixedAssetForm").reset();$("fixedAssetDate").value=todayISO();clear($("fixedAssetFormMsg"));setFixedAssetPurchaseFields();$("fixedAssetFormModal").classList.add("active");}catch(e){showToast("تعذر تجهيز نموذج الأصل: "+err(e),"error");}});
+function renderFixedAssets(){const box=$("fixedAssetsList");if(!box)return;box.replaceChildren();if(!fixedAssetsCache.length){box.innerHTML="<div class='empty'>لا توجد أصول ثابتة مسجلة.</div>";return;}fixedAssetsCache.forEach(x=>{const card=document.createElement("div");card.className="product";const title=document.createElement("div");title.className="pname";title.textContent="🏭 "+x.asset_name+" ("+(x.asset_code||x.asset_id)+")";const details=document.createElement("div");details.className="details";const source=x.source_type==="SUPPLIER_CREDIT"?"شراء آجل من "+supplierName(x.supplier_id):x.source_type==="PARTNER_CONTRIBUTION"?"مساهمة عينية من "+(partnersCache.find(p=>String(p.partner_id)===String(x.partner_id))?.partner_name||("الشريك رقم "+(x.partner_id||"-"))):"شراء نقدي من "+treasuryName(x.treasury_id);details.textContent=source+" | التاريخ: "+formatDate(x.acquisition_date)+" | التكلفة: "+fmt(x.acquisition_cost)+" | المكان: "+(x.location_description||"-")+" | الحالة: "+(x.status==="ACTIVE"?"نشط":"ملغي");card.append(title,details);if(x.status==="ACTIVE"&&canManageFixedAssets){const actions=document.createElement("div");actions.className="actions";const b=document.createElement("button");b.className="btn danger";b.textContent="إلغاء الأصل";b.onclick=()=>openRecordCancel("FIXED_ASSET",x.asset_id,x.source_type);actions.appendChild(b);card.appendChild(actions);}box.appendChild(card);});}
+if($("addFixedAssetBtn"))$("addFixedAssetBtn").addEventListener("click",async()=>{if(!canManageFixedAssets)return;try{if(!treasuriesCache.length)await loadTreasuries();if(!suppliersCache.length)await loadSuppliers();fillTreasurySelects();fillFixedAssetSupplierSelect();await fillFixedAssetPartnerSelect();$("fixedAssetForm").reset();$("fixedAssetDate").value=todayISO();clear($("fixedAssetFormMsg"));setFixedAssetPurchaseFields();$("fixedAssetFormModal").classList.add("active");}catch(e){showToast("تعذر تجهيز نموذج الأصل: "+err(e),"error");}});
 if($("fixedAssetPurchaseType"))$("fixedAssetPurchaseType").addEventListener("change",setFixedAssetPurchaseFields);
-if($("fixedAssetForm"))$("fixedAssetForm").addEventListener("submit",async e=>{e.preventDefault();if(!canManageFixedAssets)return;const btn=$("saveFixedAssetBtn"),type=$("fixedAssetPurchaseType").value,name=$("fixedAssetName").value.trim(),date=$("fixedAssetDate").value,amount=Number($("fixedAssetAmount").value),treasury=Number($("fixedAssetTreasury").value)||null,supplier=Number($("fixedAssetSupplier").value)||null,location=$("fixedAssetLocation").value.trim(),serial=$("fixedAssetSerial").value.trim(),notes=$("fixedAssetNotes").value.trim();if(!name||!date||!Number.isFinite(amount)||amount<=0||(type==="CASH"&&!treasury)||(type==="SUPPLIER_CREDIT"&&!supplier)){msg($("fixedAssetFormMsg"),"أكمل بيانات الأصل وطريقة السداد.","error");return;}busy(btn,true,"جارٍ الحفظ...","حفظ الأصل الثابت");try{const payload={type,name,date,amount,treasury,supplier,location,serial,notes};const key="mm_fixed_asset_pending";const rid=getRequestId(key,payload);const rpc=type==="SUPPLIER_CREDIT"?"create_fixed_asset_purchase_on_credit":"create_fixed_asset_purchase";const args=type==="SUPPLIER_CREDIT"?{p_asset_name:name,p_supplier_id:supplier,p_acquisition_date:date,p_amount:amount,p_location_description:location||null,p_serial_number:serial||null,p_notes:notes||null,p_request_id:rid}:{p_asset_name:name,p_acquisition_date:date,p_amount:amount,p_treasury_id:treasury,p_location_description:location||null,p_serial_number:serial||null,p_notes:notes||null,p_request_id:rid};const {error}=await db.rpc(rpc,args);if(error)throw error;clearRequestId(key);$("fixedAssetFormModal").classList.remove("active");showToast("تم تسجيل الأصل الثابت","success");await loadFixedAssets();if(canViewTreasuries)await loadTreasuries();}catch(e){msg($("fixedAssetFormMsg"),"تعذر تسجيل الأصل: "+err(e),"error");}finally{busy(btn,false,"","حفظ الأصل الثابت");}});
+if($("fixedAssetForm"))$("fixedAssetForm").addEventListener("submit",async e=>{e.preventDefault();if(!canManageFixedAssets)return;const btn=$("saveFixedAssetBtn"),type=$("fixedAssetPurchaseType").value,name=$("fixedAssetName").value.trim(),category=$("fixedAssetCategory")?.value||"PRODUCTION_EQUIPMENT",date=$("fixedAssetDate").value,amount=Number($("fixedAssetAmount").value),treasury=Number($("fixedAssetTreasury").value)||null,supplier=Number($("fixedAssetSupplier").value)||null,partner=Number($("fixedAssetPartner").value)||null,location=$("fixedAssetLocation").value.trim(),serial=$("fixedAssetSerial").value.trim(),notes=$("fixedAssetNotes").value.trim();if(!name||!date||!Number.isFinite(amount)||amount<=0||(type==="CASH"&&!treasury)||(type==="SUPPLIER_CREDIT"&&!supplier)||(type==="PARTNER_CONTRIBUTION"&&!partner)){msg($("fixedAssetFormMsg"),"أكمل بيانات الأصل والشريك أو طريقة السداد.","error");return;}busy(btn,true,"جارٍ الحفظ...","حفظ الأصل الثابت");try{const payload={type,name,date,amount,treasury,supplier,partner,location,serial,notes};const key="mm_fixed_asset_pending";const rid=getRequestId(key,payload);let rpc,args;if(type==="PARTNER_CONTRIBUTION"){if(category==="PRODUCTION_EQUIPMENT"){rpc="create_partner_equipment_contribution";args={p_partner_id:partner,p_asset_name:name,p_acquisition_date:date,p_amount:amount,p_location_description:location||null,p_serial_number:serial||null,p_notes:notes||null,p_request_id:rid};}else if(category==="VEHICLE"){rpc="create_partner_vehicle_contribution";args={p_partner_id:partner,p_vehicle_name:name,p_acquisition_date:date,p_amount:amount,p_plate_number:serial||null,p_location_description:location||null,p_notes:notes||null,p_request_id:rid};}else{rpc="create_partner_other_asset_contribution";args={p_partner_id:partner,p_asset_name:name,p_asset_category:category,p_acquisition_date:date,p_amount:amount,p_location_description:location||null,p_serial_number:serial||null,p_notes:notes||null,p_request_id:rid};}}else if(type==="SUPPLIER_CREDIT"){rpc="create_fixed_asset_purchase_on_credit";args={p_asset_name:name,p_supplier_id:supplier,p_acquisition_date:date,p_amount:amount,p_location_description:location||null,p_serial_number:serial||null,p_notes:notes||null,p_request_id:rid};}else{rpc="create_fixed_asset_purchase_v2";args={p_asset_name:name,p_acquisition_date:date,p_amount:amount,p_treasury_id:treasury,p_location_description:location||null,p_serial_number:serial||null,p_notes:notes||null,p_request_id:rid};}const {error}=await db.rpc(rpc,args);if(error)throw error;clearRequestId(key);$("fixedAssetFormModal").classList.remove("active");showToast(type==="PARTNER_CONTRIBUTION"?"تم تسجيل المساهمة العينية":"تم تسجيل الأصل الثابت","success");await loadFixedAssets();if(canViewTreasuries)await loadTreasuries();}catch(e){msg($("fixedAssetFormMsg"),"تعذر تسجيل الأصل: "+err(e),"error");}finally{busy(btn,false,"","حفظ الأصل الثابت");}});
 
-function openRecordCancel(kind,id,source){activeCancelRequest={kind,id,source};const needsRefund=(kind==="LANDED_COST"&&source==="EXTERNAL_TREASURY")||(kind==="FIXED_ASSET"&&source!=="SUPPLIER_CREDIT");$("recordCancelTitle").textContent=kind==="LANDED_COST"?"إلغاء مستند تكلفة النقل":"إلغاء شراء أصل ثابت";$("cancelRefundTreasuryWrap").classList.toggle("hidden",!needsRefund);$("cancelRefundTreasury").required=needsRefund;$("recordCancelForm").reset();fillTreasurySelects();clear($("recordCancelMsg"));$("recordCancelModal").classList.add("active");}
-if($("recordCancelForm"))$("recordCancelForm").addEventListener("submit",async e=>{e.preventDefault();if(!activeCancelRequest)return;const {kind,id,source}=activeCancelRequest,reason=$("recordCancelReason").value.trim(),refund=Number($("cancelRefundTreasury").value)||null,btn=$("confirmRecordCancelBtn");if(!reason){msg($("recordCancelMsg"),"اكتب سبب الإلغاء.","error");return;}const needsRefund=(kind==="LANDED_COST"&&source==="EXTERNAL_TREASURY")||(kind==="FIXED_ASSET"&&source!=="SUPPLIER_CREDIT");if(needsRefund&&!refund){msg($("recordCancelMsg"),"اختر خزنة الاسترداد الفعلي.","error");return;}if(!confirm("سيتم إلغاء المستند وعكس أثره المحاسبي وتكلفة المخزون حسب ضوابط النظام. هل تم استرداد المبلغ فعليًا عند الحاجة؟"))return;busy(btn,true,"جارٍ الإلغاء...","تأكيد الإلغاء");try{let rpc,args;if(kind==="LANDED_COST"){if(source==="EXTERNAL_SUPPLIER"){rpc="cancel_purchase_landed_cost_on_credit";args={p_landed_cost_id:id,p_reason:reason};}else{rpc="cancel_purchase_landed_cost";args={p_landed_cost_id:id,p_reason:reason,p_refund_treasury_id:refund};}}else{if(source==="SUPPLIER_CREDIT"){rpc="cancel_fixed_asset_purchase_on_credit";args={p_asset_id:id,p_reason:reason};}else{rpc="cancel_fixed_asset_purchase";args={p_asset_id:id,p_reason:reason,p_refund_treasury_id:refund};}}const {error}=await db.rpc(rpc,args);if(error)throw error;$("recordCancelModal").classList.remove("active");activeCancelRequest=null;showToast("تم إلغاء المستند وعكس أثره","success");if(kind==="LANDED_COST")await loadLandedCosts();else await loadFixedAssets();if(canViewTreasuries)await loadTreasuries();}catch(e){msg($("recordCancelMsg"),"تعذر الإلغاء: "+err(e),"error");}finally{busy(btn,false,"","تأكيد الإلغاء");}});
+function openRecordCancel(kind,id,source){if(kind==="FIXED_ASSET"&&!canManageFixedAssets)return;activeCancelRequest={kind,id,source};const needsRefund=(kind==="LANDED_COST"&&source==="EXTERNAL_TREASURY")||(kind==="FIXED_ASSET"&&source!=="SUPPLIER_CREDIT"&&source!=="PARTNER_CONTRIBUTION"),needsPartnerConfirmation=kind==="FIXED_ASSET"&&source==="PARTNER_CONTRIBUTION";$("recordCancelTitle").textContent=kind==="LANDED_COST"?"إلغاء مستند تكلفة النقل":needsPartnerConfirmation?"إلغاء مساهمة عينية":"إلغاء شراء أصل ثابت";$("cancelRefundTreasuryWrap").classList.toggle("hidden",!needsRefund);$("cancelRefundTreasury").required=needsRefund;$("cancelPartnerAssetConfirmWrap")?.classList.toggle("hidden",!needsPartnerConfirmation);$("recordCancelForm").reset();if($("cancelPartnerAssetConfirm"))$("cancelPartnerAssetConfirm").required=needsPartnerConfirmation;fillTreasurySelects();clear($("recordCancelMsg"));$("recordCancelModal").classList.add("active");}
+if($("recordCancelForm"))$("recordCancelForm").addEventListener("submit",async e=>{e.preventDefault();if(!activeCancelRequest)return;if(activeCancelRequest.kind==="FIXED_ASSET"&&!canManageFixedAssets)return;const {kind,id,source}=activeCancelRequest,reason=$("recordCancelReason").value.trim(),refund=Number($("cancelRefundTreasury").value)||null,partnerAssetConfirmed=$("cancelPartnerAssetConfirm")?.checked===true,btn=$("confirmRecordCancelBtn");if(!reason){msg($("recordCancelMsg"),"اكتب سبب الإلغاء.","error");return;}const needsRefund=(kind==="LANDED_COST"&&source==="EXTERNAL_TREASURY")||(kind==="FIXED_ASSET"&&source!=="SUPPLIER_CREDIT"&&source!=="PARTNER_CONTRIBUTION");if(needsRefund&&!refund){msg($("recordCancelMsg"),"اختر خزنة الاسترداد الفعلي.","error");return;}if(kind==="FIXED_ASSET"&&source==="PARTNER_CONTRIBUTION"&&!partnerAssetConfirmed){msg($("recordCancelMsg"),"أكد أن المعدة رُدت للشريك ولم تدخل التشغيل أو يتم التصرف فيها أو تحميل إهلاك عليها.","error");return;}if(!confirm(source==="PARTNER_CONTRIBUTION"?"سيتم إلغاء المساهمة العينية وعكس قيدها ورصيد الشريك بعد تأكيد رد الأصل وعدم استخدامه. هل تريد المتابعة؟":"سيتم إلغاء المستند وعكس أثره المحاسبي وتكلفة المخزون حسب ضوابط النظام. هل تم استرداد المبلغ فعليًا عند الحاجة؟"))return;busy(btn,true,"جارٍ الإلغاء...","تأكيد الإلغاء");try{let rpc,args;if(kind==="LANDED_COST"){if(source==="EXTERNAL_SUPPLIER"){rpc="cancel_purchase_landed_cost_on_credit";args={p_landed_cost_id:id,p_reason:reason};}else{rpc="cancel_purchase_landed_cost";args={p_landed_cost_id:id,p_reason:reason,p_refund_treasury_id:refund};}}else if(source==="PARTNER_CONTRIBUTION"){const asset=fixedAssetsCache.find(x=>String(x.asset_id)===String(id));if(asset&&["FURNITURE","OFFICE_EQUIPMENT","OTHER_FIXED_ASSET"].includes(asset.asset_category)){rpc="cancel_partner_other_asset_contribution";args={p_asset_id:id,p_reason:reason,p_asset_returned_unused:partnerAssetConfirmed,p_cancellation_request_id:crypto.randomUUID()};}else if(asset&&asset.asset_category==="VEHICLE"){rpc="cancel_partner_vehicle_contribution";args={p_asset_id:id,p_reason:reason,p_vehicle_returned_unused:partnerAssetConfirmed,p_cancellation_request_id:crypto.randomUUID()};}else{rpc="cancel_partner_equipment_contribution";args={p_asset_id:id,p_reason:reason,p_asset_returned_unused:partnerAssetConfirmed};}}else{if(source==="SUPPLIER_CREDIT"){rpc="cancel_fixed_asset_purchase_on_credit";args={p_asset_id:id,p_reason:reason};}else{rpc="cancel_fixed_asset_purchase";args={p_asset_id:id,p_reason:reason,p_refund_treasury_id:refund};}}const {error}=await db.rpc(rpc,args);if(error)throw error;$("recordCancelModal").classList.remove("active");activeCancelRequest=null;showToast("تم إلغاء المستند وعكس أثره","success");if(kind==="LANDED_COST")await loadLandedCosts();else await loadFixedAssets();if(canViewTreasuries)await loadTreasuries();}catch(e){msg($("recordCancelMsg"),"تعذر الإلغاء: "+err(e),"error");}finally{busy(btn,false,"","تأكيد الإلغاء");}});
 
 // ========== الوصفات ==========
 async function loadRecipes(){ 
@@ -6505,12 +6761,13 @@ async function viewTripSummary(t){
 // ========== الشركاء ==========
 async function loadPartners(){ 
   if(!navigator.onLine) return; 
-  const {data}=await db.from("partners").select("*").order("partner_id"); 
+  const {data,error}=await db.from("partners").select("*").order("partner_id"); 
+  if(error) throw error;
   partnersCache=data||[]; 
   const box=$("partnersList"); if(!box) return; 
   box.replaceChildren(); 
-  if(!partnersCache.length){ box.innerHTML="<div class='empty'>لا يوجد شركاء مسجلون.</div>"; return; } 
-  partnersCache.forEach(p=>{ 
+  if(!partnersCache.length){ box.innerHTML="<div class='empty'>لا يوجد شركاء مسجلون.</div>"; } 
+  else partnersCache.forEach(p=>{ 
     const card=document.createElement("div");card.className="product"; 
     const title=document.createElement("div");title.className="pname";title.textContent="🤝 "+p.partner_name; 
     const details=document.createElement("div");details.className="details";details.textContent="الرصيد الحالي: "+fmt(p.current_balance); 
@@ -6536,7 +6793,9 @@ async function loadPartners(){
   }); 
   await loadPartnerTransactions(); 
   fillPartnerSelect(); 
-  fillPartnerTreasurySelect(); 
+  fillPartnerTreasurySelect();
+  if(canViewPartnerInventoryContributions) await loadPartnerInventoryContributions();
+  if(canViewPartnerVehicleContributions) await loadPartnerVehicleContributions();
 }
 async function loadPartnerTransactions(){ 
   if(!canViewPartners)return; 
@@ -6557,6 +6816,131 @@ async function loadPartnerTransactions(){
     } 
   }catch(e){ msg($("partnerTransactionsMsg"),"تعذر التحميل: "+err(e),"error"); } 
 }
+async function fillPartnerInventoryContributionForm(){
+  if(!partnersCache.length){const {data,error}=await db.from("partners").select("partner_id,partner_name,is_active").eq("is_active",true).order("partner_id");if(error)throw error;partnersCache=data||[];}
+  if(!productsCache.length) await loadProducts();
+  if(!locationsCache.length) await loadLocations();
+  if(!units.length) await loadLookups();
+  const fill=(id,rows,key,label,placeholder)=>{const el=$(id);if(!el)return;el.replaceChildren();const first=document.createElement("option");first.value="";first.textContent=placeholder;el.appendChild(first);rows.forEach(x=>{const op=document.createElement("option");op.value=String(x[key]);op.textContent=x[label];el.appendChild(op);});};
+  fill("picPartner",partnersCache.filter(x=>x.is_active!==false),"partner_id","partner_name","اختر الشريك");
+  fill("picProduct",productsCache.filter(x=>x.is_active!==false),"product_id","product_name","اختر الصنف");
+  fill("picLocation",locationsCache.filter(x=>x.is_active!==false&&x.location_type!=="VEHICLE"),"location_id","location_name","اختر المخزن أو الثلاجة");
+  await fillPartnerInventoryUnits();
+}
+async function fillPartnerInventoryUnits(){
+  const productId=Number($("picProduct")?.value)||null,el=$("picUnit");if(!el)return;
+  const rows=[];
+  const product=productsCache.find(x=>Number(x.product_id)===productId);
+  if(product?.base_unit_id){const u=units.find(x=>Number(x.unit_id)===Number(product.base_unit_id));if(u)rows.push(u);}
+  if(productId){const {data,error}=await db.from("product_unit_conversions").select("unit_id").eq("product_id",productId).eq("is_active",true);if(error)throw error;(data||[]).forEach(c=>{const u=units.find(x=>Number(x.unit_id)===Number(c.unit_id));if(u&&!rows.some(z=>Number(z.unit_id)===Number(u.unit_id)))rows.push(u);});}
+  const cur=el.value;el.replaceChildren();const first=document.createElement("option");first.value="";first.textContent=rows.length?"اختر الوحدة":"لا توجد وحدات تحويل معتمدة";el.appendChild(first);
+  rows.forEach(u=>{const op=document.createElement("option");op.value=String(u.unit_id);op.textContent=u.unit_name;el.appendChild(op);});el.value=cur&&rows.some(u=>String(u.unit_id)===cur)?cur:(rows[0]?String(rows[0].unit_id):"");
+}
+async function loadPartnerInventoryContributions(){
+  const box=$("partnerInventoryContributionsList");if(!box||!canViewPartnerInventoryContributions)return;
+  if(!navigator.onLine){box.innerHTML="<div class='empty'>اتصل بالإنترنت لعرض مساهمات المخزون.</div>";return;}
+  box.innerHTML="<div class='empty'>جارٍ تحميل المساهمات...</div>";clear($("partnerInventoryContributionsMsg"));
+  try{
+    const {data,error}=await db.from("partner_inventory_contributions").select("*").order("contribution_id",{ascending:false}).limit(200);if(error)throw error;
+    partnerInventoryContributionsCache=data||[];box.replaceChildren();
+    if(!partnerInventoryContributionsCache.length){box.innerHTML="<div class='empty'>لا توجد مساهمات مخزون مسجلة.</div>";return;}
+    partnerInventoryContributionsCache.forEach(x=>{
+      const partner=partnersCache.find(p=>Number(p.partner_id)===Number(x.partner_id));
+      const product=productsCache.find(p=>Number(p.product_id)===Number(x.product_id));
+      const location=locationsCache.find(l=>Number(l.location_id)===Number(x.location_id));
+      const unit=units.find(u=>Number(u.unit_id)===Number(x.unit_id));
+      const card=document.createElement("div");card.className="product";
+      const title=document.createElement("div");title.className="pname";title.textContent=(product?.product_name||("صنف "+x.product_id))+" - "+(partner?.partner_name||("شريك "+x.partner_id));
+      const details=document.createElement("div");details.className="details";
+      details.textContent="الكمية: "+fmtQty(x.entered_quantity)+" "+(unit?.unit_name||"وحدة")+" | كمية الأساس: "+fmtQty(x.base_quantity)+" | القيمة: "+fmt(x.total_value)+" | الموقع: "+(location?.location_name||x.location_id)+" | التاريخ: "+x.contribution_date+" | الحالة: "+(x.status==="ACTIVE"?"نشطة":"ملغاة");
+      card.append(title,details);
+      if(x.status==="ACTIVE"&&canCancelPartnerInventoryContributions){const actions=document.createElement("div");actions.className="actions";const b=document.createElement("button");b.className="btn danger";b.textContent="إلغاء المساهمة";b.onclick=()=>{ $("picCancelId").value=String(x.contribution_id);$("partnerInventoryContributionCancelForm").reset();$("picCancelId").value=String(x.contribution_id);clear($("partnerInventoryContributionCancelMsg"));$("partnerInventoryContributionCancelModal").classList.add("active");};actions.appendChild(b);card.appendChild(actions);}
+      box.appendChild(card);
+    });
+  }catch(e){msg($("partnerInventoryContributionsMsg"),"تعذر تحميل مساهمات المخزون: "+err(e),"error");box.innerHTML="<div class='empty'>تعذر تحميل المساهمات.</div>";}
+}
+async function fillPartnerVehicleContributionForm(){
+  if(!partnersCache.length){const {data,error}=await db.from("partners").select("partner_id,partner_name,is_active").eq("is_active",true).order("partner_id");if(error)throw error;partnersCache=data||[];}
+  const el=$("pvcPartner");el.replaceChildren();const first=document.createElement("option");first.value="";first.textContent="اختر الشريك";el.appendChild(first);
+  partnersCache.filter(p=>p.is_active!==false).forEach(p=>{const op=document.createElement("option");op.value=String(p.partner_id);op.textContent=p.partner_name;el.appendChild(op);});
+}
+async function loadPartnerVehicleContributions(){
+  const box=$("partnerVehicleContributionsList");if(!box||!canViewPartnerVehicleContributions)return;
+  if(!navigator.onLine){box.innerHTML="<div class='empty'>اتصل بالإنترنت لعرض مساهمات السيارات.</div>";return;}
+  box.innerHTML="<div class='empty'>جارٍ تحميل مساهمات السيارات...</div>";clear($("partnerVehicleContributionsMsg"));
+  try{
+    const {data,error}=await db.from("fixed_assets").select("*").eq("source_type","PARTNER_CONTRIBUTION").eq("asset_category","VEHICLE").order("asset_id",{ascending:false}).limit(200);if(error)throw error;
+    partnerVehicleContributionsCache=data||[];box.replaceChildren();
+    if(!partnerVehicleContributionsCache.length){box.innerHTML="<div class='empty'>لا توجد مساهمات سيارات مسجلة.</div>";return;}
+    const ids=partnerVehicleContributionsCache.map(x=>x.asset_id);
+    const {data:locations,error:locError}=await db.from("locations").select("location_id,location_name,location_code,vehicle_asset_id,is_active").in("vehicle_asset_id",ids);if(locError)throw locError;
+    const locByAsset=new Map((locations||[]).map(l=>[String(l.vehicle_asset_id),l]));
+    partnerVehicleContributionsCache.forEach(x=>{
+      const partner=partnersCache.find(p=>Number(p.partner_id)===Number(x.partner_id));
+      const location=locByAsset.get(String(x.asset_id));
+      const card=document.createElement("div");card.className="product";
+      const title=document.createElement("div");title.className="pname";title.textContent=x.asset_name+" - "+(partner?.partner_name||("شريك "+x.partner_id));
+      const details=document.createElement("div");details.className="details";
+      details.textContent="رقم اللوحة: "+(x.serial_number||"-")+" | القيمة: "+fmt(x.acquisition_cost)+" | التاريخ: "+x.acquisition_date+" | الموقع التشغيلي: "+(location?.location_name||"غير مرتبط")+" ("+(location?.location_code||"-")+") | "+(location?.is_active?"نشط":"متوقف")+" | الحالة المحاسبية: "+(x.status==="ACTIVE"?"نشطة":"ملغاة");
+      card.append(title,details);
+      if(x.status==="ACTIVE"&&canCancelPartnerVehicleContributions){const actions=document.createElement("div");actions.className="actions";const b=document.createElement("button");b.className="btn danger";b.textContent="إلغاء المساهمة";b.onclick=()=>{$("partnerVehicleContributionCancelForm").reset();$("pvcCancelAssetId").value=String(x.asset_id);clear($("partnerVehicleContributionCancelMsg"));$("partnerVehicleContributionCancelModal").classList.add("active");};actions.appendChild(b);card.appendChild(actions);}
+      box.appendChild(card);
+    });
+  }catch(e){msg($("partnerVehicleContributionsMsg"),"تعذر تحميل مساهمات السيارات: "+err(e),"error");box.innerHTML="<div class='empty'>تعذر تحميل المساهمات.</div>";}
+}
+if($("addPartnerVehicleContributionBtn"))$("addPartnerVehicleContributionBtn").addEventListener("click",async()=>{
+  if(!canManagePartnerVehicleContributions)return;
+  try{await fillPartnerVehicleContributionForm();$("partnerVehicleContributionForm").reset();$("pvcDate").value=todayISO();clear($("partnerVehicleContributionFormMsg"));$("partnerVehicleContributionFormModal").classList.add("active");}
+  catch(e){showToast("تعذر تجهيز نموذج السيارة: "+err(e),"error",7000);}
+});
+if($("refreshPartnerVehicleContributionsBtn"))$("refreshPartnerVehicleContributionsBtn").addEventListener("click",loadPartnerVehicleContributions);
+if($("partnerVehicleContributionForm"))$("partnerVehicleContributionForm").addEventListener("submit",async e=>{
+  e.preventDefault();if(!canManagePartnerVehicleContributions)return;
+  const btn=$("savePartnerVehicleContributionBtn"),partner=Number($("pvcPartner").value),name=$("pvcName").value.trim(),plate=$("pvcPlate").value.trim(),value=Number($("pvcValue").value),date=$("pvcDate").value,location=$("pvcLocation").value.trim(),notes=$("pvcNotes").value.trim();
+  if(!partner||!name||!plate||!Number.isFinite(value)||value<=0||!date){msg($("partnerVehicleContributionFormMsg"),"أكمل الشريك واسم السيارة ورقم اللوحة والقيمة والتاريخ.","error");return;}
+  busy(btn,true,"جارٍ الحفظ...","حفظ مساهمة السيارة");
+  const payload={partner,name,plate,value,date,location,notes},key="mm_partner_vehicle_contribution_pending";
+  try{const requestId=getRequestId(key,payload);const {data,error}=await db.rpc("create_partner_vehicle_contribution",{p_partner_id:partner,p_vehicle_name:name,p_acquisition_date:date,p_amount:value,p_plate_number:plate,p_location_description:location||null,p_notes:notes||null,p_request_id:requestId});if(error)throw error;clearRequestId(key);$("partnerVehicleContributionFormModal").classList.remove("active");showToast("تم تسجيل السيارة كأصل ثابت وربطها بموقع تشغيل.","success");await loadPartners();}
+  catch(e){msg($("partnerVehicleContributionFormMsg"),"تعذر تسجيل مساهمة السيارة: "+err(e),"error");}
+  finally{busy(btn,false,"","حفظ مساهمة السيارة");}
+});
+if($("partnerVehicleContributionCancelForm"))$("partnerVehicleContributionCancelForm").addEventListener("submit",async e=>{
+  e.preventDefault();if(!canCancelPartnerVehicleContributions)return;
+  const id=Number($("pvcCancelAssetId").value),reason=$("pvcCancelReason").value.trim(),confirmed=$("pvcCancelReturnedConfirm").checked,btn=$("confirmPartnerVehicleContributionCancelBtn");
+  if(!id||!reason||!confirmed){msg($("partnerVehicleContributionCancelMsg"),"اكتب سبب الإلغاء وأكد رد السيارة وعدم استخدامها.","error");return;}
+  if(!confirm("سيتم عكس قيد السيارة ورصيد الشريك وإيقاف موقعها التشغيلي. هل تم رد السيارة ولم تستخدم في أي جولة؟"))return;
+  busy(btn,true,"جارٍ الإلغاء...","تأكيد الإلغاء");
+  try{const payload={id,reason},requestId=getRequestId("mm_partner_vehicle_cancel_pending",payload);const {error}=await db.rpc("cancel_partner_vehicle_contribution",{p_asset_id:id,p_reason:reason,p_vehicle_returned_unused:true,p_cancellation_request_id:requestId});if(error)throw error;clearRequestId("mm_partner_vehicle_cancel_pending");$("partnerVehicleContributionCancelModal").classList.remove("active");showToast("تم إلغاء مساهمة السيارة وعكس أثرها.","success");await loadPartners();}
+  catch(e){msg($("partnerVehicleContributionCancelMsg"),"تعذر إلغاء مساهمة السيارة: "+err(e),"error");}
+  finally{busy(btn,false,"","تأكيد الإلغاء");}
+});
+if($("addPartnerInventoryContributionBtn"))$("addPartnerInventoryContributionBtn").addEventListener("click",async()=>{
+  if(!canManagePartnerInventoryContributions)return;
+  try{await fillPartnerInventoryContributionForm();$("partnerInventoryContributionForm").reset();$("picDate").value=todayISO();await fillPartnerInventoryUnits();clear($("partnerInventoryContributionFormMsg"));$("partnerInventoryContributionFormModal").classList.add("active");}
+  catch(e){showToast("تعذر تجهيز نموذج المساهمة: "+err(e),"error",7000);}
+});
+if($("picProduct"))$("picProduct").addEventListener("change",()=>fillPartnerInventoryUnits().catch(e=>msg($("partnerInventoryContributionFormMsg"),err(e),"error")));
+if($("refreshPartnerInventoryContributionsBtn"))$("refreshPartnerInventoryContributionsBtn").addEventListener("click",loadPartnerInventoryContributions);
+if($("partnerInventoryContributionForm"))$("partnerInventoryContributionForm").addEventListener("submit",async e=>{
+  e.preventDefault();if(!canManagePartnerInventoryContributions)return;
+  const btn=$("savePartnerInventoryContributionBtn"),partner=Number($("picPartner").value),product=Number($("picProduct").value),location=Number($("picLocation").value),unit=Number($("picUnit").value),quantity=Number($("picQuantity").value),value=Number($("picTotalValue").value),date=$("picDate").value,notes=$("picNotes").value.trim();
+  if(!partner||!product||!location||!unit||!Number.isFinite(quantity)||quantity<=0||!Number.isFinite(value)||value<=0||!date){msg($("partnerInventoryContributionFormMsg"),"أكمل الشريك والصنف والموقع والوحدة والكمية والقيمة والتاريخ.","error");return;}
+  busy(btn,true,"جارٍ الحفظ...","حفظ المساهمة");
+  const payload={partner,product,location,unit,quantity,value,date,notes},key="mm_partner_inventory_contribution_pending";
+  try{const requestId=getRequestId(key,payload);const {data,error}=await db.rpc("create_partner_inventory_contribution",{p_partner_id:partner,p_product_id:product,p_location_id:location,p_unit_id:unit,p_quantity:quantity,p_total_value:value,p_contribution_date:date,p_notes:notes||null,p_request_id:requestId});if(error)throw error;clearRequestId(key);$("partnerInventoryContributionFormModal").classList.remove("active");showToast("تم تسجيل مساهمة المخزون وربطها بحساب الشريك.","success");await loadPartners();}
+  catch(e){msg($("partnerInventoryContributionFormMsg"),"تعذر تسجيل المساهمة: "+err(e),"error");}
+  finally{busy(btn,false,"","حفظ المساهمة");}
+});
+if($("partnerInventoryContributionCancelForm"))$("partnerInventoryContributionCancelForm").addEventListener("submit",async e=>{
+  e.preventDefault();if(!canCancelPartnerInventoryContributions)return;
+  const id=Number($("picCancelId").value),reason=$("picCancelReason").value.trim(),confirmed=$("picCancelReturnedConfirm").checked,btn=$("confirmPartnerInventoryContributionCancelBtn");
+  if(!id||!reason||!confirmed){msg($("partnerInventoryContributionCancelMsg"),"اكتب سبب الإلغاء وأكد رد البضاعة دون استخدامها.","error");return;}
+  if(!confirm("سيتم عكس كمية المخزون وقيمته ورصيد الشريك والقيد المحاسبي. هل تم رد البضاعة كاملة ولم تستخدم؟"))return;
+  busy(btn,true,"جارٍ الإلغاء...","تأكيد الإلغاء");
+  try{const payload={id,reason},requestId=getRequestId("mm_partner_inventory_cancel_pending",payload);const {error}=await db.rpc("cancel_partner_inventory_contribution",{p_contribution_id:id,p_reason:reason,p_stock_returned_unused:true,p_cancellation_request_id:requestId});if(error)throw error;clearRequestId("mm_partner_inventory_cancel_pending");$("partnerInventoryContributionCancelModal").classList.remove("active");showToast("تم إلغاء مساهمة المخزون وعكس أثرها.","success");await loadPartners();await loadPartnerInventoryContributions();}
+  catch(e){msg($("partnerInventoryContributionCancelMsg"),"تعذر إلغاء المساهمة: "+err(e),"error");}
+  finally{busy(btn,false,"","تأكيد الإلغاء");}
+});
 if($("refreshPartnersBtn")) $("refreshPartnersBtn").addEventListener("click",loadPartners);
 if($("refreshPartnerTransactionsBtn")) $("refreshPartnerTransactionsBtn").addEventListener("click",loadPartnerTransactions);
 if($("partnerForm")) $("partnerForm").addEventListener("submit", async e => { 
@@ -6620,9 +7004,10 @@ async function viewPartnerStatement(p) {
   modal.classList.remove("hidden"); 
   try { 
     const { data: tx } = await db.from("partner_transactions").select("*").eq("partner_id", p.partner_id).order("transaction_date", {ascending: true}); 
-    let runningBalance = 0; 
-    let totalIn=0, totalOut=0; 
-    let html = `<thead><tr><th>التاريخ</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead><tbody>`; 
+    const openingBalance = Number(p.opening_balance||0);
+    let runningBalance = openingBalance;
+    let totalIn=0, totalOut=0;
+    let html = `<thead><tr><th>التاريخ</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead><tbody><tr><td>-</td><td>الرصيد الافتتاحي</td><td style="color:red">${openingBalance<0?fmt(Math.abs(openingBalance)):'-'}</td><td style="color:green">${openingBalance>0?fmt(openingBalance):'-'}</td><td>${fmt(runningBalance)}</td></tr>`; 
     const typeMap={CAPITAL_IN:"مساهمة نقدية",WITHDRAWAL:"سحب شخصي",PROFIT:"توزيع أرباح",CAPITAL_OUT:"مساهمة عينية"}; 
     (tx||[]).forEach(t => { 
       let inAmt = 0, outAmt = 0; 
@@ -6640,7 +7025,7 @@ async function viewPartnerStatement(p) {
     html += `</tbody>`; 
     $("modalStatementItems").innerHTML = html; 
     $("modalStatementHeader").innerHTML = `<div><strong>الشريك:</strong> ${p.partner_name}</div>`; 
-    $("modalStatementSummary").innerHTML = `<div class="line"><span>إجمالي الإيداعات:</span><span style="color:green;">${fmt(totalIn)}</span></div><div class="line"><span>إجمالي السحوبات:</span><span style="color:red;">${fmt(totalOut)}</span></div><div class="line grand"><span>الرصيد النهائي:</span><span>${fmt(runningBalance)}</span></div>`; 
+    $("modalStatementSummary").innerHTML = `<div class="line"><span>الرصيد الافتتاحي:</span><span>${fmt(openingBalance)}</span></div><div class="line"><span>إجمالي الإيداعات:</span><span style="color:green;">${fmt(totalIn)}</span></div><div class="line"><span>إجمالي السحوبات:</span><span style="color:red;">${fmt(totalOut)}</span></div><div class="line grand"><span>الرصيد النهائي:</span><span>${fmt(runningBalance)}</span></div>`; 
     fillPrintHeaders(); 
   } catch(e) { alert(err(e)); } 
 }
@@ -6673,49 +7058,20 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
       const to = $("accToDate").value;
 
       try { 
-          const { data: periodData, error: periodErr } = await db.rpc("get_period_summary", { p_from: from, p_to: to }); 
-          if(periodErr) console.warn("[SUM]", periodErr);
-          if(periodData) { 
-            $("accRevPeriod").textContent = fmt(periodData.rev); 
-            $("accPurchPeriod").textContent = fmt(periodData.purch); 
-            $("accExpPeriod").textContent = fmt(periodData.exp); 
-            $("accCollPeriod").textContent = fmt(periodData.coll || 0); 
-            $("accProfitPeriod").textContent = fmt(periodData.profit); 
-            $("accCash").textContent = fmt(periodData.cash); 
-            $("accAR").textContent = fmt(periodData.ar); 
-            $("accAP").textContent = fmt(periodData.ap); 
-          } else {
-            const [salesR, purchR, expR, collR, treasR, custR, suppR, spR] = await Promise.all([
-              db.from("sales_invoices").select("net_total").gte("invoice_date", from).lte("invoice_date", to).neq("status","CANCELLED"),
-              db.from("purchase_invoices").select("net_total").gte("invoice_date", from).lte("invoice_date", to).neq("status","CANCELLED"),
-              db.from("expenses").select("amount").gte("expense_date", from).lte("expense_date", to),
-              db.from("customer_collections").select("amount").gte("collection_date", from).lte("collection_date", to).eq("status","POSTED"),
-              db.from("treasuries").select("current_balance").eq("is_active", true),
-              db.from("sales_invoices").select("remaining_amount").eq("status","POSTED").gt("remaining_amount",0),
-              db.from("purchase_invoices").select("net_total").neq("status","CANCELLED"),
-              db.from("supplier_payments").select("amount")
-            ]);
-            const rev = (salesR.data||[]).reduce((s,i)=>s+Number(i.net_total||0),0);
-            const purch = (purchR.data||[]).reduce((s,i)=>s+Number(i.net_total||0),0);
-            const exp = (expR.data||[]).reduce((s,i)=>s+Number(i.amount||0),0);
-            const coll = (collR.data||[]).reduce((s,i)=>s+Number(i.amount||0),0);
-            const cash = (treasR.data||[]).reduce((s,t)=>s+Number(t.current_balance||0),0);
-            const ar = (custR.data||[]).reduce((s,i)=>s+Number(i.remaining_amount||0),0);
-            const totalPurchases = (suppR.data||[]).reduce((s,i)=>s+Number(i.net_total||0),0);
-            const totalPaid = (spR.data||[]).reduce((s,i)=>s+Number(i.amount||0),0);
-            const ap = totalPurchases - totalPaid;
-            $("accRevPeriod").textContent = fmt(rev); 
-            $("accPurchPeriod").textContent = fmt(purch); 
-            $("accExpPeriod").textContent = fmt(exp); 
-            $("accCollPeriod").textContent = fmt(coll); 
-            $("accProfitPeriod").textContent = fmt(rev - purch - exp); 
-            $("accCash").textContent = fmt(cash); 
-            $("accAR").textContent = fmt(ar); 
-            $("accAP").textContent = fmt(ap); 
-          }
+          const { data: periodData, error: periodErr } = await db.rpc("get_period_summary", { p_from: from, p_to: to });
+          if(periodErr) throw periodErr;
+          if(!periodData) throw new Error("لم تُرجع قاعدة البيانات ملخص الفترة.");
+          $("accRevPeriod").textContent = fmt(periodData.rev);
+          $("accPurchPeriod").textContent = fmt(periodData.purch);
+          $("accExpPeriod").textContent = fmt(periodData.exp);
+          $("accCollPeriod").textContent = fmt(periodData.coll || 0);
+          $("accProfitPeriod").textContent = fmt(periodData.profit);
+          $("accCash").textContent = fmt(periodData.cash);
+          $("accAR").textContent = fmt(periodData.ar);
+          $("accAP").textContent = fmt(periodData.ap);
 
           const { data: trialData, error: trialErr } = await db.rpc("get_trial_balance", { p_from: from, p_to: to });
-          if(trialErr) console.warn("[TRIAL]", trialErr);
+          if(trialErr) throw trialErr;
           const tbodyTrial = $("trialBalanceTable").querySelector("tbody"); 
           tbodyTrial.innerHTML = "";
           if(trialData && trialData.length > 0) { 
@@ -6733,7 +7089,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
           }
 
           const { data: journalData, error: journalErr } = await db.rpc("get_journal_entries", { p_from: from, p_to: to });
-          if(journalErr) console.warn("[JOURNAL]", journalErr);
+          if(journalErr) throw journalErr;
           const tbodyJournal = $("journalTable").querySelector("tbody"); 
           tbodyJournal.innerHTML = "";
           if(journalData && journalData.length > 0) { 
@@ -6994,34 +7350,15 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
           const { data, error } = await db.rpc("get_profit_loss", { p_from: from, p_to: to });
           if(error) throw error;
           const row = data && data[0];
-          
-          if(!row) { 
-              const [salesR, purchR, expR] = await Promise.all([
-                  db.from("sales_invoices").select("net_total").gte("invoice_date", from).lte("invoice_date", to).neq("status","CANCELLED"),
-                  db.from("purchase_invoices").select("net_total").gte("invoice_date", from).lte("invoice_date", to).neq("status","CANCELLED"),
-                  db.from("expenses").select("amount").gte("expense_date", from).lte("expense_date", to)
-              ]);
-              const revenue = (salesR.data||[]).reduce((s,i)=>s+Number(i.net_total||0),0);
-              const cogs = (purchR.data||[]).reduce((s,i)=>s+Number(i.net_total||0),0);
-              const expenses = (expR.data||[]).reduce((s,i)=>s+Number(i.amount||0),0);
-              const profit = revenue - cogs - expenses;
-              const margin = revenue > 0 ? ((profit / revenue) * 100).toFixed(2) : 0;
-              if(plBox) plBox.innerHTML = `
-                  <div class="line"><span>الإيرادات:</span><span style="color:green;">${fmt(revenue)}</span></div>
-                  <div class="line"><span>تكلفة المبيعات (المشتريات):</span><span style="color:red;">-${fmt(cogs)}</span></div>
-                  <div class="line"><span>المصروفات:</span><span style="color:red;">-${fmt(expenses)}</span></div>
-                  <div class="line grand" style="color:var(--g);"><span>صافي الربح:</span><span>${fmt(profit)}</span></div>
-                  <div class="line"><span>هامش الربح:</span><span>${margin}%</span></div>
-                  <div class="line" style="font-size:12px; color:var(--muted);"><span>من:</span><span>${from}</span></div>
-                  <div class="line" style="font-size:12px; color:var(--muted);"><span>إلى:</span><span>${to}</span></div>
-              `;
+          if(!row) {
+              if(plBox) plBox.innerHTML = "<div class='empty'>لا توجد بيانات محاسبية مسجلة في هذه الفترة.</div>";
               return;
           }
-          
+
           const margin = row.revenue > 0 ? ((row.profit / row.revenue) * 100).toFixed(2) : 0;
           if(plBox) plBox.innerHTML = `
               <div class="line"><span>الإيرادات:</span><span style="color:green;">${fmt(row.revenue)}</span></div>
-              <div class="line"><span>تكلفة المبيعات (المشتريات):</span><span style="color:red;">-${fmt(row.cogs)}</span></div>
+              <div class="line"><span>تكلفة المبيعات:</span><span style="color:red;">-${fmt(row.cogs)}</span></div>
               <div class="line"><span>المصروفات:</span><span style="color:red;">-${fmt(row.expenses)}</span></div>
               <div class="line grand" style="color:var(--g);"><span>صافي الربح:</span><span>${fmt(row.profit)}</span></div>
               <div class="line"><span>هامش الربح:</span><span>${margin}%</span></div>
@@ -7189,18 +7526,25 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
     }catch(e){showToast("تعذر تعليم الكل كمقروء: "+err(e),"error",7000);if(btn)btn.disabled=false;}
   }
   async function sendManualNotification(){
-    const btn=$("sendNotificationBtn"),title=$("notificationTitle")?.value.trim(),body=$("notificationBody")?.value.trim(),users=Array.from($("notificationUsers")?.selectedOptions||[]).map(o=>o.value);
-    if(!title||!body||!users.length){msg($("notificationSendMsg"),"اكتب العنوان والنص واختر مستلمًا واحدًا على الأقل.","error");return;}
+    const btn=$("sendNotificationBtn"),title=$("notificationTitle")?.value.trim(),body=$("notificationBody")?.value.trim(),sendAll=$("notificationSendAll")?.checked===true,select=$("notificationUsers");
+    const users=sendAll?Array.from(select?.options||[]).map(o=>o.value):Array.from(select?.selectedOptions||[]).map(o=>o.value);
+    if(!title||!body||!users.length){msg($("notificationSendMsg"),sendAll?"لا يوجد مستخدمون نشطون لإرسال الإشعار إليهم.":"اكتب العنوان والنص واختر مستلمًا واحدًا على الأقل.","error");return;}
     busy(btn,true,"جارٍ الإرسال...","إرسال التنبيه");
     try{
       if(!isSystemAdmin)throw new Error("إرسال التنبيهات متاح لمدير النظام فقط.");
-      const eventKey="MANUAL:"+(crypto.randomUUID?crypto.randomUUID():Date.now()+":"+Math.random().toString(36).slice(2));
-      const {error}=await db.rpc("create_notification",{p_notification_type:"MANUAL",p_title:title,p_body:body,p_event_key:eventKey,p_user_ids:users,p_entity_type:null,p_entity_id:null,p_due_at:null,p_metadata:{source:"admin_panel"}});
+      const notificationType=sendAll?"GENERAL":"MANUAL";
+      const eventKey=notificationType+":"+(crypto.randomUUID?crypto.randomUUID():Date.now()+":"+Math.random().toString(36).slice(2));
+      const {error}=await db.rpc("create_notification",{p_notification_type:notificationType,p_title:title,p_body:body,p_event_key:eventKey,p_user_ids:users,p_entity_type:null,p_entity_id:null,p_due_at:null,p_metadata:{source:"admin_panel",audience:sendAll?"ALL_ACTIVE_USERS":"SELECTED_USERS"}});
       if(error)throw error;
-      msg($("notificationSendMsg"),"تم إرسال التنبيه.","success");$("notificationTitle").value="";$("notificationBody").value="";Array.from($("notificationUsers").options).forEach(o=>o.selected=false);showToast("تم إرسال التنبيه للمستخدمين المحددين.","success");
+      msg($("notificationSendMsg"),sendAll?"تم إرسال الإشعار العام إلى جميع المستخدمين النشطين.":"تم إرسال التنبيه للمستخدمين المحددين.","success");
+      $("notificationTitle").value="";$("notificationBody").value="";
+      if(select){Array.from(select.options).forEach(o=>o.selected=false);select.disabled=false;}
+      if($("notificationSendAll"))$("notificationSendAll").checked=false;
+      showToast(sendAll?"تم إرسال الإشعار العام لجميع المستخدمين النشطين.":"تم إرسال التنبيه للمستخدمين المحددين.","success");
     }catch(e){msg($("notificationSendMsg"),"تعذر إرسال التنبيه: "+err(e),"error");}
     finally{busy(btn,false,"","إرسال التنبيه");}
   }
+  if($("notificationSendAll"))$("notificationSendAll").addEventListener("change",()=>{const select=$("notificationUsers");if(select){select.disabled=$("notificationSendAll").checked;if($("notificationSendAll").checked)Array.from(select.options).forEach(o=>o.selected=false);}});
   if($("refreshNotificationsBtn"))$("refreshNotificationsBtn").addEventListener("click",loadNotifications);
   if($("markAllNotificationsReadBtn"))$("markAllNotificationsReadBtn").addEventListener("click",markAllNotificationsRead);
   if($("sendNotificationBtn"))$("sendNotificationBtn").addEventListener("click",sendManualNotification);
@@ -7223,7 +7567,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
       showApp();
       try { await loadLookups(); } catch(e){ console.error("[BOOT lookups]", e); }
       try { await loadProducts(); } catch(e){ console.error("[BOOT products]", e); }
-      if(canViewLocations || canViewStockTransfers){ try{ await loadLocations(); }catch(e){console.error("[BOOT locations]",e);} }
+      if(canLoadLocations){ try{ await loadLocations(); }catch(e){console.error("[BOOT locations]",e);} }
       if(canViewTreasuries){ try{ await loadTreasuries(); }catch(e){console.error("[BOOT treasuries]",e);} }
       if(canViewStock){ try{ await loadStock(); }catch(e){console.error("[BOOT stock]",e);} }
       if(canViewRecipes){ try{ await loadRecipes(); }catch(e){console.error("[BOOT recipes]",e);} }
