@@ -4165,14 +4165,14 @@ function renderStockLocationTabs() {
     allBtn.className = "tab-btn" + (currentStockLocationFilter === null ? " active" : "");
     allBtn.textContent = "الكل";
     allBtn.style.cssText = "flex:0 0 auto; padding:8px 14px; white-space:nowrap;";
-    allBtn.onclick = () => { currentStockLocationFilter = null; renderStockLocationTabs(); renderStock(); };
+    allBtn.onclick = () => { currentStockLocationFilter = null; renderStockLocationTabs(); renderStock(); renderStockLots(); };
     box.appendChild(allBtn);
     locationsCache.filter(l => l.is_active).forEach(loc => {
         const btn = document.createElement("button");
         btn.className = "tab-btn" + (String(currentStockLocationFilter) === String(loc.location_id) ? " active" : "");
         btn.textContent = loc.location_name;
         btn.style.cssText = "flex:0 0 auto; padding:8px 14px; white-space:nowrap;";
-        btn.onclick = () => { currentStockLocationFilter = loc.location_id; renderStockLocationTabs(); renderStock(); };
+        btn.onclick = () => { currentStockLocationFilter = loc.location_id; renderStockLocationTabs(); renderStock(); renderStockLots(); };
         box.appendChild(btn);
     });
 }
