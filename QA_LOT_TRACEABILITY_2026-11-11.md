@@ -170,3 +170,12 @@ Historical movements were not assigned fabricated lot allocations.
 - The invoice reached CANCELLED status. During the transaction, product stock returned to 9.2500 KG and the original lot balance returned to 0.5000 KG.
 - The full test transaction was rolled back. Post-rollback counts remained 55 stock movements, 4 lots, 4 lot-balance rows, 6 purchase invoices, 10 sales invoices, 2 sales returns, and 65 journal entries. No QA-SC lot remained. Main warehouse product 1 stock remained 8.7500 KG with inventory value 424.0384.
 - No UI code changed. Application release remains v70 / meat-v103; this was a database cancellation correction only.
+
+
+## Active-trip sales invoice cancellation regression (2026-11-11)
+- Re-tested sales invoice cancellation while the related trip was still ACTIVE.
+- The cancellation movement reversed the exact original ISSUE movement and restored the exact dispatched lot.
+- Trip-load synchronization removed the cancelled invoice from the sold quantity (quantity_sold returned to 0.0000 KG).
+- The trip then settled successfully. The full 0.5 KG load returned from vehicle to source using the same lot.
+- Final in-transaction state: trip COMPLETED, main warehouse product 1 = 8.7500 KG, vehicle product 1 = 0.0000 KG, and lot balances matched.
+- The complete transaction was rolled back. Post-rollback counts remained 55 stock movements, 4 lots, 4 lot-balance rows, 4 trips, 10 sales invoices, 2 sales returns, 3 trip-load rows, and 65 journal entries. No QA lots remained.
