@@ -8205,7 +8205,6 @@ if ('serviceWorker' in navigator) {
 }
 
 
-<script>
 (function(){
 const enhance=()=>{
  const box=document.getElementById("fixedAssetsList");if(!box||!window.fixedAssetsCache)return;
@@ -8218,6 +8217,6 @@ const enhance=()=>{
 const s=document.getElementById("fixedAssetsList");if(s)new MutationObserver(enhance).observe(s,{childList:true});
 const sec=document.getElementById("sectionFixedAssets");if(sec)new MutationObserver(enhance).observe(sec,{attributes:true,attributeFilter:["class"]});
 })();
-</script></script>
+</script>
 </body>
 </html>
