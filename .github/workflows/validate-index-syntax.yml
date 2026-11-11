@@ -1,0 +1,31 @@
+name: Validate MeatManagement inline JavaScript
+
+on:
+  pull_request:
+    paths:
+      - index.html
+      - scripts/check-inline-js.cjs
+      - .github/workflows/validate-index-syntax.yml
+  push:
+    branches:
+      - main
+    paths:
+      - index.html
+      - scripts/check-inline-js.cjs
+      - .github/workflows/validate-index-syntax.yml
+
+permissions:
+  contents: read
+
+jobs:
+  inline-js-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Validate inline JavaScript
+        run: node scripts/check-inline-js.cjs
