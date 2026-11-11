@@ -33,6 +33,18 @@ const menuIds = {
 };
 
 
+
+test('Purchase and purchase-return preview matches database rounding rules', () => {
+  expect(qaHtml).toContain('let priorGrossTotal = 0;');
+  expect(qaHtml).toContain('Math.round((priorGrossTotal * invoiceDiscount / invoiceSubtotal + Number.EPSILON) * 100) / 100');
+  expect(qaHtml).toContain('Math.round(((priorGrossTotal + grossTotal) * invoiceDiscount / invoiceSubtotal + Number.EPSILON) * 100) / 100');
+  expect(qaHtml).toContain('priorGrossTotal += grossTotal;');
+  expect(qaHtml).toContain('subtotal+=Math.round((q*p+Number.EPSILON)*100)/100;');
+  expect(qaHtml).toContain('const t=Math.round((q*p+Number.EPSILON)*100)/100;');
+  expect(qaHtml).toContain('v_item_return_amount :=');
+  expect(qaHtml).toContain('v_cumulative_amount :=');
+});
+
 test('Supplier workflow guards: cancelled documents, supplier profile and payment idempotency', () => {
   expect(qaHtml).toContain('address:$("supplierAddress").value.trim()||null');
   expect(qaHtml).toContain('$("supplierAddress").value=s.address||""');
