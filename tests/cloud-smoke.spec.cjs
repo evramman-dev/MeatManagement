@@ -147,6 +147,23 @@ test('MeatManagement read-only navigation, permissions and session smoke test', 
 
     await expect(target, 'Section ' + section + ' should open when its menu is visible').toBeVisible({ timeout: 15000 });
     await page.waitForTimeout(800);
+    if (section === 'suppliers') {
+      const supplierCards = page.locator('#suppliersList > .product');
+      await expect(supplierCards.first(), 'At least one supplier should be available for statement testing').toBeVisible({ timeout: 30000 });
+      await supplierCards.first().getByRole('button', { name: 'كشف حساب' }).click();
+      await expect(page.locator('#supplierStatementModal')).toBeVisible();
+      await expect(page.locator('#modalSupplierHeader')).not.toContainText('جارٍ تحميل البيانات...', { timeout: 30000 });
+      await expect(page.locator('#modalSupplierHeader')).not.toContainText('خطأ:', { timeout: 30000 });
+      await expect(page.locator('#modalSupplierSummary')).toContainText('الرصيد الافتتاحي:');
+      await expect(page.locator('#modalSupplierSummary')).toContainText('المشتريات الآجلة:');
+      await expect(page.locator('#modalSupplierSummary')).toContainText('تكاليف نقل آجلة على المورد:');
+      await expect(page.locator('#modalSupplierSummary')).toContainText('أصول مشتراة آجلًا من المورد:');
+      await expect(page.locator('#modalSupplierSummary')).toContainText('الرصيد النهائي:');
+      await expect(page.locator('#modalSupplierItems')).toContainText('الرصيد');
+      await page.screenshot({ path: 'test-results/supplier-statement.png', fullPage: true });
+      await page.locator('#supplierStatementModal .close-btn').click();
+      await expect(page.locator('#supplierStatementModal')).toBeHidden();
+    }
     if (section === 'products') {
       const productCards = page.locator('#products > .product');
       if (await productCards.count()) {
