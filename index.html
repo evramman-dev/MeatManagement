@@ -9020,11 +9020,6 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
   }
   init();
   initDateDisplayInputs();
-} catch (globalError) {
-  console.error("CRITICAL ERROR:", globalError);
-  alert("حدث خطأ فادح في تحميل البرنامج: " + globalError.message);
-}
-
 /* ===== واجهة الشركاء والأصول ===== */
 (function(){
 function mmModal(id,title,body){
@@ -9058,6 +9053,12 @@ const originalPartners=loadPartners;loadPartners=async function(){await original
 viewPartnerStatement=mmPartnerLedger;
 const originalAssets=loadFixedAssets;loadFixedAssets=async function(){await originalAssets();const box=$("fixedAssetsList");if(!box||!canManageFixedAssets)return;[...box.children].forEach((card,i)=>{if(card.dataset.mmAsset==="1")return;const x=fixedAssetsCache[i];if(!x||x.status!=="ACTIVE")return;card.dataset.mmAsset="1";const a=card.querySelector(".actions")||(()=>{const z=document.createElement("div");z.className="actions";card.appendChild(z);return z;})();const b=document.createElement("button");b.className="btn secondary";b.textContent=x.useful_life_months?"إثبات إهلاك":"إعداد الإهلاك";b.onclick=()=>mmAssetAction(x,x.useful_life_months?"dep":"config");a.appendChild(b);const d=document.createElement("button");d.className="btn secondary";d.textContent="بيع / استبعاد";d.onclick=()=>mmAssetAction(x,"dispose");a.appendChild(d);});};
 })();
+} catch (globalError) {
+  console.error("CRITICAL ERROR:", globalError);
+  alert("حدث خطأ فادح في تحميل البرنامج: " + globalError.message);
+}
+
+
 })();
 
 // ====== PWA ======
