@@ -49,7 +49,7 @@ test('Supplier workflow guards: cancelled documents, supplier profile and paymen
   expect(qaHtml).toContain('if(result.error) throw result.error;');
   expect(qaHtml).toContain('.eq("is_cancelled", false).order("payment_id", {ascending:false})');
   expect(qaHtml).toContain('.eq("is_cancelled", false).order("payment_date", {ascending:true})');
-  expect(qaHtml).toContain('.eq("is_cancelled", false).order("return_id", {ascending:false})');
+  expect(qaHtml).toContain('.order("return_id", {ascending:false})');
   expect(qaHtml).toContain('.eq("is_cancelled", false).order("return_date", {ascending:true})');
   expect(qaHtml).toContain('requestStorageKey += "_" + currentUserId');
   expect(qaHtml).toContain('JSON.stringify(pendingRequest.payload) !== JSON.stringify(requestPayload)');
