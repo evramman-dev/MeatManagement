@@ -626,7 +626,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div id="systemResetCard" class="card hidden">
 <h2>إعادة تهيئة النظام</h2>
 <p class="desc">أداة مستقلة لمدير النظام. تنفذ الفحص وتجهيز خطة المعالجة تلقائيًا، ولا تطلب منك تشغيل استعلامات أو تنفيذ خطوات يدوية. لن يبدأ أي حذف قبل عرض التقرير النهائي وموافقتك الصريحة.</p>
-<div class="product"><div class="pname">المرحلة الأولى: الفحص والتجهيز التلقائي</div><div class="details">تفحص المستندات والروابط والأرصدة والقيود، وتحدد ترتيب الإلغاء والعكس والحذف. تنفذ التجهيزات الآمنة التي لا تحذف بيانات، ثم تعرض تقريرًا بما سيتم وما سيظل محفوظًا وأي موانع تمنع التنفيذ.</div><button id="runAdminResetPreviewBtn" class="btn" type="button">ابدأ الفحص والتجهيز التلقائي</button></div>
+<div class="product"><div class="pname">المرحلة الأولى: الفحص والتجهيز التلقائي</div><div class="details">تفحص المستندات والروابط والأرصدة والقيود، وتحفظ تقرير المعاينة برقم مرجعي وبصمة تحقق. لا تغير هذه الخطوة أي بيانات. بعد اكتمال محرك التنفيذ ستعرض خطة الإلغاء والعكس والحذف قبل طلب موافقتك.</div><button id="runAdminResetPreviewBtn" class="btn" type="button">ابدأ الفحص والتجهيز التلقائي</button></div>
 <div class="product"><div class="pname">بوابة الموافقة قبل التنفيذ</div><div class="details">بعد اكتمال التقرير، تعرض الأداة خطة التنفيذ بالتفصيل. لا تنفذ حذفًا أو إلغاءً لأي مستند قبل موافقتك. بعد الموافقة تنفذ الخطة تلقائيًا، وتتوقف بالكامل إذا ظهر اختلاف أو مانع غير متوقع.</div><button class="btn secondary" type="button" disabled>تظهر الموافقة بعد اكتمال الخطة والتحقق منها</button></div>
 <div id="adminResetPreviewMsg" class="status hidden"></div>
 <div id="adminResetPreviewResult"></div>
@@ -2310,9 +2310,16 @@ if($("runAdminResetPreviewBtn")) $("runAdminResetPreviewBtn").addEventListener("
   clear(message);result.replaceChildren();
   busy(btn,true,"جارٍ فحص البيانات...","فحص العمليات والبيانات");
   try{
-    const {data,error}=await db.rpc("admin_reset_preview");
+    const {data:prepared,error}=await db.rpc("admin_reset_prepare");
     if(error) throw error;
-    if(!data || data.preview_only!==true) throw new Error("لم يرجع الخادم نتيجة معاينة صالحة.");
+    if(!prepared || prepared.prepared!==true || !prepared.preview || prepared.preview.preview_only!==true) throw new Error("لم يرجع الخادم خطة معاينة محفوظة وصالحة.");
+    const data=prepared.preview;
+    const plan=document.createElement("div");plan.className="product";
+    const planTitle=document.createElement("div");planTitle.className="pname";planTitle.textContent="رقم تقرير المعاينة المحفوظ";
+    const planInfo=document.createElement("div");planInfo.className="details";
+    planInfo.style.cssText="overflow-wrap:anywhere;line-height:1.8";
+    planInfo.textContent="رقم الخطة: "+prepared.plan_id+" | بصمة التحقق: "+prepared.plan_hash+" | تنتهي: "+new Date(prepared.expires_at).toLocaleString("ar-EG")+" | الحالة: "+prepared.status;
+    plan.append(planTitle,planInfo);result.appendChild(plan);
     const labels={sales_invoices:"فواتير البيع",sales_invoice_items:"بنود البيع",customer_collections:"تحصيلات العملاء",customer_cheques:"شيكات العملاء",sales_returns:"مرتجعات البيع",sales_return_items:"بنود مرتجعات البيع",sales_return_exchange_items:"بنود الاستبدال",purchase_invoices:"فواتير الشراء",purchase_invoice_items:"بنود الشراء",purchase_returns:"مرتجعات الشراء",purchase_return_items:"بنود مرتجعات الشراء",supplier_payments:"سداد الموردين",purchase_landed_costs:"تكاليف النقل",purchase_landed_cost_allocations:"توزيع تكاليف النقل",production_orders:"أوامر التشغيل",production_order_materials:"خامات التشغيل",production_order_expense_allocations:"توزيع مصروفات التشغيل",recipes:"الوصفات",recipe_items:"مكونات الوصفات",recipe_movements:"حركات الوصفات",stock_lots:"التشغيلات LOT",stock_lot_balances:"أرصدة التشغيلات",stock_movements:"حركات المخزون",stock_movement_lot_allocations:"تخصيصات التشغيلات",stock_balances:"أرصدة المخزون",stock_transfers:"تحويلات المخازن",stock_transfer_items:"بنود التحويل",stock_transfer_reversals:"عكس التحويلات",trips:"الرحلات",trip_loads:"تحميل السيارات",trip_customers:"عملاء الرحلات",expenses:"المصروفات",treasury_transactions:"حركات الخزائن",journal_entries:"القيود المحاسبية",journal_entry_lines:"سطور القيود",journal_adjustments:"التسويات المحاسبية",fixed_asset_depreciation_entries:"إهلاك الأصول",partner_transactions:"حركات الشركاء",partner_inventory_contributions:"مساهمات المخزون",partner_profit_distributions:"توزيعات الأرباح",partner_profit_distribution_items:"بنود توزيعات الأرباح",reservations:"الحجوزات",notifications:"الإشعارات",notification_recipients:"مستلمو الإشعارات",products:"الأصناف",product_categories:"تصنيفات الأصناف",product_unit_conversions:"تحويلات الوحدات",product_packaging_options:"خيارات التعبئة",units:"الوحدات",customers:"العملاء",customer_groups:"مجموعات العملاء",suppliers:"الموردون",sales_reps:"مندوبو المبيعات",locations:"المخازن والمواقع",partners:"الشركاء",treasuries:"الخزائن",fixed_assets:"الأصول الثابتة",price_lists:"قوائم الأسعار",price_list_items:"بنود قوائم الأسعار",customer_price_lists:"قوائم أسعار العملاء",expense_types:"أنواع المصروفات",sales_rep_areas:"مناطق المندوبين",notification_rules:"قواعد الإشعارات",app_users:"المستخدمون",app_roles:"الأدوار",app_permissions:"الصلاحيات",app_role_permissions:"ربط الأدوار بالصلاحيات",chart_of_accounts:"دليل الحسابات",accounting_periods:"الفترات المحاسبية",company_settings:"إعدادات الشركة",governorates:"المحافظات",cities:"المراكز والمدن",areas:"المناطق",user_logs:"سجل التتبع"};
     const addSection=(title,obj)=>{
       const section=document.createElement("div");section.className="product";
@@ -2353,7 +2360,7 @@ if($("runAdminResetPreviewBtn")) $("runAdminResetPreviewBtn").addEventListener("
     addDetailRows("تفاصيل الرحلات النشطة",b.trip_details,[["رقم الرحلة","number"],["الحالة","status"],["تاريخ البداية","start_date"],["المخزن المصدر","source_location_id"],["موقع السيارة","vehicle_location_id"],["المندوب","sales_rep_id"]]);
     addDetailRows("تفاصيل الخزائن ذات الأرصدة",b.treasury_details,[["الخزنة","name"],["النوع","type"],["الرصيد الحالي","current_balance"],["الرصيد الافتتاحي","opening_balance"],["الحساب","account_id"]]);
     addDetailRows("تفاصيل أرصدة المخزون",b.stock_details,[["المخزن","location_name"],["الصنف","product_name"],["الكمية","quantity"],["قيمة المخزون","inventory_value"]]);
-    msg(message,"اكتملت المعاينة فقط. لم يتم حذف أو تعديل أي بيانات.","success");
+    msg(message,"اكتمل الفحص وحُفظ التقرير برقم مرجعي. لم يتم حذف أو تعديل أي بيانات، والتنفيذ ما زال مقفولًا حتى اكتمال محركه.","success");
   }catch(e){msg(message,"تعذر إجراء المعاينة: "+err(e),"error");}
   finally{busy(btn,false,"","فحص العمليات والبيانات");}
 });
