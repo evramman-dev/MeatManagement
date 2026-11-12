@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v104</title>
+<title>MeatManagement v105</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -625,9 +625,9 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
 <div id="systemResetCard" class="card hidden">
 <h2>إعادة تهيئة النظام</h2>
-<p class="desc">أداة مستقلة لمدير النظام. تنفذ الفحص وتجهيز خطة المعالجة تلقائيًا، ولا تطلب منك تشغيل استعلامات أو تنفيذ خطوات يدوية. لن يبدأ أي حذف قبل عرض التقرير النهائي وموافقتك الصريحة.</p>
+<p class="desc">أداة مستقلة لمدير النظام. تتيح لك تجربة الفحص وتجهيز التقارير ونسخ البيانات ومراجعة الموانع من داخل التطبيق. هذه النسخة مخصصة لاختبار الواجهة والمعاينة فقط، والتنفيذ الفعلي مقفول لحين اختبار الحذف الكامل في بيئة آمنة.</p>
 <div class="product"><div class="pname">المرحلة الأولى: تصفير العمليات والأرصدة</div><div class="details">مرحلة مستقلة تشمل المستندات والحركات والقيود وأرصدة العملاء والموردين والخزائن والمخزون. اعرض التقرير ونسخة البيانات الخاصة به، ثم اعتمد التقرير قبل تنفيذ التصفير.</div><button id="runAdminResetPreviewBtn" class="btn" type="button">فحص وتجهيز المرحلة الأولى</button></div>
-<div class="product"><div class="pname">بوابة الموافقة قبل التنفيذ</div><div class="details">بعد اكتمال التقرير، تعرض الأداة خطة التنفيذ بالتفصيل. لا تنفذ حذفًا أو إلغاءً لأي مستند قبل موافقتك. يظل التنفيذ مقفولًا حتى اجتياز اختبار التشغيل النهائي. بعد فتحه لن يبدأ الحذف إلا بموافقتك على التقرير.</div><div id="adminResetActions" class="row" style="gap:8px;flex-wrap:wrap;"></div></div>
+<div class="product"><div class="pname">بوابة الموافقة قبل التنفيذ</div><div class="details">بعد اكتمال التقرير، تعرض الأداة خطة التنفيذ بالتفصيل. يمكنك اختبار المعاينة ومراجعة التقرير ونسخة البيانات واعتماد التقرير دون حذف. زر التنفيذ يظل معطلًا في هذه النسخة، ولا يمكن بدء الحذف من الواجهة.</div><div id="adminResetActions" class="row" style="gap:8px;flex-wrap:wrap;"></div></div>
 <div id="adminResetPreviewMsg" class="status hidden"></div>
 <div id="adminResetPreviewResult"></div>
 <div class="product" style="margin-top:15px;"><div class="pname">المرحلة الثانية: إعادة تهيئة البيانات الأساسية - اختيارية ومستقلة</div><div class="details">لا تعمل تلقائيًا مع المرحلة الأولى. يمكنك تنفيذها عند الحاجة فقط، بعد اكتمال المرحلة الأولى والتحقق من خلو النظام من العمليات والأرصدة. ستملك معاينة وخطة وموافقة وتنفيذًا منفصلًا.</div><button id="runAdminResetPhase2PreviewBtn" class="btn secondary" type="button">فحص وتجهيز المرحلة الثانية</button>
@@ -2375,11 +2375,11 @@ if($("runAdminResetPreviewBtn")) $("runAdminResetPreviewBtn").addEventListener("
       const executeBtn=document.createElement("button");
       executeBtn.className="btn secondary";
       executeBtn.type="button";
-      executeBtn.textContent="تنفيذ المرحلة الأولى";
+      executeBtn.textContent="التنفيذ مقفول للاختبار";
       executeBtn.disabled=true;
       const actionInfo=document.createElement("div");
       actionInfo.className="details";
-      actionInfo.textContent="راجع أعداد السجلات ونسخة البيانات أعلاه. الاعتماد لا يحذف شيئًا. التنفيذ يحتاج موافقة منفصلة.";
+      actionInfo.textContent="يمكنك مراجعة التقرير ونسخة البيانات واختبار الاعتماد. لن يتم تنفيذ حذف أو تصفير من هذه النسخة، وزر التنفيذ يظل مقفولًا.";
       actions.append(approveBtn,executeBtn,actionInfo);
       approveBtn.addEventListener("click",async()=>{
         if(!window.confirm("هل توافق على اعتماد تقرير المرحلة الأولى؟ الاعتماد يحفظ موافقتك فقط ولا يحذف أي بيانات."))return;
