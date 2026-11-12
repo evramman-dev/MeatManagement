@@ -626,7 +626,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div id="systemResetCard" class="card hidden">
 <h2>إعادة تهيئة النظام</h2>
 <p class="desc">أداة مستقلة لمدير النظام. تتيح لك تجربة الفحص وتجهيز التقارير ونسخ البيانات ومراجعة الموانع من داخل التطبيق. هذه النسخة مخصصة لاختبار الواجهة والمعاينة فقط، والتنفيذ الفعلي مقفول لحين اختبار الحذف الكامل في بيئة آمنة.</p>
-<div class="product"><div class="pname">المرحلة الأولى: تصفير العمليات والأرصدة</div><div class="details">مرحلة مستقلة تشمل المستندات والحركات والقيود وأرصدة العملاء والموردين والخزائن والمخزون. اعرض التقرير ونسخة البيانات الخاصة به، ثم اعتمد التقرير قبل تنفيذ التصفير.</div><button id="runAdminResetPreviewBtn" class="btn" type="button">فحص وتجهيز المرحلة الأولى</button></div>
+<div class="product"><div class="pname">المرحلة الأولى: تصفير العمليات والأرصدة</div><div class="details">مرحلة مستقلة تشمل المستندات والحركات والقيود وأرصدة العملاء والموردين والخزائن والمخزون. اعرض التقرير ونسخة البيانات الخاصة به، ثم اعتمد التقرير قبل تنفيذ التصفير.</div><button id="runAdminResetPreviewBtn" class="btn" type="button">عرض التقرير المحفوظ أو تجهيز تقرير جديد</button></div>
 <div class="product"><div class="pname">بوابة الموافقة قبل التنفيذ</div><div class="details">بعد اكتمال التقرير، تعرض الأداة خطة التنفيذ بالتفصيل. يمكنك اختبار المعاينة ومراجعة التقرير ونسخة البيانات واعتماد التقرير دون حذف. زر التنفيذ يظل معطلًا في هذه النسخة، ولا يمكن بدء الحذف من الواجهة.</div><div id="adminResetActions" class="row" style="gap:8px;flex-wrap:wrap;"></div></div>
 <div id="adminResetPreviewMsg" class="status hidden"></div>
 <div id="adminResetPreviewResult"></div>
@@ -2221,6 +2221,13 @@ window.openSection = function(name) {
   if (name === "landedCosts") loadLandedCosts();
   if (name === "fixedAssets") loadFixedAssets();
   if (name === "reports") loadReports();
+  if (name === "systemReset" && isSystemAdmin) {
+    const restoreBtn=$("runAdminResetPreviewBtn");
+    if(restoreBtn && restoreBtn.dataset.autoRestoreStarted!=="1") {
+      restoreBtn.dataset.autoRestoreStarted="1";
+      restoreBtn.click();
+    }
+  }
   if (name === "stockTransfers") { fillStockTransferSelects(); if(!$("stItems").children.length) addStItemRow(); }
   if (name === "production") { fillProductionRecipeSelect(); fillProductionLocationSelect(); }
   if (name === "recipes") loadRecipes();
@@ -2313,8 +2320,13 @@ if($("runAdminResetPreviewBtn")) $("runAdminResetPreviewBtn").addEventListener("
   clear(message);result.replaceChildren();
   busy(btn,true,"جارٍ فحص البيانات...","فحص العمليات والبيانات");
   try{
-    const {data:prepared,error}=await db.rpc("admin_reset_prepare_phase",{p_phase:"PHASE_1"});
+    let {data:prepared,error}=await db.rpc("admin_reset_get_latest_phase1_plan");
     if(error) throw error;
+    if(!prepared || prepared.found!==true){
+      const fresh=await db.rpc("admin_reset_prepare_phase",{p_phase:"PHASE_1"});
+      if(fresh.error) throw fresh.error;
+      prepared=fresh.data;
+    }
     if(!prepared || prepared.prepared!==true || !prepared.preview || prepared.preview.preview_only!==true) throw new Error("لم يرجع الخادم خطة معاينة محفوظة وصالحة.");
     const data=prepared.preview;
     const planBackup=data.plan_backup||{};
@@ -2371,7 +2383,9 @@ if($("runAdminResetPreviewBtn")) $("runAdminResetPreviewBtn").addEventListener("
       const approveBtn=document.createElement("button");
       approveBtn.className="btn";
       approveBtn.type="button";
-      approveBtn.textContent="اعتماد التقرير";
+      const alreadyApproved=prepared.status==="APPROVED";
+      approveBtn.textContent=alreadyApproved?"تم اعتماد التقرير بالفعل":"اعتماد التقرير";
+      approveBtn.disabled=alreadyApproved;
       const executeBtn=document.createElement("button");
       executeBtn.className="btn secondary";
       executeBtn.type="button";
@@ -2379,7 +2393,9 @@ if($("runAdminResetPreviewBtn")) $("runAdminResetPreviewBtn").addEventListener("
       executeBtn.disabled=true;
       const actionInfo=document.createElement("div");
       actionInfo.className="details";
-      actionInfo.textContent="يمكنك مراجعة التقرير ونسخة البيانات واختبار الاعتماد. لن يتم تنفيذ حذف أو تصفير من هذه النسخة، وزر التنفيذ يظل مقفولًا.";
+      actionInfo.textContent=alreadyApproved
+        ?"هذا التقرير معتمد بالفعل ومحفوظ. تم التحقق من بصمته. لم يتم حذف أي بيانات، والتنفيذ ما زال مقفولًا."
+        :"يمكنك مراجعة التقرير ونسخة البيانات واعتماد التقرير. لن يتم تنفيذ حذف أو تصفير من هذه النسخة.";
       actions.append(approveBtn,executeBtn,actionInfo);
       approveBtn.addEventListener("click",async()=>{
         if(!window.confirm("هل توافق على اعتماد تقرير المرحلة الأولى؟ الاعتماد يحفظ موافقتك فقط ولا يحذف أي بيانات."))return;
@@ -2438,7 +2454,9 @@ if($("runAdminResetPreviewBtn")) $("runAdminResetPreviewBtn").addEventListener("
         }
       });
     }
-    msg(message,"اكتمل الفحص وحُفظ التقرير ونسخة بياناته الخاصة. لم يتم حذف أو تعديل أي بيانات. راجع التقرير ثم اعتمده إذا أردت المتابعة.","success");
+    msg(message,prepared.restored===true
+      ?"تم استرجاع آخر تقرير محفوظ والتحقق من بصمته. حالته: "+prepared.status+". لم يتم إنشاء تقرير جديد أو حذف أو تعديل أي بيانات."
+      :"اكتمل الفحص وحُفظ التقرير ونسخة بياناته الخاصة. لم يتم حذف أو تعديل أي بيانات. راجع التقرير ثم اعتمده إذا أردت المتابعة.","success");
   }catch(e){msg(message,"تعذر إجراء المعاينة: "+err(e),"error");}
   finally{busy(btn,false,"","فحص العمليات والبيانات");}
 });
