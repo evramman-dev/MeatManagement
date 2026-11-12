@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v93</title>
+<title>MeatManagement v94</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -327,7 +327,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v93]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v94]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -462,17 +462,24 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <button id="tasksFilterBtn" class="btn" style="margin-top:10px;">تحديث التحليلات</button>
 </div>
 <div class="home-dashboard" id="tasksDashboard"></div>
-<div style="margin-top:20px;">
-<div class="dashboard-title">📊 تحليل المبيعات (آخر 7 أيام)</div>
-<canvas id="tasksSalesChart" style="max-height:200px;"></canvas>
+<div class="dashboard-grid" style="margin-top:14px;">
+  <div class="dash-item" id="tasksChartsToggle" role="button" tabindex="0" onclick="toggleTasksCharts()">
+    <div class="dash-icon">📊</div><div class="dash-title">التحليلات البيانية</div>
+  </div>
 </div>
-<div style="margin-top:20px;">
-<div class="dashboard-title">💸 توزيع المصروفات</div>
-<canvas id="tasksExpensesChart" style="max-height:220px;"></canvas>
-</div>
-<div style="margin-top:20px;">
-<div class="dashboard-title">🚐 مبيعات الجولات</div>
-<canvas id="tasksTripsChart" style="max-height:220px;"></canvas>
+<div id="tasksChartsPanel" class="hidden" style="margin-top:16px;">
+  <div style="margin-top:12px;">
+    <div class="dashboard-title">📊 تحليل المبيعات (آخر 30 يومًا)</div>
+    <canvas id="tasksSalesChart" style="max-height:200px;"></canvas>
+  </div>
+  <div style="margin-top:20px;">
+    <div class="dashboard-title">💸 توزيع المصروفات</div>
+    <canvas id="tasksExpensesChart" style="max-height:220px;"></canvas>
+  </div>
+  <div style="margin-top:20px;">
+    <div class="dashboard-title">🚐 مبيعات الجولات</div>
+    <canvas id="tasksTripsChart" style="max-height:220px;"></canvas>
+  </div>
 </div>
 <div style="margin-top:20px;">
 <div class="dashboard-title">🔔 التنبيهات المهمة</div>
@@ -1782,7 +1789,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v93</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v94</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -2838,15 +2845,23 @@ async function loadHomeDashboard() {
     
 // ========== المهام والتنبيهات (v27 - مُصلَّحة) ==========
 let tasksSalesChart = null, tasksExpensesChart = null, tasksTripsChart = null;
+function toggleTasksCharts() {
+  const panel = $("tasksChartsPanel");
+  const toggle = $("tasksChartsToggle");
+  if(!panel) return;
+  const opening = panel.classList.contains("hidden");
+  panel.classList.toggle("hidden", !opening);
+  if(toggle) toggle.setAttribute("aria-expanded", opening ? "true" : "false");
+  if(opening) [tasksSalesChart,tasksExpensesChart,tasksTripsChart].forEach(chart=>{ if(chart) chart.resize(); });
+}
 async function loadTasks() {
   const box = $("tasksList"); if(!box) return;
   if (!navigator.onLine) { box.innerHTML = "<div class='empty'>أنت أوفلاين حالياً.</div>"; return; }
   if(!isSystemAdmin){
     const filterBox = document.querySelector("#tasks .filter-box");
     if(filterBox) filterBox.classList.add("hidden");
-    ["tasksSalesChart","tasksExpensesChart","tasksTripsChart"].forEach(id=>{
-      const canvas=$(id); if(canvas && canvas.parentElement) canvas.parentElement.classList.add("hidden");
-    });
+    const chartsToggle=$("tasksChartsToggle"); if(chartsToggle) chartsToggle.classList.add("hidden");
+    const chartsPanel=$("tasksChartsPanel"); if(chartsPanel) chartsPanel.classList.add("hidden");
     const dash=$("tasksDashboard");
     const quickLinks = getRoleQuickLinks(currentRoleCode);
     if(dash) dash.innerHTML = quickLinks.map(([section,icon,label])=>
@@ -2857,7 +2872,7 @@ async function loadTasks() {
   }
   // إعادة إظهار عناصر التحليل عند دخول دور إداري أو محاسبي.
   const filterBox = document.querySelector("#tasks .filter-box"); if(filterBox) filterBox.classList.remove("hidden");
-  ["tasksSalesChart","tasksExpensesChart","tasksTripsChart"].forEach(id=>{ const canvas=$(id); if(canvas && canvas.parentElement) canvas.parentElement.classList.remove("hidden"); });
+  const chartsToggle=$("tasksChartsToggle"); if(chartsToggle) chartsToggle.classList.remove("hidden");
   box.innerHTML = "<div class='empty'>جارٍ تحميل مهامك...</div>";
   
   const from = $("tasksFromDate").value || todayISO().substring(0,7)+"-01";
@@ -2895,9 +2910,18 @@ async function loadTasks() {
       <div class="home-card"><div class="hc-label">📊 صافي الربح</div><div class="hc-value">غير محسوب</div><div class="details">لا نعرض الربح قبل احتساب تكلفة المبيعات الفعلية وتسوية المخزون والإنتاج.</div></div>
     `;
 
+    const salesChartStartDate = new Date();
+    salesChartStartDate.setDate(salesChartStartDate.getDate()-29);
+    const salesChartFrom = salesChartStartDate.getFullYear()+"-"+String(salesChartStartDate.getMonth()+1).padStart(2,"0")+"-"+String(salesChartStartDate.getDate()).padStart(2,"0");
+    const salesChartTo = todayISO();
+    const { data: salesChartRows } = await db.from("sales_invoices").select("net_total, invoice_date").gte("invoice_date", salesChartFrom).lte("invoice_date", salesChartTo).neq("status","CANCELLED");
     const dailySales = {};
-    for(let i=6; i>=0; i--){ const d = new Date(); d.setDate(d.getDate()-i); const key = d.toISOString().substring(0,10); dailySales[key] = 0; }
-    (salesRes.data||[]).forEach(s => { if(dailySales[s.invoice_date] !== undefined) dailySales[s.invoice_date] += Number(s.net_total||0); });
+    for(let i=29; i>=0; i--){
+      const d = new Date(); d.setDate(d.getDate()-i);
+      const key = d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+      dailySales[key] = 0;
+    }
+    (salesChartRows||[]).forEach(s => { if(dailySales[s.invoice_date] !== undefined) dailySales[s.invoice_date] += Number(s.net_total||0); });
     const labels = Object.keys(dailySales).map(k => formatDate(k));
     const data = Object.values(dailySales);
     if(tasksSalesChart) tasksSalesChart.destroy();
