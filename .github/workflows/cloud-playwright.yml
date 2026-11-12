@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - qa/full-cycle-test
+      - qa/full-cycle-v108
 
 permissions:
   contents: read
