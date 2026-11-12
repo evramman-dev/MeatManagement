@@ -2330,9 +2330,28 @@ if($("runAdminResetPreviewBtn")) $("runAdminResetPreviewBtn").addEventListener("
     const backup=document.createElement("div");backup.className="product";
     const backupTitle=document.createElement("div");backupTitle.className="pname";backupTitle.textContent="النسخة الاحتياطية";
     const backupInfo=document.createElement("div");backupInfo.className="details";
-    backupInfo.textContent="الجداول المسجلة: "+Number(data.backup?.manifest_tables||0)+" من "+Number(data.backup?.complete_expected_tables||74)+" | السجلات: "+Number(data.backup?.manifest_rows||0);
+    backupInfo.textContent="الجداول المسجلة: "+Number(data.backup?.manifest_tables||0)+" من "+Number(data.backup?.complete_expected_tables||74)+" | السجلات: "+Number(data.backup?.manifest_rows||0)+" من "+Number(data.backup?.expected_rows||4442)+" | الحالة: "+(data.backup?.complete===true?"مكتملة":"غير مكتملة - يمنع البدء");
     backup.append(backupTitle,backupInfo);result.appendChild(backup);
     addSection("عناصر تتطلب معالجة قبل إعادة التهيئة",data.blockers);
+    const addDetailRows=(title,rows,fields)=>{
+      if(!Array.isArray(rows)||!rows.length)return;
+      const section=document.createElement("div");section.className="product";
+      const heading=document.createElement("div");heading.className="pname";heading.textContent=title;section.appendChild(heading);
+      rows.forEach(item=>{
+        const line=document.createElement("div");line.className="details";
+        line.style.cssText="padding:8px 0;border-top:1px solid var(--line);line-height:1.7;overflow-wrap:anywhere";
+        line.textContent=fields.map(([label,key])=>label+": "+(item?.[key]??"—")).join(" | ");
+        section.appendChild(line);
+      });
+      result.appendChild(section);
+    };
+    const b=data.blockers||{};
+    addDetailRows("توزيع القيود المرحلة حسب نوع المرجع",b.posted_journal_groups,[["المرجع","reference_type"],["الحالة","status"],["العدد","count"]]);
+    addDetailRows("تفاصيل التحصيلات النشطة",b.collection_details,[["رقم التحصيل","number"],["العميل","customer_name"],["المبلغ","amount"],["طريقة الدفع","payment_method"],["الخزنة","treasury_name"],["الفاتورة","invoice_id"],["الرحلة","trip_id"],["الحالة","status"]]);
+    addDetailRows("تفاصيل مرتجعات البيع النشطة",b.sales_return_details,[["رقم المرتجع","number"],["العميل","customer_name"],["القيمة","value"],["الفاتورة","invoice_id"],["الرحلة","trip_id"],["الحالة","status"]]);
+    addDetailRows("تفاصيل الرحلات النشطة",b.trip_details,[["رقم الرحلة","number"],["الحالة","status"],["تاريخ البداية","start_date"],["المخزن المصدر","source_location_id"],["موقع السيارة","vehicle_location_id"],["المندوب","sales_rep_id"]]);
+    addDetailRows("تفاصيل الخزائن ذات الأرصدة",b.treasury_details,[["الخزنة","name"],["النوع","type"],["الرصيد الحالي","current_balance"],["الرصيد الافتتاحي","opening_balance"],["الحساب","account_id"]]);
+    addDetailRows("تفاصيل أرصدة المخزون",b.stock_details,[["المخزن","location_name"],["الصنف","product_name"],["الكمية","quantity"],["قيمة المخزون","inventory_value"]]);
     msg(message,"اكتملت المعاينة فقط. لم يتم حذف أو تعديل أي بيانات.","success");
   }catch(e){msg(message,"تعذر إجراء المعاينة: "+err(e),"error");}
   finally{busy(btn,false,"","فحص العمليات والبيانات");}
