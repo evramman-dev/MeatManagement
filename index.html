@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v98</title>
+<title>MeatManagement v99</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -106,6 +106,18 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 .filter-box .row{margin-bottom:8px}
 .filter-box label{margin:0 0 5px}
 /* كروت الرئيسية - تعديل احترافي ومتناسق */
+.home-actions-divider{
+    display:flex;align-items:center;gap:12px;
+    margin:22px 2px 10px;color:var(--muted);
+    font-size:13px;font-weight:700;
+}
+.home-actions-divider::before,.home-actions-divider::after{
+    content:"";height:1px;flex:1;background:var(--line);
+}
+.home-actions-divider span{
+    padding:5px 12px;border:1px solid var(--line);
+    border-radius:20px;background:#f7f9f6;white-space:nowrap;
+}
 .home-dashboard {
     display: grid;
     /* عرض ثابت ومنتظم: كرتين في الصف على الموبايل */
@@ -330,7 +342,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v98]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v99]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -399,11 +411,12 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div id="homeOverview">
 <div id="userInfo" class="info">جارٍ تحميل بيانات الحساب...</div>
 <div class="home-dashboard" id="homeDashboard"></div>
-<div class="home-dashboard" id="homeQuickReports" style="margin-top:14px;">
-  <button id="openHomeNotifications" class="home-card red" type="button"><span class="hc-label">مركز التنبيهات</span><span class="hc-value" id="homeNotificationButtonCount">0</span></button>
-  <button id="openHomeGeoSummary" class="home-card gold" type="button"><span class="hc-label">ملخص تعاملات المحافظة</span><span class="hc-value" id="homeGeoButtonBalance">0</span></button>
-  <button id="openHomeItemsSummary" class="home-card green" type="button"><span class="hc-label">ملخص حركة الأصناف</span><span class="hc-value">عرض</span></button>
-  <button id="openHomeCustomersSummary" class="home-card" type="button"><span class="hc-label">ملخص العملاء</span><span class="hc-value">عرض</span></button>
+<div class="home-actions-divider"><span>التقارير والملخصات</span></div>
+<div class="home-dashboard" id="homeQuickReports">
+  <button id="openHomeNotifications" class="home-card red" type="button"><span class="hc-label">🔔 مركز التنبيهات</span><span class="hc-value" id="homeNotificationButtonCount">0</span></button>
+  <button id="openHomeGeoSummary" class="home-card gold" type="button"><span class="hc-label">🗺️ ملخص تعاملات المحافظة</span><span class="hc-value" id="homeGeoButtonBalance">0</span></button>
+  <button id="openHomeItemsSummary" class="home-card green" type="button"><span class="hc-label">📦 ملخص حركة الأصناف</span><span class="hc-value">عرض</span></button>
+  <button id="openHomeCustomersSummary" class="home-card" type="button"><span class="hc-label">👥 ملخص العملاء</span><span class="hc-value">عرض</span></button>
 </div>
 </div>
 <div id="homeNotificationPanel" class="card hidden" style="margin-top:14px;">
@@ -1806,7 +1819,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v98</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v99</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -2903,13 +2916,14 @@ async function loadTasks() {
   const to = $("tasksToDate").value || todayISO();
 
   try {
-    const [salesRes, purchRes, expRes, collRes, retRes, prodRes, lowStockRes, unpaidInvRes, draftTripsRes, draftProdRes, profitRes] = await Promise.all([
+    const [salesRes, purchRes, expRes, collRes, retRes, prodRes, stockValueRes, lowStockRes, unpaidInvRes, draftTripsRes, draftProdRes, profitRes] = await Promise.all([
       db.from("sales_invoices").select("net_total, invoice_date").gte("invoice_date", from).lte("invoice_date", to).neq("status","CANCELLED"),
       db.from("purchase_invoices").select("net_total").gte("invoice_date", from).lte("invoice_date", to).neq("status","CANCELLED"),
       db.from("expenses").select("amount, expense_type").eq("is_cancelled",false).gte("expense_date", from).lte("expense_date", to),
       db.from("customer_collections").select("amount").gte("collection_date", from).lte("collection_date", to).eq("status","POSTED"),
       db.from("purchase_returns").select("total_return_amount").gte("return_date", from).lte("return_date", to),
       db.from("sales_returns").select("total_returned_value").gte("return_date", from).lte("return_date", to),
+      db.from("stock_balances").select("inventory_value"),
       db.from("stock_balances").select("product_id, quantity, products(product_name, minimum_stock)").limit(1000),
       db.from("sales_invoices").select("invoice_number, remaining_amount, customers(customer_name)").in("status", ["POSTED","PARTIAL"]).gt("remaining_amount", 0).limit(20),
       db.from("trips").select("trip_number, sales_reps(name)").eq("status", "DRAFT").limit(20),
@@ -2923,6 +2937,9 @@ async function loadTasks() {
     const totalColl = (collRes.data||[]).reduce((a,b)=>a+Number(b.amount||0),0);
     const totalPurRet = (retRes.data||[]).reduce((a,b)=>a+Number(b.total_return_amount||0),0);
     const totalSalRet = (prodRes.data||[]).reduce((a,b)=>a+Number(b.total_returned_value||0),0);
+    const totalInventoryValue = !stockValueRes.error
+      ? (stockValueRes.data||[]).reduce((sum,row)=>sum+Number(row.inventory_value||0),0)
+      : null;
     const profitRows = Array.isArray(profitRes.data) ? profitRes.data : (profitRes.data ? [profitRes.data] : []);
     const profitRow = profitRows[0] || null;
     const profitValue = !profitRes.error && profitRow ? fmt(profitRow.profit) : "غير متاح";
@@ -2939,6 +2956,7 @@ async function loadTasks() {
       <div class="home-card"><div class="hc-label">↩️ مرتجع مشتريات</div><div class="hc-value">${fmt(totalPurRet)}</div></div>
       <div class="home-card"><div class="hc-label">↩️ مرتجع بيع</div><div class="hc-value">${fmt(totalSalRet)}</div></div>
       <div class="home-card"><div class="hc-label">📊 صافي الربح</div><div class="hc-value">${profitValue}</div><div class="details">${profitDetails}</div></div>
+      <div class="home-card green"><div class="hc-label">📦 قيمة المخزون</div><div class="hc-value">${totalInventoryValue===null ? "غير متاح" : fmt(totalInventoryValue)}</div><div class="details">القيمة الحالية لأرصدة جميع المواقع المخزنية</div></div>
     `;
 
     const salesChartStartDate = new Date();
