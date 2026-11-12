@@ -1597,7 +1597,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 <button class="btn" id="refreshGeoSalesReport" type="button" style="margin-top:10px;">عرض التقرير</button>
 <div class="info" style="margin-top:10px;">رصيد أول المدة هو صافي رصيد العملاء قبل بداية الفترة. الرصيد الحالي = رصيد أول المدة + المبيعات - التحصيلات - المرتجعات التي خُصمت من المديونية. الرقم الموجب يعني أن على العملاء رصيدًا للشركة، والرقم السالب يعني أن للعملاء رصيدًا لدى الشركة. عمود المرتجعات يعرض إجمالي المرتجعات خلال الفترة، بما فيها المبالغ التي رُدت نقدًا. حركة الأصناف بوحدتها الأساسية، والرصيد الحالي يشمل جميع المواقع.</div>
-<div class="table-responsive" style="margin-top:12px;"><table class="print-table" id="geoSalesTable"><thead><tr><th>المحافظة</th><th>رصيد أول المدة</th><th>إجمالي المبيعات</th><th>إجمالي التحصيلات</th><th>إجمالي المرتجعات</th><th>الرصيد الحالي</th></tr></thead><tbody><tr><td colspan="6">حدد الفترة ثم اضغط عرض التقرير.</td></tr></tbody></table></div><h3 style="margin-top:20px;">ملخص حركة الأصناف</h3><div class="table-responsive"><table class="print-table" id="geoItemsTable"><thead><tr><th>الصنف</th><th>الوحدة</th><th>إجمالي مشتريات</th><th>إجمالي مبيعات</th><th>إجمالي مرتجعات</th><th>رصيد حالي</th></tr></thead><tbody><tr><td colspan="6">حدد الفترة ثم اضغط عرض التقرير.</td></tr></tbody></table></div>
+<div class="table-responsive" style="margin-top:12px;"><table class="print-table" id="geoSalesTable"><thead><tr><th>المحافظة</th><th>رصيد أول المدة</th><th>إجمالي المبيعات</th><th>إجمالي التحصيلات</th><th>إجمالي المرتجعات</th><th>رصيد العملاء</th></tr></thead><tbody><tr><td colspan="6">حدد الفترة ثم اضغط عرض التقرير.</td></tr></tbody></table></div><h3 style="margin-top:20px;">ملخص حركة الأصناف</h3><div class="table-responsive"><table class="print-table" id="geoItemsTable"><thead><tr><th>الصنف</th><th>الوحدة</th><th>إجمالي مشتريات</th><th>إجمالي مبيعات</th><th>إجمالي مرتجعات</th><th>رصيد حالي</th></tr></thead><tbody><tr><td colspan="6">حدد الفترة ثم اضغط عرض التقرير.</td></tr></tbody></table></div>
 </div>
 <div id="repPL" class="report-tab hidden">
 <div class="grid"><div><label>من تاريخ</label><input type="date" id="plFromDate"></div><div><label>إلى تاريخ</label><input type="date" id="plToDate"></div></div>
@@ -1850,7 +1850,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div id="locationStatementHeader" style="font-size:14px;line-height:1.8;margin-bottom:15px;"></div>
 <div class="table-responsive"><table class="print-table" id="locationStatementTable"><thead><tr><th>التاريخ</th><th>الصنف</th><th>الحركة</th><th>التغيير</th><th>الرصيد التراكمي</th><th>البيان</th></tr></thead><tbody></tbody></table></div>
 <div id="locationSummaryTitle" style="font-weight:bold;margin-top:20px;font-size:15px;color:var(--g);border-bottom:2px solid var(--gold);padding-bottom:5px;display:inline-block;">ملخص حركة الأصناف</div>
-<div class="table-responsive" style="margin-top:10px;"><table class="print-table" id="locationSummaryTable"><thead><tr><th>الصنف</th><th>إجمالي وارد</th><th>إجمالي صادر</th><th>صافي الحركة</th><th>الرصيد الحالي</th></tr></thead><tbody></tbody></table></div>
+<div class="table-responsive" style="margin-top:10px;"><table class="print-table" id="locationSummaryTable"><thead><tr><th>الصنف</th><th>إجمالي وارد</th><th>إجمالي صادر</th><th>صافي الحركة</th><th>رصيد العملاء</th></tr></thead><tbody></tbody></table></div>
 <div class="print-footer" id="locationPrintFooter"></div>
 </div>
 <div class="no-print" style="margin-top:20px;display:flex;gap:10px;"><button class="btn" onclick="window.print()" style="background:var(--gold);color:var(--g);flex:1;">🖨️ طباعة / PDF</button><button class="btn" id="shareLocationWhatsappBtn" style="background:#25D366;flex:1;">💬 واتساب</button></div>
@@ -3482,9 +3482,9 @@ async function loadGeoSalesReport(){
   const body=$("geoSalesTable")?.querySelector("tbody"),itemsBody=$("geoItemsTable")?.querySelector("tbody");if(!body||!itemsBody)return;
   const from=$("geoSalesFromDate").value||monthStartISO(),to=$("geoSalesToDate").value||todayISO();
   if(from>to){body.innerHTML='<tr><td colspan="6">تاريخ البداية يجب أن يسبق تاريخ النهاية.</td></tr>';return;}
-  body.innerHTML='<tr><td colspan="6">جارٍ تحميل التقرير...</td></tr>';itemsBody.innerHTML='<tr><td colspan="5">جارٍ تحميل حركة الأصناف...</td></tr>';
+  body.innerHTML='<tr><td colspan="6">جارٍ تحميل التقرير...</td></tr>';itemsBody.innerHTML='<tr><td colspan="6">جارٍ تحميل حركة الأصناف...</td></tr>';
   try{const [rows,items]=await Promise.all([buildGeoSalesSummary(from,to),buildGeoItemMovementSummary(from,to)]);body.innerHTML=rows.length?geoSalesRowsHtml(rows):'<tr><td colspan="6">لا توجد حركة خلال الفترة.</td></tr>';itemsBody.innerHTML=items.length?geoItemRowsHtml(items):'<tr><td colspan="6">لا توجد حركة أصناف خلال الفترة.</td></tr>';}
-  catch(e){const message=esc(err(e));body.innerHTML=`<tr><td colspan="6" style="color:red;">تعذر تحميل التقرير: ${message}</td></tr>`;itemsBody.innerHTML=`<tr><td colspan="5" style="color:red;">تعذر تحميل حركة الأصناف: ${message}</td></tr>`;}
+  catch(e){const message=esc(err(e));body.innerHTML=`<tr><td colspan="6" style="color:red;">تعذر تحميل التقرير: ${message}</td></tr>`;itemsBody.innerHTML=`<tr><td colspan="6" style="color:red;">تعذر تحميل حركة الأصناف: ${message}</td></tr>`;}
 }
 async function loadHomeGeoSummary(){
   const box=$("homeGeoSummary"),itemsBox=$("homeGeoItemsSummary");
@@ -3495,7 +3495,7 @@ async function loadHomeGeoSummary(){
   if(itemsBox)itemsBox.innerHTML='<h3>ملخص حركة الأصناف</h3><div class="info">جارٍ تحميل حركة الأصناف...</div>';
   try{
     const [rows,items]=await Promise.all([buildGeoSalesSummary(from,to),buildGeoItemMovementSummary(from,to)]);
-    box.innerHTML='<h3>ملخص المبيعات والتحصيلات حسب المحافظة</h3><div class="info">من '+from+' إلى '+to+' | المديونية المتبقية حتى نهاية الفترة</div><div class="table-responsive"><table class="print-table"><thead><tr><th>المحافظة</th><th>رصيد أول المدة</th><th>إجمالي المبيعات</th><th>إجمالي التحصيلات</th><th>إجمالي المرتجعات</th><th>الرصيد الحالي</th></tr></thead><tbody>'+(rows.length?geoSalesRowsHtml(rows):'<tr><td colspan="6">لا توجد حركة.</td></tr>')+'</tbody></table></div>';
+    box.innerHTML='<h3>ملخص المبيعات والتحصيلات حسب المحافظة</h3><div class="info">من '+from+' إلى '+to+' | الرصيد المالي للعملاء حتى نهاية الفترة</div><div class="table-responsive"><table class="print-table"><thead><tr><th>المحافظة</th><th>رصيد أول المدة</th><th>إجمالي المبيعات</th><th>إجمالي التحصيلات</th><th>إجمالي المرتجعات</th><th>رصيد العملاء</th></tr></thead><tbody>'+(rows.length?geoSalesRowsHtml(rows):'<tr><td colspan="6">لا توجد حركة.</td></tr>')+'</tbody></table></div>';
     if(itemsBox)itemsBox.innerHTML='<h3>ملخص حركة الأصناف</h3><div class="info">من '+from+' إلى '+to+' | الكميات بوحدة الصنف الأساسية</div><div class="table-responsive"><table class="print-table"><thead><tr><th>الصنف</th><th>الوحدة</th><th>إجمالي مشتريات</th><th>إجمالي مبيعات</th><th>إجمالي مرتجعات</th><th>رصيد حالي</th></tr></thead><tbody>'+(items.length?geoItemRowsHtml(items):'<tr><td colspan="6">لا توجد حركة أصناف خلال الفترة.</td></tr>')+'</tbody></table></div>';
   }catch(e){
     const message=esc(err(e));
