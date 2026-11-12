@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v89</title>
+<title>MeatManagement v90</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -3444,13 +3444,13 @@ async function buildGeoSalesSummary(from,to){
   ]);
   const customerGovMap=new Map(customers.map(c=>[String(c.customer_id),c.governorate_id])),map=new Map();
   const ensure=id=>{const key=id==null?"unknown":String(id);if(!map.has(key))map.set(key,{name:id==null?"غير محدد":geoGovernorateName(id),opening:0,sales:0,collections:0,returns:0,balance:0});return map.get(key);};
-  const invoicesByCustomer=new Map(),openingCollections=new Map(),periodCollections=new Map(),openingReturns=new Map(),periodDebtReturns=new Map(),periodSalesByCustomer=new Map();
+  const invoicesByCustomer=new Map(),openingCollections=new Map(),periodCollections=new Map(),openingReturns=new Map(),periodReturnsByCustomer=new Map(),periodSalesByCustomer=new Map();
   customerGovernoratesCache.forEach(g=>ensure(g.governorate_id));
   sales.forEach(inv=>{const key=String(inv.customer_id),day=String(inv.invoice_date||"").slice(0,10),amount=Number(inv.net_total||0);if(!invoicesByCustomer.has(key))invoicesByCustomer.set(key,[]);invoicesByCustomer.get(key).push({day,amount});if(day>=from&&day<=to){ensure(customerGovMap.get(key)).sales+=amount;periodSalesByCustomer.set(key,(periodSalesByCustomer.get(key)||0)+amount);}});
   collections.forEach(col=>{const key=String(col.customer_id),day=String(col.collection_date||"").slice(0,10),amount=Number(col.amount||0);if(day<from)openingCollections.set(key,(openingCollections.get(key)||0)+amount);else if(day<=to){periodCollections.set(key,(periodCollections.get(key)||0)+amount);ensure(customerGovMap.get(key)).collections+=amount;}});
-  returns.forEach(ret=>{const key=String(ret.customer_id),day=String(ret.return_date||"").slice(0,10),amount=Number(ret.total_returned_value||0);if(day>=from&&day<=to)ensure(customerGovMap.get(key)).returns+=amount;if(ret.cash_action==="DEDUCT_DEBT"){const target=day<from?openingReturns:periodDebtReturns;target.set(key,(target.get(key)||0)+amount);}});
-  const keys=new Set([...invoicesByCustomer.keys(),...openingCollections.keys(),...periodCollections.keys(),...openingReturns.keys(),...periodDebtReturns.keys()]);
-  keys.forEach(key=>{const row=ensure(customerGovMap.get(key)),invRows=invoicesByCustomer.get(key)||[],beforeSales=invRows.filter(x=>x.day<from).reduce((a,x)=>a+x.amount,0),opening=beforeSales-(openingCollections.get(key)||0)-(openingReturns.get(key)||0);row.opening+=opening;row.balance+=opening+(periodSalesByCustomer.get(key)||0)-(periodCollections.get(key)||0)-(periodDebtReturns.get(key)||0);});
+  returns.forEach(ret=>{const key=String(ret.customer_id),day=String(ret.return_date||"").slice(0,10),amount=Number(ret.total_returned_value||0);if(day<from)openingReturns.set(key,(openingReturns.get(key)||0)+amount);else if(day<=to){periodReturnsByCustomer.set(key,(periodReturnsByCustomer.get(key)||0)+amount);ensure(customerGovMap.get(key)).returns+=amount;}});
+  const keys=new Set([...invoicesByCustomer.keys(),...openingCollections.keys(),...periodCollections.keys(),...openingReturns.keys(),...periodReturnsByCustomer.keys()]);
+  keys.forEach(key=>{const row=ensure(customerGovMap.get(key)),invRows=invoicesByCustomer.get(key)||[],beforeSales=invRows.filter(x=>x.day<from).reduce((a,x)=>a+x.amount,0),opening=beforeSales-(openingCollections.get(key)||0)-(openingReturns.get(key)||0);row.opening+=opening;row.balance+=opening+(periodSalesByCustomer.get(key)||0)-(periodCollections.get(key)||0)-(periodReturnsByCustomer.get(key)||0);});
   return Array.from(map.values()).filter(x=>x.opening||x.sales||x.collections||x.returns||x.balance).sort((a,b)=>a.name.localeCompare(b.name,"ar"));
 }
 async function buildGeoItemMovementSummary(from,to){
