@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v94</title>
+<title>MeatManagement v95</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -134,6 +134,9 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     transform: scale(0.96);
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
+.tasks-charts-button{width:100%;margin:0;min-height:100px;font-family:inherit;cursor:pointer}
+.tasks-charts-button .hc-label,.tasks-charts-button .hc-value{color:inherit}
+
 
 /* الألوان بتاعتك (زي ما هي بس متنسقة أحسن) */
 .home-card { background: linear-gradient(135deg, var(--g), var(--g2)); color: white; }
@@ -327,7 +330,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v94]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v95]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -462,10 +465,11 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <button id="tasksFilterBtn" class="btn" style="margin-top:10px;">تحديث التحليلات</button>
 </div>
 <div class="home-dashboard" id="tasksDashboard"></div>
-<div class="dashboard-grid" style="margin-top:14px;">
-  <div class="dash-item" id="tasksChartsToggle" role="button" tabindex="0" onclick="toggleTasksCharts()">
-    <div class="dash-icon">📊</div><div class="dash-title">التحليلات البيانية</div>
-  </div>
+<div class="home-dashboard" style="margin-top:14px;">
+  <button type="button" class="home-card gold tasks-charts-button" id="tasksChartsToggle" aria-expanded="false" aria-controls="tasksChartsPanel">
+    <span class="hc-label">📊 التحليلات البيانية</span>
+    <span class="hc-value" style="font-size:14px;">عرض الرسوم البيانية</span>
+  </button>
 </div>
 <div id="tasksChartsPanel" class="hidden" style="margin-top:16px;">
   <div style="margin-top:12px;">
@@ -1789,7 +1793,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v94</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v95</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -2851,9 +2855,15 @@ function toggleTasksCharts() {
   if(!panel) return;
   const opening = panel.classList.contains("hidden");
   panel.classList.toggle("hidden", !opening);
-  if(toggle) toggle.setAttribute("aria-expanded", opening ? "true" : "false");
-  if(opening) [tasksSalesChart,tasksExpensesChart,tasksTripsChart].forEach(chart=>{ if(chart) chart.resize(); });
+  if(toggle) {
+    toggle.setAttribute("aria-expanded", opening ? "true" : "false");
+    const label = toggle.querySelector(".hc-value");
+    if(label) label.textContent = opening ? "إخفاء الرسوم البيانية" : "عرض الرسوم البيانية";
+  }
+  if(opening) requestAnimationFrame(()=>[tasksSalesChart,tasksExpensesChart,tasksTripsChart].forEach(chart=>{ if(chart) chart.resize(); }));
 }
+const tasksChartsToggleButton = $("tasksChartsToggle");
+if(tasksChartsToggleButton) tasksChartsToggleButton.addEventListener("click", toggleTasksCharts);
 async function loadTasks() {
   const box = $("tasksList"); if(!box) return;
   if (!navigator.onLine) { box.innerHTML = "<div class='empty'>أنت أوفلاين حالياً.</div>"; return; }
