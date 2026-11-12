@@ -2105,7 +2105,7 @@ window.openSection = function(name) {
   if (name === "locations") loadLocations();
   if (name === "stock") loadStock();
   if (name === "stockSummary") loadStockSummary();
-  if (name === "packaging") { loadProducts(); loadPackagingOptions(); }
+  if (name === "packaging") loadProducts();
   if (name === "productionDailySummary") loadProductionDailySummary();
    if (name === "stockLots") loadStockLots();
   if (name === "reservations") loadReservations();
@@ -3468,7 +3468,7 @@ function geoSalesRowsHtml(rows){
 }
 function geoItemRowsHtml(rows){
   const totals=rows.reduce((t,r)=>({purchases:t.purchases+r.purchases,sales:t.sales+r.sales,returns:t.returns+r.returns,current:t.current+r.current}),{purchases:0,sales:0,returns:0,current:0});
-  return rows.map(r=>`<tr><td>${esc(productName(r.product_id))}</td><td>${fmtQty(r.purchases)}</td><td>${fmtQty(r.sales)}</td><td>${fmtQty(r.returns)}</td><td>${fmtQty(r.current)}</td></tr>`).join("")+`<tr style="background:#e9efe9;font-weight:bold;"><td>الإجمالي</td><td>${fmtQty(totals.purchases)}</td><td>${fmtQty(totals.sales)}</td><td>${fmtQty(totals.returns)}</td><td>${fmtQty(totals.current)}</td></tr>`;
+  return rows.map(r=>{const p=productsCache.find(x=>String(x.product_id)===String(r.product_id));return `<tr><td>${esc(productName(r.product_id))} (${esc(unitName(p?.base_unit_id))})</td><td>${fmtQty(r.purchases)}</td><td>${fmtQty(r.sales)}</td><td>${fmtQty(r.returns)}</td><td>${fmtQty(r.current)}</td></tr>`;}).join("");
 }
 
 async function loadGeoSalesReport(){
