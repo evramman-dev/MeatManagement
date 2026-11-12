@@ -2477,7 +2477,7 @@ if($("runAdminResetPhase2PreviewBtn")) $("runAdminResetPhase2PreviewBtn").addEve
       price_lists:"قوائم الأسعار",price_list_items:"بنود قوائم الأسعار",
       customer_price_lists:"قوائم أسعار العملاء",partners:"الشركاء",
       expense_types:"أنواع المصروفات",sales_reps:"مندوبو المبيعات",
-      sales_rep_areas:"مناطق المندوبين",app_users:"المستخدمون",app_roles:"الأدوار",
+      sales_rep_areas:"مناطق المندوبين",fixed_assets:"الأصول الثابتة",notification_rules:"قواعد الإشعارات",app_users:"المستخدمون",app_roles:"الأدوار",
       app_permissions:"الصلاحيات",app_role_permissions:"ربط الأدوار بالصلاحيات",
       chart_of_accounts:"دليل الحسابات",accounting_periods:"الفترات المحاسبية",
       company_settings:"إعدادات الشركة",governorates:"المحافظات",cities:"المراكز والمدن",
@@ -2505,7 +2505,8 @@ if($("runAdminResetPhase2PreviewBtn")) $("runAdminResetPhase2PreviewBtn").addEve
     addSection("البيانات الأساسية التي ستُحذف",data.master_data);
     addSection("البيانات التي ستظل محفوظة",data.preserved);
     addSection("التحقق من خلو العمليات بعد المرحلة الأولى",data.operations_verification);
-    addSection("التحقق من الموانع",data.blockers_verification);
+    addSection("التحقق من الموانع التشغيلية",data.blockers_verification);
+    addSection("ارتباطات تمنع حذف بيانات المرحلة الثانية",data.phase2_blockers);
     addSection("نسخة البيانات المحفوظة لهذه الخطة",backupPlan.rows_by_table);
     const backup=document.createElement("div");backup.className="product";
     const backupTitle=document.createElement("div");backupTitle.className="pname";backupTitle.textContent="النسخة الاحتياطية العامة";
@@ -2518,10 +2519,15 @@ if($("runAdminResetPhase2PreviewBtn")) $("runAdminResetPhase2PreviewBtn").addEve
     backup.append(backupTitle,backupInfo);result.appendChild(backup);
     const actions=document.createElement("div");actions.className="product";
     const approveBtn=document.createElement("button");approveBtn.className="btn";approveBtn.type="button";
-    approveBtn.textContent="اعتماد تقرير المرحلة الثانية";
+    const phase2Blockers=data.phase2_blockers||{};
+    const phase2HasBlockers=Object.values(phase2Blockers).some(value=>Number(value)>0);
+    approveBtn.textContent=phase2HasBlockers?"الاعتماد متوقف بسبب ارتباطات الأصول":"اعتماد تقرير المرحلة الثانية";
+    approveBtn.disabled=phase2HasBlockers;
     const note=document.createElement("div");note.className="details";
     note.style.marginTop="8px";
-    note.textContent="الاعتماد يسجل موافقتك على التقرير فقط. لا يحذف بيانات. زر التنفيذ غير متاح حتى اجتياز اختبار التشغيل النهائي.";
+    note.textContent=phase2HasBlockers
+      ?"لا يمكن اعتماد التقرير. توجد أصول ثابتة مرتبطة بموردين أو شركاء أو خزائن ضمن البيانات المستهدف حذفها. يجب معالجة هذا التعارض أولًا."
+      :"الاعتماد يسجل موافقتك على التقرير فقط. لا يحذف بيانات. زر التنفيذ غير متاح حتى اجتياز اختبار التشغيل النهائي.";
     actions.append(approveBtn,note);result.appendChild(actions);
     approveBtn.addEventListener("click",async()=>{
       if(!window.confirm("هل توافق على اعتماد تقرير المرحلة الثانية؟ الاعتماد لا يحذف أي بيانات."))return;
@@ -2542,6 +2548,7 @@ if($("runAdminResetPhase2PreviewBtn")) $("runAdminResetPhase2PreviewBtn").addEve
         msg(note,"تعذر اعتماد التقرير: "+err(e),"error");
       }finally{
         busy(approveBtn,false,"","اعتماد تقرير المرحلة الثانية");
+        if(approveBtn.textContent==="تم اعتماد التقرير"||phase2HasBlockers)approveBtn.disabled=true;
       }
     });
     msg(message,"اكتمل تجهيز تقرير المرحلة الثانية ونسخة بياناتها. لم يتم حذف أو تعديل أي بيانات. راجع التقرير قبل اعتماده.","success");
