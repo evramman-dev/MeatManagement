@@ -47,8 +47,8 @@ test('Factory reset readiness inventory through the application UI', async ({ pa
   await open('products');
   if (await page.locator('#addBtn').isVisible().catch(() => false)) await page.locator('#addBtn').click();
   await wait(500);
-  snapshot.productCategories = await countOptions('#category');
-  snapshot.productUnits = await countOptions('#baseUnit');
+  snapshot.productCategoryOptions = await page.locator('#category option').evaluateAll(os => os.map(o => ({ value:o.value, text:o.textContent.trim() })));
+  snapshot.productUnitOptions = await page.locator('#baseUnit option').evaluateAll(os => os.map(o => ({ value:o.value, text:o.textContent.trim() })));
   snapshot.productFormAvailable = await page.locator('#productFormModal').evaluate(el => el.classList.contains('active'));
   if (snapshot.productFormAvailable) await page.locator('#productFormModal .close-btn').click();
 
@@ -62,8 +62,13 @@ test('Factory reset readiness inventory through the application UI', async ({ pa
   if (snapshot.canAddCustomer) {
     await page.locator('#addCustomerBtn').click();
     await wait(500);
-    snapshot.governorates = await countOptions('#customerGovernorate');
-    snapshot.customerCitiesInitially = await countOptions('#customerCity');
+    snapshot.governorateOptions = await page.locator('#customerGovernorate option').evaluateAll(os => os.map(o => ({ value:o.value, text:o.textContent.trim() })));
+    const firstGovernorate = await page.locator('#customerGovernorate option').evaluateAll(os => os.find(o => o.value)?.value || '');
+    if (firstGovernorate) {
+      await page.locator('#customerGovernorate').selectOption(firstGovernorate);
+      await wait(1200);
+    }
+    snapshot.cityOptionsAfterGovernorate = await page.locator('#customerCity option').evaluateAll(os => os.map(o => ({ value:o.value, text:o.textContent.trim() })));
     await page.locator('#customerFormModal .close-btn').click();
   }
 
@@ -80,16 +85,16 @@ test('Factory reset readiness inventory through the application UI', async ({ pa
   snapshot.canAddTreasury = await page.locator('#addTreasuryBtn').isVisible().catch(() => false);
 
   await open('expenses');
-  snapshot.expenseTypes = await countOptions('#expenseType');
+  snapshot.expenseTypeOptions = await page.locator('#expenseType option').evaluateAll(os => os.map(o => ({ value:o.value, text:o.textContent.trim() })));
 
   await open('purchases');
-  snapshot.purchaseSuppliers = await countOptions('#purchaseSupplier');
-  snapshot.purchaseLocations = await countOptions('#purchaseLocation');
+  snapshot.purchaseSupplierOptions = await page.locator('#purchaseSupplier option').evaluateAll(os => os.map(o => ({ value:o.value, text:o.textContent.trim() })));
+  snapshot.purchaseLocationOptions = await page.locator('#purchaseLocation option').evaluateAll(os => os.map(o => ({ value:o.value, text:o.textContent.trim() })));
 
   await open('trips');
-  snapshot.tripReps = await countOptions('#tripRepSelect');
-  snapshot.tripSources = await countOptions('#tripSource');
-  snapshot.tripVehicles = await countOptions('#tripVehicle');
+  snapshot.tripRepOptions = await page.locator('#tripRepSelect option').evaluateAll(os => os.map(o => ({ value:o.value, text:o.textContent.trim() })));
+  snapshot.tripSourceOptions = await page.locator('#tripSource option').evaluateAll(os => os.map(o => ({ value:o.value, text:o.textContent.trim() })));
+  snapshot.tripVehicleOptions = await page.locator('#tripVehicle option').evaluateAll(os => os.map(o => ({ value:o.value, text:o.textContent.trim() })));
 
   console.log('MEATMANAGEMENT_FACTORY_RESET_READINESS:', JSON.stringify(snapshot, null, 2));
   await page.screenshot({ path: 'test-results/factory-reset-readiness.png', fullPage: true });
