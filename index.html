@@ -2319,7 +2319,7 @@ if($("runAdminFactoryResetPreviewBtn")) $("runAdminFactoryResetPreviewBtn").addE
     let {data:prepared,error}=await db.rpc("admin_factory_reset_get_latest");
     if(error)throw error;
     const latestExpiry=prepared?.expires_at?Date.parse(prepared.expires_at):NaN;
-    const latestExpired=Number.isFinite(latestExpiry)&&latestExpiry<=Date.now();
+    const latestExpired=!Number.isFinite(latestExpiry)||latestExpiry<=Date.now();
     if(!prepared||prepared.found!==true||latestExpired){
       const fresh=await db.rpc("admin_factory_reset_prepare");
       if(fresh.error)throw fresh.error;
