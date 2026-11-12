@@ -410,6 +410,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
   </div>
 </div>
 <div id="homeGeoSummary" class="card" style="margin-top:14px;"><h3>ملخص المبيعات والتحصيلات حسب المحافظة</h3><div class="info">جارٍ تحميل الملخص...</div></div>
+<div id="homeGeoItemsSummary" class="card hidden" style="margin-top:14px;"><h3>ملخص حركة الأصناف</h3><div class="info">جارٍ تحميل حركة الأصناف...</div></div>
 <button id="logoutBtn" class="btn secondary" type="button" style="margin-top:16px;">تسجيل الخروج</button>
 </div>
 </section>
@@ -1949,6 +1950,7 @@ try {
   function msg(el,text,type=""){ if(!el) return; el.textContent=text; el.className="status"+(type?" "+type:""); }
   function clear(el){ if(!el) return; el.textContent=""; el.className="status hidden"; }
   function err(e){ return(e?.message||"حدث خطأ غير معروف.")+(e?.code?" — الرمز: "+e.code:""); }
+  function esc(value){ return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch])); }
   function busy(btn,on,onText,offText){ if(!btn) return; btn.disabled=on; btn.textContent=on?onText:offText; }
   function fmt(n){ const v=Number(n||0); return v.toLocaleString("ar-EG",{minimumFractionDigits:2,maximumFractionDigits:2}); }
   function fmtQty(n){ const v=Number(n||0); return v.toLocaleString("ar-EG",{minimumFractionDigits:0,maximumFractionDigits:4}); }
@@ -3485,14 +3487,21 @@ async function loadGeoSalesReport(){
   catch(e){const message=esc(err(e));body.innerHTML=`<tr><td colspan="6" style="color:red;">تعذر تحميل التقرير: ${message}</td></tr>`;itemsBody.innerHTML=`<tr><td colspan="5" style="color:red;">تعذر تحميل حركة الأصناف: ${message}</td></tr>`;}
 }
 async function loadHomeGeoSummary(){
-  const box=$("homeGeoSummary"); if(!box||!isSystemAdmin){if(box)box.classList.add("hidden");return;}
-  box.classList.remove("hidden");
+  const box=$("homeGeoSummary"),itemsBox=$("homeGeoItemsSummary");
+  if(!box||!isSystemAdmin){if(box)box.classList.add("hidden");if(itemsBox)itemsBox.classList.add("hidden");return;}
+  box.classList.remove("hidden");if(itemsBox)itemsBox.classList.remove("hidden");
   const from=monthStartISO(),to=todayISO();
   box.innerHTML='<h3>ملخص المبيعات والتحصيلات حسب المحافظة</h3><div class="info">جارٍ تحميل الملخص...</div>';
+  if(itemsBox)itemsBox.innerHTML='<h3>ملخص حركة الأصناف</h3><div class="info">جارٍ تحميل حركة الأصناف...</div>';
   try{
-    const rows=await buildGeoSalesSummary(from,to);
-    box.innerHTML='<h3>ملخص المبيعات والتحصيلات حسب المحافظة</h3><div class="info">من '+from+' إلى '+to+' | المديونية المتبقية حتى نهاية الفترة</div><div class="table-responsive"><table class="print-table"><thead><tr><th>المحافظة</th><th>رصيد أول المدة</th><th>إجمالي المبيعات</th><th>إجمالي التحصيلات</th><th>إجمالي المرتجعات</th><th>الرصيد الحالي</th></tr></thead><tbody>'+(rows.length?geoSalesRowsHtml(rows):'<tr><td colspan="5">لا توجد حركة.</td></tr>')+'</tbody></table></div>';
-  }catch(e){box.innerHTML='<h3>ملخص المبيعات والتحصيلات حسب المحافظة</h3><div class="empty error">تعذر تحميل الملخص: '+err(e)+'</div>';}
+    const [rows,items]=await Promise.all([buildGeoSalesSummary(from,to),buildGeoItemMovementSummary(from,to)]);
+    box.innerHTML='<h3>ملخص المبيعات والتحصيلات حسب المحافظة</h3><div class="info">من '+from+' إلى '+to+' | المديونية المتبقية حتى نهاية الفترة</div><div class="table-responsive"><table class="print-table"><thead><tr><th>المحافظة</th><th>رصيد أول المدة</th><th>إجمالي المبيعات</th><th>إجمالي التحصيلات</th><th>إجمالي المرتجعات</th><th>الرصيد الحالي</th></tr></thead><tbody>'+(rows.length?geoSalesRowsHtml(rows):'<tr><td colspan="6">لا توجد حركة.</td></tr>')+'</tbody></table></div>';
+    if(itemsBox)itemsBox.innerHTML='<h3>ملخص حركة الأصناف</h3><div class="info">من '+from+' إلى '+to+' | الكميات بوحدة الصنف الأساسية</div><div class="table-responsive"><table class="print-table"><thead><tr><th>الصنف</th><th>إجمالي مشتريات</th><th>إجمالي مبيعات</th><th>إجمالي مرتجعات</th><th>رصيد حالي</th></tr></thead><tbody>'+(items.length?geoItemRowsHtml(items):'<tr><td colspan="5">لا توجد حركة أصناف خلال الفترة.</td></tr>')+'</tbody></table></div>';
+  }catch(e){
+    const message=esc(err(e));
+    box.innerHTML='<h3>ملخص المبيعات والتحصيلات حسب المحافظة</h3><div class="empty error">تعذر تحميل الملخص: '+message+'</div>';
+    if(itemsBox)itemsBox.innerHTML='<h3>ملخص حركة الأصناف</h3><div class="empty error">تعذر تحميل حركة الأصناف: '+message+'</div>';
+  }
 }
 
 // ========== العملاء ==========
@@ -5053,15 +5062,23 @@ async function viewInvoice(inv) {
           $("modalInvoiceLots").textContent="تعذر تحميل تخصيصات التشغيلات: "+err(allocationError);
         }
         const invoiceTime = formatDateTime(inv.created_at || inv.invoice_date);
+        const {data: invoiceReturns,error: invoiceReturnsError} = await db.from("sales_returns").select("sales_return_id,total_returned_value,cash_action,status,return_number").eq("sales_invoice_id",inv.sales_invoice_id).eq("status","POSTED");
+        if(invoiceReturnsError) throw invoiceReturnsError;
+        const debtReturns=(invoiceReturns||[]).filter(r=>r.cash_action==="DEDUCT_DEBT").reduce((s,r)=>s+Number(r.total_returned_value||0),0);
+        const cashBackReturns=(invoiceReturns||[]).filter(r=>r.cash_action==="CASH_BACK").reduce((s,r)=>s+Number(r.total_returned_value||0),0);
+        const invoiceRemaining=Math.max(Number(inv.remaining_amount||0),0);
         $("modalInvoiceHeader").innerHTML = `<div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span><strong>فاتورة:</strong> ${inv.invoice_number}</span><span><strong>التاريخ:</strong> ${invoiceTime}</span></div><div style="display:flex;justify-content:space-between;"><span><strong>العميل:</strong> ${customerName(inv.customer_id)}</span><span><strong>الإجمالي:</strong> ${fmt(inv.net_total)}</span></div>`;
         const subtotal = Number(inv.subtotal); 
         const discount = Number(inv.discount_amount);
-        $("modalInvoiceTotals").innerHTML = `<div class="line"><span>الإجمالي قبل الخصم:</span><span>${fmt(subtotal)}</span></div><div class="line"><span>الخصم:</span><span style="color:red;">-${fmt(discount)}</span></div><div class="line" style="border-top:1px dashed #ccc;padding-top:5px;"><span>الإجمالي:</span><span style="font-weight:bold;">${fmt(inv.net_total)}</span></div><div class="line"><span>مدفوع:</span><span style="color:green;">${fmt(inv.paid_amount)}</span></div><div class="line grand"><span>متبقي:</span><span style="color:red;">${fmt(inv.remaining_amount)}</span></div>`;
+        $("modalInvoiceTotals").innerHTML = `<div class="line"><span>الإجمالي قبل الخصم:</span><span>${fmt(subtotal)}</span></div><div class="line"><span>الخصم:</span><span style="color:red;">-${fmt(discount)}</span></div><div class="line" style="border-top:1px dashed #ccc;padding-top:5px;"><span>الإجمالي:</span><span style="font-weight:bold;">${fmt(inv.net_total)}</span></div><div class="line"><span>مدفوع فعلي:</span><span style="color:green;">${fmt(inv.paid_amount)}</span></div><div class="line"><span>مرتجع مخصوم من المديونية:</span><span style="color:#8a6d1a;">${fmt(debtReturns)}</span></div>${cashBackReturns>0?`<div class="line"><span>مرتجع تم رد قيمته نقدًا:</span><span style="color:#8a6d1a;">${fmt(cashBackReturns)}</span></div>`:''}<div class="line grand"><span>متبقي:</span><span style="color:red;">${fmt(invoiceRemaining)}</span></div>`;
         let totalCustInv = 0, totalCustPaid = 0; 
-        salesCache.filter(i => i.customer_id === inv.customer_id && i.status !== 'CANCELLED').forEach(i => { totalCustInv += Number(i.net_total); totalCustPaid += Number(i.paid_amount); });
-        let totalCustRemaining = totalCustInv - totalCustPaid; 
-        let prevBalance = totalCustRemaining - Number(inv.remaining_amount);
-        $("modalInvoiceAccountSummary").innerHTML = `<div style="background:#e9f6ec;padding:10px;border-radius:8px;margin-top:10px;border:1px solid #c9d5c9;"><h4 style="margin:0 0 8px;color:#173c2c;text-align:center;">ملخص حساب العميل</h4><div class="line"><span>الرصيد السابق:</span><span>${fmt(prevBalance)}</span></div><div class="line"><span>إجمالي الفواتير:</span><span>${fmt(totalCustInv)}</span></div><div class="line"><span>إجمالي المدفوع:</span><span style="color:green;">${fmt(totalCustPaid)}</span></div><div class="line grand" style="color:#173c2c;"><span>الرصيد الحالي:</span><span>${fmt(totalCustRemaining)}</span></div></div>`;
+        salesCache.filter(i => i.customer_id === inv.customer_id && i.status !== 'CANCELLED').forEach(i => { totalCustInv += Number(i.net_total||0); totalCustPaid += Number(i.paid_amount||0); });
+        const {data: customerReturns,error: customerReturnsError} = await db.from("sales_returns").select("total_returned_value,cash_action,status").eq("customer_id",inv.customer_id).eq("status","POSTED");
+        if(customerReturnsError) throw customerReturnsError;
+        const totalCustDebtReturns=(customerReturns||[]).filter(r=>r.cash_action==="DEDUCT_DEBT").reduce((s,r)=>s+Number(r.total_returned_value||0),0);
+        const totalCustRemaining=Math.max(0,totalCustInv-totalCustPaid-totalCustDebtReturns);
+        const prevBalance=Math.max(0,totalCustRemaining-invoiceRemaining);
+        $("modalInvoiceAccountSummary").innerHTML = `<div style="background:#e9f6ec;padding:10px;border-radius:8px;margin-top:10px;border:1px solid #c9d5c9;"><h4 style="margin:0 0 8px;color:#173c2c;text-align:center;">ملخص حساب العميل</h4><div class="line"><span>الرصيد السابق:</span><span>${fmt(prevBalance)}</span></div><div class="line"><span>إجمالي الفواتير:</span><span>${fmt(totalCustInv)}</span></div><div class="line"><span>إجمالي المدفوع:</span><span style="color:green;">${fmt(totalCustPaid)}</span></div><div class="line"><span>إجمالي المرتجعات المخصومة:</span><span style="color:#8a6d1a;">${fmt(totalCustDebtReturns)}</span></div><div class="line grand" style="color:#173c2c;"><span>الرصيد الحالي:</span><span>${fmt(totalCustRemaining)}</span></div></div>`;
         const phone = customerPhone(inv.customer_id);
         const waBtn = $("shareWhatsappBtn");
         let waText = `*MeatManagement*\nفاتورة رقم: ${inv.invoice_number}\nالتاريخ: ${invoiceTime}\nالعميل: ${customerName(inv.customer_id)}\n------------------------\n`;
@@ -5071,8 +5088,8 @@ async function viewInvoice(inv) {
         });
         waText += `\n------------------------\n`;
         waText += `*الإجمالي:* ${fmt(inv.net_total)}\n`;
-        waText += `*مدفوع:* ${fmt(inv.paid_amount)}\n`;
-        waText += `*متبقي:* ${fmt(inv.remaining_amount)}\n`;
+        waText += `*مدفوع فعلي:* ${fmt(inv.paid_amount)}\n`;
+        waText += `*مرتجع مخصوم من المديونية:* ${fmt(debtReturns)}\n*متبقي:* ${fmt(invoiceRemaining)}\n`;
         waText += `\n--------------------\n`;
         waText += `*الرصيد الحالي للعميل:* ${fmt(totalCustRemaining)}\n`;
         waText += `========================\n`;
