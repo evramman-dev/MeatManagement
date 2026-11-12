@@ -626,11 +626,11 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div id="systemResetCard" class="card hidden">
 <h2>إعادة تهيئة النظام</h2>
 <p class="desc">أداة مستقلة لمدير النظام. تنفذ الفحص وتجهيز خطة المعالجة تلقائيًا، ولا تطلب منك تشغيل استعلامات أو تنفيذ خطوات يدوية. لن يبدأ أي حذف قبل عرض التقرير النهائي وموافقتك الصريحة.</p>
-<div class="product"><div class="pname">المرحلة الأولى: الفحص والتجهيز التلقائي</div><div class="details">تفحص المستندات والروابط والأرصدة والقيود، وتحفظ تقرير المعاينة برقم مرجعي وبصمة تحقق. لا تغير هذه الخطوة أي بيانات. بعد اكتمال محرك التنفيذ ستعرض خطة الإلغاء والعكس والحذف قبل طلب موافقتك.</div><button id="runAdminResetPreviewBtn" class="btn" type="button">ابدأ الفحص والتجهيز التلقائي</button></div>
+<div class="product"><div class="pname">المرحلة الأولى: تصفير العمليات والأرصدة</div><div class="details">مرحلة مستقلة تشمل المستندات والحركات والقيود وأرصدة العملاء والموردين والخزائن والمخزون. ابدأ بالمعاينة وحفظ التقرير. لن يبدأ التنفيذ قبل اكتمال المحرك وعرض الخطة وموافقتك.</div><button id="runAdminResetPreviewBtn" class="btn" type="button">فحص وتجهيز المرحلة الأولى</button></div>
 <div class="product"><div class="pname">بوابة الموافقة قبل التنفيذ</div><div class="details">بعد اكتمال التقرير، تعرض الأداة خطة التنفيذ بالتفصيل. لا تنفذ حذفًا أو إلغاءً لأي مستند قبل موافقتك. بعد الموافقة تنفذ الخطة تلقائيًا، وتتوقف بالكامل إذا ظهر اختلاف أو مانع غير متوقع.</div><button class="btn secondary" type="button" disabled>تظهر الموافقة بعد اكتمال الخطة والتحقق منها</button></div>
 <div id="adminResetPreviewMsg" class="status hidden"></div>
 <div id="adminResetPreviewResult"></div>
-<div class="product" style="margin-top:15px;"><div class="pname">المرحلة الثانية: البيانات الأساسية</div><div class="details">مقفولة حتى اكتمال المرحلة الأولى والتأكد من عدم وجود أي مستندات أو أرصدة مرتبطة.</div><button class="btn secondary" type="button" disabled>غير متاحة حاليًا</button></div>
+<div class="product" style="margin-top:15px;"><div class="pname">المرحلة الثانية: إعادة تهيئة البيانات الأساسية - اختيارية ومستقلة</div><div class="details">لا تعمل تلقائيًا مع المرحلة الأولى. يمكنك تنفيذها عند الحاجة فقط، بعد اكتمال المرحلة الأولى والتحقق من خلو النظام من العمليات والأرصدة. ستملك معاينة وخطة وموافقة وتنفيذًا منفصلًا.</div><button class="btn secondary" type="button" disabled>تُفتح بعد اكتمال محرك المرحلة الثانية</button></div>
 </div>
 </div>
 <!-- شاشة إدارة المندوبين -->
@@ -2310,7 +2310,7 @@ if($("runAdminResetPreviewBtn")) $("runAdminResetPreviewBtn").addEventListener("
   clear(message);result.replaceChildren();
   busy(btn,true,"جارٍ فحص البيانات...","فحص العمليات والبيانات");
   try{
-    const {data:prepared,error}=await db.rpc("admin_reset_prepare");
+    const {data:prepared,error}=await db.rpc("admin_reset_prepare_phase",{p_phase:"PHASE_1"});
     if(error) throw error;
     if(!prepared || prepared.prepared!==true || !prepared.preview || prepared.preview.preview_only!==true) throw new Error("لم يرجع الخادم خطة معاينة محفوظة وصالحة.");
     const data=prepared.preview;
