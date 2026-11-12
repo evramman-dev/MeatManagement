@@ -2318,7 +2318,7 @@ if($("runAdminResetPreviewBtn")) $("runAdminResetPreviewBtn").addEventListener("
       const heading=document.createElement("div");heading.className="pname";heading.textContent=title;section.appendChild(heading);
       const table=document.createElement("table");table.className="print-table";
       const body=document.createElement("tbody");
-      Object.entries(obj||{}).forEach(([key,value])=>{
+      Object.entries(obj||{}).filter(([key,value])=>!Array.isArray(value)&&(typeof value==="number"||typeof value==="string")).forEach(([key,value])=>{
         const row=document.createElement("tr"),name=document.createElement("td"),count=document.createElement("td");
         name.textContent=labels[key]||key;count.textContent=Number(value||0).toLocaleString("ar-EG");row.append(name,count);body.appendChild(row);
       });
