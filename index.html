@@ -626,24 +626,13 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div id="systemResetCard" class="card hidden">
 <h2>استعادة ضبط المصنع</h2>
 <p class="desc">عملية واحدة تعيد البرنامج إلى وضع البداية. تحتفظ بحساب مدير النظام وبنية قاعدة البيانات والجداول والعلاقات والدوال والصلاحيات والإعدادات والبيانات المرجعية المحددة. تمسح الحسابات الأخرى وجميع بيانات التشغيل والبيانات الأساسية وسجل التتبع.</p>
-<div class="product">
-<div class="pname">البيانات التي ستظل موجودة</div>
-<div class="details">حساب مدير النظام فقط، الأدوار والصلاحيات، دليل الحسابات، الفترات المحاسبية، إعدادات الشركة، المحافظات والمدن والمناطق، الوحدات، وقواعد الإشعارات.</div>
-</div>
-<div class="product">
-<div class="pname">البيانات التي سيتم مسحها</div>
-<div class="details">كل حسابات المستخدمين الأخرى، العملاء والموردون والأصناف والأسعار والمخازن والخزائن والمندوبون والشركاء والأصول، الفواتير والمرتجعات والتحصيلات والمدفوعات والمصروفات والقيود والحركات والمخزون والإنتاج والرحلات والإشعارات وسجل التتبع والنسخ القديمة لبيانات الاختبار.</div>
-</div>
-<div class="product">
-<div class="pname">تقرير ضبط المصنع</div>
-<div class="details">جهز التقرير أولًا. راجع أعداد البيانات التي ستمسح والبيانات التي ستظل. بعد اعتماد التقرير يظهر زر التنفيذ.</div>
-<button id="runAdminFactoryResetPreviewBtn" class="btn" type="button">عرض آخر تقرير أو تجهيز تقرير جديد</button>
-</div>
-<div id="adminFactoryResetMsg" class="status hidden"></div>
-<div id="adminFactoryResetResult"></div>
-<div id="adminFactoryResetActions" class="row" style="gap:8px;flex-wrap:wrap;margin-top:12px;"></div>
+<div class="product"><div class="pname">البيانات التي ستظل موجودة</div><div class="details">حساب مدير النظام فقط، الأدوار والصلاحيات، دليل الحسابات، الفترات المحاسبية، إعدادات الشركة، المحافظات والمدن والمناطق، الوحدات، وقواعد الإشعارات.</div></div>
+<div class="product"><div class="pname">البيانات التي سيتم مسحها</div><div class="details">كل حسابات المستخدمين الأخرى، العملاء والموردون والأصناف والأسعار والمخازن والخزائن والمندوبون والشركاء والأصول، الفواتير والمرتجعات والتحصيلات والمدفوعات والمصروفات والقيود والحركات والمخزون والإنتاج والرحلات والإشعارات وسجل التتبع والنسخ القديمة لبيانات الاختبار.</div></div>
+<div class="product"><div class="pname">تقرير ضبط المصنع</div><div class="details">جهز التقرير أولًا. راجع أعداد البيانات التي ستمسح والبيانات التي ستظل. بعد اعتماد التقرير يظهر زر التنفيذ.</div><button id="runAdminFactoryResetPreviewBtn" class="btn" type="button">عرض آخر تقرير أو تجهيز تقرير جديد</button></div>
+<div id="adminFactoryResetMsg" class="status hidden"></div><div id="adminFactoryResetResult"></div><div id="adminFactoryResetActions" class="row" style="gap:8px;flex-wrap:wrap;margin-top:12px;"></div>
 </div>
 </div>
+<!-- شاشة إدارة المندوبين -->
 <div id="sectionSalesReps" class="sub-section hidden">
 <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
 <div id="salesRepsCard" class="card hidden">
@@ -2322,16 +2311,7 @@ function page(name){
 
 
 if($("runAdminFactoryResetPreviewBtn")) $("runAdminFactoryResetPreviewBtn").addEventListener("click",async()=>{
-  const btn=$("runAdminFactoryResetPreviewBtn"),message=$("adminResetPreviewMsg"),result=$("adminResetPreviewResult");
-  if(!isSystemAdmin){msg(message,"هذه العملية متاحة لمدير النظام فقط.","error");return;}
-  clear(message);result.replaceChildren();
-  busy(btn,true,"جارٍ فحص البيانات...","فحص العمليات والبيانات");
-  try{
-    let {data:prepared,error}=await db.rpc("admin_reset_geif($("runAdminFactoryResetPreviewBtn")) $("runAdminFactoryResetPreviewBtn").addEventListener("click",async()=>{
-  const btn=$("runAdminFactoryResetPreviewBtn");
-  const message=$("adminFactoryResetMsg");
-  const result=$("adminFactoryResetResult");
-  const actions=$("adminFactoryResetActions");
+  const btn=$("runAdminFactoryResetPreviewBtn"),message=$("adminFactoryResetMsg"),result=$("adminFactoryResetResult"),actions=$("adminFactoryResetActions");
   if(!isSystemAdmin){msg(message,"إعادة ضبط المصنع متاحة لمدير النظام فقط.","error");return;}
   clear(message);result.replaceChildren();actions.replaceChildren();
   busy(btn,true,"جارٍ تجهيز التقرير...","تجهيز تقرير ضبط المصنع");
@@ -2343,129 +2323,69 @@ if($("runAdminFactoryResetPreviewBtn")) $("runAdminFactoryResetPreviewBtn").addE
       if(fresh.error)throw fresh.error;
       prepared=fresh.data;
     }
-    if(!prepared||prepared.prepared!==true||!prepared.preview||prepared.preview.mode!=="FACTORY_RESET_SINGLE_OPERATION"){
-      throw new Error("لم يرجع الخادم تقرير ضبط مصنع صالحًا.");
-    }
+    if(!prepared||prepared.prepared!==true||!prepared.preview||prepared.preview.mode!=="FACTORY_RESET_SINGLE_OPERATION")throw new Error("لم يرجع الخادم تقرير ضبط مصنع صالحًا.");
     const preview=prepared.preview;
-    const labels={
-      customer_cheques:"شيكات العملاء",customer_collections:"تحصيلات العملاء",customer_groups:"مجموعات العملاء",
-      customer_price_lists:"قوائم أسعار العملاء",customers:"العملاء",expense_types:"أنواع المصروفات",
-      expenses:"المصروفات",fixed_asset_depreciation_entries:"إهلاك الأصول",fixed_assets:"الأصول الثابتة",
-      journal_adjustments:"التسويات المحاسبية",journal_entries:"القيود المحاسبية",journal_entry_lines:"سطور القيود",
-      locations:"المخازن والمواقع",notification_recipients:"مستلمو الإشعارات",notifications:"الإشعارات",
-      partner_inventory_contributions:"مساهمات المخزون",partner_profit_distribution_items:"بنود توزيعات الأرباح",
-      partner_profit_distributions:"توزيعات الأرباح",partner_transactions:"حركات الشركاء",partners:"الشركاء",
-      price_list_items:"بنود قوائم الأسعار",price_lists:"قوائم الأسعار",product_categories:"تصنيفات الأصناف",
-      product_packaging_options:"خيارات التعبئة",product_unit_conversions:"تحويلات الوحدات",
-      production_order_expense_allocations:"توزيع مصروفات الإنتاج",production_order_materials:"خامات الإنتاج",
-      production_orders:"أوامر الإنتاج",products:"الأصناف",purchase_invoice_items:"بنود الشراء",
-      purchase_invoices:"فواتير الشراء",purchase_landed_cost_allocations:"توزيع تكاليف الشراء",
-      purchase_landed_costs:"تكاليف الشراء",purchase_return_items:"بنود مرتجعات الشراء",
-      purchase_returns:"مرتجعات الشراء",recipe_items:"مكونات الوصفات",recipe_movements:"حركات الوصفات",
-      recipes:"الوصفات",reservations:"الحجوزات",sales_invoice_items:"بنود البيع",sales_invoices:"فواتير البيع",
-      sales_rep_areas:"مناطق المندوبين",sales_reps:"مندوبو المبيعات",sales_return_exchange_items:"بنود الاستبدال",
-      sales_return_items:"بنود مرتجعات البيع",sales_returns:"مرتجعات البيع",stock_balances:"أرصدة المخزون",
-      stock_lot_balances:"أرصدة التشغيلات",stock_lots:"تشغيلات المخزون",stock_movement_lot_allocations:"تخصيصات التشغيلات",
-      stock_movements:"حركات المخزون",stock_transfer_items:"بنود تحويل المخزون",
-      stock_transfer_reversals:"عكس تحويلات المخزون",stock_transfers:"تحويلات المخزون",
-      supplier_payments:"مدفوعات الموردين",suppliers:"الموردون",treasuries:"الخزائن",
-      treasury_transactions:"حركات الخزائن",trip_customers:"عملاء الرحلات",trip_loads:"تحميل السيارات",
-      trips:"الرحلات",user_logs:"سجل التتبع"
-    };
+    const labels={customers:"العملاء",suppliers:"الموردون",products:"الأصناف",product_categories:"تصنيفات الأصناف",customers:"العملاء",sales_reps:"مندوبو المبيعات",sales_rep_areas:"مناطق المندوبين",locations:"المخازن والمواقع",treasuries:"الخزائن",partners:"الشركاء",fixed_assets:"الأصول الثابتة",price_lists:"قوائم الأسعار",price_list_items:"بنود قوائم الأسعار",customer_groups:"مجموعات العملاء",customer_price_lists:"قوائم أسعار العملاء",expense_types:"أنواع المصروفات",expenses:"المصروفات",sales_invoices:"فواتير البيع",sales_invoice_items:"بنود البيع",sales_returns:"مرتجعات البيع",sales_return_items:"بنود المرتجعات",purchase_invoices:"فواتير الشراء",purchase_invoice_items:"بنود الشراء",purchase_returns:"مرتجعات الشراء",supplier_payments:"مدفوعات الموردين",customer_collections:"تحصيلات العملاء",customer_cheques:"شيكات العملاء",stock_movements:"حركات المخزون",stock_balances:"أرصدة المخزون",stock_lots:"تشغيلات المخزون",stock_lot_balances:"أرصدة التشغيلات",stock_transfers:"تحويلات المخزون",stock_transfer_items:"بنود التحويل",stock_transfer_reversals:"عكس التحويلات",production_orders:"أوامر الإنتاج",production_order_materials:"خامات الإنتاج",production_order_expense_allocations:"مصروفات الإنتاج",recipes:"الوصفات",recipe_items:"مكونات الوصفات",recipe_movements:"حركات الوصفات",trips:"الرحلات",trip_loads:"تحميل السيارات",trip_customers:"عملاء الرحلات",treasury_transactions:"حركات الخزائن",journal_entries:"القيود المحاسبية",journal_entry_lines:"سطور القيود",journal_adjustments:"التسويات المحاسبية",notifications:"الإشعارات",notification_recipients:"مستلمو الإشعارات",user_logs:"سجل التتبع"};
     const addTable=(headingText,obj)=>{
-      const entries=Object.entries(obj||{});
       const section=document.createElement("div");section.className="product";
-      const heading=document.createElement("div");heading.className="pname";heading.textContent=headingText;
-      section.appendChild(heading);
-      const table=document.createElement("table");table.className="print-table";
-      const body=document.createElement("tbody");
-      entries.forEach(([key,value])=>{
-        const row=document.createElement("tr"),name=document.createElement("td"),count=document.createElement("td");
-        name.textContent=labels[key]||key;
-        count.textContent=Number(value||0).toLocaleString("ar-EG");
-        row.append(name,count);body.appendChild(row);
-      });
+      const heading=document.createElement("div");heading.className="pname";heading.textContent=headingText;section.appendChild(heading);
+      const table=document.createElement("table");table.className="print-table";const body=document.createElement("tbody");
+      Object.entries(obj||{}).forEach(([key,value])=>{const row=document.createElement("tr"),name=document.createElement("td"),count=document.createElement("td");name.textContent=labels[key]||key;count.textContent=Number(value||0).toLocaleString("ar-EG");row.append(name,count);body.appendChild(row);});
       table.appendChild(body);section.appendChild(table);result.appendChild(section);
     };
     const summary=document.createElement("div");summary.className="product";
     const title=document.createElement("div");title.className="pname";title.textContent="بيانات التقرير";
-    const info=document.createElement("div");info.className="details";
-    info.style.cssText="overflow-wrap:anywhere;line-height:1.9";
-    info.textContent="رقم التقرير: "+prepared.plan_id+" | بصمة التحقق: "+prepared.plan_hash+
-      " | الحالة: "+prepared.status+" | ينتهي: "+new Date(prepared.expires_at).toLocaleString("ar-EG");
+    const info=document.createElement("div");info.className="details";info.style.cssText="overflow-wrap:anywhere;line-height:1.9";
+    info.textContent="رقم التقرير: "+prepared.plan_id+" | بصمة التحقق: "+prepared.plan_hash+" | الحالة: "+prepared.status+" | ينتهي: "+new Date(prepared.expires_at).toLocaleString("ar-EG");
     summary.append(title,info);result.appendChild(summary);
     addTable("الجداول التي ستُمسح بياناتها",preview.delete_tables);
     addTable("الجداول التي ستظل بياناتها",preview.preserved_tables);
     const accounts=document.createElement("div");accounts.className="product";
     const accountsTitle=document.createElement("div");accountsTitle.className="pname";accountsTitle.textContent="حسابات المستخدمين";
     const accountsInfo=document.createElement("div");accountsInfo.className="details";
-    accountsInfo.textContent="حسابات Auth التي ستُحذف: "+Number(preview.auth_users_to_delete||0).toLocaleString("ar-EG")+
-      " | سجلات المستخدمين التي ستُحذف: "+Number(preview.app_users_to_delete||0).toLocaleString("ar-EG")+
-      " | سجل التتبع الذي سيُمسح: "+Number(preview.user_logs_to_clear||0).toLocaleString("ar-EG")+
-      " | حساب مدير النظام المحتفظ به: 1";
+    accountsInfo.textContent="حسابات الدخول التي ستُحذف: "+Number(preview.auth_users_to_delete||0).toLocaleString("ar-EG")+" | سجلات المستخدمين التي ستُحذف: "+Number(preview.app_users_to_delete||0).toLocaleString("ar-EG")+" | سجل التتبع الذي سيُمسح: "+Number(preview.user_logs_to_clear||0).toLocaleString("ar-EG")+" | حساب مدير النظام المحتفظ به: 1";
     accounts.append(accountsTitle,accountsInfo);result.appendChild(accounts);
-    const note=document.createElement("div");note.className="product";
-    note.textContent="لن يحذف المحرك أي جدول أو دالة أو علاقة أو قيد. سيحذف البيانات فقط. إذا ظهرت علاقة غير معالجة أو تغيرت البيانات بعد اعتماد التقرير، تتوقف العملية وتعود كل تغييراتها تلقائيًا.";
-    result.appendChild(note);
-
-    const approveBtn=document.createElement("button");approveBtn.className="btn";approveBtn.type="button";
-    approveBtn.textContent=prepared.status==="APPROVED"?"التقرير معتمد":"اعتماد تقرير ضبط المصنع";
-    approveBtn.disabled=prepared.status==="APPROVED";
-    const executeBtn=document.createElement("button");executeBtn.className="btn danger";executeBtn.type="button";
-    executeBtn.textContent="تنفيذ استعادة ضبط المصنع";
-    executeBtn.disabled=prepared.status!=="APPROVED";
-    const status=document.createElement("div");status.className="details";
-    status.textContent=prepared.status==="APPROVED"
-      ?"تم اعتماد التقرير. يمكنك تنفيذ ضبط المصنع بعد مراجعة الأعداد أعلاه."
-      :"التقرير جاهز للمراجعة. الاعتماد لا يحذف أي بيانات.";
+    const note=document.createElement("div");note.className="product";note.textContent="لن يحذف المحرك أي جدول أو دالة أو علاقة أو قيد. سيحذف البيانات فقط. إذا ظهرت علاقة غير معالجة أو تغيرت البيانات بعد اعتماد التقرير، تتوقف العملية وتعود كل تغييراتها تلقائيًا.";result.appendChild(note);
+    const approveBtn=document.createElement("button");approveBtn.className="btn";approveBtn.type="button";approveBtn.textContent=prepared.status==="APPROVED"?"التقرير معتمد":"اعتماد تقرير ضبط المصنع";approveBtn.disabled=prepared.status==="APPROVED";
+    const executeBtn=document.createElement("button");executeBtn.className="btn danger";executeBtn.type="button";executeBtn.textContent="تنفيذ استعادة ضبط المصنع";executeBtn.disabled=prepared.status!=="APPROVED";
+    const status=document.createElement("div");status.className="details";status.textContent=prepared.status==="APPROVED"?"تم اعتماد التقرير. يمكنك تنفيذ ضبط المصنع بعد مراجعة الأعداد أعلاه.":"التقرير جاهز للمراجعة. الاعتماد لا يحذف أي بيانات.";
     actions.append(approveBtn,executeBtn,status);
     approveBtn.addEventListener("click",async()=>{
       if(!window.confirm("هل تعتمد تقرير ضبط المصنع؟ الاعتماد لا يحذف أي بيانات."))return;
       busy(approveBtn,true,"جارٍ اعتماد التقرير...","اعتماد التقرير");
       try{
-        const {data:approval,error:approvalError}=await db.rpc("admin_factory_reset_approve",{
-          p_plan_id:prepared.plan_id,p_plan_hash:prepared.plan_hash
-        });
+        const {data:approval,error:approvalError}=await db.rpc("admin_factory_reset_approve",{p_plan_id:prepared.plan_id,p_plan_hash:prepared.plan_hash});
         if(approvalError)throw approvalError;
         if(!approval||approval.approved!==true||approval.status!=="APPROVED")throw new Error(approval?.message||"لم يؤكد الخادم الاعتماد.");
-        prepared.status="APPROVED";approveBtn.disabled=true;approveBtn.textContent="التقرير معتمد";
-        executeBtn.disabled=false;status.textContent="تم اعتماد التقرير. زر التنفيذ أصبح متاحًا.";
+        prepared.status="APPROVED";approveBtn.disabled=true;approveBtn.textContent="التقرير معتمد";executeBtn.disabled=false;status.textContent="تم اعتماد التقرير. زر التنفيذ أصبح متاحًا.";
         msg(message,"تم اعتماد تقرير ضبط المصنع. لم تُحذف أي بيانات.","success");
       }catch(e){msg(status,"تعذر اعتماد التقرير: "+err(e),"error");}
       finally{busy(approveBtn,false,"","اعتماد التقرير");}
     });
     executeBtn.addEventListener("click",async()=>{
       if(executeBtn.disabled)return;
-      const confirmation="سيتم حذف حسابات المستخدمين الأخرى وجميع البيانات المحددة في التقرير، مع الاحتفاظ بحساب مدير النظام وبنية البرنامج. لا يمكن التراجع بعد اكتمال العملية. هل تريد المتابعة؟";
-      if(!window.confirm(confirmation))return;
+      if(!window.confirm("سيتم حذف حسابات المستخدمين الأخرى وجميع البيانات المحددة في التقرير، مع الاحتفاظ بحساب مدير النظام وبنية البرنامج. هل تريد المتابعة؟"))return;
       if(!window.confirm("تأكيد أخير: هل توافق على مسح بيانات البرنامج والإبقاء على حساب مدير النظام فقط؟"))return;
-      busy(executeBtn,true,"جارٍ تنفيذ ضبط المصنع...","تنفيذ ضبط المصنع");
-      approveBtn.disabled=true;
+      busy(executeBtn,true,"جارٍ تنفيذ ضبط المصنع...","تنفيذ ضبط المصنع");approveBtn.disabled=true;
       try{
-        const {data:execution,error:executionError}=await db.rpc("admin_factory_reset_execute",{
-          p_plan_id:prepared.plan_id,p_plan_hash:prepared.plan_hash
-        });
+        const {data:execution,error:executionError}=await db.rpc("admin_factory_reset_execute",{p_plan_id:prepared.plan_id,p_plan_hash:prepared.plan_hash});
         if(executionError)throw executionError;
-        if(!execution||execution.executed!==true||execution.status!=="COMPLETED"){
-          throw new Error(execution?.message||"لم يؤكد الخادم اكتمال ضبط المصنع.");
-        }
+        if(!execution||execution.executed!==true||execution.status!=="COMPLETED")throw new Error(execution?.message||"لم يؤكد الخادم اكتمال ضبط المصنع.");
         executeBtn.disabled=true;status.textContent="اكتملت استعادة ضبط المصنع.";
-        const done=document.createElement("pre");done.className="details";
-        done.style.cssText="white-space:pre-wrap;overflow-wrap:anywhere;direction:ltr;text-align:left";
-        done.textContent=JSON.stringify(execution.result||{},null,2);result.appendChild(done);
+        const done=document.createElement("pre");done.className="details";done.style.cssText="white-space:pre-wrap;overflow-wrap:anywhere;direction:ltr;text-align:left";done.textContent=JSON.stringify(execution.result||{},null,2);result.appendChild(done);
         msg(message,"اكتملت استعادة ضبط المصنع. احتفظ البرنامج بحساب مدير النظام وبنيته والجداول والعلاقات والدوال.","success");
-      }catch(e){
-        msg(status,"توقفت العملية: "+err(e),"error");
-        approveBtn.disabled=false;
-      }finally{busy(executeBtn,false,"","تنفيذ ضبط المصنع");}
+      }catch(e){msg(status,"توقفت العملية: "+err(e),"error");approveBtn.disabled=false;}
+      finally{busy(executeBtn,false,"","تنفيذ ضبط المصنع");}
     });
-    msg(message,prepared.restored===true
-      ?"تم استرجاع تقرير ضبط المصنع السابق والتحقق من بصمته. لم تُحذف أي بيانات."
-      :"تم تجهيز تقرير ضبط المصنع وحفظ بصمته. لم تُحذف أي بيانات.","success");
+    msg(message,prepared.restored===true?"تم استرجاع تقرير ضبط المصنع السابق والتحقق من بصمته. لم تُحذف أي بيانات.":"تم تجهيز تقرير ضبط المصنع وحفظ بصمته. لم تُحذف أي بيانات.","success");
   }catch(e){msg(message,"تعذر تجهيز تقرير ضبط المصنع: "+err(e),"error");}
   finally{busy(btn,false,"","عرض تقرير ضبط المصنع");}
 });
-ing(id))?.unit_name||"غير محدد"; }
+async function permission(code){ if(isSystemAdmin) return true; if(!navigator.onLine) return false; try { const {data,error}=await db.rpc("has_permission",{p_permission_code:code}); if(error)throw error; return data===true; } catch (e) { return false; } }
+
+// ========== الحقول المساعدة ==========
+function typeName(v){ return({RAW:"خام",SEMI_FINISHED:"نصف مصنع",FINISHED:"منتج تام"})[v]||v||"غير محدد"; }
+function unitName(id){ return units.find(x=>String(x.unit_id)===String(id))?.unit_name||"غير محدد"; }
 function customerName(id){ return customersCache.find(x=>String(x.customer_id)===String(id))?.customer_name||"غير محدد"; }
 function customerPhone(id){ return customersCache.find(x=>String(x.customer_id)===String(id))?.phone||""; }
 function locationName(id){ return locationsCache.find(x=>String(x.location_id)===String(id))?.location_name||"غير محدد"; }
