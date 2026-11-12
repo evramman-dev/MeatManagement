@@ -5331,7 +5331,7 @@ function updatePurchaseTotals(){
 if($("purchaseDiscount")) $("purchaseDiscount").addEventListener("input",updatePurchaseTotals);
 if($("addPurchaseItemBtn")) $("addPurchaseItemBtn").addEventListener("click",()=>addPurchaseItemRow());
 
-let purchaseReturnsCache=[];
+purchaseReturnsCache=[];
 function purchaseInvoiceAmounts(inv){const total=Number(inv.net_total||0),paidAtInvoice=inv.treasury_id!=null?total:0,credits=purchaseReturnsCache.filter(r=>String(r.purchase_invoice_id)===String(inv.purchase_invoice_id)&&r.settlement_method==="SUPPLIER_CREDIT").reduce((sum,r)=>sum+Number(r.total_return_amount||0),0),paid=Math.min(total,paidAtInvoice+credits);return{total,paid,remaining:Math.max(0,total-paid),paidAtInvoice};}
 async function loadPurchases(){
   if(!navigator.onLine){purchasesCache=getCache('purchases');purchaseReturnsCache=getCache('purchase_returns_for_invoices');renderPurchases();return;}
