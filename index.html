@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v92</title>
+<title>MeatManagement v93</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -327,7 +327,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v92]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v93]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1782,7 +1782,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v92</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v93</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -3578,8 +3578,26 @@ async function buildCustomerBalanceSummary(from,to){
     .filter(r=>r.opening||r.sales||r.returns||r.collections||r.balance)
     .sort((a,b)=>a.name.localeCompare(b.name,"ar"));
 }
+function customerBalanceTotals(rows){
+  return rows.reduce((t,r)=>{t.opening+=Number(r.opening||0);t.sales+=Number(r.sales||0);t.returns+=Number(r.returns||0);t.collections+=Number(r.collections||0);t.balance+=Number(r.balance||0);return t;},{opening:0,sales:0,returns:0,collections:0,balance:0});
+}
 function customerBalanceRowsHtml(rows){
-  return rows.map(r=>'<tr><td>'+esc(r.name)+'</td><td>'+esc(r.governorate)+'</td><td>'+fmt(r.opening)+'</td><td>'+fmt(r.sales)+'</td><td>'+fmt(r.returns)+'</td><td>'+fmt(r.collections)+'</td><td style="font-weight:bold;color:'+(r.balance<0?'#a52b2b':'#173c2c')+'">'+fmt(r.balance)+'</td></tr>').join("");
+  const totals=customerBalanceTotals(rows);
+  const body=rows.map(r=>'<tr><td>'+esc(r.name)+'</td><td>'+esc(r.governorate)+'</td><td>'+fmt(r.opening)+'</td><td>'+fmt(r.sales)+'</td><td>'+fmt(r.returns)+'</td><td>'+fmt(r.collections)+'</td><td style="font-weight:bold;color:'+(r.balance<0?'#a52b2b':'#173c2c')+'">'+fmt(r.balance)+'</td></tr>').join("");
+  return body+'<tr style="font-weight:bold;background:#eef3ef;border-top:2px solid #173c2c;"><td>الإجمالي</td><td>—</td><td>'+fmt(totals.opening)+'</td><td>'+fmt(totals.sales)+'</td><td>'+fmt(totals.returns)+'</td><td>'+fmt(totals.collections)+'</td><td style="color:'+(totals.balance<0?'#a52b2b':'#173c2c')+'">'+fmt(totals.balance)+'</td></tr>';
+}
+function customerBalanceStatsHtml(rows){
+  const totals=customerBalanceTotals(rows);
+  const governorates=new Set(rows.map(r=>(r.governorate||"").trim()).filter(name=>name&&name!=="غير محدد"));
+  const stats=[
+    ["إجمالي عدد العملاء",rows.length],
+    ["إجمالي عدد المحافظات",governorates.size],
+    ["إجمالي المبيعات",fmt(totals.sales)],
+    ["إجمالي المرتجعات",fmt(totals.returns)],
+    ["إجمالي التحصيلات",fmt(totals.collections)],
+    ["إجمالي الرصيد الحالي",fmt(totals.balance)]
+  ];
+  return '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin:12px 0;">'+stats.map(([label,value])=>'<div style="background:#f4f7f4;border:1px solid #dce5dc;border-radius:9px;padding:10px;text-align:center;"><div style="font-size:12px;color:#526257;margin-bottom:5px;">'+label+'</div><strong style="font-size:16px;color:#173c2c;">'+value+'</strong></div>').join("")+'</div>';
 }
 async function loadHomeGeoSummary(){
   const box=$("homeGeoSummary"),itemsBox=$("homeGeoItemsSummary"),customersBox=$("homeCustomersSummary");
@@ -3595,7 +3613,7 @@ async function loadHomeGeoSummary(){
     if($("homeGeoButtonBalance"))$("homeGeoButtonBalance").textContent=fmt(totalBalance);
     box.innerHTML='<h3>ملخص تعاملات المحافظة</h3><div class="info">من '+from+' إلى '+to+' | الرصيد المالي للعملاء حتى نهاية الفترة</div><div class="table-responsive"><table class="print-table"><thead><tr><th>المحافظة</th><th>رصيد أول المدة</th><th>إجمالي المبيعات</th><th>إجمالي التحصيلات</th><th>إجمالي المرتجعات</th><th>رصيد العملاء</th></tr></thead><tbody>'+(rows.length?geoSalesRowsHtml(rows):'<tr><td colspan="6">لا توجد حركة.</td></tr>')+'</tbody></table></div>';
     if(itemsBox)itemsBox.innerHTML='<h3>ملخص حركة الأصناف</h3><div class="info">من '+from+' إلى '+to+' | الكميات بوحدة الصنف الأساسية</div><div class="table-responsive"><table class="print-table"><thead><tr><th>الصنف</th><th>الوحدة</th><th>إجمالي مشتريات</th><th>إجمالي مبيعات</th><th>إجمالي مرتجعات</th><th>رصيد حالي</th></tr></thead><tbody>'+(items.length?geoItemRowsHtml(items):'<tr><td colspan="6">لا توجد حركة أصناف خلال الفترة.</td></tr>')+'</tbody></table></div>';
-    if(customersBox)customersBox.innerHTML='<h3>ملخص العملاء</h3><div class="info">من '+from+' إلى '+to+' | الرصيد حتى نهاية الفترة</div><div class="table-responsive"><table class="print-table"><thead><tr><th>العميل</th><th>المحافظة</th><th>رصيد أول المدة</th><th>إجمالي مبيعات</th><th>إجمالي مرتجعات</th><th>إجمالي تحصيلات</th><th>رصيد العميل</th></tr></thead><tbody>'+(customers.length?customerBalanceRowsHtml(customers):'<tr><td colspan="7">لا توجد حركة عملاء.</td></tr>')+'</tbody></table></div>';
+    if(customersBox)customersBox.innerHTML='<h3>ملخص العملاء</h3><div class="info">من '+from+' إلى '+to+' | الرصيد حتى نهاية الفترة</div>'+customerBalanceStatsHtml(customers)+'<div class="table-responsive"><table class="print-table"><thead><tr><th>العميل</th><th>المحافظة</th><th>رصيد أول المدة</th><th>إجمالي مبيعات</th><th>إجمالي مرتجعات</th><th>إجمالي تحصيلات</th><th>رصيد العميل</th></tr></thead><tbody>'+(customers.length?customerBalanceRowsHtml(customers):'<tr><td colspan="7">لا توجد حركة عملاء.</td></tr>'+customerBalanceRowsHtml([]))+'</tbody></table></div>';
   }catch(e){
     const message=esc(err(e));
     box.innerHTML='<h3>ملخص تعاملات المحافظة</h3><div class="empty error">تعذر تحميل الملخص: '+message+'</div>';if($("homeGeoButtonBalance"))$("homeGeoButtonBalance").textContent="—";
