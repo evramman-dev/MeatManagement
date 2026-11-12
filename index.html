@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v100</title>
+<title>MeatManagement v101</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -146,7 +146,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     transform: scale(0.96);
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
-.tasks-charts-button{width:100%;margin:0;min-height:100px;font-family:inherit;cursor:pointer}
+.tasks-charts-button{width:100%;margin:0;min-height:110px;padding:16px 14px;font-family:inherit;cursor:pointer}
 /* إبراز المؤشرات المالية في صف مستقل بعرض كامل */
 #tasksDashboard .tasks-financial-card{
     grid-column:1 / -1;
@@ -366,7 +366,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v100]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v101]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1843,7 +1843,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v100</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v101</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -2987,14 +2987,18 @@ async function loadTasks() {
     salesChartStartDate.setDate(salesChartStartDate.getDate()-29);
     const salesChartFrom = salesChartStartDate.getFullYear()+"-"+String(salesChartStartDate.getMonth()+1).padStart(2,"0")+"-"+String(salesChartStartDate.getDate()).padStart(2,"0");
     const salesChartTo = todayISO();
-    const { data: salesChartRows } = await db.from("sales_invoices").select("net_total, invoice_date").gte("invoice_date", salesChartFrom).lte("invoice_date", salesChartTo).neq("status","CANCELLED");
+    const salesChartEndExclusive = new Date(salesChartTo+"T00:00:00");
+    salesChartEndExclusive.setDate(salesChartEndExclusive.getDate()+1);
+    const salesChartToExclusive = salesChartEndExclusive.getFullYear()+"-"+String(salesChartEndExclusive.getMonth()+1).padStart(2,"0")+"-"+String(salesChartEndExclusive.getDate()).padStart(2,"0");
+    const { data: salesChartRows, error: salesChartError } = await db.from("sales_invoices").select("net_total, invoice_date").gte("invoice_date", salesChartFrom).lt("invoice_date", salesChartToExclusive).neq("status","CANCELLED");
+    if(salesChartError) throw salesChartError;
     const dailySales = {};
     for(let i=29; i>=0; i--){
       const d = new Date(); d.setDate(d.getDate()-i);
       const key = d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
       dailySales[key] = 0;
     }
-    (salesChartRows||[]).forEach(s => { if(dailySales[s.invoice_date] !== undefined) dailySales[s.invoice_date] += Number(s.net_total||0); });
+    (salesChartRows||[]).forEach(s => { const invoiceDay = String(s.invoice_date||"").slice(0,10); if(dailySales[invoiceDay] !== undefined) dailySales[invoiceDay] += Number(s.net_total||0); });
     const labels = Object.keys(dailySales).map(k => formatDate(k));
     const data = Object.values(dailySales);
     if(tasksSalesChart) tasksSalesChart.destroy();
