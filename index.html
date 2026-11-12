@@ -432,6 +432,19 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 </section>
 
+<div id="homeQuickPrintModal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header"><h3 id="homeQuickPrintTitle">طباعة التقرير</h3><button class="close-btn" id="closeHomeQuickPrintBtn" type="button">&times;</button></div>
+    <div class="modal-body">
+      <div id="homeQuickPrintArea" class="statement-print-area">
+        <div class="print-header" id="homeQuickPrintHeader"></div>
+        <div id="homeQuickPrintContent"></div>
+        <div class="print-footer" id="homeQuickPrintFooter"></div>
+      </div>
+      <div class="no-print" style="display:flex;gap:10px;margin-top:15px;"><button id="confirmHomeQuickPrintBtn" class="btn" type="button" style="flex:1;background:var(--gold);color:var(--g);">طباعة / PDF</button><button id="shareHomeQuickPrintBtn" class="btn" type="button" style="flex:1;background:#25D366;">واتساب</button></div>
+    </div>
+  </div>
+</div>
 <section id="tasks" class="hidden">
 <div class="card">
 <h2>📋 مهامي والتنبيهات</h2>
@@ -3503,6 +3516,35 @@ async function loadGeoSalesReport(){
   try{const [rows,items]=await Promise.all([buildGeoSalesSummary(from,to),buildGeoItemMovementSummary(from,to)]);body.innerHTML=rows.length?geoSalesRowsHtml(rows):'<tr><td colspan="6">لا توجد حركة خلال الفترة.</td></tr>';itemsBody.innerHTML=items.length?geoItemRowsHtml(items):'<tr><td colspan="6">لا توجد حركة أصناف خلال الفترة.</td></tr>';}
   catch(e){const message=esc(err(e));body.innerHTML=`<tr><td colspan="6" style="color:red;">تعذر تحميل التقرير: ${message}</td></tr>`;itemsBody.innerHTML=`<tr><td colspan="6" style="color:red;">تعذر تحميل حركة الأصناف: ${message}</td></tr>`;}
 }
+function openHomeDetail(panelId){
+  $("homeOverview")?.classList.add("hidden");
+  ["homeNotificationPanel","homeGeoPanel","homeItemsPanel"].forEach(id=>$(id)?.classList.toggle("hidden",id!==panelId));
+  window.scrollTo(0,0);
+}
+function closeHomeDetail(){
+  ["homeNotificationPanel","homeGeoPanel","homeItemsPanel"].forEach(id=>$(id)?.classList.add("hidden"));
+  $("homeOverview")?.classList.remove("hidden");
+  window.scrollTo(0,0);
+}
+let homeQuickPrintShareText="";
+function homeQuickReportData(type){
+  const configs={notifications:{title:"مركز التنبيهات",source:"notificationsList"},geo:{title:"ملخص تعاملات المحافظة",source:"homeGeoSummary"},items:{title:"ملخص حركة الأصناف",source:"homeGeoItemsSummary"}};
+  const config=configs[type];if(!config)throw new Error("نوع التقرير غير معروف");
+  const source=$(config.source);if(!source)throw new Error("محتوى التقرير غير متاح");
+  const clone=source.cloneNode(true);clone.removeAttribute("id");
+  const range=source.querySelector(".info")?.textContent?.trim()||"";
+  const table=source.querySelector("table");
+  const details=table?Array.from(table.rows).map(row=>Array.from(row.cells).map(cell=>cell.innerText.trim()).join(" | ")).join("\n"):source.innerText.trim();
+  return{title:config.title,clone,share:[config.title,range,details].filter(Boolean).join("\n\n")};
+}
+function openHomeQuickPrint(type){
+  try{const report=homeQuickReportData(type);homeQuickPrintShareText=report.share;$("homeQuickPrintTitle").textContent=report.title;$("homeQuickPrintHeader").innerHTML='<div style="text-align:center;font-size:18px;font-weight:bold;">'+esc(report.title)+'</div>';$("homeQuickPrintContent").replaceChildren(report.clone);$("homeQuickPrintFooter").textContent="MeatManagement";$("homeQuickPrintModal").classList.remove("hidden");}
+  catch(e){showToast("تعذر تجهيز التقرير: "+err(e),"error");}
+}
+function shareHomeQuickReport(type){
+  try{const report=homeQuickReportData(type);window.open("https://wa.me/?text="+encodeURIComponent(report.share),"_blank");}
+  catch(e){showToast("تعذر تجهيز المشاركة: "+err(e),"error");}
+}
 async function loadHomeGeoSummary(){
   const box=$("homeGeoSummary"),itemsBox=$("homeGeoItemsSummary");
   if(!box||!isSystemAdmin){$("openHomeGeoSummary")?.classList.add("hidden");$("openHomeItemsSummary")?.classList.add("hidden");return;}
@@ -3512,7 +3554,9 @@ async function loadHomeGeoSummary(){
   if(itemsBox)itemsBox.innerHTML='<h3>ملخص حركة الأصناف</h3><div class="info">جارٍ تحميل حركة الأصناف...</div>';
   try{
     const [rows,items]=await Promise.all([buildGeoSalesSummary(from,to),buildGeoItemMovementSummary(from,to)]);
-    box.innerHTML='<h3>ملخص المبيعات والتحصيلات حسب المحافظة</h3><div class="info">من '+from+' إلى '+to+' | الرصيد المالي للعملاء حتى نهاية الفترة</div><div class="table-responsive"><table class="print-table"><thead><tr><th>المحافظة</th><th>رصيد أول المدة</th><th>إجمالي المبيعات</th><th>إجمالي التحصيلات</th><th>إجمالي المرتجعات</th><th>رصيد العملاء</th></tr></thead><tbody>'+(rows.length?geoSalesRowsHtml(rows):'<tr><td colspan="6">لا توجد حركة.</td></tr>')+'</tbody></table></div>';
+    const totalBalance=rows.reduce((sum,row)=>sum+Number(row.balance||0),0);
+    if($("homeGeoButtonBalance"))$("homeGeoButtonBalance").textContent=fmt(totalBalance);
+    box.innerHTML='<h3>ملخص تعاملات المحافظة</h3><div class="info">من '+from+' إلى '+to+' | الرصيد المالي للعملاء حتى نهاية الفترة</div><div class="table-responsive"><table class="print-table"><thead><tr><th>المحافظة</th><th>رصيد أول المدة</th><th>إجمالي المبيعات</th><th>إجمالي التحصيلات</th><th>إجمالي المرتجعات</th><th>رصيد العملاء</th></tr></thead><tbody>'+(rows.length?geoSalesRowsHtml(rows):'<tr><td colspan="6">لا توجد حركة.</td></tr>')+'</tbody></table></div>';
     if(itemsBox)itemsBox.innerHTML='<h3>ملخص حركة الأصناف</h3><div class="info">من '+from+' إلى '+to+' | الكميات بوحدة الصنف الأساسية</div><div class="table-responsive"><table class="print-table"><thead><tr><th>الصنف</th><th>الوحدة</th><th>إجمالي مشتريات</th><th>إجمالي مبيعات</th><th>إجمالي مرتجعات</th><th>رصيد حالي</th></tr></thead><tbody>'+(items.length?geoItemRowsHtml(items):'<tr><td colspan="6">لا توجد حركة أصناف خلال الفترة.</td></tr>')+'</tbody></table></div>';
   }catch(e){
     const message=esc(err(e));
@@ -8646,6 +8690,16 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
     finally{busy(btn,false,"","إرسال التنبيه");}
   }
   if($("notificationSendAll"))$("notificationSendAll").addEventListener("change",()=>{const select=$("notificationUsers");if(select){select.disabled=$("notificationSendAll").checked;if($("notificationSendAll").checked)Array.from(select.options).forEach(o=>o.selected=false);}});
+  if($("openHomeNotifications"))$("openHomeNotifications").addEventListener("click",()=>openHomeDetail("homeNotificationPanel"));
+  if($("openHomeGeoSummary"))$("openHomeGeoSummary").addEventListener("click",()=>openHomeDetail("homeGeoPanel"));
+  if($("openHomeItemsSummary"))$("openHomeItemsSummary").addEventListener("click",()=>openHomeDetail("homeItemsPanel"));
+  document.querySelectorAll(".home-detail-back").forEach(btn=>btn.addEventListener("click",closeHomeDetail));
+  document.querySelectorAll("[data-home-print]").forEach(btn=>btn.addEventListener("click",()=>openHomeQuickPrint(btn.dataset.homePrint)));
+  document.querySelectorAll("[data-home-share]").forEach(btn=>btn.addEventListener("click",()=>shareHomeQuickReport(btn.dataset.homeShare)));
+  if($("closeHomeQuickPrintBtn"))$("closeHomeQuickPrintBtn").addEventListener("click",()=>$("homeQuickPrintModal").classList.add("hidden"));
+  if($("confirmHomeQuickPrintBtn"))$("confirmHomeQuickPrintBtn").addEventListener("click",()=>window.print());
+  if($("shareHomeQuickPrintBtn"))$("shareHomeQuickPrintBtn").addEventListener("click",()=>{if(homeQuickPrintShareText)window.open("https://wa.me/?text="+encodeURIComponent(homeQuickPrintShareText),"_blank");});
+  window.addEventListener("afterprint",()=>{$("homeQuickPrintModal")?.classList.add("hidden");});
   if($("refreshNotificationsBtn"))$("refreshNotificationsBtn").addEventListener("click",loadNotifications);
   if($("markAllNotificationsReadBtn"))$("markAllNotificationsReadBtn").addEventListener("click",markAllNotificationsRead);
   if($("sendNotificationBtn"))$("sendNotificationBtn").addEventListener("click",sendManualNotification);
