@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v103</title>
+<title>MeatManagement v104</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -366,7 +366,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v103]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v104]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -441,6 +441,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
   <button id="openHomeGeoSummary" class="home-card gold" type="button"><span class="hc-label">🗺️ ملخص تعاملات المحافظة</span><span class="hc-value" id="homeGeoButtonBalance">0</span></button>
   <button id="openHomeItemsSummary" class="home-card green" type="button"><span class="hc-label">📦 ملخص حركة الأصناف</span><span class="hc-value">عرض</span></button>
   <button id="openHomeCustomersSummary" class="home-card" type="button"><span class="hc-label">👥 ملخص العملاء</span><span class="hc-value">عرض</span></button>
+  <button id="openHomeSuppliersSummary" class="home-card gold" type="button"><span class="hc-label">🏭 ملخص الموردين</span><span class="hc-value">عرض</span></button>
 </div>
 </div>
 <div id="homeNotificationPanel" class="card hidden" style="margin-top:14px;">
@@ -473,6 +474,11 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
   <button class="btn secondary home-detail-back" type="button" style="width:auto;margin-bottom:12px;">رجوع للرئيسية</button>
   <div class="notification-actions"><button class="btn secondary" type="button" data-home-print="customers">طباعة / PDF</button><button class="btn" type="button" data-home-share="customers" style="background:#25D366;">واتساب</button></div>
   <div id="homeCustomersSummary" style="margin-top:12px;"><h3>ملخص العملاء</h3><div class="info">جارٍ تحميل ملخص العملاء...</div></div>
+</div>
+<div id="homeSuppliersPanel" class="card hidden" style="margin-top:14px;">
+  <button class="btn secondary home-detail-back" type="button" style="width:auto;margin-bottom:12px;">رجوع للرئيسية</button>
+  <div class="notification-actions"><button class="btn secondary" type="button" data-home-print="suppliers">طباعة / PDF</button><button class="btn" type="button" data-home-share="suppliers" style="background:#25D366;">واتساب</button></div>
+  <div id="homeSuppliersSummary" style="margin-top:12px;"><h3>ملخص الموردين</h3><div class="info">جارٍ تحميل ملخص الموردين...</div></div>
 </div>
 <button id="logoutBtn" class="btn secondary" type="button" style="margin-top:16px;">تسجيل الخروج</button>
 </div>
@@ -1843,7 +1849,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v103</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v104</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -3641,17 +3647,17 @@ async function loadGeoSalesReport(){
 }
 function openHomeDetail(panelId){
   $("homeOverview")?.classList.add("hidden");
-  ["homeNotificationPanel","homeGeoPanel","homeItemsPanel","homeCustomersPanel"].forEach(id=>$(id)?.classList.toggle("hidden",id!==panelId));
+  ["homeNotificationPanel","homeGeoPanel","homeItemsPanel","homeCustomersPanel","homeSuppliersPanel"].forEach(id=>$(id)?.classList.toggle("hidden",id!==panelId));
   window.scrollTo(0,0);
 }
 function closeHomeDetail(){
-  ["homeNotificationPanel","homeGeoPanel","homeItemsPanel","homeCustomersPanel"].forEach(id=>$(id)?.classList.add("hidden"));
+  ["homeNotificationPanel","homeGeoPanel","homeItemsPanel","homeCustomersPanel","homeSuppliersPanel"].forEach(id=>$(id)?.classList.add("hidden"));
   $("homeOverview")?.classList.remove("hidden");
   window.scrollTo(0,0);
 }
 let homeQuickPrintShareText="";
 function homeQuickReportData(type){
-  const configs={notifications:{title:"مركز التنبيهات",source:"notificationsList"},geo:{title:"ملخص تعاملات المحافظة",source:"homeGeoSummary"},items:{title:"ملخص حركة الأصناف",source:"homeGeoItemsSummary"},customers:{title:"ملخص العملاء",source:"homeCustomersSummary"}};
+  const configs={notifications:{title:"مركز التنبيهات",source:"notificationsList"},geo:{title:"ملخص تعاملات المحافظة",source:"homeGeoSummary"},items:{title:"ملخص حركة الأصناف",source:"homeGeoItemsSummary"},customers:{title:"ملخص العملاء",source:"homeCustomersSummary"},suppliers:{title:"ملخص الموردين",source:"homeSuppliersSummary"}};
   const config=configs[type];if(!config)throw new Error("نوع التقرير غير معروف");
   const source=$(config.source);if(!source)throw new Error("محتوى التقرير غير متاح");
   const clone=source.cloneNode(true);clone.removeAttribute("id");
@@ -3706,26 +3712,72 @@ function customerBalanceStatsHtml(rows){
   ];
   return '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin:12px 0;">'+stats.map(([label,value])=>'<div style="background:#f4f7f4;border:1px solid #dce5dc;border-radius:9px;padding:10px;text-align:center;"><div style="font-size:12px;color:#526257;margin-bottom:5px;">'+label+'</div><strong style="font-size:16px;color:#173c2c;">'+value+'</strong></div>').join("")+'</div>';
 }
+
+async function buildSupplierBalanceSummary(from,to){
+  const [y,m,d]=String(to).split("-").map(Number),nextDate=new Date(Date.UTC(y,m-1,d+1)).toISOString().slice(0,10);
+  const [suppliers,invoices,payments,returns,landedCosts,creditAssets]=await Promise.all([
+    fetchAllRows(db.from("suppliers").select("supplier_id,supplier_name,opening_balance").order("supplier_id")),
+    fetchAllRows(db.from("purchase_invoices").select("supplier_id,invoice_date,net_total,treasury_id,status").eq("status","POSTED").lt("invoice_date",nextDate).order("invoice_date")),
+    fetchAllRows(db.from("supplier_payments").select("supplier_id,payment_date,amount,is_cancelled").eq("is_cancelled",false).lt("payment_date",nextDate).order("payment_date")),
+    fetchAllRows(db.from("purchase_returns").select("supplier_id,return_date,total_return_amount,settlement_method,is_cancelled").eq("is_cancelled",false).lt("return_date",nextDate).order("return_date")),
+    fetchAllRows(db.from("purchase_landed_costs").select("supplier_id,cost_date,amount,source_type,status").eq("source_type","EXTERNAL_SUPPLIER").eq("status","ACTIVE").lt("cost_date",nextDate).order("cost_date")),
+    fetchAllRows(db.from("fixed_assets").select("supplier_id,acquisition_date,acquisition_cost,source_type,status").eq("source_type","SUPPLIER_CREDIT").eq("status","ACTIVE").lt("acquisition_date",nextDate).order("acquisition_date"))
+  ]);
+  const rows=new Map(suppliers.map(s=>[String(s.supplier_id),{supplier_id:s.supplier_id,name:s.supplier_name||"غير محدد",opening:Number(s.opening_balance||0),purchases:0,additions:0,returns:0,payments:0,balance:0}]));
+  const ensure=id=>{const key=String(id);if(!rows.has(key))rows.set(key,{supplier_id:id,name:supplierName(id),opening:0,purchases:0,additions:0,returns:0,payments:0,balance:0});return rows.get(key);};
+  invoices.forEach(inv=>{if(inv.treasury_id)return;const r=ensure(inv.supplier_id),day=String(inv.invoice_date||"").slice(0,10),amount=Number(inv.net_total||0);if(day<from)r.opening+=amount;else if(day<=to)r.purchases+=amount;});
+  landedCosts.forEach(cost=>{const r=ensure(cost.supplier_id),day=String(cost.cost_date||"").slice(0,10),amount=Number(cost.amount||0);if(day<from)r.opening+=amount;else if(day<=to)r.additions+=amount;});
+  creditAssets.forEach(asset=>{const r=ensure(asset.supplier_id),day=String(asset.acquisition_date||"").slice(0,10),amount=Number(asset.acquisition_cost||0);if(day<from)r.opening+=amount;else if(day<=to)r.additions+=amount;});
+  returns.forEach(ret=>{if(ret.settlement_method!=="SUPPLIER_CREDIT")return;const r=ensure(ret.supplier_id),day=String(ret.return_date||"").slice(0,10),amount=Number(ret.total_return_amount||0);if(day<from)r.opening-=amount;else if(day<=to)r.returns+=amount;});
+  payments.forEach(payment=>{const r=ensure(payment.supplier_id),day=String(payment.payment_date||"").slice(0,10),amount=Number(payment.amount||0);if(day<from)r.opening-=amount;else if(day<=to)r.payments+=amount;});
+  return Array.from(rows.values()).map(r=>({...r,balance:r.opening+r.purchases+r.additions-r.returns-r.payments}))
+    .filter(r=>r.opening||r.purchases||r.additions||r.returns||r.payments||r.balance)
+    .sort((a,b)=>a.name.localeCompare(b.name,"ar"));
+}
+function supplierBalanceTotals(rows){
+  return rows.reduce((t,r)=>{t.opening+=Number(r.opening||0);t.purchases+=Number(r.purchases||0);t.additions+=Number(r.additions||0);t.returns+=Number(r.returns||0);t.payments+=Number(r.payments||0);t.balance+=Number(r.balance||0);return t;},{opening:0,purchases:0,additions:0,returns:0,payments:0,balance:0});
+}
+function supplierBalanceRowsHtml(rows){
+  const totals=supplierBalanceTotals(rows);
+  const body=rows.map(r=>'<tr><td>'+esc(r.name)+'</td><td>'+fmt(r.opening)+'</td><td>'+fmt(r.purchases)+'</td><td>'+fmt(r.additions)+'</td><td>'+fmt(r.returns)+'</td><td>'+fmt(r.payments)+'</td><td style="font-weight:bold;color:'+(r.balance<0?'#176b3a':'#a52b2b')+'">'+fmt(r.balance)+'</td></tr>').join("");
+  return body+'<tr style="font-weight:bold;background:#eef3ef;border-top:2px solid #173c2c;"><td>الإجمالي</td><td>'+fmt(totals.opening)+'</td><td>'+fmt(totals.purchases)+'</td><td>'+fmt(totals.additions)+'</td><td>'+fmt(totals.returns)+'</td><td>'+fmt(totals.payments)+'</td><td style="color:'+(totals.balance<0?'#176b3a':'#a52b2b')+'">'+fmt(totals.balance)+'</td></tr>';
+}
+function supplierBalanceStatsHtml(rows){
+  const totals=supplierBalanceTotals(rows);
+  const stats=[
+    ["إجمالي عدد الموردين",rows.length],
+    ["إجمالي المشتريات الآجلة",fmt(totals.purchases)],
+    ["إجمالي الإضافات الآجلة",fmt(totals.additions)],
+    ["إجمالي المرتجعات المخصومة",fmt(totals.returns)],
+    ["إجمالي دفعات الموردين",fmt(totals.payments)],
+    ["إجمالي مستحقات الموردين",fmt(totals.balance)]
+  ];
+  return '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin:12px 0;">'+stats.map(([label,value])=>'<div style="background:#f4f7f4;border:1px solid #dce5dc;border-radius:9px;padding:10px;text-align:center;"><div style="font-size:12px;color:#526257;margin-bottom:5px;">'+label+'</div><strong style="font-size:16px;color:#173c2c;">'+value+'</strong></div>').join("")+'</div>';
+}
+
 async function loadHomeGeoSummary(){
-  const box=$("homeGeoSummary"),itemsBox=$("homeGeoItemsSummary"),customersBox=$("homeCustomersSummary");
-  if(!box||!isSystemAdmin){["openHomeGeoSummary","openHomeItemsSummary","openHomeCustomersSummary"].forEach(id=>$(id)?.classList.add("hidden"));return;}
-  ["openHomeGeoSummary","openHomeItemsSummary","openHomeCustomersSummary"].forEach(id=>$(id)?.classList.remove("hidden"));
+  const box=$("homeGeoSummary"),itemsBox=$("homeGeoItemsSummary"),customersBox=$("homeCustomersSummary"),suppliersBox=$("homeSuppliersSummary");
+  if(!box||!isSystemAdmin){["openHomeGeoSummary","openHomeItemsSummary","openHomeCustomersSummary","openHomeSuppliersSummary"].forEach(id=>$(id)?.classList.add("hidden"));return;}
+  ["openHomeGeoSummary","openHomeItemsSummary","openHomeCustomersSummary","openHomeSuppliersSummary"].forEach(id=>$(id)?.classList.remove("hidden"));
   const from=monthStartISO(),to=todayISO();
   box.innerHTML='<h3>ملخص المبيعات والتحصيلات حسب المحافظة</h3><div class="info">جارٍ تحميل الملخص...</div>';
   if(itemsBox)itemsBox.innerHTML='<h3>ملخص حركة الأصناف</h3><div class="info">جارٍ تحميل حركة الأصناف...</div>';
   if(customersBox)customersBox.innerHTML='<h3>ملخص العملاء</h3><div class="info">جارٍ تحميل ملخص العملاء...</div>';
+  if(suppliersBox)suppliersBox.innerHTML='<h3>ملخص الموردين</h3><div class="info">جارٍ تحميل ملخص الموردين...</div>';
   try{
-    const [rows,items,customers]=await Promise.all([buildGeoSalesSummary(from,to),buildGeoItemMovementSummary(from,to),buildCustomerBalanceSummary(from,to)]);
+    const [rows,items,customers,suppliers]=await Promise.all([buildGeoSalesSummary(from,to),buildGeoItemMovementSummary(from,to),buildCustomerBalanceSummary(from,to),buildSupplierBalanceSummary(from,to)]);
     const totalBalance=rows.reduce((sum,row)=>sum+Number(row.balance||0),0);
     if($("homeGeoButtonBalance"))$("homeGeoButtonBalance").textContent=fmt(totalBalance);
     box.innerHTML='<h3>ملخص تعاملات المحافظة</h3><div class="info">من '+from+' إلى '+to+' | الرصيد المالي للعملاء حتى نهاية الفترة</div><div class="table-responsive"><table class="print-table"><thead><tr><th>المحافظة</th><th>رصيد أول المدة</th><th>إجمالي المبيعات</th><th>إجمالي التحصيلات</th><th>إجمالي المرتجعات</th><th>رصيد العملاء</th></tr></thead><tbody>'+(rows.length?geoSalesRowsHtml(rows):'<tr><td colspan="6">لا توجد حركة.</td></tr>')+'</tbody></table></div>';
     if(itemsBox)itemsBox.innerHTML='<h3>ملخص حركة الأصناف</h3><div class="info">من '+from+' إلى '+to+' | الكميات بوحدة الصنف الأساسية</div><div class="table-responsive"><table class="print-table"><thead><tr><th>الصنف</th><th>الوحدة</th><th>إجمالي مشتريات</th><th>إجمالي مبيعات</th><th>إجمالي مرتجعات</th><th>رصيد حالي</th></tr></thead><tbody>'+(items.length?geoItemRowsHtml(items):'<tr><td colspan="6">لا توجد حركة أصناف خلال الفترة.</td></tr>')+'</tbody></table></div>';
     if(customersBox)customersBox.innerHTML='<h3>ملخص العملاء</h3><div class="info">من '+from+' إلى '+to+' | الرصيد حتى نهاية الفترة</div>'+customerBalanceStatsHtml(customers)+'<div class="table-responsive"><table class="print-table"><thead><tr><th>العميل</th><th>المحافظة</th><th>رصيد أول المدة</th><th>إجمالي مبيعات</th><th>إجمالي مرتجعات</th><th>إجمالي تحصيلات</th><th>رصيد العميل</th></tr></thead><tbody>'+(customers.length?customerBalanceRowsHtml(customers):'<tr><td colspan="7">لا توجد حركة عملاء.</td></tr>'+customerBalanceRowsHtml([]))+'</tbody></table></div>';
+    if(suppliersBox)suppliersBox.innerHTML='<h3>ملخص الموردين</h3><div class="info">من '+from+' إلى '+to+' | الرصيد حتى نهاية الفترة</div>'+supplierBalanceStatsHtml(suppliers)+'<div class="table-responsive"><table class="print-table"><thead><tr><th>المورد</th><th>رصيد أول المدة</th><th>مشتريات آجلة</th><th>إضافات آجلة</th><th>مرتجعات مخصومة</th><th>دفعات</th><th>رصيد المورد</th></tr></thead><tbody>'+(suppliers.length?supplierBalanceRowsHtml(suppliers):'<tr><td colspan="7">لا توجد حركة موردين.</td></tr>'+supplierBalanceRowsHtml([]))+'</tbody></table></div>';
   }catch(e){
     const message=esc(err(e));
     box.innerHTML='<h3>ملخص تعاملات المحافظة</h3><div class="empty error">تعذر تحميل الملخص: '+message+'</div>';if($("homeGeoButtonBalance"))$("homeGeoButtonBalance").textContent="—";
     if(itemsBox)itemsBox.innerHTML='<h3>ملخص حركة الأصناف</h3><div class="empty error">تعذر تحميل حركة الأصناف: '+message+'</div>';
     if(customersBox)customersBox.innerHTML='<h3>ملخص العملاء</h3><div class="empty error">تعذر تحميل ملخص العملاء: '+message+'</div>';
+    if(suppliersBox)suppliersBox.innerHTML='<h3>ملخص الموردين</h3><div class="empty error">تعذر تحميل ملخص الموردين: '+message+'</div>';
   }
 }
 
@@ -8874,6 +8926,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
   if($("openHomeGeoSummary"))$("openHomeGeoSummary").addEventListener("click",()=>openHomeDetail("homeGeoPanel"));
   if($("openHomeItemsSummary"))$("openHomeItemsSummary").addEventListener("click",()=>openHomeDetail("homeItemsPanel"));
   if($("openHomeCustomersSummary"))$("openHomeCustomersSummary").addEventListener("click",()=>openHomeDetail("homeCustomersPanel"));
+  if($("openHomeSuppliersSummary"))$("openHomeSuppliersSummary").addEventListener("click",()=>openHomeDetail("homeSuppliersPanel"));
   document.querySelectorAll(".home-detail-back").forEach(btn=>btn.addEventListener("click",closeHomeDetail));
   document.querySelectorAll("[data-home-print]").forEach(btn=>btn.addEventListener("click",()=>openHomeQuickPrint(btn.dataset.homePrint)));
   document.querySelectorAll("[data-home-share]").forEach(btn=>btn.addEventListener("click",()=>shareHomeQuickReport(btn.dataset.homeShare)));
