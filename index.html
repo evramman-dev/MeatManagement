@@ -327,7 +327,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v89]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v91]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -393,10 +393,19 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <section id="home" class="hidden">
 <div class="card">
 <h2>🏠 الرئيسية</h2>
+<div id="homeOverview">
 <div id="userInfo" class="info">جارٍ تحميل بيانات الحساب...</div>
 <div class="home-dashboard" id="homeDashboard"></div>
-<div class="card" id="notificationCenter" style="margin-top:14px;">
+<div class="home-dashboard" id="homeQuickReports" style="margin-top:14px;">
+  <button id="openHomeNotifications" class="home-card red" type="button"><span class="hc-label">مركز التنبيهات</span><span class="hc-value" id="homeNotificationButtonCount">0</span></button>
+  <button id="openHomeGeoSummary" class="home-card gold" type="button"><span class="hc-label">ملخص تعاملات المحافظة</span><span class="hc-value" id="homeGeoButtonBalance">0</span></button>
+  <button id="openHomeItemsSummary" class="home-card green" type="button"><span class="hc-label">ملخص حركة الأصناف</span><span class="hc-value">عرض</span></button>
+</div>
+</div>
+<div id="homeNotificationPanel" class="card hidden" style="margin-top:14px;">
+  <button class="btn secondary home-detail-back" type="button" style="width:auto;margin-bottom:12px;">رجوع للرئيسية</button>
   <div class="notification-head"><h3 style="margin:0;">مركز التنبيهات <span id="notificationUnreadCount" class="notification-count">0</span></h3><div class="notification-actions" style="margin:0;"><button id="refreshNotificationsBtn" class="btn secondary" type="button">تحديث</button><button id="markAllNotificationsReadBtn" class="btn secondary" type="button">تعليم الكل كمقروء</button></div></div>
+  <div id="notificationActions" class="notification-actions" style="margin-top:10px;"><button class="btn secondary" type="button" data-home-print="notifications">طباعة / PDF</button><button class="btn" type="button" data-home-share="notifications" style="background:#25D366;">واتساب</button></div>
   <div id="notificationsList" style="margin-top:10px;"><div class="empty">جارٍ تحميل التنبيهات...</div></div>
   <div id="notificationSendPanel" class="notification-send hidden">
     <h3>إرسال تنبيه للمستخدمين</h3>
@@ -409,8 +418,16 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
     <div id="notificationSendMsg" class="status hidden"></div>
   </div>
 </div>
-<div id="homeGeoSummary" class="card" style="margin-top:14px;"><h3>ملخص المبيعات والتحصيلات حسب المحافظة</h3><div class="info">جارٍ تحميل الملخص...</div></div>
-<div id="homeGeoItemsSummary" class="card hidden" style="margin-top:14px;"><h3>ملخص حركة الأصناف</h3><div class="info">جارٍ تحميل حركة الأصناف...</div></div>
+<div id="homeGeoPanel" class="card hidden" style="margin-top:14px;">
+  <button class="btn secondary home-detail-back" type="button" style="width:auto;margin-bottom:12px;">رجوع للرئيسية</button>
+  <div class="notification-actions"><button class="btn secondary" type="button" data-home-print="geo">طباعة / PDF</button><button class="btn" type="button" data-home-share="geo" style="background:#25D366;">واتساب</button></div>
+  <div id="homeGeoSummary" style="margin-top:12px;"><h3>ملخص تعاملات المحافظة</h3><div class="info">جارٍ تحميل الملخص...</div></div>
+</div>
+<div id="homeItemsPanel" class="card hidden" style="margin-top:14px;">
+  <button class="btn secondary home-detail-back" type="button" style="width:auto;margin-bottom:12px;">رجوع للرئيسية</button>
+  <div class="notification-actions"><button class="btn secondary" type="button" data-home-print="items">طباعة / PDF</button><button class="btn" type="button" data-home-share="items" style="background:#25D366;">واتساب</button></div>
+  <div id="homeGeoItemsSummary" style="margin-top:12px;"><h3>ملخص حركة الأصناف</h3><div class="info">جارٍ تحميل حركة الأصناف...</div></div>
+</div>
 <button id="logoutBtn" class="btn secondary" type="button" style="margin-top:16px;">تسجيل الخروج</button>
 </div>
 </section>
@@ -3488,8 +3505,8 @@ async function loadGeoSalesReport(){
 }
 async function loadHomeGeoSummary(){
   const box=$("homeGeoSummary"),itemsBox=$("homeGeoItemsSummary");
-  if(!box||!isSystemAdmin){if(box)box.classList.add("hidden");if(itemsBox)itemsBox.classList.add("hidden");return;}
-  box.classList.remove("hidden");if(itemsBox)itemsBox.classList.remove("hidden");
+  if(!box||!isSystemAdmin){$("openHomeGeoSummary")?.classList.add("hidden");$("openHomeItemsSummary")?.classList.add("hidden");return;}
+  $("openHomeGeoSummary")?.classList.remove("hidden");$("openHomeItemsSummary")?.classList.remove("hidden");
   const from=monthStartISO(),to=todayISO();
   box.innerHTML='<h3>ملخص المبيعات والتحصيلات حسب المحافظة</h3><div class="info">جارٍ تحميل الملخص...</div>';
   if(itemsBox)itemsBox.innerHTML='<h3>ملخص حركة الأصناف</h3><div class="info">جارٍ تحميل حركة الأصناف...</div>';
@@ -3499,7 +3516,7 @@ async function loadHomeGeoSummary(){
     if(itemsBox)itemsBox.innerHTML='<h3>ملخص حركة الأصناف</h3><div class="info">من '+from+' إلى '+to+' | الكميات بوحدة الصنف الأساسية</div><div class="table-responsive"><table class="print-table"><thead><tr><th>الصنف</th><th>الوحدة</th><th>إجمالي مشتريات</th><th>إجمالي مبيعات</th><th>إجمالي مرتجعات</th><th>رصيد حالي</th></tr></thead><tbody>'+(items.length?geoItemRowsHtml(items):'<tr><td colspan="6">لا توجد حركة أصناف خلال الفترة.</td></tr>')+'</tbody></table></div>';
   }catch(e){
     const message=esc(err(e));
-    box.innerHTML='<h3>ملخص المبيعات والتحصيلات حسب المحافظة</h3><div class="empty error">تعذر تحميل الملخص: '+message+'</div>';
+    box.innerHTML='<h3>ملخص تعاملات المحافظة</h3><div class="empty error">تعذر تحميل الملخص: '+message+'</div>';if($("homeGeoButtonBalance"))$("homeGeoButtonBalance").textContent="—";
     if(itemsBox)itemsBox.innerHTML='<h3>ملخص حركة الأصناف</h3><div class="empty error">تعذر تحميل حركة الأصناف: '+message+'</div>';
   }
 }
@@ -8592,7 +8609,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
       if(error)throw error;
       const rows=(data||[]).filter(x=>x.notifications).sort((a,b)=>new Date(b.notifications.created_at||0)-new Date(a.notifications.created_at||0));
       const unread=rows.filter(x=>!x.read_at).length;
-      if($("notificationUnreadCount"))$("notificationUnreadCount").textContent=String(unread);
+      if($("notificationUnreadCount"))$("notificationUnreadCount").textContent=String(unread);if($("homeNotificationButtonCount"))$("homeNotificationButtonCount").textContent=String(unread);
       if($("markAllNotificationsReadBtn"))$("markAllNotificationsReadBtn").disabled=unread===0;
       if(!rows.length){list.innerHTML='<div class="empty">لا توجد تنبيهات حتى الآن.</div>';}
       else list.innerHTML=rows.map(x=>{const n=x.notifications;return `<article class="notification-item ${x.read_at?'':'unread'}"><strong>${notificationEscape(n.title)}</strong><div style="margin-top:6px;white-space:pre-wrap;line-height:1.7;">${notificationEscape(n.body)}</div><div class="notification-meta"><span>${notificationEscape(formatDateTime(n.created_at))}</span><span>${x.read_at?'مقروء':'غير مقروء'}</span></div>${x.read_at?'':`<div class="notification-actions"><button class="btn secondary notification-read-btn" type="button" data-id="${notificationEscape(x.notification_id)}">تعليم كمقروء</button></div>`}</article>`;}).join("");
