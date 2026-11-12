@@ -1595,7 +1595,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div><label for="geoSalesToDate">إلى تاريخ</label><input type="date" id="geoSalesToDate"></div>
 </div>
 <button class="btn" id="refreshGeoSalesReport" type="button" style="margin-top:10px;">عرض التقرير</button>
-<div class="info" style="margin-top:10px;">المبيعات والتحصيلات خلال الفترة. المبيعات الآجلة تعرض قيمة الفواتير التي ما زال عليها رصيد. المديونية المتبقية هي رصيد الفواتير القائمة حتى نهاية الفترة المحددة، بعد خصم التحصيلات المسجلة حتى ذلك التاريخ.</div>
+<div class="info" style="margin-top:10px;">رصيد أول المدة هو مديونية العملاء قبل بداية الفترة. الرصيد الحالي = رصيد أول المدة + المبيعات - التحصيلات - المرتجعات التي خُصمت من المديونية. عمود المرتجعات يعرض إجمالي المرتجعات خلال الفترة، بما فيها المبالغ التي رُدت نقدًا. حركة الأصناف بوحدتها الأساسية، والرصيد الحالي يشمل جميع المواقع.</div>
 <div class="table-responsive" style="margin-top:12px;"><table class="print-table" id="geoSalesTable"><thead><tr><th>المحافظة</th><th>رصيد أول المدة</th><th>إجمالي المبيعات</th><th>إجمالي التحصيلات</th><th>إجمالي المرتجعات</th><th>الرصيد الحالي</th></tr></thead><tbody><tr><td colspan="6">حدد الفترة ثم اضغط عرض التقرير.</td></tr></tbody></table></div><h3 style="margin-top:20px;">ملخص حركة الأصناف</h3><div class="table-responsive"><table class="print-table" id="geoItemsTable"><thead><tr><th>الصنف</th><th>إجمالي مشتريات</th><th>إجمالي مبيعات</th><th>إجمالي مرتجعات</th><th>رصيد حالي</th></tr></thead><tbody><tr><td colspan="5">حدد الفترة ثم اضغط عرض التقرير.</td></tr></tbody></table></div>
 </div>
 <div id="repPL" class="report-tab hidden">
