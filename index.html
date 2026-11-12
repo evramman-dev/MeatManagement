@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v95</title>
+<title>MeatManagement v97</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -330,7 +330,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v95]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v97]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1193,6 +1193,10 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div id="productionWasteRows"></div>
 <button id="addProductionWasteBtn" class="btn secondary" type="button">إضافة فاقد</button>
 <div class="info">يجب توزيع تكلفة المسترجعات والفاقد بقيم فعلية. لا يحسب البرنامج نسبة توزيع تلقائية.</div>
+<hr>
+<h4>المصروفات المباشرة للإنتاج</h4>
+<div class="info">يمكنك توزيع جزء من أجور الإنتاج أو مهمات الإنتاج أو التعبئة على أمر التشغيل. المبلغ المخصص يدخل في تكلفة الناتج، والباقي يظل مصروف فترة.</div>
+<div id="productionDirectExpenses"><div class="empty">جارٍ تحميل المصروفات المتاحة...</div></div>
 <button id="saveProductionExecutionBtn" class="btn" type="submit">تنفيذ وتسجيل التكلفة</button>
 <div id="productionExecutionMsg" class="status hidden"></div>
 </form>
@@ -1802,7 +1806,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v96</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v97</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -6975,7 +6979,7 @@ async function loadExpenseTypes(){
   if(!navigator.onLine)return;
   const {data,error}=await db.from("expense_types").select("expense_type,account_id,category_group,cost_treatment,is_active").eq("is_active",true).order("category_group").order("expense_type");
   if(error)throw error;
-  expenseTypesCache=(data||[]).filter(x=>x.cost_treatment==="PERIOD_EXPENSE" && x.account_id);
+  expenseTypesCache=(data||[]).filter(x=>(x.cost_treatment==="PERIOD_EXPENSE" || x.cost_treatment==="DIRECT_PRODUCTION_COST") && x.account_id);
   const ids=[...new Set(expenseTypesCache.map(x=>Number(x.account_id)).filter(Boolean))];
   expenseAccountCodes={};
   if(ids.length){const a=await db.from("chart_of_accounts").select("account_id,account_code").in("account_id",ids);if(!a.error)(a.data||[]).forEach(x=>expenseAccountCodes[String(x.account_id)]=x.account_code);}
@@ -7433,17 +7437,32 @@ function addProductionWasteRow(){
  const remove=document.createElement("button");remove.type="button";remove.className="btn secondary";remove.textContent="حذف";remove.onclick=()=>row.remove();
  [["الخامة المصدر",source],["كمية الفاقد بالوحدة الأساسية",qty],["التكلفة المخصصة",cost]].forEach(([label,el])=>{const wrap=document.createElement("label");wrap.textContent=label;wrap.appendChild(el);row.appendChild(wrap);});row.appendChild(remove);$("productionWasteRows").appendChild(row);
 }
+function renderProductionDirectExpenses(items){
+ const box=$("productionDirectExpenses");if(!box)return;box.replaceChildren();
+ if(!items?.length){box.innerHTML="<div class='empty'>لا توجد مصروفات إنتاج مباشرة متاحة للتوزيع حاليًا.</div>";return;}
+ items.forEach(item=>{
+  const row=document.createElement("div");row.className="item-row production-direct-expense-row";
+  row.dataset.expenseId=String(item.expense_id);row.dataset.available=String(item.available_amount);
+  const details=document.createElement("div");details.className="details";
+  details.textContent=expenseTypeName(item.expense_type)+" | "+formatDate(item.expense_date)+" | إجمالي المصروف: "+fmt(item.amount)+" | سبق تحميله: "+fmt(item.allocated_amount)+" | المتاح: "+fmt(item.available_amount);
+  const label=document.createElement("label");label.textContent="المبلغ المخصص لهذا الأمر";
+  const input=document.createElement("input");input.className="production-direct-expense-amount";input.type="number";input.min="0";input.max=String(item.available_amount);input.step="0.01";input.value="0";input.placeholder="اترك صفرًا إذا لن تخصص مبلغًا";
+  label.appendChild(input);row.appendChild(details);row.appendChild(label);box.appendChild(row);
+ });
+}
 async function openProductionExecution(order){
  if(!canManageProduction||!order||order.status!=="DRAFT")return;
  try{
   const {data,error}=await db.from("production_order_materials").select("material_id,raw_product_id,required_quantity,unit_id").eq("order_id",order.order_id).order("material_id");
   if(error)throw error;if(!data?.length)throw new Error("أمر التشغيل لا يحتوي على خامات.");
+  const {data:directData,error:directError}=await db.rpc("get_available_production_expenses",{p_order_id:Number(order.order_id)});
+  if(directError)throw directError;
   productionExecutionOrder=order;productionExecutionMaterials=data;
   $("productionExecutionForm").reset();$("productionExecutionDate").value=todayISO();$("productionExecutionOutput").value=String(order.target_quantity||"");
   $("productionExecutionOrderInfo").textContent="أمر التشغيل: "+order.order_number+" | الناتج: "+productName(order.output_product_id)+" | الوحدة: "+unitName(order.output_unit_id);
   const box=$("productionExecutionMaterials");box.replaceChildren();
   data.forEach(m=>{const row=document.createElement("div");row.className="item-row";row.dataset.materialId=String(m.material_id);const label=document.createElement("label");label.textContent=productName(m.raw_product_id)+" — "+unitName(m.unit_id)+" (المطلوب: "+fmtQty(m.required_quantity)+")";const input=document.createElement("input");input.className="production-actual-material";input.type="number";input.min="0";input.step="0.000001";input.value=String(m.required_quantity??0);input.required=true;label.appendChild(input);row.appendChild(label);box.appendChild(row);});
-  $("productionRecoveredRows").replaceChildren();$("productionWasteRows").replaceChildren();clear($("productionExecutionMsg"));$("productionExecutionModal").classList.add("active");
+  $("productionRecoveredRows").replaceChildren();$("productionWasteRows").replaceChildren();renderProductionDirectExpenses(directData||[]);clear($("productionExecutionMsg"));$("productionExecutionModal").classList.add("active");
  }catch(e){showToast("تعذر فتح تنفيذ أمر التشغيل: "+err(e),"error",7000);}
 }
 if($("addProductionRecoveredBtn"))$("addProductionRecoveredBtn").addEventListener("click",addProductionRecoveredRow);
@@ -7454,10 +7473,11 @@ if($("productionExecutionForm"))$("productionExecutionForm").addEventListener("s
  const materials=[];for(const row of $("productionExecutionMaterials").querySelectorAll(".item-row")){const qty=Number(row.querySelector(".production-actual-material").value);if(!Number.isFinite(qty)||qty<0)return msg($("productionExecutionMsg"),"راجع كميات الخامات المستهلكة.","error");materials.push({material_id:Number(row.dataset.materialId),actual_quantity:qty});}
  const recovered=[];for(const row of $("productionRecoveredRows").querySelectorAll(".production-cost-row")){const source=Number(row.querySelector(".production-recovered-source").value),product=Number(row.querySelector(".production-recovered-product").value),sourceQty=Number(row.querySelector(".production-recovered-source-qty").value),baseQty=Number(row.querySelector(".production-recovered-base-qty").value),cost=Number(row.querySelector(".production-recovered-cost").value);if(!(source>0&&product>0&&sourceQty>0&&baseQty>0&&cost>0))return msg($("productionExecutionMsg"),"أكمل بيانات كل مادة مسترجعة، بما فيها كمية المصدر والتكلفة.","error");recovered.push({product_id:product,source_material_id:source,source_base_quantity:sourceQty,base_quantity:baseQty,allocated_cost:cost});}
  const waste=[];for(const row of $("productionWasteRows").querySelectorAll(".production-cost-row")){const source=Number(row.querySelector(".production-waste-source").value),qty=Number(row.querySelector(".production-waste-qty").value),cost=Number(row.querySelector(".production-waste-cost").value);if(!(source>0&&qty>0&&cost>0))return msg($("productionExecutionMsg"),"أكمل بيانات كل بند فاقد، بما فيها الكمية والتكلفة.","error");waste.push({material_id:source,base_quantity:qty,allocated_cost:cost});}
+ const directExpenses=[];for(const row of $("productionDirectExpenses").querySelectorAll(".production-direct-expense-row")){const amount=Number(row.querySelector(".production-direct-expense-amount").value||0),available=Number(row.dataset.available);if(!Number.isFinite(amount)||amount<0||amount>available+0.0001)return msg($("productionExecutionMsg"),"المبلغ المخصص من أحد المصروفات يتجاوز المتاح.","error");if(amount>0)directExpenses.push({expense_id:Number(row.dataset.expenseId),allocated_amount:amount});}
  if($("productionExecutionDate").value!==todayISO())return msg($("productionExecutionMsg"),"تاريخ التنفيذ يجب أن يساوي تاريخ اليوم.","error");
- if(!confirm("سيتم تسجيل صرف الخامات والناتج والمسترجعات والفاقد بالقيم التي أدخلتها. راجع الكميات والتكاليف قبل التأكيد. هل تريد التنفيذ؟"))return;
+ if(!confirm("سيتم تسجيل صرف الخامات والناتج والمسترجعات والفاقد، وتحميل المصروفات المباشرة التي خصصت لها مبلغًا على تكلفة الناتج. راجع البيانات قبل التأكيد. هل تريد التنفيذ؟"))return;
  const btn=$("saveProductionExecutionBtn");busy(btn,true,"جارٍ التنفيذ...","تنفيذ وتسجيل التكلفة");clear($("productionExecutionMsg"));
- try{const {error}=await db.rpc("execute_production_order_v5",{p_order_id:Number(productionExecutionOrder.order_id),p_actual_output_quantity:output,p_materials:materials,p_recovered_materials:recovered,p_abnormal_waste:waste,p_execution_date:$("productionExecutionDate").value});if(error)throw error;showToast("تم تنفيذ أمر التشغيل وتسجيل التكلفة الفعلية","success");logUserAction("PRODUCTION","تنفيذ فعلي لأمر: "+productionExecutionOrder.order_number);$("productionExecutionModal").classList.remove("active");await loadProduction();await loadStock();}
+ try{const {error}=await db.rpc("execute_production_order_v6",{p_order_id:Number(productionExecutionOrder.order_id),p_actual_output_quantity:output,p_materials:materials,p_recovered_materials:recovered,p_abnormal_waste:waste,p_direct_expenses:directExpenses,p_execution_date:$("productionExecutionDate").value});if(error)throw error;showToast("تم تنفيذ أمر التشغيل وتسجيل تكلفة الخامات والمصروفات المباشرة","success");logUserAction("PRODUCTION","تنفيذ فعلي لأمر: "+productionExecutionOrder.order_number);$("productionExecutionModal").classList.remove("active");await loadProduction();await loadStock();}
  catch(error){msg($("productionExecutionMsg"),"تعذر تنفيذ أمر التشغيل: "+err(error),"error");}
  finally{busy(btn,false,"","تنفيذ وتسجيل التكلفة");}
 });
@@ -7478,7 +7498,7 @@ function renderProduction(){
     const recipeName = recipesCache.find(r=>String(r.recipe_id)===String(p.recipe_id))?.recipe_name || "-"; 
     const details=document.createElement("div"); 
     details.className="details"; 
-    const actualDetails=p.status==="COMPLETED"?" | الإنتاج الفعلي: "+fmtQty(p.actual_output_quantity)+" "+unitName(p.output_unit_id)+" | تكلفة الخامات: "+fmt(p.total_material_cost)+" | تكلفة الوحدة الأساسية: "+fmt(p.output_unit_cost):"";
+    const actualDetails=p.status==="COMPLETED"?" | الإنتاج الفعلي: "+fmtQty(p.actual_output_quantity)+" "+unitName(p.output_unit_id)+" | تكلفة الخامات: "+fmt(p.total_material_cost)+" | المصروفات المباشرة: "+fmt(p.total_direct_cost||0)+" | إجمالي تكلفة الإنتاج: "+fmt(p.total_production_cost||p.total_material_cost||0)+" | تكلفة الوحدة الأساسية: "+fmt(p.output_unit_cost):"";
     details.textContent="الوصفة: "+recipeName+" | المستهدف: "+fmtQty(p.target_quantity)+" "+unitName(p.output_unit_id)+actualDetails+" | الحالة: "+(statusMap[p.status]||p.status); 
     const actions=document.createElement("div"); 
     actions.className="actions"; 
