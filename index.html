@@ -2396,10 +2396,13 @@ if($("runAdminResetPreviewBtn")) $("runAdminResetPreviewBtn").addEventListener("
           msg(actionInfo,"تعذر اعتماد التقرير: "+err(e),"error");
         }finally{
           busy(approveBtn,false,"","اعتماد التقرير");
+          if(!executeBtn.disabled)approveBtn.disabled=true;
         }
       });
       executeBtn.addEventListener("click",async()=>{
         if(executeBtn.disabled)return;
+        let completed=false;
+        let blocked=false;
         if(!window.confirm("سيتم حذف بيانات العمليات والحركات والقيود، وتصفير أرصدة العملاء والموردين والخزائن والمخزون وفق التقرير المعروض. المرحلة الثانية لن تعمل. هل توافق على تنفيذ المرحلة الأولى الآن؟"))return;
         busy(executeBtn,true,"جارٍ تنفيذ المرحلة الأولى...","تنفيذ المرحلة الأولى");
         try{
@@ -2409,8 +2412,10 @@ if($("runAdminResetPreviewBtn")) $("runAdminResetPreviewBtn").addEventListener("
           });
           if(executionError)throw executionError;
           if(!execution||execution.executed!==true||execution.status!=="COMPLETED"){
+            if(execution?.status==="BLOCKED"){blocked=true;approveBtn.disabled=true;}
             throw new Error(execution?.message||"لم تكتمل المرحلة الأولى. لم تعتمد الأداة نجاح التصفير.");
           }
+          completed=true;
           approveBtn.disabled=true;
           executeBtn.disabled=true;
           actionInfo.textContent="اكتملت المرحلة الأولى. المرحلة الثانية ما زالت مستقلة ولم يتم تشغيلها.";
@@ -2424,6 +2429,8 @@ if($("runAdminResetPreviewBtn")) $("runAdminResetPreviewBtn").addEventListener("
           msg(actionInfo,"لم تكتمل عملية التصفير: "+err(e),"error");
         }finally{
           busy(executeBtn,false,"","تنفيذ المرحلة الأولى");
+          if(completed||blocked)executeBtn.disabled=true;
+          if(blocked)approveBtn.disabled=true;
         }
       });
     }
