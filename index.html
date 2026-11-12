@@ -452,6 +452,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="dashboard-title">📦 البضاعة والإنتاج</div>
 <div class="dashboard-grid">
 <div class="dash-item hidden" id="menuProducts" onclick="window.openSection('products')"><div class="dash-icon">📦</div><div class="dash-title">المنتجات</div></div>
+<div class="dash-item hidden" id="menuPackaging" onclick="window.openSection('packaging')"><div class="dash-icon">📦</div><div class="dash-title">خيارات التعبئة</div></div>
 <div class="dash-item hidden" id="menuLocations" onclick="window.openSection('locations')"><div class="dash-icon">🏭</div><div class="dash-title">المواقع والمخازن</div></div>
 <div class="dash-item hidden" id="menuStock" onclick="window.openSection('stock')"><div class="dash-icon">📊</div><div class="dash-title">أرصدة المخزون</div></div>
 <div class="dash-item hidden" id="menuStockSummary" onclick="window.openSection('stockSummary')"><div class="dash-icon">📋</div><div class="dash-title">ملخص أرصدة الأصناف</div></div>
@@ -1595,7 +1596,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 <button class="btn" id="refreshGeoSalesReport" type="button" style="margin-top:10px;">عرض التقرير</button>
 <div class="info" style="margin-top:10px;">المبيعات والتحصيلات خلال الفترة. المبيعات الآجلة تعرض قيمة الفواتير التي ما زال عليها رصيد. المديونية المتبقية هي رصيد الفواتير القائمة حتى نهاية الفترة المحددة، بعد خصم التحصيلات المسجلة حتى ذلك التاريخ.</div>
-<div class="table-responsive" style="margin-top:12px;"><table class="print-table" id="geoSalesTable"><thead><tr><th>المحافظة</th><th>صافي المبيعات</th><th>التحصيلات</th><th>أرصدة فواتير الفترة</th><th>إجمالي رصيد الفواتير</th></tr></thead><tbody><tr><td colspan="5">حدد الفترة ثم اضغط عرض التقرير.</td></tr></tbody></table></div>
+<div class="table-responsive" style="margin-top:12px;"><table class="print-table" id="geoSalesTable"><thead><tr><th>المحافظة</th><th>رصيد أول المدة</th><th>إجمالي المبيعات</th><th>إجمالي التحصيلات</th><th>إجمالي المرتجعات</th><th>الرصيد الحالي</th></tr></thead><tbody><tr><td colspan="6">حدد الفترة ثم اضغط عرض التقرير.</td></tr></tbody></table></div><h3 style="margin-top:20px;">ملخص حركة الأصناف</h3><div class="table-responsive"><table class="print-table" id="geoItemsTable"><thead><tr><th>الصنف</th><th>إجمالي مشتريات</th><th>إجمالي مبيعات</th><th>إجمالي مرتجعات</th><th>رصيد حالي</th></tr></thead><tbody><tr><td colspan="5">حدد الفترة ثم اضغط عرض التقرير.</td></tr></tbody></table></div>
 </div>
 <div id="repPL" class="report-tab hidden">
 <div class="grid"><div><label>من تاريخ</label><input type="date" id="plFromDate"></div><div><label>إلى تاريخ</label><input type="date" id="plToDate"></div></div>
@@ -1680,8 +1681,12 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="row"><input id="search" type="search" placeholder="ابحث..."><button id="refreshBtn" class="btn secondary" type="button">تحديث</button></div>
 <div id="listMsg" class="status hidden"></div>
 <div id="products"><div class="empty">جارٍ تحميل المنتجات...</div></div>
-<div id="packagingManagement" class="card" style="margin-top:14px;display:none;"><div class="row" style="justify-content:space-between"><h3 style="margin:0;color:var(--g);">📦 خيارات التعبئة</h3><button id="addPackageOptionBtn" class="btn" type="button" style="width:auto;margin:0;">＋ خيار تعبئة</button></div><div class="row" style="margin-top:10px;"><select id="packageProductFilter"><option value="">كل المنتجات</option></select><button id="refreshPackageOptionsBtn" class="btn secondary" type="button">تحديث</button></div><div id="packageOptionsMsg" class="status hidden"></div><div id="packageOptionsList"><div class="empty">جارٍ تحميل خيارات التعبئة...</div></div></div>
+<div class="row" style="margin-top:10px;"><select id="packageProductFilter"><option value="">كل المنتجات</option></select><button id="refreshPackageOptionsBtn" class="btn secondary" type="button">تحديث</button></div><div id="packageOptionsMsg" class="status hidden"></div><div id="packageOptionsList"><div class="empty">جارٍ تحميل خيارات التعبئة...</div></div></div>
 </div>
+</div>
+<div id="sectionPackaging" class="sub-section hidden">
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">رجوع للقائمة</button>
+<div class="card"><h2>خيارات التعبئة</h2><div id="packagingManagement" class="card" style="margin-top:14px;display:none;"><div class="row" style="justify-content:space-between"><h3 style="margin:0;color:var(--g);">📦 خيارات التعبئة</h3><button id="addPackageOptionBtn" class="btn" type="button" style="width:auto;margin:0;">＋ خيار تعبئة</button></div></div>
 <div id="packageOptionFormModal" class="modal-form"><div class="modal-form-content"><div class="modal-header"><h3 id="packageOptionFormTitle">إضافة خيار تعبئة</h3><button class="close-btn" type="button" onclick="document.getElementById('packageOptionFormModal').classList.remove('active')">&times;</button></div><div class="modal-body"><form id="packageOptionForm" onsubmit="event.preventDefault();"><input id="packageOptionEditId" type="hidden"><label>المنتج *</label><select id="packageOptionProduct" required></select><label>وحدة التعبئة *</label><select id="packageOptionUnit" required></select><label>اسم خيار التعبئة *</label><input id="packageOptionName" required><label>وزن العبوة الواحدة بالكيلوجرام *</label><input id="packageOptionWeight" type="number" min="0.0001" step="0.0001" required><label>الترتيب</label><input id="packageOptionSort" type="number" step="1" value="0"><label class="check"><input id="packageOptionActive" type="checkbox" checked>الخيار نشط</label><button id="savePackageOptionBtn" class="btn" type="submit">حفظ</button><div id="packageOptionFormMsg" class="status hidden"></div></form></div></div></div>
 <div id="productFormModal" class="modal-form">
 <div class="modal-form-content">
@@ -2091,6 +2096,7 @@ window.openSection = function(name) {
   if (name === "locations") loadLocations();
   if (name === "stock") loadStock();
   if (name === "stockSummary") loadStockSummary();
+  if (name === "packaging") { loadProducts(); loadPackageOptions(); }
   if (name === "productionDailySummary") loadProductionDailySummary();
    if (name === "stockLots") loadStockLots();
   if (name === "reservations") loadReservations();
@@ -2325,7 +2331,7 @@ async function userInfo(user){
     await db.from("app_users").update({ last_login: new Date().toISOString() }).eq("user_id", user.id);
     logUserAction("LOGIN", "تسجيل دخول");
 
-    canManage=await permission("PRODUCTS_MANAGE") || isSystemAdmin; if($("menuProducts")) $("menuProducts").classList.toggle("hidden", !canManage); if($("addBtn")) $("addBtn").classList.toggle("hidden",!canManage); if($("packagingManagement")) $("packagingManagement").style.display=canManage?"block":"none";
+    canManage=await permission("PRODUCTS_MANAGE") || isSystemAdmin; if($("menuProducts")) $("menuProducts").classList.toggle("hidden", !canManage); if($("menuPackaging")) $("menuPackaging").classList.toggle("hidden", !canManage); if($("addBtn")) $("addBtn").classList.toggle("hidden",!canManage); if($("packagingManagement")) $("packagingManagement").style.display="block";
     try{ canViewLocations=await permission("LOCATIONS_VIEW") || isSystemAdmin; canManageLocations=await permission("LOCATIONS_MANAGE") || isSystemAdmin; if($("menuLocations")) $("menuLocations").classList.toggle("hidden",!canViewLocations); if($("locationsCard")) $("locationsCard").classList.toggle("hidden",!canViewLocations); if($("addLocationBtn")) $("addLocationBtn").classList.toggle("hidden",!canManageLocations); }catch(e){}
     try{ canViewTreasuries=await permission("TREASURIES_VIEW") || isSystemAdmin; canManageTreasuries=await permission("TREASURIES_MANAGE") || isSystemAdmin; if($("menuTreasuries")) $("menuTreasuries").classList.toggle("hidden",!canViewTreasuries); if($("treasuriesCard")) $("treasuriesCard").classList.toggle("hidden",!canViewTreasuries); if($("addTreasuryBtn")) $("addTreasuryBtn").classList.toggle("hidden",!canManageTreasuries); }catch(e){}
     try{ canViewTreasuryTransfers=await permission("TREASURIES_MANAGE") || await permission("ACCOUNTING_MANAGE") || isSystemAdmin; if($("menuTreasuryTransfers")) $("menuTreasuryTransfers").classList.toggle("hidden",!canViewTreasuryTransfers); }catch(e){}
@@ -3418,69 +3424,51 @@ async function fetchAllRows(query){
 }
 async function buildGeoSalesSummary(from,to){
   await loadCustomerGeoData();
-  const [y,m,d]=String(to).split("-").map(Number);
-  const nextDate=new Date(Date.UTC(y,m-1,d+1)).toISOString().slice(0,10);
+  const [y,m,d]=String(to).split("-").map(Number),nextDate=new Date(Date.UTC(y,m-1,d+1)).toISOString().slice(0,10);
   const [customers,sales,collections,returns]=await Promise.all([
     fetchAllRows(db.from("customers").select("customer_id,governorate_id").order("customer_id")),
     fetchAllRows(db.from("sales_invoices").select("sales_invoice_id,customer_id,invoice_date,net_total,status").lte("invoice_date",to).in("status",["POSTED","PAID","PARTIAL"]).order("invoice_date")),
     fetchAllRows(db.from("customer_collections").select("sales_invoice_id,customer_id,amount,collection_date,status,allocation_type").eq("status","POSTED").lt("collection_date",nextDate).order("collection_date")),
     fetchAllRows(db.from("sales_returns").select("sales_invoice_id,customer_id,return_date,total_returned_value,cash_action,status").eq("status","POSTED").lt("return_date",nextDate).order("return_date"))
   ]);
-  const customerGovMap=new Map(customers.map(c=>[String(c.customer_id),c.governorate_id]));
-  const map=new Map();
-  const ensure=(id)=>{
-    const key=id==null?"unknown":String(id);
-    if(!map.has(key)) map.set(key,{name:id==null?"غير محدد":geoGovernorateName(id),sales:0,collections:0,credit:0,debt:0});
-    return map.get(key);
-  };
-  const invoiceMap=new Map();
-  const invoiceBalanceByCustomer=new Map();
+  const customerGovMap=new Map(customers.map(c=>[String(c.customer_id),c.governorate_id])),map=new Map();
+  const ensure=id=>{const key=id==null?"unknown":String(id);if(!map.has(key))map.set(key,{name:id==null?"غير محدد":geoGovernorateName(id),opening:0,sales:0,collections:0,returns:0,balance:0});return map.get(key);};
+  const invoicesByCustomer=new Map(),openingCollections=new Map(),periodCollections=new Map(),openingReturns=new Map(),periodDebtReturns=new Map();
   customerGovernoratesCache.forEach(g=>ensure(g.governorate_id));
-  sales.forEach(inv=>{
-    const customerKey=String(inv.customer_id);
-    const total=Number(inv.net_total||0);
-    invoiceMap.set(String(inv.sales_invoice_id),{customerKey,total,invoiceDate:String(inv.invoice_date||"")});
-    if(inv.invoice_date>=from && inv.invoice_date<=to) ensure(customerGovMap.get(customerKey)).sales+=total;
-  });
-  collections.forEach(col=>{
-    const customerKey=String(col.customer_id);
-    const collectionDay=String(col.collection_date||"").slice(0,10);
-    if(collectionDay>=from && collectionDay<=to) ensure(customerGovMap.get(customerKey)).collections+=Number(col.amount||0);
-    if(col.sales_invoice_id!=null && col.allocation_type!=="OPENING_BALANCE"){
-      const key=String(col.sales_invoice_id);
-      invoiceBalanceByCustomer.set(key,(invoiceBalanceByCustomer.get(key)||0)+Number(col.amount||0));
-    }
-  });
-  const debtReturnsByInvoice=new Map();
-  returns.forEach(ret=>{
-    const customerKey=String(ret.customer_id);
-    const returnDay=String(ret.return_date||"").slice(0,10);
-    const value=Number(ret.total_returned_value||0);
-    if(returnDay>=from && returnDay<=to) ensure(customerGovMap.get(customerKey)).sales-=value;
-    if(ret.cash_action==="DEDUCT_DEBT" && ret.sales_invoice_id!=null){
-      const key=String(ret.sales_invoice_id);
-      debtReturnsByInvoice.set(key,(debtReturnsByInvoice.get(key)||0)+value);
-    }
-  });
-  invoiceMap.forEach((inv,invoiceKey)=>{
-    const outstanding=Math.max(0,inv.total-(invoiceBalanceByCustomer.get(invoiceKey)||0)-(debtReturnsByInvoice.get(invoiceKey)||0));
-    const row=ensure(customerGovMap.get(inv.customerKey));
-    row.debt+=outstanding;
-    if(inv.invoiceDate>=from && inv.invoiceDate<=to) row.credit+=outstanding;
-  });
-  return Array.from(map.values()).filter(x=>x.sales||x.collections||x.credit||x.debt).sort((a,b)=>a.name.localeCompare(b.name,"ar"));
+  sales.forEach(inv=>{const key=String(inv.customer_id),day=String(inv.invoice_date||"").slice(0,10),amount=Number(inv.net_total||0);if(!invoicesByCustomer.has(key))invoicesByCustomer.set(key,[]);invoicesByCustomer.get(key).push({day,amount});if(day>=from&&day<=to)ensure(customerGovMap.get(key)).sales+=amount;});
+  collections.forEach(col=>{const key=String(col.customer_id),day=String(col.collection_date||"").slice(0,10),amount=Number(col.amount||0);if(day<from)openingCollections.set(key,(openingCollections.get(key)||0)+amount);else if(day<=to){periodCollections.set(key,(periodCollections.get(key)||0)+amount);ensure(customerGovMap.get(key)).collections+=amount;}});
+  returns.forEach(ret=>{const key=String(ret.customer_id),day=String(ret.return_date||"").slice(0,10),amount=Number(ret.total_returned_value||0);if(day>=from&&day<=to)ensure(customerGovMap.get(key)).returns+=amount;if(ret.cash_action==="DEDUCT_DEBT"){const target=day<from?openingReturns:periodDebtReturns;target.set(key,(target.get(key)||0)+amount);}});
+  const keys=new Set([...invoicesByCustomer.keys(),...openingCollections.keys(),...periodCollections.keys(),...openingReturns.keys(),...periodDebtReturns.keys()]);
+  keys.forEach(key=>{const row=ensure(customerGovMap.get(key)),invRows=invoicesByCustomer.get(key)||[],beforeSales=invRows.filter(x=>x.day<from).reduce((a,x)=>a+x.amount,0),opening=Math.max(0,beforeSales-(openingCollections.get(key)||0)-(openingReturns.get(key)||0));row.opening+=opening;row.balance+=Math.max(0,opening+row.sales-(periodCollections.get(key)||0)-(periodDebtReturns.get(key)||0));});
+  return Array.from(map.values()).filter(x=>x.opening||x.sales||x.collections||x.returns||x.balance).sort((a,b)=>a.name.localeCompare(b.name,"ar"));
+}
+async function buildGeoItemMovementSummary(from,to){
+  const [y,m,d]=String(to).split("-").map(Number),nextDate=new Date(Date.UTC(y,m-1,d+1)).toISOString().slice(0,10);
+  const [moves,balances]=await Promise.all([
+    fetchAllRows(db.from("stock_movements").select("product_id,movement_type,quantity_change,created_at,purchase_invoice_id,purchase_return_id,sales_invoice_id,sales_return_id").gte("created_at",from+"T00:00:00").lt("created_at",nextDate+"T00:00:00").order("created_at")),
+    fetchAllRows(db.from("stock_balances").select("product_id,quantity"))
+  ]);
+  const totals=new Map(),get=id=>{const key=String(id);if(!totals.has(key))totals.set(key,{product_id:id,purchases:0,sales:0,returns:0,current:0});return totals.get(key);};
+  moves.forEach(m=>{const q=Math.abs(Number(m.quantity_change||0)),row=get(m.product_id);if(m.movement_type==="RECEIVE"&&m.purchase_invoice_id!=null)row.purchases+=q;else if(m.movement_type==="ISSUE"&&m.sales_invoice_id!=null)row.sales+=q;else if(m.movement_type==="RETURN"&&(m.purchase_return_id!=null||m.sales_return_id!=null))row.returns+=q;});
+  balances.forEach(b=>get(b.product_id).current+=Number(b.quantity||0));
+  return Array.from(totals.values()).filter(x=>x.purchases||x.sales||x.returns||x.current).sort((a,b)=>productName(a.product_id).localeCompare(productName(b.product_id),"ar"));
 }
 function geoSalesRowsHtml(rows){
-  const totals=rows.reduce((t,r)=>({sales:t.sales+r.sales,collections:t.collections+r.collections,credit:t.credit+r.credit,debt:t.debt+r.debt}),{sales:0,collections:0,credit:0,debt:0});
-  return rows.map(r=>`<tr><td>${r.name}</td><td>${fmt(r.sales)}</td><td>${fmt(r.collections)}</td><td>${fmt(r.credit)}</td><td>${fmt(r.debt)}</td></tr>`).join("")+`<tr style="background:#e9efe9;font-weight:bold;"><td>الإجمالي</td><td>${fmt(totals.sales)}</td><td>${fmt(totals.collections)}</td><td>${fmt(totals.credit)}</td><td>${fmt(totals.debt)}</td></tr>`;
+  const totals=rows.reduce((t,r)=>({opening:t.opening+r.opening,sales:t.sales+r.sales,collections:t.collections+r.collections,returns:t.returns+r.returns,balance:t.balance+r.balance}),{opening:0,sales:0,collections:0,returns:0,balance:0});
+  return rows.map(r=>`<tr><td>${esc(r.name)}</td><td>${fmt(r.opening)}</td><td>${fmt(r.sales)}</td><td>${fmt(r.collections)}</td><td>${fmt(r.returns)}</td><td>${fmt(r.balance)}</td></tr>`).join("")+`<tr style="background:#e9efe9;font-weight:bold;"><td>الإجمالي</td><td>${fmt(totals.opening)}</td><td>${fmt(totals.sales)}</td><td>${fmt(totals.collections)}</td><td>${fmt(totals.returns)}</td><td>${fmt(totals.balance)}</td></tr>`;
 }
+function geoItemRowsHtml(rows){
+  const totals=rows.reduce((t,r)=>({purchases:t.purchases+r.purchases,sales:t.sales+r.sales,returns:t.returns+r.returns,current:t.current+r.current}),{purchases:0,sales:0,returns:0,current:0});
+  return rows.map(r=>`<tr><td>${esc(productName(r.product_id))}</td><td>${fmtQty(r.purchases)}</td><td>${fmtQty(r.sales)}</td><td>${fmtQty(r.returns)}</td><td>${fmtQty(r.current)}</td></tr>`).join("")+`<tr style="background:#e9efe9;font-weight:bold;"><td>الإجمالي</td><td>${fmtQty(totals.purchases)}</td><td>${fmtQty(totals.sales)}</td><td>${fmtQty(totals.returns)}</td><td>${fmtQty(totals.current)}</td></tr>`;
+}
+
 async function loadGeoSalesReport(){
-  const body=$("geoSalesTable")?.querySelector("tbody"); if(!body) return;
-  const from=$("geoSalesFromDate").value||monthStartISO(), to=$("geoSalesToDate").value||todayISO();
-  if(from>to){body.innerHTML='<tr><td colspan="5">تاريخ البداية يجب أن يسبق تاريخ النهاية.</td></tr>';return;}
-  body.innerHTML='<tr><td colspan="5">جارٍ تحميل التقرير...</td></tr>';
-  try{const rows=await buildGeoSalesSummary(from,to);body.innerHTML=rows.length?geoSalesRowsHtml(rows):'<tr><td colspan="5">لا توجد حركة خلال الفترة.</td></tr>';}
-  catch(e){body.innerHTML=`<tr><td colspan="5" style="color:red;">تعذر تحميل التقرير: ${err(e)}</td></tr>`;}
+  const body=$("geoSalesTable")?.querySelector("tbody"),itemsBody=$("geoItemsTable")?.querySelector("tbody");if(!body||!itemsBody)return;
+  const from=$("geoSalesFromDate").value||monthStartISO(),to=$("geoSalesToDate").value||todayISO();
+  if(from>to){body.innerHTML='<tr><td colspan="6">تاريخ البداية يجب أن يسبق تاريخ النهاية.</td></tr>';return;}
+  body.innerHTML='<tr><td colspan="6">جارٍ تحميل التقرير...</td></tr>';itemsBody.innerHTML='<tr><td colspan="5">جارٍ تحميل حركة الأصناف...</td></tr>';
+  try{const [rows,items]=await Promise.all([buildGeoSalesSummary(from,to),buildGeoItemMovementSummary(from,to)]);body.innerHTML=rows.length?geoSalesRowsHtml(rows):'<tr><td colspan="6">لا توجد حركة خلال الفترة.</td></tr>';itemsBody.innerHTML=items.length?geoItemRowsHtml(items):'<tr><td colspan="5">لا توجد حركة أصناف خلال الفترة.</td></tr>';}
+  catch(e){const message=esc(err(e));body.innerHTML=`<tr><td colspan="6" style="color:red;">تعذر تحميل التقرير: ${message}</td></tr>`;itemsBody.innerHTML=`<tr><td colspan="5" style="color:red;">تعذر تحميل حركة الأصناف: ${message}</td></tr>`;}
 }
 async function loadHomeGeoSummary(){
   const box=$("homeGeoSummary"); if(!box||!isSystemAdmin){if(box)box.classList.add("hidden");return;}
@@ -4172,7 +4160,7 @@ async function loadStock(){
     renderStock();
 }
 async function loadStockSummary(){
-  const box=$("stockSummaryList");if(!box||!canViewStock)return;
+  const box=$("stockSummaryList");if(!box)return;
   if(!navigator.onLine){box.innerHTML="<div class='empty'>اتصل بالإنترنت لعرض ملخص الأرصدة.</div>";return;}
   box.innerHTML="<div class='empty'>جارٍ تحميل الأرصدة...</div>";
   try{
@@ -5335,13 +5323,13 @@ function updatePurchaseTotals(){
 if($("purchaseDiscount")) $("purchaseDiscount").addEventListener("input",updatePurchaseTotals);
 if($("addPurchaseItemBtn")) $("addPurchaseItemBtn").addEventListener("click",()=>addPurchaseItemRow());
 
-async function loadPurchases(){ 
-  if(!navigator.onLine) { purchasesCache=getCache('purchases'); renderPurchases(); return; } 
-  const {data}=await db.from("purchase_invoices").select("*").order("purchase_invoice_id",{ascending:false}).limit(100); 
-  purchasesCache=data||[]; 
-  saveCache('purchases', purchasesCache); 
-  renderPurchases(); 
-  fillPurchaseReturnInvoiceSelect(); fillLandedInvoiceSelect(); 
+let purchaseReturnsCache=[];
+function purchaseInvoiceAmounts(inv){const total=Number(inv.net_total||0),paidAtInvoice=inv.treasury_id!=null?total:0,credits=purchaseReturnsCache.filter(r=>String(r.purchase_invoice_id)===String(inv.purchase_invoice_id)&&r.settlement_method==="SUPPLIER_CREDIT").reduce((sum,r)=>sum+Number(r.total_return_amount||0),0),paid=Math.min(total,paidAtInvoice+credits);return{total,paid,remaining:Math.max(0,total-paid),paidAtInvoice};}
+async function loadPurchases(){
+  if(!navigator.onLine){purchasesCache=getCache('purchases');purchaseReturnsCache=getCache('purchase_returns_for_invoices');renderPurchases();return;}
+  const {data,error}=await db.from("purchase_invoices").select("*").order("purchase_invoice_id",{ascending:false}).limit(100);if(error)throw error;purchasesCache=data||[];
+  const ids=purchasesCache.map(x=>x.purchase_invoice_id);if(ids.length){const rr=await db.from("purchase_returns").select("purchase_invoice_id,total_return_amount,settlement_method,is_cancelled").in("purchase_invoice_id",ids).eq("is_cancelled",false);if(rr.error)throw rr.error;purchaseReturnsCache=rr.data||[];}else purchaseReturnsCache=[];
+  saveCache('purchases',purchasesCache);saveCache('purchase_returns_for_invoices',purchaseReturnsCache);renderPurchases();fillPurchaseReturnInvoiceSelect();fillLandedInvoiceSelect();
 }
 function renderPurchases(){ 
   const box=$("purchasesList"); if(!box) return; 
@@ -5360,8 +5348,8 @@ function renderPurchases(){
       ? "الحالة: ملغاة" + (inv.cancellation_reason ? " | سبب الإلغاء: " + inv.cancellation_reason : "")
       : "الحالة: " + (inv.status === "POSTED" ? "مرحلة" : (inv.status || "غير محددة"));
     details.textContent="المورد: "+supplierName(inv.supplier_id)+" | التاريخ: "+formatDate(inv.invoice_date)+" | "+invoiceStatus; 
-    const total=document.createElement("span");total.className="badge";total.textContent="الإجمالي: "+fmt(inv.net_total); 
-    card.append(title,details,total); 
+    const amounts=purchaseInvoiceAmounts(inv),totals=document.createElement("div");totals.className="total-box";totals.innerHTML='<div class="line"><span>الإجمالي:</span><span>'+fmt(amounts.total)+'</span></div><div class="line"><span>المدفوع عند الفاتورة:</span><span>'+fmt(amounts.paidAtInvoice)+'</span></div><div class="line grand"><span>الباقي بعد مرتجعات المورد:</span><span>'+fmt(amounts.remaining)+'</span></div>';
+    card.append(title,details,totals); 
     const actions=document.createElement("div");actions.className="actions"; 
     const view=document.createElement("button");view.className="btn secondary";view.textContent="عرض التفاصيل";view.onclick=()=>viewPurchaseInvoice(inv); 
     actions.appendChild(view);
@@ -5419,9 +5407,8 @@ async function viewPurchaseInvoice(inv) {
         html += `</tbody>`; 
         $("modalPurchaseItems").innerHTML = html;
         $("modalPurchaseHeader").innerHTML = `<div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span><strong>فاتورة:</strong> ${inv.invoice_number}</span><span><strong>التاريخ:</strong> ${formatDate(inv.invoice_date)}</span></div><div style="display:flex;justify-content:space-between;"><span><strong>المورد:</strong> ${supplierName(inv.supplier_id)}</span><span><strong>الموقع:</strong> ${locationName(inv.location_id)}</span></div>`;
-        const subtotal = Number(inv.subtotal); 
-        const discount = Number(inv.discount);
-        $("modalPurchaseTotals").innerHTML = `<div class="line"><span>الإجمالي:</span><span>${fmt(subtotal)}</span></div><div class="line"><span>الخصم:</span><span style="color:red;">-${fmt(discount)}</span></div><div class="line grand"><span>الصافي:</span><span>${fmt(inv.net_total)}</span></div>`;
+        const subtotal=Number(inv.subtotal||0),discount=Number(inv.discount||0),amounts=purchaseInvoiceAmounts(inv);
+        $("modalPurchaseTotals").innerHTML=`<div class="line"><span>الإجمالي:</span><span>${fmt(subtotal)}</span></div><div class="line"><span>الخصم:</span><span>-${fmt(discount)}</span></div><div class="line"><span>الصافي:</span><span>${fmt(amounts.total)}</span></div><div class="line"><span>المدفوع عند الفاتورة:</span><span>${fmt(amounts.paidAtInvoice)}</span></div><div class="line grand"><span>الباقي بعد مرتجعات المورد:</span><span>${fmt(amounts.remaining)}</span></div>`;
         const supplier = suppliersCache.find(s => String(s.supplier_id) === String(inv.supplier_id));
         const phone = supplier ? supplier.phone : "";
         const waBtn = $("sharePurchaseWhatsappBtn");
@@ -7170,7 +7157,7 @@ if($("recipeForm")) $("recipeForm").addEventListener("submit", async e => {
 
 // ========== أوامر التشغيل ==========
 async function loadProductionDailySummary(){
-  const box=$("productionSummaryList");if(!box||!canViewProduction)return;
+  const box=$("productionSummaryList");if(!box)return;
   if(!navigator.onLine){box.innerHTML="<div class='empty'>اتصل بالإنترنت لعرض ملخص الإنتاج.</div>";return;}
   const selected=$("productionSummaryDate")?.value||todayISO();
   if($("productionSummaryDate")&&!$("productionSummaryDate").value)$("productionSummaryDate").value=selected;
