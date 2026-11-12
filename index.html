@@ -5746,6 +5746,7 @@ if($("purchaseForm")) $("purchaseForm").addEventListener("submit", async e => {
     if(!supplierId||!locationId||!date){msg($("purchaseFormMsg"),"أكمل البيانات.","error");return;}
     const items=[];
     let valid=true;
+    let lotDatesValid=true;
     document.querySelectorAll("#purchaseItems .item-row").forEach(row=>{ 
       const prodSel=row.querySelector(".item-product"); 
       const unitSel=row.querySelector(".item-unit"); 
@@ -5757,10 +5758,11 @@ if($("purchaseForm")) $("purchaseForm").addEventListener("submit", async e => {
       const supplierLotCode=row.querySelector(".item-supplier-lot-code")?.value.trim()||null;
       const manufacturedOn=row.querySelector(".item-manufactured-on")?.value||null;
       const expiresOn=row.querySelector(".item-expires-on")?.value||null;
-      if(manufacturedOn&&expiresOn&&expiresOn<manufacturedOn){valid=false;return;}
+      if(!manufacturedOn||!expiresOn){valid=false;lotDatesValid=false;return;}
+      if(expiresOn<manufacturedOn){valid=false;lotDatesValid=false;return;}
       items.push({product_id:Number(productId),unit_id:unitId,quantity:qty,unit_price:price,supplier_lot_code:supplierLotCode,manufactured_on:manufacturedOn,expires_on:expiresOn}); 
     });
-    if(!items.length||!valid){ msg($("purchaseFormMsg"),"أكمل بيانات الأصناف وتأكد من صحة الكمية والسعر.","error");return; }
+    if(!items.length||!valid){ msg($("purchaseFormMsg"),lotDatesValid?"أكمل بيانات الأصناف وتأكد من صحة الكمية والسعر.":"يجب إدخال تاريخ الإنتاج وتاريخ الصلاحية لكل صنف، وتاريخ الصلاحية لا يسبق الإنتاج.","error");return; }
     const subtotal=items.reduce((sum,item)=>sum+Math.round((item.quantity*item.unit_price+Number.EPSILON)*100)/100,0);
     if(discount<0||discount>=subtotal){msg($("purchaseFormMsg"),"الخصم يجب أن يكون أكبر من أو يساوي صفرًا وأقل من إجمالي الأصناف.","error");return;}
     const button=$("savePurchaseBtn"); 
