@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v104</title>
+<title>MeatManagement v105</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -607,6 +607,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="dash-item hidden" id="menuAccounting" onclick="window.openSection('accounting')"><div class="dash-icon">🧮</div><div class="dash-title">المحاسبة</div></div>
 <div class="dash-item hidden" id="menuReports" onclick="window.openSection('reports')"><div class="dash-icon">📈</div><div class="dash-title">التقارير</div></div>
 <div class="dash-item hidden" id="menuUsers" onclick="window.openSection('users')"><div class="dash-icon">👤</div><div class="dash-title">المستخدمون</div></div>
+<div class="dash-item hidden" id="menuSystemReset" onclick="window.openSection('systemReset')"><div class="dash-icon">♻️</div><div class="dash-title">إعادة تهيئة النظام</div></div>
 <div class="dash-item hidden" id="menuSettings" onclick="window.openSection('settings')"><div class="dash-icon">⚙️</div><div class="dash-title">إعدادات الشركة</div></div>
 </div>
 </div>
@@ -618,6 +619,21 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <h2>👥 إدارة المستخدمين</h2>
 <button class="btn" onclick="document.getElementById('userFormModal').classList.add('active')">＋ إضافة مستخدم جديد</button>
 <div id="usersList" style="margin-top:15px;"><div class="empty">جارٍ تحميل المستخدمين...</div></div>
+</div>
+</div>
+<div id="sectionSystemReset" class="sub-section hidden">
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<div id="systemResetCard" class="card hidden">
+<h2>إعادة تهيئة النظام</h2>
+<p class="desc">أداة مستقلة لمدير النظام. تتيح لك تجربة الفحص وتجهيز التقارير ونسخ البيانات ومراجعة الموانع من داخل التطبيق. هذه النسخة مخصصة لاختبار الواجهة والمعاينة فقط، والتنفيذ الفعلي مقفول لحين اختبار الحذف الكامل في بيئة آمنة.</p>
+<div class="product"><div class="pname">المرحلة الأولى: تصفير العمليات والأرصدة</div><div class="details">مرحلة مستقلة تشمل المستندات والحركات والقيود وأرصدة العملاء والموردين والخزائن والمخزون. اعرض التقرير ونسخة البيانات الخاصة به، ثم اعتمد التقرير قبل تنفيذ التصفير.</div><button id="runAdminResetPreviewBtn" class="btn" type="button">فحص وتجهيز المرحلة الأولى</button></div>
+<div class="product"><div class="pname">بوابة الموافقة قبل التنفيذ</div><div class="details">بعد اكتمال التقرير، تعرض الأداة خطة التنفيذ بالتفصيل. يمكنك اختبار المعاينة ومراجعة التقرير ونسخة البيانات واعتماد التقرير دون حذف. زر التنفيذ يظل معطلًا في هذه النسخة، ولا يمكن بدء الحذف من الواجهة.</div><div id="adminResetActions" class="row" style="gap:8px;flex-wrap:wrap;"></div></div>
+<div id="adminResetPreviewMsg" class="status hidden"></div>
+<div id="adminResetPreviewResult"></div>
+<div class="product" style="margin-top:15px;"><div class="pname">المرحلة الثانية: إعادة تهيئة البيانات الأساسية - اختيارية ومستقلة</div><div class="details">لا تعمل تلقائيًا مع المرحلة الأولى. يمكنك تنفيذها عند الحاجة فقط، بعد اكتمال المرحلة الأولى والتحقق من خلو النظام من العمليات والأرصدة. ستملك معاينة وخطة وموافقة وتنفيذًا منفصلًا.</div><button id="runAdminResetPhase2PreviewBtn" class="btn secondary" type="button">فحص وتجهيز المرحلة الثانية</button>
+<div class="details" style="margin-top:8px">تتطلب اكتمال المرحلة الأولى بنجاح. تعرض تقريرًا مستقلًا، ثم يمكنك اعتماد التقرير دون حذف. التنفيذ الفعلي يظل مقفولًا.</div>
+<div id="adminResetPhase2Msg" class="status hidden"></div>
+<div id="adminResetPhase2Result"></div></div>
 </div>
 </div>
 <!-- شاشة إدارة المندوبين -->
@@ -2171,7 +2187,7 @@ function showLogin(){ hideSections(); if($("login")) $("login").classList.remove
 function showApp(){ hideSections(); if($("nav")) $("nav").classList.remove("hidden"); page("home"); }
 
 window.openSection = function(name) {
-  const sectionMenuMap = { products:"menuProducts", locations:"menuLocations", stock:"menuStock", stockSummary:"menuStock", stockLots:"menuStockLots", stockTransfers:"menuStockTransfers", recipes:"menuRecipes", production:"menuProduction", productionDailySummary:"menuProduction", reservations:"menuReservations", suppliers:"menuSuppliers", purchases:"menuPurchases", purchaseReturns:"menuPurchaseReturns", landedCosts:"menuLandedCosts", fixedAssets:"menuFixedAssets", supplierPayments:"menuSupplierPayments", expenses:"menuExpenses", customers:"menuCustomers", sales:"menuSales", salesReturns:"menuSalesReturns", priceLists:"menuPriceLists", collections:"menuCollections", trips:"menuTrips", salesReps:"menuSalesReps", treasuries:"menuTreasuries", treasuryTransfers:"menuTreasuryTransfers", partners:"menuPartners", accounting:"menuAccounting", reports:"menuReports", users:"menuUsers", settings:"menuSettings" };
+  const sectionMenuMap = { products:"menuProducts", locations:"menuLocations", stock:"menuStock", stockSummary:"menuStock", stockLots:"menuStockLots", stockTransfers:"menuStockTransfers", recipes:"menuRecipes", production:"menuProduction", productionDailySummary:"menuProduction", reservations:"menuReservations", suppliers:"menuSuppliers", purchases:"menuPurchases", purchaseReturns:"menuPurchaseReturns", landedCosts:"menuLandedCosts", fixedAssets:"menuFixedAssets", supplierPayments:"menuSupplierPayments", expenses:"menuExpenses", customers:"menuCustomers", sales:"menuSales", salesReturns:"menuSalesReturns", priceLists:"menuPriceLists", collections:"menuCollections", trips:"menuTrips", salesReps:"menuSalesReps", treasuries:"menuTreasuries", treasuryTransfers:"menuTreasuryTransfers", partners:"menuPartners", accounting:"menuAccounting", reports:"menuReports", users:"menuUsers", systemReset:"menuSystemReset", settings:"menuSettings" };
   const allowedIds = getRoleMenuIds(currentRoleCode);
   const requestedMenuId = sectionMenuMap[name];
   if(!isSystemAdmin && (!requestedMenuId || !allowedIds.has(requestedMenuId))) {
@@ -2289,6 +2305,260 @@ function page(name){
     }
   }
 }
+
+
+if($("runAdminResetPreviewBtn")) $("runAdminResetPreviewBtn").addEventListener("click",async()=>{
+  const btn=$("runAdminResetPreviewBtn"),message=$("adminResetPreviewMsg"),result=$("adminResetPreviewResult");
+  if(!isSystemAdmin){msg(message,"هذه العملية متاحة لمدير النظام فقط.","error");return;}
+  clear(message);result.replaceChildren();
+  busy(btn,true,"جارٍ فحص البيانات...","فحص العمليات والبيانات");
+  try{
+    const {data:prepared,error}=await db.rpc("admin_reset_prepare_phase",{p_phase:"PHASE_1"});
+    if(error) throw error;
+    if(!prepared || prepared.prepared!==true || !prepared.preview || prepared.preview.preview_only!==true) throw new Error("لم يرجع الخادم خطة معاينة محفوظة وصالحة.");
+    const data=prepared.preview;
+    const planBackup=data.plan_backup||{};
+    const plan=document.createElement("div");plan.className="product";
+    const planTitle=document.createElement("div");planTitle.className="pname";planTitle.textContent="رقم تقرير المعاينة المحفوظ";
+    const planInfo=document.createElement("div");planInfo.className="details";
+    planInfo.style.cssText="overflow-wrap:anywhere;line-height:1.8";
+    planInfo.textContent="رقم الخطة: "+prepared.plan_id+" | بصمة التحقق: "+prepared.plan_hash+" | نسخة الخطة: "+Number(planBackup.tables||0)+" جدول / "+Number(planBackup.total_rows||0).toLocaleString("ar-EG")+" سجل | تنتهي: "+new Date(prepared.expires_at).toLocaleString("ar-EG")+" | الحالة: "+prepared.status;
+    plan.append(planTitle,planInfo);result.appendChild(plan);
+    const labels={sales_invoices:"فواتير البيع",sales_invoice_items:"بنود البيع",customer_collections:"تحصيلات العملاء",customer_cheques:"شيكات العملاء",sales_returns:"مرتجعات البيع",sales_return_items:"بنود مرتجعات البيع",sales_return_exchange_items:"بنود الاستبدال",purchase_invoices:"فواتير الشراء",purchase_invoice_items:"بنود الشراء",purchase_returns:"مرتجعات الشراء",purchase_return_items:"بنود مرتجعات الشراء",supplier_payments:"سداد الموردين",purchase_landed_costs:"تكاليف النقل",purchase_landed_cost_allocations:"توزيع تكاليف النقل",production_orders:"أوامر التشغيل",production_order_materials:"خامات التشغيل",production_order_expense_allocations:"توزيع مصروفات التشغيل",recipes:"الوصفات",recipe_items:"مكونات الوصفات",recipe_movements:"حركات الوصفات",stock_lots:"التشغيلات LOT",stock_lot_balances:"أرصدة التشغيلات",stock_movements:"حركات المخزون",stock_movement_lot_allocations:"تخصيصات التشغيلات",stock_balances:"أرصدة المخزون",stock_transfers:"تحويلات المخازن",stock_transfer_items:"بنود التحويل",stock_transfer_reversals:"عكس التحويلات",trips:"الرحلات",trip_loads:"تحميل السيارات",trip_customers:"عملاء الرحلات",expenses:"المصروفات",treasury_transactions:"حركات الخزائن",journal_entries:"القيود المحاسبية",journal_entry_lines:"سطور القيود",journal_adjustments:"التسويات المحاسبية",fixed_asset_depreciation_entries:"إهلاك الأصول",partner_transactions:"حركات الشركاء",partner_inventory_contributions:"مساهمات المخزون",partner_profit_distributions:"توزيعات الأرباح",partner_profit_distribution_items:"بنود توزيعات الأرباح",reservations:"الحجوزات",notifications:"الإشعارات",notification_recipients:"مستلمو الإشعارات",products:"الأصناف",product_categories:"تصنيفات الأصناف",product_unit_conversions:"تحويلات الوحدات",product_packaging_options:"خيارات التعبئة",units:"الوحدات",customers:"العملاء",customer_groups:"مجموعات العملاء",suppliers:"الموردون",sales_reps:"مندوبو المبيعات",locations:"المخازن والمواقع",partners:"الشركاء",treasuries:"الخزائن",fixed_assets:"الأصول الثابتة",price_lists:"قوائم الأسعار",price_list_items:"بنود قوائم الأسعار",customer_price_lists:"قوائم أسعار العملاء",expense_types:"أنواع المصروفات",sales_rep_areas:"مناطق المندوبين",notification_rules:"قواعد الإشعارات",app_users:"المستخدمون",app_roles:"الأدوار",app_permissions:"الصلاحيات",app_role_permissions:"ربط الأدوار بالصلاحيات",chart_of_accounts:"دليل الحسابات",accounting_periods:"الفترات المحاسبية",company_settings:"إعدادات الشركة",governorates:"المحافظات",cities:"المراكز والمدن",areas:"المناطق",user_logs:"سجل التتبع"};
+    const addSection=(title,obj)=>{
+      const section=document.createElement("div");section.className="product";
+      const heading=document.createElement("div");heading.className="pname";heading.textContent=title;section.appendChild(heading);
+      const table=document.createElement("table");table.className="print-table";
+      const body=document.createElement("tbody");
+      Object.entries(obj||{}).filter(([key,value])=>!Array.isArray(value)&&(typeof value==="number"||typeof value==="string")).forEach(([key,value])=>{
+        const row=document.createElement("tr"),name=document.createElement("td"),count=document.createElement("td");
+        name.textContent=labels[key]||key;count.textContent=Number(value||0).toLocaleString("ar-EG");row.append(name,count);body.appendChild(row);
+      });
+      table.appendChild(body);section.appendChild(table);result.appendChild(section);
+    };
+    addSection("العمليات والحركات",data.operations);
+    addSection("البيانات الأساسية",data.master_data);
+    addSection("البيانات المحفوظة",data.preserved);
+    addSection("نسخة البيانات المحفوظة لهذه الخطة",planBackup.rows_by_table);
+    const backup=document.createElement("div");backup.className="product";
+    const backupTitle=document.createElement("div");backupTitle.className="pname";backupTitle.textContent="النسخة الاحتياطية";
+    const backupInfo=document.createElement("div");backupInfo.className="details";
+    backupInfo.textContent="الجداول المسجلة: "+Number(data.backup?.manifest_tables||0)+" من "+Number(data.backup?.complete_expected_tables||74)+" | السجلات: "+Number(data.backup?.manifest_rows||0)+" من "+Number(data.backup?.expected_rows||4442)+" | الحالة: "+(data.backup?.complete===true?"مكتملة":"غير مكتملة - يمنع البدء");
+    backup.append(backupTitle,backupInfo);result.appendChild(backup);
+    addSection("عناصر تتطلب معالجة قبل إعادة التهيئة",data.blockers);
+    const addDetailRows=(title,rows,fields)=>{
+      if(!Array.isArray(rows)||!rows.length)return;
+      const section=document.createElement("div");section.className="product";
+      const heading=document.createElement("div");heading.className="pname";heading.textContent=title;section.appendChild(heading);
+      rows.forEach(item=>{
+        const line=document.createElement("div");line.className="details";
+        line.style.cssText="padding:8px 0;border-top:1px solid var(--line);line-height:1.7;overflow-wrap:anywhere";
+        line.textContent=fields.map(([label,key])=>label+": "+(item?.[key]??"—")).join(" | ");
+        section.appendChild(line);
+      });
+      result.appendChild(section);
+    };
+    const b=data.blockers||{};
+    addDetailRows("توزيع القيود المرحلة حسب نوع المرجع",b.posted_journal_groups,[["المرجع","reference_type"],["الحالة","status"],["العدد","count"]]);
+    addDetailRows("تفاصيل التحصيلات النشطة",b.collection_details,[["رقم التحصيل","number"],["العميل","customer_name"],["المبلغ","amount"],["طريقة الدفع","payment_method"],["الخزنة","treasury_name"],["الفاتورة","invoice_id"],["الرحلة","trip_id"],["الحالة","status"]]);
+    addDetailRows("تفاصيل مرتجعات البيع النشطة",b.sales_return_details,[["رقم المرتجع","number"],["العميل","customer_name"],["القيمة","value"],["الفاتورة","invoice_id"],["الرحلة","trip_id"],["الحالة","status"]]);
+    addDetailRows("تفاصيل الرحلات النشطة",b.trip_details,[["رقم الرحلة","number"],["الحالة","status"],["تاريخ البداية","start_date"],["المخزن المصدر","source_location_id"],["موقع السيارة","vehicle_location_id"],["المندوب","sales_rep_id"]]);
+    addDetailRows("تفاصيل الخزائن ذات الأرصدة",b.treasury_details,[["الخزنة","name"],["النوع","type"],["الرصيد الحالي","current_balance"],["الرصيد الافتتاحي","opening_balance"],["الحساب","account_id"]]);
+    addDetailRows("تفاصيل أرصدة المخزون",b.stock_details,[["المخزن","location_name"],["الصنف","product_name"],["الكمية","quantity"],["قيمة المخزون","inventory_value"]]);
+    const actions=$("adminResetActions");
+    if(actions){
+      actions.replaceChildren();
+      const approveBtn=document.createElement("button");
+      approveBtn.className="btn";
+      approveBtn.type="button";
+      approveBtn.textContent="اعتماد التقرير";
+      const executeBtn=document.createElement("button");
+      executeBtn.className="btn secondary";
+      executeBtn.type="button";
+      executeBtn.textContent="التنفيذ مقفول للاختبار";
+      executeBtn.disabled=true;
+      const actionInfo=document.createElement("div");
+      actionInfo.className="details";
+      actionInfo.textContent="يمكنك مراجعة التقرير ونسخة البيانات واختبار الاعتماد. لن يتم تنفيذ حذف أو تصفير من هذه النسخة، وزر التنفيذ يظل مقفولًا.";
+      actions.append(approveBtn,executeBtn,actionInfo);
+      approveBtn.addEventListener("click",async()=>{
+        if(!window.confirm("هل توافق على اعتماد تقرير المرحلة الأولى؟ الاعتماد يحفظ موافقتك فقط ولا يحذف أي بيانات."))return;
+        busy(approveBtn,true,"جارٍ اعتماد التقرير...","اعتماد التقرير");
+        try{
+          const {data:approval,error:approvalError}=await db.rpc("admin_reset_approve_phase",{
+            p_plan_id:prepared.plan_id,
+            p_plan_hash:prepared.plan_hash
+          });
+          if(approvalError)throw approvalError;
+          if(!approval||approval.approved!==true||approval.status!=="APPROVED")throw new Error(approval?.message||"لم يؤكد الخادم اعتماد التقرير.");
+          executeBtn.disabled=true;
+          executeBtn.textContent="التنفيذ مقفول حتى الاختبار النهائي";
+          approveBtn.disabled=true;
+          actionInfo.textContent="تم اعتماد التقرير. لم يتم حذف أي بيانات. سيظل التنفيذ مقفولًا حتى اجتياز اختبار التشغيل النهائي.";
+          msg(message,"تم اعتماد تقرير المرحلة الأولى. لم يتم حذف أي بيانات.","success");
+        }catch(e){
+          msg(actionInfo,"تعذر اعتماد التقرير: "+err(e),"error");
+        }finally{
+          busy(approveBtn,false,"","اعتماد التقرير");
+          if(!executeBtn.disabled)approveBtn.disabled=true;
+        }
+      });
+      executeBtn.addEventListener("click",async()=>{
+        if(executeBtn.disabled)return;
+        let completed=false;
+        let blocked=false;
+        if(!window.confirm("سيتم حذف بيانات العمليات والحركات والقيود، وتصفير أرصدة العملاء والموردين والخزائن والمخزون وفق التقرير المعروض. المرحلة الثانية لن تعمل. هل توافق على تنفيذ المرحلة الأولى الآن؟"))return;
+        busy(executeBtn,true,"جارٍ تنفيذ المرحلة الأولى...","تنفيذ المرحلة الأولى");
+        try{
+          const {data:execution,error:executionError}=await db.rpc("admin_reset_execute_phase1",{
+            p_plan_id:prepared.plan_id,
+            p_plan_hash:prepared.plan_hash
+          });
+          if(executionError)throw executionError;
+          if(!execution||execution.executed!==true||execution.status!=="COMPLETED"){
+            if(execution?.status==="BLOCKED"){blocked=true;approveBtn.disabled=true;}
+            throw new Error(execution?.message||"لم تكتمل المرحلة الأولى. لم تعتمد الأداة نجاح التصفير.");
+          }
+          completed=true;
+          approveBtn.disabled=true;
+          executeBtn.disabled=true;
+          actionInfo.textContent="اكتملت المرحلة الأولى. المرحلة الثانية ما زالت مستقلة ولم يتم تشغيلها.";
+          const resultBlock=document.createElement("pre");
+          resultBlock.className="details";
+          resultBlock.style.cssText="white-space:pre-wrap;overflow-wrap:anywhere;direction:ltr;text-align:left";
+          resultBlock.textContent=JSON.stringify(execution.result||{},null,2);
+          actions.appendChild(resultBlock);
+          msg(message,"اكتملت المرحلة الأولى، وتأكد الخادم من تصفير الأرصدة وحذف سجلات العمليات. لم يتم تشغيل المرحلة الثانية.","success");
+        }catch(e){
+          msg(actionInfo,"لم تكتمل عملية التصفير: "+err(e),"error");
+        }finally{
+          busy(executeBtn,false,"","تنفيذ المرحلة الأولى");
+          if(completed||blocked)executeBtn.disabled=true;
+          if(blocked)approveBtn.disabled=true;
+        }
+      });
+    }
+    msg(message,"اكتمل الفحص وحُفظ التقرير ونسخة بياناته الخاصة. لم يتم حذف أو تعديل أي بيانات. راجع التقرير ثم اعتمده إذا أردت المتابعة.","success");
+  }catch(e){msg(message,"تعذر إجراء المعاينة: "+err(e),"error");}
+  finally{busy(btn,false,"","فحص العمليات والبيانات");}
+});
+
+
+if($("runAdminResetPhase2PreviewBtn")) $("runAdminResetPhase2PreviewBtn").addEventListener("click",async()=>{
+  const btn=$("runAdminResetPhase2PreviewBtn");
+  const message=$("adminResetPhase2Msg");
+  const result=$("adminResetPhase2Result");
+  if(!isSystemAdmin){msg(message,"هذه العملية متاحة لمدير النظام فقط.","error");return;}
+  clear(message);result.replaceChildren();
+  busy(btn,true,"جارٍ فحص البيانات الأساسية...","فحص المرحلة الثانية");
+  try{
+    const {data:prepared,error}=await db.rpc("admin_reset_prepare_phase",{p_phase:"PHASE_2"});
+    if(error)throw error;
+    if(!prepared||prepared.prepared!==true||prepared.phase!=="PHASE_2"||!prepared.preview||prepared.preview.phase!=="PHASE_2"){
+      throw new Error("لم يرجع الخادم تقريرًا محفوظًا وصالحًا للمرحلة الثانية.");
+    }
+    const data=prepared.preview;
+    const backupPlan=data.plan_backup||{};
+    const plan=document.createElement("div");plan.className="product";
+    const title=document.createElement("div");title.className="pname";title.textContent="تقرير المرحلة الثانية";
+    const info=document.createElement("div");info.className="details";
+    info.style.cssText="overflow-wrap:anywhere;line-height:1.9";
+    info.textContent="رقم الخطة: "+prepared.plan_id+" | بصمة التحقق: "+prepared.plan_hash+
+      " | نسخة الخطة: "+Number(backupPlan.tables||0)+" جدول / "+
+      Number(backupPlan.total_rows||0).toLocaleString("ar-EG")+" سجل"+
+      " | تنتهي: "+new Date(prepared.expires_at).toLocaleString("ar-EG")+
+      " | الحالة: "+prepared.status;
+    plan.append(title,info);result.appendChild(plan);
+    const labels={
+      customers:"العملاء",customer_groups:"مجموعات العملاء",suppliers:"الموردون",
+      products:"الأصناف",product_categories:"تصنيفات الأصناف",product_unit_conversions:"تحويلات الوحدات",
+      product_packaging_options:"خيارات التعبئة",recipes:"الوصفات",recipe_items:"مكونات الوصفات",
+      units:"الوحدات",locations:"المخازن والمواقع",treasuries:"الخزائن",
+      price_lists:"قوائم الأسعار",price_list_items:"بنود قوائم الأسعار",
+      customer_price_lists:"قوائم أسعار العملاء",partners:"الشركاء",
+      expense_types:"أنواع المصروفات",sales_reps:"مندوبو المبيعات",
+      sales_rep_areas:"مناطق المندوبين",fixed_assets:"الأصول الثابتة",notification_rules:"قواعد الإشعارات",app_users:"المستخدمون",app_roles:"الأدوار",
+      app_permissions:"الصلاحيات",app_role_permissions:"ربط الأدوار بالصلاحيات",
+      chart_of_accounts:"دليل الحسابات",accounting_periods:"الفترات المحاسبية",
+      company_settings:"إعدادات الشركة",governorates:"المحافظات",cities:"المراكز والمدن",
+      areas:"المناطق",user_logs:"سجل التتبع",notification_rules:"قواعد الإشعارات"
+    };
+    const addSection=(headingText,obj)=>{
+      const section=document.createElement("div");section.className="product";
+      const heading=document.createElement("div");heading.className="pname";heading.textContent=headingText;
+      section.appendChild(heading);
+      const table=document.createElement("table");table.className="print-table";
+      const body=document.createElement("tbody");
+      Object.entries(obj||{}).filter(([key,value])=>!Array.isArray(value)&&
+        (typeof value==="number"||typeof value==="string"||typeof value==="boolean")).forEach(([key,value])=>{
+        const row=document.createElement("tr"),name=document.createElement("td"),count=document.createElement("td");
+        name.textContent=labels[key]||key;
+        count.textContent=typeof value==="boolean"?(value?"نعم":"لا"):String(value);
+        row.append(name,count);body.appendChild(row);
+      });
+      if(!body.children.length){
+        const row=document.createElement("tr"),cell=document.createElement("td");
+        cell.colSpan=2;cell.textContent="لا توجد سجلات في هذا القسم.";row.appendChild(cell);body.appendChild(row);
+      }
+      table.appendChild(body);section.appendChild(table);result.appendChild(section);
+    };
+    addSection("البيانات الأساسية التي ستُحذف",data.master_data);
+    addSection("البيانات التي ستظل محفوظة",data.preserved);
+    addSection("بيانات تتولاها المرحلة الأولى",data.phase1_cleared);
+    addSection("التحقق من خلو العمليات بعد المرحلة الأولى",data.operations_verification);
+    addSection("التحقق من الموانع التشغيلية",data.blockers_verification);
+    addSection("ارتباطات تمنع حذف بيانات المرحلة الثانية",data.phase2_blockers);
+    addSection("نسخة البيانات المحفوظة لهذه الخطة",backupPlan.rows_by_table);
+    const backup=document.createElement("div");backup.className="product";
+    const backupTitle=document.createElement("div");backupTitle.className="pname";backupTitle.textContent="النسخة الاحتياطية العامة";
+    const backupInfo=document.createElement("div");backupInfo.className="details";
+    backupInfo.textContent="الجداول المسجلة: "+Number(data.backup?.manifest_tables||0)+
+      " من "+Number(data.backup?.complete_expected_tables||74)+
+      " | السجلات: "+Number(data.backup?.manifest_rows||0)+
+      " من "+Number(data.backup?.expected_rows||4442)+
+      " | الحالة: "+(data.backup?.complete===true?"مكتملة":"غير مكتملة - يمنع البدء");
+    backup.append(backupTitle,backupInfo);result.appendChild(backup);
+    const actions=document.createElement("div");actions.className="product";
+    const approveBtn=document.createElement("button");approveBtn.className="btn";approveBtn.type="button";
+    const phase2Blockers=data.phase2_blockers||{};
+    const phase2HasBlockers=Object.values(phase2Blockers).some(value=>Number(value)>0);
+    approveBtn.textContent=phase2HasBlockers?"الاعتماد متوقف بسبب ارتباطات الأصول":"اعتماد تقرير المرحلة الثانية";
+    approveBtn.disabled=phase2HasBlockers;
+    const note=document.createElement("div");note.className="details";
+    note.style.marginTop="8px";
+    note.textContent=phase2HasBlockers
+      ?"لا يمكن اعتماد التقرير. توجد أصول ثابتة مرتبطة بموردين أو شركاء أو خزائن ضمن البيانات المستهدف حذفها. يجب معالجة هذا التعارض أولًا."
+      :"الاعتماد يسجل موافقتك على التقرير فقط. لا يحذف بيانات. زر التنفيذ غير متاح حتى اجتياز اختبار التشغيل النهائي.";
+    actions.append(approveBtn,note);result.appendChild(actions);
+    approveBtn.addEventListener("click",async()=>{
+      if(!window.confirm("هل توافق على اعتماد تقرير المرحلة الثانية؟ الاعتماد لا يحذف أي بيانات."))return;
+      busy(approveBtn,true,"جارٍ اعتماد التقرير...","اعتماد التقرير");
+      try{
+        const {data:approval,error:approvalError}=await db.rpc("admin_reset_approve_phase2",{
+          p_plan_id:prepared.plan_id,p_plan_hash:prepared.plan_hash
+        });
+        if(approvalError)throw approvalError;
+        if(!approval||approval.approved!==true||approval.status!=="APPROVED"){
+          throw new Error(approval?.message||"لم يؤكد الخادم اعتماد التقرير.");
+        }
+        approveBtn.disabled=true;
+        approveBtn.textContent="تم اعتماد التقرير";
+        note.textContent="تم اعتماد التقرير. لم يتم حذف أي بيانات. يظل التنفيذ الفعلي مقفولًا.";
+        msg(message,"تم اعتماد تقرير المرحلة الثانية. لم يتم حذف أي بيانات.","success");
+      }catch(e){
+        msg(note,"تعذر اعتماد التقرير: "+err(e),"error");
+      }finally{
+        busy(approveBtn,false,"","اعتماد تقرير المرحلة الثانية");
+        if(approveBtn.textContent==="تم اعتماد التقرير"||phase2HasBlockers)approveBtn.disabled=true;
+      }
+    });
+    msg(message,"اكتمل تجهيز تقرير المرحلة الثانية ونسخة بياناتها. لم يتم حذف أو تعديل أي بيانات. راجع التقرير قبل اعتماده.","success");
+  }catch(e){
+    msg(message,"تعذر تجهيز المرحلة الثانية: "+err(e),"error");
+  }finally{
+    busy(btn,false,"","فحص وتجهيز المرحلة الثانية");
+  }
+});
 
 async function permission(code){ if(isSystemAdmin) return true; if(!navigator.onLine) return false; try { const {data,error}=await db.rpc("has_permission",{p_permission_code:code}); if(error)throw error; return data===true; } catch (e) { return false; } }
 
@@ -2542,10 +2812,12 @@ async function userInfo(user){
       document.querySelectorAll("#dataDashboard .dash-item").forEach(el=>el.classList.remove("hidden"));
       document.querySelectorAll("#dataDashboard .dashboard-group").forEach(el=>el.classList.remove("hidden"));
       ["menuUsers","menuSalesReps","menuAccounting","menuSettings"].forEach(id=>{ if($(id)) $(id).classList.remove("hidden"); });
-      ["userManagementCard","salesRepsCard","accountingCard"].forEach(id=>{ if($(id)) $(id).classList.remove("hidden"); });
+      ["userManagementCard","salesRepsCard","accountingCard","systemResetCard"].forEach(id=>{ if($(id)) $(id).classList.remove("hidden"); });
       await loadUserManagementLookups();
     } else {
       if($("menuUsers")) $("menuUsers").classList.add("hidden");
+      if($("menuSystemReset")) $("menuSystemReset").classList.add("hidden");
+      if($("systemResetCard")) $("systemResetCard").classList.add("hidden");
       if($("userManagementCard")) $("userManagementCard").classList.add("hidden");
       if($("menuSalesReps")) $("menuSalesReps").classList.add("hidden");
       if($("salesRepsCard")) $("salesRepsCard").classList.add("hidden");
@@ -5286,6 +5558,36 @@ async function viewInvoice(inv) {
     $("modalInvoiceItems").innerHTML = "";
     $("modalInvoiceLots").innerHTML = "<div class='empty'>جارٍ تحميل تخصيصات التشغيلات...</div>";
     modal.classList.remove("hidden");
+    const invoiceActions=modal.querySelector(".no-print");
+    const oldCancelButton=document.getElementById("cancelSalesInvoiceBtn");
+    if(oldCancelButton) oldCancelButton.remove();
+    const canCancelSalesInvoice=isSystemAdmin || await permission("SALES_MANAGE");
+    if(invoiceActions && canCancelSalesInvoice && inv.status==="POSTED"){
+      const cancelButton=document.createElement("button");
+      cancelButton.id="cancelSalesInvoiceBtn";
+      cancelButton.type="button";
+      cancelButton.className="btn danger";
+      cancelButton.textContent="إلغاء فاتورة البيع";
+      cancelButton.style.flex="1";
+      cancelButton.onclick=async()=>{
+        if(!confirm("سيتم إلغاء الفاتورة وعكس حركة المخزون والقيد المحاسبي المرتبط بها حسب ضوابط النظام. يشترط عدم وجود تحصيل نشط أو مرتجع نشط أو حركة مخزون لاحقة غير مسموح بها. هل تريد المتابعة؟")) return;
+        busy(cancelButton,true,"جارٍ الإلغاء...","إلغاء فاتورة البيع");
+        try{
+          const {error}=await db.rpc("cancel_sales_invoice",{p_invoice_id:Number(inv.sales_invoice_id)});
+          if(error) throw error;
+          showToast("تم إلغاء فاتورة البيع وعكس آثارها بنجاح","success");
+          modal.classList.add("hidden");
+          await loadSales();
+          if(canViewStock) await loadStock();
+          if(canViewTreasuries) await loadTreasuries();
+        }catch(e){
+          alert("تعذر إلغاء فاتورة البيع: "+err(e));
+        }finally{
+          busy(cancelButton,false,"","إلغاء فاتورة البيع");
+        }
+      };
+      invoiceActions.appendChild(cancelButton);
+    }
     try {
         const { data: items, error: itemsError } = await db.from("sales_invoice_items").select("*").eq("sales_invoice_id", inv.sales_invoice_id);
         if(itemsError) throw itemsError;
