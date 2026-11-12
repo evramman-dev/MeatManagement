@@ -626,8 +626,8 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div id="systemResetCard" class="card hidden">
 <h2>إعادة تهيئة النظام</h2>
 <p class="desc">أداة مستقلة لمدير النظام. تنفذ الفحص وتجهيز خطة المعالجة تلقائيًا، ولا تطلب منك تشغيل استعلامات أو تنفيذ خطوات يدوية. لن يبدأ أي حذف قبل عرض التقرير النهائي وموافقتك الصريحة.</p>
-<div class="product"><div class="pname">المرحلة الأولى: تصفير العمليات والأرصدة</div><div class="details">مرحلة مستقلة تشمل المستندات والحركات والقيود وأرصدة العملاء والموردين والخزائن والمخزون. ابدأ بالمعاينة وحفظ التقرير. لن يبدأ التنفيذ قبل اكتمال المحرك وعرض الخطة وموافقتك.</div><button id="runAdminResetPreviewBtn" class="btn" type="button">فحص وتجهيز المرحلة الأولى</button></div>
-<div class="product"><div class="pname">بوابة الموافقة قبل التنفيذ</div><div class="details">بعد اكتمال التقرير، تعرض الأداة خطة التنفيذ بالتفصيل. لا تنفذ حذفًا أو إلغاءً لأي مستند قبل موافقتك. بعد الموافقة تنفذ الخطة تلقائيًا، وتتوقف بالكامل إذا ظهر اختلاف أو مانع غير متوقع.</div><button class="btn secondary" type="button" disabled>تظهر الموافقة بعد اكتمال الخطة والتحقق منها</button></div>
+<div class="product"><div class="pname">المرحلة الأولى: تصفير العمليات والأرصدة</div><div class="details">مرحلة مستقلة تشمل المستندات والحركات والقيود وأرصدة العملاء والموردين والخزائن والمخزون. اعرض التقرير ونسخة البيانات الخاصة به، ثم اعتمد التقرير قبل تنفيذ التصفير.</div><button id="runAdminResetPreviewBtn" class="btn" type="button">فحص وتجهيز المرحلة الأولى</button></div>
+<div class="product"><div class="pname">بوابة الموافقة قبل التنفيذ</div><div class="details">بعد اكتمال التقرير، تعرض الأداة خطة التنفيذ بالتفصيل. لا تنفذ حذفًا أو إلغاءً لأي مستند قبل موافقتك. بعد الموافقة تنفذ الخطة تلقائيًا، وتتوقف بالكامل إذا ظهر اختلاف أو مانع غير متوقع.</div><div id="adminResetActions" class="row" style="gap:8px;flex-wrap:wrap;"></div></div>
 <div id="adminResetPreviewMsg" class="status hidden"></div>
 <div id="adminResetPreviewResult"></div>
 <div class="product" style="margin-top:15px;"><div class="pname">المرحلة الثانية: إعادة تهيئة البيانات الأساسية - اختيارية ومستقلة</div><div class="details">لا تعمل تلقائيًا مع المرحلة الأولى. يمكنك تنفيذها عند الحاجة فقط، بعد اكتمال المرحلة الأولى والتحقق من خلو النظام من العمليات والأرصدة. ستملك معاينة وخطة وموافقة وتنفيذًا منفصلًا.</div><button class="btn secondary" type="button" disabled>تُفتح بعد اكتمال محرك المرحلة الثانية</button></div>
@@ -2314,11 +2314,12 @@ if($("runAdminResetPreviewBtn")) $("runAdminResetPreviewBtn").addEventListener("
     if(error) throw error;
     if(!prepared || prepared.prepared!==true || !prepared.preview || prepared.preview.preview_only!==true) throw new Error("لم يرجع الخادم خطة معاينة محفوظة وصالحة.");
     const data=prepared.preview;
+    const planBackup=data.plan_backup||{};
     const plan=document.createElement("div");plan.className="product";
     const planTitle=document.createElement("div");planTitle.className="pname";planTitle.textContent="رقم تقرير المعاينة المحفوظ";
     const planInfo=document.createElement("div");planInfo.className="details";
     planInfo.style.cssText="overflow-wrap:anywhere;line-height:1.8";
-    planInfo.textContent="رقم الخطة: "+prepared.plan_id+" | بصمة التحقق: "+prepared.plan_hash+" | تنتهي: "+new Date(prepared.expires_at).toLocaleString("ar-EG")+" | الحالة: "+prepared.status;
+    planInfo.textContent="رقم الخطة: "+prepared.plan_id+" | بصمة التحقق: "+prepared.plan_hash+" | نسخة الخطة: "+Number(planBackup.tables||0)+" جدول / "+Number(planBackup.total_rows||0).toLocaleString("ar-EG")+" سجل | تنتهي: "+new Date(prepared.expires_at).toLocaleString("ar-EG")+" | الحالة: "+prepared.status;
     plan.append(planTitle,planInfo);result.appendChild(plan);
     const labels={sales_invoices:"فواتير البيع",sales_invoice_items:"بنود البيع",customer_collections:"تحصيلات العملاء",customer_cheques:"شيكات العملاء",sales_returns:"مرتجعات البيع",sales_return_items:"بنود مرتجعات البيع",sales_return_exchange_items:"بنود الاستبدال",purchase_invoices:"فواتير الشراء",purchase_invoice_items:"بنود الشراء",purchase_returns:"مرتجعات الشراء",purchase_return_items:"بنود مرتجعات الشراء",supplier_payments:"سداد الموردين",purchase_landed_costs:"تكاليف النقل",purchase_landed_cost_allocations:"توزيع تكاليف النقل",production_orders:"أوامر التشغيل",production_order_materials:"خامات التشغيل",production_order_expense_allocations:"توزيع مصروفات التشغيل",recipes:"الوصفات",recipe_items:"مكونات الوصفات",recipe_movements:"حركات الوصفات",stock_lots:"التشغيلات LOT",stock_lot_balances:"أرصدة التشغيلات",stock_movements:"حركات المخزون",stock_movement_lot_allocations:"تخصيصات التشغيلات",stock_balances:"أرصدة المخزون",stock_transfers:"تحويلات المخازن",stock_transfer_items:"بنود التحويل",stock_transfer_reversals:"عكس التحويلات",trips:"الرحلات",trip_loads:"تحميل السيارات",trip_customers:"عملاء الرحلات",expenses:"المصروفات",treasury_transactions:"حركات الخزائن",journal_entries:"القيود المحاسبية",journal_entry_lines:"سطور القيود",journal_adjustments:"التسويات المحاسبية",fixed_asset_depreciation_entries:"إهلاك الأصول",partner_transactions:"حركات الشركاء",partner_inventory_contributions:"مساهمات المخزون",partner_profit_distributions:"توزيعات الأرباح",partner_profit_distribution_items:"بنود توزيعات الأرباح",reservations:"الحجوزات",notifications:"الإشعارات",notification_recipients:"مستلمو الإشعارات",products:"الأصناف",product_categories:"تصنيفات الأصناف",product_unit_conversions:"تحويلات الوحدات",product_packaging_options:"خيارات التعبئة",units:"الوحدات",customers:"العملاء",customer_groups:"مجموعات العملاء",suppliers:"الموردون",sales_reps:"مندوبو المبيعات",locations:"المخازن والمواقع",partners:"الشركاء",treasuries:"الخزائن",fixed_assets:"الأصول الثابتة",price_lists:"قوائم الأسعار",price_list_items:"بنود قوائم الأسعار",customer_price_lists:"قوائم أسعار العملاء",expense_types:"أنواع المصروفات",sales_rep_areas:"مناطق المندوبين",notification_rules:"قواعد الإشعارات",app_users:"المستخدمون",app_roles:"الأدوار",app_permissions:"الصلاحيات",app_role_permissions:"ربط الأدوار بالصلاحيات",chart_of_accounts:"دليل الحسابات",accounting_periods:"الفترات المحاسبية",company_settings:"إعدادات الشركة",governorates:"المحافظات",cities:"المراكز والمدن",areas:"المناطق",user_logs:"سجل التتبع"};
     const addSection=(title,obj)=>{
@@ -2335,6 +2336,7 @@ if($("runAdminResetPreviewBtn")) $("runAdminResetPreviewBtn").addEventListener("
     addSection("العمليات والحركات",data.operations);
     addSection("البيانات الأساسية",data.master_data);
     addSection("البيانات المحفوظة",data.preserved);
+    addSection("نسخة البيانات المحفوظة لهذه الخطة",planBackup.rows_by_table);
     const backup=document.createElement("div");backup.className="product";
     const backupTitle=document.createElement("div");backupTitle.className="pname";backupTitle.textContent="النسخة الاحتياطية";
     const backupInfo=document.createElement("div");backupInfo.className="details";
@@ -2360,7 +2362,72 @@ if($("runAdminResetPreviewBtn")) $("runAdminResetPreviewBtn").addEventListener("
     addDetailRows("تفاصيل الرحلات النشطة",b.trip_details,[["رقم الرحلة","number"],["الحالة","status"],["تاريخ البداية","start_date"],["المخزن المصدر","source_location_id"],["موقع السيارة","vehicle_location_id"],["المندوب","sales_rep_id"]]);
     addDetailRows("تفاصيل الخزائن ذات الأرصدة",b.treasury_details,[["الخزنة","name"],["النوع","type"],["الرصيد الحالي","current_balance"],["الرصيد الافتتاحي","opening_balance"],["الحساب","account_id"]]);
     addDetailRows("تفاصيل أرصدة المخزون",b.stock_details,[["المخزن","location_name"],["الصنف","product_name"],["الكمية","quantity"],["قيمة المخزون","inventory_value"]]);
-    msg(message,"اكتمل الفحص وحُفظ التقرير برقم مرجعي. لم يتم حذف أو تعديل أي بيانات، والتنفيذ ما زال مقفولًا حتى اكتمال محركه.","success");
+    const actions=$("adminResetActions");
+    if(actions){
+      actions.replaceChildren();
+      const approveBtn=document.createElement("button");
+      approveBtn.className="btn";
+      approveBtn.type="button";
+      approveBtn.textContent="اعتماد التقرير";
+      const executeBtn=document.createElement("button");
+      executeBtn.className="btn secondary";
+      executeBtn.type="button";
+      executeBtn.textContent="تنفيذ المرحلة الأولى";
+      executeBtn.disabled=true;
+      const actionInfo=document.createElement("div");
+      actionInfo.className="details";
+      actionInfo.textContent="راجع أعداد السجلات ونسخة البيانات أعلاه. الاعتماد لا يحذف شيئًا. التنفيذ يحتاج موافقة منفصلة.";
+      actions.append(approveBtn,executeBtn,actionInfo);
+      approveBtn.addEventListener("click",async()=>{
+        if(!window.confirm("هل توافق على اعتماد تقرير المرحلة الأولى؟ الاعتماد يحفظ موافقتك فقط ولا يحذف أي بيانات."))return;
+        busy(approveBtn,true,"جارٍ اعتماد التقرير...","اعتماد التقرير");
+        try{
+          const {data:approval,error:approvalError}=await db.rpc("admin_reset_approve_phase",{
+            p_plan_id:prepared.plan_id,
+            p_plan_hash:prepared.plan_hash
+          });
+          if(approvalError)throw approvalError;
+          if(!approval||approval.approved!==true||approval.status!=="APPROVED")throw new Error(approval?.message||"لم يؤكد الخادم اعتماد التقرير.");
+          executeBtn.disabled=false;
+          approveBtn.disabled=true;
+          actionInfo.textContent="تم اعتماد التقرير. لم يتم حذف أي بيانات. اضغط تنفيذ المرحلة الأولى فقط إذا كنت تريد بدء التصفير.";
+          msg(message,"تم اعتماد تقرير المرحلة الأولى. لم يتم حذف أي بيانات.","success");
+        }catch(e){
+          msg(actionInfo,"تعذر اعتماد التقرير: "+err(e),"error");
+        }finally{
+          busy(approveBtn,false,"","اعتماد التقرير");
+        }
+      });
+      executeBtn.addEventListener("click",async()=>{
+        if(executeBtn.disabled)return;
+        if(!window.confirm("سيتم حذف بيانات العمليات والحركات والقيود، وتصفير أرصدة العملاء والموردين والخزائن والمخزون وفق التقرير المعروض. المرحلة الثانية لن تعمل. هل توافق على تنفيذ المرحلة الأولى الآن؟"))return;
+        busy(executeBtn,true,"جارٍ تنفيذ المرحلة الأولى...","تنفيذ المرحلة الأولى");
+        try{
+          const {data:execution,error:executionError}=await db.rpc("admin_reset_execute_phase1",{
+            p_plan_id:prepared.plan_id,
+            p_plan_hash:prepared.plan_hash
+          });
+          if(executionError)throw executionError;
+          if(!execution||execution.executed!==true||execution.status!=="COMPLETED"){
+            throw new Error(execution?.message||"لم تكتمل المرحلة الأولى. لم تعتمد الأداة نجاح التصفير.");
+          }
+          approveBtn.disabled=true;
+          executeBtn.disabled=true;
+          actionInfo.textContent="اكتملت المرحلة الأولى. المرحلة الثانية ما زالت مستقلة ولم يتم تشغيلها.";
+          const resultBlock=document.createElement("pre");
+          resultBlock.className="details";
+          resultBlock.style.cssText="white-space:pre-wrap;overflow-wrap:anywhere;direction:ltr;text-align:left";
+          resultBlock.textContent=JSON.stringify(execution.result||{},null,2);
+          actions.appendChild(resultBlock);
+          msg(message,"اكتملت المرحلة الأولى، وتأكد الخادم من تصفير الأرصدة وحذف سجلات العمليات. لم يتم تشغيل المرحلة الثانية.","success");
+        }catch(e){
+          msg(actionInfo,"لم تكتمل عملية التصفير: "+err(e),"error");
+        }finally{
+          busy(executeBtn,false,"","تنفيذ المرحلة الأولى");
+        }
+      });
+    }
+    msg(message,"اكتمل الفحص وحُفظ التقرير ونسخة بياناته الخاصة. لم يتم حذف أو تعديل أي بيانات. راجع التقرير ثم اعتمده إذا أردت المتابعة.","success");
   }catch(e){msg(message,"تعذر إجراء المعاينة: "+err(e),"error");}
   finally{busy(btn,false,"","فحص العمليات والبيانات");}
 });
