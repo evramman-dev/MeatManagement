@@ -3564,12 +3564,12 @@ function shareHomeQuickReport(type){
 async function buildCustomerBalanceSummary(from,to){
   const [y,m,d]=String(to).split("-").map(Number),nextDate=new Date(Date.UTC(y,m-1,d+1)).toISOString().slice(0,10);
   const [customers,sales,collections,returns]=await Promise.all([
-    fetchAllRows(db.from("customers").select("customer_id,customer_name,governorate_id").order("customer_id")),
+    fetchAllRows(db.from("customers").select("customer_id,customer_name,governorate_id,opening_balance").order("customer_id")),
     fetchAllRows(db.from("sales_invoices").select("customer_id,invoice_date,net_total,status").lt("invoice_date",nextDate).in("status",["POSTED","PAID","PARTIAL"]).order("invoice_date")),
     fetchAllRows(db.from("customer_collections").select("customer_id,amount,collection_date,status").eq("status","POSTED").lt("collection_date",nextDate).order("collection_date")),
     fetchAllRows(db.from("sales_returns").select("customer_id,return_date,total_returned_value,status").eq("status","POSTED").lt("return_date",nextDate).order("return_date"))
   ]);
-  const rows=new Map(customers.map(c=>[String(c.customer_id),{customer_id:c.customer_id,name:c.customer_name||"غير محدد",governorate:geoGovernorateName(c.governorate_id),opening:0,sales:0,returns:0,collections:0,balance:0}]));
+  const rows=new Map(customers.map(c=>[String(c.customer_id),{customer_id:c.customer_id,name:c.customer_name||"غير محدد",governorate:geoGovernorateName(c.governorate_id),opening:Number(c.opening_balance||0),sales:0,returns:0,collections:0,balance:0}]));
   const ensure=id=>{const key=String(id);if(!rows.has(key))rows.set(key,{customer_id:id,name:customerName(id),governorate:"غير محدد",opening:0,sales:0,returns:0,collections:0,balance:0});return rows.get(key);};
   sales.forEach(inv=>{const r=ensure(inv.customer_id),day=String(inv.invoice_date||"").slice(0,10),amount=Number(inv.net_total||0);if(day<from)r.opening+=amount;else if(day<=to)r.sales+=amount;});
   collections.forEach(col=>{const r=ensure(col.customer_id),day=String(col.collection_date||"").slice(0,10),amount=Number(col.amount||0);if(day<from)r.opening-=amount;else if(day<=to)r.collections+=amount;});
