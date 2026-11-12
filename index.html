@@ -3453,12 +3453,17 @@ async function buildGeoSalesSummary(from,to){
 }
 async function buildGeoItemMovementSummary(from,to){
   const [y,m,d]=String(to).split("-").map(Number),nextDate=new Date(Date.UTC(y,m-1,d+1)).toISOString().slice(0,10);
-  const [moves,balances]=await Promise.all([
+  const [moves,balances,purchaseInvoices,salesInvoices,purchaseReturns,salesReturns]=await Promise.all([
     fetchAllRows(db.from("stock_movements").select("product_id,movement_type,quantity_change,created_at,purchase_invoice_id,purchase_return_id,sales_invoice_id,sales_return_id").gte("created_at",new Date(from+"T00:00:00").toISOString()).lt("created_at",new Date(nextDate+"T00:00:00").toISOString()).order("created_at")),
-    fetchAllRows(db.from("stock_balances").select("product_id,quantity"))
+    fetchAllRows(db.from("stock_balances").select("product_id,quantity")),
+    fetchAllRows(db.from("purchase_invoices").select("purchase_invoice_id").eq("status","POSTED")),
+    fetchAllRows(db.from("sales_invoices").select("sales_invoice_id").in("status",["POSTED","PAID","PARTIAL"])),
+    fetchAllRows(db.from("purchase_returns").select("return_id").eq("is_cancelled",false)),
+    fetchAllRows(db.from("sales_returns").select("sales_return_id").eq("status","POSTED"))
   ]);
+  const activePurchaseInvoices=new Set(purchaseInvoices.map(x=>String(x.purchase_invoice_id))),activeSalesInvoices=new Set(salesInvoices.map(x=>String(x.sales_invoice_id))),activePurchaseReturns=new Set(purchaseReturns.map(x=>String(x.return_id))),activeSalesReturns=new Set(salesReturns.map(x=>String(x.sales_return_id)));
   const totals=new Map(),get=id=>{const key=String(id);if(!totals.has(key))totals.set(key,{product_id:id,purchases:0,sales:0,returns:0,current:0});return totals.get(key);};
-  moves.forEach(m=>{const q=Math.abs(Number(m.quantity_change||0)),row=get(m.product_id);if(m.movement_type==="RECEIVE"&&m.purchase_invoice_id!=null)row.purchases+=q;else if(m.movement_type==="ISSUE"&&m.sales_invoice_id!=null)row.sales+=q;else if(m.movement_type==="RETURN"&&(m.purchase_return_id!=null||m.sales_return_id!=null))row.returns+=q;});
+  moves.forEach(m=>{const q=Math.abs(Number(m.quantity_change||0)),row=get(m.product_id);if(m.movement_type==="RECEIVE"&&m.purchase_invoice_id!=null&&activePurchaseInvoices.has(String(m.purchase_invoice_id)))row.purchases+=q;else if(m.movement_type==="ISSUE"&&m.sales_invoice_id!=null&&activeSalesInvoices.has(String(m.sales_invoice_id)))row.sales+=q;else if(m.movement_type==="RETURN"&&((m.purchase_return_id!=null&&activePurchaseReturns.has(String(m.purchase_return_id)))||(m.sales_return_id!=null&&activeSalesReturns.has(String(m.sales_return_id)))))row.returns+=q;});
   balances.forEach(b=>get(b.product_id).current+=Number(b.quantity||0));
   return Array.from(totals.values()).filter(x=>x.purchases||x.sales||x.returns||x.current).sort((a,b)=>productName(a.product_id).localeCompare(productName(b.product_id),"ar"));
 }
