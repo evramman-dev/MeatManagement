@@ -400,6 +400,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
   <button id="openHomeNotifications" class="home-card red" type="button"><span class="hc-label">مركز التنبيهات</span><span class="hc-value" id="homeNotificationButtonCount">0</span></button>
   <button id="openHomeGeoSummary" class="home-card gold" type="button"><span class="hc-label">ملخص تعاملات المحافظة</span><span class="hc-value" id="homeGeoButtonBalance">0</span></button>
   <button id="openHomeItemsSummary" class="home-card green" type="button"><span class="hc-label">ملخص حركة الأصناف</span><span class="hc-value">عرض</span></button>
+  <button id="openHomeCustomersSummary" class="home-card" type="button"><span class="hc-label">ملخص العملاء</span><span class="hc-value">عرض</span></button>
 </div>
 </div>
 <div id="homeNotificationPanel" class="card hidden" style="margin-top:14px;">
@@ -427,6 +428,11 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
   <button class="btn secondary home-detail-back" type="button" style="width:auto;margin-bottom:12px;">رجوع للرئيسية</button>
   <div class="notification-actions"><button class="btn secondary" type="button" data-home-print="items">طباعة / PDF</button><button class="btn" type="button" data-home-share="items" style="background:#25D366;">واتساب</button></div>
   <div id="homeGeoItemsSummary" style="margin-top:12px;"><h3>ملخص حركة الأصناف</h3><div class="info">جارٍ تحميل حركة الأصناف...</div></div>
+</div>
+<div id="homeCustomersPanel" class="card hidden" style="margin-top:14px;">
+  <button class="btn secondary home-detail-back" type="button" style="width:auto;margin-bottom:12px;">رجوع للرئيسية</button>
+  <div class="notification-actions"><button class="btn secondary" type="button" data-home-print="customers">طباعة / PDF</button><button class="btn" type="button" data-home-share="customers" style="background:#25D366;">واتساب</button></div>
+  <div id="homeCustomersSummary" style="margin-top:12px;"><h3>ملخص العملاء</h3><div class="info">جارٍ تحميل ملخص العملاء...</div></div>
 </div>
 <button id="logoutBtn" class="btn secondary" type="button" style="margin-top:16px;">تسجيل الخروج</button>
 </div>
@@ -480,19 +486,29 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <h2>🗂️ مركز البيانات</h2>
 <p class="desc">اختر القسم الذي تريد الدخول إليه.</p>
 <div class="dashboard-group">
-<div class="dashboard-title">📦 البضاعة والإنتاج</div>
+<div class="dashboard-title">المنتجات</div>
 <div class="dashboard-grid">
 <div class="dash-item hidden" id="menuProducts" onclick="window.openSection('products')"><div class="dash-icon">📦</div><div class="dash-title">المنتجات</div></div>
-<div class="dash-item hidden" id="menuPackaging" onclick="window.openSection('packaging')"><div class="dash-icon">📦</div><div class="dash-title">خيارات التعبئة</div></div>
+<div class="dash-item hidden" id="menuStockSummary" onclick="window.openSection('stockSummary')"><div class="dash-icon">📋</div><div class="dash-title">ملخص أرصدة الأصناف</div></div>
+<div class="dash-item hidden" id="menuProductionDailySummary" onclick="window.openSection('productionDailySummary')"><div class="dash-icon">📅</div><div class="dash-title">ملخص الإنتاج اليومي</div></div>
+</div>
+</div>
+<div class="dashboard-group">
+<div class="dashboard-title">المخزون</div>
+<div class="dashboard-grid">
 <div class="dash-item hidden" id="menuLocations" onclick="window.openSection('locations')"><div class="dash-icon">🏭</div><div class="dash-title">المواقع والمخازن</div></div>
 <div class="dash-item hidden" id="menuStock" onclick="window.openSection('stock')"><div class="dash-icon">📊</div><div class="dash-title">أرصدة المخزون</div></div>
-<div class="dash-item hidden" id="menuStockSummary" onclick="window.openSection('stockSummary')"><div class="dash-icon">📋</div><div class="dash-title">ملخص أرصدة الأصناف</div></div>
-<div class="dash-item hidden" id="menuStockLots" onclick="window.openSection('stockLots')"><div class="dash-icon">🏷️</div><div class="dash-title">تتبع التشغيلات</div></div>
 <div class="dash-item hidden" id="menuStockTransfers" onclick="window.openSection('stockTransfers')"><div class="dash-icon">🔄</div><div class="dash-title">تحويل المخازن</div></div>
+<div class="dash-item hidden" id="menuPackaging" onclick="window.openSection('packaging')"><div class="dash-icon">📦</div><div class="dash-title">خيارات التعبئة</div></div>
+<div class="dash-item hidden" id="menuReservations" onclick="window.openSection('reservations')"><div class="dash-icon">🔒</div><div class="dash-title">الحجوزات</div></div>
+</div>
+</div>
+<div class="dashboard-group">
+<div class="dashboard-title">الإنتاج</div>
+<div class="dashboard-grid">
 <div class="dash-item hidden" id="menuRecipes" onclick="window.openSection('recipes')"><div class="dash-icon">📝</div><div class="dash-title">الوصفات</div></div>
 <div class="dash-item hidden" id="menuProduction" onclick="window.openSection('production')"><div class="dash-icon">🏭</div><div class="dash-title">أوامر التشغيل</div></div>
-<div class="dash-item hidden" id="menuProductionDailySummary" onclick="window.openSection('productionDailySummary')"><div class="dash-icon">📅</div><div class="dash-title">ملخص الإنتاج اليومي</div></div>
-<div class="dash-item hidden" id="menuReservations" onclick="window.openSection('reservations')"><div class="dash-icon">🔒</div><div class="dash-title">الحجوزات</div></div>
+<div class="dash-item hidden" id="menuStockLots" onclick="window.openSection('stockLots')"><div class="dash-icon">🏷️</div><div class="dash-title">تتبع التشغيلات</div></div>
 </div>
 </div>
 <div class="dashboard-group">
@@ -3518,17 +3534,17 @@ async function loadGeoSalesReport(){
 }
 function openHomeDetail(panelId){
   $("homeOverview")?.classList.add("hidden");
-  ["homeNotificationPanel","homeGeoPanel","homeItemsPanel"].forEach(id=>$(id)?.classList.toggle("hidden",id!==panelId));
+  ["homeNotificationPanel","homeGeoPanel","homeItemsPanel","homeCustomersPanel"].forEach(id=>$(id)?.classList.toggle("hidden",id!==panelId));
   window.scrollTo(0,0);
 }
 function closeHomeDetail(){
-  ["homeNotificationPanel","homeGeoPanel","homeItemsPanel"].forEach(id=>$(id)?.classList.add("hidden"));
+  ["homeNotificationPanel","homeGeoPanel","homeItemsPanel","homeCustomersPanel"].forEach(id=>$(id)?.classList.add("hidden"));
   $("homeOverview")?.classList.remove("hidden");
   window.scrollTo(0,0);
 }
 let homeQuickPrintShareText="";
 function homeQuickReportData(type){
-  const configs={notifications:{title:"مركز التنبيهات",source:"notificationsList"},geo:{title:"ملخص تعاملات المحافظة",source:"homeGeoSummary"},items:{title:"ملخص حركة الأصناف",source:"homeGeoItemsSummary"}};
+  const configs={notifications:{title:"مركز التنبيهات",source:"notificationsList"},geo:{title:"ملخص تعاملات المحافظة",source:"homeGeoSummary"},items:{title:"ملخص حركة الأصناف",source:"homeGeoItemsSummary"},customers:{title:"ملخص العملاء",source:"homeCustomersSummary"}};
   const config=configs[type];if(!config)throw new Error("نوع التقرير غير معروف");
   const source=$(config.source);if(!source)throw new Error("محتوى التقرير غير متاح");
   const clone=source.cloneNode(true);clone.removeAttribute("id");
@@ -3545,23 +3561,46 @@ function shareHomeQuickReport(type){
   try{const report=homeQuickReportData(type);window.open("https://wa.me/?text="+encodeURIComponent(report.share),"_blank");}
   catch(e){showToast("تعذر تجهيز المشاركة: "+err(e),"error");}
 }
+async function buildCustomerBalanceSummary(from,to){
+  const [y,m,d]=String(to).split("-").map(Number),nextDate=new Date(Date.UTC(y,m-1,d+1)).toISOString().slice(0,10);
+  const [customers,sales,collections,returns]=await Promise.all([
+    fetchAllRows(db.from("customers").select("customer_id,customer_name,governorate_id").order("customer_id")),
+    fetchAllRows(db.from("sales_invoices").select("customer_id,invoice_date,net_total,status").lt("invoice_date",nextDate).in("status",["POSTED","PAID","PARTIAL"]).order("invoice_date")),
+    fetchAllRows(db.from("customer_collections").select("customer_id,amount,collection_date,status").eq("status","POSTED").lt("collection_date",nextDate).order("collection_date")),
+    fetchAllRows(db.from("sales_returns").select("customer_id,return_date,total_returned_value,status").eq("status","POSTED").lt("return_date",nextDate).order("return_date"))
+  ]);
+  const rows=new Map(customers.map(c=>[String(c.customer_id),{customer_id:c.customer_id,name:c.customer_name||"غير محدد",governorate:geoGovernorateName(c.governorate_id),opening:0,sales:0,returns:0,collections:0,balance:0}]));
+  const ensure=id=>{const key=String(id);if(!rows.has(key))rows.set(key,{customer_id:id,name:customerName(id),governorate:"غير محدد",opening:0,sales:0,returns:0,collections:0,balance:0});return rows.get(key);};
+  sales.forEach(inv=>{const r=ensure(inv.customer_id),day=String(inv.invoice_date||"").slice(0,10),amount=Number(inv.net_total||0);if(day<from)r.opening+=amount;else if(day<=to)r.sales+=amount;});
+  collections.forEach(col=>{const r=ensure(col.customer_id),day=String(col.collection_date||"").slice(0,10),amount=Number(col.amount||0);if(day<from)r.opening-=amount;else if(day<=to)r.collections+=amount;});
+  returns.forEach(ret=>{const r=ensure(ret.customer_id),day=String(ret.return_date||"").slice(0,10),amount=Number(ret.total_returned_value||0);if(day<from)r.opening-=amount;else if(day<=to)r.returns+=amount;});
+  return Array.from(rows.values()).map(r=>({...r,balance:r.opening+r.sales-r.returns-r.collections}))
+    .filter(r=>r.opening||r.sales||r.returns||r.collections||r.balance)
+    .sort((a,b)=>a.name.localeCompare(b.name,"ar"));
+}
+function customerBalanceRowsHtml(rows){
+  return rows.map(r=>'<tr><td>'+esc(r.name)+'</td><td>'+esc(r.governorate)+'</td><td>'+fmt(r.opening)+'</td><td>'+fmt(r.sales)+'</td><td>'+fmt(r.returns)+'</td><td>'+fmt(r.collections)+'</td><td style="font-weight:bold;color:'+(r.balance<0?'#a52b2b':'#173c2c')+'">'+fmt(r.balance)+'</td></tr>').join("");
+}
 async function loadHomeGeoSummary(){
-  const box=$("homeGeoSummary"),itemsBox=$("homeGeoItemsSummary");
-  if(!box||!isSystemAdmin){$("openHomeGeoSummary")?.classList.add("hidden");$("openHomeItemsSummary")?.classList.add("hidden");return;}
-  $("openHomeGeoSummary")?.classList.remove("hidden");$("openHomeItemsSummary")?.classList.remove("hidden");
+  const box=$("homeGeoSummary"),itemsBox=$("homeGeoItemsSummary"),customersBox=$("homeCustomersSummary");
+  if(!box||!isSystemAdmin){["openHomeGeoSummary","openHomeItemsSummary","openHomeCustomersSummary"].forEach(id=>$(id)?.classList.add("hidden"));return;}
+  ["openHomeGeoSummary","openHomeItemsSummary","openHomeCustomersSummary"].forEach(id=>$(id)?.classList.remove("hidden"));
   const from=monthStartISO(),to=todayISO();
   box.innerHTML='<h3>ملخص المبيعات والتحصيلات حسب المحافظة</h3><div class="info">جارٍ تحميل الملخص...</div>';
   if(itemsBox)itemsBox.innerHTML='<h3>ملخص حركة الأصناف</h3><div class="info">جارٍ تحميل حركة الأصناف...</div>';
+  if(customersBox)customersBox.innerHTML='<h3>ملخص العملاء</h3><div class="info">جارٍ تحميل ملخص العملاء...</div>';
   try{
-    const [rows,items]=await Promise.all([buildGeoSalesSummary(from,to),buildGeoItemMovementSummary(from,to)]);
+    const [rows,items,customers]=await Promise.all([buildGeoSalesSummary(from,to),buildGeoItemMovementSummary(from,to),buildCustomerBalanceSummary(from,to)]);
     const totalBalance=rows.reduce((sum,row)=>sum+Number(row.balance||0),0);
     if($("homeGeoButtonBalance"))$("homeGeoButtonBalance").textContent=fmt(totalBalance);
     box.innerHTML='<h3>ملخص تعاملات المحافظة</h3><div class="info">من '+from+' إلى '+to+' | الرصيد المالي للعملاء حتى نهاية الفترة</div><div class="table-responsive"><table class="print-table"><thead><tr><th>المحافظة</th><th>رصيد أول المدة</th><th>إجمالي المبيعات</th><th>إجمالي التحصيلات</th><th>إجمالي المرتجعات</th><th>رصيد العملاء</th></tr></thead><tbody>'+(rows.length?geoSalesRowsHtml(rows):'<tr><td colspan="6">لا توجد حركة.</td></tr>')+'</tbody></table></div>';
     if(itemsBox)itemsBox.innerHTML='<h3>ملخص حركة الأصناف</h3><div class="info">من '+from+' إلى '+to+' | الكميات بوحدة الصنف الأساسية</div><div class="table-responsive"><table class="print-table"><thead><tr><th>الصنف</th><th>الوحدة</th><th>إجمالي مشتريات</th><th>إجمالي مبيعات</th><th>إجمالي مرتجعات</th><th>رصيد حالي</th></tr></thead><tbody>'+(items.length?geoItemRowsHtml(items):'<tr><td colspan="6">لا توجد حركة أصناف خلال الفترة.</td></tr>')+'</tbody></table></div>';
+    if(customersBox)customersBox.innerHTML='<h3>ملخص العملاء</h3><div class="info">من '+from+' إلى '+to+' | الرصيد حتى نهاية الفترة</div><div class="table-responsive"><table class="print-table"><thead><tr><th>العميل</th><th>المحافظة</th><th>رصيد أول المدة</th><th>إجمالي مبيعات</th><th>إجمالي مرتجعات</th><th>إجمالي تحصيلات</th><th>رصيد العميل</th></tr></thead><tbody>'+(customers.length?customerBalanceRowsHtml(customers):'<tr><td colspan="7">لا توجد حركة عملاء.</td></tr>')+'</tbody></table></div>';
   }catch(e){
     const message=esc(err(e));
     box.innerHTML='<h3>ملخص تعاملات المحافظة</h3><div class="empty error">تعذر تحميل الملخص: '+message+'</div>';if($("homeGeoButtonBalance"))$("homeGeoButtonBalance").textContent="—";
     if(itemsBox)itemsBox.innerHTML='<h3>ملخص حركة الأصناف</h3><div class="empty error">تعذر تحميل حركة الأصناف: '+message+'</div>';
+    if(customersBox)customersBox.innerHTML='<h3>ملخص العملاء</h3><div class="empty error">تعذر تحميل ملخص العملاء: '+message+'</div>';
   }
 }
 
@@ -8693,6 +8732,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
   if($("openHomeNotifications"))$("openHomeNotifications").addEventListener("click",()=>openHomeDetail("homeNotificationPanel"));
   if($("openHomeGeoSummary"))$("openHomeGeoSummary").addEventListener("click",()=>openHomeDetail("homeGeoPanel"));
   if($("openHomeItemsSummary"))$("openHomeItemsSummary").addEventListener("click",()=>openHomeDetail("homeItemsPanel"));
+  if($("openHomeCustomersSummary"))$("openHomeCustomersSummary").addEventListener("click",()=>openHomeDetail("homeCustomersPanel"));
   document.querySelectorAll(".home-detail-back").forEach(btn=>btn.addEventListener("click",closeHomeDetail));
   document.querySelectorAll("[data-home-print]").forEach(btn=>btn.addEventListener("click",()=>openHomeQuickPrint(btn.dataset.homePrint)));
   document.querySelectorAll("[data-home-share]").forEach(btn=>btn.addEventListener("click",()=>shareHomeQuickReport(btn.dataset.homeShare)));
