@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v99</title>
+<title>MeatManagement v100</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -147,6 +147,30 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 .tasks-charts-button{width:100%;margin:0;min-height:100px;font-family:inherit;cursor:pointer}
+/* إبراز المؤشرات المالية في صف مستقل بعرض كامل */
+#tasksDashboard .tasks-financial-card{
+    grid-column:1 / -1;
+    width:100%;
+    min-height:110px;
+    padding:16px 14px;
+    color:#fff !important;
+    background:linear-gradient(135deg,#173c2c,#24563e);
+}
+#tasksDashboard .tasks-financial-card .hc-label,
+#tasksDashboard .tasks-financial-card .hc-value,
+#tasksDashboard .tasks-financial-card .details{
+    color:#fff !important;
+    opacity:1;
+}
+#tasksDashboard .tasks-financial-card .hc-value{
+    font-size:22px;
+    font-weight:900;
+    letter-spacing:0;
+}
+#tasksDashboard .tasks-financial-card .details{
+    margin-top:7px;
+    font-size:12px;
+}
 .tasks-charts-button .hc-label,.tasks-charts-button .hc-value{color:inherit}
 
 
@@ -342,7 +366,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v99]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v100]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1819,7 +1843,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v99</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v100</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -2955,8 +2979,8 @@ async function loadTasks() {
       <div class="home-card"><div class="hc-label">💸 التحصيلات</div><div class="hc-value">${fmt(totalColl)}</div></div>
       <div class="home-card"><div class="hc-label">↩️ مرتجع مشتريات</div><div class="hc-value">${fmt(totalPurRet)}</div></div>
       <div class="home-card"><div class="hc-label">↩️ مرتجع بيع</div><div class="hc-value">${fmt(totalSalRet)}</div></div>
-      <div class="home-card"><div class="hc-label">📊 صافي الربح</div><div class="hc-value">${profitValue}</div><div class="details">${profitDetails}</div></div>
-      <div class="home-card green"><div class="hc-label">📦 قيمة المخزون</div><div class="hc-value">${totalInventoryValue===null ? "غير متاح" : fmt(totalInventoryValue)}</div><div class="details">القيمة الحالية لأرصدة جميع المواقع المخزنية</div></div>
+      <div class="home-card tasks-financial-card"><div class="hc-label">📊 صافي الربح</div><div class="hc-value">${profitValue}</div><div class="details">${profitDetails}</div></div>
+      <div class="home-card green tasks-financial-card"><div class="hc-label">📦 قيمة المخزون</div><div class="hc-value">${totalInventoryValue===null ? "غير متاح" : fmt(totalInventoryValue)}</div><div class="details">القيمة الحالية لأرصدة جميع المواقع المخزنية</div></div>
     `;
 
     const salesChartStartDate = new Date();
