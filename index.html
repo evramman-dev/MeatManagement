@@ -627,7 +627,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <h2>إعادة تهيئة النظام</h2>
 <p class="desc">أداة مستقلة لمدير النظام. تنفذ الفحص وتجهيز خطة المعالجة تلقائيًا، ولا تطلب منك تشغيل استعلامات أو تنفيذ خطوات يدوية. لن يبدأ أي حذف قبل عرض التقرير النهائي وموافقتك الصريحة.</p>
 <div class="product"><div class="pname">المرحلة الأولى: تصفير العمليات والأرصدة</div><div class="details">مرحلة مستقلة تشمل المستندات والحركات والقيود وأرصدة العملاء والموردين والخزائن والمخزون. اعرض التقرير ونسخة البيانات الخاصة به، ثم اعتمد التقرير قبل تنفيذ التصفير.</div><button id="runAdminResetPreviewBtn" class="btn" type="button">فحص وتجهيز المرحلة الأولى</button></div>
-<div class="product"><div class="pname">بوابة الموافقة قبل التنفيذ</div><div class="details">بعد اكتمال التقرير، تعرض الأداة خطة التنفيذ بالتفصيل. لا تنفذ حذفًا أو إلغاءً لأي مستند قبل موافقتك. بعد الموافقة تنفذ الخطة تلقائيًا، وتتوقف بالكامل إذا ظهر اختلاف أو مانع غير متوقع.</div><div id="adminResetActions" class="row" style="gap:8px;flex-wrap:wrap;"></div></div>
+<div class="product"><div class="pname">بوابة الموافقة قبل التنفيذ</div><div class="details">بعد اكتمال التقرير، تعرض الأداة خطة التنفيذ بالتفصيل. لا تنفذ حذفًا أو إلغاءً لأي مستند قبل موافقتك. يظل التنفيذ مقفولًا حتى اجتياز اختبار التشغيل النهائي. بعد فتحه لن يبدأ الحذف إلا بموافقتك على التقرير.</div><div id="adminResetActions" class="row" style="gap:8px;flex-wrap:wrap;"></div></div>
 <div id="adminResetPreviewMsg" class="status hidden"></div>
 <div id="adminResetPreviewResult"></div>
 <div class="product" style="margin-top:15px;"><div class="pname">المرحلة الثانية: إعادة تهيئة البيانات الأساسية - اختيارية ومستقلة</div><div class="details">لا تعمل تلقائيًا مع المرحلة الأولى. يمكنك تنفيذها عند الحاجة فقط، بعد اكتمال المرحلة الأولى والتحقق من خلو النظام من العمليات والأرصدة. ستملك معاينة وخطة وموافقة وتنفيذًا منفصلًا.</div><button class="btn secondary" type="button" disabled>تُفتح بعد اكتمال محرك المرحلة الثانية</button></div>
@@ -2388,9 +2388,10 @@ if($("runAdminResetPreviewBtn")) $("runAdminResetPreviewBtn").addEventListener("
           });
           if(approvalError)throw approvalError;
           if(!approval||approval.approved!==true||approval.status!=="APPROVED")throw new Error(approval?.message||"لم يؤكد الخادم اعتماد التقرير.");
-          executeBtn.disabled=false;
+          executeBtn.disabled=true;
+          executeBtn.textContent="التنفيذ مقفول حتى الاختبار النهائي";
           approveBtn.disabled=true;
-          actionInfo.textContent="تم اعتماد التقرير. لم يتم حذف أي بيانات. اضغط تنفيذ المرحلة الأولى فقط إذا كنت تريد بدء التصفير.";
+          actionInfo.textContent="تم اعتماد التقرير. لم يتم حذف أي بيانات. سيظل التنفيذ مقفولًا حتى اجتياز اختبار التشغيل النهائي.";
           msg(message,"تم اعتماد تقرير المرحلة الأولى. لم يتم حذف أي بيانات.","success");
         }catch(e){
           msg(actionInfo,"تعذر اعتماد التقرير: "+err(e),"error");
