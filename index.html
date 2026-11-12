@@ -46,6 +46,18 @@ input[type=number],input[type=date]{direction:ltr;text-align:left}
 .row input{flex:1;min-width:160px}
 .row .btn{width:auto;margin:0}
 .product{border:1px solid var(--line);border-radius:12px;padding:13px;margin-top:10px;background:white}
+.product-tools{margin-top:14px}
+.product-filters{margin:12px 0;gap:7px}
+.product-filter{width:auto;margin:0;padding:9px 12px;font-size:13px;flex:1;min-width:105px}
+.product-filter.active{background:var(--g);color:#fff}
+.product-group{margin-top:18px}
+.product-group-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px;background:#eef3ee;border:1px solid var(--line);border-radius:11px}
+.product-group-heading h3{margin:0 0 4px;color:var(--g);font-size:16px}
+.product-group-heading .details{font-size:12px}
+.product-group .product{margin-top:9px}
+#productCategoryFilter,#productStatusFilter{flex:1;min-width:130px}
+@media(max-width:420px){.product-filter{min-width:calc(50% - 7px)}.product-group-heading{align-items:flex-start}}
+
 .pname{font-weight:bold;font-size:16px;margin-bottom:7px}
 .details{font-size:13px;line-height:1.9;color:var(--muted)}
 .badge{display:inline-block;padding:4px 8px;margin:6px 5px 0 0;border-radius:7px;background:#edf1ed;font-size:12px}
@@ -1802,12 +1814,13 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <div id="sectionProducts" class="sub-section hidden">
 <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
-<div class="card">
-<div class="row" style="justify-content:space-between"><h2>📦 المنتجات</h2><button id="addBtn" class="btn hidden" type="button" onclick="window.openNewProductForm()">＋ إضافة منتج</button></div>
-<div class="row"><input id="search" type="search" placeholder="ابحث..."><button id="refreshBtn" class="btn secondary" type="button">تحديث</button></div>
+<div class="card product-hub">
+<div class="row" style="justify-content:space-between"><div><h2 style="margin:0">إدارة المنتجات</h2><div class="details">اختر القسم للوصول إلى الأصناف ومراجعة بياناتها</div></div><button id="addBtn" class="btn hidden" type="button" onclick="window.openNewProductForm()">＋ إضافة صنف</button></div>
+<div class="row product-tools"><input id="search" type="search" placeholder="ابحث باسم الصنف أو الكود أو الباركود"><button id="refreshBtn" class="btn secondary" type="button">تحديث</button></div>
+<div class="row product-filters"><button type="button" class="btn product-filter active" data-product-filter="ALL">كل الأصناف</button><button type="button" class="btn product-filter secondary" data-product-filter="RAW">الخامات</button><button type="button" class="btn product-filter secondary" data-product-filter="SEMI_FINISHED">نصف مصنع</button><button type="button" class="btn product-filter secondary" data-product-filter="FINISHED">منتجات تامة</button><button type="button" class="btn product-filter secondary" data-product-filter="SPICES">التوابل ومكونات الوصفات</button></div>
+<div class="row"><select id="productCategoryFilter" aria-label="فلترة حسب التصنيف"><option value="">كل التصنيفات</option></select><select id="productStatusFilter" aria-label="حالة الصنف"><option value="">كل الحالات</option><option value="active">نشط</option><option value="inactive">موقوف</option></select><span id="productCount" class="details">0 صنف</span></div>
 <div id="listMsg" class="status hidden"></div>
-<div id="products"><div class="empty">جارٍ تحميل المنتجات...</div>
-</div>
+<div id="products"><div class="empty">جارٍ تحميل المنتجات...</div></div>
 </div>
 </div>
 <div id="sectionPackaging" class="sub-section hidden">
@@ -3537,70 +3550,84 @@ async function loadProducts(){
   fillStockFormSelects(); 
   fillReservationSelects(); 
 }
-function renderProducts(){ 
-  const box=$("products"); if(!box) return; 
-  box.replaceChildren(); 
-  const q=($("search").value||"").toLowerCase(); 
-  const found=productsCache.filter(p=> [p.product_name,p.product_code,p.barcode].some(v=>String(v||"").toLowerCase().includes(q))); 
-  if(!found.length){ box.innerHTML = `<div class="empty">لا توجد منتجات.</div>`; return; } 
+let activeProductSection="ALL";
+function isSpiceProduct(p){
+  const code=String(p.product_code||"").toUpperCase();
+  const name=String(p.product_name||"").trim();
+  const known=["ملح","كمون","فلفل أسود","جوزة الطيب","نشا","بيكنج بودر","توابل كفتة","توابل سجق","توابل برجر","قرفة","ثوم بودر","بصل بودر","بصل أبيض","بصل أحمر"];
+  return p.product_type==="RAW" && (code.startsWith("SP-") || known.includes(name));
+}
+function productSectionOf(p){return isSpiceProduct(p)?"SPICES":(p.product_type||"OTHER");}
+function setupProductFilters(){
+  const categorySelect=$("productCategoryFilter");
+  if(categorySelect && categorySelect.options.length<=1){
+    categories.forEach(c=>{const o=document.createElement("option");o.value=String(c.category_id);o.textContent=c.category_name;categorySelect.appendChild(o);});
+  }
+  document.querySelectorAll("[data-product-filter]").forEach(btn=>{
+    if(btn.dataset.bound==="1")return;
+    btn.dataset.bound="1";
+    btn.addEventListener("click",()=>{
+      activeProductSection=btn.dataset.productFilter;
+      document.querySelectorAll("[data-product-filter]").forEach(x=>{
+        const active=x.dataset.productFilter===activeProductSection;
+        x.classList.toggle("active",active);
+        x.classList.toggle("secondary",!active);
+      });
+      renderProducts();
+    });
+  });
+  ["productCategoryFilter","productStatusFilter"].forEach(id=>{
+    const el=$(id);if(el&&el.dataset.bound!=="1"){el.dataset.bound="1";el.addEventListener("change",renderProducts);}
+  });
+}
+function renderProducts(){
+  const box=$("products");if(!box)return;
+  setupProductFilters();
+  box.replaceChildren();
+  const q=($("search")?.value||"").trim().toLowerCase();
+  const cat=$("productCategoryFilter")?.value||"";
+  const status=$("productStatusFilter")?.value||"";
+  const matched=productsCache.filter(p=>{
+    const textMatch=[p.product_name,p.product_code,p.barcode].some(v=>String(v||"").toLowerCase().includes(q));
+    const sectionMatch=activeProductSection==="ALL"||productSectionOf(p)===activeProductSection;
+    const catMatch=!cat||String(p.category_id)===cat;
+    const statusMatch=!status||(status==="active"?p.is_active===true:p.is_active===false);
+    return textMatch&&sectionMatch&&catMatch&&statusMatch;
+  });
+  const count=$("productCount");if(count)count.textContent=matched.length+" صنف";
+  if(!matched.length){box.innerHTML='<div class="empty">لا توجد أصناف تطابق البحث والفلاتر الحالية.</div>';return;}
   const esc=v=>String(v??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
-  found.forEach(p=>{ 
-    const card=document.createElement("div");
-    card.className="product";
-    const category=categories.find(c=>String(c.category_id)===String(p.category_id))?.category_name||"غير محدد";
-    const unitDetails=`الوحدات: مخزون ${esc(unitName(p.base_unit_id))} | شراء ${esc(unitName(p.purchase_unit_id))} | بيع ${esc(unitName(p.sales_unit_id))}`;
-    const hasPrices=[p.min_selling_price,p.target_selling_price,p.max_selling_price].some(v=>v!==null&&v!==undefined&&v!=="");
-    const priceDetails=hasPrices?`<div class="details">أسعار البيع — أدنى: ${p.min_selling_price==null?"—":fmt(p.min_selling_price)} | مستهدف: ${p.target_selling_price==null?"—":fmt(p.target_selling_price)} | أقصى: ${p.max_selling_price==null?"—":fmt(p.max_selling_price)}</div>`:"";
-    const uses=[["can_be_purchased","شراء"],["can_be_produced","إنتاج"],["can_be_sold","بيع"],["can_be_loaded","تحميل"]].filter(([key])=>p[key]).map(([,label])=>label);
-    const statusBadge=p.is_active?'<span class="badge badge-paid">نشط</span>':'<span class="badge badge-cancel">موقوف</span>';
-    const usageBadges=uses.length?uses.map(label=>'<span class="badge">'+label+'</span>').join(""):'<span class="badge">لا توجد استخدامات مفعلة</span>';
-    card.innerHTML=`<div class="pname">${esc(p.product_name)}</div>
-      <div class="details">الكود: ${esc(p.product_code||"—")} | النوع: ${esc(typeName(p.product_type))} | التصنيف: ${esc(category)}${p.barcode?" | الباركود: "+esc(p.barcode):""}</div>
-      <div class="details">${unitDetails}${p.units_per_carton? " | عدد الوحدات بالكرتونة: "+esc(fmtQty(p.units_per_carton)):""}${p.shelf_life_months? " | صلاحية الإنتاج: "+esc(p.shelf_life_months)+" شهر":(p.shelf_life_days? " | صلاحية الإنتاج: "+esc(p.shelf_life_days)+" يوم":"")}</div>
-      <div class="details">حد إعادة الطلب: ${p.minimum_stock==null?"—":esc(fmtQty(p.minimum_stock))}</div>
-      ${priceDetails}<div>${statusBadge}${usageBadges}</div>`;
-    if(canViewStock){
-      const historyBtn=document.createElement("button");
-      historyBtn.type="button";
-      historyBtn.className="btn secondary";
-      historyBtn.style.marginTop="10px";
-      historyBtn.textContent="📜 حركة الصنف / كارت الصنف";
-      historyBtn.onclick=()=>viewProductStockMovements(p.product_id);
-      card.appendChild(historyBtn);
-    }
-    if(canManage){ 
-      const btn=document.createElement("button");
-      btn.className="btn secondary";
-      btn.textContent="تعديل";
-      btn.onclick=()=>{ 
-        $("editId").value=p.product_id; 
-        $("pname").value=p.product_name; 
-        $("pcode").value=p.product_code; 
-        $("barcode").value=p.barcode||""; 
-        $("ptype").value=p.product_type; 
-        $("category").value=p.category_id; 
-        $("baseUnit").value=String(p.base_unit_id||"");
-        $("purchaseUnit").value=String(p.purchase_unit_id||"");
-        $("salesUnit").value=String(p.sales_unit_id||"");
-        $("minStock").value=p.minimum_stock; 
-        $("minPrice").value=p.min_selling_price||""; 
-        $("targetPrice").value=p.target_selling_price||""; 
-        $("maxPrice").value=p.max_selling_price||""; 
-        $("unitsCarton").value=p.units_per_carton||""; 
-        $("shelfLifeMonths").value=p.shelf_life_months||""; 
-        $("active").checked=p.is_active; 
-        $("canPurchase").checked=p.can_be_purchased; 
-        $("canProduce").checked=p.can_be_produced; 
-        $("canSell").checked=p.can_be_sold; 
-        $("canLoad").checked=p.can_be_loaded; 
-        $("formTitle").textContent="تعديل المنتج";
-        if($("formMsg")) clear($("formMsg"));
-        $("productFormModal").classList.add('active'); 
-      }; 
-      card.appendChild(btn);
-    } 
-    box.appendChild(card); 
-  }); 
+  const sections=[
+    {id:"RAW",title:"الخامات",desc:"اللحوم والدواجن والخامات الأخرى"},
+    {id:"SPICES",title:"التوابل ومكونات الوصفات",desc:"تظهر هنا لسهولة الوصول وتظل مسجلة كخامات في النظام"},
+    {id:"SEMI_FINISHED",title:"المنتجات نصف المصنعة",desc:"العجائن ومخرجات التشغيل نصف المصنع"},
+    {id:"FINISHED",title:"المنتجات التامة",desc:"الأصناف الجاهزة للبيع والتوزيع"}
+  ];
+  const visibleSections=sections.filter(sec=>matched.some(p=>productSectionOf(p)===sec.id));
+  visibleSections.forEach(sec=>{
+    const items=matched.filter(p=>productSectionOf(p)===sec.id);
+    const heading=document.createElement("section");heading.className="product-group";
+    const title=document.createElement("div");title.className="product-group-heading";
+    title.innerHTML='<div><h3>'+sec.title+'</h3><div class="details">'+sec.desc+'</div></div><span class="badge">'+items.length+' صنف</span>';
+    heading.appendChild(title);
+    items.forEach(p=>{
+      const card=document.createElement("div");card.className="product";
+      const category=categories.find(c=>String(c.category_id)===String(p.category_id))?.category_name||"غير محدد";
+      const unitDetails='الوحدات: مخزون '+esc(unitName(p.base_unit_id))+' | شراء '+esc(unitName(p.purchase_unit_id))+' | بيع '+esc(unitName(p.sales_unit_id));
+      const hasPrices=[p.min_selling_price,p.target_selling_price,p.max_selling_price].some(v=>v!==null&&v!==undefined&&v!=="");
+      const priceDetails=hasPrices?'<div class="details">أسعار البيع — أدنى: '+(p.min_selling_price==null?"—":esc(fmt(p.min_selling_price)))+' | مستهدف: '+(p.target_selling_price==null?"—":esc(fmt(p.target_selling_price)))+' | أقصى: '+(p.max_selling_price==null?"—":esc(fmt(p.max_selling_price)))+'</div>':"";
+      const uses=[["can_be_purchased","شراء"],["can_be_produced","إنتاج"],["can_be_sold","بيع"],["can_be_loaded","تحميل"]].filter(([key])=>p[key]).map(([,label])=>label);
+      const statusBadge=p.is_active?'<span class="badge badge-paid">نشط</span>':'<span class="badge badge-cancel">موقوف</span>';
+      const usageBadges=uses.length?uses.map(label=>'<span class="badge">'+label+'</span>').join(""):'<span class="badge">لا توجد استخدامات مفعلة</span>';
+      card.innerHTML='<div class="pname">'+esc(p.product_name)+'</div><div class="details">الكود: '+esc(p.product_code||"—")+' | التصنيف: '+esc(category)+(p.barcode?' | الباركود: '+esc(p.barcode):"")+'</div><div class="details">'+unitDetails+(p.units_per_carton?' | عدد الوحدات بالكرتونة: '+esc(fmtQty(p.units_per_carton)):"")+(p.shelf_life_months?' | صلاحية الإنتاج: '+esc(p.shelf_life_months)+' شهر':(p.shelf_life_days?' | صلاحية الإنتاج: '+esc(p.shelf_life_days)+' يوم':""))+'</div><div class="details">حد إعادة الطلب: '+(p.minimum_stock==null?"—":esc(fmtQty(p.minimum_stock)))+'</div>'+priceDetails+'<div>'+statusBadge+usageBadges+'</div>';
+      if(canViewStock){const historyBtn=document.createElement("button");historyBtn.type="button";historyBtn.className="btn secondary";historyBtn.style.marginTop="10px";historyBtn.textContent="حركة الصنف / كارت الصنف";historyBtn.onclick=()=>viewProductStockMovements(p.product_id);card.appendChild(historyBtn);}
+      if(canManage){const btn=document.createElement("button");btn.className="btn secondary";btn.textContent="تعديل بيانات الصنف";btn.onclick=()=>{
+        $("editId").value=p.product_id;$("pname").value=p.product_name;$("pcode").value=p.product_code;$("barcode").value=p.barcode||"";$("ptype").value=p.product_type;$("category").value=p.category_id;$("baseUnit").value=String(p.base_unit_id||"");$("purchaseUnit").value=String(p.purchase_unit_id||"");$("salesUnit").value=String(p.sales_unit_id||"");$("minStock").value=p.minimum_stock;$("minPrice").value=p.min_selling_price||"";$("targetPrice").value=p.target_selling_price||"";$("maxPrice").value=p.max_selling_price||"";$("unitsCarton").value=p.units_per_carton||"";$("shelfLifeMonths").value=p.shelf_life_months||"";$("active").checked=p.is_active;$("canPurchase").checked=p.can_be_purchased;$("canProduce").checked=p.can_be_produced;$("canSell").checked=p.can_be_sold;$("canLoad").checked=p.can_be_loaded;$("formTitle").textContent="تعديل الصنف";if($("formMsg"))clear($("formMsg"));$("productFormModal").classList.add("active");
+      };card.appendChild(btn);}
+      heading.appendChild(card);
+    });
+    box.appendChild(heading);
+  });
 }
 window.openNewProductForm=function(){
   const form=$("productForm");
