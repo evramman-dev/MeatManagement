@@ -2440,7 +2440,7 @@ async function loadLookups(){
   try {
     const [c,u]=await Promise.all([
       db.from("product_categories").select("category_id,category_name,is_active").eq("is_active",true).order("category_id"),
-      db.from("units").select("unit_id,unit_name,is_package_unit,is_active").eq("is_active",true).order("unit_id")
+      db.from("units").select("unit_id,unit_code,unit_name,unit_type,conversion_to_kg,is_package_unit,is_active").eq("is_active",true).order("unit_id")
     ]);
     if(c.error) throw new Error("تعذر تحميل التصنيفات: "+err(c.error));
     if(u.error) throw new Error("تعذر تحميل الوحدات: "+err(u.error));
@@ -5666,6 +5666,7 @@ function addPurchaseItemRow() {
     const op=document.createElement("option");op.value=String(p.product_id);op.textContent=p.product_name+" ("+p.product_code+")"; 
     op.dataset.baseUnit=String(p.base_unit_id||"");
     op.dataset.purchaseUnit=String(p.purchase_unit_id||"");
+    op.dataset.productType=String(p.product_type||"");
     op.dataset.unitsCarton=String(p.units_per_carton||"");
     prodSel.appendChild(op); 
   });
@@ -5714,9 +5715,14 @@ function addPurchaseItemRow() {
     const purchaseUnitId=Number(opt?.dataset?.purchaseUnit||0);
     const unitsCarton=Number(opt?.dataset?.unitsCarton||0);
     if(unitId&&baseUnitId&&q>0){
+      const inputUnit=units.find(x=>Number(x.unit_id)===unitId);
+      const baseUnit=units.find(x=>Number(x.unit_id)===baseUnitId);
       if(unitId===baseUnitId){
         hint.textContent="يدخل: "+fmtQty(q)+" "+unitName(baseUnitId);
-      }else if(unitId===purchaseUnitId&&purchaseUnitId===cartonUnitId&&unitsCarton>0){
+      }else if(inputUnit?.unit_type==="WEIGHT"&&baseUnit?.unit_type==="WEIGHT"&&Number(inputUnit.conversion_to_kg)>0&&Number(baseUnit.conversion_to_kg)>0){
+        const baseQty=q*Number(inputUnit.conversion_to_kg)/Number(baseUnit.conversion_to_kg);
+        hint.textContent="يدخل: "+fmtQty(baseQty)+" "+unitName(baseUnitId);
+      }else if(unitId===purchaseUnitId&&unitId===cartonUnitId&&unitsCarton>0){
         const baseQty=q*unitsCarton;
         hint.textContent="يدخل: "+fmtQty(baseQty)+" "+unitName(baseUnitId);
       }else{
@@ -5729,16 +5735,21 @@ function addPurchaseItemRow() {
     const opt=prodSel.selectedOptions[0]; 
     const baseUnitId=String(opt?.dataset?.baseUnit||"");
     const purchaseUnitId=String(opt?.dataset?.purchaseUnit||"");
+    const productType=String(opt?.dataset?.productType||"");
     const unitsCarton=Number(opt?.dataset?.unitsCarton||0);
     unitSel.replaceChildren();
     const firstU=document.createElement("option");firstU.value="";firstU.textContent="اختر الوحدة";unitSel.appendChild(firstU);
-    // اعرض وحدة الشراء المحددة لهذا المنتج أولاً، ثم الوحدة الأساسية كبديل عند الحاجة.
+    // اعرض وحدة الشراء المحددة والوحدة الأساسية، وأتح الجرام لكل الخامات ذات أساس الوزن.
+    const gramUnit=units.find(x=>x.unit_code==="G"&&x.unit_type==="WEIGHT");
+    const allowedUnits=[purchaseUnitId,baseUnitId];
+    if(productType==="RAW"&&gramUnit)allowedUnits.push(String(gramUnit.unit_id));
     const preferredUnitId=purchaseUnitId||baseUnitId;
-    [preferredUnitId,baseUnitId].filter((v,i,a)=>v&&a.indexOf(v)===i).forEach(id=>{
+    [...new Set(allowedUnits.filter(Boolean))].forEach(id=>{
       const op=document.createElement("option");
       op.value=id;
       const isCarton=id===purchaseUnitId&&Number(id)===cartonUnitId&&unitsCarton>0;
-      op.textContent=unitName(id)+(isCarton?" ("+unitsCarton+")":(id===preferredUnitId?" (وحدة الشراء)":" (الوحدة الأساسية)"));
+      const isPreferred=id===preferredUnitId;
+      op.textContent=unitName(id)+(isCarton?" ("+unitsCarton+")":(isPreferred?" (وحدة الشراء)":(id===String(baseUnitId)?" (الوحدة الأساسية)":"")));
       unitSel.appendChild(op);
     });
     if(preferredUnitId)unitSel.value=preferredUnitId;
