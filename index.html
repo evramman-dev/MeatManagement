@@ -607,6 +607,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="dash-item hidden" id="menuAccounting" onclick="window.openSection('accounting')"><div class="dash-icon">🧮</div><div class="dash-title">المحاسبة</div></div>
 <div class="dash-item hidden" id="menuReports" onclick="window.openSection('reports')"><div class="dash-icon">📈</div><div class="dash-title">التقارير</div></div>
 <div class="dash-item hidden" id="menuUsers" onclick="window.openSection('users')"><div class="dash-icon">👤</div><div class="dash-title">المستخدمون</div></div>
+<div class="dash-item hidden" id="menuSystemReset" onclick="window.openSection('systemReset')"><div class="dash-icon">♻️</div><div class="dash-title">إعادة تهيئة النظام</div></div>
 <div class="dash-item hidden" id="menuSettings" onclick="window.openSection('settings')"><div class="dash-icon">⚙️</div><div class="dash-title">إعدادات الشركة</div></div>
 </div>
 </div>
@@ -618,6 +619,17 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <h2>👥 إدارة المستخدمين</h2>
 <button class="btn" onclick="document.getElementById('userFormModal').classList.add('active')">＋ إضافة مستخدم جديد</button>
 <div id="usersList" style="margin-top:15px;"><div class="empty">جارٍ تحميل المستخدمين...</div></div>
+</div>
+</div>
+<div id="sectionSystemReset" class="sub-section hidden">
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<div id="systemResetCard" class="card hidden">
+<h2>إعادة تهيئة النظام</h2>
+<p class="desc">هذه الشاشة مخصصة لمدير النظام. ابدأ بالمعاينة فقط. لن يتم حذف أي بيانات من هذا الزر.</p>
+<div class="product"><div class="pname">المرحلة الأولى: العمليات</div><div class="details">تعرض أعداد الحركات والمستندات والقيود المرتبطة بها، وتحدد الأرصدة والعناصر التي تمنع إعادة التهيئة.</div><button id="runAdminResetPreviewBtn" class="btn" type="button">فحص العمليات والبيانات</button></div>
+<div id="adminResetPreviewMsg" class="status hidden"></div>
+<div id="adminResetPreviewResult"></div>
+<div class="product" style="margin-top:15px;"><div class="pname">المرحلة الثانية: البيانات الأساسية</div><div class="details">مقفولة حتى اكتمال المرحلة الأولى والتأكد من عدم وجود أي مستندات أو أرصدة مرتبطة.</div><button class="btn secondary" type="button" disabled>غير متاحة حاليًا</button></div>
 </div>
 </div>
 <!-- شاشة إدارة المندوبين -->
@@ -2171,7 +2183,7 @@ function showLogin(){ hideSections(); if($("login")) $("login").classList.remove
 function showApp(){ hideSections(); if($("nav")) $("nav").classList.remove("hidden"); page("home"); }
 
 window.openSection = function(name) {
-  const sectionMenuMap = { products:"menuProducts", locations:"menuLocations", stock:"menuStock", stockSummary:"menuStock", stockLots:"menuStockLots", stockTransfers:"menuStockTransfers", recipes:"menuRecipes", production:"menuProduction", productionDailySummary:"menuProduction", reservations:"menuReservations", suppliers:"menuSuppliers", purchases:"menuPurchases", purchaseReturns:"menuPurchaseReturns", landedCosts:"menuLandedCosts", fixedAssets:"menuFixedAssets", supplierPayments:"menuSupplierPayments", expenses:"menuExpenses", customers:"menuCustomers", sales:"menuSales", salesReturns:"menuSalesReturns", priceLists:"menuPriceLists", collections:"menuCollections", trips:"menuTrips", salesReps:"menuSalesReps", treasuries:"menuTreasuries", treasuryTransfers:"menuTreasuryTransfers", partners:"menuPartners", accounting:"menuAccounting", reports:"menuReports", users:"menuUsers", settings:"menuSettings" };
+  const sectionMenuMap = { products:"menuProducts", locations:"menuLocations", stock:"menuStock", stockSummary:"menuStock", stockLots:"menuStockLots", stockTransfers:"menuStockTransfers", recipes:"menuRecipes", production:"menuProduction", productionDailySummary:"menuProduction", reservations:"menuReservations", suppliers:"menuSuppliers", purchases:"menuPurchases", purchaseReturns:"menuPurchaseReturns", landedCosts:"menuLandedCosts", fixedAssets:"menuFixedAssets", supplierPayments:"menuSupplierPayments", expenses:"menuExpenses", customers:"menuCustomers", sales:"menuSales", salesReturns:"menuSalesReturns", priceLists:"menuPriceLists", collections:"menuCollections", trips:"menuTrips", salesReps:"menuSalesReps", treasuries:"menuTreasuries", treasuryTransfers:"menuTreasuryTransfers", partners:"menuPartners", accounting:"menuAccounting", reports:"menuReports", users:"menuUsers", systemReset:"menuSystemReset", settings:"menuSettings" };
   const allowedIds = getRoleMenuIds(currentRoleCode);
   const requestedMenuId = sectionMenuMap[name];
   if(!isSystemAdmin && (!requestedMenuId || !allowedIds.has(requestedMenuId))) {
@@ -2289,6 +2301,42 @@ function page(name){
     }
   }
 }
+
+
+if($("runAdminResetPreviewBtn")) $("runAdminResetPreviewBtn").addEventListener("click",async()=>{
+  const btn=$("runAdminResetPreviewBtn"),message=$("adminResetPreviewMsg"),result=$("adminResetPreviewResult");
+  if(!isSystemAdmin){msg(message,"هذه العملية متاحة لمدير النظام فقط.","error");return;}
+  clear(message);result.replaceChildren();
+  busy(btn,true,"جارٍ فحص البيانات...","فحص العمليات والبيانات");
+  try{
+    const {data,error}=await db.rpc("admin_reset_preview");
+    if(error) throw error;
+    if(!data || data.preview_only!==true) throw new Error("لم يرجع الخادم نتيجة معاينة صالحة.");
+    const labels={sales_invoices:"فواتير البيع",sales_invoice_items:"بنود البيع",customer_collections:"تحصيلات العملاء",customer_cheques:"شيكات العملاء",sales_returns:"مرتجعات البيع",sales_return_items:"بنود مرتجعات البيع",sales_return_exchange_items:"بنود الاستبدال",purchase_invoices:"فواتير الشراء",purchase_invoice_items:"بنود الشراء",purchase_returns:"مرتجعات الشراء",purchase_return_items:"بنود مرتجعات الشراء",supplier_payments:"سداد الموردين",purchase_landed_costs:"تكاليف النقل",purchase_landed_cost_allocations:"توزيع تكاليف النقل",production_orders:"أوامر التشغيل",production_order_materials:"خامات التشغيل",production_order_expense_allocations:"توزيع مصروفات التشغيل",recipes:"الوصفات",recipe_items:"مكونات الوصفات",recipe_movements:"حركات الوصفات",stock_lots:"التشغيلات LOT",stock_lot_balances:"أرصدة التشغيلات",stock_movements:"حركات المخزون",stock_movement_lot_allocations:"تخصيصات التشغيلات",stock_balances:"أرصدة المخزون",stock_transfers:"تحويلات المخازن",stock_transfer_items:"بنود التحويل",stock_transfer_reversals:"عكس التحويلات",trips:"الرحلات",trip_loads:"تحميل السيارات",trip_customers:"عملاء الرحلات",expenses:"المصروفات",treasury_transactions:"حركات الخزائن",journal_entries:"القيود المحاسبية",journal_entry_lines:"سطور القيود",journal_adjustments:"التسويات المحاسبية",fixed_asset_depreciation_entries:"إهلاك الأصول",partner_transactions:"حركات الشركاء",partner_inventory_contributions:"مساهمات المخزون",partner_profit_distributions:"توزيعات الأرباح",partner_profit_distribution_items:"بنود توزيعات الأرباح",reservations:"الحجوزات",notifications:"الإشعارات",notification_recipients:"مستلمو الإشعارات",products:"الأصناف",product_categories:"تصنيفات الأصناف",product_unit_conversions:"تحويلات الوحدات",product_packaging_options:"خيارات التعبئة",units:"الوحدات",customers:"العملاء",customer_groups:"مجموعات العملاء",suppliers:"الموردون",sales_reps:"مندوبو المبيعات",locations:"المخازن والمواقع",partners:"الشركاء",treasuries:"الخزائن",fixed_assets:"الأصول الثابتة",price_lists:"قوائم الأسعار",price_list_items:"بنود قوائم الأسعار",customer_price_lists:"قوائم أسعار العملاء",expense_types:"أنواع المصروفات",sales_rep_areas:"مناطق المندوبين",notification_rules:"قواعد الإشعارات",app_users:"المستخدمون",app_roles:"الأدوار",app_permissions:"الصلاحيات",app_role_permissions:"ربط الأدوار بالصلاحيات",chart_of_accounts:"دليل الحسابات",accounting_periods:"الفترات المحاسبية",company_settings:"إعدادات الشركة",governorates:"المحافظات",cities:"المراكز والمدن",areas:"المناطق",user_logs:"سجل التتبع"};
+    const addSection=(title,obj)=>{
+      const section=document.createElement("div");section.className="product";
+      const heading=document.createElement("div");heading.className="pname";heading.textContent=title;section.appendChild(heading);
+      const table=document.createElement("table");table.className="print-table";
+      const body=document.createElement("tbody");
+      Object.entries(obj||{}).forEach(([key,value])=>{
+        const row=document.createElement("tr"),name=document.createElement("td"),count=document.createElement("td");
+        name.textContent=labels[key]||key;count.textContent=Number(value||0).toLocaleString("ar-EG");row.append(name,count);body.appendChild(row);
+      });
+      table.appendChild(body);section.appendChild(table);result.appendChild(section);
+    };
+    addSection("العمليات والحركات",data.operations);
+    addSection("البيانات الأساسية",data.master_data);
+    addSection("البيانات المحفوظة",data.preserved);
+    const backup=document.createElement("div");backup.className="product";
+    const backupTitle=document.createElement("div");backupTitle.className="pname";backupTitle.textContent="النسخة الاحتياطية";
+    const backupInfo=document.createElement("div");backupInfo.className="details";
+    backupInfo.textContent="الجداول المسجلة: "+Number(data.backup?.manifest_tables||0)+" من "+Number(data.backup?.complete_expected_tables||74)+" | السجلات: "+Number(data.backup?.manifest_rows||0);
+    backup.append(backupTitle,backupInfo);result.appendChild(backup);
+    addSection("عناصر تتطلب معالجة قبل إعادة التهيئة",data.blockers);
+    msg(message,"اكتملت المعاينة فقط. لم يتم حذف أو تعديل أي بيانات.","success");
+  }catch(e){msg(message,"تعذر إجراء المعاينة: "+err(e),"error");}
+  finally{busy(btn,false,"","فحص العمليات والبيانات");}
+});
 
 async function permission(code){ if(isSystemAdmin) return true; if(!navigator.onLine) return false; try { const {data,error}=await db.rpc("has_permission",{p_permission_code:code}); if(error)throw error; return data===true; } catch (e) { return false; } }
 
@@ -2542,10 +2590,12 @@ async function userInfo(user){
       document.querySelectorAll("#dataDashboard .dash-item").forEach(el=>el.classList.remove("hidden"));
       document.querySelectorAll("#dataDashboard .dashboard-group").forEach(el=>el.classList.remove("hidden"));
       ["menuUsers","menuSalesReps","menuAccounting","menuSettings"].forEach(id=>{ if($(id)) $(id).classList.remove("hidden"); });
-      ["userManagementCard","salesRepsCard","accountingCard"].forEach(id=>{ if($(id)) $(id).classList.remove("hidden"); });
+      ["userManagementCard","salesRepsCard","accountingCard","systemResetCard"].forEach(id=>{ if($(id)) $(id).classList.remove("hidden"); });
       await loadUserManagementLookups();
     } else {
       if($("menuUsers")) $("menuUsers").classList.add("hidden");
+      if($("menuSystemReset")) $("menuSystemReset").classList.add("hidden");
+      if($("systemResetCard")) $("systemResetCard").classList.add("hidden");
       if($("userManagementCard")) $("userManagementCard").classList.add("hidden");
       if($("menuSalesReps")) $("menuSalesReps").classList.add("hidden");
       if($("salesRepsCard")) $("salesRepsCard").classList.add("hidden");
@@ -5286,6 +5336,35 @@ async function viewInvoice(inv) {
     $("modalInvoiceItems").innerHTML = "";
     $("modalInvoiceLots").innerHTML = "<div class='empty'>جارٍ تحميل تخصيصات التشغيلات...</div>";
     modal.classList.remove("hidden");
+    const invoiceActions=modal.querySelector(".no-print");
+    const oldCancelButton=document.getElementById("cancelSalesInvoiceBtn");
+    if(oldCancelButton) oldCancelButton.remove();
+    if(invoiceActions && canManageSales && inv.status==="POSTED"){
+      const cancelButton=document.createElement("button");
+      cancelButton.id="cancelSalesInvoiceBtn";
+      cancelButton.type="button";
+      cancelButton.className="btn danger";
+      cancelButton.textContent="إلغاء فاتورة البيع";
+      cancelButton.style.flex="1";
+      cancelButton.onclick=async()=>{
+        if(!confirm("سيتم إلغاء الفاتورة وعكس حركة المخزون والقيد المحاسبي المرتبط بها حسب ضوابط النظام. يشترط عدم وجود تحصيل نشط أو مرتجع نشط أو حركة مخزون لاحقة غير مسموح بها. هل تريد المتابعة؟")) return;
+        busy(cancelButton,true,"جارٍ الإلغاء...","إلغاء فاتورة البيع");
+        try{
+          const {error}=await db.rpc("cancel_sales_invoice",{p_invoice_id:Number(inv.sales_invoice_id)});
+          if(error) throw error;
+          showToast("تم إلغاء فاتورة البيع وعكس آثارها بنجاح","success");
+          modal.classList.add("hidden");
+          await loadSales();
+          if(canViewStock) await loadStock();
+          if(canViewTreasuries) await loadTreasuries();
+        }catch(e){
+          alert("تعذر إلغاء فاتورة البيع: "+err(e));
+        }finally{
+          busy(cancelButton,false,"","إلغاء فاتورة البيع");
+        }
+      };
+      invoiceActions.appendChild(cancelButton);
+    }
     try {
         const { data: items, error: itemsError } = await db.from("sales_invoice_items").select("*").eq("sales_invoice_id", inv.sales_invoice_id);
         if(itemsError) throw itemsError;
