@@ -466,30 +466,39 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 <div class="home-dashboard" id="tasksDashboard"></div>
 <div class="home-dashboard" style="margin-top:14px;">
-  <button type="button" class="home-card gold tasks-charts-button" id="tasksChartsToggle" aria-expanded="false" aria-controls="tasksChartsPanel">
+  <button type="button" class="home-card gold tasks-charts-button" id="tasksChartsToggle">
     <span class="hc-label">📊 التحليلات البيانية</span>
-    <span class="hc-value" style="font-size:14px;">عرض الرسوم البيانية</span>
+    <span class="hc-value" style="font-size:14px;">فتح التحليلات</span>
   </button>
-</div>
-<div id="tasksChartsPanel" class="hidden" style="margin-top:16px;">
-  <div style="margin-top:12px;">
-    <div class="dashboard-title">📊 تحليل المبيعات (آخر 30 يومًا)</div>
-    <canvas id="tasksSalesChart" style="max-height:200px;"></canvas>
-  </div>
-  <div style="margin-top:20px;">
-    <div class="dashboard-title">💸 توزيع المصروفات</div>
-    <canvas id="tasksExpensesChart" style="max-height:220px;"></canvas>
-  </div>
-  <div style="margin-top:20px;">
-    <div class="dashboard-title">🚐 مبيعات الجولات</div>
-    <canvas id="tasksTripsChart" style="max-height:220px;"></canvas>
-  </div>
 </div>
 <div style="margin-top:20px;">
 <div class="dashboard-title">🔔 التنبيهات المهمة</div>
 <div id="tasksList"><div class="empty">جارٍ تحميل مهامك...</div></div>
 </div>
 </div>
+</section>
+
+<section id="tasksChartsScreen" class="hidden">
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+      <button type="button" class="btn secondary" id="tasksChartsBack" style="width:auto;margin:0;">رجوع</button>
+      <h2 style="margin:0;">📊 التحليلات البيانية</h2>
+    </div>
+    <div id="tasksChartsPanel">
+      <div style="margin-top:12px;">
+        <div class="dashboard-title">📊 تحليل المبيعات (آخر 30 يومًا)</div>
+        <canvas id="tasksSalesChart" style="max-height:200px;"></canvas>
+      </div>
+      <div style="margin-top:20px;">
+        <div class="dashboard-title">💸 توزيع المصروفات</div>
+        <canvas id="tasksExpensesChart" style="max-height:220px;"></canvas>
+      </div>
+      <div style="margin-top:20px;">
+        <div class="dashboard-title">🚐 مبيعات الجولات</div>
+        <canvas id="tasksTripsChart" style="max-height:220px;"></canvas>
+      </div>
+    </div>
+  </div>
 </section>
 
 <section id="data" class="hidden">
@@ -1793,7 +1802,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v95</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v96</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -2110,7 +2119,7 @@ try {
   }
     
 // ========== التنقل ==========
-function hideSections(){ ["login","recovery","newPass","home","tasks","data","nav"].forEach(id=>{ if($(id)) $(id).classList.add("hidden"); }); }
+function hideSections(){ ["login","recovery","newPass","home","tasks","tasksChartsScreen","data","nav"].forEach(id=>{ if($(id)) $(id).classList.add("hidden"); }); }
 function showLogin(){ hideSections(); if($("login")) $("login").classList.remove("hidden"); }
 function showApp(){ hideSections(); if($("nav")) $("nav").classList.remove("hidden"); page("home"); }
 
@@ -2849,21 +2858,23 @@ async function loadHomeDashboard() {
     
 // ========== المهام والتنبيهات (v27 - مُصلَّحة) ==========
 let tasksSalesChart = null, tasksExpensesChart = null, tasksTripsChart = null;
-function toggleTasksCharts() {
-  const panel = $("tasksChartsPanel");
-  const toggle = $("tasksChartsToggle");
-  if(!panel) return;
-  const opening = panel.classList.contains("hidden");
-  panel.classList.toggle("hidden", !opening);
-  if(toggle) {
-    toggle.setAttribute("aria-expanded", opening ? "true" : "false");
-    const label = toggle.querySelector(".hc-value");
-    if(label) label.textContent = opening ? "إخفاء الرسوم البيانية" : "عرض الرسوم البيانية";
-  }
-  if(opening) requestAnimationFrame(()=>[tasksSalesChart,tasksExpensesChart,tasksTripsChart].forEach(chart=>{ if(chart) chart.resize(); }));
+function openTasksChartsScreen() {
+  if(!isSystemAdmin) { showToast("هذه التحليلات متاحة لمدير النظام فقط.", "error"); return; }
+  if($("home")) $("home").classList.add("hidden");
+  if($("tasks")) $("tasks").classList.add("hidden");
+  if($("data")) $("data").classList.add("hidden");
+  if($("nav")) $("nav").classList.add("hidden");
+  if($("tasksChartsScreen")) $("tasksChartsScreen").classList.remove("hidden");
+  requestAnimationFrame(()=>[tasksSalesChart,tasksExpensesChart,tasksTripsChart].forEach(chart=>{ if(chart) chart.resize(); }));
 }
 const tasksChartsToggleButton = $("tasksChartsToggle");
-if(tasksChartsToggleButton) tasksChartsToggleButton.addEventListener("click", toggleTasksCharts);
+if(tasksChartsToggleButton) tasksChartsToggleButton.addEventListener("click", openTasksChartsScreen);
+const tasksChartsBackButton = $("tasksChartsBack");
+if(tasksChartsBackButton) tasksChartsBackButton.addEventListener("click", ()=>{
+  if($("tasksChartsScreen")) $("tasksChartsScreen").classList.add("hidden");
+  if($("nav")) $("nav").classList.remove("hidden");
+  page("tasks");
+});
 async function loadTasks() {
   const box = $("tasksList"); if(!box) return;
   if (!navigator.onLine) { box.innerHTML = "<div class='empty'>أنت أوفلاين حالياً.</div>"; return; }
@@ -2871,7 +2882,6 @@ async function loadTasks() {
     const filterBox = document.querySelector("#tasks .filter-box");
     if(filterBox) filterBox.classList.add("hidden");
     const chartsToggle=$("tasksChartsToggle"); if(chartsToggle) chartsToggle.classList.add("hidden");
-    const chartsPanel=$("tasksChartsPanel"); if(chartsPanel) chartsPanel.classList.add("hidden");
     const dash=$("tasksDashboard");
     const quickLinks = getRoleQuickLinks(currentRoleCode);
     if(dash) dash.innerHTML = quickLinks.map(([section,icon,label])=>
