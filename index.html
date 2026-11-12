@@ -625,8 +625,9 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
 <div id="systemResetCard" class="card hidden">
 <h2>إعادة تهيئة النظام</h2>
-<p class="desc">هذه الشاشة مخصصة لمدير النظام. ابدأ بالمعاينة فقط. لن يتم حذف أي بيانات من هذا الزر.</p>
-<div class="product"><div class="pname">المرحلة الأولى: العمليات</div><div class="details">تعرض أعداد الحركات والمستندات والقيود المرتبطة بها، وتحدد الأرصدة والعناصر التي تمنع إعادة التهيئة.</div><button id="runAdminResetPreviewBtn" class="btn" type="button">فحص العمليات والبيانات</button></div>
+<p class="desc">أداة مستقلة لمدير النظام. تنفذ الفحص وتجهيز خطة المعالجة تلقائيًا، ولا تطلب منك تشغيل استعلامات أو تنفيذ خطوات يدوية. لن يبدأ أي حذف قبل عرض التقرير النهائي وموافقتك الصريحة.</p>
+<div class="product"><div class="pname">المرحلة الأولى: الفحص والتجهيز التلقائي</div><div class="details">تفحص المستندات والروابط والأرصدة والقيود، وتحدد ترتيب الإلغاء والعكس والحذف. تنفذ التجهيزات الآمنة التي لا تحذف بيانات، ثم تعرض تقريرًا بما سيتم وما سيظل محفوظًا وأي موانع تمنع التنفيذ.</div><button id="runAdminResetPreviewBtn" class="btn" type="button">ابدأ الفحص والتجهيز التلقائي</button></div>
+<div class="product"><div class="pname">بوابة الموافقة قبل التنفيذ</div><div class="details">بعد اكتمال التقرير، تعرض الأداة خطة التنفيذ بالتفصيل. لا تنفذ حذفًا أو إلغاءً لأي مستند قبل موافقتك. بعد الموافقة تنفذ الخطة تلقائيًا، وتتوقف بالكامل إذا ظهر اختلاف أو مانع غير متوقع.</div><button class="btn secondary" type="button" disabled>تظهر الموافقة بعد اكتمال الخطة والتحقق منها</button></div>
 <div id="adminResetPreviewMsg" class="status hidden"></div>
 <div id="adminResetPreviewResult"></div>
 <div class="product" style="margin-top:15px;"><div class="pname">المرحلة الثانية: البيانات الأساسية</div><div class="details">مقفولة حتى اكتمال المرحلة الأولى والتأكد من عدم وجود أي مستندات أو أرصدة مرتبطة.</div><button class="btn secondary" type="button" disabled>غير متاحة حاليًا</button></div>
