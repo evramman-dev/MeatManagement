@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v107</title>
+<title>MeatManagement v108</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -366,7 +366,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v107]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v108]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1861,7 +1861,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v107</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v108</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -2318,12 +2318,16 @@ if($("runAdminFactoryResetPreviewBtn")) $("runAdminFactoryResetPreviewBtn").addE
   try{
     let {data:prepared,error}=await db.rpc("admin_factory_reset_get_latest");
     if(error)throw error;
-    if(!prepared||prepared.found!==true){
+    const latestExpiry=prepared?.expires_at?Date.parse(prepared.expires_at):NaN;
+    const latestExpired=Number.isFinite(latestExpiry)&&latestExpiry<=Date.now();
+    if(!prepared||prepared.found!==true||latestExpired){
       const fresh=await db.rpc("admin_factory_reset_prepare");
       if(fresh.error)throw fresh.error;
       prepared=fresh.data;
     }
     if(!prepared||prepared.prepared!==true||!prepared.preview||prepared.preview.mode!=="FACTORY_RESET_SINGLE_OPERATION")throw new Error("لم يرجع الخادم تقرير ضبط مصنع صالحًا.");
+    const reportExpiresAt=Date.parse(prepared.expires_at||"");
+    if(!Number.isFinite(reportExpiresAt)||reportExpiresAt<=Date.now())throw new Error("انتهت صلاحية التقرير قبل عرضه. اضغط عرض التقرير مرة أخرى لتجهيز تقرير جديد.");
     const preview=prepared.preview;
     const labels={customers:"العملاء",suppliers:"الموردون",products:"الأصناف",product_categories:"تصنيفات الأصناف",customers:"العملاء",sales_reps:"مندوبو المبيعات",sales_rep_areas:"مناطق المندوبين",locations:"المخازن والمواقع",treasuries:"الخزائن",partners:"الشركاء",fixed_assets:"الأصول الثابتة",price_lists:"قوائم الأسعار",price_list_items:"بنود قوائم الأسعار",customer_groups:"مجموعات العملاء",customer_price_lists:"قوائم أسعار العملاء",expense_types:"أنواع المصروفات",expenses:"المصروفات",sales_invoices:"فواتير البيع",sales_invoice_items:"بنود البيع",sales_returns:"مرتجعات البيع",sales_return_items:"بنود المرتجعات",purchase_invoices:"فواتير الشراء",purchase_invoice_items:"بنود الشراء",purchase_returns:"مرتجعات الشراء",supplier_payments:"مدفوعات الموردين",customer_collections:"تحصيلات العملاء",customer_cheques:"شيكات العملاء",stock_movements:"حركات المخزون",stock_balances:"أرصدة المخزون",stock_lots:"تشغيلات المخزون",stock_lot_balances:"أرصدة التشغيلات",stock_transfers:"تحويلات المخزون",stock_transfer_items:"بنود التحويل",stock_transfer_reversals:"عكس التحويلات",production_orders:"أوامر الإنتاج",production_order_materials:"خامات الإنتاج",production_order_expense_allocations:"مصروفات الإنتاج",recipes:"الوصفات",recipe_items:"مكونات الوصفات",recipe_movements:"حركات الوصفات",trips:"الرحلات",trip_loads:"تحميل السيارات",trip_customers:"عملاء الرحلات",treasury_transactions:"حركات الخزائن",journal_entries:"القيود المحاسبية",journal_entry_lines:"سطور القيود",journal_adjustments:"التسويات المحاسبية",notifications:"الإشعارات",notification_recipients:"مستلمو الإشعارات",user_logs:"سجل التتبع"};
     const addTable=(headingText,obj)=>{
@@ -2351,6 +2355,11 @@ if($("runAdminFactoryResetPreviewBtn")) $("runAdminFactoryResetPreviewBtn").addE
     const status=document.createElement("div");status.className="details";status.textContent=prepared.status==="APPROVED"?"تم اعتماد التقرير. يمكنك تنفيذ ضبط المصنع بعد مراجعة الأعداد أعلاه.":"التقرير جاهز للمراجعة. الاعتماد لا يحذف أي بيانات.";
     actions.append(approveBtn,executeBtn,status);
     approveBtn.addEventListener("click",async()=>{
+      if(Date.parse(prepared.expires_at||"")<=Date.now()){
+        approveBtn.disabled=true;executeBtn.disabled=true;
+        status.textContent="انتهت صلاحية التقرير. اضغط عرض تقرير ضبط المصنع لإنشاء تقرير جديد.";
+        msg(message,"انتهت صلاحية التقرير. لم يتم الاعتماد أو حذف أي بيانات.","error");return;
+      }
       if(!window.confirm("هل تعتمد تقرير ضبط المصنع؟ الاعتماد لا يحذف أي بيانات."))return;
       busy(approveBtn,true,"جارٍ اعتماد التقرير...","اعتماد التقرير");
       try{
@@ -2364,6 +2373,11 @@ if($("runAdminFactoryResetPreviewBtn")) $("runAdminFactoryResetPreviewBtn").addE
     });
     executeBtn.addEventListener("click",async()=>{
       if(executeBtn.disabled)return;
+      if(Date.parse(prepared.expires_at||"")<=Date.now()){
+        approveBtn.disabled=true;executeBtn.disabled=true;
+        status.textContent="انتهت صلاحية التقرير. جهز تقريرًا جديدًا قبل التنفيذ.";
+        msg(message,"انتهت صلاحية التقرير. لم يبدأ التنفيذ ولم تُحذف أي بيانات.","error");return;
+      }
       if(!window.confirm("سيتم حذف حسابات المستخدمين الأخرى وجميع البيانات المحددة في التقرير، مع الاحتفاظ بحساب مدير النظام وبنية البرنامج. هل تريد المتابعة؟"))return;
       if(!window.confirm("تأكيد أخير: هل توافق على مسح بيانات البرنامج والإبقاء على حساب مدير النظام فقط؟"))return;
       busy(executeBtn,true,"جارٍ تنفيذ ضبط المصنع...","تنفيذ ضبط المصنع");approveBtn.disabled=true;
