@@ -8635,7 +8635,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
       if(canViewSuppliers){ try{ await loadSuppliers(); }catch(e){console.error("[BOOT suppliers]",e);} }
       if(canViewPurchases){ try{ await loadPurchases(); }catch(e){console.error("[BOOT purchases]",e);} }
       if(canViewPartners){ try{ await loadPartners(); }catch(e){console.error("[BOOT partners]",e);} }
-      try { await loadHomeDashboard(); } catch(e){ console.error("[BOOT home]", e); }
+      // showApp() already opens the home page and calls loadHomeDashboard().
       try { await loadNotifications(); } catch(e){ console.error("[BOOT notifications]",e); }
       bootedUserId=user.id;
       if(taxWarningShownForUserId!==user.id && companySettings.company_tax_number === "000000000"){
