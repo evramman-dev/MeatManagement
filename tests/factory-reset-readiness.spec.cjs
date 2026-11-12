@@ -50,6 +50,7 @@ test('Factory reset readiness inventory through the application UI', async ({ pa
   snapshot.productCategories = await countOptions('#category');
   snapshot.productUnits = await countOptions('#baseUnit');
   snapshot.productFormAvailable = await page.locator('#productFormModal').evaluate(el => el.classList.contains('active'));
+  if (snapshot.productFormAvailable) await page.locator('#productFormModal .close-btn').click();
 
   await open('suppliers');
   snapshot.suppliers = await countChildren('#suppliersList');
