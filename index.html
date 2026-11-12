@@ -5339,7 +5339,8 @@ async function viewInvoice(inv) {
     const invoiceActions=modal.querySelector(".no-print");
     const oldCancelButton=document.getElementById("cancelSalesInvoiceBtn");
     if(oldCancelButton) oldCancelButton.remove();
-    if(invoiceActions && canManageSales && inv.status==="POSTED"){
+    const canCancelSalesInvoice=isSystemAdmin || await permission("SALES_MANAGE");
+    if(invoiceActions && canCancelSalesInvoice && inv.status==="POSTED"){
       const cancelButton=document.createElement("button");
       cancelButton.id="cancelSalesInvoiceBtn";
       cancelButton.type="button";
