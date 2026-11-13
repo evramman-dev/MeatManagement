@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v111</title>
+<title>MeatManagement v112</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1822,6 +1822,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <button type="button" class="dash-item" onclick="window.openProductList('SEMI_FINISHED','منتجات نصف مصنعة')"><span class="dash-icon">⚙️</span><span class="dash-title">منتجات نصف مصنعة</span></button>
 <button type="button" class="dash-item" onclick="window.openProductList('PACKAGING','خامات التشغيل')"><span class="dash-icon">🏷️</span><span class="dash-title">خامات التشغيل</span></button>
 <button type="button" class="dash-item" onclick="window.openProductList('FINISHED','المنتجات التامة')"><span class="dash-icon">📦</span><span class="dash-title">المنتجات التامة</span></button>
+<button type="button" class="dash-item" onclick="window.openInventorySummaryReport()"><span class="dash-icon">📊</span><span class="dash-title">تقرير أرصدة وحركة المخزون</span></button>
 </div>
 </div>
 </div>
@@ -1986,6 +1987,31 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 </div>
 </div>
+
+<div id="inventorySummaryModal" class="modal hidden">
+<div class="modal-content" style="max-width:1100px">
+<div class="modal-header"><h3>تقرير أرصدة وحركة المخزون</h3><button class="close-btn" type="button" onclick="document.getElementById('inventorySummaryModal').classList.add('hidden')">&times;</button></div>
+<div class="modal-body">
+<div class="no-print filter-box">
+<div class="grid">
+<div><label for="inventorySummaryFrom">من تاريخ</label><input id="inventorySummaryFrom" type="date"></div>
+<div><label for="inventorySummaryTo">إلى تاريخ</label><input id="inventorySummaryTo" type="date"></div>
+</div>
+<div class="row" style="margin-top:10px"><button id="refreshInventorySummaryBtn" class="btn" type="button">عرض التقرير</button><span id="inventorySummaryStatus" class="details"></span></div>
+</div>
+<div id="inventorySummaryPrintArea" class="statement-print-area">
+<div class="print-header" id="inventorySummaryPrintHeader"></div>
+<div class="invoice-header-title">تقرير أرصدة وحركة المخزون</div>
+<div id="inventorySummaryMeta" class="invoice-meta-grid"></div>
+<div id="inventorySummaryContent"><div class="empty">حدد الفترة ثم اضغط عرض التقرير.</div></div>
+<div id="inventorySummaryGrandTotal" class="total-box"></div>
+<div class="print-footer" id="inventorySummaryPrintFooter"></div>
+</div>
+<div class="no-print" style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap">
+<button class="btn" type="button" onclick="window.print()" style="background:var(--gold);color:var(--g);flex:1">طباعة / PDF</button>
+<button class="btn" type="button" id="shareInventorySummaryWhatsappBtn" style="background:#25D366;flex:1">واتساب</button>
+</div>
+</div></div></div>
 
 <div id="treasuryStatementModal" class="modal hidden">
 <div class="modal-content">
@@ -5097,6 +5123,144 @@ async function viewStockMovements(productId, locationId) {
         fillPrintHeaders();
     } catch(e) { tbody.innerHTML = `<tr><td colspan='${allLocations?6:5}' style="color:red;">خطأ: ${err(e)}</td></tr>`; } 
 }
+
+const inventorySummaryGroups=[
+ {key:"RAW",title:"الخامات"},
+ {key:"SPICES",title:"التوابل ومكونات الوصفات"},
+ {key:"SEMI_FINISHED",title:"المنتجات نصف المصنعة"},
+ {key:"PACKAGING",title:"خامات التشغيل"},
+ {key:"FINISHED",title:"المنتجات التامة"}
+];
+function inventorySummaryGroupOf(product){
+ const section=productSectionOf(product);
+ if(["RAW_MEAT","RAW_POULTRY","RAW_OTHER"].includes(section))return "RAW";
+ if(["SPICES","SEMI_FINISHED","PACKAGING","FINISHED"].includes(section))return section;
+ return "RAW";
+}
+function inventorySummaryEscape(value){
+ return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+}
+function inventorySummaryNumber(value){return Number(value||0);}
+function inventorySummaryQty(value){return fmtQty(inventorySummaryNumber(value));}
+function inventorySummaryMoney(value){return fmt(inventorySummaryNumber(value));}
+function inventorySummaryDateTimeStart(dateValue){return new Date(dateValue+"T00:00:00");}
+async function loadInventorySummaryReport(){
+ const from=$("inventorySummaryFrom")?.value,to=$("inventorySummaryTo")?.value;
+ const content=$("inventorySummaryContent"),status=$("inventorySummaryStatus"),button=$("refreshInventorySummaryBtn");
+ if(!from||!to||from>to){if(status)status.textContent="حدد فترة تاريخ صحيحة.";return;}
+ if(!canViewStock){showToast("ليس لديك صلاحية عرض أرصدة المخزون","error");return;}
+ if(!navigator.onLine){showToast("اتصل بالإنترنت لعرض تقرير المخزون","error");return;}
+ if(button)busy(button,true,"جارٍ تحميل التقرير...","عرض التقرير");
+ if(content)content.innerHTML='<div class="empty">جارٍ تحميل أرصدة وحركات المخزون...</div>';
+ if(status)status.textContent="يتم تجميع بيانات كل المواقع...";
+ try{
+  const endExclusive=new Date(to+"T00:00:00");endExclusive.setDate(endExclusive.getDate()+1);
+  const startTime=inventorySummaryDateTimeStart(from).getTime();
+  const endTime=endExclusive.getTime();
+  const movements=[];
+  let offset=0;
+  while(true){
+   const {data,error}=await db.from("stock_movements")
+    .select("movement_id,product_id,quantity_change,total_cost,created_at,stock_transfer_id")
+    .lt("created_at",endExclusive.toISOString())
+    .order("movement_id",{ascending:true}).range(offset,offset+999);
+   if(error)throw error;
+   const batch=data||[];movements.push(...batch);
+   if(batch.length<1000)break;
+   offset+=1000;
+   if(offset>=500000)throw new Error("حجم حركات المخزون تجاوز الحد الآمن للتقرير.");
+  }
+  const {data:balances,error:balanceError}=await db.from("stock_balances")
+   .select("product_id,quantity,inventory_value");
+  if(balanceError)throw balanceError;
+  const movementByProduct=new Map();
+  movements.forEach(m=>{
+   const id=Number(m.product_id),row=movementByProduct.get(id)||{openingQty:0,openingValue:0,inQty:0,inValue:0,outQty:0,outValue:0,hasMovement:false};
+   const qty=inventorySummaryNumber(m.quantity_change),cost=Math.abs(inventorySummaryNumber(m.total_cost));
+   const time=new Date(m.created_at).getTime();
+   if(m.stock_transfer_id==null){
+    if(time<startTime){
+     row.openingQty+=qty;
+     row.openingValue+=qty>=0?cost:-cost;
+    }else if(time<endTime){
+     row.hasMovement=true;
+     if(qty>0){row.inQty+=qty;row.inValue+=cost;}
+     else if(qty<0){row.outQty+=Math.abs(qty);row.outValue+=cost;}
+    }
+   }else if(time<startTime){
+    // التحويلات الداخلية لا تغير إجمالي رصيد الشركة.
+   }
+   movementByProduct.set(id,row);
+  });
+  const balanceByProduct=new Map();
+  (balances||[]).forEach(b=>{
+   const id=Number(b.product_id),row=balanceByProduct.get(id)||{qty:0,value:0};
+   row.qty+=inventorySummaryNumber(b.quantity);row.value+=inventorySummaryNumber(b.inventory_value);
+   balanceByProduct.set(id,row);
+  });
+  const allProducts=(productsCache||[]).filter(p=>p&&p.product_id!=null);
+  const relevantProducts=allProducts.filter(p=>{
+   const id=Number(p.product_id),b=balanceByProduct.get(id),m=movementByProduct.get(id);
+   return p.is_active!==false||(b&&(b.qty!==0||b.value!==0))||(m&&m.hasMovement);
+  });
+  const rowsByGroup=new Map(inventorySummaryGroups.map(g=>[g.key,[]]));
+  relevantProducts.forEach(p=>{
+   const id=Number(p.product_id),m=movementByProduct.get(id)||{openingQty:0,openingValue:0,inQty:0,inValue:0,outQty:0,outValue:0};
+   const b=balanceByProduct.get(id)||{qty:0,value:0};
+   const row={product:p,unit:unitName(p.base_unit_id),openingQty:m.openingQty,openingValue:m.openingValue,inQty:m.inQty,inValue:m.inValue,outQty:m.outQty,outValue:m.outValue,currentQty:b.qty,currentValue:b.value};
+   const group=inventorySummaryGroupOf(p);if(!rowsByGroup.has(group))rowsByGroup.set(group,[]);
+   rowsByGroup.get(group).push(row);
+  });
+  const columns=[["openingQty","كمية"],["openingValue","قيمة"],["inQty","كمية"],["inValue","قيمة"],["outQty","كمية"],["outValue","قيمة"],["currentQty","كمية"],["currentValue","قيمة"]];
+  let grandValue={openingValue:0,inValue:0,outValue:0,currentValue:0};
+  let waText="تقرير أرصدة وحركة المخزون\nالفترة: "+formatDate(from)+" إلى "+formatDate(to)+"\n";
+  let output="";
+  inventorySummaryGroups.forEach(group=>{
+   const rows=(rowsByGroup.get(group.key)||[]).sort((a,b)=>String(a.product.product_name||"").localeCompare(String(b.product.product_name||""),"ar"));
+   const totalsByUnit=new Map();
+   const sums={openingValue:0,inValue:0,outValue:0,currentValue:0};
+   rows.forEach(r=>{
+    const unit=r.unit||"—",t=totalsByUnit.get(unit)||{openingQty:0,inQty:0,outQty:0,currentQty:0};
+    ["openingQty","inQty","outQty","currentQty"].forEach(k=>t[k]+=r[k]);
+    totalsByUnit.set(unit,t);
+    ["openingValue","inValue","outValue","currentValue"].forEach(k=>{sums[k]+=r[k];grandValue[k]+=r[k];});
+   });
+   const body=rows.length?rows.map(r=>'<tr><td>'+inventorySummaryEscape(r.product.product_name)+'</td><td>'+inventorySummaryEscape(r.unit||"—")+'</td><td>'+inventorySummaryQty(r.openingQty)+'</td><td>'+inventorySummaryMoney(r.openingValue)+'</td><td>'+inventorySummaryQty(r.inQty)+'</td><td>'+inventorySummaryMoney(r.inValue)+'</td><td>'+inventorySummaryQty(r.outQty)+'</td><td>'+inventorySummaryMoney(r.outValue)+'</td><td>'+inventorySummaryQty(r.currentQty)+'</td><td>'+inventorySummaryMoney(r.currentValue)+'</td></tr>').join(""):'<tr><td colspan="10" class="empty">لا توجد أصناف في هذا التصنيف.</td></tr>';
+   const summaryRows=[...totalsByUnit.entries()].sort((a,b)=>a[0].localeCompare(b[0],"ar")).map(([unit,t])=>'<tr><td>'+inventorySummaryEscape(unit)+'</td><td>'+inventorySummaryQty(t.openingQty)+'</td><td>'+inventorySummaryQty(t.inQty)+'</td><td>'+inventorySummaryQty(t.outQty)+'</td><td>'+inventorySummaryQty(t.currentQty)+'</td></tr>').join("");
+   output+='<section class="inventory-report-section"><h3 class="dashboard-title">'+inventorySummaryEscape(group.title)+' ('+rows.length+' صنف)</h3><div class="table-responsive"><table class="print-table"><thead><tr><th rowspan="2">الصنف</th><th rowspan="2">الوحدة</th><th colspan="2">رصيد أول المدة</th><th colspan="2">إجمالي دخول</th><th colspan="2">إجمالي خروج</th><th colspan="2">الرصيد الحالي</th></tr><tr><th>الكمية</th><th>القيمة</th><th>الكمية</th><th>القيمة</th><th>الكمية</th><th>القيمة</th><th>الكمية</th><th>القيمة</th></tr></thead><tbody>'+body+'</tbody></table></div><div class="mini-summary"><h4>ملخص '+inventorySummaryEscape(group.title)+'</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>الوحدة</th><th>رصيد أول المدة</th><th>إجمالي دخول</th><th>إجمالي خروج</th><th>الرصيد الحالي</th></tr></thead><tbody>'+summaryRows+'</tbody></table></div><div class="line"><span>قيمة رصيد أول المدة</span><strong>'+inventorySummaryMoney(sums.openingValue)+'</strong></div><div class="line"><span>قيمة إجمالي الدخول</span><strong>'+inventorySummaryMoney(sums.inValue)+'</strong></div><div class="line"><span>قيمة إجمالي الخروج</span><strong>'+inventorySummaryMoney(sums.outValue)+'</strong></div><div class="line"><span>قيمة الرصيد الحالي</span><strong>'+inventorySummaryMoney(sums.currentValue)+'</strong></div></div></section>';
+   waText+="\n"+group.title+"\n";
+   rows.forEach(r=>{waText+=r.product.product_name+" ("+r.unit+"): أول المدة "+inventorySummaryQty(r.openingQty)+" / "+inventorySummaryMoney(r.openingValue)+"، دخول "+inventorySummaryQty(r.inQty)+" / "+inventorySummaryMoney(r.inValue)+"، خروج "+inventorySummaryQty(r.outQty)+" / "+inventorySummaryMoney(r.outValue)+"، حالي "+inventorySummaryQty(r.currentQty)+" / "+inventorySummaryMoney(r.currentValue)+"\n";});
+   waText+="إجمالي القيمة الحالية للتصنيف: "+inventorySummaryMoney(sums.currentValue)+"\n";
+  });
+  if(content)content.innerHTML=output||'<div class="empty">لا توجد أصناف لعرضها.</div>';
+  $("inventorySummaryMeta").innerHTML='<div><strong>الفترة:</strong> '+inventorySummaryEscape(formatDate(from))+' إلى '+inventorySummaryEscape(formatDate(to))+'</div><div><strong>نطاق التقرير:</strong> جميع المواقع المخزنية</div><div><strong>عدد الأصناف:</strong> '+relevantProducts.length+'</div><div><strong>تاريخ إعداد التقرير:</strong> '+inventorySummaryEscape(formatDateTime(new Date().toISOString()))+'</div>';
+  $("inventorySummaryGrandTotal").innerHTML='<div class="line"><span>إجمالي قيمة رصيد أول المدة</span><strong>'+inventorySummaryMoney(grandValue.openingValue)+'</strong></div><div class="line"><span>إجمالي قيمة الدخول</span><strong>'+inventorySummaryMoney(grandValue.inValue)+'</strong></div><div class="line"><span>إجمالي قيمة الخروج</span><strong>'+inventorySummaryMoney(grandValue.outValue)+'</strong></div><div class="line grand"><span>إجمالي قيمة الرصيد الحالي</span><strong>'+inventorySummaryMoney(grandValue.currentValue)+'</strong></div>';
+  waText+="\nالإجمالي العام\nقيمة أول المدة: "+inventorySummaryMoney(grandValue.openingValue)+"\nقيمة الدخول: "+inventorySummaryMoney(grandValue.inValue)+"\nقيمة الخروج: "+inventorySummaryMoney(grandValue.outValue)+"\nقيمة الرصيد الحالي: "+inventorySummaryMoney(grandValue.currentValue);
+  window.inventorySummaryWhatsappText=waText;
+  if(status)status.textContent="تم تحديث التقرير. "+movements.length+" حركة مخزون.";
+  fillPrintHeaders();
+ }catch(e){
+  if(content)content.innerHTML='<div class="status error">تعذر تحميل التقرير: '+inventorySummaryEscape(err(e))+'</div>';
+  if(status)status.textContent="تعذر تحميل التقرير.";
+  showToast("تعذر تحميل تقرير المخزون: "+err(e),"error",7000);
+ }finally{if(button)busy(button,false,"","عرض التقرير");}
+}
+window.openInventorySummaryReport=function(){
+ if(!canViewStock){showToast("ليس لديك صلاحية عرض أرصدة المخزون","error");return;}
+ const modal=$("inventorySummaryModal");if(!modal)return;
+ const from=$("inventorySummaryFrom"),to=$("inventorySummaryTo");
+ if(from&&!from.value)from.value=monthStartISO();
+ if(to&&!to.value)to.value=todayISO();
+ modal.classList.remove("hidden");
+ loadInventorySummaryReport();
+};
+if($("refreshInventorySummaryBtn"))$("refreshInventorySummaryBtn").addEventListener("click",loadInventorySummaryReport);
+if($("shareInventorySummaryWhatsappBtn"))$("shareInventorySummaryWhatsappBtn").addEventListener("click",()=>{
+ const text=window.inventorySummaryWhatsappText;
+ if(!text){showToast("اعرض التقرير أولاً قبل المشاركة","error");return;}
+ window.open("https://wa.me/?text="+encodeURIComponent(text),"_blank");
+});
+
 async function viewProductStockMovements(productId) {
     if(!canViewStock) { showToast("ليس لديك صلاحية عرض حركة المخزون","error"); return; }
     if(!navigator.onLine) { showToast("اتصل بالإنترنت لعرض كارت الصنف","error"); return; }
