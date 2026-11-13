@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v125</title>
+<title>MeatManagement v126</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -5335,7 +5335,7 @@ async function loadInventorySummaryReport(){
    const body=rows.length?rows.map(r=>'<tr><td>'+inventorySummaryEscape(r.product.product_name)+'</td><td>'+inventorySummaryEscape(r.unit||"—")+'</td><td>'+inventorySummaryQty(r.openingQty)+'</td><td>'+inventorySummaryMoney(r.openingValue)+'</td><td>'+inventorySummaryQty(r.inQty)+'</td><td>'+inventorySummaryMoney(r.inValue)+'</td><td>'+inventorySummaryQty(r.outQty)+'</td><td>'+inventorySummaryMoney(r.outValue)+'</td><td>'+inventorySummaryQty(r.currentQty)+'</td><td>'+inventorySummaryMoney(r.currentValue)+'</td></tr>').join(""):'<tr><td colspan="10" class="empty">لا توجد أصناف في هذا التصنيف.</td></tr>';
    const summaryRows=[...totalsByUnit.entries()].sort((a,b)=>a[0].localeCompare(b[0],"ar")).map(([unit,t])=>'<tr><td>'+inventorySummaryEscape(unit)+'</td><td>'+inventorySummaryQty(t.openingQty)+'</td><td>'+inventorySummaryQty(t.inQty)+'</td><td>'+inventorySummaryQty(t.outQty)+'</td><td>'+inventorySummaryQty(t.currentQty)+'</td></tr>').join("");
    const sectionHeading=group.parent==="FINISHED"?'<h3 class="dashboard-title">'+inventorySummaryEscape(group.title)+' ('+rows.length+' صنف)</h3>':'<details class="inventory-report-section"><summary class="dashboard-title">'+inventorySummaryEscape(group.title)+' ('+rows.length+' صنف)</summary><div class="inventory-report-section-body">';
-   output+=(group.parent==="FINISHED"?sectionHeading:sectionHeading)+'<div class="table-responsive"><table class="print-table"><thead><tr><th rowspan="2">الصنف</th><th rowspan="2">الوحدة</th><th colspan="2">رصيد أول المدة</th><th colspan="2">إجمالي دخول</th><th colspan="2">إجمالي خروج</th><th colspan="2">الرصيد الحالي</th></tr><tr><th>الكمية</th><th>القيمة</th><th>الكمية</th><th>القيمة</th><th>الكمية</th><th>القيمة</th><th>الكمية</th><th>القيمة</th></tr></thead><tbody>'+body+'</tbody></table></div><div class="mini-summary"><h4>ملخص '+inventorySummaryEscape(group.title)+'</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>الوحدة</th><th>رصيد أول المدة</th><th>إجمالي دخول</th><th>إجمالي خروج</th><th>الرصيد الحالي</th></tr></thead><tbody>'+summaryRows+'</tbody></table></div><div class="line"><span>قيمة رصيد أول المدة</span><strong>'+inventorySummaryMoney(sums.openingValue)+'</strong></div><div class="line"><span>قيمة إجمالي الدخول</span><strong>'+inventorySummaryMoney(sums.inValue)+'</strong></div><div class="line"><span>قيمة إجمالي الخروج</span><strong>'+inventorySummaryMoney(sums.outValue)+'</strong></div><div class="line"><span>قيمة الرصيد الحالي</span><strong>'+inventorySummaryMoney(sums.currentValue)+'</strong></div></div></div>'+(group.parent==="FINISHED"?(group.key==="FINISHED_POULTRY"?"</div></details>":""):'</div></details>');
+   output+=(group.parent==="FINISHED"?sectionHeading:sectionHeading)+'<div class="table-responsive"><table class="print-table"><thead><tr><th rowspan="2">الصنف</th><th rowspan="2">الوحدة</th><th colspan="2">رصيد أول المدة</th><th colspan="2">إجمالي دخول</th><th colspan="2">إجمالي خروج</th><th colspan="2">الرصيد الحالي</th></tr><tr><th>الكمية</th><th>القيمة</th><th>الكمية</th><th>القيمة</th><th>الكمية</th><th>القيمة</th><th>الكمية</th><th>القيمة</th></tr></thead><tbody>'+body+'</tbody></table></div><div class="mini-summary"><h4>ملخص '+inventorySummaryEscape(group.title)+'</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>الوحدة</th><th>رصيد أول المدة</th><th>إجمالي دخول</th><th>إجمالي خروج</th><th>الرصيد الحالي</th></tr></thead><tbody>'+summaryRows+'</tbody></table></div><div class="line"><span>قيمة رصيد أول المدة</span><strong>'+inventorySummaryMoney(sums.openingValue)+'</strong></div><div class="line"><span>قيمة إجمالي الدخول</span><strong>'+inventorySummaryMoney(sums.inValue)+'</strong></div><div class="line"><span>قيمة إجمالي الخروج</span><strong>'+inventorySummaryMoney(sums.outValue)+'</strong></div><div class="line"><span>قيمة الرصيد الحالي</span><strong>'+inventorySummaryMoney(sums.currentValue)+'</strong></div></div>'+(group.parent==="FINISHED"?(group.key==="FINISHED_POULTRY"?"</div></details>":""):'</div></div></details>');
    waText+="\n"+group.title+"\n";
    rows.forEach(r=>{waText+=r.product.product_name+" ("+r.unit+"): أول المدة "+inventorySummaryQty(r.openingQty)+" / "+inventorySummaryMoney(r.openingValue)+"، دخول "+inventorySummaryQty(r.inQty)+" / "+inventorySummaryMoney(r.inValue)+"، خروج "+inventorySummaryQty(r.outQty)+" / "+inventorySummaryMoney(r.outValue)+"، حالي "+inventorySummaryQty(r.currentQty)+" / "+inventorySummaryMoney(r.currentValue)+"\n";});
    waText+="إجمالي القيمة الحالية للتصنيف: "+inventorySummaryMoney(sums.currentValue)+"\n";
@@ -5406,35 +5406,26 @@ async function inventoryCountLoad(id){
  $("inventoryCountStatus").textContent=approved?"تم اعتماد هذه الدورة وتنفيذ تسوية الأرصدة.":"أدخل الجرد الفعلي لكل الأصناف في كل موقع ثم احفظ كل موقع.";
 }
 function inventoryCountGroupName(loc,x){
- const categoryId=Number(x.category_id||0);
- const finishedGroup=inventoryFinishedProductGroup(x);
- const finishedTitle=finishedGroup==="FINISHED_POULTRY"?"منتجات تامة دواجن":"منتجات تامة لحوم";
- if(loc.location_type==="SHOWROOM"){
-  if(categoryId===24)return "منتجات تامة - زيوت وعسل وطحينة";
-  if(categoryId===26)return "الخضروات المجمدة";
-  if(categoryId===27)return "منتجات الأجبان";
-  if(categoryId===29)return "منتجات المخللات";
-  return x.product_type==="FINISHED"?finishedTitle:"المنتجات التامة";
+ const section=productSectionOf(x);
+ if(section==="FINISHED"){
+  return inventoryFinishedProductGroup(x)==="FINISHED_POULTRY"?"منتجات تامة دواجن":"منتجات تامة لحوم";
  }
- if(loc.location_type==="MAIN_WAREHOUSE"){
-  if(categoryId===16)return "مواد التعبئة والتغليف";
-  if(categoryId===23)return "خامات الزيوت والعسل والطحينة";
-  if(categoryId===24)return "منتجات تامة - زيوت وعسل وطحينة";
-  return "الخامات الجافة والتوابل";
- }
- if(loc.location_type==="FRIDGE"){
-  if(categoryId===25)return "أسماك وسي فود";
-  if(categoryId===28)return "خامات المخللات";
-  if(categoryId===29)return "منتجات المخللات";
-  if(categoryId===26)return "الخضروات المجمدة";
-  if(categoryId===27)return "منتجات الأجبان";
-  if(categoryId===20)return "الدواجن";
-  if(categoryId===19)return "اللحوم";
-  if(x.product_type==="RAW")return "الخامات المبردة";
-  if(x.product_type==="SEMI_FINISHED")return "منتجات نصف مصنعة";
-  if(x.product_type==="FINISHED")return finishedTitle;
- }
- return x.product_type==="FINISHED"?finishedTitle:x.product_type==="SEMI_FINISHED"?"منتجات نصف مصنعة":"الخامات";
+ const names={
+  RAW_MEAT:"اللحوم",
+  RAW_POULTRY:"الدواجن",
+  RAW_FISH:"أسماك وسي فود",
+  RAW_PICKLES:"خامات المخللات",
+  FIN_PICKLES:"منتجات المخللات",
+  CHEESE:"منتجات الأجبان",
+  FROZEN_VEG:"الخضروات المجمدة",
+  SEMI_FINISHED:"منتجات نصف مصنعة",
+  RAW_OTHER:"خامات أخرى",
+  SPICES:"التوابل ومكونات الوصفات",
+  OIL_HONEY_RAW:"خامات الزيوت والعسل والطحينة",
+  OIL_HONEY_FINISHED:"منتجات تامة - زيوت وعسل وطحينة",
+  PACKAGING:"خامات التشغيل"
+ };
+ return names[section]||"أصناف غير مصنفة";
 }
 function inventoryCountRenderEditor(){
  const host=$("inventoryCountEditor"),loc=inventoryCountLocations.find(x=>String(x.location_id)===String(inventoryCountSelectedLocation));
