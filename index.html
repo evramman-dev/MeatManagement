@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v120</title>
+<title>MeatManagement v121</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -5397,6 +5397,7 @@ function inventoryCountRenderEditor(){
   const body=items.map(x=>{
    const conversions=x.conversions||[];
    const saved=Array.isArray(x.counted_units)?x.counted_units:[];
+   const isFixedCheese=Number(x.category_id)===27||String(x.product_code||"").startsWith("CH-");
    let actualInput="";
    if(conversions.length){
     const plates=conversions.map(cv=>{
@@ -5405,7 +5406,7 @@ function inventoryCountRenderEditor(){
       const oldTotal=old&&Number(old.quantity)>0?Number(old.quantity)*Number(old.package_weight_kg||0):"";
       return '<div class="inventory-count-dynamic" style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><label style="font-weight:normal;margin:4px 0">عدد '+inventoryCountEsc(cv.unit_name)+'<input class="inventory-count-dynamic-count" data-product="'+x.product_id+'" data-unit="'+cv.unit_id+'" type="number" min="0" step="1" value="'+(old?inventoryCountEsc(old.quantity):"")+'" '+(readOnly?"disabled":"")+' style="min-width:90px"></label><label style="font-weight:normal;margin:4px 0">إجمالي الوزن بالكيلو<input class="inventory-count-dynamic-weight" data-product="'+x.product_id+'" data-unit="'+cv.unit_id+'" type="number" min="0" step="0.001" value="'+(oldTotal===""?"":inventoryCountEsc(oldTotal))+'" '+(readOnly?"disabled":"")+' style="min-width:90px"></label></div>';
      }
-     const countLabel=Number(x.category_id)===27?'عدد العبوات':inventoryCountEsc(cv.unit_name);
+     const countLabel=isFixedCheese?'عدد العبوات':inventoryCountEsc(cv.unit_name);
      return '<label style="font-weight:normal;margin:4px 0">'+countLabel+'<input class="inventory-count-plate" data-product="'+x.product_id+'" data-unit="'+cv.unit_id+'" data-factor="'+cv.base_quantity_per_unit+'" type="number" min="0" step="1" value="'+(old?inventoryCountEsc(old.quantity):"")+'" '+(readOnly?"disabled":"")+' style="min-width:90px"></label>';
     }).join("");
     const looseCategories=[20,26,27,28,29];
@@ -5413,7 +5414,7 @@ function inventoryCountRenderEditor(){
     const showLoose=!looseCategories.includes(Number(x.category_id||0))&&!finishedSealedProducts.includes(Number(x.product_id||0));
     const looseLabel=Number(x.category_id)===25?'كمية متبقية خارج العبوات (كيلوجرام)':'كمية متبقية خارج العبوات ('+inventoryCountEsc(unitName(x.unit_id))+')';
     const looseInput=showLoose?'<label style="font-weight:normal;margin:4px 0">'+looseLabel+'<input class="inventory-count-loose" data-product="'+x.product_id+'" type="number" min="0" step="0.001" value="'+(x.counted_loose_quantity==null?"":inventoryCountEsc(x.counted_loose_quantity))+'" '+(readOnly?"disabled":"")+' style="min-width:90px"></label>':"";
-    actualInput='<div class="inventory-count-units">'+plates+looseInput+'<div class="details">إجمالي الكمية: <strong class="inventory-count-live-total" data-product="'+x.product_id+'" data-unit="'+inventoryCountEsc(unitName(x.unit_id))+'" data-default-zero="'+(Number(x.category_id)===27?'1':'0')+'">'+(x.counted_quantity==null?(Number(x.category_id)===27?'0 '+inventoryCountEsc(unitName(x.unit_id)):'—'):inventoryCountQty(x.counted_quantity)+" "+inventoryCountEsc(unitName(x.unit_id)))+'</strong></div></div>';
+    actualInput='<div class="inventory-count-units">'+plates+looseInput+'<div class="details">إجمالي الكمية: <strong class="inventory-count-live-total" data-product="'+x.product_id+'" data-unit="'+inventoryCountEsc(unitName(x.unit_id))+'" data-default-zero="'+(isFixedCheese?'1':'0')+'">'+(x.counted_quantity==null?(isFixedCheese?'0 '+inventoryCountEsc(unitName(x.unit_id)):'—'):inventoryCountQty(x.counted_quantity)+" "+inventoryCountEsc(unitName(x.unit_id)))+'</strong></div></div>';
    }else{
     actualInput='<input class="inventory-count-qty" data-product="'+x.product_id+'" type="number" min="0" step="0.001" value="'+(x.counted_quantity==null?"":inventoryCountEsc(x.counted_quantity))+'" '+(readOnly?"disabled":"")+' style="min-width:95px;width:110px">';
    }
