@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v109</title>
+<title>MeatManagement v110</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -561,9 +561,9 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <h2>🗂️ مركز البيانات</h2>
 <p class="desc">اختر القسم الذي تريد الدخول إليه.</p>
 <div class="dashboard-group">
-<div class="dashboard-title">المنتجات</div>
+<div class="dashboard-title">إدارة المنتجات</div>
 <div class="dashboard-grid">
-<div class="dash-item hidden" id="menuProducts" onclick="window.openSection('products')"><div class="dash-icon">📦</div><div class="dash-title">المنتجات</div></div>
+<div class="dash-item hidden" id="menuProducts" onclick="window.openSection('products')"><div class="dash-icon">📦</div><div class="dash-title">إدارة المنتجات</div></div>
 <div class="dash-item hidden" id="menuStockSummary" onclick="window.openSection('stockSummary')"><div class="dash-icon">📋</div><div class="dash-title">ملخص أرصدة الأصناف</div></div>
 <div class="dash-item hidden" id="menuProductionDailySummary" onclick="window.openSection('productionDailySummary')"><div class="dash-icon">📅</div><div class="dash-title">ملخص الإنتاج اليومي</div></div>
 </div>
@@ -1813,16 +1813,38 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 <div id="sectionProducts" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">رجوع للقائمة</button>
 <div class="card product-hub">
-<div class="row" style="justify-content:space-between"><div><h2 style="margin:0">إدارة المنتجات</h2><div class="details">اختر القسم للوصول إلى الأصناف ومراجعة بياناتها</div></div><button id="addBtn" class="btn hidden" type="button" onclick="window.openNewProductForm()">＋ إضافة صنف</button></div>
-<div class="row product-tools"><input id="search" type="search" placeholder="ابحث باسم الصنف أو الكود أو الباركود"><button id="refreshBtn" class="btn secondary" type="button">تحديث</button></div>
-<div class="row product-filters"><button type="button" class="btn product-filter active" data-product-filter="ALL">كل الأصناف</button><button type="button" class="btn product-filter secondary" data-product-filter="RAW">الخامات</button><button type="button" class="btn product-filter secondary" data-product-filter="SEMI_FINISHED">نصف مصنع</button><button type="button" class="btn product-filter secondary" data-product-filter="FINISHED">منتجات تامة</button><button type="button" class="btn product-filter secondary" data-product-filter="SPICES">التوابل ومكونات الوصفات</button></div>
-<div class="row"><select id="productCategoryFilter" aria-label="فلترة حسب التصنيف"><option value="">كل التصنيفات</option></select><select id="productStatusFilter" aria-label="حالة الصنف"><option value="">كل الحالات</option><option value="active">نشط</option><option value="inactive">موقوف</option></select><span id="productCount" class="details">0 صنف</span></div>
+<div class="row" style="justify-content:space-between"><div><h2 style="margin:0">إدارة المنتجات</h2><div class="details">اختر نوع الأصناف لفتح شاشة الإدارة الخاصة به</div></div><button id="addBtn" class="btn hidden" type="button" onclick="window.openNewProductForm()">إضافة صنف</button></div>
+<div class="dashboard-grid" style="margin-top:16px">
+<button type="button" class="dash-item" onclick="window.openRawMaterialsMenu()"><span class="dash-icon">🥩</span><span class="dash-title">خامات</span></button>
+<button type="button" class="dash-item" onclick="window.openProductList('SPICES','توابل ومكونات الوصفات')"><span class="dash-icon">🌶️</span><span class="dash-title">توابل ومكونات الوصفات</span></button>
+<button type="button" class="dash-item" onclick="window.openProductList('SEMI_FINISHED','منتجات نصف مصنعة')"><span class="dash-icon">⚙️</span><span class="dash-title">منتجات نصف مصنعة</span></button>
+<button type="button" class="dash-item" onclick="window.openProductList('PACKAGING','خامات التشغيل')"><span class="dash-icon">🏷️</span><span class="dash-title">خامات التشغيل</span></button>
+<button type="button" class="dash-item" onclick="window.openProductList('FINISHED','المنتجات التامة')"><span class="dash-icon">📦</span><span class="dash-title">المنتجات التامة</span></button>
+</div>
+</div>
+</div>
+<div id="rawSubcategoryModal" class="modal-form" style="z-index:900" onclick="if(event.target===this)window.closeRawMaterialsMenu()">
+<div class="modal-form-content">
+<div class="modal-header"><h3>الخامات</h3><button class="close-btn" type="button" onclick="window.closeRawMaterialsMenu()">×</button></div>
+<div class="modal-body">
+<p class="details">اختر نوع الخامات</p>
+<div class="dashboard-grid">
+<button type="button" class="dash-item" onclick="window.openProductList('RAW_MEAT','اللحوم')"><span class="dash-icon">🥩</span><span class="dash-title">لحوم</span></button>
+<button type="button" class="dash-item" onclick="window.openProductList('RAW_POULTRY','الدواجن')"><span class="dash-icon">🍗</span><span class="dash-title">دواجن</span></button>
+<button type="button" class="dash-item" onclick="window.openProductList('RAW_OTHER','خامات أخرى')"><span class="dash-icon">📦</span><span class="dash-title">خامات أخرى</span></button>
+</div>
+</div></div></div>
+<div id="productListModal" class="modal-form" style="z-index:910" onclick="if(event.target===this)window.closeProductList()">
+<div class="modal-form-content">
+<div class="modal-header"><h3 id="productListTitle">إدارة الأصناف</h3><button class="close-btn" type="button" onclick="window.closeProductList()">×</button></div>
+<div class="modal-body">
+<div class="row product-tools"><input id="search" type="search" placeholder="ابحث بالاسم أو الكود أو الباركود"><button id="refreshBtn" class="btn secondary" type="button">تحديث</button></div>
+<div class="row" style="margin-top:12px"><select id="productCategoryFilter" aria-label="فلترة حسب التصنيف"><option value="">كل التصنيفات</option></select><select id="productStatusFilter" aria-label="حالة الصنف"><option value="">كل الحالات</option><option value="active">نشط</option><option value="inactive">موقوف</option></select><span id="productCount" class="details">0 صنف</span></div>
 <div id="listMsg" class="status hidden"></div>
 <div id="products"><div class="empty">جارٍ تحميل المنتجات...</div></div>
-</div>
-</div>
+</div></div></div>
 <div id="sectionPackaging" class="sub-section hidden">
 <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">رجوع للقائمة</button>
 <div class="card">
@@ -3554,10 +3576,35 @@ let activeProductSection="ALL";
 function isSpiceProduct(p){
   const code=String(p.product_code||"").toUpperCase();
   const name=String(p.product_name||"").trim();
-  const known=["ملح","كمون","فلفل أسود","جوزة الطيب","نشا","بيكنج بودر","توابل كفتة","توابل سجق","توابل برجر","قرفة","ثوم بودر","بصل بودر","بصل أبيض","بصل أحمر"];
+  const known=["ملح","كمون","فلفل أسود","جوزة الطيب","نشا","بيكنج بودر","توابل كفتة","توابل سجق","توابل برجر","قرفة","ثوم بودر","بصل بودر"];
   return p.product_type==="RAW" && (code.startsWith("SP-") || known.includes(name));
 }
-function productSectionOf(p){return isSpiceProduct(p)?"SPICES":(p.product_type||"OTHER");}
+function productSectionOf(p){
+  const categoryId=Number(p.category_id||0);
+  if(categoryId===16)return "PACKAGING";
+  if(isSpiceProduct(p)||categoryId===22)return "SPICES";
+  if(p.product_type==="SEMI_FINISHED")return "SEMI_FINISHED";
+  if(p.product_type==="FINISHED")return "FINISHED";
+  if(p.product_type==="RAW"){
+    if(categoryId===19)return "RAW_MEAT";
+    if(categoryId===20)return "RAW_POULTRY";
+    return "RAW_OTHER";
+  }
+  return p.product_type||"OTHER";
+}
+window.openRawMaterialsMenu=function(){const m=$("rawSubcategoryModal");if(m)m.classList.add("active");};
+window.closeRawMaterialsMenu=function(){const m=$("rawSubcategoryModal");if(m)m.classList.remove("active");};
+window.openProductList=function(section,title){
+  activeProductSection=section;
+  const heading=$("productListTitle");if(heading)heading.textContent=title||"إدارة الأصناف";
+  const modal=$("productListModal");if(modal)modal.classList.add("active");
+  window.closeRawMaterialsMenu();
+  if($("search"))$("search").value="";
+  if($("productCategoryFilter"))$("productCategoryFilter").value="";
+  if($("productStatusFilter"))$("productStatusFilter").value="";
+  renderProducts();
+};
+window.closeProductList=function(){const m=$("productListModal");if(m)m.classList.remove("active");};
 function setupProductFilters(){
   const categorySelect=$("productCategoryFilter");
   if(categorySelect && categorySelect.options.length<=1){
@@ -3589,7 +3636,7 @@ function renderProducts(){
   const status=$("productStatusFilter")?.value||"";
   const matched=productsCache.filter(p=>{
     const textMatch=[p.product_name,p.product_code,p.barcode].some(v=>String(v||"").toLowerCase().includes(q));
-    const sectionMatch=activeProductSection==="ALL"||productSectionOf(p)===activeProductSection;
+    const sectionMatch=productSectionOf(p)===activeProductSection;
     const catMatch=!cat||String(p.category_id)===cat;
     const statusMatch=!status||(status==="active"?p.is_active===true:p.is_active===false);
     return textMatch&&sectionMatch&&catMatch&&statusMatch;
@@ -3598,9 +3645,12 @@ function renderProducts(){
   if(!matched.length){box.innerHTML='<div class="empty">لا توجد أصناف تطابق البحث والفلاتر الحالية.</div>';return;}
   const esc=v=>String(v??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
   const sections=[
-    {id:"RAW",title:"الخامات",desc:"اللحوم والدواجن والخامات الأخرى"},
-    {id:"SPICES",title:"التوابل ومكونات الوصفات",desc:"تظهر هنا لسهولة الوصول وتظل مسجلة كخامات في النظام"},
-    {id:"SEMI_FINISHED",title:"المنتجات نصف المصنعة",desc:"العجائن ومخرجات التشغيل نصف المصنع"},
+    {id:"RAW_MEAT",title:"اللحوم",desc:"الخامات المصنفة لحوم"},
+    {id:"RAW_POULTRY",title:"الدواجن",desc:"الخامات المصنفة دواجن"},
+    {id:"RAW_OTHER",title:"خامات أخرى",desc:"باقي الخامات"},
+    {id:"SPICES",title:"التوابل ومكونات الوصفات",desc:"توابل ومكونات الوصفات"},
+    {id:"SEMI_FINISHED",title:"المنتجات نصف المصنعة",desc:"مخرجات التشغيل نصف المصنع"},
+    {id:"PACKAGING",title:"خامات التشغيل",desc:"مواد التعبئة والتغليف والاستيكرات"},
     {id:"FINISHED",title:"المنتجات التامة",desc:"الأصناف الجاهزة للبيع والتوزيع"}
   ];
   const visibleSections=sections.filter(sec=>matched.some(p=>productSectionOf(p)===sec.id));
@@ -3613,13 +3663,14 @@ function renderProducts(){
     items.forEach(p=>{
       const card=document.createElement("div");card.className="product";
       const category=categories.find(c=>String(c.category_id)===String(p.category_id))?.category_name||"غير محدد";
+      const operatingTypeDetails=productSectionOf(p)==="PACKAGING"?'<div class="details">النوع: '+esc(unitName(p.base_unit_id))+'</div>':"";
       const unitDetails='الوحدات: مخزون '+esc(unitName(p.base_unit_id))+' | شراء '+esc(unitName(p.purchase_unit_id))+' | بيع '+esc(unitName(p.sales_unit_id));
       const hasPrices=[p.min_selling_price,p.target_selling_price,p.max_selling_price].some(v=>v!==null&&v!==undefined&&v!=="");
       const priceDetails=hasPrices?'<div class="details">أسعار البيع — أدنى: '+(p.min_selling_price==null?"—":esc(fmt(p.min_selling_price)))+' | مستهدف: '+(p.target_selling_price==null?"—":esc(fmt(p.target_selling_price)))+' | أقصى: '+(p.max_selling_price==null?"—":esc(fmt(p.max_selling_price)))+'</div>':"";
       const uses=[["can_be_purchased","شراء"],["can_be_produced","إنتاج"],["can_be_sold","بيع"],["can_be_loaded","تحميل"]].filter(([key])=>p[key]).map(([,label])=>label);
       const statusBadge=p.is_active?'<span class="badge badge-paid">نشط</span>':'<span class="badge badge-cancel">موقوف</span>';
       const usageBadges=uses.length?uses.map(label=>'<span class="badge">'+label+'</span>').join(""):'<span class="badge">لا توجد استخدامات مفعلة</span>';
-      card.innerHTML='<div class="pname">'+esc(p.product_name)+'</div><div class="details">الكود: '+esc(p.product_code||"—")+' | التصنيف: '+esc(category)+(p.barcode?' | الباركود: '+esc(p.barcode):"")+'</div><div class="details">'+unitDetails+(p.units_per_carton?' | عدد الوحدات بالكرتونة: '+esc(fmtQty(p.units_per_carton)):"")+(p.shelf_life_months?' | صلاحية الإنتاج: '+esc(p.shelf_life_months)+' شهر':(p.shelf_life_days?' | صلاحية الإنتاج: '+esc(p.shelf_life_days)+' يوم':""))+'</div><div class="details">حد إعادة الطلب: '+(p.minimum_stock==null?"—":esc(fmtQty(p.minimum_stock)))+'</div>'+priceDetails+'<div>'+statusBadge+usageBadges+'</div>';
+      card.innerHTML='<div class="pname">'+esc(p.product_name)+'</div><div class="details">الكود: '+esc(p.product_code||"—")+' | التصنيف: '+esc(category)+(p.barcode?' | الباركود: '+esc(p.barcode):"")+'</div>'+operatingTypeDetails+'<div class="details">'+unitDetails+(p.units_per_carton?' | عدد الوحدات بالكرتونة: '+esc(fmtQty(p.units_per_carton)):"")+(p.shelf_life_months?' | صلاحية الإنتاج: '+esc(p.shelf_life_months)+' شهر':(p.shelf_life_days?' | صلاحية الإنتاج: '+esc(p.shelf_life_days)+' يوم':""))+'</div><div class="details">حد إعادة الطلب: '+(p.minimum_stock==null?"—":esc(fmtQty(p.minimum_stock)))+'</div>'+priceDetails+'<div>'+statusBadge+usageBadges+'</div>';
       if(canViewStock){const historyBtn=document.createElement("button");historyBtn.type="button";historyBtn.className="btn secondary";historyBtn.style.marginTop="10px";historyBtn.textContent="حركة الصنف / كارت الصنف";historyBtn.onclick=()=>viewProductStockMovements(p.product_id);card.appendChild(historyBtn);}
       if(canManage){const btn=document.createElement("button");btn.className="btn secondary";btn.textContent="تعديل بيانات الصنف";btn.onclick=()=>{
         $("editId").value=p.product_id;$("pname").value=p.product_name;$("pcode").value=p.product_code;$("barcode").value=p.barcode||"";$("ptype").value=p.product_type;$("category").value=p.category_id;$("baseUnit").value=String(p.base_unit_id||"");$("purchaseUnit").value=String(p.purchase_unit_id||"");$("salesUnit").value=String(p.sales_unit_id||"");$("minStock").value=p.minimum_stock;$("minPrice").value=p.min_selling_price||"";$("targetPrice").value=p.target_selling_price||"";$("maxPrice").value=p.max_selling_price||"";$("unitsCarton").value=p.units_per_carton||"";$("shelfLifeMonths").value=p.shelf_life_months||"";$("active").checked=p.is_active;$("canPurchase").checked=p.can_be_purchased;$("canProduce").checked=p.can_be_produced;$("canSell").checked=p.can_be_sold;$("canLoad").checked=p.can_be_loaded;$("formTitle").textContent="تعديل الصنف";if($("formMsg"))clear($("formMsg"));$("productFormModal").classList.add("active");
