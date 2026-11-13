@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v121</title>
+<title>MeatManagement v122</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -5411,12 +5411,14 @@ function inventoryCountRenderEditor(){
     }).join("");
     const looseCategories=[20,26,27,28,29];
     const finishedSealedProducts=[45,46,47,48,53,54,55,62,63,64];
-    const showLoose=!looseCategories.includes(Number(x.category_id||0))&&!finishedSealedProducts.includes(Number(x.product_id||0));
+    const isFinishedSealed=x.product_type==="FINISHED"||finishedSealedProducts.includes(Number(x.product_id||0));
+    const showLoose=!looseCategories.includes(Number(x.category_id||0))&&!isFinishedSealed;
     const looseLabel=Number(x.category_id)===25?'كمية متبقية خارج العبوات (كيلوجرام)':'كمية متبقية خارج العبوات ('+inventoryCountEsc(unitName(x.unit_id))+')';
     const looseInput=showLoose?'<label style="font-weight:normal;margin:4px 0">'+looseLabel+'<input class="inventory-count-loose" data-product="'+x.product_id+'" type="number" min="0" step="0.001" value="'+(x.counted_loose_quantity==null?"":inventoryCountEsc(x.counted_loose_quantity))+'" '+(readOnly?"disabled":"")+' style="min-width:90px"></label>':"";
-    actualInput='<div class="inventory-count-units">'+plates+looseInput+'<div class="details">إجمالي الكمية: <strong class="inventory-count-live-total" data-product="'+x.product_id+'" data-unit="'+inventoryCountEsc(unitName(x.unit_id))+'" data-default-zero="'+(isFixedCheese?'1':'0')+'">'+(x.counted_quantity==null?(isFixedCheese?'0 '+inventoryCountEsc(unitName(x.unit_id)):'—'):inventoryCountQty(x.counted_quantity)+" "+inventoryCountEsc(unitName(x.unit_id)))+'</strong></div></div>';
+    actualInput='<div class="inventory-count-units">'+plates+looseInput+'<div class="details">إجمالي الكمية: <strong class="inventory-count-live-total" data-product="'+x.product_id+'" data-unit="'+inventoryCountEsc(unitName(x.unit_id))+'" data-default-zero="0">'+(x.counted_quantity==null?"—":inventoryCountQty(x.counted_quantity)+" "+inventoryCountEsc(unitName(x.unit_id)))+'</strong></div></div>';
    }else{
-    actualInput='<input class="inventory-count-qty" data-product="'+x.product_id+'" type="number" min="0" step="0.001" value="'+(x.counted_quantity==null?"":inventoryCountEsc(x.counted_quantity))+'" '+(readOnly?"disabled":"")+' style="min-width:95px;width:110px">';
+    const genericValue=x.counted_quantity==null?"":inventoryCountEsc(x.counted_quantity);
+    actualInput='<div class="inventory-count-units"><input class="inventory-count-qty" data-product="'+x.product_id+'" type="number" min="0" step="0.001" value="'+genericValue+'" '+(readOnly?"disabled":"")+' style="min-width:95px;width:110px"><div class="details">إجمالي الكمية: <strong class="inventory-count-live-total" data-product="'+x.product_id+'" data-unit="'+inventoryCountEsc(unitName(x.unit_id))+'" data-default-zero="0">'+(x.counted_quantity==null?"—":inventoryCountQty(x.counted_quantity)+" "+inventoryCountEsc(unitName(x.unit_id)))+'</strong></div></div>';
    }
    const unitLabel=inventoryCountEsc(unitName(x.unit_id));
    return '<tr><td>'+inventoryCountEsc(x.product_name)+'<div class="details">'+inventoryCountEsc(x.product_code||"")+'</div></td><td>'+unitLabel+'</td><td>'+inventoryCountQty(x.system_quantity)+'</td><td>'+inventoryCountMoney(x.system_value)+'</td><td>'+actualInput+'</td><td>'+(x.counted_value==null?"—":inventoryCountMoney(x.counted_value))+'</td><td>'+(x.difference_quantity==null?"—":inventoryCountQty(x.difference_quantity))+'</td><td>'+(x.difference_value==null?"—":inventoryCountMoney(x.difference_value))+'</td></tr>';
@@ -5429,12 +5431,14 @@ function inventoryCountRenderEditor(){
    const pid=out.dataset.product;let kg=0,has=out.dataset.defaultZero==="1";
    host.querySelectorAll('.inventory-count-plate[data-product="'+pid+'"]').forEach(i=>{if(i.value.trim()!==""){has=true;kg+=Number(i.value||0)*Number(i.dataset.factor||0);}});
    host.querySelectorAll('.inventory-count-dynamic-weight[data-product="'+pid+'"]').forEach(i=>{if(i.value.trim()!==""){has=true;kg+=Number(i.value||0);}});
+   const direct=host.querySelector('.inventory-count-qty[data-product="'+pid+'"]');
+   if(direct&&direct.value.trim()!==""){has=true;kg+=Number(direct.value||0);}
    const loose=host.querySelector('.inventory-count-loose[data-product="'+pid+'"]');
    if(loose&&loose.value.trim()!==""){has=true;kg+=Number(loose.value||0);}
    out.textContent=has?inventoryCountQty(kg)+" "+out.dataset.unit:"—";
   });
  };
- host.querySelectorAll(".inventory-count-plate,.inventory-count-loose,.inventory-count-dynamic-count,.inventory-count-dynamic-weight").forEach(i=>i.addEventListener("input",updateTotals));
+ host.querySelectorAll(".inventory-count-plate,.inventory-count-loose,.inventory-count-qty,.inventory-count-dynamic-count,.inventory-count-dynamic-weight").forEach(i=>i.addEventListener("input",updateTotals));
 }
 async function inventoryCountSaveCurrent(){
  if(!inventoryCountCanEdit)throw new Error("ليس لديك صلاحية تسجيل الجرد");
