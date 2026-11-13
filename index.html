@@ -5407,7 +5407,10 @@ function inventoryCountRenderEditor(){
      }
      return '<label style="font-weight:normal;margin:4px 0">'+inventoryCountEsc(cv.unit_name)+'<input class="inventory-count-plate" data-product="'+x.product_id+'" data-unit="'+cv.unit_id+'" data-factor="'+cv.base_quantity_per_unit+'" type="number" min="0" step="1" value="'+(old?inventoryCountEsc(old.quantity):"")+'" '+(readOnly?"disabled":"")+' style="min-width:90px"></label>';
     }).join("");
-    actualInput='<div class="inventory-count-units">'+plates+'<label style="font-weight:normal;margin:4px 0">كمية متبقية خارج العبوات ('+inventoryCountEsc(unitName(x.unit_id))+')<input class="inventory-count-loose" data-product="'+x.product_id+'" type="number" min="0" step="0.001" value="'+(x.counted_loose_quantity==null?"":inventoryCountEsc(x.counted_loose_quantity))+'" '+(readOnly?"disabled":"")+' style="min-width:90px"></label><div class="details">إجمالي الكمية: <strong class="inventory-count-live-total" data-product="'+x.product_id+'" data-unit="'+inventoryCountEsc(unitName(x.unit_id))+'">'+(x.counted_quantity==null?"—":inventoryCountQty(x.counted_quantity)+" "+inventoryCountEsc(unitName(x.unit_id)))+'</strong></div></div>';
+    const looseCategories=[20,25,26,27,28,29];
+    const showLoose=!looseCategories.includes(Number(x.category_id||0));
+    const looseInput=showLoose?'<label style="font-weight:normal;margin:4px 0">كمية متبقية خارج العبوات ('+inventoryCountEsc(unitName(x.unit_id))+')<input class="inventory-count-loose" data-product="'+x.product_id+'" type="number" min="0" step="0.001" value="'+(x.counted_loose_quantity==null?"":inventoryCountEsc(x.counted_loose_quantity))+'" '+(readOnly?"disabled":"")+' style="min-width:90px"></label>':"";
+    actualInput='<div class="inventory-count-units">'+plates+looseInput+'<div class="details">إجمالي الكمية: <strong class="inventory-count-live-total" data-product="'+x.product_id+'" data-unit="'+inventoryCountEsc(unitName(x.unit_id))+'">'+(x.counted_quantity==null?"—":inventoryCountQty(x.counted_quantity)+" "+inventoryCountEsc(unitName(x.unit_id)))+'</strong></div></div>';
    }else{
     actualInput='<input class="inventory-count-qty" data-product="'+x.product_id+'" type="number" min="0" step="0.001" value="'+(x.counted_quantity==null?"":inventoryCountEsc(x.counted_quantity))+'" '+(readOnly?"disabled":"")+' style="min-width:95px;width:110px">';
    }
@@ -5416,7 +5419,7 @@ function inventoryCountRenderEditor(){
   }).join("");
   return '<section class="inventory-report-section"><h3>'+inventoryCountEsc(group)+' ('+items.length+' صنف)</h3><div class="table-responsive"><table class="print-table"><thead><tr><th>الصنف</th><th>وحدة المخزون</th><th>رصيد النظام</th><th>قيمة النظام</th><th>الجرد الفعلي</th><th>قيمة الجرد</th><th>فرق الكمية</th><th>فرق القيمة</th></tr></thead><tbody>'+body+'</tbody></table></div></section>';
  }).join("");
- host.innerHTML='<div class="info">أدخل عدد العبوات أو القطع. عند اختلاف الأوزان، أدخل إجمالي وزنها بالكيلو. أدخل الكمية المتبقية خارج العبوات إذا وجدت.</div>'+sections;
+ host.innerHTML='<div class="info">أدخل عدد العبوات أو القطع. عند اختلاف الأوزان، أدخل إجمالي وزنها بالكيلو. تظهر خانة الكمية السائبة للأصناف التي تسمح بطبيعتها بوجود كمية منفصلة فقط.</div>'+sections;
  const updateTotals=()=>{
   host.querySelectorAll(".inventory-count-live-total").forEach(out=>{
    const pid=out.dataset.product;let kg=0,has=false;
