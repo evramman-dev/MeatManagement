@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v116</title>
+<title>MeatManagement v117</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -5786,6 +5786,7 @@ function addInvoiceItemRow() {
     op.dataset.minPrice = p.min_selling_price != null ? String(p.min_selling_price) : ""; 
     op.dataset.maxPrice = p.max_selling_price != null ? String(p.max_selling_price) : ""; 
     op.dataset.baseUnit=String(p.base_unit_id||""); 
+    op.dataset.salesUnit=String(p.sales_unit_id||""); 
     op.dataset.unitsCarton=String(p.units_per_carton||""); 
     prodSel.appendChild(op); 
   });
@@ -5805,11 +5806,15 @@ function addInvoiceItemRow() {
   const hintDiv = document.createElement("div"); hintDiv.className = "price-hint"; 
   const errDiv = document.createElement("div"); errDiv.className = "error-text";
   grid3.append(unitWrap,qtyWrap,priceWrap);
+  const weightWrap=document.createElement("div");weightWrap.className="dynamic-weight-wrap";weightWrap.hidden=true;
+  const weightLabel=document.createElement("label");weightLabel.textContent="إجمالي الوزن الفعلي بالكيلو";
+  const weightTotal=document.createElement("input");weightTotal.type="number";weightTotal.className="item-actual-weight";weightTotal.min="0.0001";weightTotal.step="0.0001";weightTotal.placeholder="وزن كل العبوات أو القطع";
+  weightWrap.append(weightLabel,weightTotal);
   const lineTotal=document.createElement("div"); lineTotal.className="item-line-total"; lineTotal.textContent="الإجمالي: 0";
   const stockHint=document.createElement("div"); stockHint.className="item-hint"; stockHint.textContent="";
   const removeBtn=document.createElement("button"); removeBtn.type="button"; removeBtn.className="btn danger"; removeBtn.textContent="حذف الصنف";
   removeBtn.addEventListener("click",()=>{ wrap.remove();updateInvoiceTotals(); if(!$("invoiceItems").children.length)addInvoiceItemRow(); });
-  wrap.append(prodLabel,scanBtn,barcodeInput,prodSel,grid3,hintDiv,errDiv,lineTotal,stockHint,removeBtn); 
+  wrap.append(prodLabel,scanBtn,barcodeInput,prodSel,grid3,weightWrap,hintDiv,errDiv,lineTotal,stockHint,removeBtn); 
   $("invoiceItems").appendChild(wrap);
   const recalc=()=>{ 
     const q=Number(qty.value||0); 
@@ -5829,8 +5834,11 @@ function addInvoiceItemRow() {
     } 
     const unitId=Number(unitSel.value||0); 
     const baseUnitId=Number(opt?.dataset?.baseUnit||0); 
-    const unitsCarton=Number(opt?.dataset?.unitsCarton||0); 
-    if(unitId&&baseUnitId&&q>0){ 
+    const unitsCarton=Number(opt?.dataset?.unitsCarton||0);
+    const actualWeight=Number(weightTotal.value||0);
+    weightWrap.hidden=!(unitId&&baseUnitId==="1"&&unitId!==1);
+    if(actualWeight>0&&q>0){stockHint.textContent="يخصم من المخزون: "+fmtQty(actualWeight)+" كجم";}
+    else if(unitId&&baseUnitId&&q>0){ 
       if(unitId===baseUnitId){ stockHint.textContent="يخصم من المخزون: "+fmtQty(q)+" "+unitName(baseUnitId); } 
       else if(unitId===cartonUnitId&&unitsCarton>0){ 
         const baseQty=q*unitsCarton; 
@@ -5842,13 +5850,17 @@ function addInvoiceItemRow() {
   wrap._recalculateInvoiceLine=recalc;
   const populateUnits=()=>{ 
     const opt=prodSel.selectedOptions[0]; 
-    const baseUnitId=opt?.dataset?.baseUnit||""; 
+    const baseUnitId=opt?.dataset?.baseUnit||"";
+    const salesUnitId=opt?.dataset?.salesUnit||"";
     const unitsCarton=Number(opt?.dataset?.unitsCarton||0); 
     hintDiv.textContent = "سيتم جلب السعر من قائمة العميل المعتمدة بعد اختيار الوحدة."; 
     unitSel.replaceChildren(); 
     const firstU=document.createElement("option");firstU.value="";firstU.textContent="اختر الوحدة";unitSel.appendChild(firstU); 
-    if(baseUnitId){ 
-      const op=document.createElement("option");op.value=baseUnitId;op.textContent=unitName(baseUnitId);unitSel.appendChild(op); 
+    if(baseUnitId){
+      const op=document.createElement("option");op.value=baseUnitId;op.textContent=unitName(baseUnitId);unitSel.appendChild(op);
+    }
+    if(salesUnitId&&salesUnitId!==baseUnitId){
+      const salesOp=document.createElement("option");salesOp.value=salesUnitId;salesOp.textContent=unitName(salesUnitId);unitSel.appendChild(salesOp);
     } 
     if(unitsCarton>0&&cartonUnitId){ 
       const op=document.createElement("option");op.value=String(cartonUnitId);op.textContent="كرتونة ("+unitsCarton+")";unitSel.appendChild(op); 
@@ -5859,8 +5871,9 @@ function addInvoiceItemRow() {
   };
   prodSel.addEventListener("change",()=>{ price.value=""; populateUnits(); applyCustomerPriceToRow(wrap); }); 
   unitSel.addEventListener("change",()=>{ addPackageSelectToRow(wrap,prodSel.value,unitSel.value); applyCustomerPriceToRow(wrap); recalc(); }); 
-  qty.addEventListener("input",recalc); 
-  price.addEventListener("input",recalc); 
+  qty.addEventListener("input",recalc);
+  weightTotal.addEventListener("input",recalc);
+  price.addEventListener("input",recalc);
   populateUnits();
 }
 
@@ -6069,7 +6082,12 @@ if($("invoiceForm")) $("invoiceForm").addEventListener("submit", async e => {
     const minAllowed=Number(row.dataset.minimumPrice||0); 
     const maxAllowed=row.dataset.maximumPrice?Number(row.dataset.maximumPrice):Infinity; 
     if(!pId || !uId || qty<=0 || price<=0 || price<minAllowed-0.000001 || price>maxAllowed+0.000001) valid = false; 
-    else items.push({ product_id: Number(pId), sale_unit_id: Number(uId), quantity: qty, unit_price: price, package_option_id: row.querySelector(".item-package-option")?.value ? Number(row.querySelector(".item-package-option").value) : null }); 
+    else {
+      const actualWeight=Number(row.querySelector(".item-actual-weight")?.value||0);
+      items.push({product_id:Number(pId),sale_unit_id:Number(uId),quantity:qty,unit_price:price,
+        package_option_id:actualWeight>0?null:(row.querySelector(".item-package-option")?.value?Number(row.querySelector(".item-package-option").value):null),
+        package_weight_kg:actualWeight>0?actualWeight/qty:null});
+    } 
   });
   if(!items.length || !valid) { msg($("invoiceFormMsg"), "أكمل بيانات الأصناف، وأدخل سعرًا داخل الحدين المعتمدين للمنتج والقائمة.", "error"); return; }
   let subTotal = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
@@ -6203,6 +6221,10 @@ function addPurchaseItemRow() {
   const price=document.createElement("input"); price.type="number"; price.className="item-price"; price.min="0"; price.step="0.01"; price.required=true; 
   priceWrap.append(priceLabel,price);
   grid3.append(unitWrap,qtyWrap,priceWrap);
+  const weightWrap=document.createElement("div");weightWrap.className="dynamic-weight-wrap";weightWrap.hidden=true;
+  const weightLabel=document.createElement("label");weightLabel.textContent="إجمالي الوزن الفعلي بالكيلو";
+  const weightTotal=document.createElement("input");weightTotal.type="number";weightTotal.className="item-actual-weight";weightTotal.min="0.0001";weightTotal.step="0.0001";weightTotal.placeholder="وزن كل العبوات أو القطع";
+  weightWrap.append(weightLabel,weightTotal);
   const lotGrid=document.createElement("div");lotGrid.className="grid3";
   const supplierLotWrap=document.createElement("div");
   const supplierLotLabel=document.createElement("label");supplierLotLabel.textContent="رقم تشغيلة المورد";
@@ -6221,7 +6243,7 @@ function addPurchaseItemRow() {
   const hint=document.createElement("div"); hint.className="item-hint"; hint.textContent="";
   const removeBtn=document.createElement("button"); removeBtn.type="button"; removeBtn.className="btn danger"; removeBtn.textContent="حذف الصنف"; 
   removeBtn.addEventListener("click",()=>{ wrap.remove();updatePurchaseTotals(); if(!$("purchaseItems").children.length)addPurchaseItemRow(); });
-  wrap.append(prodLabel,scanBtn,barcodeInput,prodSel,grid3,lotGrid,lineTotal,hint,removeBtn); 
+  wrap.append(prodLabel,scanBtn,barcodeInput,prodSel,grid3,weightWrap,lotGrid,lineTotal,hint,removeBtn); 
   $("purchaseItems").appendChild(wrap);
   const recalc=()=>{ 
     const q=Number(qty.value||0);
@@ -6233,7 +6255,10 @@ function addPurchaseItemRow() {
     const baseUnitId=Number(opt?.dataset?.baseUnit||0);
     const purchaseUnitId=Number(opt?.dataset?.purchaseUnit||0);
     const unitsCarton=Number(opt?.dataset?.unitsCarton||0);
-    if(unitId&&baseUnitId&&q>0){
+    const actualWeight=Number(weightTotal.value||0);
+    weightWrap.hidden=!(unitId&&baseUnitId===1&&unitId!==1);
+    if(actualWeight>0&&q>0){hint.textContent="يدخل: "+fmtQty(actualWeight)+" كجم";}
+    else if(unitId&&baseUnitId&&q>0){
       const inputUnit=units.find(x=>Number(x.unit_id)===unitId);
       const baseUnit=units.find(x=>Number(x.unit_id)===baseUnitId);
       if(unitId===baseUnitId){
@@ -6435,7 +6460,10 @@ if($("purchaseForm")) $("purchaseForm").addEventListener("submit", async e => {
       const isPackaging=String(prodSel?.selectedOptions?.[0]?.dataset?.categoryId||"")==="16";
       if(!isPackaging&&(!manufacturedOn||!expiresOn)){valid=false;lotDatesValid=false;return;}
       if(manufacturedOn&&expiresOn&&expiresOn<manufacturedOn){valid=false;lotDatesValid=false;return;}
-      items.push({product_id:Number(productId),unit_id:unitId,quantity:qty,unit_price:price,supplier_lot_code:supplierLotCode,manufactured_on:manufacturedOn,expires_on:expiresOn}); 
+      const actualWeight=Number(row.querySelector(".item-actual-weight")?.value||0);
+      items.push({product_id:Number(productId),unit_id:unitId,quantity:qty,unit_price:price,
+        package_weight_kg:actualWeight>0?actualWeight/qty:null,
+        supplier_lot_code:supplierLotCode,manufactured_on:manufacturedOn,expires_on:expiresOn}); 
     });
     if(!items.length||!valid){ msg($("purchaseFormMsg"),lotDatesValid?"أكمل بيانات الأصناف وتأكد من صحة الكمية والسعر.":"يجب إدخال تاريخ الإنتاج وتاريخ الصلاحية لكل صنف، وتاريخ الصلاحية لا يسبق الإنتاج.","error");return; }
     const subtotal=items.reduce((sum,item)=>sum+Math.round((item.quantity*item.unit_price+Number.EPSILON)*100)/100,0);
