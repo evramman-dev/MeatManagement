@@ -5401,6 +5401,10 @@ function inventoryCountRenderEditor(){
    if(conversions.length){
     const plates=conversions.map(cv=>{
      const old=saved.find(z=>Number(z.unit_id)===Number(cv.unit_id));
+     if(cv.dynamic_weight){
+      const oldTotal=old&&Number(old.quantity)>0?Number(old.quantity)*Number(old.package_weight_kg||0):"";
+      return '<div class="inventory-count-dynamic" style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><label style="font-weight:normal;margin:4px 0">عدد '+inventoryCountEsc(cv.unit_name)+'<input class="inventory-count-dynamic-count" data-product="'+x.product_id+'" data-unit="'+cv.unit_id+'" type="number" min="0" step="1" value="'+(old?inventoryCountEsc(old.quantity):"")+'" '+(readOnly?"disabled":"")+' style="min-width:90px"></label><label style="font-weight:normal;margin:4px 0">إجمالي الوزن بالكيلو<input class="inventory-count-dynamic-weight" data-product="'+x.product_id+'" data-unit="'+cv.unit_id+'" type="number" min="0" step="0.001" value="'+(oldTotal===""?"":inventoryCountEsc(oldTotal))+'" '+(readOnly?"disabled":"")+' style="min-width:90px"></label></div>';
+     }
      return '<label style="font-weight:normal;margin:4px 0">'+inventoryCountEsc(cv.unit_name)+'<input class="inventory-count-plate" data-product="'+x.product_id+'" data-unit="'+cv.unit_id+'" data-factor="'+cv.base_quantity_per_unit+'" type="number" min="0" step="1" value="'+(old?inventoryCountEsc(old.quantity):"")+'" '+(readOnly?"disabled":"")+' style="min-width:90px"></label>';
     }).join("");
     actualInput='<div class="inventory-count-units">'+plates+'<label style="font-weight:normal;margin:4px 0">كمية متبقية خارج العبوات ('+inventoryCountEsc(unitName(x.unit_id))+')<input class="inventory-count-loose" data-product="'+x.product_id+'" type="number" min="0" step="0.001" value="'+(x.counted_loose_quantity==null?"":inventoryCountEsc(x.counted_loose_quantity))+'" '+(readOnly?"disabled":"")+' style="min-width:90px"></label><div class="details">إجمالي الكمية: <strong class="inventory-count-live-total" data-product="'+x.product_id+'" data-unit="'+inventoryCountEsc(unitName(x.unit_id))+'">'+(x.counted_quantity==null?"—":inventoryCountQty(x.counted_quantity)+" "+inventoryCountEsc(unitName(x.unit_id)))+'</strong></div></div>';
@@ -5412,17 +5416,18 @@ function inventoryCountRenderEditor(){
   }).join("");
   return '<section class="inventory-report-section"><h3>'+inventoryCountEsc(group)+' ('+items.length+' صنف)</h3><div class="table-responsive"><table class="print-table"><thead><tr><th>الصنف</th><th>وحدة المخزون</th><th>رصيد النظام</th><th>قيمة النظام</th><th>الجرد الفعلي</th><th>قيمة الجرد</th><th>فرق الكمية</th><th>فرق القيمة</th></tr></thead><tbody>'+body+'</tbody></table></div></section>';
  }).join("");
- host.innerHTML='<div class="info">أدخل عدد العبوات لكل حجم مسجل. النظام يحسب إجمالي الكمية بوحدة الصنف تلقائيًا. أدخل الكمية المتبقية خارج العبوات إذا وجدت.</div>'+sections;
+ host.innerHTML='<div class="info">أدخل عدد العبوات أو القطع. عند اختلاف الأوزان، أدخل إجمالي وزنها بالكيلو. أدخل الكمية المتبقية خارج العبوات إذا وجدت.</div>'+sections;
  const updateTotals=()=>{
   host.querySelectorAll(".inventory-count-live-total").forEach(out=>{
    const pid=out.dataset.product;let kg=0,has=false;
    host.querySelectorAll('.inventory-count-plate[data-product="'+pid+'"]').forEach(i=>{if(i.value.trim()!==""){has=true;kg+=Number(i.value||0)*Number(i.dataset.factor||0);}});
+   host.querySelectorAll('.inventory-count-dynamic-weight[data-product="'+pid+'"]').forEach(i=>{if(i.value.trim()!==""){has=true;kg+=Number(i.value||0);}});
    const loose=host.querySelector('.inventory-count-loose[data-product="'+pid+'"]');
    if(loose&&loose.value.trim()!==""){has=true;kg+=Number(loose.value||0);}
    out.textContent=has?inventoryCountQty(kg)+" "+out.dataset.unit:"—";
   });
  };
- host.querySelectorAll(".inventory-count-plate,.inventory-count-loose").forEach(i=>i.addEventListener("input",updateTotals));
+ host.querySelectorAll(".inventory-count-plate,.inventory-count-loose,.inventory-count-dynamic-count,.inventory-count-dynamic-weight").forEach(i=>i.addEventListener("input",updateTotals));
 }
 async function inventoryCountSaveCurrent(){
  if(!inventoryCountCanEdit)throw new Error("ليس لديك صلاحية تسجيل الجرد");
@@ -5431,19 +5436,28 @@ async function inventoryCountSaveCurrent(){
  const rows=[...document.querySelectorAll("#inventoryCountEditor tbody tr")];
  rows.forEach(row=>{
   const plateInputs=[...row.querySelectorAll(".inventory-count-plate")];
-  if(plateInputs.length){
+  const dynamicCountInputs=[...row.querySelectorAll(".inventory-count-dynamic-count")];
+  if(plateInputs.length||dynamicCountInputs.length){
    const loose=row.querySelector(".inventory-count-loose");
-   const entered=plateInputs.some(i=>i.value.trim()!=="")||(loose&&loose.value.trim()!=="");
+   const dynamicUnits=dynamicCountInputs.map(i=>{
+    const weight=row.querySelector('.inventory-count-dynamic-weight[data-unit="'+i.dataset.unit+'"]');
+    const count=i.value.trim()===""?0:Number(i.value);
+    const totalWeight=weight&&weight.value.trim()!==""?Number(weight.value):0;
+    if((count>0&&totalWeight<=0)||(count===0&&totalWeight>0))throw new Error("أدخل العدد وإجمالي الوزن معًا لكل عبوة أو قطعة.");
+    return {unit_id:Number(i.dataset.unit),quantity:count,package_weight_kg:count>0?totalWeight/count:1};
+   });
+   const entered=plateInputs.some(i=>i.value.trim()!=="")||dynamicCountInputs.some(i=>i.value.trim()!=="")||dynamicCountInputs.some(i=>{const w=row.querySelector('.inventory-count-dynamic-weight[data-unit="'+i.dataset.unit+'"]');return w&&w.value.trim()!=="";})||(loose&&loose.value.trim()!=="");
    if(!entered)return;
-   const units=plateInputs.map(i=>({unit_id:Number(i.dataset.unit),quantity:i.value.trim()===""?0:Number(i.value)}));
-   counts.push({location_id:locId,product_id:Number(plateInputs[0].dataset.product),counted_units:units,loose_quantity:loose&&loose.value.trim()!==""?Number(loose.value):0});
+   const units=plateInputs.map(i=>({unit_id:Number(i.dataset.unit),quantity:i.value.trim()===""?0:Number(i.value)})).concat(dynamicUnits);
+   const firstInput=plateInputs[0]||dynamicCountInputs[0];
+   counts.push({location_id:locId,product_id:Number(firstInput.dataset.product),counted_units:units,loose_quantity:loose&&loose.value.trim()!==""?Number(loose.value):0});
   }else{
    const input=row.querySelector(".inventory-count-qty");
    if(input&&input.value.trim()!=="")counts.push({location_id:locId,product_id:Number(input.dataset.product),counted_quantity:Number(input.value)});
   }
  });
  if(counts.some(x=>x.counted_quantity!==undefined&&(!Number.isFinite(x.counted_quantity)||x.counted_quantity<0))||
-    counts.some(x=>x.loose_quantity!==undefined&&(!Number.isFinite(x.loose_quantity)||x.loose_quantity<0||x.counted_units.some(u=>!Number.isFinite(u.quantity)||u.quantity<0))))
+    counts.some(x=>x.loose_quantity!==undefined&&(!Number.isFinite(x.loose_quantity)||x.loose_quantity<0||x.counted_units.some(u=>!Number.isFinite(u.quantity)||u.quantity<0||(u.package_weight_kg!=null&&(!Number.isFinite(u.package_weight_kg)||u.package_weight_kg<=0))))))
   throw new Error("راجع كميات الجرد المدخلة");
  const {data,error}=await db.rpc("inventory_count_save",{p_session_id:Number(inventoryCountCurrent.session.session_id),p_counts:counts});
  if(error)throw error;
