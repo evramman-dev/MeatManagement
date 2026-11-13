@@ -5694,6 +5694,7 @@ function addPurchaseItemRow() {
     op.dataset.baseUnit=String(p.base_unit_id||"");
     op.dataset.purchaseUnit=String(p.purchase_unit_id||"");
     op.dataset.productType=String(p.product_type||"");
+    op.dataset.categoryId=String(p.category_id||"");
     op.dataset.unitsCarton=String(p.units_per_carton||"");
     prodSel.appendChild(op); 
   });
@@ -5769,7 +5770,8 @@ function addPurchaseItemRow() {
     // اعرض وحدة الشراء المحددة والوحدة الأساسية، وأتح الجرام لكل الخامات ذات أساس الوزن.
     const gramUnit=units.find(x=>x.unit_code==="G"&&x.unit_type==="WEIGHT");
     const allowedUnits=[purchaseUnitId,baseUnitId];
-    if(productType==="RAW"&&gramUnit)allowedUnits.push(String(gramUnit.unit_id));
+    const categoryId=String(opt?.dataset?.categoryId||"");
+    if(productType==="RAW"&&categoryId!=="16"&&gramUnit)allowedUnits.push(String(gramUnit.unit_id));
     const preferredUnitId=purchaseUnitId||baseUnitId;
     [...new Set(allowedUnits.filter(Boolean))].forEach(id=>{
       const op=document.createElement("option");
@@ -5782,11 +5784,17 @@ function addPurchaseItemRow() {
     if(preferredUnitId)unitSel.value=preferredUnitId;
     recalc(); 
   };
-  prodSel.addEventListener("change",()=>{ populateUnits(); }); 
+  const updateLotDateVisibility=()=>{
+    const isPackaging=String(prodSel.selectedOptions[0]?.dataset?.categoryId||"")==="16";
+    manufacturedWrap.hidden=isPackaging;
+    expiresWrap.hidden=isPackaging;
+  };
+  prodSel.addEventListener("change",()=>{ populateUnits(); updateLotDateVisibility(); }); 
   unitSel.addEventListener("change",recalc); 
   qty.addEventListener("input",recalc); 
   price.addEventListener("input",recalc); 
   populateUnits();
+  updateLotDateVisibility();
 }
 function updatePurchaseTotals(){ 
   let subtotal=0; 
@@ -5933,8 +5941,9 @@ if($("purchaseForm")) $("purchaseForm").addEventListener("submit", async e => {
       const supplierLotCode=row.querySelector(".item-supplier-lot-code")?.value.trim()||null;
       const manufacturedOn=row.querySelector(".item-manufactured-on")?.value||null;
       const expiresOn=row.querySelector(".item-expires-on")?.value||null;
-      if(!manufacturedOn||!expiresOn){valid=false;lotDatesValid=false;return;}
-      if(expiresOn<manufacturedOn){valid=false;lotDatesValid=false;return;}
+      const isPackaging=String(prodSel?.selectedOptions?.[0]?.dataset?.categoryId||"")==="16";
+      if(!isPackaging&&(!manufacturedOn||!expiresOn)){valid=false;lotDatesValid=false;return;}
+      if(manufacturedOn&&expiresOn&&expiresOn<manufacturedOn){valid=false;lotDatesValid=false;return;}
       items.push({product_id:Number(productId),unit_id:unitId,quantity:qty,unit_price:price,supplier_lot_code:supplierLotCode,manufactured_on:manufacturedOn,expires_on:expiresOn}); 
     });
     if(!items.length||!valid){ msg($("purchaseFormMsg"),lotDatesValid?"أكمل بيانات الأصناف وتأكد من صحة الكمية والسعر.":"يجب إدخال تاريخ الإنتاج وتاريخ الصلاحية لكل صنف، وتاريخ الصلاحية لا يسبق الإنتاج.","error");return; }
