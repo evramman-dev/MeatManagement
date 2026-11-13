@@ -5392,14 +5392,14 @@ if($("inventoryCountLoadBtn"))$("inventoryCountLoadBtn").addEventListener("click
  catch(e){showToast("تعذر فتح دورة الجرد: "+err(e),"error");}
 });
 if($("inventoryCountLocationSelect"))$("inventoryCountLocationSelect").addEventListener("change",async()=>{
- try{await inventoryCountSaveCurrent();inventoryCountSelectedLocation=$("inventoryCountLocationSelect").value;inventoryCountRenderEditor();}
+ try{if(inventoryCountCanEdit&&inventoryCountCurrent?.session?.status==="DRAFT")await inventoryCountSaveCurrent();inventoryCountSelectedLocation=$("inventoryCountLocationSelect").value;inventoryCountRenderEditor();}
  catch(e){showToast("تعذر حفظ الموقع الحالي: "+err(e),"error");}
 });
 if($("inventoryCountSaveBtn"))$("inventoryCountSaveBtn").addEventListener("click",async()=>{
  try{await inventoryCountSaveCurrent();}catch(e){showToast("تعذر حفظ الجرد: "+err(e),"error",7000);}
 });
 if($("inventoryCountReportBtn"))$("inventoryCountReportBtn").addEventListener("click",async()=>{
- try{await inventoryCountSaveCurrent();inventoryCountBuildReport();}catch(e){showToast("تعذر إعداد التقرير: "+err(e),"error",7000);}
+ try{if(inventoryCountCanEdit&&inventoryCountCurrent?.session?.status==="DRAFT")await inventoryCountSaveCurrent();inventoryCountBuildReport();}catch(e){showToast("تعذر إعداد التقرير: "+err(e),"error",7000);}
 });
 if($("inventoryCountApproveBtn"))$("inventoryCountApproveBtn").addEventListener("click",async()=>{
  if(!isSystemAdmin){showToast("اعتماد الجرد لمدير النظام فقط","error");return;}
