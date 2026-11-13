@@ -5406,17 +5406,19 @@ function inventoryCountBuildReport(){
   (loc.lines||[]).forEach(x=>{const k=inventoryCountGroupName(loc,x);(groups[k]||(groups[k]=[])).push(x);});
   let groupHtml="";
   Object.entries(groups).forEach(([group,items])=>{
+   const gs={systemValue:0,countedValue:0,diffValue:0};
    const rows=items.map(x=>{
     const counted=x.counted_quantity==null?null:inventoryCountNum(x.counted_quantity);
     const diff=counted==null?null:counted-inventoryCountNum(x.system_quantity);
-    sums.systemValue+=inventoryCountNum(x.system_value);
-    if(counted!=null){sums.countedValue+=inventoryCountNum(x.counted_value);sums.diffValue+=inventoryCountNum(x.difference_value);}
+    gs.systemValue+=inventoryCountNum(x.system_value);
+    if(counted!=null){gs.countedValue+=inventoryCountNum(x.counted_value);gs.diffValue+=inventoryCountNum(x.difference_value);}
     const conversions=x.conversions||[],saved=Array.isArray(x.counted_units)?x.counted_units:[];
-    const plateText=conversions.map(cv=>{const z=saved.find(v=>Number(v.unit_id)===Number(cv.unit_id));return z?inventoryCountQty(z.quantity)+" "+cv.unit_name:"";}).filter(Boolean).join(" + ");
+    const plateText=conversions.map(cv=>{const z=saved.find(v=>Number(v.unit_id)===Number(cv.unit_id));return z?inventoryCountQty(z.quantity)+" "+inventoryCountEsc(cv.unit_name):"";}).filter(Boolean).join(" + ");
     const actual=counted==null?"لم يجرد":(conversions.length?(plateText||"0 طبق")+(Number(x.counted_loose_quantity||0)>0?" + "+inventoryCountQty(x.counted_loose_quantity)+" كجم":"")+"<div class='details'>الإجمالي "+inventoryCountQty(counted)+" كجم</div>":inventoryCountQty(counted));
     return '<tr><td>'+inventoryCountEsc(x.product_name)+'</td><td>'+ (conversions.length?"طبق / كجم":inventoryCountEsc(unitName(x.unit_id)))+'</td><td>'+inventoryCountQty(x.system_quantity)+'</td><td>'+inventoryCountMoney(x.system_value)+'</td><td>'+actual+'</td><td>'+(counted==null?"—":inventoryCountMoney(x.counted_value))+'</td><td>'+(diff==null?"—":inventoryCountQty(diff))+'</td><td>'+(x.difference_value==null?"—":inventoryCountMoney(x.difference_value))+'</td></tr>';
    }).join("");
-   groupHtml+='<h4 style="margin:16px 0 6px;color:var(--g)">'+inventoryCountEsc(group)+'</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>الصنف</th><th>الوحدة</th><th>رصيد النظام كجم</th><th>قيمة النظام</th><th>الجرد الفعلي</th><th>قيمة الجرد</th><th>فرق الكمية كجم</th><th>فرق القيمة</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+   sums.systemValue+=gs.systemValue;sums.countedValue+=gs.countedValue;sums.diffValue+=gs.diffValue;
+   groupHtml+='<h4 style="margin:16px 0 6px;color:var(--g)">'+inventoryCountEsc(group)+'</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>الصنف</th><th>الوحدة</th><th>رصيد النظام كجم</th><th>قيمة النظام</th><th>الجرد الفعلي</th><th>قيمة الجرد</th><th>فرق الكمية كجم</th><th>فرق القيمة</th></tr></thead><tbody>'+rows+'</tbody></table></div><div class="mini-summary"><strong>ملخص '+inventoryCountEsc(group)+'</strong><div class="line"><span>قيمة رصيد النظام</span><strong>'+inventoryCountMoney(gs.systemValue)+'</strong></div><div class="line"><span>قيمة الجرد الفعلي</span><strong>'+inventoryCountMoney(gs.countedValue)+'</strong></div><div class="line"><span>فرق القيمة</span><strong>'+inventoryCountMoney(gs.diffValue)+'</strong></div></div>';
   });
   totals.systemValue+=sums.systemValue;totals.countedValue+=sums.countedValue;totals.diffValue+=sums.diffValue;
   html+='<section class="inventory-report-section"><h3>'+inventoryCountEsc(loc.location_name)+'</h3>'+groupHtml+'<div class="mini-summary"><strong>ملخص الموقع</strong><div class="line"><span>قيمة رصيد النظام</span><strong>'+inventoryCountMoney(sums.systemValue)+'</strong></div><div class="line"><span>قيمة الجرد الفعلي</span><strong>'+inventoryCountMoney(sums.countedValue)+'</strong></div><div class="line"><span>فرق القيمة</span><strong>'+inventoryCountMoney(sums.diffValue)+'</strong></div></div></section>';
