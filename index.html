@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v128</title>
+<title>MeatManagement v129</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -2187,7 +2187,7 @@ try {
   let canViewPriceLists=false, canManagePriceLists=false;
   let companySettings={};
 
-  let productsCache=[], categories=[], units=[], cartonUnitId=null, packagingOptionsCache=[];
+  let productsCache=[], categories=[], units=[], cartonUnitId=null, packagingOptionsCache=[], productUnitConversionsCache=[];
   let locationsCache=[], treasuriesCache=[], stockCache=[], customersCache=[], salesCache=[], collectionsCache=[], suppliersCache=[], purchasesCache=[], recipesCache=[], productionCache=[], tripsCache=[], partnersCache=[], usersCache=[], purchaseReturnsCache=[], supplierPaymentsCache=[], reservationsCache=[];
   let customerGovernoratesCache=[], customerCitiesCache=[], customerAreasCache=[];
   let expenseTypesCache=[], expenseAccountCodes={}, supplierPayablesCache=[], landedCostsCache=[], fixedAssetsCache=[], vehicleExpensesCache=[];
@@ -3634,7 +3634,7 @@ function fillPriceListForms(){
   const gs=$("assignmentGroup");if(gs){gs.replaceChildren();customerGroupsCache.filter(g=>g.is_active!==false).forEach(g=>{const o=document.createElement("option");o.value=g.customer_group_id;o.textContent=g.group_name;gs.appendChild(o);});}
   syncPriceAssignmentDates(true);
 }
-function fillPriceItemUnits(){const p=productsCache.find(x=>String(x.product_id)===String($("priceItemProduct")?.value));const u=$("priceItemUnit");if(!u)return;u.replaceChildren();[p?.sales_unit_id,p?.base_unit_id,p?.purchase_unit_id].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i).forEach(id=>{const x=units.find(y=>Number(y.unit_id)===Number(id));if(x){const o=document.createElement("option");o.value=id;o.textContent=x.unit_name;u.appendChild(o);}});}
+function fillPriceItemUnits(){const p=productsCache.find(x=>String(x.product_id)===String($("priceItemProduct")?.value));const u=$("priceItemUnit");if(!u)return;u.replaceChildren();const conversionIds=productUnitConversionsCache.filter(x=>Number(x.product_id)===Number(p?.product_id)).map(x=>Number(x.unit_id));[p?.sales_unit_id,p?.base_unit_id,p?.purchase_unit_id,...conversionIds].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i).forEach(id=>{const x=units.find(y=>Number(y.unit_id)===Number(id));if(x){const o=document.createElement("option");o.value=id;o.textContent=x.unit_name;u.appendChild(o);}});}
 function renderPriceAssignments(rows){const b=$("priceAssignmentsList");if(!b)return;b.innerHTML=rows.length?rows.map(x=>`<div class="product"><div class="pname">${x.price_lists?.price_list_name||"قائمة"}</div><div class="details">${x.customers?.customer_name||x.customer_groups?.group_name||"-"} | أولوية ${x.priority} | من ${formatDate(x.valid_from)}</div></div>`).join(""):'<div class="empty">لا توجد روابط.</div>';}
 function renderCustomerGroups(){const b=$("customerGroupsList");if(!b)return;b.innerHTML=customerGroupsCache.length?customerGroupsCache.map(x=>`<div class="product"><div class="pname">${x.group_name}</div><div class="details">${x.group_code}</div></div>`).join(""):'<div class="empty">لا توجد مجموعات.</div>';}
 async function approvePriceList(id){if(!canManagePriceLists)return;try{const {error}=await db.rpc("approve_price_list",{p_price_list_id:Number(id)});if(error)throw error;showToast("تم اعتماد قائمة الأسعار","success");await loadPriceLists();}catch(e){showToast("تعذر اعتماد القائمة: "+err(e),"error",7000);}}
@@ -3654,10 +3654,14 @@ if($("accountingPeriodForm"))$("accountingPeriodForm").addEventListener("submit"
 
 // ========== المنتجات ==========
 async function loadProducts(){ 
-  if(!navigator.onLine) { productsCache=getCache('products'); renderProducts(); return; } 
+  if(!navigator.onLine) { productsCache=getCache('products'); productUnitConversionsCache=getCache('productUnitConversions'); renderProducts(); return; } 
   const {data}=await db.from("products").select("*").order("product_id"); 
   productsCache=data||[]; 
-  saveCache('products', productsCache); 
+  saveCache('products', productsCache);
+  const {data:conversionRows,error:conversionError}=await db.from("product_unit_conversions").select("product_id,unit_id,base_quantity_per_unit,is_active").eq("is_active",true);
+  if(conversionError)throw conversionError;
+  productUnitConversionsCache=conversionRows||[];
+  saveCache('productUnitConversions',productUnitConversionsCache); 
   renderProducts();
   if($("packagingManagement")){ $("packagingManagement").style.display=canManage?"block":"none"; fillPackageProductSelects(); await loadPackagingOptions(); }
   fillStockFormSelects(); 
@@ -5948,10 +5952,13 @@ function addInvoiceItemRow() {
     const baseUnitId=Number(opt?.dataset?.baseUnit||0); 
     const unitsCarton=Number(opt?.dataset?.unitsCarton||0);
     const actualWeight=Number(weightTotal.value||0);
-    weightWrap.hidden=!(unitId&&baseUnitId==="1"&&unitId!==1);
+    const selectedProductId=Number(prodSel.value||0);
+    const fixedConversion=productUnitConversionsCache.find(x=>Number(x.product_id)===selectedProductId&&Number(x.unit_id)===unitId);
+    weightWrap.hidden=!(unitId&&baseUnitId==="1"&&unitId!==1&&!fixedConversion);
     if(actualWeight>0&&q>0){stockHint.textContent="يخصم من المخزون: "+fmtQty(actualWeight)+" كجم";}
     else if(unitId&&baseUnitId&&q>0){ 
       if(unitId===baseUnitId){ stockHint.textContent="يخصم من المخزون: "+fmtQty(q)+" "+unitName(baseUnitId); } 
+      else if(fixedConversion){stockHint.textContent="يخصم من المخزون: "+fmtQty(q*Number(fixedConversion.base_quantity_per_unit||0))+" "+unitName(baseUnitId);}
       else if(unitId===cartonUnitId&&unitsCarton>0){ 
         const baseQty=q*unitsCarton; 
         stockHint.textContent="يخصم: "+fmtQty(baseQty)+" "+unitName(baseUnitId); 
@@ -5968,12 +5975,10 @@ function addInvoiceItemRow() {
     hintDiv.textContent = "سيتم جلب السعر من قائمة العميل المعتمدة بعد اختيار الوحدة."; 
     unitSel.replaceChildren(); 
     const firstU=document.createElement("option");firstU.value="";firstU.textContent="اختر الوحدة";unitSel.appendChild(firstU); 
-    if(baseUnitId){
-      const op=document.createElement("option");op.value=baseUnitId;op.textContent=unitName(baseUnitId);unitSel.appendChild(op);
-    }
-    if(salesUnitId&&salesUnitId!==baseUnitId){
-      const salesOp=document.createElement("option");salesOp.value=salesUnitId;salesOp.textContent=unitName(salesUnitId);unitSel.appendChild(salesOp);
-    } 
+    const conversionIds=productUnitConversionsCache.filter(x=>Number(x.product_id)===Number(prodSel.value)).map(x=>Number(x.unit_id));
+    [baseUnitId,salesUnitId,...conversionIds].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i).forEach(unitId=>{
+      const unitOption=document.createElement("option");unitOption.value=String(unitId);unitOption.textContent=unitName(unitId);unitSel.appendChild(unitOption);
+    });
     if(unitsCarton>0&&cartonUnitId){ 
       const op=document.createElement("option");op.value=String(cartonUnitId);op.textContent="كرتونة ("+unitsCarton+")";unitSel.appendChild(op); 
     } 
@@ -6810,7 +6815,7 @@ function addSalesReturnItemRow(container){
   function fill(){
     const pr=productsCache.find(x=>String(x.product_id)===String(p.value));u.replaceChildren();
     const f=document.createElement("option");f.value="";f.textContent="اختر الوحدة";u.appendChild(f);
-    if(pr){[pr.sales_unit_id,pr.base_unit_id].filter(Boolean).forEach(id=>{if([...u.options].some(o=>o.value===String(id)))return;const un=units.find(x=>Number(x.unit_id)===Number(id));if(un){const o=document.createElement("option");o.value=String(id);o.textContent=un.unit_name;u.appendChild(o);}});u.value=String(pr.sales_unit_id||pr.base_unit_id);}
+    if(pr){const conversionIds=productUnitConversionsCache.filter(x=>Number(x.product_id)===Number(pr.product_id)).map(x=>Number(x.unit_id));[pr.sales_unit_id,pr.base_unit_id,...conversionIds].filter(Boolean).forEach(id=>{if([...u.options].some(o=>o.value===String(id)))return;const un=units.find(x=>Number(x.unit_id)===Number(id));if(un){const o=document.createElement("option");o.value=String(id);o.textContent=un.unit_name;u.appendChild(o);}});u.value=String(pr.sales_unit_id||pr.base_unit_id);}
     fillPackages();fillSalesReturnLotSelect(row);recalc();
   }
   function recalc(){total.textContent="الإجمالي: "+fmt(Number(q.value||0)*Number(price.value||0));updateSalesReturnTotals();}
