@@ -3586,7 +3586,7 @@ function productCategoryIdsForSection(section=activeProductSection){
   };
   return map[section]||categories.map(c=>Number(c.category_id));
 }
-function refreshProductCategoryOptions(formSelected=null){
+function refreshProductCategoryOptions(formSelected=null,includeForm=true){
   const allowed=new Set(productCategoryIdsForSection());
   const fill=(el,placeholder,selected)=>{
     if(!el)return;
@@ -3601,7 +3601,7 @@ function refreshProductCategoryOptions(formSelected=null){
     el.value=[...el.options].some(o=>o.value===current)?current:"";
   };
   fill($("productCategoryFilter"),"كل تصنيفات القسم",null);
-  fill($("category"),"اختر التصنيف",formSelected);
+  if(includeForm)fill($("category"),"اختر التصنيف",formSelected);
 }
 function isSpiceProduct(p){
   const code=String(p.product_code||"").toUpperCase();
@@ -3630,13 +3630,14 @@ window.openProductList=function(section,title){
   const modal=$("productListModal");if(modal)modal.classList.add("active");
   window.closeRawMaterialsMenu();
   if($("search"))$("search").value="";
+  if($("productCategoryFilter"))$("productCategoryFilter").value="";
   if($("productStatusFilter"))$("productStatusFilter").value="";
   refreshProductCategoryOptions();
   renderProducts();
 };
 window.closeProductList=function(){const m=$("productListModal");if(m)m.classList.remove("active");activeProductSection="ALL";};
 function setupProductFilters(){
-  refreshProductCategoryOptions();
+  refreshProductCategoryOptions(null,false);
   const addInList=$("addProductInListBtn");
   if(addInList){
     addInList.classList.toggle("hidden",!canManage);
