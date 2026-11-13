@@ -1844,7 +1844,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <button type="button" class="dash-item" onclick="window.openProductList('FIN_PICKLES','منتجات المخللات')"><span class="dash-icon">🫙</span><span class="dash-title">منتجات المخللات</span></button>
 <button type="button" class="dash-item" onclick="window.openProductList('FROZEN_VEG','الخضروات المجمدة')"><span class="dash-icon">❄️</span><span class="dash-title">الخضروات المجمدة</span></button>
 <button type="button" class="dash-item" onclick="window.openProductList('CHEESE','منتجات الأجبان')"><span class="dash-icon">🧀</span><span class="dash-title">منتجات الأجبان</span></button>
-<button type="button" class="dash-item" onclick="window.openProductList('FINISHED','المنتجات التامة')"><span class="dash-icon">📦</span><span class="dash-title">المنتجات التامة</span></button>
+<button type="button" class="dash-item" onclick="window.openFinishedProductsMenu()"><span class="dash-icon">📦</span><span class="dash-title">المنتجات التامة</span></button>
 <button type="button" class="dash-item" onclick="window.openProductList('OIL_HONEY_FINISHED','منتجات تامة - زيوت وعسل وطحينة')"><span class="dash-icon">🫙</span><span class="dash-title">منتجات تامة - زيوت وعسل وطحينة</span></button>
 </div>
 </details>
@@ -1876,6 +1876,16 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <button type="button" class="dash-item" onclick="window.openProductList('RAW_POULTRY','الدواجن')"><span class="dash-icon">🍗</span><span class="dash-title">دواجن</span></button>
 <button type="button" class="dash-item" id="rawOtherMenuItem" onclick="window.openProductList('RAW_OTHER','خامات أخرى')"><span class="dash-icon">📦</span><span class="dash-title">خامات أخرى</span></button>
 <button type="button" class="dash-item" onclick="window.openProductList('RAW_FISH','أسماك وسي فود')"><span class="dash-icon">🐟</span><span class="dash-title">أسماك وسي فود</span></button>
+</div>
+</div></div></div>
+<div id="finishedSubcategoryModal" class="modal-form" style="z-index:900" onclick="if(event.target===this)window.closeFinishedProductsMenu()">
+<div class="modal-form-content">
+<div class="modal-header"><h3>المنتجات التامة</h3><button class="close-btn" type="button" onclick="window.closeFinishedProductsMenu()">×</button></div>
+<div class="modal-body">
+<p class="details">اختر نوع المنتجات التامة</p>
+<div class="dashboard-grid">
+<button type="button" class="dash-item" onclick="window.openProductList('FINISHED_MEAT','منتجات تامة لحوم')"><span class="dash-icon">🥩</span><span class="dash-title">لحوم</span></button>
+<button type="button" class="dash-item" onclick="window.openProductList('FINISHED_POULTRY','منتجات تامة دواجن')"><span class="dash-icon">🍗</span><span class="dash-title">دواجن</span></button>
 </div>
 </div></div></div>
 <div id="productListModal" class="modal-form" style="z-index:910" onclick="if(event.target===this)window.closeProductList()">
@@ -3683,6 +3693,8 @@ function productCategoryIdsForSection(section=activeProductSection){
     SEMI_FINISHED:[17],
     PACKAGING:[16],
     FINISHED:[18],
+    FINISHED_MEAT:[18],
+    FINISHED_POULTRY:[18],
     OIL_HONEY_FINISHED:[24]
   };
   return map[section]||categories.map(c=>Number(c.category_id));
@@ -3732,11 +3744,14 @@ function productSectionOf(p){
 }
 window.openRawMaterialsMenu=function(){const m=$("rawSubcategoryModal");const other=$("rawOtherMenuItem");if(other){const hasOther=(productsCache||[]).some(p=>p&&productSectionOf(p)==="RAW_OTHER");other.classList.toggle("hidden",!hasOther);}if(m)m.classList.add("active");};
 window.closeRawMaterialsMenu=function(){const m=$("rawSubcategoryModal");if(m)m.classList.remove("active");};
+window.openFinishedProductsMenu=function(){const m=$("finishedSubcategoryModal");if(m)m.classList.add("active");};
+window.closeFinishedProductsMenu=function(){const m=$("finishedSubcategoryModal");if(m)m.classList.remove("active");};
 window.openProductList=function(section,title){
   activeProductSection=section;
   const heading=$("productListTitle");if(heading)heading.textContent=title||"إدارة الأصناف";
   const modal=$("productListModal");if(modal)modal.classList.add("active");
   window.closeRawMaterialsMenu();
+  window.closeFinishedProductsMenu();
   if($("search"))$("search").value="";
   if($("productCategoryFilter"))$("productCategoryFilter").value="";
   if($("productStatusFilter"))$("productStatusFilter").value="";
@@ -3780,7 +3795,12 @@ function renderProducts(){
   const status=$("productStatusFilter")?.value||"";
   const matched=productsCache.filter(p=>{
     const textMatch=[p.product_name,p.product_code,p.barcode].some(v=>String(v||"").toLowerCase().includes(q));
-    const sectionMatch=productSectionOf(p)===activeProductSection;
+    const productSection=productSectionOf(p);
+    const sectionMatch=activeProductSection==="FINISHED_MEAT"
+      ? productSection==="FINISHED" && inventoryFinishedProductGroup(p)==="FINISHED_MEAT"
+      : activeProductSection==="FINISHED_POULTRY"
+        ? productSection==="FINISHED" && inventoryFinishedProductGroup(p)==="FINISHED_POULTRY"
+        : productSection===activeProductSection;
     const catMatch=!cat||String(p.category_id)===cat;
     const statusMatch=!status||(status==="active"?p.is_active===true:p.is_active===false);
     return textMatch&&sectionMatch&&catMatch&&statusMatch;
