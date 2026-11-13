@@ -5287,6 +5287,7 @@ if($("shareInventorySummaryWhatsappBtn"))$("shareInventorySummaryWhatsappBtn").a
 
 
 let inventoryCountCurrent=null;
+let inventoryCountCanEdit=false;
 let inventoryCountLocations=[];
 let inventoryCountSelectedLocation=null;
 function inventoryCountEsc(v){return String(v??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
@@ -5312,7 +5313,9 @@ async function inventoryCountLoad(id){
  else if(inventoryCountLocations.length)loc.value=String(inventoryCountLocations[0].location_id);
  inventoryCountSelectedLocation=loc.value;
  const approved=s.status==="APPROVED";
- $("inventoryCountSaveBtn").disabled=approved;
+ $("inventoryCountSaveBtn").disabled=approved||!inventoryCountCanEdit;
+ $("inventoryCountSaveBtn").classList.toggle("hidden",!inventoryCountCanEdit);
+ $("inventoryCountNewBtn").classList.toggle("hidden",!inventoryCountCanEdit);
  $("inventoryCountApproveBtn").classList.toggle("hidden",!isSystemAdmin||approved);
  $("inventoryCountNewBtn").disabled=false;
  inventoryCountRenderEditor();
@@ -5322,11 +5325,13 @@ function inventoryCountRenderEditor(){
  const host=$("inventoryCountEditor"),loc=inventoryCountLocations.find(x=>String(x.location_id)===String(inventoryCountSelectedLocation));
  if(!host)return;if(!loc){host.innerHTML='<div class="empty">اختر دورة جرد لبدء العمل.</div>';return;}
  const approved=inventoryCountCurrent?.session?.status==="APPROVED";
+ const readOnly=approved||!inventoryCountCanEdit;
  const lines=loc.lines||[];
- const body=lines.map(x=>'<tr><td>'+inventoryCountEsc(x.product_name)+'</td><td>'+inventoryCountEsc(unitName(x.unit_id))+'</td><td>'+inventoryCountQty(x.system_quantity)+'</td><td>'+inventoryCountMoney(x.system_value)+'</td><td><input class="inventory-count-qty" data-product="'+x.product_id+'" type="number" min="0" step="0.000001" value="'+(x.counted_quantity==null?"":inventoryCountEsc(x.counted_quantity))+'" '+(approved?"disabled":"")+' style="min-width:95px;width:110px"></td><td>'+ (x.counted_value==null?"—":inventoryCountMoney(x.counted_value))+'</td><td>'+(x.difference_quantity==null?"—":inventoryCountQty(x.difference_quantity))+'</td><td>'+(x.difference_value==null?"—":inventoryCountMoney(x.difference_value))+'</td></tr>').join("");
+ const body=lines.map(x=>'<tr><td>'+inventoryCountEsc(x.product_name)+'</td><td>'+inventoryCountEsc(unitName(x.unit_id))+'</td><td>'+inventoryCountQty(x.system_quantity)+'</td><td>'+inventoryCountMoney(x.system_value)+'</td><td><input class="inventory-count-qty" data-product="'+x.product_id+'" type="number" min="0" step="0.000001" value="'+(x.counted_quantity==null?"":inventoryCountEsc(x.counted_quantity))+'" '+(readOnly?"disabled":"")+' style="min-width:95px;width:110px"></td><td>'+ (x.counted_value==null?"—":inventoryCountMoney(x.counted_value))+'</td><td>'+(x.difference_quantity==null?"—":inventoryCountQty(x.difference_quantity))+'</td><td>'+(x.difference_value==null?"—":inventoryCountMoney(x.difference_value))+'</td></tr>').join("");
  host.innerHTML='<section class="inventory-report-section"><h3>'+inventoryCountEsc(loc.location_name)+' ('+lines.length+' صنف)</h3><div class="table-responsive"><table class="print-table"><thead><tr><th>الصنف</th><th>الوحدة</th><th>رصيد النظام</th><th>قيمة النظام</th><th>الجرد الفعلي</th><th>قيمة الجرد</th><th>فرق الكمية</th><th>فرق القيمة</th></tr></thead><tbody>'+body+'</tbody></table></div></section>';
 }
 async function inventoryCountSaveCurrent(){
+ if(!inventoryCountCanEdit)throw new Error("ليس لديك صلاحية تسجيل الجرد");
  if(!inventoryCountCurrent)throw new Error("اختر دورة جرد أولاً");
  const locId=Number(inventoryCountSelectedLocation);
  const inputs=[...document.querySelectorAll("#inventoryCountEditor .inventory-count-qty")];
@@ -5367,6 +5372,9 @@ window.openInventoryCount=async function(){
  $("inventoryCountModal").classList.remove("hidden");
  $("inventoryCountPrintArea").classList.add("hidden");
  $("inventoryCountDate").value=todayISO();
+ inventoryCountCanEdit=!!(isSystemAdmin||canManageStock||await permission("INVENTORY_ADJUST"));
+ $("inventoryCountNewBtn").classList.toggle("hidden",!inventoryCountCanEdit);
+ $("inventoryCountSaveBtn").classList.toggle("hidden",!inventoryCountCanEdit);
  $("inventoryCountApproveBtn").classList.toggle("hidden",!isSystemAdmin);
  try{await inventoryCountRefreshList();$("inventoryCountStatus").textContent="أنشئ دورة جرد جديدة أو افتح دورة سابقة.";}
  catch(e){showToast("تعذر تحميل دورات الجرد: "+err(e),"error");}
