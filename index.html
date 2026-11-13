@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v112</title>
+<title>MeatManagement v113</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1823,6 +1823,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <button type="button" class="dash-item" onclick="window.openProductList('PACKAGING','خامات التشغيل')"><span class="dash-icon">🏷️</span><span class="dash-title">خامات التشغيل</span></button>
 <button type="button" class="dash-item" onclick="window.openProductList('FINISHED','المنتجات التامة')"><span class="dash-icon">📦</span><span class="dash-title">المنتجات التامة</span></button>
 <button type="button" class="dash-item" onclick="window.openInventorySummaryReport()"><span class="dash-icon">📊</span><span class="dash-title">تقرير أرصدة وحركة المخزون</span></button>
+<button type="button" class="dash-item" onclick="window.openInventoryCount()"><span class="dash-icon">📋</span><span class="dash-title">إدارة الجرد</span></button>
 </div>
 </div>
 </div>
@@ -2011,6 +2012,29 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <button class="btn" type="button" onclick="window.print()" style="background:var(--gold);color:var(--g);flex:1">طباعة / PDF</button>
 <button class="btn" type="button" id="shareInventorySummaryWhatsappBtn" style="background:#25D366;flex:1">واتساب</button>
 </div>
+</div></div></div>
+
+<div id="inventoryCountModal" class="modal hidden">
+<div class="modal-content" style="max-width:1200px">
+<div class="modal-header"><h3>إدارة الجرد</h3><button class="close-btn" type="button" onclick="document.getElementById('inventoryCountModal').classList.add('hidden')">&times;</button></div>
+<div class="modal-body">
+<div class="no-print filter-box">
+<div class="row"><button id="inventoryCountNewBtn" class="btn" type="button">إنشاء دورة جرد جديدة</button><select id="inventoryCountSessionSelect" style="flex:1;min-width:220px"><option value="">اختر دورة جرد سابقة</option></select><button id="inventoryCountLoadBtn" class="btn secondary" type="button">فتح</button></div>
+<div id="inventoryCountHeader" class="details" style="margin-top:10px"></div>
+<div class="grid" style="margin-top:10px"><div><label for="inventoryCountLocationSelect">الموقع الجاري جرده</label><select id="inventoryCountLocationSelect"></select></div><div><label for="inventoryCountDate">تاريخ الجرد</label><input id="inventoryCountDate" type="date"></div></div>
+<div class="row" style="margin-top:10px;flex-wrap:wrap"><button id="inventoryCountSaveBtn" class="btn" type="button">حفظ جرد الموقع</button><button id="inventoryCountReportBtn" class="btn secondary" type="button">عرض التقرير الكامل</button><button id="inventoryCountApproveBtn" class="btn" type="button" style="background:#176b3a">اعتماد الجرد وتسوية الأرصدة</button></div>
+<div id="inventoryCountStatus" class="status" style="margin-top:10px"></div>
+</div>
+<div id="inventoryCountEditor"></div>
+<div id="inventoryCountPrintArea" class="statement-print-area hidden">
+<div class="print-header" id="inventoryCountPrintHeader"></div>
+<div class="invoice-header-title">تقرير الجرد الشامل</div>
+<div id="inventoryCountReportMeta" class="invoice-meta-grid"></div>
+<div id="inventoryCountReportContent"></div>
+<div id="inventoryCountReportTotals" class="total-box"></div>
+<div class="print-footer" id="inventoryCountPrintFooter"></div>
+</div>
+<div class="no-print" style="margin-top:15px;display:flex;gap:10px;flex-wrap:wrap"><button id="inventoryCountPrintBtn" class="btn secondary" type="button">طباعة / PDF</button><button id="inventoryCountWhatsappBtn" class="btn secondary" type="button">واتساب</button></div>
 </div></div></div>
 
 <div id="treasuryStatementModal" class="modal hidden">
@@ -5260,6 +5284,130 @@ if($("shareInventorySummaryWhatsappBtn"))$("shareInventorySummaryWhatsappBtn").a
  if(!text){showToast("اعرض التقرير أولاً قبل المشاركة","error");return;}
  window.open("https://wa.me/?text="+encodeURIComponent(text),"_blank");
 });
+
+
+let inventoryCountCurrent=null;
+let inventoryCountLocations=[];
+let inventoryCountSelectedLocation=null;
+function inventoryCountEsc(v){return String(v??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
+function inventoryCountNum(v){return Number(v||0);}
+function inventoryCountMoney(v){return fmt(inventoryCountNum(v));}
+function inventoryCountQty(v){return fmtQty(inventoryCountNum(v));}
+async function inventoryCountRefreshList(selectId){
+ const {data,error}=await db.rpc("inventory_count_list");if(error)throw error;
+ const sel=$("inventoryCountSessionSelect");if(!sel)return;
+ sel.innerHTML='<option value="">اختر دورة جرد سابقة</option>';
+ (data||[]).forEach(s=>{const o=document.createElement("option");o.value=s.session_id;o.textContent=s.session_code+" | "+formatDate(s.count_date)+" | "+(s.status==="APPROVED"?"معتمد":"مسودة");sel.appendChild(o);});
+ if(selectId)sel.value=String(selectId);
+}
+async function inventoryCountLoad(id){
+ const {data,error}=await db.rpc("inventory_count_get",{p_session_id:Number(id)});if(error)throw error;
+ inventoryCountCurrent=data;inventoryCountLocations=data.locations||[];
+ const s=data.session||{};
+ $("inventoryCountHeader").innerHTML="رقم الدورة: <strong>"+inventoryCountEsc(s.session_code)+"</strong> | التاريخ: "+inventoryCountEsc(formatDate(s.count_date))+" | الحالة: <strong>"+(s.status==="APPROVED"?"معتمد":"مسودة")+"</strong>";
+ $("inventoryCountDate").value=s.count_date||todayISO();
+ const loc=$("inventoryCountLocationSelect");loc.innerHTML="";
+ inventoryCountLocations.forEach(l=>{const o=document.createElement("option");o.value=l.location_id;o.textContent=l.location_name;loc.appendChild(o);});
+ if(inventoryCountSelectedLocation&&inventoryCountLocations.some(l=>String(l.location_id)===String(inventoryCountSelectedLocation)))loc.value=String(inventoryCountSelectedLocation);
+ else if(inventoryCountLocations.length)loc.value=String(inventoryCountLocations[0].location_id);
+ inventoryCountSelectedLocation=loc.value;
+ const approved=s.status==="APPROVED";
+ $("inventoryCountSaveBtn").disabled=approved;
+ $("inventoryCountApproveBtn").classList.toggle("hidden",!isSystemAdmin||approved);
+ $("inventoryCountNewBtn").disabled=false;
+ inventoryCountRenderEditor();
+ $("inventoryCountStatus").textContent=approved?"تم اعتماد هذه الدورة وتنفيذ تسوية الأرصدة.":"أدخل الجرد الفعلي لكل الأصناف في كل موقع ثم احفظ كل موقع.";
+}
+function inventoryCountRenderEditor(){
+ const host=$("inventoryCountEditor"),loc=inventoryCountLocations.find(x=>String(x.location_id)===String(inventoryCountSelectedLocation));
+ if(!host)return;if(!loc){host.innerHTML='<div class="empty">اختر دورة جرد لبدء العمل.</div>';return;}
+ const approved=inventoryCountCurrent?.session?.status==="APPROVED";
+ const lines=loc.lines||[];
+ const body=lines.map(x=>'<tr><td>'+inventoryCountEsc(x.product_name)+'</td><td>'+inventoryCountEsc(unitName(x.unit_id))+'</td><td>'+inventoryCountQty(x.system_quantity)+'</td><td>'+inventoryCountMoney(x.system_value)+'</td><td><input class="inventory-count-qty" data-product="'+x.product_id+'" type="number" min="0" step="0.000001" value="'+(x.counted_quantity==null?"":inventoryCountEsc(x.counted_quantity))+'" '+(approved?"disabled":"")+' style="min-width:95px;width:110px"></td><td>'+ (x.counted_value==null?"—":inventoryCountMoney(x.counted_value))+'</td><td>'+(x.difference_quantity==null?"—":inventoryCountQty(x.difference_quantity))+'</td><td>'+(x.difference_value==null?"—":inventoryCountMoney(x.difference_value))+'</td></tr>').join("");
+ host.innerHTML='<section class="inventory-report-section"><h3>'+inventoryCountEsc(loc.location_name)+' ('+lines.length+' صنف)</h3><div class="table-responsive"><table class="print-table"><thead><tr><th>الصنف</th><th>الوحدة</th><th>رصيد النظام</th><th>قيمة النظام</th><th>الجرد الفعلي</th><th>قيمة الجرد</th><th>فرق الكمية</th><th>فرق القيمة</th></tr></thead><tbody>'+body+'</tbody></table></div></section>';
+}
+async function inventoryCountSaveCurrent(){
+ if(!inventoryCountCurrent)throw new Error("اختر دورة جرد أولاً");
+ const locId=Number(inventoryCountSelectedLocation);
+ const inputs=[...document.querySelectorAll("#inventoryCountEditor .inventory-count-qty")];
+ const counts=inputs.filter(i=>i.value.trim()!=="").map(i=>({location_id:locId,product_id:Number(i.dataset.product),counted_quantity:Number(i.value)}));
+ if(counts.some(x=>!Number.isFinite(x.counted_quantity)||x.counted_quantity<0))throw new Error("راجع كميات الجرد المدخلة");
+ const {data,error}=await db.rpc("inventory_count_save",{p_session_id:Number(inventoryCountCurrent.session.session_id),p_counts:counts});
+ if(error)throw error;
+ await inventoryCountLoad(inventoryCountCurrent.session.session_id);
+ $("inventoryCountStatus").textContent="تم حفظ "+data+" صنف في "+(inventoryCountLocations.find(x=>Number(x.location_id)===locId)?.location_name||"الموقع")+". لم تتغير أرصدة المخزون.";
+}
+function inventoryCountBuildReport(){
+ if(!inventoryCountCurrent)throw new Error("اختر دورة جرد أولاً");
+ let html="",wa="تقرير الجرد الشامل\n"+inventoryCountCurrent.session.session_code+"\n";
+ let totals={systemValue:0,countedValue:0,diffValue:0,systemQty:0,countedQty:0,diffQty:0};
+ inventoryCountLocations.forEach(loc=>{
+  let sums={systemValue:0,countedValue:0,diffValue:0,systemQty:0,countedQty:0,diffQty:0};
+  const rows=(loc.lines||[]).map(x=>{
+   const counted=x.counted_quantity==null?null:inventoryCountNum(x.counted_quantity);
+   const diff=counted==null?null:counted-inventoryCountNum(x.system_quantity);
+   const diffVal=counted==null?null:diff*inventoryCountNum(x.unit_cost);
+   sums.systemQty+=inventoryCountNum(x.system_quantity);sums.systemValue+=inventoryCountNum(x.system_value);
+   if(counted!=null){sums.countedQty+=counted;sums.countedValue+=inventoryCountNum(x.counted_value);sums.diffQty+=diff;sums.diffValue+=inventoryCountNum(x.difference_value);}
+   return '<tr><td>'+inventoryCountEsc(x.product_name)+'</td><td>'+inventoryCountEsc(unitName(x.unit_id))+'</td><td>'+inventoryCountQty(x.system_quantity)+'</td><td>'+inventoryCountMoney(x.system_value)+'</td><td>'+(counted==null?"لم يجرد":inventoryCountQty(counted))+'</td><td>'+(counted==null?"—":inventoryCountMoney(x.counted_value))+'</td><td>'+(diff==null?"—":inventoryCountQty(diff))+'</td><td>'+(diffVal==null?"—":inventoryCountMoney(diffVal))+'</td></tr>';
+  }).join("");
+  totals.systemQty+=sums.systemQty;totals.systemValue+=sums.systemValue;totals.countedQty+=sums.countedQty;totals.countedValue+=sums.countedValue;totals.diffQty+=sums.diffQty;totals.diffValue+=sums.diffValue;
+  html+='<section class="inventory-report-section"><h3>'+inventoryCountEsc(loc.location_name)+'</h3><div class="table-responsive"><table class="print-table"><thead><tr><th>الصنف</th><th>الوحدة</th><th>رصيد النظام</th><th>قيمة النظام</th><th>الجرد الفعلي</th><th>قيمة الجرد</th><th>فرق الكمية</th><th>فرق القيمة</th></tr></thead><tbody>'+rows+'</tbody></table></div><div class="mini-summary"><strong>ملخص الموقع</strong><div class="line"><span>قيمة رصيد النظام</span><strong>'+inventoryCountMoney(sums.systemValue)+'</strong></div><div class="line"><span>قيمة الجرد الفعلي</span><strong>'+inventoryCountMoney(sums.countedValue)+'</strong></div><div class="line"><span>فرق القيمة</span><strong>'+inventoryCountMoney(sums.diffValue)+'</strong></div></div></section>';
+  wa+='\n'+loc.location_name+': رصيد '+inventoryCountMoney(sums.systemValue)+'، جرد '+inventoryCountMoney(sums.countedValue)+'، فرق '+inventoryCountMoney(sums.diffValue)+'\n';
+ });
+ $("inventoryCountReportMeta").innerHTML='<div><strong>الدورة:</strong> '+inventoryCountEsc(inventoryCountCurrent.session.session_code)+'</div><div><strong>التاريخ:</strong> '+inventoryCountEsc(formatDate(inventoryCountCurrent.session.count_date))+'</div><div><strong>الحالة:</strong> '+(inventoryCountCurrent.session.status==="APPROVED"?"معتمد":"مسودة")+'</div><div><strong>عدد المواقع:</strong> '+inventoryCountLocations.length+'</div>';
+ $("inventoryCountReportContent").innerHTML=html;
+ $("inventoryCountReportTotals").innerHTML='<h3>الإجمالي العام لكل المواقع</h3><div class="line"><span>قيمة رصيد النظام</span><strong>'+inventoryCountMoney(totals.systemValue)+'</strong></div><div class="line"><span>قيمة الجرد الفعلي</span><strong>'+inventoryCountMoney(totals.countedValue)+'</strong></div><div class="line grand"><span>فرق القيمة</span><strong>'+inventoryCountMoney(totals.diffValue)+'</strong></div>';
+ $("inventoryCountPrintArea").classList.remove("hidden");
+ window.inventoryCountWhatsappText=wa+'\nالإجمالي: رصيد '+inventoryCountMoney(totals.systemValue)+'، جرد '+inventoryCountMoney(totals.countedValue)+'، فرق '+inventoryCountMoney(totals.diffValue);
+ fillPrintHeaders();
+}
+window.openInventoryCount=async function(){
+ if(!canViewStock&&!canManageStock&&!isSystemAdmin){showToast("ليس لديك صلاحية عرض الجرد","error");return;}
+ $("inventoryCountModal").classList.remove("hidden");
+ $("inventoryCountPrintArea").classList.add("hidden");
+ $("inventoryCountDate").value=todayISO();
+ $("inventoryCountApproveBtn").classList.toggle("hidden",!isSystemAdmin);
+ try{await inventoryCountRefreshList();$("inventoryCountStatus").textContent="أنشئ دورة جرد جديدة أو افتح دورة سابقة.";}
+ catch(e){showToast("تعذر تحميل دورات الجرد: "+err(e),"error");}
+};
+if($("inventoryCountNewBtn"))$("inventoryCountNewBtn").addEventListener("click",async()=>{
+ try{
+  const {data,error}=await db.rpc("inventory_count_create",{p_count_date:$("inventoryCountDate").value||todayISO(),p_notes:null});
+  if(error)throw error;
+  await inventoryCountRefreshList(data);await inventoryCountLoad(data);
+  $("inventoryCountPrintArea").classList.add("hidden");
+ }catch(e){showToast("تعذر إنشاء دورة الجرد: "+err(e),"error",7000);}
+});
+if($("inventoryCountLoadBtn"))$("inventoryCountLoadBtn").addEventListener("click",async()=>{
+ try{const id=$("inventoryCountSessionSelect").value;if(!id)throw new Error("اختر دورة الجرد");await inventoryCountLoad(id);$("inventoryCountPrintArea").classList.add("hidden");}
+ catch(e){showToast("تعذر فتح دورة الجرد: "+err(e),"error");}
+});
+if($("inventoryCountLocationSelect"))$("inventoryCountLocationSelect").addEventListener("change",async()=>{
+ try{await inventoryCountSaveCurrent();inventoryCountSelectedLocation=$("inventoryCountLocationSelect").value;inventoryCountRenderEditor();}
+ catch(e){showToast("تعذر حفظ الموقع الحالي: "+err(e),"error");}
+});
+if($("inventoryCountSaveBtn"))$("inventoryCountSaveBtn").addEventListener("click",async()=>{
+ try{await inventoryCountSaveCurrent();}catch(e){showToast("تعذر حفظ الجرد: "+err(e),"error",7000);}
+});
+if($("inventoryCountReportBtn"))$("inventoryCountReportBtn").addEventListener("click",async()=>{
+ try{await inventoryCountSaveCurrent();inventoryCountBuildReport();}catch(e){showToast("تعذر إعداد التقرير: "+err(e),"error",7000);}
+});
+if($("inventoryCountApproveBtn"))$("inventoryCountApproveBtn").addEventListener("click",async()=>{
+ if(!isSystemAdmin){showToast("اعتماد الجرد لمدير النظام فقط","error");return;}
+ if(!confirm("سيتم اعتماد دورة الجرد وتنفيذ تسوية فعلية لأرصدة جميع المواقع. لا يمكن التراجع عن الاعتماد. هل تريد المتابعة؟"))return;
+ try{
+  await inventoryCountSaveCurrent();
+  const {data,error}=await db.rpc("inventory_count_approve",{p_session_id:Number(inventoryCountCurrent.session.session_id),p_notes:null});
+  if(error)throw error;
+  await inventoryCountLoad(inventoryCountCurrent.session.session_id);await inventoryCountRefreshList(inventoryCountCurrent.session.session_id);
+  inventoryCountBuildReport();
+  showToast("تم اعتماد الجرد وتنفيذ "+data+" تسوية مخزون","success",7000);
+  if(typeof loadStock==="function")await loadStock();
+ }catch(e){showToast("لم يتم اعتماد الجرد: "+err(e),"error",8000);}
+});
+if($("inventoryCountPrintBtn"))$("inventoryCountPrintBtn").addEventListener("click",()=>{if(!$("inventoryCountReportContent").innerHTML){showToast("اعرض التقرير أولاً","error");return;}window.print();});
+if($("inventoryCountWhatsappBtn"))$("inventoryCountWhatsappBtn").addEventListener("click",()=>{if(!window.inventoryCountWhatsappText){showToast("اعرض التقرير أولاً","error");return;}window.open("https://wa.me/?text="+encodeURIComponent(window.inventoryCountWhatsappText),"_blank");});
 
 async function viewProductStockMovements(productId) {
     if(!canViewStock) { showToast("ليس لديك صلاحية عرض حركة المخزون","error"); return; }
