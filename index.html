@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v123</title>
+<title>MeatManagement v124</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -254,6 +254,9 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 #barcodeScanner .scanner-footer{padding:12px;background:var(--g);color:white;text-align:center;font-size:13px}
 #barcodeScanner .close-scan{background:none;border:0;color:white;font-size:22px}
 @media print{
+  .inventory-report-section:not([open])>.inventory-report-section-body{display:block!important}
+  .inventory-report-section>summary{display:list-item!important}
+  .inventory-report-section{break-inside:avoid}
   @page{margin:8mm;size:A4 portrait}
   body{background:#fff!important}
   body *{visibility:hidden}
@@ -5207,24 +5210,25 @@ async function viewStockMovements(productId, locationId) {
 }
 
 const inventorySummaryGroups=[
- {key:"RAW",title:"الخامات"},
- {key:"RAW_FISH",title:"أسماك وسي فود"},
+ {key:"RAW_POULTRY",title:"الدواجن"},
+ {key:"FINISHED",title:"المنتجات التامة"},
+ {key:"FROZEN_VEG",title:"الخضروات المجمدة"},
+ {key:"RAW_MEAT",title:"اللحوم"},
  {key:"RAW_PICKLES",title:"خامات المخللات"},
+ {key:"FIN_PICKLES",title:"منتجات المخللات"},
+ {key:"CHEESE",title:"منتجات الأجبان"},
+ {key:"RAW_FISH",title:"أسماك وسي فود"},
+ {key:"SEMI_FINISHED",title:"منتجات نصف مصنعة"},
+ {key:"RAW_OTHER",title:"خامات أخرى"},
  {key:"SPICES",title:"التوابل ومكونات الوصفات"},
  {key:"OIL_HONEY_RAW",title:"خامات الزيوت والعسل والطحينة"},
- {key:"SEMI_FINISHED",title:"المنتجات نصف المصنعة"},
  {key:"PACKAGING",title:"خامات التشغيل"},
- {key:"FINISHED",title:"المنتجات التامة"},
  {key:"OIL_HONEY_FINISHED",title:"منتجات تامة - زيوت وعسل وطحينة"},
- {key:"FROZEN_VEG",title:"الخضروات المجمدة"},
- {key:"CHEESE",title:"منتجات الأجبان"},
- {key:"FIN_PICKLES",title:"منتجات المخللات"}
+ {key:"OTHER",title:"أصناف غير مصنفة"}
 ];
 function inventorySummaryGroupOf(product){
  const section=productSectionOf(product);
- if(["RAW_MEAT","RAW_POULTRY","RAW_OTHER"].includes(section))return "RAW";
- if(["RAW_FISH","RAW_PICKLES","SPICES","OIL_HONEY_RAW","SEMI_FINISHED","PACKAGING","FINISHED","OIL_HONEY_FINISHED","FROZEN_VEG","CHEESE","FIN_PICKLES"].includes(section))return section;
- return "RAW";
+ return inventorySummaryGroups.some(group=>group.key===section)?section:"OTHER";
 }
 function inventorySummaryEscape(value){
  return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
@@ -5316,7 +5320,7 @@ async function loadInventorySummaryReport(){
    });
    const body=rows.length?rows.map(r=>'<tr><td>'+inventorySummaryEscape(r.product.product_name)+'</td><td>'+inventorySummaryEscape(r.unit||"—")+'</td><td>'+inventorySummaryQty(r.openingQty)+'</td><td>'+inventorySummaryMoney(r.openingValue)+'</td><td>'+inventorySummaryQty(r.inQty)+'</td><td>'+inventorySummaryMoney(r.inValue)+'</td><td>'+inventorySummaryQty(r.outQty)+'</td><td>'+inventorySummaryMoney(r.outValue)+'</td><td>'+inventorySummaryQty(r.currentQty)+'</td><td>'+inventorySummaryMoney(r.currentValue)+'</td></tr>').join(""):'<tr><td colspan="10" class="empty">لا توجد أصناف في هذا التصنيف.</td></tr>';
    const summaryRows=[...totalsByUnit.entries()].sort((a,b)=>a[0].localeCompare(b[0],"ar")).map(([unit,t])=>'<tr><td>'+inventorySummaryEscape(unit)+'</td><td>'+inventorySummaryQty(t.openingQty)+'</td><td>'+inventorySummaryQty(t.inQty)+'</td><td>'+inventorySummaryQty(t.outQty)+'</td><td>'+inventorySummaryQty(t.currentQty)+'</td></tr>').join("");
-   output+='<section class="inventory-report-section"><h3 class="dashboard-title">'+inventorySummaryEscape(group.title)+' ('+rows.length+' صنف)</h3><div class="table-responsive"><table class="print-table"><thead><tr><th rowspan="2">الصنف</th><th rowspan="2">الوحدة</th><th colspan="2">رصيد أول المدة</th><th colspan="2">إجمالي دخول</th><th colspan="2">إجمالي خروج</th><th colspan="2">الرصيد الحالي</th></tr><tr><th>الكمية</th><th>القيمة</th><th>الكمية</th><th>القيمة</th><th>الكمية</th><th>القيمة</th><th>الكمية</th><th>القيمة</th></tr></thead><tbody>'+body+'</tbody></table></div><div class="mini-summary"><h4>ملخص '+inventorySummaryEscape(group.title)+'</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>الوحدة</th><th>رصيد أول المدة</th><th>إجمالي دخول</th><th>إجمالي خروج</th><th>الرصيد الحالي</th></tr></thead><tbody>'+summaryRows+'</tbody></table></div><div class="line"><span>قيمة رصيد أول المدة</span><strong>'+inventorySummaryMoney(sums.openingValue)+'</strong></div><div class="line"><span>قيمة إجمالي الدخول</span><strong>'+inventorySummaryMoney(sums.inValue)+'</strong></div><div class="line"><span>قيمة إجمالي الخروج</span><strong>'+inventorySummaryMoney(sums.outValue)+'</strong></div><div class="line"><span>قيمة الرصيد الحالي</span><strong>'+inventorySummaryMoney(sums.currentValue)+'</strong></div></div></section>';
+   output+='<details class="inventory-report-section"><summary class="dashboard-title">'+inventorySummaryEscape(group.title)+' ('+rows.length+' صنف)</summary><div class="inventory-report-section-body"><div class="table-responsive"><table class="print-table"><thead><tr><th rowspan="2">الصنف</th><th rowspan="2">الوحدة</th><th colspan="2">رصيد أول المدة</th><th colspan="2">إجمالي دخول</th><th colspan="2">إجمالي خروج</th><th colspan="2">الرصيد الحالي</th></tr><tr><th>الكمية</th><th>القيمة</th><th>الكمية</th><th>القيمة</th><th>الكمية</th><th>القيمة</th><th>الكمية</th><th>القيمة</th></tr></thead><tbody>'+body+'</tbody></table></div><div class="mini-summary"><h4>ملخص '+inventorySummaryEscape(group.title)+'</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>الوحدة</th><th>رصيد أول المدة</th><th>إجمالي دخول</th><th>إجمالي خروج</th><th>الرصيد الحالي</th></tr></thead><tbody>'+summaryRows+'</tbody></table></div><div class="line"><span>قيمة رصيد أول المدة</span><strong>'+inventorySummaryMoney(sums.openingValue)+'</strong></div><div class="line"><span>قيمة إجمالي الدخول</span><strong>'+inventorySummaryMoney(sums.inValue)+'</strong></div><div class="line"><span>قيمة إجمالي الخروج</span><strong>'+inventorySummaryMoney(sums.outValue)+'</strong></div><div class="line"><span>قيمة الرصيد الحالي</span><strong>'+inventorySummaryMoney(sums.currentValue)+'</strong></div></div></div></details>';
    waText+="\n"+group.title+"\n";
    rows.forEach(r=>{waText+=r.product.product_name+" ("+r.unit+"): أول المدة "+inventorySummaryQty(r.openingQty)+" / "+inventorySummaryMoney(r.openingValue)+"، دخول "+inventorySummaryQty(r.inQty)+" / "+inventorySummaryMoney(r.inValue)+"، خروج "+inventorySummaryQty(r.outQty)+" / "+inventorySummaryMoney(r.outValue)+"، حالي "+inventorySummaryQty(r.currentQty)+" / "+inventorySummaryMoney(r.currentValue)+"\n";});
    waText+="إجمالي القيمة الحالية للتصنيف: "+inventorySummaryMoney(sums.currentValue)+"\n";
