@@ -88,6 +88,16 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 .dashboard-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:12px}
 .dash-item{display:flex;flex-direction:column;align-items:center;justify-content:center;background:white;border:1px solid var(--line);border-radius:14px;padding:16px 10px;cursor:pointer;box-shadow:0 2px 8px #142d1905;transition:transform .1s}
 .dash-item:active{transform:scale(0.95)}
+.product-menu-group{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 2px 8px #142d1905}
+.product-menu-group>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:15px;color:var(--g);font-weight:700;font-size:16px}
+.product-menu-group>summary::-webkit-details-marker{display:none}
+.product-menu-group>summary:after{content:"＋";font-size:18px;color:var(--g);margin-inline-start:auto}
+.product-menu-group[open]>summary:after{content:"−"}
+.product-menu-group[open]>summary{border-bottom:1px solid var(--line);background:#f7faf7}
+.product-menu-group>.dashboard-grid{padding:12px}
+.product-menu-hint{font-size:12px;font-weight:400;color:var(--muted);margin-inline-start:auto}
+.dash-subtitle{font-size:11px;color:var(--muted);margin-top:4px;text-align:center}
+
 .dash-icon{font-size:28px;margin-bottom:8px}
 .dash-title{font-size:13px;font-weight:bold;color:var(--g);text-align:center}
 .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
@@ -1816,20 +1826,40 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">رجوع للقائمة</button>
 <div class="card product-hub">
 <div class="row" style="justify-content:space-between"><div><h2 style="margin:0">إدارة المنتجات</h2><div class="details">اختر نوع الأصناف لفتح شاشة الإدارة الخاصة به</div></div><button id="addBtn" class="btn hidden" type="button" onclick="window.openNewProductForm()">إضافة صنف</button></div>
-<div class="dashboard-grid" style="margin-top:16px">
-<button type="button" class="dash-item" onclick="window.openRawMaterialsMenu()"><span class="dash-icon">🥩</span><span class="dash-title">خامات</span></button>
-<button type="button" class="dash-item" onclick="window.openProductList('SPICES','توابل ومكونات الوصفات')"><span class="dash-icon">🌶️</span><span class="dash-title">توابل ومكونات الوصفات</span></button>
+<div class="product-menu-groups" style="margin-top:16px;display:grid;gap:12px">
+<details class="product-menu-group" open>
+<summary><span>🥩 خامات</span><span class="product-menu-hint">المواد الخام قبل التصنيع</span></summary>
+<div class="dashboard-grid">
+<button type="button" class="dash-item" onclick="window.openRawMaterialsMenu()"><span class="dash-icon">🥩</span><span class="dash-title">اللحوم والدواجن والأسماك</span><span class="dash-subtitle">باقي أنواع الخامات</span></button>
 <button type="button" class="dash-item" onclick="window.openProductList('OIL_HONEY_RAW','خامات الزيوت والعسل والطحينة')"><span class="dash-icon">🫒</span><span class="dash-title">خامات الزيوت والعسل والطحينة</span></button>
 <button type="button" class="dash-item" onclick="window.openProductList('RAW_PICKLES','خامات المخللات')"><span class="dash-icon">🥒</span><span class="dash-title">خامات المخللات</span></button>
+</div>
+</details>
+<details class="product-menu-group">
+<summary><span>📦 منتجات جاهزة للبيع</span><span class="product-menu-hint">الأصناف التي تُباع للعميل</span></summary>
+<div class="dashboard-grid">
 <button type="button" class="dash-item" onclick="window.openProductList('FIN_PICKLES','منتجات المخللات')"><span class="dash-icon">🫙</span><span class="dash-title">منتجات المخللات</span></button>
 <button type="button" class="dash-item" onclick="window.openProductList('FROZEN_VEG','الخضروات المجمدة')"><span class="dash-icon">❄️</span><span class="dash-title">الخضروات المجمدة</span></button>
 <button type="button" class="dash-item" onclick="window.openProductList('CHEESE','منتجات الأجبان')"><span class="dash-icon">🧀</span><span class="dash-title">منتجات الأجبان</span></button>
-<button type="button" class="dash-item" onclick="window.openProductList('SEMI_FINISHED','منتجات نصف مصنعة')"><span class="dash-icon">⚙️</span><span class="dash-title">منتجات نصف مصنعة</span></button>
-<button type="button" class="dash-item" onclick="window.openProductList('PACKAGING','خامات التشغيل')"><span class="dash-icon">🏷️</span><span class="dash-title">خامات التشغيل</span></button>
 <button type="button" class="dash-item" onclick="window.openProductList('FINISHED','المنتجات التامة')"><span class="dash-icon">📦</span><span class="dash-title">المنتجات التامة</span></button>
 <button type="button" class="dash-item" onclick="window.openProductList('OIL_HONEY_FINISHED','منتجات تامة - زيوت وعسل وطحينة')"><span class="dash-icon">🫙</span><span class="dash-title">منتجات تامة - زيوت وعسل وطحينة</span></button>
+</div>
+</details>
+<details class="product-menu-group">
+<summary><span>⚙️ مكونات ومستلزمات الإنتاج</span><span class="product-menu-hint">مكونات الوصفات ومواد التشغيل</span></summary>
+<div class="dashboard-grid">
+<button type="button" class="dash-item" onclick="window.openProductList('SPICES','توابل ومكونات الوصفات')"><span class="dash-icon">🌶️</span><span class="dash-title">توابل ومكونات الوصفات</span></button>
+<button type="button" class="dash-item" onclick="window.openProductList('PACKAGING','خامات التشغيل')"><span class="dash-icon">🏷️</span><span class="dash-title">خامات التشغيل</span></button>
+<button type="button" class="dash-item" onclick="window.openProductList('SEMI_FINISHED','منتجات نصف مصنعة')"><span class="dash-icon">⚙️</span><span class="dash-title">منتجات نصف مصنعة</span></button>
+</div>
+</details>
+<details class="product-menu-group">
+<summary><span>📊 التقارير والجرد</span><span class="product-menu-hint">متابعة الأرصدة وتنفيذ الجرد</span></summary>
+<div class="dashboard-grid">
 <button type="button" class="dash-item" onclick="window.openInventorySummaryReport()"><span class="dash-icon">📊</span><span class="dash-title">تقرير أرصدة وحركة المخزون</span></button>
 <button type="button" class="dash-item" onclick="window.openInventoryCount()"><span class="dash-icon">📋</span><span class="dash-title">إدارة الجرد</span></button>
+</div>
+</details>
 </div>
 </div>
 </div>
@@ -1841,7 +1871,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="dashboard-grid">
 <button type="button" class="dash-item" onclick="window.openProductList('RAW_MEAT','اللحوم')"><span class="dash-icon">🥩</span><span class="dash-title">لحوم</span></button>
 <button type="button" class="dash-item" onclick="window.openProductList('RAW_POULTRY','الدواجن')"><span class="dash-icon">🍗</span><span class="dash-title">دواجن</span></button>
-<button type="button" class="dash-item" onclick="window.openProductList('RAW_OTHER','خامات أخرى')"><span class="dash-icon">📦</span><span class="dash-title">خامات أخرى</span></button>
+<button type="button" class="dash-item" id="rawOtherMenuItem" onclick="window.openProductList('RAW_OTHER','خامات أخرى')"><span class="dash-icon">📦</span><span class="dash-title">خامات أخرى</span></button>
 <button type="button" class="dash-item" onclick="window.openProductList('RAW_FISH','أسماك وسي فود')"><span class="dash-icon">🐟</span><span class="dash-title">أسماك وسي فود</span></button>
 </div>
 </div></div></div>
@@ -3693,7 +3723,7 @@ function productSectionOf(p){
   }
   return p.product_type||"OTHER";
 }
-window.openRawMaterialsMenu=function(){const m=$("rawSubcategoryModal");if(m)m.classList.add("active");};
+window.openRawMaterialsMenu=function(){const m=$("rawSubcategoryModal");const other=$("rawOtherMenuItem");if(other){const hasOther=(productsCache||[]).some(p=>p&&productSectionOf(p)==="RAW_OTHER");other.classList.toggle("hidden",!hasOther);}if(m)m.classList.add("active");};
 window.closeRawMaterialsMenu=function(){const m=$("rawSubcategoryModal");if(m)m.classList.remove("active");};
 window.openProductList=function(section,title){
   activeProductSection=section;
