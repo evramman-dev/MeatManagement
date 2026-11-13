@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v114</title>
+<title>MeatManagement v115</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -5349,23 +5349,23 @@ function inventoryCountRenderEditor(){
      const old=saved.find(z=>Number(z.unit_id)===Number(cv.unit_id));
      return '<label style="font-weight:normal;margin:4px 0">'+inventoryCountEsc(cv.unit_name)+'<input class="inventory-count-plate" data-product="'+x.product_id+'" data-unit="'+cv.unit_id+'" data-factor="'+cv.base_quantity_per_unit+'" type="number" min="0" step="1" value="'+(old?inventoryCountEsc(old.quantity):"")+'" '+(readOnly?"disabled":"")+' style="min-width:90px"></label>';
     }).join("");
-    actualInput='<div class="inventory-count-units">'+plates+'<label style="font-weight:normal;margin:4px 0">كمية سائبة بالكيلو<input class="inventory-count-loose" data-product="'+x.product_id+'" type="number" min="0" step="0.001" value="'+(x.counted_loose_quantity==null?"":inventoryCountEsc(x.counted_loose_quantity))+'" '+(readOnly?"disabled":"")+' style="min-width:90px"></label><div class="details">إجمالي الوزن: <strong class="inventory-count-live-total" data-product="'+x.product_id+'">'+(x.counted_quantity==null?"—":inventoryCountQty(x.counted_quantity)+" كجم")+'</strong></div></div>';
+    actualInput='<div class="inventory-count-units">'+plates+'<label style="font-weight:normal;margin:4px 0">كمية متبقية خارج العبوات<input class="inventory-count-loose" data-product="'+x.product_id+'" type="number" min="0" step="0.001" value="'+(x.counted_loose_quantity==null?"":inventoryCountEsc(x.counted_loose_quantity))+'" '+(readOnly?"disabled":"")+' style="min-width:90px"></label><div class="details">إجمالي الوزن: <strong class="inventory-count-live-total" data-product="'+x.product_id+'">'+(x.counted_quantity==null?"—":inventoryCountQty(x.counted_quantity)+" "+inventoryCountEsc(unitName(x.unit_id)))+'</strong></div></div>';
    }else{
     actualInput='<input class="inventory-count-qty" data-product="'+x.product_id+'" type="number" min="0" step="0.001" value="'+(x.counted_quantity==null?"":inventoryCountEsc(x.counted_quantity))+'" '+(readOnly?"disabled":"")+' style="min-width:95px;width:110px">';
    }
-   const unitLabel=conversions.length?"كجم":inventoryCountEsc(unitName(x.unit_id));
+   const unitLabel=inventoryCountEsc(unitName(x.unit_id));
    return '<tr><td>'+inventoryCountEsc(x.product_name)+'<div class="details">'+inventoryCountEsc(x.product_code||"")+'</div></td><td>'+unitLabel+'</td><td>'+inventoryCountQty(x.system_quantity)+'</td><td>'+inventoryCountMoney(x.system_value)+'</td><td>'+actualInput+'</td><td>'+(x.counted_value==null?"—":inventoryCountMoney(x.counted_value))+'</td><td>'+(x.difference_quantity==null?"—":inventoryCountQty(x.difference_quantity))+'</td><td>'+(x.difference_value==null?"—":inventoryCountMoney(x.difference_value))+'</td></tr>';
   }).join("");
   return '<section class="inventory-report-section"><h3>'+inventoryCountEsc(group)+' ('+items.length+' صنف)</h3><div class="table-responsive"><table class="print-table"><thead><tr><th>الصنف</th><th>وحدة المخزون</th><th>رصيد النظام</th><th>قيمة النظام</th><th>الجرد الفعلي</th><th>قيمة الجرد</th><th>فرق الكمية</th><th>فرق القيمة</th></tr></thead><tbody>'+body+'</tbody></table></div></section>';
  }).join("");
- host.innerHTML='<div class="info">أدخل عدد الأطباق لكل وزن مسجل. النظام يحسب إجمالي الوزن بالكيلو تلقائيًا. يمكنك إضافة كمية سائبة بالكيلو عند وجودها.</div>'+sections;
+ host.innerHTML='<div class="info">أدخل عدد العبوات لكل حجم مسجل. النظام يحسب إجمالي الكمية بوحدة الصنف تلقائيًا. أدخل الكمية المتبقية خارج العبوات إذا وجدت.</div>'+sections;
  const updateTotals=()=>{
   host.querySelectorAll(".inventory-count-live-total").forEach(out=>{
    const pid=out.dataset.product;let kg=0,has=false;
    host.querySelectorAll('.inventory-count-plate[data-product="'+pid+'"]').forEach(i=>{if(i.value.trim()!==""){has=true;kg+=Number(i.value||0)*Number(i.dataset.factor||0);}});
    const loose=host.querySelector('.inventory-count-loose[data-product="'+pid+'"]');
    if(loose&&loose.value.trim()!==""){has=true;kg+=Number(loose.value||0);}
-   out.textContent=has?inventoryCountQty(kg)+" كجم":"—";
+   out.textContent=has?inventoryCountQty(kg)+" "+inventoryCountEsc(unitName(inventoryCountLocations.flatMap(l=>l.lines||[]).find(x=>String(x.product_id)===String(pid))?.unit_id)):"—";
   });
  };
  host.querySelectorAll(".inventory-count-plate,.inventory-count-loose").forEach(i=>i.addEventListener("input",updateTotals));
@@ -5414,8 +5414,8 @@ function inventoryCountBuildReport(){
     if(counted!=null){gs.countedValue+=inventoryCountNum(x.counted_value);gs.diffValue+=inventoryCountNum(x.difference_value);}
     const conversions=x.conversions||[],saved=Array.isArray(x.counted_units)?x.counted_units:[];
     const plateText=conversions.map(cv=>{const z=saved.find(v=>Number(v.unit_id)===Number(cv.unit_id));return z?inventoryCountQty(z.quantity)+" "+inventoryCountEsc(cv.unit_name):"";}).filter(Boolean).join(" + ");
-    const actual=counted==null?"لم يجرد":(conversions.length?(plateText||"0 طبق")+(Number(x.counted_loose_quantity||0)>0?" + "+inventoryCountQty(x.counted_loose_quantity)+" كجم":"")+"<div class='details'>الإجمالي "+inventoryCountQty(counted)+" كجم</div>":inventoryCountQty(counted));
-    return '<tr><td>'+inventoryCountEsc(x.product_name)+'</td><td>'+ (conversions.length?"طبق / كجم":inventoryCountEsc(unitName(x.unit_id)))+'</td><td>'+inventoryCountQty(x.system_quantity)+'</td><td>'+inventoryCountMoney(x.system_value)+'</td><td>'+actual+'</td><td>'+(counted==null?"—":inventoryCountMoney(x.counted_value))+'</td><td>'+(diff==null?"—":inventoryCountQty(diff))+'</td><td>'+(x.difference_value==null?"—":inventoryCountMoney(x.difference_value))+'</td></tr>';
+    const actual=counted==null?"لم يجرد":(conversions.length?(plateText||"0 عبوة")+(Number(x.counted_loose_quantity||0)>0?" + "+inventoryCountQty(x.counted_loose_quantity)+" "+inventoryCountEsc(unitName(x.unit_id)):"")+"<div class='details'>الإجمالي "+inventoryCountQty(counted)+" كجم</div>":inventoryCountQty(counted));
+    return '<tr><td>'+inventoryCountEsc(x.product_name)+'</td><td>'+ (conversions.length?"عبوات / "+inventoryCountEsc(unitName(x.unit_id)):inventoryCountEsc(unitName(x.unit_id)))+'</td><td>'+inventoryCountQty(x.system_quantity)+'</td><td>'+inventoryCountMoney(x.system_value)+'</td><td>'+actual+'</td><td>'+(counted==null?"—":inventoryCountMoney(x.counted_value))+'</td><td>'+(diff==null?"—":inventoryCountQty(diff))+'</td><td>'+(x.difference_value==null?"—":inventoryCountMoney(x.difference_value))+'</td></tr>';
    }).join("");
    sums.systemValue+=gs.systemValue;sums.countedValue+=gs.countedValue;sums.diffValue+=gs.diffValue;
    groupHtml+='<h4 style="margin:16px 0 6px;color:var(--g)">'+inventoryCountEsc(group)+'</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>الصنف</th><th>الوحدة</th><th>رصيد النظام كجم</th><th>قيمة النظام</th><th>الجرد الفعلي</th><th>قيمة الجرد</th><th>فرق الكمية كجم</th><th>فرق القيمة</th></tr></thead><tbody>'+rows+'</tbody></table></div><div class="mini-summary"><strong>ملخص '+inventoryCountEsc(group)+'</strong><div class="line"><span>قيمة رصيد النظام</span><strong>'+inventoryCountMoney(gs.systemValue)+'</strong></div><div class="line"><span>قيمة الجرد الفعلي</span><strong>'+inventoryCountMoney(gs.countedValue)+'</strong></div><div class="line"><span>فرق القيمة</span><strong>'+inventoryCountMoney(gs.diffValue)+'</strong></div></div>';
