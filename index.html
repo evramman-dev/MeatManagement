@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v113</title>
+<title>MeatManagement v114</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1889,6 +1889,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <label class="check"><input id="canProduce" type="checkbox">يمكن إنتاجه</label>
 <label class="check"><input id="canSell" type="checkbox">يمكن بيعه</label>
 <label class="check"><input id="canLoad" type="checkbox">يمكن تحميله</label>
+<label class="check"><input id="requiresRefrigeration" type="checkbox">يحتاج إلى تخزين مبرد</label>
 </div>
 <label class="check"><input id="active" type="checkbox" checked>المنتج نشط</label>
 <button id="saveBtn" class="btn" type="submit">حفظ</button>
@@ -1899,7 +1900,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v108</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v114</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -3624,6 +3625,7 @@ async function loadProducts(){
   fillReservationSelects(); 
 }
 let activeProductSection="ALL";
+function defaultProductNeedsRefrigeration(type,categoryId){return Number(categoryId)===19||Number(categoryId)===20||type==="SEMI_FINISHED"||type==="FINISHED";}
 function productCategoryIdsForSection(section=activeProductSection){
   const map={
     RAW_MEAT:[19],
@@ -3652,6 +3654,7 @@ function refreshProductCategoryOptions(formSelected=null,includeForm=true){
   };
   fill($("productCategoryFilter"),"كل تصنيفات القسم",null);
   if(includeForm)fill($("category"),"اختر التصنيف",formSelected);
+  if(includeForm&&$("requiresRefrigeration")&&!$("editId")?.value)$("requiresRefrigeration").checked=defaultProductNeedsRefrigeration($("ptype")?.value,$("category")?.value);
 }
 function isSpiceProduct(p){
   const code=String(p.product_code||"").toUpperCase();
@@ -3760,7 +3763,7 @@ function renderProducts(){
       if(canViewStock){const historyBtn=document.createElement("button");historyBtn.type="button";historyBtn.className="btn secondary";historyBtn.style.marginTop="10px";historyBtn.textContent="حركة الصنف / كارت الصنف";historyBtn.onclick=()=>viewProductStockMovements(p.product_id);card.appendChild(historyBtn);}
       if(canManage){const btn=document.createElement("button");btn.className="btn secondary";btn.textContent="تعديل بيانات الصنف";btn.onclick=()=>{
         refreshProductCategoryOptions(p.category_id);
-        $("editId").value=p.product_id;$("pname").value=p.product_name;$("pcode").value=p.product_code;$("barcode").value=p.barcode||"";$("ptype").value=p.product_type;$("category").value=p.category_id;$("baseUnit").value=String(p.base_unit_id||"");$("purchaseUnit").value=String(p.purchase_unit_id||"");$("salesUnit").value=String(p.sales_unit_id||"");$("minStock").value=p.minimum_stock;$("minPrice").value=p.min_selling_price||"";$("targetPrice").value=p.target_selling_price||"";$("maxPrice").value=p.max_selling_price||"";$("unitsCarton").value=p.units_per_carton||"";$("shelfLifeMonths").value=p.shelf_life_months||"";$("active").checked=p.is_active;$("canPurchase").checked=p.can_be_purchased;$("canProduce").checked=p.can_be_produced;$("canSell").checked=p.can_be_sold;$("canLoad").checked=p.can_be_loaded;$("formTitle").textContent="تعديل الصنف";if($("formMsg"))clear($("formMsg"));$("productFormModal").classList.add("active");
+        $("editId").value=p.product_id;$("pname").value=p.product_name;$("pcode").value=p.product_code;$("barcode").value=p.barcode||"";$("ptype").value=p.product_type;$("category").value=p.category_id;$("baseUnit").value=String(p.base_unit_id||"");$("purchaseUnit").value=String(p.purchase_unit_id||"");$("salesUnit").value=String(p.sales_unit_id||"");$("minStock").value=p.minimum_stock;$("minPrice").value=p.min_selling_price||"";$("targetPrice").value=p.target_selling_price||"";$("maxPrice").value=p.max_selling_price||"";$("unitsCarton").value=p.units_per_carton||"";$("shelfLifeMonths").value=p.shelf_life_months||"";$("active").checked=p.is_active;$("canPurchase").checked=p.can_be_purchased;$("canProduce").checked=p.can_be_produced;$("canSell").checked=p.can_be_sold;$("canLoad").checked=p.can_be_loaded;$("requiresRefrigeration").checked=!!p.requires_refrigeration;$("formTitle").textContent="تعديل الصنف";if($("formMsg"))clear($("formMsg"));$("productFormModal").classList.add("active");
       };card.appendChild(btn);}
       heading.appendChild(card);
     });
@@ -3776,6 +3779,7 @@ window.openNewProductForm=function(){
   const allowed=productCategoryIdsForSection();
   if(allowed.length===1 && $("category"))$("category").value=String(allowed[0]);
   if($("active")) $("active").checked=true;
+  if($("requiresRefrigeration")) $("requiresRefrigeration").checked=defaultProductNeedsRefrigeration($("ptype")?.value,$("category")?.value);
   if($("productFormModal")) $("productFormModal").classList.add("active");
   if($("formMsg")) clear($("formMsg"));
 };
@@ -3815,7 +3819,8 @@ if($("productForm")) $("productForm").addEventListener("submit", async e => {
     can_be_purchased:$("canPurchase").checked, 
     can_be_produced:$("canProduce").checked, 
     can_be_sold:$("canSell").checked, 
-    can_be_loaded:$("canLoad").checked 
+    can_be_loaded:$("canLoad").checked,
+    requires_refrigeration:$("requiresRefrigeration").checked
   }; 
   try{ 
     const result=id
@@ -3833,6 +3838,7 @@ if($("productForm")) $("productForm").addEventListener("submit", async e => {
   }
   finally{ busy(btn,false,"","حفظ"); }
 });
+["ptype","category"].forEach(id=>{const el=$(id);if(el&&el.dataset.storageBound!=="1"){el.dataset.storageBound="1";el.addEventListener("change",()=>{if($("requiresRefrigeration"))$("requiresRefrigeration").checked=defaultProductNeedsRefrigeration($("ptype").value,$("category").value);});}});
 if($("refreshBtn")) $("refreshBtn").addEventListener("click",loadProducts);
 if($("search")) $("search").addEventListener("input",renderProducts);
 
