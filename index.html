@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v115</title>
+<title>MeatManagement v116</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1819,9 +1819,11 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="dashboard-grid" style="margin-top:16px">
 <button type="button" class="dash-item" onclick="window.openRawMaterialsMenu()"><span class="dash-icon">🥩</span><span class="dash-title">خامات</span></button>
 <button type="button" class="dash-item" onclick="window.openProductList('SPICES','توابل ومكونات الوصفات')"><span class="dash-icon">🌶️</span><span class="dash-title">توابل ومكونات الوصفات</span></button>
+<button type="button" class="dash-item" onclick="window.openProductList('OIL_HONEY_RAW','خامات الزيوت والعسل والطحينة')"><span class="dash-icon">🫒</span><span class="dash-title">خامات الزيوت والعسل والطحينة</span></button>
 <button type="button" class="dash-item" onclick="window.openProductList('SEMI_FINISHED','منتجات نصف مصنعة')"><span class="dash-icon">⚙️</span><span class="dash-title">منتجات نصف مصنعة</span></button>
 <button type="button" class="dash-item" onclick="window.openProductList('PACKAGING','خامات التشغيل')"><span class="dash-icon">🏷️</span><span class="dash-title">خامات التشغيل</span></button>
 <button type="button" class="dash-item" onclick="window.openProductList('FINISHED','المنتجات التامة')"><span class="dash-icon">📦</span><span class="dash-title">المنتجات التامة</span></button>
+<button type="button" class="dash-item" onclick="window.openProductList('OIL_HONEY_FINISHED','منتجات تامة - زيوت وعسل وطحينة')"><span class="dash-icon">🫙</span><span class="dash-title">منتجات تامة - زيوت وعسل وطحينة</span></button>
 <button type="button" class="dash-item" onclick="window.openInventorySummaryReport()"><span class="dash-icon">📊</span><span class="dash-title">تقرير أرصدة وحركة المخزون</span></button>
 <button type="button" class="dash-item" onclick="window.openInventoryCount()"><span class="dash-icon">📋</span><span class="dash-title">إدارة الجرد</span></button>
 </div>
@@ -3630,9 +3632,11 @@ function productCategoryIdsForSection(section=activeProductSection){
     RAW_POULTRY:[20],
     RAW_OTHER:[15,21],
     SPICES:[22],
+    OIL_HONEY_RAW:[23],
     SEMI_FINISHED:[17],
     PACKAGING:[16],
-    FINISHED:[18]
+    FINISHED:[18],
+    OIL_HONEY_FINISHED:[24]
   };
   return map[section]||categories.map(c=>Number(c.category_id));
 }
@@ -3662,6 +3666,8 @@ function isSpiceProduct(p){
 function productSectionOf(p){
   const categoryId=Number(p.category_id||0);
   if(categoryId===16)return "PACKAGING";
+  if(categoryId===23)return "OIL_HONEY_RAW";
+  if(categoryId===24)return "OIL_HONEY_FINISHED";
   if(isSpiceProduct(p)||categoryId===22)return "SPICES";
   if(p.product_type==="SEMI_FINISHED")return "SEMI_FINISHED";
   if(p.product_type==="FINISHED")return "FINISHED";
@@ -3734,10 +3740,12 @@ function renderProducts(){
     {id:"RAW_MEAT",title:"اللحوم",desc:"الخامات المصنفة لحوم"},
     {id:"RAW_POULTRY",title:"الدواجن",desc:"الخامات المصنفة دواجن"},
     {id:"RAW_OTHER",title:"خامات أخرى",desc:"باقي الخامات"},
-    {id:"SPICES",title:"التوابل ومكونات الوصفات",desc:"توابل ومكونات الوصفات"},
+    {id:"SPICES",title:"التوابل ومكونات الوصفات",desc:"التوابل وفول الصويا والسميط ومكونات التصنيع"},
+    {id:"OIL_HONEY_RAW",title:"خامات الزيوت والعسل والطحينة",desc:"الخامات الأساسية المستخدمة في إنتاج العبوات"},
     {id:"SEMI_FINISHED",title:"المنتجات نصف المصنعة",desc:"مخرجات التشغيل نصف المصنع"},
     {id:"PACKAGING",title:"خامات التشغيل",desc:"مواد التعبئة والتغليف والاستيكرات"},
-    {id:"FINISHED",title:"المنتجات التامة",desc:"الأصناف الجاهزة للبيع والتوزيع"}
+    {id:"FINISHED",title:"المنتجات التامة",desc:"الأصناف الجاهزة للبيع والتوزيع"},
+    {id:"OIL_HONEY_FINISHED",title:"منتجات تامة - زيوت وعسل وطحينة",desc:"العبوات النهائية من الزيت والعسل والطحينة"}
   ];
   const visibleSections=sections.filter(sec=>matched.some(p=>productSectionOf(p)===sec.id));
   visibleSections.forEach(sec=>{
@@ -5151,14 +5159,16 @@ async function viewStockMovements(productId, locationId) {
 const inventorySummaryGroups=[
  {key:"RAW",title:"الخامات"},
  {key:"SPICES",title:"التوابل ومكونات الوصفات"},
+ {key:"OIL_HONEY_RAW",title:"خامات الزيوت والعسل والطحينة"},
  {key:"SEMI_FINISHED",title:"المنتجات نصف المصنعة"},
  {key:"PACKAGING",title:"خامات التشغيل"},
- {key:"FINISHED",title:"المنتجات التامة"}
+ {key:"FINISHED",title:"المنتجات التامة"},
+ {key:"OIL_HONEY_FINISHED",title:"منتجات تامة - زيوت وعسل وطحينة"}
 ];
 function inventorySummaryGroupOf(product){
  const section=productSectionOf(product);
  if(["RAW_MEAT","RAW_POULTRY","RAW_OTHER"].includes(section))return "RAW";
- if(["SPICES","SEMI_FINISHED","PACKAGING","FINISHED"].includes(section))return section;
+ if(["SPICES","OIL_HONEY_RAW","SEMI_FINISHED","PACKAGING","FINISHED","OIL_HONEY_FINISHED"].includes(section))return section;
  return "RAW";
 }
 function inventorySummaryEscape(value){
@@ -5322,8 +5332,14 @@ async function inventoryCountLoad(id){
  $("inventoryCountStatus").textContent=approved?"تم اعتماد هذه الدورة وتنفيذ تسوية الأرصدة.":"أدخل الجرد الفعلي لكل الأصناف في كل موقع ثم احفظ كل موقع.";
 }
 function inventoryCountGroupName(loc,x){
- if(loc.location_type==="SHOWROOM")return "المنتجات التامة";
- if(loc.location_type==="MAIN_WAREHOUSE")return Number(x.category_id)===16?"مواد التعبئة والتغليف":"الخامات الجافة والتوابل";
+ const categoryId=Number(x.category_id||0);
+ if(loc.location_type==="SHOWROOM")return categoryId===24?"منتجات تامة - زيوت وعسل وطحينة":"المنتجات التامة";
+ if(loc.location_type==="MAIN_WAREHOUSE"){
+  if(categoryId===16)return "مواد التعبئة والتغليف";
+  if(categoryId===23)return "خامات الزيوت والعسل والطحينة";
+  if(categoryId===24)return "منتجات تامة - زيوت وعسل وطحينة";
+  return "الخامات الجافة والتوابل";
+ }
  if(loc.location_type==="FRIDGE"){
   if(x.product_type==="RAW")return "الخامات المبردة";
   if(x.product_type==="SEMI_FINISHED")return "منتجات نصف مصنعة";
