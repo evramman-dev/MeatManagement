@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v126</title>
+<title>MeatManagement v127</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -5231,7 +5231,7 @@ function inventoryFinishedProductGroup(product){
  const categoryId=Number(product?.category_id||0);
  const categoryName=String((Array.isArray(categories)?categories.find(c=>Number(c.category_id)===categoryId)?.category_name:"")||"").trim();
  const name=String(product?.product_name||"").trim();
- if(categoryName.includes("دواجن")||categoryId===20||/دواجن|فراخ|اوراك|أوراك|صدور|شيش طاووق/i.test(name))return "FINISHED_POULTRY";
+ if(categoryName.includes("دواجن")||categoryId===20||/دواجن|فراخ|اوراك|أوراك|وراك|صدور|دبابيس|بانيه|بط|كبد\\s*وقوانص|شيش طاووق/i.test(name))return "FINISHED_POULTRY";
  if(categoryName.includes("لحوم")||categoryId===19||/لحوم|لحم|كولاطة|كولاته|مفروم|برجر|كفتة|سجق/i.test(name))return "FINISHED_MEAT";
  return "FINISHED_MEAT";
 }
