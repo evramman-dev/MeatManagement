@@ -3576,7 +3576,7 @@ let activeProductSection="ALL";
 function isSpiceProduct(p){
   const code=String(p.product_code||"").toUpperCase();
   const name=String(p.product_name||"").trim();
-  const known=["ملح","كمون","فلفل أسود","جوزة الطيب","نشا","بيكنج بودر","توابل كفتة","توابل سجق","توابل برجر","قرفة","ثوم بودر","بصل بودر","بصل أبيض","بصل أحمر"];
+  const known=["ملح","كمون","فلفل أسود","جوزة الطيب","نشا","بيكنج بودر","توابل كفتة","توابل سجق","توابل برجر","قرفة","ثوم بودر","بصل بودر"];
   return p.product_type==="RAW" && (code.startsWith("SP-") || known.includes(name));
 }
 function productSectionOf(p){
