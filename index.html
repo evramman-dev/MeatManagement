@@ -6854,11 +6854,13 @@ async function loadReturnInvoicesForCustomer(){
   msg($("returnFormMsg"),"تعذر تحميل فواتير العميل: "+err(e),"error");
  }
 }
-function updateSalesReturnCashActionUI(){
+function updateSalesReturnCashActionUI(tripStatusOverride){
   const action=$("returnCashAction")?.value||"AUTO";
   const selectedTripId=Number($("returnInvoice")?.selectedOptions?.[0]?.dataset?.trip||0);
   const trip=tripsCache.find(t=>Number(t.trip_id)===selectedTripId);
-  const activeTrip=!!trip&&["DRAFT","ACTIVE"].includes(trip.status);
+  const activeTrip=tripStatusOverride!==undefined
+    ?["DRAFT","ACTIVE"].includes(tripStatusOverride)
+    :!!trip&&["DRAFT","ACTIVE"].includes(trip.status);
   const needsTreasury=action==="CASH_BACK"&&!activeTrip;
   const treasury=$("returnTreasury");
   const label=$("returnTreasuryLabel");
@@ -7271,6 +7273,7 @@ if($("returnForm"))$("returnForm").addEventListener("submit",async e=>{
       returnTripStatus=trip?.status||null;
     }
     const activeTrip=["DRAFT","ACTIVE"].includes(returnTripStatus);
+    if(cashAction==="CASH_BACK"&&!activeTrip)updateSalesReturnCashActionUI(returnTripStatus);
     const treasuryId=cashAction==="CASH_BACK"?(activeTrip?8:Number($("returnTreasury")?.value||0)||null):null;
     if(cashAction==="CASH_BACK"&&!activeTrip&&(!treasuryId||treasuryId===8)){
       $("returnCashAction").value="CASH_BACK";
