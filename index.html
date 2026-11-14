@@ -9065,7 +9065,7 @@ async function viewTripSummary(t){
 
     const MANDOUB_TREASURY_ID = 8;
     const totalSales = invoices
-      .filter(i => i.status !== "CANCELLED")
+      .filter(i => ["POSTED", "PAID", "PARTIAL"].includes(i.status))
       .reduce((s, i) => s + Number(i.net_total || 0), 0);
 
     const totalCollections = collections.reduce(
