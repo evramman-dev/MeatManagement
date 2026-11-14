@@ -69,6 +69,14 @@ test('Sales return retries reuse the same return number and item request IDs', (
   expect(qaHtml).not.toContain('const itemRequestId=(crypto.randomUUID?crypto.randomUUID():Date.now()+');
 });
 
+test('Collection views label cancelled records and exclude them from posted totals', () => {
+  expect(qaHtml).toContain('const statusLabel=col.status==="POSTED"?"مرحّل":col.status==="CANCELLED"?"ملغى":"غير مرحّل";');
+  expect(qaHtml).toContain('if(row.status==="POSTED") totalPosted += Number(row.amount||0);');
+  expect(qaHtml).toContain('if(row.status==="CANCELLED") totalCancelled += Number(row.amount||0);');
+  expect(qaHtml).toContain('إجمالي التحصيلات المرحلة:');
+  expect(qaHtml).toContain('إجمالي التحصيلات الملغاة (مستبعدة من الإجمالي):');
+});
+
 test('Admin notifications support selected users and all active users', () => {
   expect(qaHtml).toContain('id="notificationSendAll"');
   expect(qaHtml).toContain('إرسال إشعار عام إلى جميع المستخدمين النشطين');
