@@ -1800,6 +1800,11 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 <div id="collectionsMsg" class="status hidden"></div>
 <div id="collectionsList"><div class="empty">جارٍ تحميل التحصيلات...</div></div>
+<div id="customerChequesCard" class="card" style="margin-top:16px;">
+  <div class="row" style="justify-content:space-between;align-items:center;"><h3>شيكات العملاء</h3><button id="refreshCustomerChequesBtn" class="btn secondary" type="button">تحديث الشيكات</button></div>
+  <div class="details">تظهر الشيكات المعلقة والمحصلة والمرتدة. التحصيل متاح لمن لديه صلاحية تسجيل التحصيل، والارتداد متاح لمن لديه صلاحية إدارة التحصيلات.</div>
+  <div id="customerChequesList"><div class="empty">جارٍ تحميل الشيكات...</div></div>
+</div>
 </div>
 </div>
 <div id="collectionFormModal" class="modal-form">
@@ -7824,7 +7829,8 @@ async function loadCollections(){
     if(error) { if(box) box.innerHTML = `<div class="empty error">خطأ: ${err(error)}</div>`; return; } 
     collectionsCache=await enrichCollectionRepNames(data||[]); 
     saveCache('collections', collectionsCache); 
-    renderCollections(); 
+    renderCollections();
+    await loadCustomerCheques();
 }
 function renderCollections(){ 
   const box=$("collectionsList"); if(!box) return; 
@@ -7842,7 +7848,83 @@ function renderCollections(){
     box.appendChild(card); 
   }); 
 }
+
+async function loadCustomerCheques(){
+  const box=$("customerChequesList");
+  if(!box || !canViewCollections) return;
+  if(!navigator.onLine){box.innerHTML='<div class="empty">اتصل بالإنترنت لعرض الشيكات.</div>';return;}
+  box.innerHTML='<div class="empty">جارٍ تحميل الشيكات...</div>';
+  try{
+    const {data:cheques,error}=await db.from("customer_cheques").select("*").order("due_date",{ascending:true}).order("cheque_id",{ascending:false}).limit(300);
+    if(error) throw error;
+    const rows=cheques||[];
+    box.replaceChildren();
+    if(!rows.length){box.innerHTML='<div class="empty">لا توجد شيكات مسجلة.</div>';return;}
+    const collectionIds=[...new Set(rows.map(x=>Number(x.collection_id)).filter(Boolean))];
+    const {data:collections,error:collectionError}=collectionIds.length
+      ? await db.from("customer_collections").select("collection_id,collection_number,customer_id,status").in("collection_id",collectionIds)
+      : {data:[],error:null};
+    if(collectionError) throw collectionError;
+    const collectionMap=new Map((collections||[]).map(x=>[String(x.collection_id),x]));
+    rows.forEach(ch=>{
+      const collection=collectionMap.get(String(ch.collection_id));
+      const card=document.createElement("div");card.className="product";
+      const statusMap={PENDING:"معلق — ينتظر التحصيل",CLEARED:"تم تحصيله",BOUNCED:"مرتد"};
+      const title=document.createElement("div");title.className="pname";
+      title.textContent="شيك رقم "+(ch.cheque_number||"—")+" — "+(statusMap[ch.status]||ch.status||"غير محدد");
+      const details=document.createElement("div");details.className="details";
+      details.textContent="العميل: "+customerName(collection?.customer_id)+" | التحصيل: "+(collection?.collection_number||("#"+ch.collection_id))+" | البنك: "+(ch.bank_name||"—")+" | المبلغ: "+fmt(ch.amount)+" | الاستحقاق: "+formatDate(ch.due_date);
+      card.append(title,details);
+      if(ch.status==="BOUNCED" && ch.dishonor_reason){
+        const reason=document.createElement("div");reason.className="details";reason.textContent="سبب الارتداد: "+ch.dishonor_reason;card.appendChild(reason);
+      }
+      if(ch.status==="CLEARED" && ch.bank_reference){
+        const reference=document.createElement("div");reference.className="details";reference.textContent="مرجع البنك: "+ch.bank_reference;card.appendChild(reference);
+      }
+      if(ch.status==="PENDING" && collection?.status==="POSTED"){
+        const actions=document.createElement("div");actions.className="actions";
+        if(canPostCollections){
+          const clearBtn=document.createElement("button");clearBtn.type="button";clearBtn.className="btn";clearBtn.textContent="تسجيل تحصيل الشيك";
+          clearBtn.addEventListener("click",async()=>{
+            const bankReference=window.prompt("اكتب مرجع البنك إن وجد:","") ;
+            if(bankReference===null)return;
+            clearBtn.disabled=true;
+            try{
+              const {error}=await db.rpc("clear_customer_cheque",{p_cheque_id:Number(ch.cheque_id),p_bank_reference:bankReference.trim()||null});
+              if(error)throw error;
+              showToast("تم تسجيل تحصيل الشيك وتحويله إلى خزنة البنك.","success");
+              await loadCustomerCheques();await loadTreasuries();
+            }catch(e){showToast("تعذر تحصيل الشيك: "+err(e),"error",7000);clearBtn.disabled=false;}
+          });
+          actions.appendChild(clearBtn);
+        }
+        if(canManageCollections){
+          const bounceBtn=document.createElement("button");bounceBtn.type="button";bounceBtn.className="btn danger";bounceBtn.textContent="تسجيل ارتداد الشيك";
+          bounceBtn.addEventListener("click",async()=>{
+            const reason=window.prompt("اكتب سبب ارتداد الشيك:");
+            if(reason===null)return;
+            if(!reason.trim()){showToast("سبب ارتداد الشيك مطلوب.","error");return;}
+            if(!confirm("سيتم تسجيل ارتداد الشيك وإلغاء التحصيل وعكس أثره المالي على الخزنة والفاتورة. هل تريد المتابعة؟"))return;
+            bounceBtn.disabled=true;
+            try{
+              const {error}=await db.rpc("bounce_customer_cheque",{p_cheque_id:Number(ch.cheque_id),p_dishonor_reason:reason.trim()});
+              if(error)throw error;
+              showToast("تم تسجيل ارتداد الشيك وعكس التحصيل.","success");
+              await loadCustomerCheques();await loadCollections();await loadTreasuries();
+            }catch(e){showToast("تعذر تسجيل ارتداد الشيك: "+err(e),"error",7000);bounceBtn.disabled=false;}
+          });
+          actions.appendChild(bounceBtn);
+        }
+        if(actions.childElementCount)card.appendChild(actions);
+      }
+      box.appendChild(card);
+    });
+  }catch(e){
+    box.innerHTML='<div class="status error">تعذر تحميل الشيكات: '+esc(err(e))+'</div>';
+  }
+}
 if($("refreshCollectionsBtn")) $("refreshCollectionsBtn").addEventListener("click",loadCollections);
+if($("refreshCustomerChequesBtn")) $("refreshCustomerChequesBtn").addEventListener("click",loadCustomerCheques);
 if($("collectionsSearch")) $("collectionsSearch").addEventListener("input",renderCollections);
 if($("viewCollectionsStatementBtn")) $("viewCollectionsStatementBtn").addEventListener("click", async () => {
     const modal = $("genericStatementModal"); 
@@ -8800,9 +8882,11 @@ async function loadPendingTripLoads(){
       const details=document.createElement("div");
       details.className="details";
       const statusText=item.load_status==="APPROVED"?"معتمد وينتظر الصرف الفعلي":"بانتظار الاعتماد";
-      details.textContent="الصنف: "+productName(item.product_id)+" | الكمية المطلوبة: "+Number(item.requested_quantity||0).toLocaleString("ar-EG")+" | الحالة: "+statusText+" | تاريخ الطلب: "+(item.created_at?formatDateTime(item.created_at):"—");
+      const product=productsCache.find(p=>Number(p.product_id)===Number(item.product_id));
+      const baseUnit=unitName(product?.base_unit_id);
+      details.textContent="الصنف: "+productName(item.product_id)+" | الوحدة الأساسية: "+baseUnit+" | الكمية المطلوبة: "+Number(item.requested_quantity||0).toLocaleString("ar-EG")+" "+baseUnit+" | الحالة: "+statusText+" | تاريخ الطلب: "+(item.created_at?formatDateTime(item.created_at):"—");
       const qtyLabel=document.createElement("label");
-      qtyLabel.textContent=item.load_status==="APPROVED"?"الكمية التي خرجت فعليًا من المخزن":"الكمية المعتمدة";
+      qtyLabel.textContent=(item.load_status==="APPROVED"?"الكمية التي خرجت فعليًا من المخزن":"الكمية المعتمدة")+" ("+baseUnit+")";
       const qty=document.createElement("input");
       qty.type="number";
       qty.min="0.0001";
