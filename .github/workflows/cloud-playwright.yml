@@ -6,6 +6,7 @@ on:
     branches:
       - qa/full-cycle-test
       - fix/sales-return-retry-idempotency
+      - fix/collection-statement-cancelled-status
 
 permissions:
   contents: read
