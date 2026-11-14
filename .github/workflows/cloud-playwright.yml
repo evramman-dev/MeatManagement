@@ -8,6 +8,7 @@ on:
       - qa/full-cycle-test
       - fix/sales-return-retry-idempotency
       - fix/collection-statement-cancelled-status
+      - fix/cheque-management-vehicle-trip-guard
 
 permissions:
   contents: read
