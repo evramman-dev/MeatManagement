@@ -7836,8 +7836,9 @@ function renderCollections(){
     const card=document.createElement("div");card.className="product"; 
     const repName = col.resolved_sales_rep_name || col.sales_rep_name || "غير محدد";
     const channelLabel = col.collection_channel_label || (col.trip_id ? "عن طريق المندوب" : "مباشر من الشركة"); 
-    const trip = col.trip_id ? tripNumber(col.trip_id) : "بدون جولة"; 
-    card.innerHTML = `<div class="pname">💰 ${col.collection_number}</div><div class="details">عميل: ${customerName(col.customer_id)} | مبلغ: ${fmt(col.amount)}</div><div class="details">📅 التاريخ: ${formatDate(col.collection_date)} | 👤 المندوب المسؤول: ${repName} | طريقة التحصيل: ${channelLabel} | 🚐 الجولة: ${trip}</div>`; 
+    const trip = col.trip_id ? tripNumber(col.trip_id) : "بدون جولة";
+    const statusLabel=col.status==="POSTED"?"مرحّل":col.status==="CANCELLED"?"ملغى":"غير مرحّل";
+    card.innerHTML = `<div class="pname">💰 ${col.collection_number} — ${statusLabel}</div><div class="details">عميل: ${customerName(col.customer_id)} | مبلغ: ${fmt(col.amount)}</div><div class="details">📅 التاريخ: ${formatDate(col.collection_date)} | 👤 المندوب المسؤول: ${repName} | طريقة التحصيل: ${channelLabel} | 🚐 الجولة: ${trip}</div>`; 
     box.appendChild(card); 
   }); 
 }
@@ -7862,17 +7863,26 @@ if($("viewCollectionsStatementBtn")) $("viewCollectionsStatementBtn").addEventLi
     const { data, error } = await query; 
     if(error) { $("genericStatementHeader").innerHTML = "خطأ: "+err(error); return; }
     const statementRows=await enrichCollectionRepNames(data||[]);
-    let total = 0; 
-    let html = `<thead><tr><th>التاريخ</th><th>رقم التحصيل</th><th>العميل</th><th>المندوب المسؤول / طريقة التحصيل</th><th>المبلغ</th></tr></thead><tbody>`;
-    statementRows.forEach(row => { total += Number(row.amount); html += `<tr><td>${formatDate(row.collection_date)}</td><td>${row.collection_number}</td><td>${customerName(row.customer_id)}</td><td>${row.resolved_sales_rep_name||"غير محدد"} — ${row.collection_channel_label|| (row.trip_id ? "عن طريق المندوب" : "مباشر من الشركة")}</td><td>${fmt(row.amount)}</td></tr>`; });
-    if(!data || !data.length) html += `<tr><td colspan="5">لا توجد تحصيلات</td></tr>`; 
+    let totalPosted = 0;
+    let totalCancelled = 0;
+    let html = `<thead><tr><th>التاريخ</th><th>رقم التحصيل</th><th>العميل</th><th>المندوب المسؤول / طريقة التحصيل</th><th>الحالة</th><th>المبلغ</th></tr></thead><tbody>`;
+    statementRows.forEach(row => {
+      const statusLabel=row.status==="POSTED"?"مرحّل":row.status==="CANCELLED"?"ملغى":"غير مرحّل";
+      if(row.status==="POSTED") totalPosted += Number(row.amount||0);
+      if(row.status==="CANCELLED") totalCancelled += Number(row.amount||0);
+      html += `<tr><td>${formatDate(row.collection_date)}</td><td>${row.collection_number}</td><td>${customerName(row.customer_id)}</td><td>${row.resolved_sales_rep_name||"غير محدد"} — ${row.collection_channel_label|| (row.trip_id ? "عن طريق المندوب" : "مباشر من الشركة")}</td><td>${statusLabel}</td><td>${fmt(row.amount)}</td></tr>`;
+    });
+    if(!data || !data.length) html += `<tr><td colspan="6">لا توجد تحصيلات</td></tr>`; 
     html += `</tbody>`;
     $("genericStatementItems").innerHTML = html; 
     $("genericStatementHeader").innerHTML = `<div><strong>العميل:</strong> ${custName}</div><div><strong>الفترة:</strong> ${periodText || "كل الفترات"}</div>`; 
-    $("genericStatementSummary").innerHTML = `<div class="line grand"><span>إجمالي التحصيلات:</span><span>${fmt(total)}</span></div>`;
+    $("genericStatementSummary").innerHTML = `<div class="line grand"><span>إجمالي التحصيلات المرحلة:</span><span>${fmt(totalPosted)}</span></div><div class="line"><span>إجمالي التحصيلات الملغاة (مستبعدة من الإجمالي):</span><span>${fmt(totalCancelled)}</span></div>`;
     let waText = `*كشف حركة التحصيلات*\nالعميل: ${custName}\n${periodText}\n------------------------\n`; 
-    statementRows.forEach(row => { waText += `▪️ ${formatDate(row.collection_date)} | ${customerName(row.customer_id)} | المندوب المسؤول: ${row.resolved_sales_rep_name||"غير محدد"} | ${row.collection_channel_label|| (row.trip_id ? "عن طريق المندوب" : "مباشر من الشركة")} | ${fmt(row.amount)}\n`; }); 
-    waText += `------------------------\n*إجمالي التحصيلات: ${fmt(total)}*`;
+    statementRows.forEach(row => {
+      const statusLabel=row.status==="POSTED"?"مرحّل":row.status==="CANCELLED"?"ملغى":"غير مرحّل";
+      waText += `▪️ ${formatDate(row.collection_date)} | ${customerName(row.customer_id)} | ${row.collection_number} | الحالة: ${statusLabel} | المندوب المسؤول: ${row.resolved_sales_rep_name||"غير محدد"} | ${row.collection_channel_label|| (row.trip_id ? "عن طريق المندوب" : "مباشر من الشركة")} | ${fmt(row.amount)}\n`;
+    });
+    waText += `------------------------\n*إجمالي التحصيلات المرحلة: ${fmt(totalPosted)}*\n*إجمالي التحصيلات الملغاة: ${fmt(totalCancelled)}*`;
     $("shareGenericWhatsappBtn").onclick = () => { window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); };
     fillPrintHeaders();
 });
