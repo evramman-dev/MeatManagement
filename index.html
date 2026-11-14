@@ -4651,47 +4651,35 @@ async function viewSupplierStatement(s) {
     modal.classList.remove("hidden");
 
     try {
-        const [invoiceResult, paymentResult, returnResult, landedCostResult, assetResult] = await Promise.all([
-            db.from("purchase_invoices")
+        const [invoices, payments, returns, landedCosts, supplierCreditAssets] = await Promise.all([
+            fetchAllRows(db.from("purchase_invoices")
                 .select("invoice_number, invoice_date, net_total, status, treasury_id")
                 .eq("supplier_id", s.supplier_id)
                 .eq("status", "POSTED")
-                .order("invoice_date", { ascending: true }),
-            db.from("supplier_payments")
+                .order("invoice_date", { ascending: true })),
+            fetchAllRows(db.from("supplier_payments")
                 .select("payment_date, amount, payment_id, is_cancelled")
                 .eq("supplier_id", s.supplier_id)
                 .eq("is_cancelled", false)
-                .order("payment_date", { ascending: true }),
-            db.from("purchase_returns")
+                .order("payment_date", { ascending: true })),
+            fetchAllRows(db.from("purchase_returns")
                 .select("return_number, return_date, total_return_amount, settlement_method, is_cancelled")
                 .eq("supplier_id", s.supplier_id)
                 .eq("is_cancelled", false)
-                .order("return_date", { ascending: true }),
-            db.from("purchase_landed_costs")
+                .order("return_date", { ascending: true })),
+            fetchAllRows(db.from("purchase_landed_costs")
                 .select("landed_cost_id, cost_date, amount, status, source_type")
                 .eq("supplier_id", s.supplier_id)
                 .eq("source_type", "EXTERNAL_SUPPLIER")
                 .eq("status", "ACTIVE")
-                .order("cost_date", { ascending: true }),
-            db.from("fixed_assets")
+                .order("cost_date", { ascending: true })),
+            fetchAllRows(db.from("fixed_assets")
                 .select("asset_id, asset_name, acquisition_date, acquisition_cost, status, source_type")
                 .eq("supplier_id", s.supplier_id)
                 .eq("source_type", "SUPPLIER_CREDIT")
                 .eq("status", "ACTIVE")
-                .order("acquisition_date", { ascending: true })
+                .order("acquisition_date", { ascending: true }))
         ]);
-
-        if(invoiceResult.error) throw invoiceResult.error;
-        if(paymentResult.error) throw paymentResult.error;
-        if(returnResult.error) throw returnResult.error;
-        if(landedCostResult.error) throw landedCostResult.error;
-        if(assetResult.error) throw assetResult.error;
-
-        const invoices = invoiceResult.data || [];
-        const payments = paymentResult.data || [];
-        const returns = returnResult.data || [];
-        const landedCosts = landedCostResult.data || [];
-        const supplierCreditAssets = assetResult.data || [];
         const timeline = [];
         const openingBalance = Number(s.opening_balance || 0);
         if (openingBalance !== 0) {
