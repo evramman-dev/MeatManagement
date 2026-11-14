@@ -9052,27 +9052,24 @@ async function viewTripSummary(t){
   $("tripSummaryBody").innerHTML = "جارٍ التحميل...";
   modal.classList.remove("hidden");
   try {
-    const [invoicesRes, collectionsRes, expensesRes, returnsRes] = await Promise.all([
-      db.from("sales_invoices").select("*").eq("trip_id", t.trip_id),
-      db.from("customer_collections").select("*").eq("trip_id", t.trip_id),
-      db.from("expenses").select("*").eq("is_cancelled",false).eq("trip_id", t.trip_id),
-      db.rpc("get_trip_returns", { p_trip_id: t.trip_id })
+    const [invoices, collections, expenses, returns, reconciliation] = await Promise.all([
+      canViewSales
+        ? fetchAllRows(db.from("sales_invoices").select("*").eq("trip_id", t.trip_id).in("status", ["POSTED","PAID","PARTIAL"]).order("invoice_date").order("sales_invoice_id"))
+        : Promise.resolve([]),
+      canViewCollections
+        ? fetchAllRows(db.from("customer_collections").select("*").eq("trip_id", t.trip_id).eq("status","POSTED").order("collection_date").order("collection_id"))
+        : Promise.resolve([]),
+      canViewExpenses
+        ? fetchAllRows(db.from("expenses").select("*").eq("is_cancelled",false).eq("trip_id", t.trip_id).order("expense_date").order("expense_id"))
+        : Promise.resolve([]),
+      canViewSalesReturns
+        ? fetchAllRows(db.rpc("get_trip_returns", { p_trip_id: t.trip_id }))
+        : Promise.resolve([]),
+      fetchAllRows(db.rpc("get_trip_stock_reconciliation", { p_trip_id: t.trip_id }))
     ]);
 
-    if (invoicesRes.error) throw invoicesRes.error;
-    if (collectionsRes.error) throw collectionsRes.error;
-    if (expensesRes.error) throw expensesRes.error;
-    if (returnsRes.error) throw returnsRes.error;
-
-    const invoices = invoicesRes.data || [];
-    const collections = (collectionsRes.data || []).filter(c => c.status === "POSTED");
-    const expenses = expensesRes.data || [];
-    const returns = returnsRes.data || [];
-
     const MANDOUB_TREASURY_ID = 8;
-    const totalSales = invoices
-      .filter(i => ["POSTED", "PAID", "PARTIAL"].includes(i.status))
-      .reduce((s, i) => s + Number(i.net_total || 0), 0);
+    const totalSales = invoices.reduce((s, i) => s + Number(i.net_total || 0), 0);
 
     const totalCollections = collections.reduce(
       (s, c) => s + Number(c.amount || 0), 0
@@ -9120,24 +9117,57 @@ async function viewTripSummary(t){
 
     let html = `<div style="font-size:14px;line-height:1.9;"><div><strong>الجولة:</strong> ${t.trip_number}</div><div><strong>المندوب:</strong> ${t.rep_name||"-"}</div><div><strong>السيارة:</strong> ${locationName(t.vehicle_location_id)}</div><div><strong>التاريخ:</strong> ${tripDateStr}</div></div>`;
 
-    html += `<div class="total-box" style="background:var(--g);color:white;margin-top:15px;">
-      <div class="line"><span>عهدة أول المدة:</span><span>${fmt(initialCash)}</span></div>
-      <div class="line"><span>مبيعات (صافي):</span><span>${fmt(totalSales)}</span></div>
-      <div class="line"><span>إجمالي التحصيلات بكل الوسائل:</span><span>${fmt(totalCollections)}</span></div>
-      <div class="line"><span>التحصيل النقدي بخزنة المناديب:</span><span>${fmt(cashCollections)}</span></div>
-      <div class="line"><span>مصروفات خزنة المناديب:</span><span>-${fmt(cashExpenses)}</span></div>
-      <div class="line"><span>مبالغ مردودة نقدًا من خزنة المناديب:</span><span>-${fmt(cashBackReturns)}</span></div>
-      <div class="line"><span>إجمالي قيمة المرتجعات (للعرض فقط):</span><span>${fmt(totalReturns)}</span></div>
-      <div class="line grand" style="color:var(--gold);"><span>صافي النقدية الفعلية بالجولة:</span><span>${fmt(netCash)}</span></div>
-    </div>`;
+    if(canViewSales || canViewCollections || canViewExpenses || canViewSalesReturns){
+      html += `<div class="total-box" style="background:var(--g);color:white;margin-top:15px;">`;
+      if(canViewSales) html += `<div class="line"><span>مبيعات الفواتير المرحلة:</span><span>${fmt(totalSales)}</span></div>`;
+      if(canViewCollections){
+        html += `<div class="line"><span>إجمالي التحصيلات بكل الوسائل:</span><span>${fmt(totalCollections)}</span></div>
+          <div class="line"><span>التحصيل النقدي بخزنة المناديب:</span><span>${fmt(cashCollections)}</span></div>`;
+      }
+      if(canViewExpenses){
+        html += `<div class="line"><span>إجمالي مصروفات الجولة:</span><span>${fmt(totalExpenses)}</span></div>
+          <div class="line"><span>مصروفات خزنة المناديب:</span><span>-${fmt(cashExpenses)}</span></div>`;
+      }
+      if(canViewSalesReturns){
+        html += `<div class="line"><span>إجمالي قيمة المرتجعات:</span><span>${fmt(totalReturns)}</span></div>
+          <div class="line"><span>مبالغ مردودة نقدًا من خزنة المناديب:</span><span>-${fmt(cashBackReturns)}</span></div>`;
+      }
+      if(canViewCollections && canViewExpenses && canViewSalesReturns){
+        html += `<div class="line"><span>عهدة أول المدة:</span><span>${fmt(initialCash)}</span></div>
+          <div class="line grand" style="color:var(--gold);"><span>صافي النقدية الفعلية بالجولة:</span><span>${fmt(netCash)}</span></div>`;
+      } else {
+        html += `<div class="line" style="font-size:12px;"><span>صافي النقدية غير معروض لأن صلاحيات العرض لا تشمل كل مكونات التسوية.</span></div>`;
+      }
+      html += `</div>`;
+    }
 
-    html += `<h4 style="color:var(--g);margin-top:20px;">🧾 الفواتير (${invoices.length})</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>رقم</th><th>العميل</th><th>الصافي</th><th>المدفوع بالفاتورة</th></tr></thead><tbody>`;
+    html += `<h4 style="color:var(--g);margin-top:20px;">مطابقة مخزون السيارة (${reconciliation.length} صنف)</h4>
+      <div class="info">الكميات بوحدة الأساس المسجلة لكل صنف. الفرق يساوي رصيد السيارة الحالي ناقص المتبقي المحسوب.</div>
+      <div class="table-responsive"><table class="print-table"><thead><tr>
+      <th>الصنف</th><th>وحدة الأساس</th><th>المحمّل</th><th>المباع</th><th>المرتجع للسيارة</th><th>الاستبدال الخارج</th><th>المعاد للمخزن</th><th>المتبقي المحسوب</th><th>رصيد السيارة</th><th>الفرق</th>
+      </tr></thead><tbody>`;
+    let mismatchCount=0;
+    reconciliation.forEach(r=>{
+      const difference=Number(r.quantity_difference||0);
+      const matched=Math.abs(difference)<=0.000001;
+      if(!matched)mismatchCount++;
+      html += `<tr><td>${esc((r.product_code||"")+" "+(r.product_name||""))}</td><td>${esc(r.base_unit_name||"-")}</td>
+        <td>${fmt(r.loaded_quantity)}</td><td>${fmt(r.sold_quantity)}</td><td>${fmt(r.returned_quantity)}</td>
+        <td>${fmt(r.exchanged_quantity)}</td><td>${fmt(r.previously_received_quantity)}</td>
+        <td>${fmt(r.calculated_remaining)}</td><td>${fmt(r.vehicle_quantity)}</td>
+        <td style="color:${matched?"#176b3a":"#b42318"};font-weight:bold;">${matched?"متطابق":fmt(difference)}</td></tr>`;
+    });
+    if(!reconciliation.length)html+=`<tr><td colspan="10">لا توجد حركة مخزون مسجلة لهذه الجولة.</td></tr>`;
+    html += `</tbody></table></div><div class="mini-summary"><div class="line"><span>الأصناف غير المتطابقة:</span><span style="font-weight:bold;color:${mismatchCount?"#b42318":"#176b3a"};">${mismatchCount}</span></div></div>`;
+
+    if(canViewSales){ html += `<h4 style="color:var(--g);margin-top:20px;">🧾 الفواتير المرحلة (${invoices.length})</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>رقم</th><th>العميل</th><th>الصافي</th><th>المدفوع بالفاتورة</th></tr></thead><tbody>`;
     invoices.forEach(i => {
       html += `<tr><td>${i.invoice_number}</td><td>${customerName(i.customer_id)}</td><td>${fmt(i.net_total)}</td><td>${fmt(i.paid_amount)}</td></tr>`;
     });
-    if(!invoices.length) html += `<tr><td colspan="4">لا توجد فواتير</td></tr>`;
-    html += `</tbody></table></div><div class="mini-summary"><div class="line"><span>إجمالي الفواتير غير الملغاة:</span><span style="font-weight:bold;">${fmt(totalSales)}</span></div></div>`;
+    if(!invoices.length) html += `<tr><td colspan="4">لا توجد فواتير مرحلة</td></tr>`;
+    html += `</tbody></table></div><div class="mini-summary"><div class="line"><span>إجمالي الفواتير المرحلة:</span><span style="font-weight:bold;">${fmt(totalSales)}</span></div></div>`; }
 
+    if(canViewSalesReturns){
     html += `<h4 style="color:var(--g);margin-top:20px;">↩️ المرتجعات (${returns.length})</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>رقم</th><th>العميل</th><th>قيمة المرتجع</th><th>الإجراء النقدي</th><th>الأثر المالي</th><th>الخزنة</th></tr></thead><tbody>`;
     returns.forEach(r => {
       const actionName = r.cash_action === "CASH_BACK" ? "رد نقدي" : r.cash_action === "CUSTOMER_PAYS_CASH" ? "تحصيل نقدي" : (r.cash_action || "-");
@@ -9146,6 +9176,9 @@ async function viewTripSummary(t){
     if(!returns.length) html += `<tr><td colspan="6">لا توجد مرتجعات</td></tr>`;
     html += `</tbody></table></div><div class="mini-summary"><div class="line"><span>إجمالي قيمة المرتجعات (لا تخصم من النقدية تلقائيًا):</span><span style="font-weight:bold;">${fmt(totalReturns)}</span></div><div class="line"><span>المردود نقدًا من خزنة المناديب:</span><span style="font-weight:bold;">${fmt(cashBackReturns)}</span></div></div>`;
 
+    }
+
+    if(canViewCollections){
     html += `<h4 style="color:var(--g);margin-top:20px;">💰 التحصيلات (${collections.length})</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>رقم</th><th>العميل</th><th>وسيلة الدفع</th><th>الخزنة</th><th>المبلغ</th></tr></thead><tbody>`;
     collections.forEach(c => {
       html += `<tr><td>${c.collection_number || "-"}</td><td>${customerName(c.customer_id)}</td><td>${methodNames[c.payment_method] || c.payment_method || "أخرى"}</td><td>${c.treasury_id || "-"}</td><td>${fmt(c.amount)}</td></tr>`;
@@ -9157,6 +9190,9 @@ async function viewTripSummary(t){
     });
     html += `<div class="line"><span>إجمالي التحصيلات:</span><span style="font-weight:bold;">${fmt(totalCollections)}</span></div></div>`;
 
+    }
+
+    if(canViewExpenses){
     html += `<h4 style="color:var(--g);margin-top:20px;">🧾 المصروفات (${expenses.length})</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>النوع</th><th>الحساب</th><th>الخزنة</th><th>المبلغ</th><th>التاريخ</th></tr></thead><tbody>`;
     expenses.forEach(e => {
       html += `<tr><td>${expenseTypeName(e.expense_type)}</td><td>${expenseAccountCode(e.expense_type)||"—"}</td><td>${e.treasury_id || "-"}</td><td>${fmt(e.amount)}</td><td>${formatDate(e.expense_date)}</td></tr>`;
@@ -9164,9 +9200,17 @@ async function viewTripSummary(t){
     if(!expenses.length) html += `<tr><td colspan="4">لا توجد مصروفات</td></tr>`;
     html += `</tbody></table></div><div class="mini-summary"><div class="line"><span>إجمالي مصروفات الجولة:</span><span style="font-weight:bold;">${fmt(totalExpenses)}</span></div><div class="line"><span>المخصوم من خزنة المناديب:</span><span style="font-weight:bold;">${fmt(cashExpenses)}</span></div></div>`;
 
+    }
+
     $("tripSummaryBody").innerHTML = html;
 
-    const waText = `كشف حساب الجولة\n${t.trip_number} - ${t.rep_name||""}\nعهدة أول المدة: ${fmt(initialCash)}\nالمبيعات: ${fmt(totalSales)}\nإجمالي التحصيلات: ${fmt(totalCollections)}\nالتحصيل النقدي بخزنة المناديب: ${fmt(cashCollections)}\nمصروفات خزنة المناديب: ${fmt(cashExpenses)}\nمردود نقدي من خزنة المناديب: ${fmt(cashBackReturns)}\nإجمالي المرتجعات: ${fmt(totalReturns)}\nصافي النقدية الفعلية: ${fmt(netCash)}`;
+    const waLines = [`كشف حركة الجولة`,`${t.trip_number} - ${t.rep_name||""}`];
+    if(canViewSales)waLines.push(`المبيعات المرحلة: ${fmt(totalSales)}`);
+    if(canViewCollections)waLines.push(`إجمالي التحصيلات: ${fmt(totalCollections)}`);
+    if(canViewExpenses)waLines.push(`مصروفات الجولة: ${fmt(totalExpenses)}`);
+    if(canViewSalesReturns)waLines.push(`إجمالي المرتجعات: ${fmt(totalReturns)}`);
+    waLines.push(`عدد الأصناف في مطابقة السيارة: ${reconciliation.length}`,`الأصناف غير المتطابقة: ${mismatchCount}`);
+    const waText = waLines.join("\\n");
     $("shareTripWhatsappBtn").onclick = () => {
       window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, "_blank");
     };
