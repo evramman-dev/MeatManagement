@@ -2521,7 +2521,10 @@ if($("runAdminFactoryResetPreviewBtn")) $("runAdminFactoryResetPreviewBtn").addE
         const {data:execution,error:executionError}=await db.rpc("admin_factory_reset_execute",{p_plan_id:prepared.plan_id,p_plan_hash:prepared.plan_hash});
         if(executionError)throw executionError;
         if(!execution||execution.executed!==true||execution.status!=="COMPLETED")throw new Error(execution?.message||"لم يؤكد الخادم اكتمال ضبط المصنع.");
-        executeBtn.disabled=true;status.textContent="اكتملت استعادة ضبط المصنع.";
+        prepared.status="COMPLETED";
+        info.textContent="رقم التقرير: "+prepared.plan_id+" | بصمة التحقق: "+prepared.plan_hash+" | الحالة: COMPLETED | تم التنفيذ بنجاح.";
+        approveBtn.disabled=true;executeBtn.disabled=true;
+        status.textContent="اكتملت استعادة ضبط المصنع. حالة التقرير: COMPLETED.";
         const done=document.createElement("pre");done.className="details";done.style.cssText="white-space:pre-wrap;overflow-wrap:anywhere;direction:ltr;text-align:left";done.textContent=JSON.stringify(execution.result||{},null,2);result.appendChild(done);
         msg(message,"اكتملت استعادة ضبط المصنع. احتفظ البرنامج ببيانات النظام والبيانات الأساسية الحالية وحسابات المستخدمين وبنية الجداول والعلاقات والدوال.","success");
       }catch(e){msg(status,"توقفت العملية: "+err(e),"error");approveBtn.disabled=false;}
