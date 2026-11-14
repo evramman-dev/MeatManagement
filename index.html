@@ -7273,7 +7273,7 @@ if($("returnForm"))$("returnForm").addEventListener("submit",async e=>{
       returnTripStatus=trip?.status||null;
     }
     const activeTrip=["DRAFT","ACTIVE"].includes(returnTripStatus);
-    if(cashAction==="CASH_BACK"&&!activeTrip)updateSalesReturnCashActionUI(returnTripStatus);
+    if(cashAction==="CASH_BACK")updateSalesReturnCashActionUI(returnTripStatus);
     const treasuryId=cashAction==="CASH_BACK"?(activeTrip?8:Number($("returnTreasury")?.value||0)||null):null;
     if(cashAction==="CASH_BACK"&&!activeTrip&&(!treasuryId||treasuryId===8)){
       $("returnCashAction").value="CASH_BACK";
