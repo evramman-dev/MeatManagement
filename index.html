@@ -1548,10 +1548,11 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <select id="returnCashAction" required>
 <option value="AUTO">تحديد تلقائي حسب مديونية الفاتورة</option>
 <option value="DEDUCT_DEBT">خصم من مديونية الفاتورة</option>
-<option value="CASH_BACK">رد نقدية من خزنة المناديب</option>
+<option value="CASH_BACK">رد نقدية</option>
 </select>
-<div class="info">رد النقدية يتم من خزنة المناديب تحت التسوية رقم 8.</div>
-<select id="returnTreasury" class="hidden"><option value="8">خزنة المناديب</option></select>
+<div id="returnCashActionInfo" class="info">اختر طريقة معالجة المرتجع.</div>
+<label id="returnTreasuryLabel" for="returnTreasury" class="hidden" style="margin-top:10px">خزنة رد النقدية *</label>
+<select id="returnTreasury" class="hidden"><option value="">اختر الخزنة</option></select>
 <label style="margin-top:16px">البضاعة المرتجعة *</label>
 <div id="returnItems"></div>
 <button id="addReturnItemBtn" class="btn secondary" type="button" style="margin-top:8px">＋ إضافة صنف</button>
@@ -6853,7 +6854,42 @@ async function loadReturnInvoicesForCustomer(){
   msg($("returnFormMsg"),"تعذر تحميل فواتير العميل: "+err(e),"error");
  }
 }
-function resetSalesReturnForm(){salesReturnLotOptionsCache=[];salesReturnLotOptionsPromise=Promise.resolve();$("returnForm").reset();$("returnItems").replaceChildren();$("exchangeItems").replaceChildren();returnItemCounter=0;$("returnDate").value=todayISO();fillReturnCustomerSelect();fillReturnTripSelect();$("returnTrip").disabled=true;fillReturnInvoiceSelect();fillTreasurySelects();addSalesReturnItemRow($("returnItems"));updateSalesReturnTotals();clear($("returnFormMsg"));$("returnFormModal").classList.add("active");}
+function updateSalesReturnCashActionUI(tripStatusOverride){
+  const action=$("returnCashAction")?.value||"AUTO";
+  const selectedTripId=Number($("returnInvoice")?.selectedOptions?.[0]?.dataset?.trip||0);
+  const trip=tripsCache.find(t=>Number(t.trip_id)===selectedTripId);
+  const activeTrip=tripStatusOverride!==undefined
+    ?["DRAFT","ACTIVE"].includes(tripStatusOverride)
+    :!!trip&&["DRAFT","ACTIVE"].includes(trip.status);
+  const needsTreasury=action==="CASH_BACK"&&!activeTrip;
+  const treasury=$("returnTreasury");
+  const label=$("returnTreasuryLabel");
+  const info=$("returnCashActionInfo");
+  if(treasury){
+    const previous=treasury.value;
+    treasury.replaceChildren();
+    const first=document.createElement("option");
+    first.value="";first.textContent="اختر خزنة رد النقدية";
+    treasury.appendChild(first);
+    treasuriesCache.filter(t=>t.is_active&&["CASH","BANK","INSTAPAY"].includes(t.treasury_type)&&Number(t.treasury_id)!==8)
+      .forEach(t=>{const option=document.createElement("option");option.value=String(t.treasury_id);option.textContent=t.treasury_name+" ("+fmt(t.current_balance)+")";treasury.appendChild(option);});
+    treasury.value=[...treasury.options].some(o=>o.value===previous)?previous:"";
+    treasury.required=needsTreasury;
+    treasury.disabled=!needsTreasury;
+    treasury.classList.toggle("hidden",!needsTreasury);
+  }
+  if(label)label.classList.toggle("hidden",!needsTreasury);
+  if(info){
+    info.textContent=action==="DEDUCT_DEBT"
+      ?"سيتم خصم قيمة المرتجع من مديونية الفاتورة."
+      :activeTrip
+        ?"رد النقدية يتم من خزنة المناديب رقم 8 الخاصة بالجولة النشطة."
+        :action==="CASH_BACK"
+          ?"اختر خزنة الشركة التي سترد منها النقدية. لا تستخدم خزنة المناديب بعد إغلاق الجولة أو خارج الجولة."
+          :"إذا تحولت العملية إلى رد نقدية، ستحتاج إلى اختيار خزنة الشركة.";
+  }
+}
+function resetSalesReturnForm(){salesReturnLotOptionsCache=[];salesReturnLotOptionsPromise=Promise.resolve();$("returnForm").reset();$("returnItems").replaceChildren();$("exchangeItems").replaceChildren();returnItemCounter=0;$("returnDate").value=todayISO();fillReturnCustomerSelect();fillReturnTripSelect();$("returnTrip").disabled=true;fillReturnInvoiceSelect();fillTreasurySelects();updateSalesReturnCashActionUI();addSalesReturnItemRow($("returnItems"));updateSalesReturnTotals();clear($("returnFormMsg"));$("returnFormModal").classList.add("active");}
 let salesReturnLotOptionsCache=[];
 let salesReturnLotOptionsPromise=Promise.resolve();
 function addSalesReturnItemRow(container){
@@ -7204,7 +7240,8 @@ if($("srFromDate"))$("srFromDate").addEventListener("change",loadSalesReturns);
 if($("srToDate"))$("srToDate").addEventListener("change",loadSalesReturns);
 if($("addReturnBtn"))$("addReturnBtn").onclick=resetSalesReturnForm;
 if($("addReturnItemBtn"))$("addReturnItemBtn").onclick=()=>addSalesReturnItemRow($("returnItems"));
-if($("returnInvoice"))$("returnInvoice").onchange=()=>{const o=$("returnInvoice").selectedOptions[0];if(o?.dataset?.customer)$("returnCustomer").value=o.dataset.customer;$("returnTrip").value=o?.dataset?.trip||"";$("returnTrip").disabled=!!$("returnInvoice").value;};
+if($("returnInvoice"))$("returnInvoice").onchange=()=>{const o=$("returnInvoice").selectedOptions[0];if(o?.dataset?.customer)$("returnCustomer").value=o.dataset.customer;$("returnTrip").value=o?.dataset?.trip||"";$("returnTrip").disabled=!!$("returnInvoice").value;updateSalesReturnCashActionUI();};
+if($("returnCashAction"))$("returnCashAction").addEventListener("change",updateSalesReturnCashActionUI);
 if($("returnForm"))$("returnForm").addEventListener("submit",async e=>{
   e.preventDefault();if(!canCreateReturns)return;
   const btn=$("saveReturnBtn");busy(btn,true,"جارٍ...","حفظ المرتجع");
@@ -7229,7 +7266,20 @@ if($("returnForm"))$("returnForm").addEventListener("submit",async e=>{
     if(cashAction==="DEDUCT_DEBT"&&invoiceDebt<returnTotal)throw new Error("قيمة المرتجع أكبر من المديونية المتبقية.");
     if(cashAction==="CASH_BACK"&&invoiceDebt>0.01)throw new Error("لا يمكن رد النقدية مع وجود مديونية على الفاتورة. اخصم المرتجع من المديونية أولاً.");
     $("returnCashAction").value=cashAction;
-    const treasuryId=cashAction==="CASH_BACK"?8:null;
+    let returnTripStatus=null;
+    if(invoice.trip_id){
+      const {data:trip,error:tripError}=await db.from("trips").select("status").eq("trip_id",invoice.trip_id).maybeSingle();
+      if(tripError)throw tripError;
+      returnTripStatus=trip?.status||null;
+    }
+    const activeTrip=["DRAFT","ACTIVE"].includes(returnTripStatus);
+    if(cashAction==="CASH_BACK")updateSalesReturnCashActionUI(returnTripStatus);
+    const treasuryId=cashAction==="CASH_BACK"?(activeTrip?8:Number($("returnTreasury")?.value||0)||null):null;
+    if(cashAction==="CASH_BACK"&&!activeTrip&&(!treasuryId||treasuryId===8)){
+      $("returnCashAction").value="CASH_BACK";
+      updateSalesReturnCashActionUI(returnTripStatus);
+      throw new Error("اختر خزنة الشركة لرد النقدية. خزنة المناديب مخصصة للجولات النشطة فقط.");
+    }
     const returnRequestKey="mm_sales_return_pending_"+invoiceId;
     const returnTripId=invoice.trip_id?Number(invoice.trip_id):null;
     const returnPayload={invoice_id:invoiceId,customer_id:customerId,trip_id:returnTripId,return_type:"RETURN",return_date:$("returnDate").value,reason:$("returnReason").value.trim()||null,notes:$("returnNotes").value.trim()||null,cash_action:cashAction,treasury_id:treasuryId,items:rows.map(r=>({product_id:r.querySelector(".return-product").value,unit_id:r.querySelector(".return-unit").value,quantity:r.querySelector(".return-qty").value,unit_price:r.querySelector(".return-price").value,lot_id:r.querySelector(".return-lot")?.value||null,package_option_id:r.querySelector(".return-package-option")?.value||null}))};
