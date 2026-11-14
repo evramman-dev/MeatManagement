@@ -77,6 +77,22 @@ test('Collection views label cancelled records and exclude them from posted tota
   expect(qaHtml).toContain('إجمالي التحصيلات الملغاة (مستبعدة من الإجمالي):');
 });
 
+test('Customer cheque management shows statuses and gates clearing and bounce actions by permissions', () => {
+  expect(qaHtml).toContain('id="customerChequesCard"');
+  expect(qaHtml).toContain('db.from("customer_cheques").select("*")');
+  expect(qaHtml).toContain('db.rpc("clear_customer_cheque"');
+  expect(qaHtml).toContain('db.rpc("bounce_customer_cheque"');
+  expect(qaHtml).toContain('if(canPostCollections)');
+  expect(qaHtml).toContain('if(canManageCollections)');
+  expect(qaHtml).toContain('سبب ارتداد الشيك:');
+});
+
+test('Trip load approval and dispatch quantities explicitly show the product base unit', () => {
+  expect(qaHtml).toContain('const baseUnit=unitName(product?.base_unit_id);');
+  expect(qaHtml).toContain('الوحدة الأساسية: "+baseUnit');
+  expect(qaHtml).toContain('+" ("+baseUnit+")"');
+});
+
 test('Admin notifications support selected users and all active users', () => {
   expect(qaHtml).toContain('id="notificationSendAll"');
   expect(qaHtml).toContain('إرسال إشعار عام إلى جميع المستخدمين النشطين');
