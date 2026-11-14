@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v129</title>
+<title>MeatManagement v130</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -650,9 +650,9 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">رجوع للقائمة</button>
 <div id="systemResetCard" class="card hidden">
 <h2>استعادة ضبط المصنع</h2>
-<p class="desc">عملية واحدة تعيد البرنامج إلى وضع البداية. تحتفظ بحساب مدير النظام وبنية قاعدة البيانات والجداول والعلاقات والدوال والصلاحيات والإعدادات والبيانات المرجعية المحددة. تمسح الحسابات الأخرى وجميع بيانات التشغيل والبيانات الأساسية وسجل التتبع.</p>
-<div class="product"><div class="pname">البيانات التي ستظل موجودة</div><div class="details">حساب مدير النظام فقط، الأدوار والصلاحيات، دليل الحسابات، الفترات المحاسبية، إعدادات الشركة، المحافظات والمدن والمناطق، الوحدات، وقواعد الإشعارات.</div></div>
-<div class="product"><div class="pname">البيانات التي سيتم مسحها</div><div class="details">كل حسابات المستخدمين الأخرى، العملاء والموردون والأصناف والأسعار والمخازن والخزائن والمندوبون والشركاء والأصول، الفواتير والمرتجعات والتحصيلات والمدفوعات والمصروفات والقيود والحركات والمخزون والإنتاج والرحلات والإشعارات وسجل التتبع والنسخ القديمة لبيانات الاختبار.</div></div>
+<p class="desc">عملية واحدة تنظف بيانات التشغيل وتعيد البرنامج إلى وضع تشغيل نظيف. لا تحذف بيانات النظام أو البيانات الأساسية الحالية. أي تصنيف أو صنف أو وصفة أو عميل أو مورد أو مخزن أو خزنة أو قائمة أسعار أو أصل أو شريك أو أي بيانات أساسية تضيفها مستقبلًا تظل موجودة بعد ضبط المصنع. الحذف أو الإيقاف أو التعديل على هذه البيانات يتم يدويًا من شاشات الإدارة.</p>
+<div class="product"><div class="pname">البيانات التي ستظل موجودة</div><div class="details">كل البيانات المصنفة كبيانات نظام أو بيانات أساسية. تشمل الأدوار والصلاحيات والحسابات وإعدادات الشركة والمرجع الجغرافي والوحدات، وتشمل أيضًا الأصناف وتصنيفاتها وتحويلاتها وخيارات التعبئة والوصفات ومكوناتها والعملاء والموردين والمندوبين والمخازن والخزائن والشركاء والأصول وقوائم الأسعار وباقي السجلات الأساسية الحالية. أي إضافة مستقبلية إلى هذه البيانات تبقى بعد ضبط المصنع.</div></div>
+<div class="product"><div class="pname">البيانات التي سيتم مسحها</div><div class="details">بيانات التشغيل فقط مثل الفواتير والمرتجعات والتحصيلات والمدفوعات والمصروفات والقيود والحركات وأرصدة وتشغيلات المخزون وأوامر الإنتاج والرحلات والإشعارات وجلسات الجرد وسجل التتبع. لا تمس هذه العملية البيانات الأساسية أو إعدادات النظام.</div></div>
 <div class="product"><div class="pname">تقرير ضبط المصنع</div><div class="details">جهز التقرير أولًا. راجع أعداد البيانات التي ستمسح والبيانات التي ستظل. بعد اعتماد التقرير يظهر زر التنفيذ.</div><button id="runAdminFactoryResetPreviewBtn" class="btn" type="button">عرض آخر تقرير أو تجهيز تقرير جديد</button></div>
 <div id="adminFactoryResetMsg" class="status hidden"></div><div id="adminFactoryResetResult"></div><div id="adminFactoryResetActions" class="row" style="gap:8px;flex-wrap:wrap;margin-top:12px;"></div>
 </div>
@@ -2483,7 +2483,7 @@ if($("runAdminFactoryResetPreviewBtn")) $("runAdminFactoryResetPreviewBtn").addE
     const accounts=document.createElement("div");accounts.className="product";
     const accountsTitle=document.createElement("div");accountsTitle.className="pname";accountsTitle.textContent="حسابات المستخدمين";
     const accountsInfo=document.createElement("div");accountsInfo.className="details";
-    accountsInfo.textContent="حسابات الدخول التي ستُحذف: "+Number(preview.auth_users_to_delete||0).toLocaleString("ar-EG")+" | سجلات المستخدمين التي ستُحذف: "+Number(preview.app_users_to_delete||0).toLocaleString("ar-EG")+" | سجل التتبع الذي سيُمسح: "+Number(preview.user_logs_to_clear||0).toLocaleString("ar-EG")+" | حساب مدير النظام المحتفظ به: 1";
+    accountsInfo.textContent="حسابات الدخول التي ستظل: "+Number(preview.auth_users_to_keep??(Number(preview.auth_users_to_delete||0)+1)).toLocaleString("ar-EG")+" | سجلات المستخدمين التي ستظل: "+Number(preview.app_users_to_keep??(Number(preview.app_users_to_delete||0)+1)).toLocaleString("ar-EG")+" | سجل التتبع الذي سيُمسح: "+Number(preview.user_logs_to_clear||0).toLocaleString("ar-EG")+" | حسابات المستخدمين ليست ضمن بيانات التشغيل التي يمسحها ضبط المصنع.";
     accounts.append(accountsTitle,accountsInfo);result.appendChild(accounts);
     const note=document.createElement("div");note.className="product";note.textContent="لن يحذف المحرك أي جدول أو دالة أو علاقة أو قيد. سيحذف البيانات فقط. إذا ظهرت علاقة غير معالجة أو تغيرت البيانات بعد اعتماد التقرير، تتوقف العملية وتعود كل تغييراتها تلقائيًا.";result.appendChild(note);
     const approveBtn=document.createElement("button");approveBtn.className="btn";approveBtn.type="button";approveBtn.textContent=prepared.status==="APPROVED"?"التقرير معتمد":"اعتماد تقرير ضبط المصنع";approveBtn.disabled=prepared.status==="APPROVED";
@@ -2514,8 +2514,8 @@ if($("runAdminFactoryResetPreviewBtn")) $("runAdminFactoryResetPreviewBtn").addE
         status.textContent="انتهت صلاحية التقرير. جهز تقريرًا جديدًا قبل التنفيذ.";
         msg(message,"انتهت صلاحية التقرير. لم يبدأ التنفيذ ولم تُحذف أي بيانات.","error");return;
       }
-      if(!window.confirm("سيتم حذف حسابات المستخدمين الأخرى وجميع البيانات المحددة في التقرير، مع الاحتفاظ بحساب مدير النظام وبنية البرنامج. هل تريد المتابعة؟"))return;
-      if(!window.confirm("تأكيد أخير: هل توافق على مسح بيانات البرنامج والإبقاء على حساب مدير النظام فقط؟"))return;
+      if(!window.confirm("سيتم حذف بيانات التشغيل المحددة في التقرير فقط، مع الاحتفاظ بكل بيانات النظام والبيانات الأساسية وحسابات المستخدمين. هل تريد المتابعة؟"))return;
+      if(!window.confirm("تأكيد أخير: هل توافق على مسح بيانات التشغيل فقط والإبقاء على البيانات الأساسية الحالية؟"))return;
       busy(executeBtn,true,"جارٍ تنفيذ ضبط المصنع...","تنفيذ ضبط المصنع");approveBtn.disabled=true;
       try{
         const {data:execution,error:executionError}=await db.rpc("admin_factory_reset_execute",{p_plan_id:prepared.plan_id,p_plan_hash:prepared.plan_hash});
@@ -2523,7 +2523,7 @@ if($("runAdminFactoryResetPreviewBtn")) $("runAdminFactoryResetPreviewBtn").addE
         if(!execution||execution.executed!==true||execution.status!=="COMPLETED")throw new Error(execution?.message||"لم يؤكد الخادم اكتمال ضبط المصنع.");
         executeBtn.disabled=true;status.textContent="اكتملت استعادة ضبط المصنع.";
         const done=document.createElement("pre");done.className="details";done.style.cssText="white-space:pre-wrap;overflow-wrap:anywhere;direction:ltr;text-align:left";done.textContent=JSON.stringify(execution.result||{},null,2);result.appendChild(done);
-        msg(message,"اكتملت استعادة ضبط المصنع. احتفظ البرنامج بحساب مدير النظام وبنيته والجداول والعلاقات والدوال.","success");
+        msg(message,"اكتملت استعادة ضبط المصنع. احتفظ البرنامج ببيانات النظام والبيانات الأساسية الحالية وحسابات المستخدمين وبنية الجداول والعلاقات والدوال.","success");
       }catch(e){msg(status,"توقفت العملية: "+err(e),"error");approveBtn.disabled=false;}
       finally{busy(executeBtn,false,"","تنفيذ ضبط المصنع");}
     });
