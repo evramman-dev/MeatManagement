@@ -7277,7 +7277,7 @@ if($("returnForm"))$("returnForm").addEventListener("submit",async e=>{
     const treasuryId=cashAction==="CASH_BACK"?(activeTrip?8:Number($("returnTreasury")?.value||0)||null):null;
     if(cashAction==="CASH_BACK"&&!activeTrip&&(!treasuryId||treasuryId===8)){
       $("returnCashAction").value="CASH_BACK";
-      updateSalesReturnCashActionUI();
+      updateSalesReturnCashActionUI(returnTripStatus);
       throw new Error("اختر خزنة الشركة لرد النقدية. خزنة المناديب مخصصة للجولات النشطة فقط.");
     }
     const returnRequestKey="mm_sales_return_pending_"+invoiceId;
