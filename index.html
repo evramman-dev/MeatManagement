@@ -4456,7 +4456,7 @@ async function viewCustomerStatement(c) {
     $("modalStatementSummary").innerHTML = ""; 
     modal.classList.remove("hidden"); 
     try { 
-        const { data: invoices } = await db.from("sales_invoices").select("invoice_number, invoice_date, net_total, paid_amount, remaining_amount, status").eq("customer_id", c.customer_id).neq("status", "CANCELLED").order("invoice_date", { ascending: true }); 
+        const { data: invoices } = await db.from("sales_invoices").select("invoice_number, invoice_date, net_total, paid_amount, remaining_amount, status").eq("customer_id", c.customer_id).in("status", ["POSTED","PAID","PARTIAL"]).order("invoice_date", { ascending: true }); 
         const { data: collections } = await db.from("customer_collections").select("collection_number, collection_date, amount, payment_method, status").eq("customer_id", c.customer_id).eq("status", "POSTED").order("collection_date", { ascending: true }); 
         const { data: retRows } = await db.rpc("get_customer_returns", { p_customer_id: c.customer_id }); 
         const timeline = []; 
