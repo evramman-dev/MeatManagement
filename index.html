@@ -7217,7 +7217,7 @@ if($("returnForm"))$("returnForm").addEventListener("submit",async e=>{
     const treasuryId=cashAction==="CASH_BACK"?8:null;
     const returnRequestKey="mm_sales_return_pending_"+invoiceId;
     const returnTripId=invoice.trip_id?Number(invoice.trip_id):null;
-    const returnPayload={invoice_id:invoiceId,customer_id:customerId,trip_id:returnTripId,return_type:"RETURN",return_date:$("returnDate").value,reason:$("returnReason").value.trim()||null,notes:$("returnNotes").value.trim()||null,cash_action:cashAction,treasury_id:treasuryId,items:rows.map(r=>({product_id:r.querySelector(".return-product").value,unit_id:r.querySelector(".return-unit").value,quantity:r.querySelector(".return-qty").value,unit_price:r.querySelector(".return-price").value}))};
+    const returnPayload={invoice_id:invoiceId,customer_id:customerId,trip_id:returnTripId,return_type:"RETURN",return_date:$("returnDate").value,reason:$("returnReason").value.trim()||null,notes:$("returnNotes").value.trim()||null,cash_action:cashAction,treasury_id:treasuryId,items:rows.map(r=>({product_id:r.querySelector(".return-product").value,unit_id:r.querySelector(".return-unit").value,quantity:r.querySelector(".return-qty").value,unit_price:r.querySelector(".return-price").value,lot_id:r.querySelector(".return-lot")?.value||null,package_option_id:r.querySelector(".return-package-option")?.value||null}))};
     const returnRequest=getSalesReturnRequest(returnRequestKey,returnPayload,rows.length);
     const returnRequestId=returnRequest.request_id;
     const {data:id,error}=await db.rpc("create_sales_return_v2",{
