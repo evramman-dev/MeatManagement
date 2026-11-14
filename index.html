@@ -1933,6 +1933,8 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div><label for="salesUnit">وحدة البيع</label><select id="salesUnit"><option value="">بدون تحديد</option></select></div>
 <div><label for="unitsCarton">وحدات بالكرتونة</label><input id="unitsCarton" type="number" min="0" step="0.0001"></div>
 <div><label for="shelfLifeMonths">مدة الصلاحية بالشهور</label><input id="shelfLifeMonths" type="number" min="1" max="120" step="1" placeholder="مثال: 3 شهور"></div>
+<div><label for="shelfLifeDays">مدة الصلاحية بالأيام</label><input id="shelfLifeDays" type="number" min="1" max="36500" step="1" placeholder="مثال: 14 يوم"></div>
+<div class="info">أدخل مدة الصلاحية بالأيام أو الشهور. لا تدخل القيمتين معًا. يلزم تحديدها قبل تنفيذ إنتاج الصنف.</div>
 <div><label for="minStock">الحد الأدنى</label><input id="minStock" type="number" min="0" step="0.0001" value="0"></div>
 <div><label for="minPrice">أقل سعر</label><input id="minPrice" type="number" min="0" step="0.01"></div>
 <div><label for="targetPrice">السعر المستهدف</label><input id="targetPrice" type="number" min="0" step="0.01"></div>
@@ -3885,7 +3887,7 @@ function renderProducts(){
       if(canViewStock){const historyBtn=document.createElement("button");historyBtn.type="button";historyBtn.className="btn secondary";historyBtn.style.marginTop="10px";historyBtn.textContent="حركة الصنف / كارت الصنف";historyBtn.onclick=()=>viewProductStockMovements(p.product_id);card.appendChild(historyBtn);}
       if(canManage){const btn=document.createElement("button");btn.className="btn secondary";btn.textContent="تعديل بيانات الصنف";btn.onclick=()=>{
         refreshProductCategoryOptions(p.category_id);
-        $("editId").value=p.product_id;$("pname").value=p.product_name;$("pcode").value=p.product_code;$("barcode").value=p.barcode||"";$("ptype").value=p.product_type;$("category").value=p.category_id;$("baseUnit").value=String(p.base_unit_id||"");$("purchaseUnit").value=String(p.purchase_unit_id||"");$("salesUnit").value=String(p.sales_unit_id||"");$("minStock").value=p.minimum_stock;$("minPrice").value=p.min_selling_price||"";$("targetPrice").value=p.target_selling_price||"";$("maxPrice").value=p.max_selling_price||"";$("unitsCarton").value=p.units_per_carton||"";$("shelfLifeMonths").value=p.shelf_life_months||"";$("active").checked=p.is_active;$("canPurchase").checked=p.can_be_purchased;$("canProduce").checked=p.can_be_produced;$("canSell").checked=p.can_be_sold;$("canLoad").checked=p.can_be_loaded;$("formTitle").textContent="تعديل الصنف";if($("formMsg"))clear($("formMsg"));$("productFormModal").classList.add("active");
+        $("editId").value=p.product_id;$("pname").value=p.product_name;$("pcode").value=p.product_code;$("barcode").value=p.barcode||"";$("ptype").value=p.product_type;$("category").value=p.category_id;$("baseUnit").value=String(p.base_unit_id||"");$("purchaseUnit").value=String(p.purchase_unit_id||"");$("salesUnit").value=String(p.sales_unit_id||"");$("minStock").value=p.minimum_stock;$("minPrice").value=p.min_selling_price||"";$("targetPrice").value=p.target_selling_price||"";$("maxPrice").value=p.max_selling_price||"";$("unitsCarton").value=p.units_per_carton||"";$("shelfLifeMonths").value=p.shelf_life_months||"";$("shelfLifeDays").value=p.shelf_life_months?"":(p.shelf_life_days||"");$("active").checked=p.is_active;$("canPurchase").checked=p.can_be_purchased;$("canProduce").checked=p.can_be_produced;$("canSell").checked=p.can_be_sold;$("canLoad").checked=p.can_be_loaded;$("formTitle").textContent="تعديل الصنف";if($("formMsg"))clear($("formMsg"));$("productFormModal").classList.add("active");
       };card.appendChild(btn);}
       heading.appendChild(card);
     });
@@ -3915,6 +3917,9 @@ async function togglePackageOption(row){try{const {error}=await db.from("product
 if($("addPackageOptionBtn"))$("addPackageOptionBtn").onclick=()=>openPackageOptionForm();if($("refreshPackageOptionsBtn"))$("refreshPackageOptionsBtn").onclick=loadPackagingOptions;if($("packageProductFilter"))$("packageProductFilter").onchange=loadPackagingOptions;
 if($("packageOptionForm"))$("packageOptionForm").addEventListener("submit",async e=>{e.preventDefault();if(!canManage)return;const btn=$("savePackageOptionBtn");busy(btn,true,"جارٍ...","حفظ");const id=$("packageOptionEditId").value;const payload={product_id:Number($("packageOptionProduct").value),unit_id:Number($("packageOptionUnit").value),option_name:$("packageOptionName").value.trim(),weight_kg:Number($("packageOptionWeight").value),sort_order:Number($("packageOptionSort").value||0),is_active:$("packageOptionActive").checked,updated_at:new Date().toISOString()};try{if(!payload.product_id||!payload.unit_id||!payload.option_name||!(payload.weight_kg>0))throw new Error("أكمل بيانات خيار التعبئة.");const user=(await db.auth.getUser()).data.user;const q=id?db.from("product_packaging_options").update(payload).eq("package_option_id",id):db.from("product_packaging_options").insert({...payload,created_by:user?.id||null});const {error}=await q;if(error)throw error;$("packageOptionFormModal").classList.remove("active");await loadPackagingOptions();}catch(e){msg($("packageOptionFormMsg"),"خطأ: "+err(e),"error");}finally{busy(btn,false,"","حفظ");}});
 
+if($("shelfLifeMonths")) $("shelfLifeMonths").addEventListener("input",()=>{if($("shelfLifeMonths").value)$("shelfLifeDays").value="";});
+if($("shelfLifeDays")) $("shelfLifeDays").addEventListener("input",()=>{if($("shelfLifeDays").value)$("shelfLifeMonths").value="";});
+
 if($("productForm")) $("productForm").addEventListener("submit", async e => { 
   e.preventDefault(); 
   const btn=$("saveBtn"); 
@@ -3932,7 +3937,7 @@ if($("productForm")) $("productForm").addEventListener("submit", async e => {
     minimum_stock:Number($("minStock").value||0), 
     units_per_carton:Number($("unitsCarton").value||0)||null,
     shelf_life_months:$("shelfLifeMonths").value?Number($("shelfLifeMonths").value):null,
-    shelf_life_days:$("shelfLifeMonths").value?Number($("shelfLifeMonths").value)*30:null, 
+    shelf_life_days:$("shelfLifeMonths").value?Number($("shelfLifeMonths").value)*30:($("shelfLifeDays").value?Number($("shelfLifeDays").value):null), 
     min_selling_price:$("minPrice").value?Number($("minPrice").value):null, 
     target_selling_price:$("targetPrice").value?Number($("targetPrice").value):null, 
     max_selling_price:$("maxPrice").value?Number($("maxPrice").value):null, 
