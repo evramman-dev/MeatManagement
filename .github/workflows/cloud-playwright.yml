@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
+      - main
       - qa/full-cycle-test
       - fix/sales-return-retry-idempotency
       - fix/collection-statement-cancelled-status
