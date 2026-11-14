@@ -653,7 +653,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <p class="desc">عملية واحدة تنظف بيانات التشغيل وتعيد البرنامج إلى وضع تشغيل نظيف. لا تحذف بيانات النظام أو البيانات الأساسية الحالية. أي تصنيف أو صنف أو وصفة أو عميل أو مورد أو مخزن أو خزنة أو قائمة أسعار أو أصل أو شريك أو أي بيانات أساسية تضيفها مستقبلًا تظل موجودة بعد ضبط المصنع. الحذف أو الإيقاف أو التعديل على هذه البيانات يتم يدويًا من شاشات الإدارة.</p>
 <div class="product"><div class="pname">البيانات التي ستظل موجودة</div><div class="details">كل البيانات المصنفة كبيانات نظام أو بيانات أساسية. تشمل الأدوار والصلاحيات والحسابات وإعدادات الشركة والمرجع الجغرافي والوحدات، وتشمل أيضًا الأصناف وتصنيفاتها وتحويلاتها وخيارات التعبئة والوصفات ومكوناتها والعملاء والموردين والمندوبين والمخازن والخزائن والشركاء والأصول وقوائم الأسعار وباقي السجلات الأساسية الحالية. أي إضافة مستقبلية إلى هذه البيانات تبقى بعد ضبط المصنع.</div></div>
 <div class="product"><div class="pname">البيانات التي سيتم مسحها</div><div class="details">بيانات التشغيل فقط مثل الفواتير والمرتجعات والتحصيلات والمدفوعات والمصروفات والقيود والحركات وأرصدة وتشغيلات المخزون وأوامر الإنتاج والرحلات والإشعارات وجلسات الجرد وسجل التتبع. لا تمس هذه العملية البيانات الأساسية أو إعدادات النظام.</div></div>
-<div class="product"><div class="pname">تقرير ضبط المصنع</div><div class="details">جهز التقرير أولًا. راجع أعداد البيانات التي ستمسح والبيانات التي ستظل. بعد اعتماد التقرير يظهر زر التنفيذ.</div><button id="runAdminFactoryResetPreviewBtn" class="btn" type="button">عرض آخر تقرير أو تجهيز تقرير جديد</button></div>
+<div class="product"><div class="pname">تقرير ضبط المصنع</div><div class="details">جهز التقرير أولًا. راجع أعداد البيانات التي ستمسح والبيانات التي ستظل. بعد اعتماد التقرير يظهر زر التنفيذ.</div><button id="runAdminFactoryResetPreviewBtn" class="btn" type="button">تجهيز تقرير جديد</button></div>
 <div id="adminFactoryResetMsg" class="status hidden"></div><div id="adminFactoryResetResult"></div><div id="adminFactoryResetActions" class="row" style="gap:8px;flex-wrap:wrap;margin-top:12px;"></div>
 </div>
 </div>
@@ -2354,11 +2354,7 @@ window.openSection = function(name) {
   if (name === "fixedAssets") loadFixedAssets();
   if (name === "reports") loadReports();
   if (name === "systemReset" && isSystemAdmin) {
-    const restoreBtn=$("runAdminFactoryResetPreviewBtn");
-    if(restoreBtn && restoreBtn.dataset.autoRestoreStarted!=="1") {
-      restoreBtn.dataset.autoRestoreStarted="1";
-      restoreBtn.click();
-    }
+    loadLatestFactoryResetStatus();
   }
   if (name === "stockTransfers") { fillStockTransferSelects(); if(!$("stItems").children.length) addStItemRow(); }
   if (name === "production") { fillProductionRecipeSelect(); fillProductionLocationSelect(); }
@@ -2446,21 +2442,39 @@ function page(name){
 }
 
 
+async function loadLatestFactoryResetStatus(){
+  const message=$("adminFactoryResetMsg"),result=$("adminFactoryResetResult"),actions=$("adminFactoryResetActions");
+  if(!isSystemAdmin)return;
+  clear(message);result.replaceChildren();actions.replaceChildren();
+  try{
+    const {data:latest,error}=await db.rpc("admin_factory_reset_get_latest");
+    if(error)throw error;
+    if(latest?.completed===true&&latest.status==="COMPLETED"){
+      const summary=document.createElement("div");summary.className="product";
+      const title=document.createElement("div");title.className="pname";title.textContent="آخر عملية ضبط مصنع";
+      const info=document.createElement("div");info.className="details";info.style.cssText="overflow-wrap:anywhere;line-height:1.9";
+      info.textContent="رقم التقرير: "+latest.plan_id+" | الحالة: COMPLETED | وقت التنفيذ: "+(latest.execution_finished_at?new Date(latest.execution_finished_at).toLocaleString("ar-EG"):"غير متاح");
+      summary.append(title,info);result.appendChild(summary);
+      if(latest.result){
+        const done=document.createElement("pre");done.className="details";done.style.cssText="white-space:pre-wrap;overflow-wrap:anywhere;direction:ltr;text-align:left";done.textContent=JSON.stringify(latest.result,null,2);result.appendChild(done);
+      }
+      msg(message,"تم استرجاع آخر عملية مكتملة. لم يتم تجهيز تقرير جديد أو حذف أي بيانات.","success");
+    }else if(latest?.registry_invalid){
+      msg(message,latest.message||"تعريف بيانات ضبط المصنع يحتاج إلى مراجعة.","error");
+    }else{
+      msg(message,"لا يوجد تنفيذ سابق لعرضه. اضغط «تجهيز تقرير جديد» عند الحاجة. لم يتم إنشاء تقرير أو حذف أي بيانات.","success");
+    }
+  }catch(e){msg(message,"تعذر تحميل حالة ضبط المصنع السابقة: "+err(e),"error");}
+}
+ 
 if($("runAdminFactoryResetPreviewBtn")) $("runAdminFactoryResetPreviewBtn").addEventListener("click",async()=>{
   const btn=$("runAdminFactoryResetPreviewBtn"),message=$("adminFactoryResetMsg"),result=$("adminFactoryResetResult"),actions=$("adminFactoryResetActions");
   if(!isSystemAdmin){msg(message,"إعادة ضبط المصنع متاحة لمدير النظام فقط.","error");return;}
   clear(message);result.replaceChildren();actions.replaceChildren();
   busy(btn,true,"جارٍ تجهيز التقرير...","تجهيز تقرير ضبط المصنع");
   try{
-    let {data:prepared,error}=await db.rpc("admin_factory_reset_get_latest");
+    const {data:prepared,error}=await db.rpc("admin_factory_reset_prepare");
     if(error)throw error;
-    const latestExpiry=prepared?.expires_at?Date.parse(prepared.expires_at):NaN;
-    const latestExpired=!Number.isFinite(latestExpiry)||latestExpiry<=Date.now();
-    if(!prepared||prepared.found!==true||latestExpired){
-      const fresh=await db.rpc("admin_factory_reset_prepare");
-      if(fresh.error)throw fresh.error;
-      prepared=fresh.data;
-    }
     if(!prepared||prepared.prepared!==true||!prepared.preview||prepared.preview.mode!=="FACTORY_RESET_SINGLE_OPERATION")throw new Error("لم يرجع الخادم تقرير ضبط مصنع صالحًا.");
     const reportExpiresAt=Date.parse(prepared.expires_at||"");
     if(!Number.isFinite(reportExpiresAt)||reportExpiresAt<=Date.now())throw new Error("انتهت صلاحية التقرير قبل عرضه. اضغط عرض التقرير مرة أخرى لتجهيز تقرير جديد.");
@@ -2493,7 +2507,7 @@ if($("runAdminFactoryResetPreviewBtn")) $("runAdminFactoryResetPreviewBtn").addE
     approveBtn.addEventListener("click",async()=>{
       if(Date.parse(prepared.expires_at||"")<=Date.now()){
         approveBtn.disabled=true;executeBtn.disabled=true;
-        status.textContent="انتهت صلاحية التقرير. اضغط عرض تقرير ضبط المصنع لإنشاء تقرير جديد.";
+        status.textContent="انتهت صلاحية التقرير. اضغط تجهيز تقرير جديد لإنشاء تقرير جديد.";
         msg(message,"انتهت صلاحية التقرير. لم يتم الاعتماد أو حذف أي بيانات.","error");return;
       }
       if(!window.confirm("هل تعتمد تقرير ضبط المصنع؟ الاعتماد لا يحذف أي بيانات."))return;
@@ -2532,7 +2546,7 @@ if($("runAdminFactoryResetPreviewBtn")) $("runAdminFactoryResetPreviewBtn").addE
     });
     msg(message,prepared.restored===true?"تم استرجاع تقرير ضبط المصنع السابق والتحقق من بصمته. لم تُحذف أي بيانات.":"تم تجهيز تقرير ضبط المصنع وحفظ بصمته. لم تُحذف أي بيانات.","success");
   }catch(e){msg(message,"تعذر تجهيز تقرير ضبط المصنع: "+err(e),"error");}
-  finally{busy(btn,false,"","عرض تقرير ضبط المصنع");}
+  finally{busy(btn,false,"","تجهيز تقرير جديد");}
 });
 async function permission(code){ if(isSystemAdmin) return true; if(!navigator.onLine) return false; try { const {data,error}=await db.rpc("has_permission",{p_permission_code:code}); if(error)throw error; return data===true; } catch (e) { return false; } }
 
