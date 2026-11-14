@@ -9096,7 +9096,7 @@ async function viewTripSummary(t){
     );
     const cashBackReturns = returns
       .filter(r => r.cash_action === "CASH_BACK" && Number(r.treasury_id) === MANDOUB_TREASURY_ID)
-      .reduce((s, r) => s + Number(r.total_returned_value || 0), 0);
+      .reduce((s, r) => s - Number(r.price_difference || 0), 0);
 
     const initialCash = Number(t.initial_cash || 0);
     const netCash = initialCash + cashCollections - cashExpenses - cashBackReturns;
@@ -9149,7 +9149,9 @@ async function viewTripSummary(t){
     let mismatchCount=0;
     reconciliation.forEach(r=>{
       const difference=Number(r.quantity_difference||0);
-      const matched=Math.abs(difference)<=0.000001;
+      const remaining=Number(r.calculated_remaining||0);
+      const vehicleQuantity=Number(r.vehicle_quantity||0);
+      const matched=Math.abs(difference)<=0.000001 && remaining>=-0.000001 && vehicleQuantity>=-0.000001;
       if(!matched)mismatchCount++;
       html += `<tr><td>${esc((r.product_code||"")+" "+(r.product_name||""))}</td><td>${esc(r.base_unit_name||"-")}</td>
         <td>${fmt(r.loaded_quantity)}</td><td>${fmt(r.sold_quantity)}</td><td>${fmt(r.returned_quantity)}</td>
