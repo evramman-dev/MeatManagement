@@ -4084,9 +4084,9 @@ async function buildCustomerBalanceSummary(from,to){
   const [y,m,d]=String(to).split("-").map(Number),nextDate=new Date(Date.UTC(y,m-1,d+1)).toISOString().slice(0,10);
   const [customers,sales,collections,returns]=await Promise.all([
     fetchAllRows(db.from("customers").select("customer_id,customer_name,governorate_id,opening_balance").order("customer_id")),
-    fetchAllRows(db.from("sales_invoices").select("customer_id,invoice_date,net_total,status").lt("invoice_date",nextDate).in("status",["POSTED","PAID","PARTIAL"]).order("invoice_date")),
-    fetchAllRows(db.from("customer_collections").select("customer_id,amount,collection_date,status").eq("status","POSTED").lt("collection_date",nextDate).order("collection_date")),
-    fetchAllRows(db.from("sales_returns").select("customer_id,return_date,total_returned_value,status,cash_action").eq("status","POSTED").eq("cash_action","DEDUCT_DEBT").lt("return_date",nextDate).order("return_date"))
+    fetchAllRows(db.from("sales_invoices").select("customer_id,invoice_date,net_total,status,sales_invoice_id").lt("invoice_date",nextDate).in("status",["POSTED","PAID","PARTIAL"]).order("invoice_date").order("sales_invoice_id")),
+    fetchAllRows(db.from("customer_collections").select("customer_id,amount,collection_date,status,collection_id").eq("status","POSTED").lt("collection_date",nextDate).order("collection_date").order("collection_id")),
+    fetchAllRows(db.from("sales_returns").select("customer_id,return_date,total_returned_value,status,cash_action,sales_return_id").eq("status","POSTED").eq("cash_action","DEDUCT_DEBT").lt("return_date",nextDate).order("return_date").order("sales_return_id"))
   ]);
   const rows=new Map(customers.map(c=>[String(c.customer_id),{customer_id:c.customer_id,name:c.customer_name||"غير محدد",governorate:geoGovernorateName(c.governorate_id),opening:Number(c.opening_balance||0),sales:0,returns:0,collections:0,balance:0}]));
   const ensure=id=>{const key=String(id);if(!rows.has(key))rows.set(key,{customer_id:id,name:customerName(id),governorate:"غير محدد",opening:0,sales:0,returns:0,collections:0,balance:0});return rows.get(key);};
@@ -4457,9 +4457,21 @@ async function viewCustomerStatement(c) {
     $("modalStatementSummary").innerHTML = ""; 
     modal.classList.remove("hidden"); 
     try { 
-        const { data: invoices } = await db.from("sales_invoices").select("invoice_number, invoice_date, net_total, paid_amount, remaining_amount, status").eq("customer_id", c.customer_id).in("status", ["POSTED","PAID","PARTIAL"]).order("invoice_date", { ascending: true }); 
-        const { data: collections } = await db.from("customer_collections").select("collection_number, collection_date, amount, payment_method, status").eq("customer_id", c.customer_id).eq("status", "POSTED").order("collection_date", { ascending: true }); 
-        const { data: retRows } = await db.rpc("get_customer_returns", { p_customer_id: c.customer_id }); 
+        const [invoices, collections, retRows] = await Promise.all([
+          fetchAllRows(db.from("sales_invoices")
+            .select("sales_invoice_id, invoice_number, invoice_date, net_total, paid_amount, remaining_amount, status")
+            .eq("customer_id", c.customer_id)
+            .in("status", ["POSTED","PAID","PARTIAL"])
+            .order("invoice_date", { ascending: true })
+            .order("sales_invoice_id", { ascending: true })),
+          fetchAllRows(db.from("customer_collections")
+            .select("collection_id, collection_number, collection_date, amount, payment_method, status")
+            .eq("customer_id", c.customer_id)
+            .eq("status", "POSTED")
+            .order("collection_date", { ascending: true })
+            .order("collection_id", { ascending: true })),
+          fetchAllRows(db.rpc("get_customer_returns", { p_customer_id: c.customer_id }))
+        ]); 
         const timeline = []; 
         let totalInvoiced = 0, totalPaid = 0, totalDebtReturns = 0, totalCashBack = 0; 
         (invoices || []).forEach(inv => { 
@@ -4490,10 +4502,16 @@ async function viewCustomerStatement(c) {
         rowsHtml += `</tbody>`; 
         $("modalStatementItems").innerHTML = rowsHtml; 
         $("modalStatementHeader").innerHTML = `<div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span><strong>العميل:</strong> ${c.customer_name}</span><span><strong>كود:</strong> ${c.customer_code}</span></div><div style="display:flex;justify-content:space-between;"><span><strong>موبايل:</strong> ${c.phone || "غير مسجل"}</span><span><strong>تاريخ الكشف:</strong> ${formatDate()}</span></div>`; 
-        $("modalStatementSummary").innerHTML = `<div class="line"><span>إجمالي المبيعات:</span><span>${fmt(totalInvoiced)}</span></div><div class="line"><span>إجمالي المدفوع:</span><span style="color:green;">${fmt(totalPaid)}</span></div><div class="line"><span>مرتجعات خصمت من المديونية:</span><span style="color:orange;">${fmt(totalDebtReturns)}</span></div><div class="line"><span>مرتجعات رُدت نقدًا:</span><span>${fmt(totalCashBack)}</span></div><div class="line grand"><span>الرصيد النهائي:</span><span style="color:red;">${fmt(runningBalance)}</span></div>`; 
+        const finalBalanceLabel = runningBalance > 0
+          ? "مديونية مستحقة على العميل: " + fmt(runningBalance)
+          : runningBalance < 0
+            ? "رصيد دائن للعميل: " + fmt(Math.abs(runningBalance))
+            : "الحساب متسوي";
+        const finalBalanceColor = runningBalance > 0 ? "red" : runningBalance < 0 ? "#176b3a" : "#333";
+        $("modalStatementSummary").innerHTML = `<div class="line"><span>الرصيد الافتتاحي:</span><span>${fmt(c.opening_balance||0)}</span></div><div class="line"><span>إجمالي المبيعات:</span><span>${fmt(totalInvoiced)}</span></div><div class="line"><span>إجمالي المدفوع:</span><span style="color:green;">${fmt(totalPaid)}</span></div><div class="line"><span>مرتجعات خصمت من المديونية:</span><span style="color:orange;">${fmt(totalDebtReturns)}</span></div><div class="line"><span>مرتجعات رُدت نقدًا:</span><span>${fmt(totalCashBack)}</span></div><div class="line grand"><span>الرصيد النهائي:</span><span style="color:${finalBalanceColor};">${finalBalanceLabel}</span></div>`; 
         const waBtn = $("shareStatementWhatsappBtn"); 
         waBtn.onclick = () => { 
-          let waText = `*كشف حساب عميل*\nالعميل: ${c.customer_name}\nالتاريخ: ${formatDate()}\n------------------------\nإجمالي المبيعات: ${fmt(totalInvoiced)}\nإجمالي المدفوع: ${fmt(totalPaid)}\nمرتجعات خصمت من المديونية: ${fmt(totalDebtReturns)}\nمرتجعات رُدت نقدًا: ${fmt(totalCashBack)}\n------------------------\n*الرصيد المتبقي: ${fmt(runningBalance)}*`; 
+          let waText = `*كشف حساب عميل*\nالعميل: ${c.customer_name}\nالتاريخ: ${formatDate()}\n------------------------\nإجمالي المبيعات: ${fmt(totalInvoiced)}\nإجمالي المدفوع: ${fmt(totalPaid)}\nمرتجعات خصمت من المديونية: ${fmt(totalDebtReturns)}\nمرتجعات رُدت نقدًا: ${fmt(totalCashBack)}\n------------------------\n*${finalBalanceLabel}*`; 
           let phone = formatWaPhone(c.phone); 
           window.open(phone ? `https://wa.me/${phone}?text=${encodeURIComponent(waText)}` : `https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); 
         }; 
