@@ -1734,7 +1734,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <button class="tab-btn" id="btnExportExcel" style="flex: 1;">📊 تصدير إكسيل (CSV)</button>
 </div>
 <div id="repAged" class="report-tab">
-<div class="table-responsive"><table class="print-table" id="agedTable"><thead><tr><th>العميل</th><th>الموبايل</th><th>الرصيد</th><th>0-30</th><th>31-60</th><th>61-90</th><th>+90</th></tr></thead><tbody></tbody></table></div>
+<div class="table-responsive"><table class="print-table" id="agedTable"><thead><tr><th>العميل</th><th>الموبايل</th><th>الرصيد</th><th>الرصيد الافتتاحي</th><th>0-30</th><th>31-60</th><th>61-90</th><th>+90</th></tr></thead><tbody></tbody></table></div>
 </div>
 <div id="repSlow" class="report-tab hidden">
 <label>عدد أيام بدون حركة (مثال: 30)</label>
@@ -9614,28 +9614,29 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
       }
       
       const tbodyAged = $("agedTable").querySelector("tbody");
-      if(tbodyAged) tbodyAged.innerHTML = "<tr><td colspan='7'>جارٍ التحميل...</td></tr>";
+      if(tbodyAged) tbodyAged.innerHTML = "<tr><td colspan='8'>جارٍ التحميل...</td></tr>";
       
       try {
-        const { data: aged, error: agedErr } = await db.rpc("get_aged_receivables"); 
+        const { data: aged, error: agedErr } = await db.rpc("get_aged_receivables_v2"); 
         if(agedErr) {
             console.warn("[AGED]", agedErr);
             const agedMessage=String(agedErr.message||agedErr.details||agedErr.code||"");
             const rpcMissing=agedErr.code==="PGRST202" || /could not find the function|function .* does not exist|schema cache/i.test(agedMessage);
-            if(tbodyAged) tbodyAged.innerHTML = `<tr><td colspan='7' style="color:#8a5a00;">${rpcMissing?"تقرير أعمار الديون غير متاح: دالة get_aged_receivables غير موجودة في قاعدة البيانات حاليًا. لم يتم تخمين معاملات أو تغيير قاعدة البيانات.":"تعذر تحميل تقرير أعمار الديون: "+err(agedErr)}</td></tr>`;
+            if(tbodyAged) tbodyAged.innerHTML = `<tr><td colspan='8' style="color:#8a5a00;">${rpcMissing?"تقرير أعمار الديون غير متاح: دالة get_aged_receivables_v2 غير موجودة في قاعدة البيانات حاليًا. لم يتم تخمين معاملات أو تغيير قاعدة البيانات.":"تعذر تحميل تقرير أعمار الديون: "+err(agedErr)}</td></tr>`;
         } else if(aged && aged.length > 0) { 
-            let totalBalance = 0, d0_30 = 0, d31_60 = 0, d61_90 = 0, dOver90 = 0;
+            let totalBalance = 0, totalOpeningBalance = 0, d0_30 = 0, d31_60 = 0, d61_90 = 0, dOver90 = 0;
             const rows = aged.map(a => {
                 totalBalance += Number(a.current_balance||0);
+                totalOpeningBalance += Number(a.opening_balance||0);
                 d0_30 += Number(a.days_0_30||0);
                 d31_60 += Number(a.days_31_60||0);
                 d61_90 += Number(a.days_61_90||0);
                 dOver90 += Number(a.days_over_90||0);
-                return `<tr><td>${a.customer_name||'-'}</td><td dir="ltr">${a.phone||'-'}</td><td>${fmt(a.current_balance)}</td><td>${fmt(a.days_0_30)}</td><td>${fmt(a.days_31_60)}</td><td>${fmt(a.days_61_90)}</td><td style="color:red;">${fmt(a.days_over_90)}</td></tr>`;
+                return `<tr><td>${a.customer_name||'-'}</td><td dir="ltr">${a.phone||'-'}</td><td>${fmt(a.current_balance)}</td><td>${fmt(a.opening_balance)}</td><td>${fmt(a.days_0_30)}</td><td>${fmt(a.days_31_60)}</td><td>${fmt(a.days_61_90)}</td><td style="color:red;">${fmt(a.days_over_90)}</td></tr>`;
             }).join("");
-            if(tbodyAged) tbodyAged.innerHTML = rows + `<tr style="background:#e9efe9;font-weight:bold;"><td colspan="2">الإجمالي (${aged.length} عميل)</td><td>${fmt(totalBalance)}</td><td>${fmt(d0_30)}</td><td>${fmt(d31_60)}</td><td>${fmt(d61_90)}</td><td style="color:red;">${fmt(dOver90)}</td></tr>`;
+            if(tbodyAged) tbodyAged.innerHTML = rows + `<tr style="background:#e9efe9;font-weight:bold;"><td colspan="2">الإجمالي (${aged.length} عميل)</td><td>${fmt(totalBalance)}</td><td>${fmt(totalOpeningBalance)}</td><td>${fmt(d0_30)}</td><td>${fmt(d31_60)}</td><td>${fmt(d61_90)}</td><td style="color:red;">${fmt(dOver90)}</td></tr>`;
         } else {
-            if(tbodyAged) tbodyAged.innerHTML = "<tr><td colspan='7' style='text-align:center;'>لا يوجد عملاء عليهم مديونية.</td></tr>";
+            if(tbodyAged) tbodyAged.innerHTML = "<tr><td colspan='8' style='text-align:center;'>لا يوجد عملاء عليهم مديونية.</td></tr>";
         }
         
         if($("geoSalesFromDate") && !$("geoSalesFromDate").value) $("geoSalesFromDate").value=monthStartISO();
@@ -9646,7 +9647,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
         await loadProfitLoss();
       } catch(e){ 
           console.warn(e); 
-          if(tbodyAged) tbodyAged.innerHTML = `<tr><td colspan='7' style="color:red;">خطأ: ${err(e)}</td></tr>`;
+          if(tbodyAged) tbodyAged.innerHTML = `<tr><td colspan='8' style="color:red;">خطأ: ${err(e)}</td></tr>`;
       }
   }
   
