@@ -1734,7 +1734,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <button class="tab-btn" id="btnExportExcel" style="flex: 1;">📊 تصدير إكسيل (CSV)</button>
 </div>
 <div id="repAged" class="report-tab">
-<div class="table-responsive"><table class="print-table" id="agedTable"><thead><tr><th>العميل</th><th>الموبايل</th><th>الرصيد</th><th>0-30</th><th>31-60</th><th>61-90</th><th>+90</th></tr></thead><tbody></tbody></table></div>
+<div class="table-responsive"><table class="print-table" id="agedTable"><thead><tr><th>العميل</th><th>الموبايل</th><th>الرصيد الصافي</th><th>الرصيد الافتتاحي</th><th>0-30</th><th>31-60</th><th>61-90</th><th>+90</th></tr></thead><tbody></tbody></table></div>
 </div>
 <div id="repSlow" class="report-tab hidden">
 <label>عدد أيام بدون حركة (مثال: 30)</label>
@@ -4084,9 +4084,9 @@ async function buildCustomerBalanceSummary(from,to){
   const [y,m,d]=String(to).split("-").map(Number),nextDate=new Date(Date.UTC(y,m-1,d+1)).toISOString().slice(0,10);
   const [customers,sales,collections,returns]=await Promise.all([
     fetchAllRows(db.from("customers").select("customer_id,customer_name,governorate_id,opening_balance").order("customer_id")),
-    fetchAllRows(db.from("sales_invoices").select("customer_id,invoice_date,net_total,status").lt("invoice_date",nextDate).in("status",["POSTED","PAID","PARTIAL"]).order("invoice_date")),
-    fetchAllRows(db.from("customer_collections").select("customer_id,amount,collection_date,status").eq("status","POSTED").lt("collection_date",nextDate).order("collection_date")),
-    fetchAllRows(db.from("sales_returns").select("customer_id,return_date,total_returned_value,status,cash_action").eq("status","POSTED").eq("cash_action","DEDUCT_DEBT").lt("return_date",nextDate).order("return_date"))
+    fetchAllRows(db.from("sales_invoices").select("customer_id,invoice_date,net_total,status,sales_invoice_id").lt("invoice_date",nextDate).in("status",["POSTED","PAID","PARTIAL"]).order("invoice_date").order("sales_invoice_id")),
+    fetchAllRows(db.from("customer_collections").select("customer_id,amount,collection_date,status,collection_id").eq("status","POSTED").lt("collection_date",nextDate).order("collection_date").order("collection_id")),
+    fetchAllRows(db.from("sales_returns").select("customer_id,return_date,total_returned_value,status,cash_action,sales_return_id").eq("status","POSTED").eq("cash_action","DEDUCT_DEBT").lt("return_date",nextDate).order("return_date").order("sales_return_id"))
   ]);
   const rows=new Map(customers.map(c=>[String(c.customer_id),{customer_id:c.customer_id,name:c.customer_name||"غير محدد",governorate:geoGovernorateName(c.governorate_id),opening:Number(c.opening_balance||0),sales:0,returns:0,collections:0,balance:0}]));
   const ensure=id=>{const key=String(id);if(!rows.has(key))rows.set(key,{customer_id:id,name:customerName(id),governorate:"غير محدد",opening:0,sales:0,returns:0,collections:0,balance:0});return rows.get(key);};
@@ -4457,9 +4457,21 @@ async function viewCustomerStatement(c) {
     $("modalStatementSummary").innerHTML = ""; 
     modal.classList.remove("hidden"); 
     try { 
-        const { data: invoices } = await db.from("sales_invoices").select("invoice_number, invoice_date, net_total, paid_amount, remaining_amount, status").eq("customer_id", c.customer_id).in("status", ["POSTED","PAID","PARTIAL"]).order("invoice_date", { ascending: true }); 
-        const { data: collections } = await db.from("customer_collections").select("collection_number, collection_date, amount, payment_method, status").eq("customer_id", c.customer_id).eq("status", "POSTED").order("collection_date", { ascending: true }); 
-        const { data: retRows } = await db.rpc("get_customer_returns", { p_customer_id: c.customer_id }); 
+        const [invoices, collections, retRows] = await Promise.all([
+          fetchAllRows(db.from("sales_invoices")
+            .select("sales_invoice_id, invoice_number, invoice_date, net_total, paid_amount, remaining_amount, status")
+            .eq("customer_id", c.customer_id)
+            .in("status", ["POSTED","PAID","PARTIAL"])
+            .order("invoice_date", { ascending: true })
+            .order("sales_invoice_id", { ascending: true })),
+          fetchAllRows(db.from("customer_collections")
+            .select("collection_id, collection_number, collection_date, amount, payment_method, status")
+            .eq("customer_id", c.customer_id)
+            .eq("status", "POSTED")
+            .order("collection_date", { ascending: true })
+            .order("collection_id", { ascending: true })),
+          fetchAllRows(db.rpc("get_customer_returns", { p_customer_id: c.customer_id }))
+        ]); 
         const timeline = []; 
         let totalInvoiced = 0, totalPaid = 0, totalDebtReturns = 0, totalCashBack = 0; 
         (invoices || []).forEach(inv => { 
@@ -4490,10 +4502,16 @@ async function viewCustomerStatement(c) {
         rowsHtml += `</tbody>`; 
         $("modalStatementItems").innerHTML = rowsHtml; 
         $("modalStatementHeader").innerHTML = `<div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span><strong>العميل:</strong> ${c.customer_name}</span><span><strong>كود:</strong> ${c.customer_code}</span></div><div style="display:flex;justify-content:space-between;"><span><strong>موبايل:</strong> ${c.phone || "غير مسجل"}</span><span><strong>تاريخ الكشف:</strong> ${formatDate()}</span></div>`; 
-        $("modalStatementSummary").innerHTML = `<div class="line"><span>إجمالي المبيعات:</span><span>${fmt(totalInvoiced)}</span></div><div class="line"><span>إجمالي المدفوع:</span><span style="color:green;">${fmt(totalPaid)}</span></div><div class="line"><span>مرتجعات خصمت من المديونية:</span><span style="color:orange;">${fmt(totalDebtReturns)}</span></div><div class="line"><span>مرتجعات رُدت نقدًا:</span><span>${fmt(totalCashBack)}</span></div><div class="line grand"><span>الرصيد النهائي:</span><span style="color:red;">${fmt(runningBalance)}</span></div>`; 
+        const finalBalanceLabel = runningBalance > 0
+          ? "مديونية مستحقة على العميل: " + fmt(runningBalance)
+          : runningBalance < 0
+            ? "رصيد دائن للعميل: " + fmt(Math.abs(runningBalance))
+            : "الحساب متسوي";
+        const finalBalanceColor = runningBalance > 0 ? "red" : runningBalance < 0 ? "#176b3a" : "#333";
+        $("modalStatementSummary").innerHTML = `<div class="line"><span>الرصيد الافتتاحي:</span><span>${fmt(c.opening_balance||0)}</span></div><div class="line"><span>إجمالي المبيعات:</span><span>${fmt(totalInvoiced)}</span></div><div class="line"><span>إجمالي المدفوع:</span><span style="color:green;">${fmt(totalPaid)}</span></div><div class="line"><span>مرتجعات خصمت من المديونية:</span><span style="color:orange;">${fmt(totalDebtReturns)}</span></div><div class="line"><span>مرتجعات رُدت نقدًا:</span><span>${fmt(totalCashBack)}</span></div><div class="line grand"><span>الرصيد النهائي:</span><span style="color:${finalBalanceColor};">${finalBalanceLabel}</span></div>`; 
         const waBtn = $("shareStatementWhatsappBtn"); 
         waBtn.onclick = () => { 
-          let waText = `*كشف حساب عميل*\nالعميل: ${c.customer_name}\nالتاريخ: ${formatDate()}\n------------------------\nإجمالي المبيعات: ${fmt(totalInvoiced)}\nإجمالي المدفوع: ${fmt(totalPaid)}\nمرتجعات خصمت من المديونية: ${fmt(totalDebtReturns)}\nمرتجعات رُدت نقدًا: ${fmt(totalCashBack)}\n------------------------\n*الرصيد المتبقي: ${fmt(runningBalance)}*`; 
+          let waText = `*كشف حساب عميل*\nالعميل: ${c.customer_name}\nالتاريخ: ${formatDate()}\n------------------------\nإجمالي المبيعات: ${fmt(totalInvoiced)}\nإجمالي المدفوع: ${fmt(totalPaid)}\nمرتجعات خصمت من المديونية: ${fmt(totalDebtReturns)}\nمرتجعات رُدت نقدًا: ${fmt(totalCashBack)}\n------------------------\n*${finalBalanceLabel}*`; 
           let phone = formatWaPhone(c.phone); 
           window.open(phone ? `https://wa.me/${phone}?text=${encodeURIComponent(waText)}` : `https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); 
         }; 
@@ -9614,28 +9632,32 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
       }
       
       const tbodyAged = $("agedTable").querySelector("tbody");
-      if(tbodyAged) tbodyAged.innerHTML = "<tr><td colspan='7'>جارٍ التحميل...</td></tr>";
+      if(tbodyAged) tbodyAged.innerHTML = "<tr><td colspan='8'>جارٍ التحميل...</td></tr>";
       
       try {
-        const { data: aged, error: agedErr } = await db.rpc("get_aged_receivables"); 
+        const { data: aged, error: agedErr } = await db.rpc("get_aged_receivables_v2"); 
         if(agedErr) {
             console.warn("[AGED]", agedErr);
             const agedMessage=String(agedErr.message||agedErr.details||agedErr.code||"");
             const rpcMissing=agedErr.code==="PGRST202" || /could not find the function|function .* does not exist|schema cache/i.test(agedMessage);
-            if(tbodyAged) tbodyAged.innerHTML = `<tr><td colspan='7' style="color:#8a5a00;">${rpcMissing?"تقرير أعمار الديون غير متاح: دالة get_aged_receivables غير موجودة في قاعدة البيانات حاليًا. لم يتم تخمين معاملات أو تغيير قاعدة البيانات.":"تعذر تحميل تقرير أعمار الديون: "+err(agedErr)}</td></tr>`;
+            if(tbodyAged) tbodyAged.innerHTML = `<tr><td colspan='8' style="color:#8a5a00;">${rpcMissing?"تقرير أعمار الديون غير متاح: دالة get_aged_receivables_v2 غير موجودة في قاعدة البيانات حاليًا. لم يتم تخمين معاملات أو تغيير قاعدة البيانات.":"تعذر تحميل تقرير أعمار الديون: "+err(agedErr)}</td></tr>`;
         } else if(aged && aged.length > 0) { 
-            let totalBalance = 0, d0_30 = 0, d31_60 = 0, d61_90 = 0, dOver90 = 0;
+            let totalBalance = 0, totalOpeningBalance = 0, d0_30 = 0, d31_60 = 0, d61_90 = 0, dOver90 = 0;
             const rows = aged.map(a => {
-                totalBalance += Number(a.current_balance||0);
+                const netBalance = Number(a.current_balance||0);
+                totalBalance += netBalance;
+                totalOpeningBalance += Number(a.opening_balance||0);
+                const netBalanceLabel = netBalance < 0 ? "رصيد دائن " + fmt(Math.abs(netBalance)) : fmt(netBalance);
+                const netBalanceColor = netBalance < 0 ? "#176b3a" : "#b42318";
                 d0_30 += Number(a.days_0_30||0);
                 d31_60 += Number(a.days_31_60||0);
                 d61_90 += Number(a.days_61_90||0);
                 dOver90 += Number(a.days_over_90||0);
-                return `<tr><td>${a.customer_name||'-'}</td><td dir="ltr">${a.phone||'-'}</td><td>${fmt(a.current_balance)}</td><td>${fmt(a.days_0_30)}</td><td>${fmt(a.days_31_60)}</td><td>${fmt(a.days_61_90)}</td><td style="color:red;">${fmt(a.days_over_90)}</td></tr>`;
+                return `<tr><td>${a.customer_name||'-'}</td><td dir="ltr">${a.phone||'-'}</td><td style="color:${netBalanceColor};font-weight:bold;">${netBalanceLabel}</td><td>${fmt(a.opening_balance)}</td><td>${fmt(a.days_0_30)}</td><td>${fmt(a.days_31_60)}</td><td>${fmt(a.days_61_90)}</td><td style="color:red;">${fmt(a.days_over_90)}</td></tr>`;
             }).join("");
-            if(tbodyAged) tbodyAged.innerHTML = rows + `<tr style="background:#e9efe9;font-weight:bold;"><td colspan="2">الإجمالي (${aged.length} عميل)</td><td>${fmt(totalBalance)}</td><td>${fmt(d0_30)}</td><td>${fmt(d31_60)}</td><td>${fmt(d61_90)}</td><td style="color:red;">${fmt(dOver90)}</td></tr>`;
+            if(tbodyAged) tbodyAged.innerHTML = rows + `<tr style="background:#e9efe9;font-weight:bold;"><td colspan="2">الإجمالي (${aged.length} عميل)</td><td>${fmt(totalBalance)}</td><td>${fmt(totalOpeningBalance)}</td><td>${fmt(d0_30)}</td><td>${fmt(d31_60)}</td><td>${fmt(d61_90)}</td><td style="color:red;">${fmt(dOver90)}</td></tr>`;
         } else {
-            if(tbodyAged) tbodyAged.innerHTML = "<tr><td colspan='7' style='text-align:center;'>لا يوجد عملاء عليهم مديونية.</td></tr>";
+            if(tbodyAged) tbodyAged.innerHTML = "<tr><td colspan='8' style='text-align:center;'>لا يوجد عملاء عليهم مديونية.</td></tr>";
         }
         
         if($("geoSalesFromDate") && !$("geoSalesFromDate").value) $("geoSalesFromDate").value=monthStartISO();
@@ -9646,7 +9668,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
         await loadProfitLoss();
       } catch(e){ 
           console.warn(e); 
-          if(tbodyAged) tbodyAged.innerHTML = `<tr><td colspan='7' style="color:red;">خطأ: ${err(e)}</td></tr>`;
+          if(tbodyAged) tbodyAged.innerHTML = `<tr><td colspan='8' style="color:red;">خطأ: ${err(e)}</td></tr>`;
       }
   }
   
