@@ -6,8 +6,7 @@ DECLARE
 BEGIN
   v_def := pg_get_functiondef('public.get_period_summary(date,date)'::regprocedure);
 
-  v_old := $old$
-COALESCE((
+  v_old := $old$    COALESCE((
       SELECT SUM(GREATEST(
         COALESCE(c.opening_balance,0)
         - COALESCE((
@@ -22,10 +21,8 @@ COALESCE((
       ))
       FROM public.customers c
       WHERE c.is_active=true
-    ),0)
-$old$;
-  v_new := $new$
-COALESCE((
+    ),0)$old$;
+  v_new := $new$    COALESCE((
       SELECT SUM(
         COALESCE(c.opening_balance,0)
         - COALESCE((
@@ -38,8 +35,7 @@ COALESCE((
           ),0)
       )
       FROM public.customers c
-    ),0)
-$new$;
+    ),0)$new$;
 
   IF position(v_old IN v_def)=0 THEN
     RAISE EXCEPTION 'Expected customer opening-balance block was not found in get_period_summary';
@@ -67,8 +63,7 @@ $new$;
   EXECUTE v_def;
 
   v_def := pg_get_functiondef('public.get_aged_receivables_v2()'::regprocedure);
-  v_old := $old$
-CASE WHEN v_role='SALES_REP' THEN 0
+  v_old := $old$CASE WHEN v_role='SALES_REP' THEN 0
            ELSE GREATEST(
              COALESCE(c.opening_balance,0)
              - COALESCE((
@@ -80,10 +75,8 @@ CASE WHEN v_role='SALES_REP' THEN 0
                    AND cc.status='POSTED'
                ),0),
              0
-           ) END AS opening_balance,
-$old$;
-  v_new := $new$
-CASE WHEN v_role='SALES_REP' THEN 0
+           ) END AS opening_balance,$old$;
+  v_new := $new$CASE WHEN v_role='SALES_REP' THEN 0
            ELSE COALESCE(c.opening_balance,0)
              - COALESCE((
                  SELECT SUM(cc.amount)
@@ -93,8 +86,7 @@ CASE WHEN v_role='SALES_REP' THEN 0
                    AND cc.allocation_type='OPENING_BALANCE'
                    AND cc.status='POSTED'
                ),0)
-           END AS opening_balance,
-$new$;
+           END AS opening_balance,$new$;
   IF position(v_old IN v_def)=0 THEN
     RAISE EXCEPTION 'Expected opening-balance expression was not found in get_aged_receivables_v2';
   END IF;
