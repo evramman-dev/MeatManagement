@@ -8011,6 +8011,7 @@ if($("collectionForm")) $("collectionForm").addEventListener("submit", async e =
         if(method === "CASH" && currentRoleCode !== "SALES_REP" && !selectedTreasuryId) throw new Error("اختر خزنة استلام المبلغ النقدي.");
         const referenceNumber = $("collectionReferenceNumber").value.trim();
         if(method === "CHEQUE" && !referenceNumber) throw new Error("اكتب رقم الشيك.");
+        if(method === "CHEQUE" && !$("collectionDueDate").value) throw new Error("اختر تاريخ استحقاق الشيك.");
         const collectionRequestKey="mm_collection_pending";
         const collectionPayload={customer_id:Number($("collectionCustomer").value),invoice_id:$("collectionInvoice").value?Number($("collectionInvoice").value):null,amount:Number($("collectionAmount").value),method,date:$("collectionDate").value,notes:$("collectionNotes").value||null,trip_id:tripId,treasury_id:selectedTreasuryId,reference:referenceNumber||null,bank:$("collectionBankName").value.trim()||null,due:$("collectionDueDate").value||null};
         const collectionRequestId=getRequestId(collectionRequestKey,collectionPayload);
