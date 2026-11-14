@@ -1734,7 +1734,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <button class="tab-btn" id="btnExportExcel" style="flex: 1;">📊 تصدير إكسيل (CSV)</button>
 </div>
 <div id="repAged" class="report-tab">
-<div class="table-responsive"><table class="print-table" id="agedTable"><thead><tr><th>العميل</th><th>الموبايل</th><th>الرصيد</th><th>الرصيد الافتتاحي</th><th>0-30</th><th>31-60</th><th>61-90</th><th>+90</th></tr></thead><tbody></tbody></table></div>
+<div class="table-responsive"><table class="print-table" id="agedTable"><thead><tr><th>العميل</th><th>الموبايل</th><th>الرصيد الصافي</th><th>الرصيد الافتتاحي</th><th>0-30</th><th>31-60</th><th>61-90</th><th>+90</th></tr></thead><tbody></tbody></table></div>
 </div>
 <div id="repSlow" class="report-tab hidden">
 <label>عدد أيام بدون حركة (مثال: 30)</label>
@@ -9644,13 +9644,16 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
         } else if(aged && aged.length > 0) { 
             let totalBalance = 0, totalOpeningBalance = 0, d0_30 = 0, d31_60 = 0, d61_90 = 0, dOver90 = 0;
             const rows = aged.map(a => {
-                totalBalance += Number(a.current_balance||0);
+                const netBalance = Number(a.current_balance||0);
+                totalBalance += netBalance;
                 totalOpeningBalance += Number(a.opening_balance||0);
+                const netBalanceLabel = netBalance < 0 ? "رصيد دائن " + fmt(Math.abs(netBalance)) : fmt(netBalance);
+                const netBalanceColor = netBalance < 0 ? "#176b3a" : "#b42318";
                 d0_30 += Number(a.days_0_30||0);
                 d31_60 += Number(a.days_31_60||0);
                 d61_90 += Number(a.days_61_90||0);
                 dOver90 += Number(a.days_over_90||0);
-                return `<tr><td>${a.customer_name||'-'}</td><td dir="ltr">${a.phone||'-'}</td><td>${fmt(a.current_balance)}</td><td>${fmt(a.opening_balance)}</td><td>${fmt(a.days_0_30)}</td><td>${fmt(a.days_31_60)}</td><td>${fmt(a.days_61_90)}</td><td style="color:red;">${fmt(a.days_over_90)}</td></tr>`;
+                return `<tr><td>${a.customer_name||'-'}</td><td dir="ltr">${a.phone||'-'}</td><td style="color:${netBalanceColor};font-weight:bold;">${netBalanceLabel}</td><td>${fmt(a.opening_balance)}</td><td>${fmt(a.days_0_30)}</td><td>${fmt(a.days_31_60)}</td><td>${fmt(a.days_61_90)}</td><td style="color:red;">${fmt(a.days_over_90)}</td></tr>`;
             }).join("");
             if(tbodyAged) tbodyAged.innerHTML = rows + `<tr style="background:#e9efe9;font-weight:bold;"><td colspan="2">الإجمالي (${aged.length} عميل)</td><td>${fmt(totalBalance)}</td><td>${fmt(totalOpeningBalance)}</td><td>${fmt(d0_30)}</td><td>${fmt(d31_60)}</td><td>${fmt(d61_90)}</td><td style="color:red;">${fmt(dOver90)}</td></tr>`;
         } else {
