@@ -178,22 +178,25 @@ BEGIN
  newtxt:=$new$  FOR v_qty IN
     SELECT sri.return_item_id,
            COALESCE(active_res.location_id,i.received_location_id,sri.location_id) AS location_id,
-           sri.product_id,sri.base_quantity AS quantity
+           sri.product_id,COALESCE(active_res.quantity,sri.base_quantity) AS quantity,
+           COALESCE(active_res.location_count,0) AS reservation_location_count
     FROM public.sales_return_items sri
     LEFT JOIN public.sales_return_item_inspections i ON i.return_item_id=sri.return_item_id
     LEFT JOIN LATERAL (
-      SELECT rr.location_id
+      SELECT MIN(rr.location_id) AS location_id,SUM(rr.quantity) AS quantity,
+             COUNT(DISTINCT rr.location_id) AS location_count
       FROM public.reservations rr
       WHERE rr.source_return_item_id=sri.return_item_id
         AND rr.status='ACTIVE'
         AND (rr.notes LIKE 'RETURN_PENDING:%' OR rr.notes LIKE 'RETURN_REWORK:%')
-      ORDER BY rr.created_at DESC,rr.reservation_id DESC
-      LIMIT 1
     ) active_res ON true
     WHERE sri.sales_return_id=p_sales_return_id
     ORDER BY location_id,sri.product_id,sri.return_item_id
     FOR UPDATE OF sri
   LOOP
+    IF v_qty.reservation_location_count>1 THEN
+      RAISE EXCEPTION 'يجب تجميع كامل كمية المرتجع في موقع واحد قبل إلغائه';
+    END IF;
     SELECT quantity INTO v_new_stock
     FROM public.stock_balances
     WHERE location_id=v_qty.location_id AND product_id=v_qty.product_id
