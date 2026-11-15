@@ -62,7 +62,7 @@ test('Sales return retries reuse the same return number and item request IDs', (
   expect(qaHtml).toContain('returnRequest=getSalesReturnRequest(returnRequestKey,returnPayload,rows.length);');
   expect(qaHtml).toContain('p_return_number:returnRequest.return_number');
   expect(qaHtml).toContain('for(let itemIndex=0;itemIndex<rows.length;itemIndex++){');
-  expect(qaHtml).toContain('const itemRequestId=returnRequest.item_request_ids[itemIndex];');
+  expect(qaHtml).toContain('p_request_id:returnRequest.item_request_ids[itemIndex]');
   expect(qaHtml).toContain('lot_id:r.querySelector(".return-lot")?.value||null,package_option_id:r.querySelector(".return-package-option")?.value||null');
 
   expect(qaHtml).not.toContain('p_return_number:"RET-"+Date.now()');
