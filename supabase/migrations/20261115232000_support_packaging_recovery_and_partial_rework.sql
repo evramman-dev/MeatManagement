@@ -237,6 +237,21 @@ BEGIN
 END
 $cancel_location$;
 
+
+-- A trip is not treated as fridge receipt unless its settlement target is a fridge or main warehouse.
+DO $settle_receipt$
+DECLARE d text; oldtxt text; newtxt text;
+BEGIN
+ d:=pg_get_functiondef('public.settle_trip(bigint,bigint)'::regprocedure);
+ oldtxt:=$old$received_at=COALESCE(i.received_at,now()),$old$;
+ newtxt:=$new$received_at=CASE
+      WHEN (SELECT l.location_type FROM public.locations l WHERE l.location_id=p_target_location_id) IN ('MAIN_WAREHOUSE','FRIDGE')
+      THEN COALESCE(i.received_at,now()) ELSE NULL END,$new$;
+ IF position(oldtxt in d)=0 THEN RAISE EXCEPTION 'settle_trip receipt timestamp source changed'; END IF;
+ EXECUTE replace(d,oldtxt,newtxt);
+END
+$settle_receipt$;
+
 -- Keep all security-definer entry points restricted to authenticated callers.
 REVOKE ALL ON FUNCTION public.settle_trip(bigint,bigint) FROM PUBLIC,anon;
 REVOKE ALL ON FUNCTION public.create_stock_transfer(bigint,bigint,date,jsonb,text,uuid) FROM PUBLIC,anon;
