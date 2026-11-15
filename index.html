@@ -1279,7 +1279,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div></div></div>
 <div id="productionPackagingWasteModal" class="modal-form">
 <div class="modal-form-content">
-<div class="modal-header"><h3>تفاصيل مستلزمات التعبئة التالفة</h3><button class="close-btn" type="button" onclick="document.getElementById('productionPackagingWasteModal').classList.remove('active')">&times;</button></div>
+<div class="modal-header"><h3>تفاصيل الاسترداد والهالك</h3><button class="close-btn" type="button" onclick="document.getElementById('productionPackagingWasteModal').classList.remove('active')">&times;</button></div>
 <div class="modal-body"><div id="productionPackagingWasteInfo" class="info"></div><div id="productionPackagingWasteRows"></div></div>
 </div></div>
 <div id="productionExecutionModal" class="modal-form">
@@ -8925,27 +8925,49 @@ if($("productionExecutionForm"))$("productionExecutionForm").addEventListener("s
 async function viewProductionPackagingWaste(order){
  const modal=$("productionPackagingWasteModal");if(!modal)return;
  $("productionPackagingWasteInfo").textContent="أمر التشغيل: "+order.order_number;
- const box=$("productionPackagingWasteRows");box.replaceChildren();
- modal.classList.add("active");
+ const box=$("productionPackagingWasteRows");box.replaceChildren();modal.classList.add("active");
  try{
-  const allocations=order.cost_allocation_details?.abnormal_waste?.allocations||[];
-  const sourceIds=[...new Set(allocations.filter(x=>(x.packaging_items||[]).length).map(x=>Number(x.material_id)))];
-  if(!sourceIds.length){box.innerHTML="<div class='empty'>لا توجد مستلزمات تعبئة مسجلة كهالك في هذا الأمر.</div>";return;}
+  const recovered=order.cost_allocation_details?.recovered_materials||[];
+  const waste=order.cost_allocation_details?.abnormal_waste?.allocations||[];
+  const sourceIds=[...new Set([
+   ...recovered.map(x=>Number(x.source_material_id)),
+   ...waste.map(x=>Number(x.material_id))
+  ].filter(x=>x>0))];
+  if(!sourceIds.length){box.innerHTML="<div class='empty'>لا توجد مواد مستردة أو تفاصيل هالك مسجلة في هذا الأمر.</div>";return;}
   const {data:materials,error}=await db.from("production_order_materials").select("material_id,raw_product_id").in("material_id",sourceIds);
   if(error)throw error;
   const sourceMap=new Map((materials||[]).map(x=>[Number(x.material_id),Number(x.raw_product_id)]));
-  allocations.forEach(a=>{
-   const packagingItems=a.packaging_items||[];if(!packagingItems.length)return;
-   const card=document.createElement("div");card.className="product";
-   const title=document.createElement("div");title.className="pname";title.textContent="المكوّن المصدر: "+productName(sourceMap.get(Number(a.material_id)));
-   const cost=document.createElement("div");cost.className="details";cost.textContent="إجمالي تكلفة الهالك المخصصة لهذا البند: "+fmt(a.allocated_cost||0);
-   card.append(title,cost);
-   packagingItems.forEach(item=>{const line=document.createElement("div");line.className="details";line.textContent=productName(item.product_id)+" — الكمية التالفة: "+fmtQty(item.quantity)+" "+unitName(item.unit_id);card.appendChild(line);});
-   box.appendChild(card);
-  });
-  if(!box.children.length)box.innerHTML="<div class='empty'>لا توجد مستلزمات تعبئة مسجلة كهالك في هذا الأمر.</div>";
+  if(recovered.length){
+   const heading=document.createElement("h4");heading.textContent="المواد المستردة";box.appendChild(heading);
+   recovered.forEach(item=>{
+    const sourceProductId=sourceMap.get(Number(item.source_material_id));
+    const recoveredProduct=productsCache.find(p=>Number(p.product_id)===Number(item.product_id));
+    const sourceProduct=productsCache.find(p=>Number(p.product_id)===Number(sourceProductId));
+    const card=document.createElement("div");card.className="product";
+    const title=document.createElement("div");title.className="pname";title.textContent=productName(item.product_id);
+    const details=document.createElement("div");details.className="details";
+    details.textContent="المصدر: "+productName(sourceProductId)+" | الكمية المستردة: "+fmtQty(item.base_quantity)+" "+unitName(recoveredProduct?.base_unit_id)+" | كمية المصدر المستخدمة: "+fmtQty(item.source_base_quantity)+" "+unitName(sourceProduct?.base_unit_id)+" | التكلفة المحملة: "+fmt(item.allocated_cost||0);
+    card.append(title,details);box.appendChild(card);
+   });
+  }
+  if(waste.length){
+   const heading=document.createElement("h4");heading.textContent="الهالك ومستلزمات التعبئة التالفة";box.appendChild(heading);
+   waste.forEach(item=>{
+    const packagingItems=item.packaging_items||[];
+    const sourceProductId=sourceMap.get(Number(item.material_id));
+    const sourceProduct=productsCache.find(p=>Number(p.product_id)===Number(sourceProductId));
+    const card=document.createElement("div");card.className="product";
+    const title=document.createElement("div");title.className="pname";title.textContent="المكوّن المصدر: "+productName(sourceProductId);
+    const details=document.createElement("div");details.className="details";
+    details.textContent="فاقد المحتوى: "+fmtQty(item.base_quantity||0)+" "+unitName(sourceProduct?.base_unit_id)+" | إجمالي تكلفة الهالك المخصصة: "+fmt(item.allocated_cost||0);
+    card.append(title,details);
+    packagingItems.forEach(pack=>{const line=document.createElement("div");line.className="details";line.textContent=productName(pack.product_id)+" — الكمية التالفة: "+fmtQty(pack.quantity)+" "+unitName(pack.unit_id);card.appendChild(line);});
+    box.appendChild(card);
+   });
+  }
  }catch(e){box.textContent="تعذر تحميل التفاصيل: "+err(e);}
 }
+
 function renderProduction(){ 
   const box=$("productionList"); if(!box) return; 
   box.replaceChildren(); 
@@ -8970,8 +8992,8 @@ function renderProduction(){
       const edit=document.createElement("button");edit.className="btn secondary";edit.textContent="تعديل المسودة";edit.onclick=()=>openProductionDraftEdit(p);actions.appendChild(edit);
       const exec=document.createElement("button");exec.className="btn";exec.textContent="تنفيذ وتسجيل التكلفة";exec.onclick=()=>openProductionExecution(p);actions.appendChild(exec); 
     } else if(canManageProduction && p.status === "COMPLETED"){
-      if((p.cost_allocation_details?.abnormal_waste?.allocations||[]).some(x=>(x.packaging_items||[]).length)){
-        const packaging=document.createElement("button");packaging.className="btn secondary";packaging.textContent="تفاصيل مستلزمات التعبئة التالفة";packaging.onclick=()=>viewProductionPackagingWaste(p);actions.appendChild(packaging);
+      if((p.cost_allocation_details?.recovered_materials||[]).length||(p.cost_allocation_details?.abnormal_waste?.allocations||[]).length){
+        const packaging=document.createElement("button");packaging.className="btn secondary";packaging.textContent="تفاصيل الاسترداد والهالك";packaging.onclick=()=>viewProductionPackagingWaste(p);actions.appendChild(packaging);
       }
       const reverse=document.createElement("button");reverse.className="btn danger";reverse.textContent="عكس أمر الإنتاج";reverse.onclick=()=>reverseProductionOrder(p);actions.appendChild(reverse);
     }
