@@ -2,6 +2,10 @@ const { test, expect } = require('@playwright/test');
 const fs = require('node:fs');
 const path = require('node:path');
 const qaHtml = fs.readFileSync(path.resolve(__dirname, '..', 'index.html'), 'utf8');
+const exchangeMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115144036_fix_sales_exchange_request_idempotency.sql'), 'utf8');
+const exchangeCancellationMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115144743_fix_sales_exchange_cancellation_accounting.sql'), 'utf8');
+const exchangeCancellationOrderMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115144800_fix_sales_exchange_cancellation_stock_reversal_order.sql'), 'utf8');
+const legacyExchangeCancelGuardSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115145032_guard_legacy_sales_return_cancel_from_exchanges.sql'), 'utf8');
 
 test.use({ serviceWorkers: 'block' });
 
@@ -77,6 +81,7 @@ test('Sales invoice retries reuse the same request ID and only clear it after su
 
 test('Sales return retries reuse the same return number and item request IDs', () => {
   expect(qaHtml).toContain('function getSalesReturnRequest(storageKey,payload,itemCount)');
+  expect(qaHtml).toContain('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx');
   expect(qaHtml).toContain('pending={request_id:makeId(),return_number:"RET-"+Date.now()+"-"+Math.random().toString(36).slice(2,8).toUpperCase(),item_request_ids:Array.from({length:itemCount},()=>makeId()),payload:normalized}');
   expect(qaHtml).toContain('returnRequest=getSalesReturnRequest(returnRequestKey,returnPayload,rows.length);');
   expect(qaHtml).toContain('p_return_number:returnRequest.return_number');
@@ -86,6 +91,42 @@ test('Sales return retries reuse the same return number and item request IDs', (
 
   expect(qaHtml).not.toContain('p_return_number:"RET-"+Date.now()');
   expect(qaHtml).not.toContain('const itemRequestId=(crypto.randomUUID?crypto.randomUUID():Date.now()+');
+});
+
+test('Sales exchange retries reuse stable request and item IDs', () => {
+  const start=qaHtml.indexOf('if(type==="EXCHANGE"){');
+  const end=qaHtml.indexOf('await salesReturnLotOptionsPromise;',start);
+  expect(start).toBeGreaterThanOrEqual(0);
+  expect(end).toBeGreaterThan(start);
+  const exchangeSource=qaHtml.slice(start,end);
+  expect(exchangeSource).toContain('const req=getSalesReturnRequest(requestKey,payload,returnItemsBase.length+exchangeItemsBase.length);');
+  expect(exchangeSource).toContain('request_id:req.item_request_ids[index]');
+  expect(exchangeSource).toContain('request_id:req.item_request_ids[returnItemsBase.length+index]');
+  expect(exchangeSource).not.toContain('request_id:crypto.randomUUID()');
+  expect(exchangeSource).toContain('else{clearRequestId(requestKey);showToast("تم حفظ طلب الاستبدال. ينتظر الاعتماد."');
+});
+
+test('Sales exchange RPC serializes retries and rejects request ID payload changes', () => {
+  expect(exchangeMigrationSql).toContain('pg_advisory_xact_lock(hashtextextended(p_request_id::text,0))');
+  expect(exchangeMigrationSql).toContain('رقم طلب الاستبدال مستخدم من قبل مع بيانات مختلفة');
+  expect(exchangeMigrationSql).toContain('sales_return_exchange_items');
+});
+
+test('Sales exchange cancellation reverses the main journal and both COGS sides once', () => {
+  expect(exchangeCancellationMigrationSql).toContain("NEW.return_type IS DISTINCT FROM 'EXCHANGE'");
+  expect(exchangeCancellationMigrationSql).toContain("'account','4100','debit',r.total_exchange_value,'credit',0");
+  expect(exchangeCancellationMigrationSql).toContain("'account','1200','debit',0,'credit',r.total_exchange_value");
+  expect(exchangeCancellationMigrationSql).toContain("'SALES_RETURN_COGS_LINE'");
+  expect(exchangeCancellationMigrationSql).toContain("'SALES_COGS_LINE'");
+});
+
+test('Same-product exchange cancellation reverses stock movements in reverse order', () => {
+  expect(exchangeCancellationOrderMigrationSql).toContain('ORDER BY movement_id DESC LOOP');
+});
+
+test('Legacy sales return cancellation cannot bypass the exchange-specific reversal', () => {
+  expect(legacyExchangeCancelGuardSql).toContain("IF v_return.return_type='EXCHANGE' THEN");
+  expect(legacyExchangeCancelGuardSql).toContain('استخدم دالة إلغاء الاستبدال المخصصة.');
 });
 
 test('Collection views label cancelled records and exclude them from posted totals', () => {
