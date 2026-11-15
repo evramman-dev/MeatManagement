@@ -180,6 +180,17 @@ test('Admin notifications support selected users and all active users', () => {
   expect(qaHtml).toContain('select.disabled=$("notificationSendAll").checked');
 });
 
+test('Task notifications are delivered only to selected users and shown on My Tasks', () => {
+  expect(qaHtml).toContain('id="taskNotificationsList"');
+  expect(qaHtml).toContain('id="taskNotificationSendPanel"');
+  expect(qaHtml).toContain('notification_type==="TASK"');
+  expect(qaHtml).toContain('p_notification_type:"TASK"');
+  expect(qaHtml).toContain('p_user_ids:users');
+  expect(qaHtml).toContain('audience:"SELECTED_USERS"');
+  expect(qaHtml).toContain('if(!isSystemAdmin)throw new Error("إرسال تنبيهات المهام متاح لمدير النظام فقط.")');
+  expect(qaHtml).toContain('await loadTaskNotifications();');
+});
+
 test('Accounting summary uses ledger totals and does not show an inaccurate fallback', () => {
   expect(qaHtml).toContain('if(periodErr) throw periodErr;');
   expect(qaHtml).toContain('if(!periodData) throw new Error("لم تُرجع قاعدة البيانات ملخص الفترة.")');
