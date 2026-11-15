@@ -410,7 +410,7 @@ test('MeatManagement read-only navigation, permissions and session smoke test', 
       await expect(lotDetails).toContainText('تخصيصات التشغيلات', { timeout: 30000 });
       await expect(lotDetails).not.toContainText('جارٍ تحميل تخصيصات التشغيلات...', { timeout: 30000 });
       await expect(lotDetails).toContainText('LOT-20261115-000031', { timeout: 30000 });
-      await expect(lotDetails).toContainText('0.5');
+      await expect(lotDetails).toContainText('٠٫٥');
       await page.screenshot({ path: 'test-results/sales-invoice-lot-allocations.png', fullPage: true });
       await page.locator('#invoiceDetailsModal .close-btn').click();
       await expect(page.locator('#invoiceDetailsModal')).toBeHidden();
