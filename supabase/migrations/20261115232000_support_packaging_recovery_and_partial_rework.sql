@@ -164,6 +164,79 @@ $addition$;
 END
 $cancel_scrap$;
 
+
+-- Cancel each returned line at its current held/inspected location, preserving item-level lot links.
+DO $cancel_location$
+DECLARE d text; oldtxt text; newtxt text; s integer; e integer;
+BEGIN
+ d:=pg_get_functiondef('public.cancel_sales_return_internal_return_hold(bigint,text)'::regprocedure);
+ s:=strpos(d,'  -- Remove goods previously received as a return.');
+ IF s=0 THEN RAISE EXCEPTION 'cancel return removal section changed'; END IF;
+ s:=strpos(d,'  FOR v_qty IN',s);
+ IF s=0 THEN RAISE EXCEPTION 'cancel return item loop changed'; END IF;
+ e:=s+strpos(substr(d,s),'  END LOOP;')+length('  END LOOP;')-1;
+ newtxt:=$new$  FOR v_qty IN
+    SELECT sri.return_item_id,
+           COALESCE(active_res.location_id,i.received_location_id,sri.location_id) AS location_id,
+           sri.product_id,sri.base_quantity AS quantity
+    FROM public.sales_return_items sri
+    LEFT JOIN public.sales_return_item_inspections i ON i.return_item_id=sri.return_item_id
+    LEFT JOIN LATERAL (
+      SELECT rr.location_id
+      FROM public.reservations rr
+      WHERE rr.source_return_item_id=sri.return_item_id
+        AND rr.status='ACTIVE'
+        AND (rr.notes LIKE 'RETURN_PENDING:%' OR rr.notes LIKE 'RETURN_REWORK:%')
+      ORDER BY rr.created_at DESC,rr.reservation_id DESC
+      LIMIT 1
+    ) active_res ON true
+    WHERE sri.sales_return_id=p_sales_return_id
+    ORDER BY location_id,sri.product_id,sri.return_item_id
+    FOR UPDATE OF sri
+  LOOP
+    SELECT quantity INTO v_new_stock
+    FROM public.stock_balances
+    WHERE location_id=v_qty.location_id AND product_id=v_qty.product_id
+    FOR UPDATE;
+
+    IF NOT FOUND OR v_new_stock<v_qty.quantity THEN
+      RAISE EXCEPTION 'رصيد المرتجع لا يكفي لعكس الصنف % في الموقع %.',
+        v_qty.product_id,v_qty.location_id;
+    END IF;
+
+    PERFORM public.assert_stock_available(v_qty.location_id,v_qty.product_id,v_qty.quantity);
+    v_new_stock:=v_new_stock-v_qty.quantity;
+
+    UPDATE public.stock_balances
+    SET quantity=v_new_stock,updated_at=now()
+    WHERE location_id=v_qty.location_id AND product_id=v_qty.product_id;
+
+    INSERT INTO public.stock_movements(
+      location_id,product_id,movement_type,quantity_change,
+      quantity_after,notes,created_by,trip_id,sales_return_id,sales_return_item_id
+    )
+    VALUES(
+      v_qty.location_id,v_qty.product_id,'ISSUE',-v_qty.quantity,
+      v_new_stock,'عكس استلام المرتجع '||v_return.return_number,
+      auth.uid(),v_return.trip_id,p_sales_return_id,v_qty.return_item_id
+    );
+  END LOOP;$new$;
+ d:=substr(d,1,s-1)||newtxt||substr(d,e+1);
+ EXECUTE d;
+
+ d:=pg_get_functiondef('public.sync_stock_movement_lots()'::regprocedure);
+ oldtxt:=$old$WHERE source_movement.sales_return_id=NEW.sales_return_id
+        AND source_movement.location_id=NEW.location_id
+        AND source_movement.product_id=NEW.product_id
+        AND (NEW.sales_return_item_id IS NULL OR source_movement.sales_return_item_id=NEW.sales_return_item_id)$old$;
+ newtxt:=$new$WHERE source_movement.sales_return_id=NEW.sales_return_id
+        AND source_movement.product_id=NEW.product_id
+        AND (NEW.sales_return_item_id IS NULL OR source_movement.sales_return_item_id=NEW.sales_return_item_id)$new$;
+ IF position(oldtxt in d)=0 THEN RAISE EXCEPTION 'sync return lot location filter changed'; END IF;
+ EXECUTE replace(d,oldtxt,newtxt);
+END
+$cancel_location$;
+
 -- Keep all security-definer entry points restricted to authenticated callers.
 REVOKE ALL ON FUNCTION public.settle_trip(bigint,bigint) FROM PUBLIC,anon;
 REVOKE ALL ON FUNCTION public.create_stock_transfer(bigint,bigint,date,jsonb,text,uuid) FROM PUBLIC,anon;
