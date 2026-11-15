@@ -81,6 +81,7 @@ test('Sales invoice retries reuse the same request ID and only clear it after su
 
 test('Sales return retries reuse the same return number and item request IDs', () => {
   expect(qaHtml).toContain('function getSalesReturnRequest(storageKey,payload,itemCount)');
+  expect(qaHtml).toContain('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx');
   expect(qaHtml).toContain('pending={request_id:makeId(),return_number:"RET-"+Date.now()+"-"+Math.random().toString(36).slice(2,8).toUpperCase(),item_request_ids:Array.from({length:itemCount},()=>makeId()),payload:normalized}');
   expect(qaHtml).toContain('returnRequest=getSalesReturnRequest(returnRequestKey,returnPayload,rows.length);');
   expect(qaHtml).toContain('p_return_number:returnRequest.return_number');
