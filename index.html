@@ -8934,13 +8934,15 @@ async function viewProductionPackagingWaste(order){
   const {data:materials,error}=await db.from("production_order_materials").select("material_id,raw_product_id").in("material_id",sourceIds);
   if(error)throw error;
   const sourceMap=new Map((materials||[]).map(x=>[Number(x.material_id),Number(x.raw_product_id)]));
-  allocations.forEach(a=>(a.packaging_items||[]).forEach(item=>{
-   const row=document.createElement("div");row.className="product";
-   const title=document.createElement("div");title.className="pname";title.textContent=productName(item.product_id);
-   const details=document.createElement("div");details.className="details";
-   details.textContent="مصدر الاسترداد: "+productName(sourceMap.get(Number(a.material_id)))+" | الكمية التالفة: "+fmtQty(item.quantity)+" "+unitName(item.unit_id)+" | تكلفة الهالك المخصصة: "+fmt(a.allocated_cost||0);
-   row.append(title,details);box.appendChild(row);
-  }));
+  allocations.forEach(a=>{
+   const packagingItems=a.packaging_items||[];if(!packagingItems.length)return;
+   const card=document.createElement("div");card.className="product";
+   const title=document.createElement("div");title.className="pname";title.textContent="المكوّن المصدر: "+productName(sourceMap.get(Number(a.material_id)));
+   const cost=document.createElement("div");cost.className="details";cost.textContent="إجمالي تكلفة الهالك المخصصة لهذا البند: "+fmt(a.allocated_cost||0);
+   card.append(title,cost);
+   packagingItems.forEach(item=>{const line=document.createElement("div");line.className="details";line.textContent=productName(item.product_id)+" — الكمية التالفة: "+fmtQty(item.quantity)+" "+unitName(item.unit_id);card.appendChild(line);});
+   box.appendChild(card);
+  });
   if(!box.children.length)box.innerHTML="<div class='empty'>لا توجد مستلزمات تعبئة مسجلة كهالك في هذا الأمر.</div>";
  }catch(e){box.textContent="تعذر تحميل التفاصيل: "+err(e);}
 }
