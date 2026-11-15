@@ -172,7 +172,7 @@ BEGIN
  d:=pg_get_functiondef('public.cancel_sales_return_internal_return_hold(bigint,text)'::regprocedure);
  s:=strpos(d,'  -- Remove goods previously received as a return.');
  IF s=0 THEN RAISE EXCEPTION 'cancel return removal section changed'; END IF;
- s:=strpos(d,'  FOR v_qty IN',s);
+ s:=s+strpos(substr(d,s),'  FOR v_qty IN')-1;
  IF s=0 THEN RAISE EXCEPTION 'cancel return item loop changed'; END IF;
  e:=s+strpos(substr(d,s),'  END LOOP;')+length('  END LOOP;')-1;
  newtxt:=$new$  FOR v_qty IN
