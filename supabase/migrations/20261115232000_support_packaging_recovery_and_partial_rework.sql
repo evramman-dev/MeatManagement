@@ -113,3 +113,13 @@ BEGIN
  EXECUTE replace(d,oldtxt,newtxt);
 END
 $migration$;
+
+-- Keep all security-definer entry points restricted to authenticated callers.
+REVOKE ALL ON FUNCTION public.settle_trip(bigint,bigint) FROM PUBLIC,anon;
+REVOKE ALL ON FUNCTION public.create_stock_transfer(bigint,bigint,date,jsonb,text,uuid) FROM PUBLIC,anon;
+REVOKE ALL ON FUNCTION public.execute_production_order_v6(bigint,numeric,jsonb,jsonb,jsonb,jsonb,date) FROM PUBLIC,anon;
+REVOKE ALL ON FUNCTION public.cancel_sales_return(bigint,text) FROM PUBLIC,anon;
+REVOKE ALL ON FUNCTION public.create_return_item_holds() FROM PUBLIC,anon;
+REVOKE ALL ON FUNCTION public.cleanup_sales_return_holds_on_cancel() FROM PUBLIC,anon;
+REVOKE ALL ON FUNCTION public.guard_sales_return_cancel_after_rework() FROM PUBLIC,anon;
+REVOKE ALL ON FUNCTION public.track_return_rework_consumption() FROM PUBLIC,anon;
