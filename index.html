@@ -1219,7 +1219,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <label for="recipeOutputProduct">المنتج الناتج *</label><select id="recipeOutputProduct" required><option value="">اختر المنتج</option></select>
 <label for="recipeOutputQty">الكمية الناتجة *</label><input id="recipeOutputQty" type="number" min="0.0001" step="0.0001" required>
 <label for="recipeOutputUnit">الوحدة *</label><select id="recipeOutputUnit" required><option value="">اختر الوحدة</option></select>
-<label style="margin-top:16px">المكونات (الخامات) *</label>
+<label style="margin-top:16px">مكونات التصنيع (خامات ومستلزمات) *</label>
 <div id="recipeItems"></div>
 <button id="addRecipeItemBtn" class="btn secondary" type="button" style="margin-top:8px">＋ إضافة مكون</button>
 <label for="recipeNotes">ملاحظات</label><textarea id="recipeNotes" rows="2"></textarea>
@@ -8559,7 +8559,7 @@ function addRecipeItemRow(item){
   const prodLabel=document.createElement("label"); prodLabel.textContent="المكون *"; 
   const prodSel=document.createElement("select"); prodSel.className="item-product"; prodSel.required=true; 
   const first=document.createElement("option"); first.value=""; first.textContent="اختر المكون"; prodSel.appendChild(first); 
-  productsCache.filter(p=>p.is_active).forEach(p=>{ 
+  productsCache.filter(p=>p.is_active&&["RAW","SEMI_FINISHED"].includes(p.product_type)).forEach(p=>{ 
     const op=document.createElement("option"); 
     op.value=String(p.product_id); 
     op.textContent=p.product_name; 
