@@ -255,6 +255,27 @@ BEGIN
 END
 $settle_receipt$;
 
+
+-- Apply the same hold and rework safeguards to exchange-return cancellation.
+ALTER FUNCTION public.cancel_sales_return_exchange_v1(bigint,text)
+  RENAME TO cancel_sales_return_exchange_v1_internal_return_hold;
+REVOKE ALL ON FUNCTION public.cancel_sales_return_exchange_v1_internal_return_hold(bigint,text)
+  FROM PUBLIC,anon,authenticated;
+CREATE FUNCTION public.cancel_sales_return_exchange_v1(p_sales_return_id bigint,p_reason text)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path=public,pg_temp
+AS $
+BEGIN
+  PERFORM set_config('app.allow_return_pending_reservations','on',true);
+  PERFORM set_config('app.allow_return_rework_reservations','on',true);
+  PERFORM public.cancel_sales_return_exchange_v1_internal_return_hold(p_sales_return_id,p_reason);
+END;
+$;
+REVOKE ALL ON FUNCTION public.cancel_sales_return_exchange_v1(bigint,text) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.cancel_sales_return_exchange_v1(bigint,text) TO authenticated;
+
 -- Keep all security-definer entry points restricted to authenticated callers.
 REVOKE ALL ON FUNCTION public.settle_trip(bigint,bigint) FROM PUBLIC,anon;
 REVOKE ALL ON FUNCTION public.create_stock_transfer(bigint,bigint,date,jsonb,text,uuid) FROM PUBLIC,anon;
