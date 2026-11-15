@@ -2,6 +2,7 @@ name: MeatManagement cloud browser tests
 
 on:
   workflow_dispatch:
+  # Validate each proposed change before it reaches main.
   pull_request:
     branches:
       - main
