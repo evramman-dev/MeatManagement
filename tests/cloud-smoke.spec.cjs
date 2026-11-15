@@ -494,6 +494,8 @@ test('Sales return inspection, rework inputs and packaging recovery are wired', 
   expect(qaHtml).toContain('record_sales_return_item_inspection');
   expect(qaHtml).toContain('add_production_order_extra_material');
   expect(qaHtml).toContain('production-packaging-waste-row');
+  expect(qaHtml).toContain('productionPackagingWasteModal');
+  expect(qaHtml).toContain('get_sales_return_rework_stock');
   expect(qaHtml).toContain('packaging_items:packagingItems');
   expect(qaHtml).toContain('["RAW","SEMI_FINISHED"].includes(p.product_type)');
   expect(qaHtml).toContain('Number(p.category_id)===16');
