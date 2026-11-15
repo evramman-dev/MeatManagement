@@ -1,3 +1,44 @@
+-- Allow the two required inspection roles to read return headers, lines and inspection records.
+DROP POLICY IF EXISTS sales_returns_select_permission ON public.sales_returns;
+CREATE POLICY sales_returns_select_permission ON public.sales_returns
+FOR SELECT TO authenticated
+USING (
+ (public.has_permission('RETURNS_VIEW') OR public.has_permission('RETURNS_CREATE')
+  OR public.has_permission('RETURNS_APPROVE') OR public.has_permission('RETURNS_MANAGE')
+  OR public.has_permission('INVENTORY_ADJUST') OR public.has_permission('PRODUCTION_MANAGE'))
+ AND (
+  public.get_current_user_role()::text<>'SALES_REP'
+  OR sales_rep_id=public.get_current_sales_rep_id()
+ )
+);
+
+DROP POLICY IF EXISTS return_items_view ON public.sales_return_items;
+CREATE POLICY return_items_view ON public.sales_return_items
+FOR SELECT TO authenticated
+USING (
+ (public.has_permission('RETURNS_VIEW') OR public.has_permission('RETURNS_MANAGE')
+  OR public.has_permission('RETURNS_APPROVE') OR public.has_permission('INVENTORY_ADJUST')
+  OR public.has_permission('PRODUCTION_MANAGE'))
+ AND (
+  public.get_current_user_role()::text<>'SALES_REP'
+  OR EXISTS (
+   SELECT 1 FROM public.sales_returns sr
+   WHERE sr.sales_return_id=sales_return_items.sales_return_id
+     AND sr.sales_rep_id=public.get_current_sales_rep_id()
+  )
+ )
+);
+
+DROP POLICY IF EXISTS sales_return_item_inspections_read ON public.sales_return_item_inspections;
+CREATE POLICY sales_return_item_inspections_read ON public.sales_return_item_inspections
+FOR SELECT TO authenticated
+USING (
+ public.has_permission('RETURNS_VIEW') OR public.has_permission('RETURNS_MANAGE')
+ OR public.has_permission('RETURNS_APPROVE') OR public.has_permission('INVENTORY_VIEW')
+ OR public.has_permission('INVENTORY_ADJUST') OR public.has_permission('PRODUCTION_VIEW')
+ OR public.has_permission('PRODUCTION_MANAGE')
+);
+
 ALTER TABLE public.production_rework_consumptions DROP CONSTRAINT IF EXISTS production_rework_consumptions_movement_id_return_item_id_key;
 CREATE INDEX IF NOT EXISTS production_rework_consumptions_movement_item_idx ON public.production_rework_consumptions(movement_id,return_item_id);
 DO $migration$
