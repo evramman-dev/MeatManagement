@@ -156,10 +156,10 @@ $migration$;
 
 CREATE OR REPLACE FUNCTION public.create_return_item_holds()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
-DECLARE v_status text; v_customer_id bigint; x record; v_location_type text;
+DECLARE v_status text; x record; v_location_type text;
 BEGIN
  IF NEW.movement_type<>'RETURN' OR NEW.quantity_change<=0 OR NEW.sales_return_id IS NULL OR NEW.reversal_of_movement_id IS NOT NULL THEN RETURN NEW; END IF;
- SELECT sr.status,sr.customer_id INTO v_status,v_customer_id FROM public.sales_returns sr WHERE sr.sales_return_id=NEW.sales_return_id;
+ SELECT sr.status INTO v_status FROM public.sales_returns sr WHERE sr.sales_return_id=NEW.sales_return_id;
  IF v_status NOT IN('DRAFT','POSTED') THEN RETURN NEW; END IF;
  FOR x IN SELECT sri.return_item_id,sri.product_id,sri.location_id,sri.base_quantity
   FROM public.sales_return_items sri
@@ -172,7 +172,7 @@ BEGIN
   ON CONFLICT(return_item_id) DO NOTHING;
   IF NOT EXISTS(SELECT 1 FROM public.reservations r WHERE r.source_return_item_id=x.return_item_id AND r.status='ACTIVE' AND r.notes LIKE 'RETURN_PENDING:%') THEN
    INSERT INTO public.reservations(customer_id,product_id,location_id,quantity,reserved_until,notes,status,created_by,request_id,source_return_item_id)
-   VALUES(v_customer_id,x.product_id,x.location_id,x.base_quantity,NULL,'RETURN_PENDING:'||x.return_item_id,'ACTIVE',NEW.created_by,gen_random_uuid(),x.return_item_id);
+   VALUES(NULL,x.product_id,x.location_id,x.base_quantity,NULL,'RETURN_PENDING:'||x.return_item_id,'ACTIVE',NEW.created_by,gen_random_uuid(),x.return_item_id);
   END IF;
  END LOOP;
  RETURN NEW;
@@ -274,7 +274,7 @@ EXECUTE FUNCTION public.guard_sales_return_cancel_after_rework();
 
 CREATE OR REPLACE FUNCTION public.track_return_rework_consumption()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
-DECLARE r record; c record; v_remaining numeric; v_take numeric; v_customer_id bigint;
+DECLARE r record; c record; v_remaining numeric; v_take numeric;
 BEGIN
  IF NEW.movement_type='ISSUE' AND NEW.quantity_change<0 AND NEW.production_order_id IS NOT NULL AND NEW.production_order_material_id IS NOT NULL AND NEW.reversal_of_movement_id IS NULL THEN
   v_remaining:=abs(NEW.quantity_change);
@@ -297,14 +297,13 @@ BEGIN
   LOOP
    EXIT WHEN v_remaining<=0;
    v_take:=LEAST(v_remaining,c.quantity-c.reversed_quantity);
-   SELECT sr.customer_id INTO v_customer_id FROM public.sales_return_items sri JOIN public.sales_returns sr ON sr.sales_return_id=sri.sales_return_id WHERE sri.return_item_id=c.return_item_id;
    IF EXISTS(SELECT 1 FROM public.reservations rr WHERE rr.source_return_item_id=c.return_item_id AND rr.location_id=c.location_id AND rr.product_id=c.product_id AND rr.status='ACTIVE' AND rr.notes LIKE 'RETURN_REWORK:%') THEN
     UPDATE public.reservations SET quantity=quantity+v_take WHERE reservation_id=(
      SELECT rr.reservation_id FROM public.reservations rr WHERE rr.source_return_item_id=c.return_item_id AND rr.location_id=c.location_id AND rr.product_id=c.product_id AND rr.status='ACTIVE' AND rr.notes LIKE 'RETURN_REWORK:%' ORDER BY rr.reservation_id LIMIT 1
     );
    ELSE
     INSERT INTO public.reservations(customer_id,product_id,location_id,quantity,reserved_until,notes,status,created_by,request_id,source_return_item_id)
-    VALUES(v_customer_id,c.product_id,c.location_id,v_take,NULL,'RETURN_REWORK:'||c.return_item_id,'ACTIVE',NEW.created_by,gen_random_uuid(),c.return_item_id);
+    VALUES(NULL,c.product_id,c.location_id,v_take,NULL,'RETURN_REWORK:'||c.return_item_id,'ACTIVE',NEW.created_by,gen_random_uuid(),c.return_item_id);
    END IF;
    UPDATE public.production_rework_consumptions SET reversed_quantity=reversed_quantity+v_take WHERE consumption_id=c.consumption_id;
    v_remaining:=v_remaining-v_take;
