@@ -7,6 +7,7 @@ const exchangeCancellationMigrationSql = fs.readFileSync(path.resolve(__dirname,
 const exchangeCancellationOrderMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115144800_fix_sales_exchange_cancellation_stock_reversal_order.sql'), 'utf8');
 const legacyExchangeCancelGuardSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115145032_guard_legacy_sales_return_cancel_from_exchanges.sql'), 'utf8');
 const fixedAssetsPolicyMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115145626_consolidate_fixed_assets_select_policies.sql'), 'utf8');
+const openingBalanceAdminMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115150500_restrict_stock_opening_balance_to_system_admin.sql'), 'utf8');
 
 test.use({ serviceWorkers: 'block' });
 
@@ -136,6 +137,12 @@ test('Fixed asset SELECT permissions are consolidated without losing either acce
   expect(fixedAssetsPolicyMigrationSql).toContain("source_type='SUPPLIER_CREDIT'");
   expect(fixedAssetsPolicyMigrationSql).toContain("has_permission('SUPPLIERS_VIEW')");
   expect(fixedAssetsPolicyMigrationSql).toContain("has_permission('SUPPLIERS_MANAGE')");
+});
+test('Stock opening balance is restricted to SYSTEM_ADMIN', () => {
+  expect(openingBalanceAdminMigrationSql).toContain("IF v_role IS DISTINCT FROM 'SYSTEM_ADMIN' THEN");
+  expect(openingBalanceAdminMigrationSql).toContain("AND u.is_active = true");
+  expect(openingBalanceAdminMigrationSql).toContain("AND r.is_active = true");
+  expect(openingBalanceAdminMigrationSql).toContain('تسجيل الرصيد الافتتاحي للمخزون متاح لمدير النظام فقط');
 });
 
 test('Collection views label cancelled records and exclude them from posted totals', () => {
