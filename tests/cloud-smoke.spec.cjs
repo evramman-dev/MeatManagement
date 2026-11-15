@@ -2,6 +2,9 @@ const { test, expect } = require('@playwright/test');
 const fs = require('node:fs');
 const path = require('node:path');
 const qaHtml = fs.readFileSync(path.resolve(__dirname, '..', 'index.html'), 'utf8');
+const returnInspectionMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115230000_sales_return_joint_inspection_rework.sql'), 'utf8');
+const packagingRecoveryMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115232000_support_packaging_recovery_and_partial_rework.sql'), 'utf8');
+
 const exchangeMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115144036_fix_sales_exchange_request_idempotency.sql'), 'utf8');
 const exchangeCancellationMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115144743_fix_sales_exchange_cancellation_accounting.sql'), 'utf8');
 const exchangeCancellationOrderMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115144800_fix_sales_exchange_cancellation_stock_reversal_order.sql'), 'utf8');
@@ -483,4 +486,22 @@ test('MeatManagement Android-sized layout and horizontal overflow check', async 
 
   const report = { mobileWidths: widths };
   console.log('MEATMANAGEMENT_MOBILE_LAYOUT_REPORT:', JSON.stringify(report, null, 2));
+});
+
+
+test('Sales return inspection, rework inputs and packaging recovery are wired', async () => {
+  expect(qaHtml).toContain('salesReturnInspectionModal');
+  expect(qaHtml).toContain('record_sales_return_item_inspection');
+  expect(qaHtml).toContain('add_production_order_extra_material');
+  expect(qaHtml).toContain('production-packaging-waste-row');
+  expect(qaHtml).toContain('packaging_items:packagingItems');
+  expect(qaHtml).toContain('["RAW","SEMI_FINISHED"].includes(p.product_type)');
+  expect(qaHtml).toContain('Number(p.category_id)===16');
+  expect(returnInspectionMigrationSql).toContain('source_return_item_id');
+  expect(returnInspectionMigrationSql).toContain('warehouse_inspected_by');
+  expect(returnInspectionMigrationSql).toContain('production_inspected_by');
+  expect(returnInspectionMigrationSql).toContain('RETURN_PENDING:%');
+  expect(returnInspectionMigrationSql).toContain('RETURN_REWORK:%');
+  expect(packagingRecoveryMigrationSql).toContain('packaging_items');
+  expect(packagingRecoveryMigrationSql).toContain('p.category_id=16');
 });
