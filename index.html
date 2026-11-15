@@ -7410,7 +7410,7 @@ async function openSalesReturnInspection(ret){
    if(ins.final_disposition||!ins.received_at){$("salesReturnInspectionRows").appendChild(card);return;}
    const addApproval=(type,allowed,currentDecision,currentNotes,otherInspector)=>{
     if(!allowed)return;
-    if(otherInspector&&otherInspector===currentUserId&&currentDecision===null){const note=document.createElement("div");note.className="details";note.textContent="هذا الحساب اعتمد الدور الآخر بالفعل. يجب أن يعتمد الحساب الثاني من مستخدم مختلف.";card.appendChild(note);return;}
+    if(otherInspector&&otherInspector===currentUserId){const note=document.createElement("div");note.className="details";note.textContent="هذا الحساب اعتمد الدور الآخر بالفعل. يجب أن يعتمد الحساب الثاني من مستخدم مختلف.";card.appendChild(note);return;}
     const section=document.createElement("div");section.className="item-row";
     const label=document.createElement("label");label.textContent=type==="WAREHOUSE"?"قرار أمين المخزن":"قرار مدير الإنتاج";
     const select=document.createElement("select");select.className="input";
@@ -8837,13 +8837,25 @@ function addProductionRecoveredRow(){
  const fields=[ ["الخامة المصدر",source],["المنتج المسترجع",product],["كمية المصدر بالوحدة الأساسية",sourceQty],["كمية المسترجع بالوحدة الأساسية",baseQty],["التكلفة المخصصة",cost] ];
  fields.forEach(([label,el])=>{const wrap=document.createElement("label");wrap.textContent=label;wrap.appendChild(el);row.appendChild(wrap);});row.appendChild(remove);$("productionRecoveredRows").appendChild(row);
 }
+function addProductionPackagingWasteItem(container){
+ const item=document.createElement("div");item.className="production-packaging-waste-row item-row";
+ const product=document.createElement("select");product.className="production-packaging-waste-product";product.required=true;product.appendChild(productionExecOption("","اختر مستلزم التعبئة التالف"));
+ productsCache.filter(p=>p.is_active&&Number(p.category_id)===16&&p.product_type==="RAW").forEach(p=>product.appendChild(productionExecOption(p.product_id,p.product_name+" — "+unitName(p.base_unit_id))));
+ const quantity=document.createElement("input");quantity.className="production-packaging-waste-quantity";quantity.type="number";quantity.min="0.000001";quantity.step="0.000001";quantity.placeholder="الكمية بالوحدة الأساسية";quantity.required=true;
+ const remove=document.createElement("button");remove.type="button";remove.className="btn secondary";remove.textContent="حذف";remove.onclick=()=>item.remove();
+ [["مستلزم التعبئة التالف",product],["الكمية",quantity]].forEach(([label,el])=>{const wrap=document.createElement("label");wrap.textContent=label;wrap.appendChild(el);item.appendChild(wrap);});
+ item.appendChild(remove);container.appendChild(item);
+}
 function addProductionWasteRow(){
  const row=document.createElement("div");row.className="item-row production-cost-row";
  const source=document.createElement("select");source.className="production-waste-source";source.required=true;fillProductionSourceSelect(source);
- const qty=document.createElement("input");qty.className="production-waste-qty";qty.type="number";qty.min="0.000001";qty.step="0.000001";qty.placeholder="كمية الفاقد بالوحدة الأساسية";qty.required=true;
- const cost=document.createElement("input");cost.className="production-waste-cost";cost.type="number";cost.min="0.000001";cost.step="0.000001";cost.placeholder="التكلفة المخصصة";cost.required=true;
- const remove=document.createElement("button");remove.type="button";remove.className="btn secondary";remove.textContent="حذف";remove.onclick=()=>row.remove();
- [["الخامة المصدر",source],["كمية الفاقد بالوحدة الأساسية",qty],["التكلفة المخصصة",cost]].forEach(([label,el])=>{const wrap=document.createElement("label");wrap.textContent=label;wrap.appendChild(el);row.appendChild(wrap);});row.appendChild(remove);$("productionWasteRows").appendChild(row);
+ const qty=document.createElement("input");qty.className="production-waste-qty";qty.type="number";qty.min="0";qty.step="0.000001";qty.placeholder="كمية فاقد المحتوى، صفر إذا كان الفاقد تغليفًا فقط";qty.required=true;
+ const cost=document.createElement("input");cost.className="production-waste-cost";cost.type="number";cost.min="0.000001";cost.step="0.000001";cost.placeholder="التكلفة المخصصة للهالك";cost.required=true;
+ const packagingRows=document.createElement("div");packagingRows.className="production-packaging-waste-rows";
+ const addPackaging=document.createElement("button");addPackaging.type="button";addPackaging.className="btn secondary";addPackaging.textContent="إضافة رول أو استيكر أو طبق تالف";addPackaging.onclick=()=>addProductionPackagingWasteItem(packagingRows);
+ const remove=document.createElement("button");remove.type="button";remove.className="btn secondary";remove.textContent="حذف بند الهالك";remove.onclick=()=>row.remove();
+ [["الخامة المصدر",source],["كمية فاقد المحتوى",qty],["التكلفة المخصصة للهالك",cost]].forEach(([label,el])=>{const wrap=document.createElement("label");wrap.textContent=label;wrap.appendChild(el);row.appendChild(wrap);});
+ row.append(packagingRows,addPackaging,remove);$("productionWasteRows").appendChild(row);
 }
 function renderProductionDirectExpenses(items){
  const box=$("productionDirectExpenses");if(!box)return;box.replaceChildren();
@@ -8893,7 +8905,7 @@ if($("productionExecutionForm"))$("productionExecutionForm").addEventListener("s
  const output=Number($("productionExecutionOutput").value);if(!(output>0))return msg($("productionExecutionMsg"),"كمية الناتج الفعلية يجب أن تكون أكبر من صفر.","error");
  const materials=[];for(const row of $("productionExecutionMaterials").querySelectorAll(".item-row")){const qty=Number(row.querySelector(".production-actual-material").value);if(!Number.isFinite(qty)||qty<0)return msg($("productionExecutionMsg"),"راجع كميات الخامات المستهلكة.","error");materials.push({material_id:Number(row.dataset.materialId),actual_quantity:qty});}
  const recovered=[];for(const row of $("productionRecoveredRows").querySelectorAll(".production-cost-row")){const source=Number(row.querySelector(".production-recovered-source").value),product=Number(row.querySelector(".production-recovered-product").value),sourceQty=Number(row.querySelector(".production-recovered-source-qty").value),baseQty=Number(row.querySelector(".production-recovered-base-qty").value),cost=Number(row.querySelector(".production-recovered-cost").value);if(!(source>0&&product>0&&sourceQty>0&&baseQty>0&&cost>0))return msg($("productionExecutionMsg"),"أكمل بيانات كل مادة مسترجعة، بما فيها كمية المصدر والتكلفة.","error");recovered.push({product_id:product,source_material_id:source,source_base_quantity:sourceQty,base_quantity:baseQty,allocated_cost:cost});}
- const waste=[];for(const row of $("productionWasteRows").querySelectorAll(".production-cost-row")){const source=Number(row.querySelector(".production-waste-source").value),qty=Number(row.querySelector(".production-waste-qty").value),cost=Number(row.querySelector(".production-waste-cost").value);if(!(source>0&&qty>0&&cost>0))return msg($("productionExecutionMsg"),"أكمل بيانات كل بند فاقد، بما فيها الكمية والتكلفة.","error");waste.push({material_id:source,base_quantity:qty,allocated_cost:cost});}
+ const waste=[];for(const row of $("productionWasteRows").querySelectorAll(".production-cost-row")){const source=Number(row.querySelector(".production-waste-source").value),qty=Number(row.querySelector(".production-waste-qty").value),cost=Number(row.querySelector(".production-waste-cost").value),packagingItems=[];for(const itemRow of row.querySelectorAll(".production-packaging-waste-row")){const productId=Number(itemRow.querySelector(".production-packaging-waste-product").value),itemQty=Number(itemRow.querySelector(".production-packaging-waste-quantity").value),product=productsCache.find(p=>Number(p.product_id)===productId);if(!(productId>0&&itemQty>0&&product&&Number(product.category_id)===16))return msg($("productionExecutionMsg"),"أكمل بيانات مستلزمات التعبئة التالفة.", "error");packagingItems.push({product_id:productId,quantity:itemQty,unit_id:Number(product.base_unit_id)});}if(!(source>0&&qty>=0&&cost>0&&(qty>0||packagingItems.length>0)))return msg($("productionExecutionMsg"),"أكمل مصدر الهالك وتكلفته، وأدخل كمية فاقد المحتوى أو مستلزم تعبئة تالف.", "error");waste.push({material_id:source,base_quantity:qty,allocated_cost:cost,packaging_items:packagingItems});}
  const directExpenses=[];for(const row of $("productionDirectExpenses").querySelectorAll(".production-direct-expense-row")){const amount=Number(row.querySelector(".production-direct-expense-amount").value||0),available=Number(row.dataset.available);if(!Number.isFinite(amount)||amount<0||amount>available+0.0001)return msg($("productionExecutionMsg"),"المبلغ المخصص من أحد المصروفات يتجاوز المتاح.","error");if(amount>0)directExpenses.push({expense_id:Number(row.dataset.expenseId),allocated_amount:amount});}
  if($("productionExecutionDate").value!==todayISO())return msg($("productionExecutionMsg"),"تاريخ التنفيذ يجب أن يساوي تاريخ اليوم.","error");
  if(!confirm("سيتم تسجيل صرف الخامات والناتج والمسترجعات والفاقد، وتحميل المصروفات المباشرة التي خصصت لها مبلغًا على تكلفة الناتج. راجع البيانات قبل التأكيد. هل تريد التنفيذ؟"))return;
