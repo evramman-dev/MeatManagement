@@ -775,7 +775,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="modal-body">
 <form id="locationForm" onsubmit="event.preventDefault();">
 <input id="locationEditId" type="hidden">
-<label for="locationCode">كود الموقع *</label><input id="locationCode" required dir="ltr">
+<label for="locationCode">كود الموقع (ينشأ تلقائيًا)</label><input id="locationCode" readonly dir="ltr" placeholder="يظهر بعد الحفظ">
 <label for="locationName">اسم الموقع *</label><input id="locationName" required>
 <label for="locationType">نوع الموقع *</label><select id="locationType" required><option value="MAIN_WAREHOUSE">مخزن رئيسي</option><option value="FRIDGE">ثلاجة</option><option value="VEHICLE">سيارة</option><option value="FACTORY">مصنع</option><option value="SHOWROOM">معرض</option></select>
 <label for="locationNotes">ملاحظات</label><textarea id="locationNotes" rows="2"></textarea>
@@ -1335,7 +1335,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="modal-body">
 <form id="customerForm" onsubmit="event.preventDefault();">
 <input id="customerEditId" type="hidden">
-<label for="customerCode">الكود *</label><input id="customerCode" required dir="ltr">
+<label for="customerCode">الكود (ينشأ تلقائيًا)</label><input id="customerCode" readonly dir="ltr" placeholder="يظهر بعد الحفظ">
 <label for="customerName">الاسم *</label><input id="customerName" required>
 <label for="customerPhone">الموبايل</label><input id="customerPhone" dir="ltr">
 <label for="customerWhatsapp">الواتساب</label><input id="customerWhatsapp" dir="ltr">
@@ -1391,7 +1391,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="modal-body">
 <form id="supplierForm" onsubmit="event.preventDefault();">
 <input id="supplierEditId" type="hidden">
-<label for="supplierCode">الكود *</label><input id="supplierCode" required dir="ltr">
+<label for="supplierCode">الكود (ينشأ تلقائيًا)</label><input id="supplierCode" readonly dir="ltr" placeholder="يظهر بعد الحفظ">
 <label for="supplierName">الاسم *</label><input id="supplierName" required>
 <label for="supplierPhone">الموبايل</label><input id="supplierPhone" dir="ltr">
 <label for="supplierTaxNumber">الرقم الضريبي</label><input id="supplierTaxNumber" dir="ltr">
@@ -1452,7 +1452,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
     <div id="priceListManageArea">
       <form id="priceListForm" class="form-grid">
         <input id="priceListEditId" type="hidden">
-        <label>الكود<input id="priceListCode" required></label>
+        <label>الكود (ينشأ تلقائيًا)<input id="priceListCode" readonly placeholder="يظهر بعد الحفظ"></label>
         <label>اسم القائمة<input id="priceListName" required></label>
         <label>من تاريخ<input id="priceListFrom" type="date" required></label>
         <label>حتى تاريخ<input id="priceListTo" type="date"></label>
@@ -1474,7 +1474,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
       <hr>
       <h3>مجموعات العملاء</h3>
       <form id="customerGroupForm" class="form-grid">
-        <label>الكود<input id="customerGroupCode" required></label>
+        <label>الكود (ينشأ تلقائيًا)<input id="customerGroupCode" readonly placeholder="يظهر بعد الحفظ"></label>
         <label>اسم المجموعة<input id="customerGroupName" required></label>
         <label>ملاحظات<textarea id="customerGroupNotes"></textarea></label>
         <button class="btn" type="submit">إضافة المجموعة</button>
@@ -1929,7 +1929,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <input id="editId" type="hidden">
 <div class="grid">
 <div><label for="pname">اسم المنتج *</label><input id="pname" required></div>
-<div><label for="pcode">كود المنتج *</label><input id="pcode" required dir="ltr"></div>
+<div><label for="pcode">كود المنتج (ينشأ تلقائيًا)</label><input id="pcode" readonly dir="ltr" placeholder="يظهر بعد الحفظ"></div>
 <div><label for="barcode">الباركود</label><input id="barcode" dir="ltr"></div>
 <div><label for="ptype">النوع *</label><select id="ptype" required><option value="RAW">خام</option><option value="SEMI_FINISHED">نصف مصنع</option><option value="FINISHED">منتج تام</option></select></div>
 <div><label for="category">التصنيف *</label><select id="category" required><option value="">جارٍ التحميل...</option></select></div>
@@ -4359,7 +4359,7 @@ function renderCustomers(){
     const card=document.createElement("div");
     card.className="product";
     const geoParts=[geoGovernorateName(c.governorate_id),geoCityName(c.city_id),geoAreaName(c.area_id)].filter((v,i)=>v&&!(i===0&&v==="غير محدد"));
-    card.innerHTML=`<div class="pname">${c.customer_name}</div><div class="details">موبايل: ${c.phone||'-'} | النوع: ${customerTypeName(c.customer_type)}</div><div class="details">الموقع: ${geoParts.length?geoParts.join(" / "):"غير محدد"}</div>${c.address?`<div class="details">العنوان: ${c.address}</div>`:""}`;
+    card.innerHTML=`<div class="pname">${c.customer_name}</div><div class="details">الكود: ${c.customer_code||"-"}</div><div class="details">موبايل: ${c.phone||'-'} | النوع: ${customerTypeName(c.customer_type)}</div><div class="details">الموقع: ${geoParts.length?geoParts.join(" / "):"غير محدد"}</div>${c.address?`<div class="details">العنوان: ${c.address}</div>`:""}`;
     const actions=document.createElement("div"); 
     actions.className="actions"; 
     const stmt=document.createElement("button"); 
