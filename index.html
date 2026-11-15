@@ -1268,6 +1268,15 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 </div>
 </div>
+<div id="salesReturnInspectionModal" class="modal-form">
+<div class="modal-form-content">
+<div class="modal-header"><h3>فحص مرتجع المبيعات عند الاستلام</h3><button class="close-btn" type="button" onclick="document.getElementById('salesReturnInspectionModal').classList.remove('active')">&times;</button></div>
+<div class="modal-body">
+<div id="salesReturnInspectionInfo" class="info"></div>
+<div class="info">يعتمد أمين المخزن ومدير الإنتاج التصنيف كلٌ بحسابه. لا يسمح النظام باعتماد الشخص نفسه للدورين.</div>
+<div id="salesReturnInspectionRows"></div>
+<div id="salesReturnInspectionMsg" class="status hidden"></div>
+</div></div></div>
 <div id="productionExecutionModal" class="modal-form">
 <div class="modal-form-content">
 <div class="modal-header"><h3>تنفيذ أمر التشغيل والتكلفة الفعلية</h3><button class="close-btn" type="button" onclick="document.getElementById('productionExecutionModal').classList.remove('active')">&times;</button></div>
@@ -1276,6 +1285,14 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div id="productionExecutionOrderInfo" class="info"></div>
 <label for="productionExecutionDate">تاريخ التنفيذ</label><input id="productionExecutionDate" type="date" readonly>
 <label for="productionExecutionOutput">كمية الناتج الفعلية *</label><input id="productionExecutionOutput" type="number" min="0.000001" step="0.000001" required>
+<h4>إضافة مكوّن إضافي من المخزون</h4>
+<div class="info">يمكن إضافة منتج تام أو نصف مصنع أو خامة إلى أمر التشغيل. يجب أن يكون رصيده متاحًا في موقع المصنع.</div>
+<div class="row">
+<select id="productionExtraProduct"><option value="">اختر مكوّنًا من المخزون</option></select>
+<input id="productionExtraQuantity" type="number" min="0.000001" step="0.000001" placeholder="الكمية بالوحدة الأساسية">
+<button id="addProductionExtraMaterialBtn" class="btn secondary" type="button">إضافة مكوّن</button>
+</div>
+<hr>
 <h4>الخامات المستهلكة فعليًا</h4>
 <div id="productionExecutionMaterials"></div>
 <div class="info">أدخل الكمية المستهلكة لكل خامة بوحدة أمر التشغيل. اترك صفرًا إذا لم تُستهلك الخامة.</div>
@@ -2210,6 +2227,7 @@ try {
   let canViewTrips=false, canManageTrips=false, canCreateTrips=false, canRequestTripLoads=false, canApproveTripLoads=false, canDispatchTripLoads=false;
   let canViewCustomers=false, canManageCustomers=false, canCreateCustomers=false;
   let canViewSales=false, canViewSalesReturns=false, canManageSales=false, canCreateReturns=false, canApproveReturns=false, canManageReturns=false;
+  let canInspectReturnsWarehouse=false, canInspectReturnsProduction=false;
   let canViewCollections=false, canPostCollections=false, canManageCollections=false;
   let canViewSuppliers=false, canManageSuppliers=false;
   let canViewPurchases=false, canManagePurchases=false;
@@ -2767,7 +2785,7 @@ async function userInfo(user){
     try{ canViewStock=await permission("STOCK_VIEW") || await permission("INVENTORY_VIEW") || isSystemAdmin; canManageStock=await permission("STOCK_MANAGE") || isSystemAdmin; if($("menuStock")) $("menuStock").classList.toggle("hidden",!canViewStock); if($("menuStockSummary")) $("menuStockSummary").classList.toggle("hidden",!canViewStock); if($("menuStockLots")) $("menuStockLots").classList.toggle("hidden",!canViewStock); if($("stockCard")) $("stockCard").classList.toggle("hidden",!canViewStock); if($("adjustStockBtn")) $("adjustStockBtn").classList.toggle("hidden",!canManageStock); }catch(e){}
     try{ canViewStockTransfers=await permission("INVENTORY_TRANSFER") || isSystemAdmin; if($("menuStockTransfers")) $("menuStockTransfers").classList.toggle("hidden",!canViewStockTransfers); }catch(e){}
     try{ canViewSales=await permission("SALES_VIEW") || await permission("INVOICES_VIEW") || isSystemAdmin; canManageSales=await permission("SALES_MANAGE") || isSystemAdmin; canViewSalesReturns=canViewSales || await permission("RETURNS_VIEW") || isSystemAdmin; if($("menuSales")) $("menuSales").classList.toggle("hidden",!canViewSales); if($("salesCard")) $("salesCard").classList.toggle("hidden",!canViewSales); if($("menuSalesReturns")) $("menuSalesReturns").classList.toggle("hidden",!canViewSalesReturns); if($("addInvoiceBtn")) $("addInvoiceBtn").classList.toggle("hidden",!(await permission("INVOICES_CREATE") || canManageSales)); }catch(e){}
-    try{ canCreateReturns=await permission("RETURNS_CREATE") || await permission("RETURNS_MANAGE") || isSystemAdmin; canApproveReturns=await permission("RETURNS_APPROVE") || await permission("RETURNS_MANAGE") || isSystemAdmin; canManageReturns=await permission("RETURNS_MANAGE") || isSystemAdmin; if($("addReturnBtn")) $("addReturnBtn").classList.toggle("hidden",!canCreateReturns); if($("addSalesReturnStandaloneBtn")) $("addSalesReturnStandaloneBtn").classList.toggle("hidden",!canCreateReturns); }catch(e){}
+    try{ canCreateReturns=await permission("RETURNS_CREATE") || await permission("RETURNS_MANAGE") || isSystemAdmin; canApproveReturns=await permission("RETURNS_APPROVE") || await permission("RETURNS_MANAGE") || isSystemAdmin; canManageReturns=await permission("RETURNS_MANAGE") || isSystemAdmin; canInspectReturnsWarehouse=await permission("INVENTORY_ADJUST") || isSystemAdmin; canInspectReturnsProduction=await permission("PRODUCTION_MANAGE") || isSystemAdmin; if($("addReturnBtn")) $("addReturnBtn").classList.toggle("hidden",!canCreateReturns); if($("addSalesReturnStandaloneBtn")) $("addSalesReturnStandaloneBtn").classList.toggle("hidden",!canCreateReturns); }catch(e){}
     try{ canViewSupplierPayments=await permission("PURCHASES_VIEW") || await permission("SUPPLIERS_VIEW") || isSystemAdmin; if($("menuSupplierPayments")) $("menuSupplierPayments").classList.toggle("hidden",!canViewSupplierPayments); }catch(e){}
     try{ canViewPurchaseReturns=await permission("RETURNS_VIEW") || await permission("PURCHASES_VIEW") || isSystemAdmin; canManagePurchaseReturns=await permission("PURCHASES_MANAGE") || isSystemAdmin; if($("menuPurchaseReturns")) $("menuPurchaseReturns").classList.toggle("hidden",!canViewPurchaseReturns); }catch(e){}
     try{ canViewReports=await permission("REPORTS_VIEW") || isSystemAdmin; if($("menuReports")) $("menuReports").classList.toggle("hidden",!canViewReports); }catch(e){}
@@ -7324,6 +7342,9 @@ async function loadSalesReturns(){
     const reason=document.createElement("div"); reason.className="details"; reason.textContent="السبب: "+(r.reason||r.notes||"-");
     const actions=document.createElement("div"); actions.className="actions";
     const view=document.createElement("button"); view.className="btn secondary"; view.textContent="عرض التفاصيل"; view.onclick=()=>viewSalesReturn(r); actions.appendChild(view);
+    if((canInspectReturnsWarehouse||canInspectReturnsProduction)&&["POSTED","APPROVED"].includes(r.status)){
+      const inspect=document.createElement("button");inspect.className="btn secondary";inspect.textContent="فحص استلام المرتجع";inspect.onclick=()=>openSalesReturnInspection(r);actions.appendChild(inspect);
+    }
     if((canApproveReturns||canManageReturns)&&r.status==="DRAFT"){
       const approve=document.createElement("button"); approve.className="btn"; approve.textContent="اعتماد وترحيل المرتجع";
       approve.onclick=async()=>{
@@ -7350,6 +7371,71 @@ async function loadSalesReturns(){
     }
     c.append(title,details,status,reason,actions); box.appendChild(c);
   });
+}
+
+async function openSalesReturnInspection(ret){
+ const modal=$("salesReturnInspectionModal");if(!modal)return;
+ $("salesReturnInspectionInfo").textContent="المرتجع: "+(ret.return_number||"—")+" | العميل: "+customerName(ret.customer_id)+" | التاريخ: "+formatDate(ret.return_date);
+ $("salesReturnInspectionRows").replaceChildren();$("salesReturnInspectionMsg").classList.add("hidden");
+ modal.classList.add("active");
+ try{
+  const {data:items,error:itemsError}=await db.from("sales_return_items").select("return_item_id,product_id,quantity,unit_id,base_quantity,location_id").eq("sales_return_id",Number(ret.sales_return_id)).order("return_item_id");
+  if(itemsError)throw itemsError;
+  if(!items?.length){$("salesReturnInspectionRows").innerHTML="<div class='empty'>لا توجد أصناف في المرتجع.</div>";return;}
+  const ids=items.map(x=>Number(x.return_item_id));
+  const [{data:inspections,error:inspectionError},{data:userData,error:userError}]=await Promise.all([
+   db.from("sales_return_item_inspections").select("*").in("return_item_id",ids),
+   db.auth.getUser()
+  ]);
+  if(inspectionError)throw inspectionError;if(userError)throw userError;
+  const currentUserId=userData?.user?.id||"";
+  const inspectionMap=new Map((inspections||[]).map(x=>[Number(x.return_item_id),x]));
+  const dispositionName=v=>({SELLABLE:"صالح للبيع",REWORK:"يحتاج إعادة تصنيع",SCRAP:"هالك نهائي"})[v]||"لم يعتمد";
+  items.forEach(item=>{
+   const card=document.createElement("div");card.className="product";
+   const title=document.createElement("div");title.className="pname";title.textContent=productName(item.product_id);
+   const details=document.createElement("div");details.className="details";details.textContent="الكمية: "+fmtQty(item.quantity)+" "+unitName(item.unit_id)+" | الوزن/الكمية الأساسية: "+fmtQty(item.base_quantity)+" "+unitName(productsCache.find(p=>Number(p.product_id)===Number(item.product_id))?.base_unit_id);
+   card.append(title,details);
+   const ins=inspectionMap.get(Number(item.return_item_id));
+   if(!ins){const old=document.createElement("div");old.className="status";old.textContent="لا يوجد سجل فحص لهذا المرتجع. تم ترحيله قبل تفعيل نظام الفحص.";card.appendChild(old);$("salesReturnInspectionRows").appendChild(card);return;}
+   const receipt=document.createElement("div");receipt.className="details";
+   receipt.textContent=ins.received_at?"تم الاستلام في "+locationName(ins.received_location_id)+" بتاريخ "+formatDate(ins.received_at):"في انتظار وصول المرتجع إلى الثلاجة أو المخزن بعد تسوية الجولة.";
+   card.appendChild(receipt);
+   const final=document.createElement("div");final.className="status";
+   final.textContent=ins.final_disposition?"التصنيف النهائي: "+dispositionName(ins.final_disposition):"قرار أمين المخزن: "+dispositionName(ins.warehouse_disposition)+" | قرار مدير الإنتاج: "+dispositionName(ins.production_disposition);
+   card.appendChild(final);
+   if(ins.warehouse_disposition&&ins.production_disposition&&ins.warehouse_disposition!==ins.production_disposition&&!ins.final_disposition){
+    const mismatch=document.createElement("div");mismatch.className="status error";mismatch.textContent="القراران غير متطابقين. يجب أن يتفق الطرفان على التصنيف.";card.appendChild(mismatch);
+   }
+   if(ins.final_disposition||!ins.received_at){$("salesReturnInspectionRows").appendChild(card);return;}
+   const addApproval=(type,allowed,currentDecision,currentNotes,otherInspector)=>{
+    if(!allowed)return;
+    if(otherInspector&&otherInspector===currentUserId&&currentDecision===null){const note=document.createElement("div");note.className="details";note.textContent="هذا الحساب اعتمد الدور الآخر بالفعل. يجب أن يعتمد الحساب الثاني من مستخدم مختلف.";card.appendChild(note);return;}
+    const section=document.createElement("div");section.className="item-row";
+    const label=document.createElement("label");label.textContent=type==="WAREHOUSE"?"قرار أمين المخزن":"قرار مدير الإنتاج";
+    const select=document.createElement("select");select.className="input";
+    [["","اختر التصنيف"],["SELLABLE","صالح للبيع"],["REWORK","يحتاج إعادة تصنيع"],["SCRAP","هالك نهائي"]].forEach(([v,t])=>{const o=document.createElement("option");o.value=v;o.textContent=t;select.appendChild(o);});
+    select.value=currentDecision||"";
+    const notes=document.createElement("textarea");notes.rows=2;notes.placeholder="ملاحظات الفحص";notes.value=currentNotes||"";
+    const save=document.createElement("button");save.type="button";save.className="btn";save.textContent=type==="WAREHOUSE"?"اعتماد أمين المخزن":"اعتماد مدير الإنتاج";
+    save.onclick=async()=>{
+     if(!select.value)return showToast("اختر تصنيف المرتجع أولاً","error");
+     busy(save,true,"جارٍ الاعتماد...","اعتماد");
+     try{
+      const {error}=await db.rpc("record_sales_return_item_inspection",{p_return_item_id:Number(item.return_item_id),p_inspector_type:type,p_disposition:select.value,p_notes:notes.value.trim()||null});
+      if(error)throw error;
+      showToast("تم تسجيل قرار الفحص","success");
+      await openSalesReturnInspection(ret);await loadSalesReturns();await loadStock();await loadSales();
+     }catch(e){showToast("تعذر تسجيل الفحص: "+err(e),"error",7000);}
+     finally{busy(save,false,"","اعتماد");}
+    };
+    label.appendChild(select);section.append(label,notes,save);card.appendChild(section);
+   };
+   addApproval("WAREHOUSE",canInspectReturnsWarehouse,ins.warehouse_disposition,ins.warehouse_notes,ins.production_inspected_by);
+   addApproval("PRODUCTION",canInspectReturnsProduction,ins.production_disposition,ins.production_notes,ins.warehouse_inspected_by);
+   $("salesReturnInspectionRows").appendChild(card);
+  });
+ }catch(e){msg($("salesReturnInspectionMsg"),"تعذر تحميل فحص المرتجع: "+err(e),"error");}
 }
 
 async function viewSalesReturn(ret){
@@ -8556,10 +8642,10 @@ function fillRecipeOutputSelects(){
 function addRecipeItemRow(item){ 
   recipeItemCounter++; 
   const wrap=document.createElement("div"); wrap.className="item-row"; 
-  const prodLabel=document.createElement("label"); prodLabel.textContent="المكون *"; 
+  const prodLabel=document.createElement("label"); prodLabel.textContent="مكوّن التصنيع *"; 
   const prodSel=document.createElement("select"); prodSel.className="item-product"; prodSel.required=true; 
   const first=document.createElement("option"); first.value=""; first.textContent="اختر المكون"; prodSel.appendChild(first); 
-  productsCache.filter(p=>p.is_active).forEach(p=>{ 
+  productsCache.filter(p=>p.is_active&&["RAW","SEMI_FINISHED"].includes(p.product_type)).forEach(p=>{ 
     const op=document.createElement("option"); 
     op.value=String(p.product_id); 
     op.textContent=p.product_name; 
@@ -8739,7 +8825,7 @@ let productionExecutionMaterials=[];
 function productionExecOption(value,label){const o=document.createElement("option");o.value=String(value??"");o.textContent=label;return o;}
 function productionSourceLabel(m){const p=productsCache.find(x=>String(x.product_id)===String(m.raw_product_id));return (p?.product_name||productName(m.raw_product_id))+" — "+unitName(m.unit_id)+" (الأساسية: "+unitName(p?.base_unit_id)+")";}
 function fillProductionSourceSelect(el){el.replaceChildren(productionExecOption("","اختر الخامة المصدر"));productionExecutionMaterials.forEach(m=>el.appendChild(productionExecOption(m.material_id,productionSourceLabel(m))));}
-function fillProductionRecoveredProductSelect(el){el.replaceChildren(productionExecOption("","اختر المنتج المسترجع"));productsCache.filter(p=>p.is_active&&p.can_be_produced&&["RAW","SEMI_FINISHED","FINISHED"].includes(p.product_type)).forEach(p=>el.appendChild(productionExecOption(p.product_id,p.product_name+" — "+unitName(p.base_unit_id))));}
+function fillProductionRecoveredProductSelect(el){el.replaceChildren(productionExecOption("","اختر المنتج المسترجع"));productsCache.filter(p=>p.is_active&&(p.can_be_produced||Number(p.category_id)===16)&&["RAW","SEMI_FINISHED","FINISHED"].includes(p.product_type)).forEach(p=>el.appendChild(productionExecOption(p.product_id,p.product_name+" — "+unitName(p.base_unit_id))));}
 function addProductionRecoveredRow(){
  const row=document.createElement("div");row.className="item-row production-cost-row";
  const source=document.createElement("select");source.className="production-recovered-source";source.required=true;fillProductionSourceSelect(source);
@@ -8775,20 +8861,33 @@ function renderProductionDirectExpenses(items){
 async function openProductionExecution(order){
  if(!canManageProduction||!order||order.status!=="DRAFT")return;
  try{
-  const {data,error}=await db.from("production_order_materials").select("material_id,raw_product_id,required_quantity,unit_id").eq("order_id",order.order_id).order("material_id");
+  const {data,error}=await db.from("production_order_materials").select("material_id,raw_product_id,required_quantity,unit_id,is_extra").eq("order_id",order.order_id).order("material_id");
   if(error)throw error;if(!data?.length)throw new Error("أمر التشغيل لا يحتوي على خامات.");
   const {data:directData,error:directError}=await db.rpc("get_available_production_expenses",{p_order_id:Number(order.order_id)});
   if(directError)throw directError;
   productionExecutionOrder=order;productionExecutionMaterials=data;
   $("productionExecutionForm").reset();$("productionExecutionDate").value=todayISO();$("productionExecutionOutput").value=String(order.target_quantity||"");
   $("productionExecutionOrderInfo").textContent="أمر التشغيل: "+order.order_number+" | الناتج: "+productName(order.output_product_id)+" | الوحدة: "+unitName(order.output_unit_id);
+  const extraSelect=$("productionExtraProduct");if(extraSelect){extraSelect.replaceChildren(productionExecOption("","اختر مكوّنًا من المخزون"));productsCache.filter(p=>p.is_active&&["RAW","SEMI_FINISHED","FINISHED"].includes(p.product_type)).forEach(p=>extraSelect.appendChild(productionExecOption(p.product_id,p.product_name+" — "+unitName(p.base_unit_id))));}
+  $("productionExtraQuantity").value="";
   const box=$("productionExecutionMaterials");box.replaceChildren();
-  data.forEach(m=>{const row=document.createElement("div");row.className="item-row";row.dataset.materialId=String(m.material_id);const label=document.createElement("label");label.textContent=productName(m.raw_product_id)+" — "+unitName(m.unit_id)+" (المطلوب: "+fmtQty(m.required_quantity)+")";const input=document.createElement("input");input.className="production-actual-material";input.type="number";input.min="0";input.step="0.000001";input.value=String(m.required_quantity??0);input.required=true;label.appendChild(input);row.appendChild(label);box.appendChild(row);});
+  data.forEach(m=>{const row=document.createElement("div");row.className="item-row";row.dataset.materialId=String(m.material_id);const label=document.createElement("label");label.textContent=productName(m.raw_product_id)+" — "+unitName(m.unit_id)+" (المطلوب: "+fmtQty(m.required_quantity)+")"+(m.is_extra?" — مكوّن إضافي":"");const input=document.createElement("input");input.className="production-actual-material";input.type="number";input.min="0";input.step="0.000001";input.value=String(m.required_quantity??0);input.required=true;label.appendChild(input);row.appendChild(label);if(m.is_extra){const remove=document.createElement("button");remove.type="button";remove.className="btn danger";remove.textContent="حذف المكوّن الإضافي";remove.onclick=async()=>{if(!confirm("حذف المكوّن الإضافي من أمر التشغيل؟"))return;try{const {error}=await db.rpc("remove_production_order_extra_material",{p_order_id:Number(order.order_id),p_material_id:Number(m.material_id)});if(error)throw error;await openProductionExecution(order);}catch(e){showToast("تعذر حذف المكوّن الإضافي: "+err(e),"error",7000);}};row.appendChild(remove);}box.appendChild(row);});
   $("productionRecoveredRows").replaceChildren();$("productionWasteRows").replaceChildren();renderProductionDirectExpenses(directData||[]);clear($("productionExecutionMsg"));$("productionExecutionModal").classList.add("active");
  }catch(e){showToast("تعذر فتح تنفيذ أمر التشغيل: "+err(e),"error",7000);}
 }
 if($("addProductionRecoveredBtn"))$("addProductionRecoveredBtn").addEventListener("click",addProductionRecoveredRow);
 if($("addProductionWasteBtn"))$("addProductionWasteBtn").addEventListener("click",addProductionWasteRow);
+async function addProductionExtraMaterial(){
+ if(!canManageProduction||!productionExecutionOrder)return;
+ const productId=Number($("productionExtraProduct")?.value||0),quantity=Number($("productionExtraQuantity")?.value||0);
+ if(!(productId>0&&quantity>0))return msg($("productionExecutionMsg"),"اختر المنتج وأدخل الكمية بوحدته الأساسية.", "error");
+ if(productionExecutionMaterials.some(m=>Number(m.raw_product_id)===productId))return msg($("productionExecutionMsg"),"هذا المنتج موجود بالفعل ضمن مكونات أمر التشغيل.", "error");
+ const btn=$("addProductionExtraMaterialBtn");busy(btn,true,"جارٍ الإضافة...","إضافة مكوّن");
+ try{const {error}=await db.rpc("add_production_order_extra_material",{p_order_id:Number(productionExecutionOrder.order_id),p_product_id:productId,p_quantity:quantity,p_request_id:crypto.randomUUID()});if(error)throw error;showToast("تمت إضافة المكوّن إلى أمر التشغيل","success");await openProductionExecution(productionExecutionOrder);}
+ catch(e){msg($("productionExecutionMsg"),"تعذرت إضافة المكوّن: "+err(e),"error");}
+ finally{busy(btn,false,"","إضافة مكوّن");}
+}
+if($("addProductionExtraMaterialBtn"))$("addProductionExtraMaterialBtn").addEventListener("click",addProductionExtraMaterial);
 if($("productionExecutionForm"))$("productionExecutionForm").addEventListener("submit",async e=>{
  e.preventDefault();if(!canManageProduction||!productionExecutionOrder)return;
  const output=Number($("productionExecutionOutput").value);if(!(output>0))return msg($("productionExecutionMsg"),"كمية الناتج الفعلية يجب أن تكون أكبر من صفر.","error");
