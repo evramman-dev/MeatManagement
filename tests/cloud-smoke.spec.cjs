@@ -49,6 +49,35 @@ test('Purchase and purchase-return preview matches database rounding rules', () 
   expect(qaHtml).toContain('const t=Math.round((q*p+Number.EPSILON)*100)/100;');
 });
 
+test('Purchase return retries reuse the same request ID and reject changed payloads', () => {
+  const start=qaHtml.indexOf('const requestStorageKey = "mm_purchase_return_pending_request_" + currentUserId;');
+  const end=qaHtml.indexOf('localStorage.removeItem(requestStorageKey);',start);
+  expect(start).toBeGreaterThanOrEqual(0);
+  expect(end).toBeGreaterThan(start);
+  const source=qaHtml.slice(start,end);
+  expect(source).toContain('JSON.stringify(pendingRequest.payload) !== JSON.stringify(requestPayload)');
+  expect(source).toContain('request_id: createSupplierPaymentRequestId()');
+  expect(source).toContain('p_request_id: pendingRequest.request_id');
+  expect(source).toContain('if(error) throw error;');
+  expect(source).toContain('db.rpc("create_purchase_return"');
+});
+
+test('Purchase return cancellation requires a reason and confirms reversal of stock, journal and treasury', () => {
+  const start=qaHtml.indexOf('cancel.onclick = async () => {',qaHtml.indexOf('async function loadPurchaseReturns'));
+  const end=qaHtml.indexOf('actions.appendChild(cancel);',start);
+  expect(start).toBeGreaterThanOrEqual(0);
+  expect(end).toBeGreaterThan(start);
+  const source=qaHtml.slice(start,end);
+  expect(source).toContain('if(!reason.trim())');
+  expect(source).toContain('سيتم عكس كمية المخزون والقيد المحاسبي');
+  expect(source).toContain('db.rpc("cancel_purchase_return"');
+  expect(source).toContain('p_return_id: Number(r.return_id)');
+  expect(source).toContain('p_reason: reason.trim()');
+  expect(source).toContain('await loadStock()');
+  expect(source).toContain('await loadTreasuries()');
+  expect(source).toContain('await loadSuppliers()');
+});
+
 test('Supplier workflow guards: cancelled documents, supplier profile and payment idempotency', () => {
   expect(qaHtml).toContain('address:$("supplierAddress").value.trim()||null');
   expect(qaHtml).toContain('$("supplierAddress").value=s.address||""');
