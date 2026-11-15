@@ -499,6 +499,7 @@ test('Sales return inspection, rework inputs and packaging recovery are wired', 
   expect(qaHtml).toContain('packaging_items:packagingItems');
   expect(qaHtml).toContain('["RAW","SEMI_FINISHED"].includes(p.product_type)');
   expect(qaHtml).toContain('Number(p.category_id)===16');
+  expect(qaHtml).toContain('p.product_name.startsWith("طبق")');
   expect(returnInspectionMigrationSql).toContain('source_return_item_id');
   expect(returnInspectionMigrationSql).toContain('warehouse_inspected_by');
   expect(returnInspectionMigrationSql).toContain('production_inspected_by');
