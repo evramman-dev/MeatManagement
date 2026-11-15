@@ -9,6 +9,7 @@ on:
       - fix/sales-return-retry-idempotency
       - fix/collection-statement-cancelled-status
       - fix/cheque-management-vehicle-trip-guard
+      - fix/sales-return-retry-browser-assertion
 
 permissions:
   contents: read
