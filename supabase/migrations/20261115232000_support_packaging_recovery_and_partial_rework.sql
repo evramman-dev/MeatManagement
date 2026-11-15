@@ -8,7 +8,7 @@ USING (
   OR public.has_permission('INVENTORY_ADJUST') OR public.has_permission('PRODUCTION_MANAGE'))
  AND (
   public.get_current_user_role()::text<>'SALES_REP'
-  OR sales_rep_id=public.get_current_sales_rep_id()
+  OR sales_rep_id IS NOT DISTINCT FROM public.get_current_sales_rep_id()
  )
 );
 
@@ -24,7 +24,7 @@ USING (
   OR EXISTS (
    SELECT 1 FROM public.sales_returns sr
    WHERE sr.sales_return_id=sales_return_items.sales_return_id
-     AND sr.sales_rep_id=public.get_current_sales_rep_id()
+     AND sr.sales_rep_id IS NOT DISTINCT FROM public.get_current_sales_rep_id()
   )
  )
 );
