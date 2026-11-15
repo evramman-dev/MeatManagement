@@ -139,8 +139,9 @@ test('Fixed asset SELECT permissions are consolidated without losing either acce
   expect(fixedAssetsPolicyMigrationSql).toContain("has_permission('SUPPLIERS_MANAGE')");
 });
 test('Stock opening balance is restricted to SYSTEM_ADMIN', () => {
-  expect(fixedAssetsPolicyMigrationSql).toContain("has_permission('ACCOUNTING_VIEW')");
   expect(openingBalanceAdminMigrationSql).toContain("IF v_role IS DISTINCT FROM 'SYSTEM_ADMIN' THEN");
+  expect(openingBalanceAdminMigrationSql).toContain("AND u.is_active = true");
+  expect(openingBalanceAdminMigrationSql).toContain("AND r.is_active = true");
   expect(openingBalanceAdminMigrationSql).toContain('تسجيل الرصيد الافتتاحي للمخزون متاح لمدير النظام فقط');
 });
 
