@@ -11,6 +11,7 @@ on:
       - fix/cheque-management-vehicle-trip-guard
       - fix/sales-return-retry-browser-assertion
       - test/sales-invoice-idempotency-coverage
+      - fix/sales-exchange-request-idempotency
 
 permissions:
   contents: read
