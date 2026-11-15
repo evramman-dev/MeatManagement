@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v131</title>
+<title>MeatManagement v132</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -351,6 +351,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 .notification-actions button{width:auto;margin:0;padding:8px 12px}
 .notification-send{border-top:1px solid var(--line);margin-top:16px;padding-top:14px}
 #notificationUsers{min-height:130px}
+#taskNotificationUsers{min-height:110px}
 .notification-broadcast{display:flex;align-items:center;gap:9px;margin:12px 0;padding:11px;border:1px solid var(--line);border-radius:10px;background:#f7f9f6;font-size:14px}
 .notification-broadcast input{width:20px;height:20px;margin:0;flex:0 0 auto}
 
@@ -542,6 +543,22 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div style="margin-top:20px;">
 <div class="dashboard-title">🔔 التنبيهات المهمة</div>
 <div id="tasksList"><div class="empty">جارٍ تحميل مهامك...</div></div>
+<div class="task-box" style="margin-top:14px;">
+  <div class="dashboard-title">تنبيهات المهام الموجهة إليك <span id="taskNotificationsUnread" class="notification-count">0</span></div>
+  <div id="taskNotificationsList"><div class="empty">جارٍ تحميل تنبيهات المهام...</div></div>
+</div>
+<div id="taskNotificationSendPanel" class="notification-send hidden">
+  <h3>إرسال تنبيه مهمة</h3>
+  <label for="taskNotificationTitle">عنوان التنبيه</label>
+  <input id="taskNotificationTitle" maxlength="180" placeholder="اكتب عنوان التنبيه">
+  <label for="taskNotificationBody">تفاصيل التنبيه</label>
+  <textarea id="taskNotificationBody" rows="3" maxlength="3000" placeholder="اكتب تفاصيل المهمة أو المطلوب متابعته"></textarea>
+  <label for="taskNotificationUsers">المستخدمون المستلمون</label>
+  <select id="taskNotificationUsers" multiple></select>
+  <div class="desc">يصل هذا التنبيه إلى المستخدمين الذين تختارهم فقط، ويظهر في صفحة مهامي.</div>
+  <button id="sendTaskNotificationBtn" class="btn" type="button">إرسال تنبيه المهمة</button>
+  <div id="taskNotificationSendMsg" class="status hidden"></div>
+</div>
 </div>
 </div>
 </section>
@@ -3218,9 +3235,91 @@ if(tasksChartsBackButton) tasksChartsBackButton.addEventListener("click", ()=>{
   if($("nav")) $("nav").classList.remove("hidden");
   page("tasks");
 });
+let taskNotificationUsersLoaded=false;
+async function loadTaskNotificationUsers(){
+  if(!isSystemAdmin)return;
+  const select=$("taskNotificationUsers");if(!select)return;
+  const {data,error}=await db.from("app_users").select("user_id,display_name").eq("is_active",true).order("display_name");
+  if(error)throw error;
+  select.innerHTML="";
+  (data||[]).forEach(user=>{
+    const option=document.createElement("option");
+    option.value=user.user_id;
+    option.textContent=user.display_name||user.user_id;
+    select.appendChild(option);
+  });
+  taskNotificationUsersLoaded=true;
+}
+async function loadTaskNotifications(){
+  const list=$("taskNotificationsList");if(!list)return;
+  if(!navigator.onLine){list.innerHTML="<div class='empty'>تنبيهات المهام تحتاج إلى اتصال بالإنترنت.</div>";return;}
+  list.innerHTML="<div class='empty'>جارٍ تحميل تنبيهات المهام...</div>";
+  try{
+    const userId=await getSignedInUserId();
+    const {data,error}=await db.from("notification_recipients")
+      .select("notification_id,read_at,notifications(notification_type,title,body,created_at)")
+      .eq("user_id",userId);
+    if(error)throw error;
+    const rows=(data||[]).filter(row=>row.notifications&&row.notifications.notification_type==="TASK")
+      .sort((a,b)=>new Date(b.notifications.created_at||0)-new Date(a.notifications.created_at||0));
+    const unread=rows.filter(row=>!row.read_at).length;
+    if($("taskNotificationsUnread"))$("taskNotificationsUnread").textContent=String(unread);
+    if(!rows.length){
+      list.innerHTML="<div class='empty'>لا توجد تنبيهات مهام موجهة إليك.</div>";
+    }else{
+      list.innerHTML=rows.map(row=>{
+        const n=row.notifications;
+        const readButton=row.read_at?"":'<div class="notification-actions"><button class="btn secondary task-notification-read-btn" type="button" data-id="'+notificationEscape(row.notification_id)+'">تعليم كمقروء</button></div>';
+        return '<article class="notification-item '+(row.read_at?'':'unread')+'"><strong>'+notificationEscape(n.title)+'</strong><div style="margin-top:6px;white-space:pre-wrap;line-height:1.7;">'+notificationEscape(n.body)+'</div><div class="notification-meta"><span>'+notificationEscape(formatDateTime(n.created_at))+'</span><span>'+(row.read_at?'مقروء':'غير مقروء')+'</span></div>'+readButton+'</article>';
+      }).join("");
+    }
+    list.querySelectorAll(".task-notification-read-btn").forEach(button=>button.addEventListener("click",async()=>{
+      button.disabled=true;
+      try{
+        const {error}=await db.rpc("mark_notification_read",{p_notification_id:button.dataset.id});
+        if(error)throw error;
+        await loadTaskNotifications();
+      }catch(error){button.disabled=false;showToast("تعذر تحديث التنبيه: "+err(error),"error",7000);}
+    }));
+    if(isSystemAdmin&&!taskNotificationUsersLoaded)await loadTaskNotificationUsers();
+  }catch(error){
+    list.innerHTML="<div class='status error'>تعذر تحميل تنبيهات المهام: "+notificationEscape(err(error))+"</div>";
+  }
+}
+async function sendTaskNotification(){
+  const button=$("sendTaskNotificationBtn"),title=$("taskNotificationTitle")?.value.trim(),body=$("taskNotificationBody")?.value.trim(),select=$("taskNotificationUsers");
+  const users=Array.from(select?.selectedOptions||[]).map(option=>option.value);
+  if(!title||!body||!users.length){
+    msg($("taskNotificationSendMsg"),"اكتب العنوان والتفاصيل واختر مستخدمًا واحدًا على الأقل.","error");
+    return;
+  }
+  busy(button,true,"جارٍ الإرسال...","إرسال تنبيه المهمة");
+  try{
+    if(!isSystemAdmin)throw new Error("إرسال تنبيهات المهام متاح لمدير النظام فقط.");
+    const eventKey="TASK:"+(crypto.randomUUID?crypto.randomUUID():Date.now()+":"+Math.random().toString(36).slice(2));
+    const {error}=await db.rpc("create_notification",{
+      p_notification_type:"TASK",p_title:title,p_body:body,p_event_key:eventKey,
+      p_user_ids:users,p_entity_type:"TASK",p_entity_id:null,p_due_at:null,
+      p_metadata:{source:"tasks_page",audience:"SELECTED_USERS"}
+    });
+    if(error)throw error;
+    msg($("taskNotificationSendMsg"),"تم إرسال تنبيه المهمة إلى المستخدمين المحددين.","success");
+    $("taskNotificationTitle").value="";
+    $("taskNotificationBody").value="";
+    if(select)Array.from(select.options).forEach(option=>option.selected=false);
+    showToast("تم إرسال تنبيه المهمة للمستخدمين المحددين.","success");
+    await loadTaskNotifications();
+  }catch(error){
+    msg($("taskNotificationSendMsg"),"تعذر إرسال تنبيه المهمة: "+err(error),"error");
+  }finally{
+    busy(button,false,"","إرسال تنبيه المهمة");
+  }
+}
 async function loadTasks() {
   const box = $("tasksList"); if(!box) return;
   if (!navigator.onLine) { box.innerHTML = "<div class='empty'>أنت أوفلاين حالياً.</div>"; return; }
+  const taskSendPanel=$("taskNotificationSendPanel");if(taskSendPanel)taskSendPanel.classList.toggle("hidden",!isSystemAdmin);
+  await loadTaskNotifications();
   if(!isSystemAdmin){
     const filterBox = document.querySelector("#tasks .filter-box");
     if(filterBox) filterBox.classList.add("hidden");
@@ -10101,6 +10200,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
   if($("refreshNotificationsBtn"))$("refreshNotificationsBtn").addEventListener("click",loadNotifications);
   if($("markAllNotificationsReadBtn"))$("markAllNotificationsReadBtn").addEventListener("click",markAllNotificationsRead);
   if($("sendNotificationBtn"))$("sendNotificationBtn").addEventListener("click",sendManualNotification);
+  if($("sendTaskNotificationBtn"))$("sendTaskNotificationBtn").addEventListener("click",sendTaskNotification);
 
   // ========== تهيئة التطبيق ==========
   let appBootPromise=null;
