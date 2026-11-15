@@ -2273,7 +2273,7 @@ try {
     try{ pending=JSON.parse(localStorage.getItem(storageKey)||"null"); }catch(e){}
     const valid=pending&&pending.payload===normalized&&pending.request_id&&pending.return_number&&Array.isArray(pending.item_request_ids)&&pending.item_request_ids.length===itemCount&&pending.item_request_ids.every(Boolean);
     if(valid)return pending;
-    const makeId=()=>crypto.randomUUID?crypto.randomUUID():Date.now()+"-"+Math.random().toString(36).slice(2);
+    const makeId=()=>window.crypto?.randomUUID?window.crypto.randomUUID():"xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,c=>{const r=Math.random()*16|0;return (c==="x"?r:(r&0x3|0x8)).toString(16);});
     pending={request_id:makeId(),return_number:"RET-"+Date.now()+"-"+Math.random().toString(36).slice(2,8).toUpperCase(),item_request_ids:Array.from({length:itemCount},()=>makeId()),payload:normalized};
     try{
       localStorage.setItem(storageKey,JSON.stringify(pending));
