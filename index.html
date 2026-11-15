@@ -7156,9 +7156,14 @@ async function loadSalesReturns(){
         if(!confirm("سيتم اعتماد المرتجع وإضافة البضاعة إلى مخزن السيارة وتسجيل أثره المالي. هل تريد المتابعة؟"))return;
         try{
           const current=(await db.auth.getUser()).data.user;
-          const {error:e1}=await db.rpc("validate_sales_return",{p_sales_return_id:Number(r.sales_return_id)}); if(e1)throw e1;
-          const {error:e2}=await db.rpc("post_sales_return",{p_sales_return_id:Number(r.sales_return_id),p_created_by:current.id}); if(e2)throw e2;
-          showToast("تم اعتماد وترحيل المرتجع","success");
+          if(r.return_type==="EXCHANGE"){
+            const {error:e1}=await db.rpc("validate_sales_return_exchange_v1",{p_sales_return_id:Number(r.sales_return_id)});if(e1)throw e1;
+            const {error:e2}=await db.rpc("post_sales_return_exchange_v1",{p_sales_return_id:Number(r.sales_return_id),p_created_by:current.id});if(e2)throw e2;
+          }else{
+            const {error:e1}=await db.rpc("validate_sales_return",{p_sales_return_id:Number(r.sales_return_id)});if(e1)throw e1;
+            const {error:e2}=await db.rpc("post_sales_return",{p_sales_return_id:Number(r.sales_return_id),p_created_by:current.id});if(e2)throw e2;
+          }
+          showToast(r.return_type==="EXCHANGE"?"تم اعتماد وترحيل الاستبدال":"تم اعتماد وترحيل المرتجع","success");
           await loadSalesReturns(); await loadSales(); await loadStock();
         }catch(e){showToast("تعذر اعتماد المرتجع: "+err(e),"error",7000);}
       };
@@ -7181,11 +7186,13 @@ async function viewSalesReturn(ret){
   $("genericStatementSummary").innerHTML="";
   modal.classList.remove("hidden");
   try{
-    const [itemsRes,invoiceRes]=await Promise.all([
+    const [itemsRes,exchangeRes,invoiceRes]=await Promise.all([
       db.from("sales_return_items").select("return_item_id,product_id,unit_id,quantity,unit_price,line_total,location_id,base_quantity,conversion_factor,package_option_id,package_weight_kg,discount_amount,notes").eq("sales_return_id",Number(ret.sales_return_id)).order("return_item_id",{ascending:true}),
+      db.from("sales_return_exchange_items").select("exchange_item_id,product_id,unit_id,quantity,unit_price,line_total,location_id,base_quantity,conversion_factor,package_option_id,package_weight_kg").eq("sales_return_id",Number(ret.sales_return_id)).order("sequence_no",{ascending:true}),
       ret.sales_invoice_id?db.from("sales_invoices").select("invoice_number").eq("sales_invoice_id",Number(ret.sales_invoice_id)).maybeSingle():Promise.resolve({data:null,error:null})
     ]);
     if(itemsRes.error)throw itemsRes.error;
+    if(exchangeRes.error)throw exchangeRes.error;
     if(invoiceRes.error)throw invoiceRes.error;
     const invoiceNumber=invoiceRes.data?.invoice_number||"—";
     const trip=tripsCache.find(t=>Number(t.trip_id)===Number(ret.trip_id));
@@ -7206,14 +7213,25 @@ async function viewSalesReturn(ret){
       html+="<tr><td>"+esc(p?.product_name||("صنف "+item.product_id))+"</td><td>"+fmtQty(item.quantity)+"</td><td>"+esc(unitName(item.unit_id))+"</td><td>"+fmt(item.unit_price)+"</td><td>"+fmt(item.line_total)+"</td><td>"+fmtQty(item.base_quantity)+" "+esc(unitName(p?.base_unit_id))+"</td></tr>";
     });
     if(!itemsRes.data?.length)html+="<tr><td colspan='6'>لا توجد تفاصيل أصناف لهذا المرتجع.</td></tr>";
+    if(ret.return_type==="EXCHANGE"){
+      html+="<tr><th colspan='6'>الأصناف البديلة</th></tr>";
+      (exchangeRes.data||[]).forEach(item=>{
+        const p=productsCache.find(x=>String(x.product_id)===String(item.product_id));
+        html+="<tr><td>"+esc(p?.product_name||("صنف "+item.product_id))+"</td><td>"+fmtQty(item.quantity)+"</td><td>"+esc(unitName(item.unit_id))+"</td><td>"+fmt(item.unit_price)+"</td><td>"+fmt(item.line_total)+"</td><td>"+fmtQty(item.base_quantity)+" "+esc(unitName(p?.base_unit_id))+"</td></tr>";
+      });
+      if(!exchangeRes.data?.length)html+="<tr><td colspan='6'>لا توجد أصناف بديلة مسجلة.</td></tr>";
+    }
     html+="</tbody>";
     $("genericStatementItems").innerHTML=html;
-    const financialImpactLabel = ret.cash_action==="CASH_BACK" ? "المبلغ المردود من الخزنة" : ret.cash_action==="DEDUCT_DEBT" ? "المبلغ المخصوم من المديونية" : "الأثر المالي";
-    const financialImpactAmount = Number(ret.total_returned_value??ret.net_total??0);
+    const exchangeTotal=Number(ret.total_exchange_value||0);
+    const priceDifference=Number(ret.price_difference||0);
+    const financialImpactLabel = ret.return_type==="EXCHANGE" ? "فرق الاستبدال" : ret.cash_action==="CASH_BACK" ? "المبلغ المردود من الخزنة" : ret.cash_action==="DEDUCT_DEBT" ? "المبلغ المخصوم من المديونية" : "الأثر المالي";
+    const financialImpactAmount = ret.return_type==="EXCHANGE" ? priceDifference : Number(ret.total_returned_value??ret.net_total??0);
     $("genericStatementSummary").innerHTML=
-      "<div class='line'><span>قيمة الأصناف:</span><span>"+fmt(ret.subtotal??ret.total_returned_value??0)+"</span></div>"+
-      "<div class='line'><span>الخصم:</span><span style='color:red;'>-"+fmt(ret.discount_amount||0)+"</span></div>"+
+      "<div class='line'><span>قيمة الأصناف المرتجعة:</span><span>"+fmt(ret.total_returned_value??ret.net_total??0)+"</span></div>"+
+      (ret.return_type==="EXCHANGE" ? "<div class='line'><span>قيمة الأصناف البديلة:</span><span>"+fmt(exchangeTotal)+"</span></div>" : "")+
       "<div class='line grand'><span>إجمالي المرتجع:</span><span>"+fmt(ret.net_total??ret.total_returned_value??0)+"</span></div>"+
+      (ret.return_type==="EXCHANGE" ? "<div class='line'><span>فرق الاستبدال:</span><span>"+fmt(priceDifference)+"</span></div>" : "")+
       "<div class='line'><span>"+financialImpactLabel+":</span><span>"+fmt(financialImpactAmount)+"</span></div>";
     const waLines=(itemsRes.data||[]).map(item=>{
       const p=productsCache.find(x=>String(x.product_id)===String(item.product_id));
