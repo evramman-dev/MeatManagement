@@ -4009,7 +4009,7 @@ async function buildGeoSalesSummary(from,to){
     fetchAllRows(db.from("customers").select("customer_id,governorate_id").order("customer_id")),
     fetchAllRows(db.from("sales_invoices").select("sales_invoice_id,customer_id,invoice_date,net_total,status").lt("invoice_date",nextDate).in("status",["POSTED","PAID","PARTIAL"]).order("invoice_date")),
     fetchAllRows(db.from("customer_collections").select("sales_invoice_id,customer_id,amount,collection_date,status,allocation_type").eq("status","POSTED").lt("collection_date",nextDate).order("collection_date")),
-    fetchAllRows(db.from("sales_returns").select("sales_invoice_id,customer_id,return_date,total_returned_value,cash_action,status").eq("status","POSTED").lt("return_date",nextDate).order("return_date"))
+    fetchAllRows(db.from("sales_returns").select("sales_invoice_id,customer_id,return_date,total_returned_value,total_exchange_value,price_difference,return_type,cash_action,status").eq("status","POSTED").lt("return_date",nextDate).order("return_date"))
   ]);
   const customerGovMap=new Map(customers.map(c=>[String(c.customer_id),c.governorate_id])),map=new Map();
   const ensure=id=>{const key=id==null?"unknown":String(id);if(!map.has(key))map.set(key,{name:id==null?"غير محدد":geoGovernorateName(id),opening:0,sales:0,collections:0,returns:0,balance:0});return map.get(key);};
@@ -4017,7 +4017,11 @@ async function buildGeoSalesSummary(from,to){
   customerGovernoratesCache.forEach(g=>ensure(g.governorate_id));
   sales.forEach(inv=>{const key=String(inv.customer_id),day=String(inv.invoice_date||"").slice(0,10),amount=Number(inv.net_total||0);if(!invoicesByCustomer.has(key))invoicesByCustomer.set(key,[]);invoicesByCustomer.get(key).push({day,amount});if(day>=from&&day<=to){ensure(customerGovMap.get(key)).sales+=amount;periodSalesByCustomer.set(key,(periodSalesByCustomer.get(key)||0)+amount);}});
   collections.forEach(col=>{const key=String(col.customer_id),day=String(col.collection_date||"").slice(0,10),amount=Number(col.amount||0);if(day<from)openingCollections.set(key,(openingCollections.get(key)||0)+amount);else if(day<=to){periodCollections.set(key,(periodCollections.get(key)||0)+amount);ensure(customerGovMap.get(key)).collections+=amount;}});
-  returns.forEach(ret=>{const key=String(ret.customer_id),day=String(ret.return_date||"").slice(0,10),amount=Number(ret.total_returned_value||0);if(day<from)openingReturns.set(key,(openingReturns.get(key)||0)+amount);else if(day<=to){periodReturnsByCustomer.set(key,(periodReturnsByCustomer.get(key)||0)+amount);ensure(customerGovMap.get(key)).returns+=amount;}});
+  returns.forEach(ret=>{
+    const key=String(ret.customer_id),day=String(ret.return_date||"").slice(0,10),amount=Number(ret.total_returned_value||0),isExchange=ret.return_type==="EXCHANGE",debtAction=["DEDUCT_DEBT","CUSTOMER_PAYS_CREDIT"].includes(ret.cash_action);
+    if(day<from){const effect=isExchange?(debtAction?-Number(ret.price_difference||0):0):(ret.cash_action==="DEDUCT_DEBT"?amount:0);openingReturns.set(key,(openingReturns.get(key)||0)+effect);}
+    else if(day<=to){const row=ensure(customerGovMap.get(key));row.returns+=amount;if(isExchange&&debtAction){const exchangeValue=Number(ret.total_exchange_value||0);row.sales+=exchangeValue;periodSalesByCustomer.set(key,(periodSalesByCustomer.get(key)||0)+exchangeValue);periodReturnsByCustomer.set(key,(periodReturnsByCustomer.get(key)||0)+amount);}else if(!isExchange&&ret.cash_action==="DEDUCT_DEBT")periodReturnsByCustomer.set(key,(periodReturnsByCustomer.get(key)||0)+amount);}
+  });
   const keys=new Set([...invoicesByCustomer.keys(),...openingCollections.keys(),...periodCollections.keys(),...openingReturns.keys(),...periodReturnsByCustomer.keys()]);
   keys.forEach(key=>{const row=ensure(customerGovMap.get(key)),invRows=invoicesByCustomer.get(key)||[],beforeSales=invRows.filter(x=>x.day<from).reduce((a,x)=>a+x.amount,0),opening=beforeSales-(openingCollections.get(key)||0)-(openingReturns.get(key)||0);row.opening+=opening;row.balance+=opening+(periodSalesByCustomer.get(key)||0)-(periodCollections.get(key)||0)-(periodReturnsByCustomer.get(key)||0);});
   return Array.from(map.values()).filter(x=>x.opening||x.sales||x.collections||x.returns||x.balance).sort((a,b)=>a.name.localeCompare(b.name,"ar"));
@@ -4030,11 +4034,12 @@ async function buildGeoItemMovementSummary(from,to){
     fetchAllRows(db.from("purchase_invoices").select("purchase_invoice_id").eq("status","POSTED")),
     fetchAllRows(db.from("sales_invoices").select("sales_invoice_id").in("status",["POSTED","PAID","PARTIAL"])),
     fetchAllRows(db.from("purchase_returns").select("return_id").eq("is_cancelled",false)),
-    fetchAllRows(db.from("sales_returns").select("sales_return_id").eq("status","POSTED"))
+    fetchAllRows(db.from("sales_returns").select("sales_return_id,return_type").eq("status","POSTED"))
   ]);
   const activePurchaseInvoices=new Set(purchaseInvoices.map(x=>String(x.purchase_invoice_id))),activeSalesInvoices=new Set(salesInvoices.map(x=>String(x.sales_invoice_id))),activePurchaseReturns=new Set(purchaseReturns.map(x=>String(x.return_id))),activeSalesReturns=new Set(salesReturns.map(x=>String(x.sales_return_id)));
   const totals=new Map(),get=id=>{const key=String(id);if(!totals.has(key))totals.set(key,{product_id:id,purchases:0,sales:0,returns:0,current:0});return totals.get(key);};
-  moves.forEach(m=>{const q=Math.abs(Number(m.quantity_change||0)),row=get(m.product_id);if(m.movement_type==="RECEIVE"&&m.purchase_invoice_id!=null&&activePurchaseInvoices.has(String(m.purchase_invoice_id)))row.purchases+=q;else if(m.movement_type==="ISSUE"&&m.sales_invoice_id!=null&&activeSalesInvoices.has(String(m.sales_invoice_id)))row.sales+=q;else if(m.movement_type==="RETURN"&&((m.purchase_return_id!=null&&activePurchaseReturns.has(String(m.purchase_return_id)))||(m.sales_return_id!=null&&activeSalesReturns.has(String(m.sales_return_id)))))row.returns+=q;});
+  const exchangeReturns=new Set(salesReturns.filter(x=>x.return_type==="EXCHANGE").map(x=>String(x.sales_return_id)));
+  moves.forEach(m=>{const q=Math.abs(Number(m.quantity_change||0)),row=get(m.product_id);if(m.movement_type==="RECEIVE"&&m.purchase_invoice_id!=null&&activePurchaseInvoices.has(String(m.purchase_invoice_id)))row.purchases+=q;else if(m.movement_type==="ISSUE"&&((m.sales_invoice_id!=null&&activeSalesInvoices.has(String(m.sales_invoice_id)))||(m.sales_return_id!=null&&exchangeReturns.has(String(m.sales_return_id)))))row.sales+=q;else if(m.movement_type==="RETURN"&&((m.purchase_return_id!=null&&activePurchaseReturns.has(String(m.purchase_return_id)))||(m.sales_return_id!=null&&activeSalesReturns.has(String(m.sales_return_id)))))row.returns+=q;});
   balances.forEach(b=>get(b.product_id).current+=Number(b.quantity||0));
   return Array.from(totals.values()).filter(x=>x.purchases||x.sales||x.returns||x.current).sort((a,b)=>productName(a.product_id).localeCompare(productName(b.product_id),"ar"));
 }
@@ -4090,13 +4095,13 @@ async function buildCustomerBalanceSummary(from,to){
     fetchAllRows(db.from("customers").select("customer_id,customer_name,governorate_id,opening_balance").order("customer_id")),
     fetchAllRows(db.from("sales_invoices").select("customer_id,invoice_date,net_total,status,sales_invoice_id").lt("invoice_date",nextDate).in("status",["POSTED","PAID","PARTIAL"]).order("invoice_date").order("sales_invoice_id")),
     fetchAllRows(db.from("customer_collections").select("customer_id,amount,collection_date,status,collection_id").eq("status","POSTED").lt("collection_date",nextDate).order("collection_date").order("collection_id")),
-    fetchAllRows(db.from("sales_returns").select("customer_id,return_date,total_returned_value,status,cash_action,sales_return_id").eq("status","POSTED").eq("cash_action","DEDUCT_DEBT").lt("return_date",nextDate).order("return_date").order("sales_return_id"))
+    fetchAllRows(db.from("sales_returns").select("customer_id,return_date,total_returned_value,total_exchange_value,price_difference,return_type,status,cash_action,sales_return_id").eq("status","POSTED").lt("return_date",nextDate).order("return_date").order("sales_return_id"))
   ]);
   const rows=new Map(customers.map(c=>[String(c.customer_id),{customer_id:c.customer_id,name:c.customer_name||"غير محدد",governorate:geoGovernorateName(c.governorate_id),opening:Number(c.opening_balance||0),sales:0,returns:0,collections:0,balance:0}]));
   const ensure=id=>{const key=String(id);if(!rows.has(key))rows.set(key,{customer_id:id,name:customerName(id),governorate:"غير محدد",opening:0,sales:0,returns:0,collections:0,balance:0});return rows.get(key);};
   sales.forEach(inv=>{const r=ensure(inv.customer_id),day=String(inv.invoice_date||"").slice(0,10),amount=Number(inv.net_total||0);if(day<from)r.opening+=amount;else if(day<=to)r.sales+=amount;});
   collections.forEach(col=>{const r=ensure(col.customer_id),day=String(col.collection_date||"").slice(0,10),amount=Number(col.amount||0);if(day<from)r.opening-=amount;else if(day<=to)r.collections+=amount;});
-  returns.forEach(ret=>{const r=ensure(ret.customer_id),day=String(ret.return_date||"").slice(0,10),amount=Number(ret.total_returned_value||0);if(day<from)r.opening-=amount;else if(day<=to)r.returns+=amount;});
+  returns.forEach(ret=>{const r=ensure(ret.customer_id),day=String(ret.return_date||"").slice(0,10),amount=Number(ret.total_returned_value||0),isExchange=ret.return_type==="EXCHANGE",debtAction=["DEDUCT_DEBT","CUSTOMER_PAYS_CREDIT"].includes(ret.cash_action);if(day<from){if(isExchange){if(debtAction)r.opening+=Number(ret.price_difference||0);}else if(ret.cash_action==="DEDUCT_DEBT")r.opening-=amount;}else if(day<=to){if(isExchange){if(debtAction){r.sales+=Number(ret.total_exchange_value||0);r.returns+=amount;}}else if(ret.cash_action==="DEDUCT_DEBT")r.returns+=amount;}});
   return Array.from(rows.values()).map(r=>({...r,balance:r.opening+r.sales-r.returns-r.collections}))
     .filter(r=>r.opening||r.sales||r.returns||r.collections||r.balance)
     .sort((a,b)=>a.name.localeCompare(b.name,"ar"));
