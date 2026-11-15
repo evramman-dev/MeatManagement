@@ -3,6 +3,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const qaHtml = fs.readFileSync(path.resolve(__dirname, '..', 'index.html'), 'utf8');
 const exchangeMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115144036_fix_sales_exchange_request_idempotency.sql'), 'utf8');
+const exchangeCancellationMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115144743_fix_sales_exchange_cancellation_accounting.sql'), 'utf8');
+const exchangeCancellationOrderMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115144800_fix_sales_exchange_cancellation_stock_reversal_order.sql'), 'utf8');
 
 test.use({ serviceWorkers: 'block' });
 
@@ -106,6 +108,18 @@ test('Sales exchange RPC serializes retries and rejects request ID payload chang
   expect(exchangeMigrationSql).toContain('pg_advisory_xact_lock(hashtextextended(p_request_id::text,0))');
   expect(exchangeMigrationSql).toContain('رقم طلب الاستبدال مستخدم من قبل مع بيانات مختلفة');
   expect(exchangeMigrationSql).toContain('sales_return_exchange_items');
+});
+
+test('Sales exchange cancellation reverses the main journal and both COGS sides once', () => {
+  expect(exchangeCancellationMigrationSql).toContain("NEW.return_type IS DISTINCT FROM 'EXCHANGE'");
+  expect(exchangeCancellationMigrationSql).toContain("'account','4100','debit',r.total_exchange_value,'credit',0");
+  expect(exchangeCancellationMigrationSql).toContain("'account','1200','debit',0,'credit',r.total_exchange_value");
+  expect(exchangeCancellationMigrationSql).toContain("'SALES_RETURN_COGS_LINE'");
+  expect(exchangeCancellationMigrationSql).toContain("'SALES_COGS_LINE'");
+});
+
+test('Same-product exchange cancellation reverses stock movements in reverse order', () => {
+  expect(exchangeCancellationOrderMigrationSql).toContain('ORDER BY movement_id DESC LOOP');
 });
 
 test('Collection views label cancelled records and exclude them from posted totals', () => {
