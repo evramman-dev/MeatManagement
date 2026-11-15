@@ -293,7 +293,7 @@ SET search_path=public,pg_temp
 AS $wrapper$
 BEGIN
   RETURN public.create_stock_transfer(
-    p_source_location_id,p_destination_location_id,p_transfer_date,p_items,p_notes,NULL::uuid
+    p_source_location_id,p_destination_location_id,p_transfer_date,p_items,p_notes,gen_random_uuid()
   );
 END;
 $wrapper$;
