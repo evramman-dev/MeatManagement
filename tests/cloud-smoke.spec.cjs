@@ -59,7 +59,7 @@ test('Supplier workflow guards: cancelled documents, supplier profile and paymen
 test('Sales return retries reuse the same return number and item request IDs', () => {
   expect(qaHtml).toContain('function getSalesReturnRequest(storageKey,payload,itemCount)');
   expect(qaHtml).toContain('pending={request_id:makeId(),return_number:"RET-"+Date.now()+"-"+Math.random().toString(36).slice(2,8).toUpperCase(),item_request_ids:Array.from({length:itemCount},()=>makeId()),payload:normalized}');
-  expect(qaHtml).toContain('const returnRequest=getSalesReturnRequest(returnRequestKey,returnPayload,rows.length);');
+  expect(qaHtml).toContain('returnRequest=getSalesReturnRequest(returnRequestKey,returnPayload,rows.length);');
   expect(qaHtml).toContain('p_return_number:returnRequest.return_number');
   expect(qaHtml).toContain('for(let itemIndex=0;itemIndex<rows.length;itemIndex++){');
   expect(qaHtml).toContain('const itemRequestId=returnRequest.item_request_ids[itemIndex];');
