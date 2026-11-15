@@ -302,6 +302,67 @@ $wrapper$;
 REVOKE ALL ON FUNCTION public.create_stock_transfer(bigint,bigint,date,jsonb,text) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.create_stock_transfer(bigint,bigint,date,jsonb,text) TO authenticated;
 
+
+-- Permanent recipes accept only raw and semi-finished inputs. Finished products remain available as explicit extra inputs on an order.
+CREATE OR REPLACE FUNCTION public.guard_recipe_item_product_type()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path=public,pg_temp
+AS $recipe_guard$
+DECLARE v_product_id bigint; v_product_type text; v_active boolean;
+BEGIN
+  IF NEW.raw_product_id IS NOT NULL AND NEW.ingredient_product_id IS NOT NULL
+     AND NEW.raw_product_id<>NEW.ingredient_product_id THEN
+    RAISE EXCEPTION 'يجب أن يتطابق الصنف في حقلي مكوّن الوصفة';
+  END IF;
+  v_product_id:=COALESCE(NEW.raw_product_id,NEW.ingredient_product_id);
+  SELECT p.product_type,p.is_active INTO v_product_type,v_active
+  FROM public.products p WHERE p.product_id=v_product_id;
+  IF NOT FOUND OR NOT COALESCE(v_active,false) THEN
+    RAISE EXCEPTION 'مكوّن الوصفة غير موجود أو غير نشط';
+  END IF;
+  IF v_product_type NOT IN ('RAW','SEMI_FINISHED') THEN
+    RAISE EXCEPTION 'الوصفة الدائمة تقبل الخامات والمنتجات نصف المصنعة فقط. أضف المنتج التام من تجهيز مدخلات أمر الإنتاج';
+  END IF;
+  RETURN NEW;
+END;
+$recipe_guard$;
+REVOKE ALL ON FUNCTION public.guard_recipe_item_product_type() FROM PUBLIC,anon;
+DROP TRIGGER IF EXISTS trg_guard_recipe_item_product_type ON public.recipe_items;
+CREATE TRIGGER trg_guard_recipe_item_product_type
+BEFORE INSERT OR UPDATE OF raw_product_id,ingredient_product_id
+ON public.recipe_items
+FOR EACH ROW EXECUTE FUNCTION public.guard_recipe_item_product_type();
+
+CREATE OR REPLACE FUNCTION public.guard_finished_recipe_inputs_on_production_complete()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path=public,pg_temp
+AS $production_guard$
+BEGIN
+  IF NEW.status='COMPLETED' AND OLD.status IS DISTINCT FROM NEW.status
+     AND EXISTS (
+       SELECT 1
+       FROM public.production_order_materials pom
+       JOIN public.products p ON p.product_id=pom.raw_product_id
+       WHERE pom.order_id=NEW.order_id
+         AND COALESCE(pom.is_extra,false)=false
+         AND p.product_type='FINISHED'
+     ) THEN
+    RAISE EXCEPTION 'لا يمكن تنفيذ وصفة تحتوي على منتج تام. أضف المنتج التام من تجهيز مدخلات أمر الإنتاج';
+  END IF;
+  RETURN NEW;
+END;
+$production_guard$;
+REVOKE ALL ON FUNCTION public.guard_finished_recipe_inputs_on_production_complete() FROM PUBLIC,anon;
+DROP TRIGGER IF EXISTS trg_guard_finished_recipe_inputs_on_production_complete ON public.production_orders;
+CREATE TRIGGER trg_guard_finished_recipe_inputs_on_production_complete
+BEFORE UPDATE OF status ON public.production_orders
+FOR EACH ROW EXECUTE FUNCTION public.guard_finished_recipe_inputs_on_production_complete();
+
+
 -- Keep all security-definer entry points restricted to authenticated callers.
 REVOKE ALL ON FUNCTION public.settle_trip(bigint,bigint) FROM PUBLIC,anon;
 REVOKE ALL ON FUNCTION public.create_stock_transfer(bigint,bigint,date,jsonb,text,uuid) FROM PUBLIC,anon;
