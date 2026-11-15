@@ -57,7 +57,7 @@ BEGIN
  newtxt:=$new$LEFT JOIN public.products p
       ON p.product_id=(x.value->>'product_id')::bigint
      AND p.is_active=true
-     AND (p.can_be_produced=true OR p.category_id=16)
+     AND (p.can_be_produced=true OR (p.category_id=16 AND p.product_name LIKE 'طبق%'))
      AND p.product_type IN ('RAW','SEMI_FINISHED','FINISHED')$new$;
  IF position(oldtxt in d)=0 THEN RAISE EXCEPTION 'recovered product validation source changed'; END IF;
  d:=replace(d,oldtxt,newtxt);
