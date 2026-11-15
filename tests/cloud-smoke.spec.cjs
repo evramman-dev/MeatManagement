@@ -500,6 +500,8 @@ test('Sales return inspection, rework inputs and packaging recovery are wired', 
   expect(qaHtml).toContain('["RAW","SEMI_FINISHED"].includes(p.product_type)');
   expect(qaHtml).toContain('Number(p.category_id)===16');
   expect(qaHtml).toContain('p.product_name.startsWith("طبق")');
+  expect(qaHtml).toContain('WAREHOUSE_KEEPER: ["menuProducts","menuLocations","menuStock","menuStockLots","menuStockTransfers","menuTrips","menuSalesReturns"]');
+  expect(qaHtml).toContain('PRODUCTION_MANAGER: ["menuProducts","menuLocations","menuStock","menuStockLots","menuRecipes","menuProduction","menuSalesReturns"]');
   expect(returnInspectionMigrationSql).toContain('source_return_item_id');
   expect(returnInspectionMigrationSql).toContain('warehouse_inspected_by');
   expect(returnInspectionMigrationSql).toContain('production_inspected_by');
