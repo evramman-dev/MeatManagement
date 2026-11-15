@@ -189,6 +189,8 @@ test('Task notifications are delivered only to selected users and shown on My Ta
   expect(qaHtml).toContain('audience:"SELECTED_USERS"');
   expect(qaHtml).toContain('if(!isSystemAdmin)throw new Error("إرسال تنبيهات المهام متاح لمدير النظام فقط.")');
   expect(qaHtml).toContain('await loadTaskNotifications();');
+  expect(qaHtml).toContain('notification_type!=="TASK"');
+  expect(qaHtml).toContain('row.notifications?.notification_type!=="TASK"');
 });
 
 test('Accounting summary uses ledger totals and does not show an inaccurate fallback', () => {
@@ -292,6 +294,9 @@ test('MeatManagement read-only navigation, permissions and session smoke test', 
   await page.locator('.navbtn[data-page="tasks"]').click();
   await expect(page.locator('#tasks')).toBeVisible();
   await expect(page.locator('#tasksDashboard')).toBeVisible();
+  await expect(page.locator('#taskNotificationsList')).toBeVisible();
+  await expect(page.locator('#taskNotificationsList')).not.toContainText('جارٍ تحميل تنبيهات المهام...', { timeout: 30000 });
+  await expect(page.locator('#taskNotificationSendPanel')).toBeHidden();
   await page.screenshot({ path: 'test-results/tasks.png', fullPage: true });
 
   currentSection = 'data';
