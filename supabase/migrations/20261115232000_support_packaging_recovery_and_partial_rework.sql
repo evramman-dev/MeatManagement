@@ -276,6 +276,30 @@ $wrapper$;
 REVOKE ALL ON FUNCTION public.cancel_sales_return_exchange_v1(bigint,text) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.cancel_sales_return_exchange_v1(bigint,text) TO authenticated;
 
+
+-- Preserve the legacy five-argument transfer RPC while routing it through the guarded six-argument wrapper.
+ALTER FUNCTION public.create_stock_transfer(bigint,bigint,date,jsonb,text)
+  RENAME TO create_stock_transfer_internal_legacy_return_hold;
+REVOKE ALL ON FUNCTION public.create_stock_transfer_internal_legacy_return_hold(bigint,bigint,date,jsonb,text)
+  FROM PUBLIC,anon,authenticated;
+CREATE FUNCTION public.create_stock_transfer(
+  p_source_location_id bigint,p_destination_location_id bigint,p_transfer_date date,
+  p_items jsonb,p_notes text
+)
+RETURNS bigint
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path=public,pg_temp
+AS $wrapper$
+BEGIN
+  RETURN public.create_stock_transfer(
+    p_source_location_id,p_destination_location_id,p_transfer_date,p_items,p_notes,NULL::uuid
+  );
+END;
+$wrapper$;
+REVOKE ALL ON FUNCTION public.create_stock_transfer(bigint,bigint,date,jsonb,text) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.create_stock_transfer(bigint,bigint,date,jsonb,text) TO authenticated;
+
 -- Keep all security-definer entry points restricted to authenticated callers.
 REVOKE ALL ON FUNCTION public.settle_trip(bigint,bigint) FROM PUBLIC,anon;
 REVOKE ALL ON FUNCTION public.create_stock_transfer(bigint,bigint,date,jsonb,text,uuid) FROM PUBLIC,anon;
