@@ -7083,6 +7083,18 @@ function salesReturnUnitFactor(productId,unitId){
   if(Number(unitId)===Number(cartonUnitId)&&Number(p.units_per_carton||0)>0)return Number(p.units_per_carton);
   return 0;
 }
+function salesReturnOriginalConversionFactor(productId,unitId,packageOptionId,lotId){
+  let matches=(salesReturnInvoiceItemsCache||[]).filter(item=>
+    Number(item.product_id)===Number(productId)&&
+    Number(item.unit_id)===Number(unitId)&&
+    (Number(item.package_option_id||0)||null)===(Number(packageOptionId||0)||null)
+  );
+  const lot=salesReturnLotOptionsCache.find(x=>Number(x.lot_id)===Number(lotId||0));
+  const linkedItemId=Number(lot?.sales_invoice_item_id||lot?.invoice_item_id||0);
+  if(linkedItemId)matches=matches.filter(item=>Number(item.sales_invoice_item_id)===linkedItemId);
+  const factors=[...new Set(matches.map(item=>Number(item.conversion_factor)).filter(x=>Number.isFinite(x)&&x>0))];
+  return factors.length===1?factors[0]:0;
+}
 function addSalesReturnExchangeItemRow(){
   const row=document.createElement("div");row.className="item-row exchange-item-row";
   const p=document.createElement("select");p.className="exchange-product";p.required=true;p.innerHTML='<option value="">اختر المنتج البديل</option>';
@@ -7287,6 +7299,7 @@ if($("returnForm"))$("returnForm").addEventListener("submit",async e=>{
   e.preventDefault();if(!canCreateReturns)return;
   const btn=$("saveReturnBtn");busy(btn,true,"جارٍ...","حفظ المرتجع");
   try{
+    await salesReturnLotOptionsPromise;
     const current=(await db.auth.getUser()).data.user;const customerId=Number($("returnCustomer").value),invoiceId=Number($("returnInvoice").value),type=$("returnType").value;
     const rows=[...document.querySelectorAll("#returnItems .item-row")];if(!rows.length)throw new Error("أضف صنفًا واحدًا على الأقل.");
     const {data:invoice,error:invoiceError}=await db.from("sales_invoices").select("remaining_amount,status,trip_id,sales_rep_id").eq("sales_invoice_id",invoiceId).single();if(invoiceError)throw invoiceError;if(!invoice||invoice.status==="CANCELLED")throw new Error("الفاتورة الأصلية غير صالحة.");
@@ -7295,7 +7308,7 @@ if($("returnForm"))$("returnForm").addEventListener("submit",async e=>{
     if(type==="EXCHANGE"){
       if(!activeTrip)throw new Error("لا يمكن تنفيذ الاستبدال إلا داخل جولة مفتوحة أو نشطة.");
       const exRows=[...document.querySelectorAll("#exchangeItems .exchange-item-row")];if(!exRows.length)throw new Error("أضف صنفًا بديلًا واحدًا على الأقل.");
-      const returnItems=rows.map(r=>({product_id:Number(r.querySelector(".return-product").value),unit_id:Number(r.querySelector(".return-unit").value),quantity:Number(r.querySelector(".return-qty").value),unit_price:Number(r.querySelector(".return-price").value),lot_id:Number(r.querySelector(".return-lot")?.value||0)||null,package_option_id:Number(r.querySelector(".return-package-option")?.value||0)||null,conversion_factor:salesReturnUnitFactor(r.querySelector(".return-product").value,r.querySelector(".return-unit").value),package_weight_kg:null,request_id:crypto.randomUUID()}));
+      const returnItems=rows.map(r=>({product_id:Number(r.querySelector(".return-product").value),unit_id:Number(r.querySelector(".return-unit").value),quantity:Number(r.querySelector(".return-qty").value),unit_price:Number(r.querySelector(".return-price").value),lot_id:Number(r.querySelector(".return-lot")?.value||0)||null,package_option_id:Number(r.querySelector(".return-package-option")?.value||0)||null,conversion_factor:salesReturnOriginalConversionFactor(r.querySelector(".return-product").value,r.querySelector(".return-unit").value,r.querySelector(".return-package-option")?.value||null,r.querySelector(".return-lot")?.value||null),package_weight_kg:null,request_id:crypto.randomUUID()}));
       const exchangeItems=exRows.map(r=>({product_id:Number(r.querySelector(".exchange-product").value),unit_id:Number(r.querySelector(".exchange-unit").value),quantity:Number(r.querySelector(".exchange-qty").value),unit_price:Number(r.querySelector(".exchange-price").value),package_option_id:Number(r.querySelector(".exchange-package-option")?.value||0)||null,conversion_factor:salesReturnUnitFactor(r.querySelector(".exchange-product").value,r.querySelector(".exchange-unit").value),package_weight_kg:null,request_id:crypto.randomUUID()}));
       if(returnItems.some(x=>!x.product_id||!x.unit_id||x.quantity<=0||x.conversion_factor<=0)||exchangeItems.some(x=>!x.product_id||!x.unit_id||x.quantity<=0||x.conversion_factor<=0))throw new Error("راجع المنتج والوحدة والكمية. لا يوجد تحويل صالح للوحدة المختارة.");
       const returnedTotal=returnItems.reduce((a,x)=>a+x.quantity*x.unit_price,0),exchangeTotal=exchangeItems.reduce((a,x)=>a+x.quantity*x.unit_price,0),difference=Math.round((exchangeTotal-returnedTotal)*100)/100;
