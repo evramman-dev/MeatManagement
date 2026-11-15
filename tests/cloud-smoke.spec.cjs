@@ -506,4 +506,7 @@ test('Sales return inspection, rework inputs and packaging recovery are wired', 
   expect(returnInspectionMigrationSql).toContain('RETURN_REWORK:%');
   expect(packagingRecoveryMigrationSql).toContain('packaging_items');
   expect(packagingRecoveryMigrationSql).toContain('p.category_id=16');
+  expect(packagingRecoveryMigrationSql).toContain("has_permission('INVENTORY_ADJUST')");
+  expect(packagingRecoveryMigrationSql).toContain("has_permission('PRODUCTION_MANAGE')");
+  expect(packagingRecoveryMigrationSql).toContain('REVOKE ALL ON FUNCTION public.create_stock_transfer');
 });
