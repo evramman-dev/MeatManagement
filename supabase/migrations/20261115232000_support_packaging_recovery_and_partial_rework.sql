@@ -266,13 +266,13 @@ RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path=public,pg_temp
-AS $
+AS $wrapper$
 BEGIN
   PERFORM set_config('app.allow_return_pending_reservations','on',true);
   PERFORM set_config('app.allow_return_rework_reservations','on',true);
   PERFORM public.cancel_sales_return_exchange_v1_internal_return_hold(p_sales_return_id,p_reason);
 END;
-$;
+$wrapper$;
 REVOKE ALL ON FUNCTION public.cancel_sales_return_exchange_v1(bigint,text) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.cancel_sales_return_exchange_v1(bigint,text) TO authenticated;
 
