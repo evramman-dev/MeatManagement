@@ -41,6 +41,16 @@ const menuIds = {
 
 
 
+test('Recipe ingredients allow raw materials and semi-finished intermediates, not finished products', () => {
+  const start=qaHtml.indexOf('function addRecipeItemRow(item)');
+  const end=qaHtml.indexOf('window.addRecipeItemRow = addRecipeItemRow;',start);
+  expect(start).toBeGreaterThanOrEqual(0);
+  expect(end).toBeGreaterThan(start);
+  const source=qaHtml.slice(start,end);
+  expect(source).toContain('productsCache.filter(p=>p.is_active&&["RAW","SEMI_FINISHED"].includes(p.product_type))');
+  expect(qaHtml).toContain('مكونات التصنيع (خامات ومستلزمات) *');
+});
+
 test('Purchase and purchase-return preview matches database rounding rules', () => {
   expect(qaHtml).toContain('let priorGrossTotal = 0;');
   expect(qaHtml).toContain('Math.round((priorGrossTotal * invoiceDiscount / invoiceSubtotal + Number.EPSILON) * 100) / 100');
