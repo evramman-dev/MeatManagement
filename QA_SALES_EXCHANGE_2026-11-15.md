@@ -78,3 +78,12 @@
 2. Performance Advisor يعرض سياسة SELECT مزدوجة على fixed_assets. السياستان تمنحان مسارين مختلفين، ويمكن دمجهما لاحقًا بشرط الحفاظ على منطق OR نفسه.
 3. Advisor يعرض 66 فهرسًا غير مستخدم حتى الآن. لا تُحذف لمجرد ظهورها، لأن بيانات التشغيل محدودة وقد تكون مطلوبة مع نمو البيانات.
 4. تحذير حماية كلمات المرور المسربة في Supabase Auth ما زال قائمًا. لم يتغير إعداد Auth في هذه المراجعة.
+
+
+## تحديث 2026-11-15 — معالجة تحذير سياسات الأصول الثابتة
+- دمج سياستي SELECT على public.fixed_assets في سياسة واحدة باستخدام OR، مع الحفاظ على مساري ACCOUNTING_VIEW/ACCOUNTING_MANAGE ومسار SUPPLIERS_VIEW/SUPPLIERS_MANAGE لأصول ائتمان الموردين.
+- Migration: 20261115145626_consolidate_fixed_assets_select_policies.
+- بعد التنفيذ بقيت سياسة SELECT واحدة فقط على fixed_assets.
+- اختفى تحذير multiple_permissive_policies من Performance Advisor.
+- بقيت 66 ملاحظة unused_index بمستوى INFO. لم نحذف أي فهرس لأن حجم بيانات التشغيل الحالي لا يكفي للحكم على فائدته.
+- بعد PR #107 أصبح main يحتوي 22 ملف migration مقابل 286 migration مسجلة في Supabase. يضيف هذا التحديث ملفًا واحدًا، وتظل فجوة الترحيلات التاريخية قائمة وتحتاج معالجة مستقلة.
