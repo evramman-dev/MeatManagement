@@ -8,6 +8,7 @@ const exchangeCancellationOrderMigrationSql = fs.readFileSync(path.resolve(__dir
 const legacyExchangeCancelGuardSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115145032_guard_legacy_sales_return_cancel_from_exchanges.sql'), 'utf8');
 const fixedAssetsPolicyMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115145626_consolidate_fixed_assets_select_policies.sql'), 'utf8');
 const openingBalanceAdminMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115150500_restrict_stock_opening_balance_to_system_admin.sql'), 'utf8');
+const salesReturnIdempotencyMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115160755_guard_sales_return_request_number_idempotency.sql'), 'utf8');
 
 test.use({ serviceWorkers: 'block' });
 
@@ -122,6 +123,11 @@ test('Sales return retries reuse the same return number and item request IDs', (
 
   expect(qaHtml).not.toContain('p_return_number:"RET-"+Date.now()');
   expect(qaHtml).not.toContain('const itemRequestId=(crypto.randomUUID?crypto.randomUUID():Date.now()+');
+});
+
+test('Regular sales return idempotency rejects changed return numbers', () => {
+  expect(salesReturnIdempotencyMigrationSql).toContain('v_existing.return_number IS DISTINCT FROM p_return_number');
+  expect(salesReturnIdempotencyMigrationSql).toContain("RAISE EXCEPTION 'رقم طلب المرتجع مستخدم من قبل مع بيانات مختلفة'");
 });
 
 test('Sales exchange retries reuse stable request and item IDs', () => {
