@@ -1751,8 +1751,8 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div><label for="geoSalesToDate">إلى تاريخ</label><input type="date" id="geoSalesToDate"></div>
 </div>
 <button class="btn" id="refreshGeoSalesReport" type="button" style="margin-top:10px;">عرض التقرير</button>
-<div class="info" style="margin-top:10px;">رصيد أول المدة هو صافي رصيد العملاء قبل بداية الفترة. الرصيد الحالي = رصيد أول المدة + المبيعات - التحصيلات - المرتجعات التي خُصمت من المديونية. الرقم الموجب يعني أن على العملاء رصيدًا للشركة، والرقم السالب يعني أن للعملاء رصيدًا لدى الشركة. عمود المرتجعات يعرض إجمالي المرتجعات خلال الفترة، بما فيها المبالغ التي رُدت نقدًا. حركة الأصناف بوحدتها الأساسية، والرصيد الحالي يشمل جميع المواقع.</div>
-<div class="table-responsive" style="margin-top:12px;"><table class="print-table" id="geoSalesTable"><thead><tr><th>المحافظة</th><th>رصيد أول المدة</th><th>إجمالي المبيعات</th><th>إجمالي التحصيلات</th><th>إجمالي المرتجعات</th><th>رصيد العملاء</th></tr></thead><tbody><tr><td colspan="6">حدد الفترة ثم اضغط عرض التقرير.</td></tr></tbody></table></div><h3 style="margin-top:20px;">ملخص حركة الأصناف</h3><div class="table-responsive"><table class="print-table" id="geoItemsTable"><thead><tr><th>الصنف</th><th>الوحدة</th><th>إجمالي مشتريات</th><th>إجمالي مبيعات</th><th>إجمالي مرتجعات</th><th>رصيد حالي</th></tr></thead><tbody><tr><td colspan="6">حدد الفترة ثم اضغط عرض التقرير.</td></tr></tbody></table></div>
+<div class="info" style="margin-top:10px;">رصيد أول المدة هو صافي رصيد العملاء قبل بداية الفترة. الرصيد الحالي = رصيد أول المدة + المبيعات - التحصيلات - المرتجعات المخصومة من المديونية + فروق الاستبدال المؤثرة على المديونية. الرقم الموجب يعني أن على العملاء رصيدًا للشركة، والرقم السالب يعني أن للعملاء رصيدًا لدى الشركة. عمود المرتجعات يعرض إجمالي المرتجعات خلال الفترة، بما فيها المبالغ التي رُدت نقدًا. حركة الأصناف بوحدتها الأساسية، والرصيد الحالي يشمل جميع المواقع.</div>
+<div class="table-responsive" style="margin-top:12px;"><table class="print-table" id="geoSalesTable"><thead><tr><th>المحافظة</th><th>رصيد أول المدة</th><th>إجمالي المبيعات</th><th>إجمالي التحصيلات</th><th>إجمالي المرتجعات</th><th>مرتجعات مخصومة من المديونية</th><th>فروق الاستبدال</th><th>رصيد العملاء</th></tr></thead><tbody><tr><td colspan="8">حدد الفترة ثم اضغط عرض التقرير.</td></tr></tbody></table></div><h3 style="margin-top:20px;">ملخص حركة الأصناف</h3><div class="table-responsive"><table class="print-table" id="geoItemsTable"><thead><tr><th>الصنف</th><th>الوحدة</th><th>إجمالي مشتريات</th><th>إجمالي مبيعات</th><th>إجمالي الاستبدالات</th><th>إجمالي مرتجعات</th><th>رصيد حالي</th></tr></thead><tbody><tr><td colspan="8">حدد الفترة ثم اضغط عرض التقرير.</td></tr></tbody></table></div>
 </div>
 <div id="repPL" class="report-tab hidden">
 <div class="grid"><div><label>من تاريخ</label><input type="date" id="plFromDate"></div><div><label>إلى تاريخ</label><input type="date" id="plToDate"></div></div>
@@ -4002,24 +4002,54 @@ async function fetchAllRows(query){
   }
   return all;
 }
+function customerReturnReceivableEffect(ret){
+  const amount=Number(ret.total_returned_value||0);
+  if(ret.return_type==="EXCHANGE"){
+    const diff=Number(ret.price_difference||0);
+    if(ret.cash_action==="DEDUCT_DEBT")return{debtReturn:0,exchangeAdjustment:diff};
+    if(ret.cash_action==="CUSTOMER_PAYS_CREDIT")return{debtReturn:0,exchangeAdjustment:Math.max(diff,0)};
+    return{debtReturn:0,exchangeAdjustment:0};
+  }
+  return ret.cash_action==="DEDUCT_DEBT"
+    ?{debtReturn:amount,exchangeAdjustment:0}
+    :{debtReturn:0,exchangeAdjustment:0};
+}
 async function buildGeoSalesSummary(from,to){
   await loadCustomerGeoData();
   const [y,m,d]=String(to).split("-").map(Number),nextDate=new Date(Date.UTC(y,m-1,d+1)).toISOString().slice(0,10);
   const [customers,sales,collections,returns]=await Promise.all([
-    fetchAllRows(db.from("customers").select("customer_id,governorate_id").order("customer_id")),
+    fetchAllRows(db.from("customers").select("customer_id,governorate_id,opening_balance").order("customer_id")),
     fetchAllRows(db.from("sales_invoices").select("sales_invoice_id,customer_id,invoice_date,net_total,status").lt("invoice_date",nextDate).in("status",["POSTED","PAID","PARTIAL"]).order("invoice_date")),
     fetchAllRows(db.from("customer_collections").select("sales_invoice_id,customer_id,amount,collection_date,status,allocation_type").eq("status","POSTED").lt("collection_date",nextDate).order("collection_date")),
-    fetchAllRows(db.from("sales_returns").select("sales_invoice_id,customer_id,return_date,total_returned_value,cash_action,status").eq("status","POSTED").lt("return_date",nextDate).order("return_date"))
+    fetchAllRows(db.from("sales_returns").select("sales_invoice_id,customer_id,return_date,total_returned_value,price_difference,return_type,cash_action,status").eq("status","POSTED").lt("return_date",nextDate).order("return_date"))
   ]);
-  const customerGovMap=new Map(customers.map(c=>[String(c.customer_id),c.governorate_id])),map=new Map();
-  const ensure=id=>{const key=id==null?"unknown":String(id);if(!map.has(key))map.set(key,{name:id==null?"غير محدد":geoGovernorateName(id),opening:0,sales:0,collections:0,returns:0,balance:0});return map.get(key);};
-  const invoicesByCustomer=new Map(),openingCollections=new Map(),periodCollections=new Map(),openingReturns=new Map(),periodReturnsByCustomer=new Map(),periodSalesByCustomer=new Map();
+  const customerGovMap=new Map(customers.map(c=>[String(c.customer_id),c.governorate_id])),customerOpeningMap=new Map(customers.map(c=>[String(c.customer_id),Number(c.opening_balance||0)])),map=new Map();
+  const ensure=id=>{const key=id==null?"unknown":String(id);if(!map.has(key))map.set(key,{name:id==null?"غير محدد":geoGovernorateName(id),opening:0,sales:0,collections:0,returns:0,debtReturns:0,exchangeAdjustments:0,balance:0});return map.get(key);};
+  const invoicesByCustomer=new Map(),openingCollections=new Map(),periodCollections=new Map(),openingDebtReturns=new Map(),openingExchangeAdjustments=new Map(),periodReturnsByCustomer=new Map(),periodSalesByCustomer=new Map();
   customerGovernoratesCache.forEach(g=>ensure(g.governorate_id));
   sales.forEach(inv=>{const key=String(inv.customer_id),day=String(inv.invoice_date||"").slice(0,10),amount=Number(inv.net_total||0);if(!invoicesByCustomer.has(key))invoicesByCustomer.set(key,[]);invoicesByCustomer.get(key).push({day,amount});if(day>=from&&day<=to){ensure(customerGovMap.get(key)).sales+=amount;periodSalesByCustomer.set(key,(periodSalesByCustomer.get(key)||0)+amount);}});
   collections.forEach(col=>{const key=String(col.customer_id),day=String(col.collection_date||"").slice(0,10),amount=Number(col.amount||0);if(day<from)openingCollections.set(key,(openingCollections.get(key)||0)+amount);else if(day<=to){periodCollections.set(key,(periodCollections.get(key)||0)+amount);ensure(customerGovMap.get(key)).collections+=amount;}});
-  returns.forEach(ret=>{const key=String(ret.customer_id),day=String(ret.return_date||"").slice(0,10),amount=Number(ret.total_returned_value||0);if(day<from)openingReturns.set(key,(openingReturns.get(key)||0)+amount);else if(day<=to){periodReturnsByCustomer.set(key,(periodReturnsByCustomer.get(key)||0)+amount);ensure(customerGovMap.get(key)).returns+=amount;}});
-  const keys=new Set([...invoicesByCustomer.keys(),...openingCollections.keys(),...periodCollections.keys(),...openingReturns.keys(),...periodReturnsByCustomer.keys()]);
-  keys.forEach(key=>{const row=ensure(customerGovMap.get(key)),invRows=invoicesByCustomer.get(key)||[],beforeSales=invRows.filter(x=>x.day<from).reduce((a,x)=>a+x.amount,0),opening=beforeSales-(openingCollections.get(key)||0)-(openingReturns.get(key)||0);row.opening+=opening;row.balance+=opening+(periodSalesByCustomer.get(key)||0)-(periodCollections.get(key)||0)-(periodReturnsByCustomer.get(key)||0);});
+  returns.forEach(ret=>{
+    const key=String(ret.customer_id),day=String(ret.return_date||"").slice(0,10),amount=Number(ret.total_returned_value||0),effect=customerReturnReceivableEffect(ret);
+    if(day<from){
+      openingDebtReturns.set(key,(openingDebtReturns.get(key)||0)+effect.debtReturn);
+      openingExchangeAdjustments.set(key,(openingExchangeAdjustments.get(key)||0)+effect.exchangeAdjustment);
+    }else if(day<=to){
+      periodReturnsByCustomer.set(key,(periodReturnsByCustomer.get(key)||0)+amount);
+      const row=ensure(customerGovMap.get(key));
+      row.returns+=amount;
+      row.debtReturns+=effect.debtReturn;
+      row.exchangeAdjustments+=effect.exchangeAdjustment;
+    }
+  });
+  const keys=new Set([...customers.map(c=>String(c.customer_id)),...invoicesByCustomer.keys(),...openingCollections.keys(),...periodCollections.keys(),...openingDebtReturns.keys(),...openingExchangeAdjustments.keys(),...periodReturnsByCustomer.keys(),...periodSalesByCustomer.keys()]);
+  keys.forEach(key=>{
+    const row=ensure(customerGovMap.get(key)),invRows=invoicesByCustomer.get(key)||[];
+    const beforeSales=invRows.filter(x=>x.day<from).reduce((a,x)=>a+x.amount,0);
+    const opening=(customerOpeningMap.get(key)||0)+beforeSales-(openingCollections.get(key)||0)-(openingDebtReturns.get(key)||0)+(openingExchangeAdjustments.get(key)||0);
+    row.opening+=opening;
+  });
+  map.forEach(row=>{row.balance=row.opening+row.sales-row.collections-row.debtReturns+row.exchangeAdjustments;});
   return Array.from(map.values()).filter(x=>x.opening||x.sales||x.collections||x.returns||x.balance).sort((a,b)=>a.name.localeCompare(b.name,"ar"));
 }
 async function buildGeoItemMovementSummary(from,to){
@@ -4033,27 +4063,31 @@ async function buildGeoItemMovementSummary(from,to){
     fetchAllRows(db.from("sales_returns").select("sales_return_id").eq("status","POSTED"))
   ]);
   const activePurchaseInvoices=new Set(purchaseInvoices.map(x=>String(x.purchase_invoice_id))),activeSalesInvoices=new Set(salesInvoices.map(x=>String(x.sales_invoice_id))),activePurchaseReturns=new Set(purchaseReturns.map(x=>String(x.return_id))),activeSalesReturns=new Set(salesReturns.map(x=>String(x.sales_return_id)));
-  const totals=new Map(),get=id=>{const key=String(id);if(!totals.has(key))totals.set(key,{product_id:id,purchases:0,sales:0,returns:0,current:0});return totals.get(key);};
-  moves.forEach(m=>{const q=Math.abs(Number(m.quantity_change||0)),row=get(m.product_id);if(m.movement_type==="RECEIVE"&&m.purchase_invoice_id!=null&&activePurchaseInvoices.has(String(m.purchase_invoice_id)))row.purchases+=q;else if(m.movement_type==="ISSUE"&&m.sales_invoice_id!=null&&activeSalesInvoices.has(String(m.sales_invoice_id)))row.sales+=q;else if(m.movement_type==="RETURN"&&((m.purchase_return_id!=null&&activePurchaseReturns.has(String(m.purchase_return_id)))||(m.sales_return_id!=null&&activeSalesReturns.has(String(m.sales_return_id)))))row.returns+=q;});
+  const totals=new Map(),get=id=>{const key=String(id);if(!totals.has(key))totals.set(key,{product_id:id,purchases:0,sales:0,exchanges:0,returns:0,current:0});return totals.get(key);};
+  moves.forEach(m=>{
+    const q=Math.abs(Number(m.quantity_change||0)),row=get(m.product_id);
+    if(m.movement_type==="RECEIVE"&&m.purchase_invoice_id!=null&&activePurchaseInvoices.has(String(m.purchase_invoice_id)))row.purchases+=q;
+    else if(m.movement_type==="ISSUE"&&m.sales_invoice_id!=null&&activeSalesInvoices.has(String(m.sales_invoice_id)))row.sales+=q;
+    else if(m.movement_type==="ISSUE"&&m.sales_return_id!=null&&activeSalesReturns.has(String(m.sales_return_id)))row.exchanges+=q;
+    else if(m.movement_type==="RETURN"&&((m.purchase_return_id!=null&&activePurchaseReturns.has(String(m.purchase_return_id)))||(m.sales_return_id!=null&&activeSalesReturns.has(String(m.sales_return_id)))))row.returns+=q;
+  });
   balances.forEach(b=>get(b.product_id).current+=Number(b.quantity||0));
-  return Array.from(totals.values()).filter(x=>x.purchases||x.sales||x.returns||x.current).sort((a,b)=>productName(a.product_id).localeCompare(productName(b.product_id),"ar"));
+  return Array.from(totals.values()).filter(x=>x.purchases||x.sales||x.exchanges||x.returns||x.current).sort((a,b)=>productName(a.product_id).localeCompare(productName(b.product_id),"ar"));
 }
 function geoSalesRowsHtml(rows){
-  const totals=rows.reduce((t,r)=>({opening:t.opening+r.opening,sales:t.sales+r.sales,collections:t.collections+r.collections,returns:t.returns+r.returns,balance:t.balance+r.balance}),{opening:0,sales:0,collections:0,returns:0,balance:0});
-  return rows.map(r=>`<tr><td>${esc(r.name)}</td><td>${fmt(r.opening)}</td><td>${fmt(r.sales)}</td><td>${fmt(r.collections)}</td><td>${fmt(r.returns)}</td><td>${fmt(r.balance)}</td></tr>`).join("")+`<tr style="background:#e9efe9;font-weight:bold;"><td>الإجمالي</td><td>${fmt(totals.opening)}</td><td>${fmt(totals.sales)}</td><td>${fmt(totals.collections)}</td><td>${fmt(totals.returns)}</td><td>${fmt(totals.balance)}</td></tr>`;
+  const totals=rows.reduce((t,r)=>({opening:t.opening+r.opening,sales:t.sales+r.sales,collections:t.collections+r.collections,returns:t.returns+r.returns,debtReturns:t.debtReturns+r.debtReturns,exchangeAdjustments:t.exchangeAdjustments+r.exchangeAdjustments,balance:t.balance+r.balance}),{opening:0,sales:0,collections:0,returns:0,debtReturns:0,exchangeAdjustments:0,balance:0});
+  return rows.map(r=>`<tr><td>${esc(r.name)}</td><td>${fmt(r.opening)}</td><td>${fmt(r.sales)}</td><td>${fmt(r.collections)}</td><td>${fmt(r.returns)}</td><td>${fmt(r.debtReturns)}</td><td>${fmt(r.exchangeAdjustments)}</td><td>${fmt(r.balance)}</td></tr>`).join("")+`<tr style="background:#e9efe9;font-weight:bold;"><td>الإجمالي</td><td>${fmt(totals.opening)}</td><td>${fmt(totals.sales)}</td><td>${fmt(totals.collections)}</td><td>${fmt(totals.returns)}</td><td>${fmt(totals.debtReturns)}</td><td>${fmt(totals.exchangeAdjustments)}</td><td>${fmt(totals.balance)}</td></tr>`;
 }
 function geoItemRowsHtml(rows){
-  const totals=rows.reduce((t,r)=>({purchases:t.purchases+r.purchases,sales:t.sales+r.sales,returns:t.returns+r.returns,current:t.current+r.current}),{purchases:0,sales:0,returns:0,current:0});
-  return rows.map(r=>{const p=productsCache.find(x=>String(x.product_id)===String(r.product_id));return `<tr><td>${esc(productName(r.product_id))}</td><td>${esc(unitName(p?.base_unit_id))}</td><td>${fmtQty(r.purchases)}</td><td>${fmtQty(r.sales)}</td><td>${fmtQty(r.returns)}</td><td>${fmtQty(r.current)}</td></tr>`;}).join("");
+  return rows.map(r=>{const p=productsCache.find(x=>String(x.product_id)===String(r.product_id));return `<tr><td>${esc(productName(r.product_id))}</td><td>${esc(unitName(p?.base_unit_id))}</td><td>${fmtQty(r.purchases)}</td><td>${fmtQty(r.sales)}</td><td>${fmtQty(r.exchanges)}</td><td>${fmtQty(r.returns)}</td><td>${fmtQty(r.current)}</td></tr>`;}).join("");
 }
-
 async function loadGeoSalesReport(){
   const body=$("geoSalesTable")?.querySelector("tbody"),itemsBody=$("geoItemsTable")?.querySelector("tbody");if(!body||!itemsBody)return;
   const from=$("geoSalesFromDate").value||monthStartISO(),to=$("geoSalesToDate").value||todayISO();
-  if(from>to){body.innerHTML='<tr><td colspan="6">تاريخ البداية يجب أن يسبق تاريخ النهاية.</td></tr>';return;}
-  body.innerHTML='<tr><td colspan="6">جارٍ تحميل التقرير...</td></tr>';itemsBody.innerHTML='<tr><td colspan="6">جارٍ تحميل حركة الأصناف...</td></tr>';
-  try{const [rows,items]=await Promise.all([buildGeoSalesSummary(from,to),buildGeoItemMovementSummary(from,to)]);body.innerHTML=rows.length?geoSalesRowsHtml(rows):'<tr><td colspan="6">لا توجد حركة خلال الفترة.</td></tr>';itemsBody.innerHTML=items.length?geoItemRowsHtml(items):'<tr><td colspan="6">لا توجد حركة أصناف خلال الفترة.</td></tr>';}
-  catch(e){const message=esc(err(e));body.innerHTML=`<tr><td colspan="6" style="color:red;">تعذر تحميل التقرير: ${message}</td></tr>`;itemsBody.innerHTML=`<tr><td colspan="6" style="color:red;">تعذر تحميل حركة الأصناف: ${message}</td></tr>`;}
+  if(from>to){body.innerHTML='<tr><td colspan="8">تاريخ البداية يجب أن يسبق تاريخ النهاية.</td></tr>';return;}
+  body.innerHTML='<tr><td colspan="8">جارٍ تحميل التقرير...</td></tr>';itemsBody.innerHTML='<tr><td colspan="7">جارٍ تحميل حركة الأصناف...</td></tr>';
+  try{const [rows,items]=await Promise.all([buildGeoSalesSummary(from,to),buildGeoItemMovementSummary(from,to)]);body.innerHTML=rows.length?geoSalesRowsHtml(rows):'<tr><td colspan="8">لا توجد حركة خلال الفترة.</td></tr>';itemsBody.innerHTML=items.length?geoItemRowsHtml(items):'<tr><td colspan="7">لا توجد حركة أصناف خلال الفترة.</td></tr>';}
+  catch(e){const message=esc(err(e));body.innerHTML=`<tr><td colspan="8" style="color:red;">تعذر تحميل التقرير: ${message}</td></tr>`;itemsBody.innerHTML=`<tr><td colspan="7" style="color:red;">تعذر تحميل حركة الأصناف: ${message}</td></tr>`;}
 }
 function openHomeDetail(panelId){
   $("homeOverview")?.classList.add("hidden");
@@ -4090,24 +4124,28 @@ async function buildCustomerBalanceSummary(from,to){
     fetchAllRows(db.from("customers").select("customer_id,customer_name,governorate_id,opening_balance").order("customer_id")),
     fetchAllRows(db.from("sales_invoices").select("customer_id,invoice_date,net_total,status,sales_invoice_id").lt("invoice_date",nextDate).in("status",["POSTED","PAID","PARTIAL"]).order("invoice_date").order("sales_invoice_id")),
     fetchAllRows(db.from("customer_collections").select("customer_id,amount,collection_date,status,collection_id").eq("status","POSTED").lt("collection_date",nextDate).order("collection_date").order("collection_id")),
-    fetchAllRows(db.from("sales_returns").select("customer_id,return_date,total_returned_value,status,cash_action,sales_return_id").eq("status","POSTED").eq("cash_action","DEDUCT_DEBT").lt("return_date",nextDate).order("return_date").order("sales_return_id"))
+    fetchAllRows(db.from("sales_returns").select("customer_id,return_date,total_returned_value,status,cash_action,sales_return_id,return_type,price_difference").eq("status","POSTED").lt("return_date",nextDate).order("return_date").order("sales_return_id"))
   ]);
-  const rows=new Map(customers.map(c=>[String(c.customer_id),{customer_id:c.customer_id,name:c.customer_name||"غير محدد",governorate:geoGovernorateName(c.governorate_id),opening:Number(c.opening_balance||0),sales:0,returns:0,collections:0,balance:0}]));
-  const ensure=id=>{const key=String(id);if(!rows.has(key))rows.set(key,{customer_id:id,name:customerName(id),governorate:"غير محدد",opening:0,sales:0,returns:0,collections:0,balance:0});return rows.get(key);};
+  const rows=new Map(customers.map(c=>[String(c.customer_id),{customer_id:c.customer_id,name:c.customer_name||"غير محدد",governorate:geoGovernorateName(c.governorate_id),opening:Number(c.opening_balance||0),sales:0,returns:0,exchangeAdjustments:0,collections:0,balance:0}]));
+  const ensure=id=>{const key=String(id);if(!rows.has(key))rows.set(key,{customer_id:id,name:customerName(id),governorate:"غير محدد",opening:0,sales:0,returns:0,exchangeAdjustments:0,collections:0,balance:0});return rows.get(key);};
   sales.forEach(inv=>{const r=ensure(inv.customer_id),day=String(inv.invoice_date||"").slice(0,10),amount=Number(inv.net_total||0);if(day<from)r.opening+=amount;else if(day<=to)r.sales+=amount;});
   collections.forEach(col=>{const r=ensure(col.customer_id),day=String(col.collection_date||"").slice(0,10),amount=Number(col.amount||0);if(day<from)r.opening-=amount;else if(day<=to)r.collections+=amount;});
-  returns.forEach(ret=>{const r=ensure(ret.customer_id),day=String(ret.return_date||"").slice(0,10),amount=Number(ret.total_returned_value||0);if(day<from)r.opening-=amount;else if(day<=to)r.returns+=amount;});
-  return Array.from(rows.values()).map(r=>({...r,balance:r.opening+r.sales-r.returns-r.collections}))
-    .filter(r=>r.opening||r.sales||r.returns||r.collections||r.balance)
+  returns.forEach(ret=>{
+    const r=ensure(ret.customer_id),day=String(ret.return_date||"").slice(0,10),effect=customerReturnReceivableEffect(ret);
+    if(day<from)r.opening+=effect.exchangeAdjustment-effect.debtReturn;
+    else if(day<=to){r.returns+=effect.debtReturn;r.exchangeAdjustments+=effect.exchangeAdjustment;}
+  });
+  return Array.from(rows.values()).map(r=>({...r,balance:r.opening+r.sales-r.returns-r.collections+r.exchangeAdjustments}))
+    .filter(r=>r.opening||r.sales||r.returns||r.exchangeAdjustments||r.collections||r.balance)
     .sort((a,b)=>a.name.localeCompare(b.name,"ar"));
 }
 function customerBalanceTotals(rows){
-  return rows.reduce((t,r)=>{t.opening+=Number(r.opening||0);t.sales+=Number(r.sales||0);t.returns+=Number(r.returns||0);t.collections+=Number(r.collections||0);t.balance+=Number(r.balance||0);return t;},{opening:0,sales:0,returns:0,collections:0,balance:0});
+  return rows.reduce((t,r)=>{t.opening+=Number(r.opening||0);t.sales+=Number(r.sales||0);t.returns+=Number(r.returns||0);t.exchangeAdjustments+=Number(r.exchangeAdjustments||0);t.collections+=Number(r.collections||0);t.balance+=Number(r.balance||0);return t;},{opening:0,sales:0,returns:0,exchangeAdjustments:0,collections:0,balance:0});
 }
 function customerBalanceRowsHtml(rows){
   const totals=customerBalanceTotals(rows);
-  const body=rows.map(r=>'<tr><td>'+esc(r.name)+'</td><td>'+esc(r.governorate)+'</td><td>'+fmt(r.opening)+'</td><td>'+fmt(r.sales)+'</td><td>'+fmt(r.returns)+'</td><td>'+fmt(r.collections)+'</td><td style="font-weight:bold;color:'+(r.balance<0?'#a52b2b':'#173c2c')+'">'+fmt(r.balance)+'</td></tr>').join("");
-  return body+'<tr style="font-weight:bold;background:#eef3ef;border-top:2px solid #173c2c;"><td>الإجمالي</td><td>—</td><td>'+fmt(totals.opening)+'</td><td>'+fmt(totals.sales)+'</td><td>'+fmt(totals.returns)+'</td><td>'+fmt(totals.collections)+'</td><td style="color:'+(totals.balance<0?'#a52b2b':'#173c2c')+'">'+fmt(totals.balance)+'</td></tr>';
+  const body=rows.map(r=>'<tr><td>'+esc(r.name)+'</td><td>'+esc(r.governorate)+'</td><td>'+fmt(r.opening)+'</td><td>'+fmt(r.sales)+'</td><td>'+fmt(r.returns)+'</td><td>'+fmt(r.exchangeAdjustments)+'</td><td>'+fmt(r.collections)+'</td><td style="font-weight:bold;color:'+(r.balance<0?'#a52b2b':'#173c2c')+'">'+fmt(r.balance)+'</td></tr>').join("");
+  return body+'<tr style="font-weight:bold;background:#eef3ef;border-top:2px solid #173c2c;"><td>الإجمالي</td><td>—</td><td>'+fmt(totals.opening)+'</td><td>'+fmt(totals.sales)+'</td><td>'+fmt(totals.returns)+'</td><td>'+fmt(totals.exchangeAdjustments)+'</td><td>'+fmt(totals.collections)+'</td><td style="color:'+(totals.balance<0?'#a52b2b':'#173c2c')+'">'+fmt(totals.balance)+'</td></tr>';
 }
 function customerBalanceStatsHtml(rows){
   const totals=customerBalanceTotals(rows);
@@ -4116,13 +4154,13 @@ function customerBalanceStatsHtml(rows){
     ["إجمالي عدد العملاء",rows.length],
     ["إجمالي عدد المحافظات",governorates.size],
     ["إجمالي المبيعات",fmt(totals.sales)],
-    ["إجمالي المرتجعات",fmt(totals.returns)],
+    ["إجمالي المرتجعات المخصومة",fmt(totals.returns)],
+    ["فروق الاستبدال",fmt(totals.exchangeAdjustments)],
     ["إجمالي التحصيلات",fmt(totals.collections)],
     ["إجمالي الرصيد الحالي",fmt(totals.balance)]
   ];
   return '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin:12px 0;">'+stats.map(([label,value])=>'<div style="background:#f4f7f4;border:1px solid #dce5dc;border-radius:9px;padding:10px;text-align:center;"><div style="font-size:12px;color:#526257;margin-bottom:5px;">'+label+'</div><strong style="font-size:16px;color:#173c2c;">'+value+'</strong></div>').join("")+'</div>';
 }
-
 async function buildSupplierBalanceSummary(from,to){
   const [y,m,d]=String(to).split("-").map(Number),nextDate=new Date(Date.UTC(y,m-1,d+1)).toISOString().slice(0,10);
   const [suppliers,invoices,payments,returns,landedCosts,creditAssets]=await Promise.all([
@@ -4178,9 +4216,9 @@ async function loadHomeGeoSummary(){
     const [rows,items,customers,suppliers]=await Promise.all([buildGeoSalesSummary(from,to),buildGeoItemMovementSummary(from,to),buildCustomerBalanceSummary(from,to),buildSupplierBalanceSummary(from,to)]);
     const totalBalance=rows.reduce((sum,row)=>sum+Number(row.balance||0),0);
     if($("homeGeoButtonBalance"))$("homeGeoButtonBalance").textContent=fmt(totalBalance);
-    box.innerHTML='<h3>ملخص تعاملات المحافظة</h3><div class="info">من '+from+' إلى '+to+' | الرصيد المالي للعملاء حتى نهاية الفترة</div><div class="table-responsive"><table class="print-table"><thead><tr><th>المحافظة</th><th>رصيد أول المدة</th><th>إجمالي المبيعات</th><th>إجمالي التحصيلات</th><th>إجمالي المرتجعات</th><th>رصيد العملاء</th></tr></thead><tbody>'+(rows.length?geoSalesRowsHtml(rows):'<tr><td colspan="6">لا توجد حركة.</td></tr>')+'</tbody></table></div>';
-    if(itemsBox)itemsBox.innerHTML='<h3>ملخص حركة الأصناف</h3><div class="info">من '+from+' إلى '+to+' | الكميات بوحدة الصنف الأساسية</div><div class="table-responsive"><table class="print-table"><thead><tr><th>الصنف</th><th>الوحدة</th><th>إجمالي مشتريات</th><th>إجمالي مبيعات</th><th>إجمالي مرتجعات</th><th>رصيد حالي</th></tr></thead><tbody>'+(items.length?geoItemRowsHtml(items):'<tr><td colspan="6">لا توجد حركة أصناف خلال الفترة.</td></tr>')+'</tbody></table></div>';
-    if(customersBox)customersBox.innerHTML='<h3>ملخص العملاء</h3><div class="info">من '+from+' إلى '+to+' | الرصيد حتى نهاية الفترة</div>'+customerBalanceStatsHtml(customers)+'<div class="table-responsive"><table class="print-table"><thead><tr><th>العميل</th><th>المحافظة</th><th>رصيد أول المدة</th><th>إجمالي مبيعات</th><th>إجمالي مرتجعات</th><th>إجمالي تحصيلات</th><th>رصيد العميل</th></tr></thead><tbody>'+(customers.length?customerBalanceRowsHtml(customers):'<tr><td colspan="7">لا توجد حركة عملاء.</td></tr>'+customerBalanceRowsHtml([]))+'</tbody></table></div>';
+    box.innerHTML='<h3>ملخص تعاملات المحافظة</h3><div class="info">من '+from+' إلى '+to+' | الرصيد المالي للعملاء حتى نهاية الفترة</div><div class="table-responsive"><table class="print-table"><thead><tr><th>المحافظة</th><th>رصيد أول المدة</th><th>إجمالي المبيعات</th><th>إجمالي التحصيلات</th><th>إجمالي المرتجعات</th><th>مرتجعات مخصومة من المديونية</th><th>فروق الاستبدال</th><th>رصيد العملاء</th></tr></thead><tbody>'+(rows.length?geoSalesRowsHtml(rows):'<tr><td colspan="8">لا توجد حركة.</td></tr>')+'</tbody></table></div>';
+    if(itemsBox)itemsBox.innerHTML='<h3>ملخص حركة الأصناف</h3><div class="info">من '+from+' إلى '+to+' | الكميات بوحدة الصنف الأساسية</div><div class="table-responsive"><table class="print-table"><thead><tr><th>الصنف</th><th>الوحدة</th><th>إجمالي مشتريات</th><th>إجمالي مبيعات</th><th>إجمالي الاستبدالات</th><th>إجمالي مرتجعات</th><th>رصيد حالي</th></tr></thead><tbody>'+(items.length?geoItemRowsHtml(items):'<tr><td colspan="7">لا توجد حركة أصناف خلال الفترة.</td></tr>')+'</tbody></table></div>';
+    if(customersBox)customersBox.innerHTML='<h3>ملخص العملاء</h3><div class="info">من '+from+' إلى '+to+' | الرصيد حتى نهاية الفترة</div>'+customerBalanceStatsHtml(customers)+'<div class="table-responsive"><table class="print-table"><thead><tr><th>العميل</th><th>المحافظة</th><th>رصيد أول المدة</th><th>إجمالي مبيعات</th><th>إجمالي مرتجعات مخصومة</th><th>فروق الاستبدال</th><th>إجمالي تحصيلات</th><th>رصيد العميل</th></tr></thead><tbody>'+(customers.length?customerBalanceRowsHtml(customers):'<tr><td colspan="8">لا توجد حركة عملاء.</td></tr>'+customerBalanceRowsHtml([]))+'</tbody></table></div>';
     if(suppliersBox)suppliersBox.innerHTML='<h3>ملخص الموردين</h3><div class="info">من '+from+' إلى '+to+' | الرصيد حتى نهاية الفترة</div>'+supplierBalanceStatsHtml(suppliers)+'<div class="table-responsive"><table class="print-table"><thead><tr><th>المورد</th><th>رصيد أول المدة</th><th>مشتريات آجلة</th><th>إضافات آجلة</th><th>مرتجعات مخصومة</th><th>دفعات</th><th>رصيد المورد</th></tr></thead><tbody>'+(suppliers.length?supplierBalanceRowsHtml(suppliers):'<tr><td colspan="7">لا توجد حركة موردين.</td></tr>'+supplierBalanceRowsHtml([]))+'</tbody></table></div>';
   }catch(e){
     const message=esc(err(e));
