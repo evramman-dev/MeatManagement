@@ -4461,7 +4461,7 @@ async function viewCustomerStatement(c) {
     $("modalStatementSummary").innerHTML = ""; 
     modal.classList.remove("hidden"); 
     try { 
-        const [invoices, collections, retRows] = await Promise.all([
+        const [invoices, collections, retRows, creditBalanceResult] = await Promise.all([
           fetchAllRows(db.from("sales_invoices")
             .select("sales_invoice_id, invoice_number, invoice_date, net_total, paid_amount, remaining_amount, status")
             .eq("customer_id", c.customer_id)
@@ -4474,10 +4474,14 @@ async function viewCustomerStatement(c) {
             .eq("status", "POSTED")
             .order("collection_date", { ascending: true })
             .order("collection_id", { ascending: true })),
-          fetchAllRows(db.rpc("get_customer_returns", { p_customer_id: c.customer_id }))
-        ]); 
+          fetchAllRows(db.rpc("get_customer_returns", { p_customer_id: c.customer_id })),
+          db.rpc("get_customer_credit_balance_v1", { p_customer_id: Number(c.customer_id) })
+        ]);
+        if(creditBalanceResult.error)throw creditBalanceResult.error;
+        const currentCreditBalance=Number(creditBalanceResult.data||0); 
         const timeline = []; 
-        let totalInvoiced = 0, totalPaid = 0, totalDebtReturns = 0, totalCashBack = 0; 
+        let totalInvoiced = 0, totalPaid = 0, totalDebtReturns = 0, totalCashBack = 0;
+        let totalExchangeDebtAdded = 0, totalExchangeDebtReduced = 0, totalExchangeCreditIssued = 0; 
         (invoices || []).forEach(inv => { 
           timeline.push({ date: inv.invoice_date, type: 'invoice', ref: inv.invoice_number, desc: "فاتورة بيع", debit: Number(inv.net_total), credit: 0 }); 
           totalInvoiced += Number(inv.net_total); 
@@ -4486,14 +4490,35 @@ async function viewCustomerStatement(c) {
           timeline.push({ date: col.collection_date, type: 'collection', ref: col.collection_number, desc: "تحصيل (" + paymentTypeName(col.payment_method) + ")", debit: 0, credit: Number(col.amount) }); 
           totalPaid += Number(col.amount); 
         }); 
-        (retRows || []).forEach(r => { 
-          const rv = Number(r.total_returned_value) || 0; 
-          if (r.cash_action === "DEDUCT_DEBT") {
-            timeline.push({ date: r.return_date, type: "return", ref: r.return_number, desc: "مرتجع بيع - خصم من المديونية", debit: 0, credit: rv }); 
-            totalDebtReturns += rv; 
-          } else if (r.cash_action === "CASH_BACK") {
-            timeline.push({ date: r.return_date, type: "return", ref: r.return_number, desc: "مرتجع بيع - رد نقدية، لا يؤثر على المديونية", debit: 0, credit: 0 }); 
-            totalCashBack += rv; 
+        (retRows || []).forEach(r => {
+          const rv = Number(r.total_returned_value) || 0;
+          if(r.return_type==="EXCHANGE"){
+            const diff=Number(r.price_difference)||0;
+            let debit=0,credit=0,desc="استبدال - دون فرق مالي";
+            if(r.cash_action==="DEDUCT_DEBT"){
+              debit=Math.max(diff,0);credit=Math.max(-diff,0);
+              totalExchangeDebtAdded+=debit;totalExchangeDebtReduced+=credit;
+              desc="استبدال - تسوية فرق السعر مع المديونية";
+            }else if(r.cash_action==="CUSTOMER_PAYS_CREDIT"){
+              debit=Math.max(diff,0);totalExchangeDebtAdded+=debit;
+              desc="استبدال - إضافة فرق السعر إلى المديونية";
+            }else if(r.cash_action==="CUSTOMER_PAYS_CASH"){
+              debit=Math.max(diff,0);credit=Math.max(diff,0);
+              desc="استبدال - تحصيل فرق السعر نقدًا";
+            }else if(r.cash_action==="CASH_BACK"){
+              totalCashBack+=Math.abs(diff);
+              desc="استبدال - رد فرق السعر نقدًا، لا يؤثر على المديونية";
+            }else if(r.cash_action==="CREDIT_BALANCE"){
+              totalExchangeCreditIssued+=Math.abs(diff);
+              desc="استبدال - إضافة فرق السعر إلى الرصيد الدائن المستقل";
+            }
+            timeline.push({date:r.return_date,type:"exchange",ref:r.return_number,desc,debit,credit});
+          }else if(r.cash_action==="DEDUCT_DEBT"){
+            timeline.push({date:r.return_date,type:"return",ref:r.return_number,desc:"مرتجع بيع - خصم من المديونية",debit:0,credit:rv});
+            totalDebtReturns+=rv;
+          }else if(r.cash_action==="CASH_BACK"){
+            timeline.push({date:r.return_date,type:"return",ref:r.return_number,desc:"مرتجع بيع - رد نقدية، لا يؤثر على المديونية",debit:0,credit:0});
+            totalCashBack+=rv;
           }
         }); 
         timeline.sort((a, b) => new Date(a.date) - new Date(b.date)); 
@@ -4512,10 +4537,10 @@ async function viewCustomerStatement(c) {
             ? "رصيد دائن للعميل: " + fmt(Math.abs(runningBalance))
             : "الحساب متسوي";
         const finalBalanceColor = runningBalance > 0 ? "red" : runningBalance < 0 ? "#176b3a" : "#333";
-        $("modalStatementSummary").innerHTML = `<div class="line"><span>الرصيد الافتتاحي:</span><span>${fmt(c.opening_balance||0)}</span></div><div class="line"><span>إجمالي المبيعات:</span><span>${fmt(totalInvoiced)}</span></div><div class="line"><span>إجمالي المدفوع:</span><span style="color:green;">${fmt(totalPaid)}</span></div><div class="line"><span>مرتجعات خصمت من المديونية:</span><span style="color:orange;">${fmt(totalDebtReturns)}</span></div><div class="line"><span>مرتجعات رُدت نقدًا:</span><span>${fmt(totalCashBack)}</span></div><div class="line grand"><span>الرصيد النهائي:</span><span style="color:${finalBalanceColor};">${finalBalanceLabel}</span></div>`; 
+        $("modalStatementSummary").innerHTML = `<div class="line"><span>الرصيد الافتتاحي:</span><span>${fmt(c.opening_balance||0)}</span></div><div class="line"><span>إجمالي المبيعات:</span><span>${fmt(totalInvoiced)}</span></div><div class="line"><span>إجمالي المدفوع:</span><span style="color:green;">${fmt(totalPaid)}</span></div><div class="line"><span>مرتجعات خصمت من المديونية:</span><span style="color:orange;">${fmt(totalDebtReturns)}</span></div><div class="line"><span>فروق استبدال أضيفت للمديونية:</span><span>${fmt(totalExchangeDebtAdded)}</span></div><div class="line"><span>فروق استبدال خفضت المديونية:</span><span>${fmt(totalExchangeDebtReduced)}</span></div><div class="line"><span>مرتجعات وفروق رُدت نقدًا:</span><span>${fmt(totalCashBack)}</span></div><div class="line"><span>فروق استبدال حُولت إلى رصيد دائن:</span><span>${fmt(totalExchangeCreditIssued)}</span></div><div class="line"><span>الرصيد الدائن المستقل الحالي:</span><span style="color:#176b3a;">${fmt(currentCreditBalance)}</span></div><div class="line grand"><span>الرصيد النهائي للمديونية:</span><span style="color:${finalBalanceColor};">${finalBalanceLabel}</span></div>`; 
         const waBtn = $("shareStatementWhatsappBtn"); 
         waBtn.onclick = () => { 
-          let waText = `*كشف حساب عميل*\nالعميل: ${c.customer_name}\nالتاريخ: ${formatDate()}\n------------------------\nإجمالي المبيعات: ${fmt(totalInvoiced)}\nإجمالي المدفوع: ${fmt(totalPaid)}\nمرتجعات خصمت من المديونية: ${fmt(totalDebtReturns)}\nمرتجعات رُدت نقدًا: ${fmt(totalCashBack)}\n------------------------\n*${finalBalanceLabel}*`; 
+          let waText = `*كشف حساب عميل*\nالعميل: ${c.customer_name}\nالتاريخ: ${formatDate()}\n------------------------\nإجمالي المبيعات: ${fmt(totalInvoiced)}\nإجمالي المدفوع: ${fmt(totalPaid)}\nمرتجعات خصمت من المديونية: ${fmt(totalDebtReturns)}\nفروق استبدال أضيفت للمديونية: ${fmt(totalExchangeDebtAdded)}\nفروق استبدال خفضت المديونية: ${fmt(totalExchangeDebtReduced)}\nمرتجعات وفروق رُدت نقدًا: ${fmt(totalCashBack)}\nالرصيد الدائن المستقل الحالي: ${fmt(currentCreditBalance)}\n------------------------\n*${finalBalanceLabel}*`; 
           let phone = formatWaPhone(c.phone); 
           window.open(phone ? `https://wa.me/${phone}?text=${encodeURIComponent(waText)}` : `https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); 
         }; 
