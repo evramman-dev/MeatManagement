@@ -114,6 +114,56 @@ BEGIN
 END
 $migration$;
 
+
+-- Reverse any previously recorded scrap movement before the original return is cancelled.
+DO $cancel_scrap$
+DECLARE d text; anchor text; addition text;
+BEGIN
+ d:=pg_get_functiondef('public.cancel_sales_return_internal_return_hold(bigint,text)'::regprocedure);
+ anchor:=$anchor$  -- Remove goods previously received as a return.$anchor$;
+ addition:=$addition$  -- Restore scrapped returned stock first so the original return can be fully reversed.
+  FOR v_qty IN
+    SELECT sm.movement_id,sm.location_id,sm.product_id,sm.quantity_change,
+           sm.unit_cost,sm.total_cost,sm.sales_return_item_id
+    FROM public.stock_movements sm
+    WHERE sm.sales_return_id=p_sales_return_id
+      AND sm.movement_type='ISSUE'
+      AND sm.notes LIKE 'هالك مرتجع %'
+      AND sm.reversal_of_movement_id IS NULL
+      AND NOT EXISTS (
+        SELECT 1 FROM public.stock_movements rev
+        WHERE rev.reversal_of_movement_id=sm.movement_id
+      )
+    ORDER BY sm.movement_id
+  LOOP
+    INSERT INTO public.stock_balances(location_id,product_id,quantity,updated_at)
+    VALUES(v_qty.location_id,v_qty.product_id,0,now())
+    ON CONFLICT(location_id,product_id) DO NOTHING;
+
+    UPDATE public.stock_balances
+    SET quantity=quantity+ABS(v_qty.quantity_change),updated_at=now()
+    WHERE location_id=v_qty.location_id AND product_id=v_qty.product_id
+    RETURNING quantity INTO v_new_stock;
+
+    INSERT INTO public.stock_movements(
+      location_id,product_id,movement_type,quantity_change,quantity_after,
+      notes,created_by,trip_id,sales_return_id,sales_return_item_id,
+      unit_cost,total_cost,reversal_of_movement_id
+    )
+    VALUES(
+      v_qty.location_id,v_qty.product_id,'RETURN',ABS(v_qty.quantity_change),v_new_stock,
+      'عكس هالك مرتجع '||v_return.return_number,auth.uid(),v_return.trip_id,
+      p_sales_return_id,v_qty.sales_return_item_id,v_qty.unit_cost,
+      v_qty.total_cost,v_qty.movement_id
+    );
+  END LOOP;
+
+$addition$;
+ IF position(anchor in d)=0 THEN RAISE EXCEPTION 'cancel_sales_return scrap reversal anchor changed'; END IF;
+ EXECUTE replace(d,anchor,addition||anchor);
+END
+$cancel_scrap$;
+
 -- Keep all security-definer entry points restricted to authenticated callers.
 REVOKE ALL ON FUNCTION public.settle_trip(bigint,bigint) FROM PUBLIC,anon;
 REVOKE ALL ON FUNCTION public.create_stock_transfer(bigint,bigint,date,jsonb,text,uuid) FROM PUBLIC,anon;
