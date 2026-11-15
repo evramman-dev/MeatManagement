@@ -56,6 +56,25 @@ test('Supplier workflow guards: cancelled documents, supplier profile and paymen
   expect(qaHtml).toContain('notes: notes || null');
 });
 
+test('Sales invoice retries reuse the same request ID and only clear it after success', () => {
+  expect(qaHtml).toContain('const requestStorageKey="mm_sales_invoice_pending";');
+  expect(qaHtml).toContain('const requestPayload={customer_id:Number(customerId),location_id:Number(locationId),invoice_date:$("invoiceDate").value,discount:(subTotal*(discount/100)),notes:$("invoiceNotes").value||null,items:items,trip_id:tripId,payments:payments};');
+  expect(qaHtml).toContain('const requestId=getRequestId(requestStorageKey,requestPayload);');
+  expect(qaHtml).toContain('p_request_id: requestId');
+  expect(qaHtml).toContain('if(!error) clearRequestId(requestStorageKey);');
+  expect(qaHtml).toContain('if(error) throw error;');
+
+  const start=qaHtml.indexOf('if($("invoiceForm")) $("invoiceForm").addEventListener("submit"');
+  const end=qaHtml.indexOf('// ========== فواتير المشتريات ==========',start);
+  expect(start).toBeGreaterThanOrEqual(0);
+  expect(end).toBeGreaterThan(start);
+  const invoiceSource=qaHtml.slice(start,end);
+  expect(invoiceSource).toContain('getRequestId(requestStorageKey,requestPayload)');
+  expect(invoiceSource).toContain('p_request_id: requestId');
+  expect(invoiceSource).toContain('if(!error) clearRequestId(requestStorageKey);');
+  expect(invoiceSource).toContain('if(error) throw error;');
+});
+
 test('Sales return retries reuse the same return number and item request IDs', () => {
   expect(qaHtml).toContain('function getSalesReturnRequest(storageKey,payload,itemCount)');
   expect(qaHtml).toContain('pending={request_id:makeId(),return_number:"RET-"+Date.now()+"-"+Math.random().toString(36).slice(2,8).toUpperCase(),item_request_ids:Array.from({length:itemCount},()=>makeId()),payload:normalized}');
