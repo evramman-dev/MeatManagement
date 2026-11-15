@@ -543,7 +543,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div style="margin-top:20px;">
 <div class="dashboard-title">🔔 التنبيهات المهمة</div>
 <div id="tasksList"><div class="empty">جارٍ تحميل مهامك...</div></div>
-<div class="task-box" style="margin-top:14px;">
+<div class="task-box" style="margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:10px;background:#fff;">
   <div class="dashboard-title">تنبيهات المهام الموجهة إليك <span id="taskNotificationsUnread" class="notification-count">0</span></div>
   <div id="taskNotificationsList"><div class="empty">جارٍ تحميل تنبيهات المهام...</div></div>
 </div>
@@ -10146,7 +10146,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
       const userId=await getSignedInUserId();
       const {data,error}=await db.from("notification_recipients").select("notification_id,read_at,notifications(notification_type,title,body,created_at,due_at,entity_type,entity_id)").eq("user_id",userId);
       if(error)throw error;
-      const rows=(data||[]).filter(x=>x.notifications).sort((a,b)=>new Date(b.notifications.created_at||0)-new Date(a.notifications.created_at||0));
+      const rows=(data||[]).filter(x=>x.notifications&&x.notifications.notification_type!=="TASK").sort((a,b)=>new Date(b.notifications.created_at||0)-new Date(a.notifications.created_at||0));
       const unread=rows.filter(x=>!x.read_at).length;
       if($("notificationUnreadCount"))$("notificationUnreadCount").textContent=String(unread);if($("homeNotificationButtonCount"))$("homeNotificationButtonCount").textContent=String(unread);
       if($("markAllNotificationsReadBtn"))$("markAllNotificationsReadBtn").disabled=unread===0;
@@ -10160,9 +10160,17 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
     const btn=$("markAllNotificationsReadBtn");if(btn)btn.disabled=true;
     try{
       const userId=await getSignedInUserId();
-      const {data,error}=await db.from("notification_recipients").update({read_at:new Date().toISOString()}).eq("user_id",userId).is("read_at",null).select("notification_recipient_id");
-      if(error)throw error;
-      await loadNotifications();showToast("تم تعليم التنبيهات كمقروءة.","success");
+      const {data:pending,error:pendingError}=await db.from("notification_recipients")
+        .select("notification_recipient_id,notifications(notification_type)")
+        .eq("user_id",userId).is("read_at",null);
+      if(pendingError)throw pendingError;
+      const ids=(pending||[]).filter(row=>row.notifications?.notification_type!=="TASK").map(row=>row.notification_recipient_id);
+      if(ids.length){
+        const {error}=await db.from("notification_recipients").update({read_at:new Date().toISOString()})
+          .eq("user_id",userId).in("notification_recipient_id",ids);
+        if(error)throw error;
+      }
+      await loadNotifications();showToast("تم تعليم تنبيهات مركز الإشعارات كمقروءة.","success");
     }catch(e){showToast("تعذر تعليم الكل كمقروء: "+err(e),"error",7000);if(btn)btn.disabled=false;}
   }
   async function sendManualNotification(){
