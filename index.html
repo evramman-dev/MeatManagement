@@ -4048,8 +4048,8 @@ async function buildGeoSalesSummary(from,to){
     const beforeSales=invRows.filter(x=>x.day<from).reduce((a,x)=>a+x.amount,0);
     const opening=(customerOpeningMap.get(key)||0)+beforeSales-(openingCollections.get(key)||0)-(openingDebtReturns.get(key)||0)+(openingExchangeAdjustments.get(key)||0);
     row.opening+=opening;
-    row.balance+=opening+(periodSalesByCustomer.get(key)||0)-(periodCollections.get(key)||0)-row.debtReturns+row.exchangeAdjustments;
   });
+  map.forEach(row=>{row.balance=row.opening+row.sales-row.collections-row.debtReturns+row.exchangeAdjustments;});
   return Array.from(map.values()).filter(x=>x.opening||x.sales||x.collections||x.returns||x.balance).sort((a,b)=>a.name.localeCompare(b.name,"ar"));
 }
 async function buildGeoItemMovementSummary(from,to){
