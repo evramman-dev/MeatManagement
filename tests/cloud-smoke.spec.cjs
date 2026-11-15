@@ -6,6 +6,7 @@ const exchangeMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supa
 const exchangeCancellationMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115144743_fix_sales_exchange_cancellation_accounting.sql'), 'utf8');
 const exchangeCancellationOrderMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115144800_fix_sales_exchange_cancellation_stock_reversal_order.sql'), 'utf8');
 const legacyExchangeCancelGuardSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115145032_guard_legacy_sales_return_cancel_from_exchanges.sql'), 'utf8');
+const fixedAssetsPolicyMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115145626_consolidate_fixed_assets_select_policies.sql'), 'utf8');
 
 test.use({ serviceWorkers: 'block' });
 
@@ -127,6 +128,14 @@ test('Same-product exchange cancellation reverses stock movements in reverse ord
 test('Legacy sales return cancellation cannot bypass the exchange-specific reversal', () => {
   expect(legacyExchangeCancelGuardSql).toContain("IF v_return.return_type='EXCHANGE' THEN");
   expect(legacyExchangeCancelGuardSql).toContain('استخدم دالة إلغاء الاستبدال المخصصة.');
+});
+
+test('Fixed asset SELECT permissions are consolidated without losing either access path', () => {
+  expect(fixedAssetsPolicyMigrationSql).toContain("has_permission('ACCOUNTING_VIEW')");
+  expect(fixedAssetsPolicyMigrationSql).toContain("has_permission('ACCOUNTING_MANAGE')");
+  expect(fixedAssetsPolicyMigrationSql).toContain("source_type='SUPPLIER_CREDIT'");
+  expect(fixedAssetsPolicyMigrationSql).toContain("has_permission('SUPPLIERS_VIEW')");
+  expect(fixedAssetsPolicyMigrationSql).toContain("has_permission('SUPPLIERS_MANAGE')");
 });
 
 test('Collection views label cancelled records and exclude them from posted totals', () => {
