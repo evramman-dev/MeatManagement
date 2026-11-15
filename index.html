@@ -4018,12 +4018,12 @@ async function buildGeoSalesSummary(from,to){
   await loadCustomerGeoData();
   const [y,m,d]=String(to).split("-").map(Number),nextDate=new Date(Date.UTC(y,m-1,d+1)).toISOString().slice(0,10);
   const [customers,sales,collections,returns]=await Promise.all([
-    fetchAllRows(db.from("customers").select("customer_id,governorate_id").order("customer_id")),
+    fetchAllRows(db.from("customers").select("customer_id,governorate_id,opening_balance").order("customer_id")),
     fetchAllRows(db.from("sales_invoices").select("sales_invoice_id,customer_id,invoice_date,net_total,status").lt("invoice_date",nextDate).in("status",["POSTED","PAID","PARTIAL"]).order("invoice_date")),
     fetchAllRows(db.from("customer_collections").select("sales_invoice_id,customer_id,amount,collection_date,status,allocation_type").eq("status","POSTED").lt("collection_date",nextDate).order("collection_date")),
     fetchAllRows(db.from("sales_returns").select("sales_invoice_id,customer_id,return_date,total_returned_value,price_difference,return_type,cash_action,status").eq("status","POSTED").lt("return_date",nextDate).order("return_date"))
   ]);
-  const customerGovMap=new Map(customers.map(c=>[String(c.customer_id),c.governorate_id])),map=new Map();
+  const customerGovMap=new Map(customers.map(c=>[String(c.customer_id),c.governorate_id])),customerOpeningMap=new Map(customers.map(c=>[String(c.customer_id),Number(c.opening_balance||0)])),map=new Map();
   const ensure=id=>{const key=id==null?"unknown":String(id);if(!map.has(key))map.set(key,{name:id==null?"غير محدد":geoGovernorateName(id),opening:0,sales:0,collections:0,returns:0,debtReturns:0,exchangeAdjustments:0,balance:0});return map.get(key);};
   const invoicesByCustomer=new Map(),openingCollections=new Map(),periodCollections=new Map(),openingDebtReturns=new Map(),openingExchangeAdjustments=new Map(),periodReturnsByCustomer=new Map(),periodSalesByCustomer=new Map();
   customerGovernoratesCache.forEach(g=>ensure(g.governorate_id));
@@ -4042,11 +4042,11 @@ async function buildGeoSalesSummary(from,to){
       row.exchangeAdjustments+=effect.exchangeAdjustment;
     }
   });
-  const keys=new Set([...invoicesByCustomer.keys(),...openingCollections.keys(),...periodCollections.keys(),...openingDebtReturns.keys(),...openingExchangeAdjustments.keys(),...periodReturnsByCustomer.keys(),...periodSalesByCustomer.keys()]);
+  const keys=new Set([...customers.map(c=>String(c.customer_id)),...invoicesByCustomer.keys(),...openingCollections.keys(),...periodCollections.keys(),...openingDebtReturns.keys(),...openingExchangeAdjustments.keys(),...periodReturnsByCustomer.keys(),...periodSalesByCustomer.keys()]);
   keys.forEach(key=>{
     const row=ensure(customerGovMap.get(key)),invRows=invoicesByCustomer.get(key)||[];
     const beforeSales=invRows.filter(x=>x.day<from).reduce((a,x)=>a+x.amount,0);
-    const opening=beforeSales-(openingCollections.get(key)||0)-(openingDebtReturns.get(key)||0)+(openingExchangeAdjustments.get(key)||0);
+    const opening=(customerOpeningMap.get(key)||0)+beforeSales-(openingCollections.get(key)||0)-(openingDebtReturns.get(key)||0)+(openingExchangeAdjustments.get(key)||0);
     row.opening+=opening;
     row.balance+=opening+(periodSalesByCustomer.get(key)||0)-(periodCollections.get(key)||0)-row.debtReturns+row.exchangeAdjustments;
   });
@@ -4084,9 +4084,9 @@ function geoItemRowsHtml(rows){
 async function loadGeoSalesReport(){
   const body=$("geoSalesTable")?.querySelector("tbody"),itemsBody=$("geoItemsTable")?.querySelector("tbody");if(!body||!itemsBody)return;
   const from=$("geoSalesFromDate").value||monthStartISO(),to=$("geoSalesToDate").value||todayISO();
-  if(from>to){body.innerHTML='<tr><td colspan="6">تاريخ البداية يجب أن يسبق تاريخ النهاية.</td></tr>';return;}
+  if(from>to){body.innerHTML='<tr><td colspan="8">تاريخ البداية يجب أن يسبق تاريخ النهاية.</td></tr>';return;}
   body.innerHTML='<tr><td colspan="8">جارٍ تحميل التقرير...</td></tr>';itemsBody.innerHTML='<tr><td colspan="7">جارٍ تحميل حركة الأصناف...</td></tr>';
-  try{const [rows,items]=await Promise.all([buildGeoSalesSummary(from,to),buildGeoItemMovementSummary(from,to)]);body.innerHTML=rows.length?geoSalesRowsHtml(rows):'<tr><td colspan="6">لا توجد حركة خلال الفترة.</td></tr>';itemsBody.innerHTML=items.length?geoItemRowsHtml(items):'<tr><td colspan="7">لا توجد حركة أصناف خلال الفترة.</td></tr>';}
+  try{const [rows,items]=await Promise.all([buildGeoSalesSummary(from,to),buildGeoItemMovementSummary(from,to)]);body.innerHTML=rows.length?geoSalesRowsHtml(rows):'<tr><td colspan="8">لا توجد حركة خلال الفترة.</td></tr>';itemsBody.innerHTML=items.length?geoItemRowsHtml(items):'<tr><td colspan="7">لا توجد حركة أصناف خلال الفترة.</td></tr>';}
   catch(e){const message=esc(err(e));body.innerHTML=`<tr><td colspan="8" style="color:red;">تعذر تحميل التقرير: ${message}</td></tr>`;itemsBody.innerHTML=`<tr><td colspan="7" style="color:red;">تعذر تحميل حركة الأصناف: ${message}</td></tr>`;}
 }
 function openHomeDetail(panelId){
