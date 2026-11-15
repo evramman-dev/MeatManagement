@@ -8831,7 +8831,7 @@ let productionExecutionMaterials=[];
 function productionExecOption(value,label){const o=document.createElement("option");o.value=String(value??"");o.textContent=label;return o;}
 function productionSourceLabel(m){const p=productsCache.find(x=>String(x.product_id)===String(m.raw_product_id));return (p?.product_name||productName(m.raw_product_id))+" — "+unitName(m.unit_id)+" (الأساسية: "+unitName(p?.base_unit_id)+")";}
 function fillProductionSourceSelect(el){el.replaceChildren(productionExecOption("","اختر الخامة المصدر"));productionExecutionMaterials.forEach(m=>el.appendChild(productionExecOption(m.material_id,productionSourceLabel(m))));}
-function fillProductionRecoveredProductSelect(el){el.replaceChildren(productionExecOption("","اختر المنتج المسترجع"));productsCache.filter(p=>p.is_active&&(p.can_be_produced||(Number(p.category_id)===16&&p.product_name.startsWith("طبق")))&&["RAW","SEMI_FINISHED","FINISHED"].includes(p.product_type)).forEach(p=>el.appendChild(productionExecOption(p.product_id,p.product_name+" — "+unitName(p.base_unit_id))));}
+function fillProductionRecoveredProductSelect(el){el.replaceChildren(productionExecOption("","اختر المنتج المسترجع"));productsCache.filter(p=>p.is_active&&(p.can_be_produced||(Number(p.category_id)===16&&p.product_name.startsWith("طبق")))&&["RAW","SEMI_FINISHED"].includes(p.product_type)).forEach(p=>el.appendChild(productionExecOption(p.product_id,p.product_name+" — "+unitName(p.base_unit_id))));}
 function addProductionRecoveredRow(){
  const row=document.createElement("div");row.className="item-row production-cost-row";
  const source=document.createElement("select");source.className="production-recovered-source";source.required=true;fillProductionSourceSelect(source);
