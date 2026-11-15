@@ -1540,15 +1540,19 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <label for="returnTrip">الجولة <span class="muted">(تُحدد تلقائيًا من الفاتورة إن كانت مرتبطة بجولة)</span></label><select id="returnTrip"><option value="">اختر الجولة</option></select>
 <label for="returnInvoice">الفاتورة الأصلية *</label><select id="returnInvoice" required><option value="">اختر الفاتورة</option></select>
 <label for="returnType">نوع المرتجع *</label>
-<select id="returnType" required onchange="document.getElementById('exchangeSection').classList.toggle('hidden', this.value !== 'EXCHANGE')">
+<select id="returnType" required onchange="updateSalesReturnTypeUI()">
 <option value="RETURN">مرتجع فقط</option>
+<option value="EXCHANGE">استبدال</option>
 </select>
 <label for="returnReason">سبب المرتجع</label><textarea id="returnReason" rows="2"></textarea>
 <label for="returnCashAction">حركة الفلوس *</label>
 <select id="returnCashAction" required>
-<option value="AUTO">تحديد تلقائي حسب مديونية الفاتورة</option>
-<option value="DEDUCT_DEBT">خصم من مديونية الفاتورة</option>
-<option value="CASH_BACK">رد نقدية</option>
+<option value="AUTO">تحديد تلقائي</option>
+<option value="DEDUCT_DEBT">تسوية الفرق مع مديونية العميل</option>
+<option value="CUSTOMER_PAYS_CASH">العميل يدفع الفرق نقدًا</option>
+<option value="CUSTOMER_PAYS_CREDIT">إضافة الفرق على مديونية العميل</option>
+<option value="CASH_BACK">رد الفرق نقدًا</option>
+<option value="CREDIT_BALANCE">إضافة الفرق كرصد دائن للعميل</option>
 </select>
 <div id="returnCashActionInfo" class="info">اختر طريقة معالجة المرتجع.</div>
 <label id="returnTreasuryLabel" for="returnTreasury" class="hidden" style="margin-top:10px">خزنة رد النقدية *</label>
@@ -6861,41 +6865,15 @@ async function loadReturnInvoicesForCustomer(){
  }
 }
 function updateSalesReturnCashActionUI(tripStatusOverride){
-  const action=$("returnCashAction")?.value||"AUTO";
-  const selectedTripId=Number($("returnInvoice")?.selectedOptions?.[0]?.dataset?.trip||0);
-  const trip=tripsCache.find(t=>Number(t.trip_id)===selectedTripId);
-  const activeTrip=tripStatusOverride!==undefined
-    ?["DRAFT","ACTIVE"].includes(tripStatusOverride)
-    :!!trip&&["DRAFT","ACTIVE"].includes(trip.status);
-  const needsTreasury=action==="CASH_BACK"&&!activeTrip;
-  const treasury=$("returnTreasury");
-  const label=$("returnTreasuryLabel");
-  const info=$("returnCashActionInfo");
-  if(treasury){
-    const previous=treasury.value;
-    treasury.replaceChildren();
-    const first=document.createElement("option");
-    first.value="";first.textContent="اختر خزنة رد النقدية";
-    treasury.appendChild(first);
-    treasuriesCache.filter(t=>t.is_active&&["CASH","BANK","INSTAPAY"].includes(t.treasury_type)&&Number(t.treasury_id)!==8)
-      .forEach(t=>{const option=document.createElement("option");option.value=String(t.treasury_id);option.textContent=t.treasury_name+" ("+fmt(t.current_balance)+")";treasury.appendChild(option);});
-    treasury.value=[...treasury.options].some(o=>o.value===previous)?previous:"";
-    treasury.required=needsTreasury;
-    treasury.disabled=!needsTreasury;
-    treasury.classList.toggle("hidden",!needsTreasury);
-  }
+  const action=$("returnCashAction")?.value||"AUTO";const selectedTripId=Number($("returnInvoice")?.selectedOptions?.[0]?.dataset?.trip||0);
+  const trip=tripsCache.find(t=>Number(t.trip_id)===selectedTripId);const activeTrip=tripStatusOverride!==undefined?["DRAFT","ACTIVE"].includes(tripStatusOverride):!!trip&&["DRAFT","ACTIVE"].includes(trip.status);
+  const needsTreasury=["CASH_BACK","CUSTOMER_PAYS_CASH"].includes(action)&&!activeTrip;const treasury=$("returnTreasury"),label=$("returnTreasuryLabel"),info=$("returnCashActionInfo");
+  if(treasury){const previous=treasury.value;treasury.replaceChildren();const first=document.createElement("option");first.value="";first.textContent="اختر خزنة التسوية";treasury.appendChild(first);treasuriesCache.filter(t=>t.is_active&&["CASH","BANK","INSTAPAY"].includes(t.treasury_type)&&Number(t.treasury_id)!==8).forEach(t=>{const o=document.createElement("option");o.value=String(t.treasury_id);o.textContent=t.treasury_name+" ("+fmt(t.current_balance)+")";treasury.appendChild(o);});treasury.value=[...treasury.options].some(o=>o.value===previous)?previous:"";treasury.required=needsTreasury;treasury.disabled=!needsTreasury;treasury.classList.toggle("hidden",!needsTreasury);}
   if(label)label.classList.toggle("hidden",!needsTreasury);
-  if(info){
-    info.textContent=action==="DEDUCT_DEBT"
-      ?"سيتم خصم قيمة المرتجع من مديونية الفاتورة."
-      :activeTrip
-        ?"رد النقدية يتم من خزنة المناديب رقم 8 الخاصة بالجولة النشطة."
-        :action==="CASH_BACK"
-          ?"اختر خزنة الشركة التي سترد منها النقدية. لا تستخدم خزنة المناديب بعد إغلاق الجولة أو خارج الجولة."
-          :"إذا تحولت العملية إلى رد نقدية، ستحتاج إلى اختيار خزنة الشركة.";
-  }
+  if(info){if(action==="CUSTOMER_PAYS_CASH")info.textContent=activeTrip?"العميل يدفع الفرق إلى خزنة المناديب رقم 8.":"اختر خزنة الشركة التي سيُحصّل إليها الفرق.";else if(action==="CASH_BACK")info.textContent=activeTrip?"رد الفرق من خزنة المناديب رقم 8.":"اختر خزنة الشركة التي سيرد منها الفرق.";else if(action==="CREDIT_BALANCE")info.textContent="سيُضاف الفرق إلى الرصيد الدائن للعميل.";else if(action==="CUSTOMER_PAYS_CREDIT")info.textContent="سيُضاف الفرق إلى مديونية العميل.";else info.textContent=action==="DEDUCT_DEBT"?"سيُسوّى الفرق مع مديونية العميل.":"اختر طريقة التسوية.";}
 }
-function resetSalesReturnForm(){salesReturnLotOptionsCache=[];salesReturnLotOptionsPromise=Promise.resolve();$("returnForm").reset();$("returnItems").replaceChildren();$("exchangeItems").replaceChildren();returnItemCounter=0;$("returnDate").value=todayISO();fillReturnCustomerSelect();fillReturnTripSelect();$("returnTrip").disabled=true;fillReturnInvoiceSelect();fillTreasurySelects();updateSalesReturnCashActionUI();addSalesReturnItemRow($("returnItems"));updateSalesReturnTotals();clear($("returnFormMsg"));$("returnFormModal").classList.add("active");}
+
+function resetSalesReturnForm(){salesReturnLotOptionsCache=[];salesReturnLotOptionsPromise=Promise.resolve();$("returnForm").reset();$("returnItems").replaceChildren();$("exchangeItems").replaceChildren();returnItemCounter=0;$("returnDate").value=todayISO();fillReturnCustomerSelect();fillReturnTripSelect();$("returnTrip").disabled=true;fillReturnInvoiceSelect();fillTreasurySelects();updateSalesReturnTypeUI();updateSalesReturnCashActionUI();addSalesReturnItemRow($("returnItems"));updateSalesReturnTotals();clear($("returnFormMsg"));$("returnFormModal").classList.add("active");}
 let salesReturnLotOptionsCache=[];
 let salesReturnLotOptionsPromise=Promise.resolve();
 function addSalesReturnItemRow(container){
@@ -7096,7 +7074,44 @@ function applySalesReturnOriginalPrice(row){
 }
 if($("returnInvoice"))$("returnInvoice").addEventListener("change",()=>{salesReturnLotOptionsPromise=loadSalesReturnLotOptions();});
 if($("returnCustomer"))$("returnCustomer").addEventListener("change",loadReturnInvoicesForCustomer);
-function updateSalesReturnTotals(){let a=0;document.querySelectorAll("#returnItems .item-row").forEach(r=>a+=Number(r.querySelector(".return-qty")?.value||0)*Number(r.querySelector(".return-price")?.value||0));$("returnTotalDisplay").textContent=fmt(a);$("exchangeTotalDisplay").textContent="0";$("diffDisplay").textContent=fmt(-a);}
+function salesReturnUnitFactor(productId,unitId){
+  const p=productsCache.find(x=>Number(x.product_id)===Number(productId));
+  if(!p||!unitId)return 0;
+  if(Number(unitId)===Number(p.base_unit_id))return 1;
+  const c=productUnitConversionsCache.find(x=>Number(x.product_id)===Number(productId)&&Number(x.unit_id)===Number(unitId));
+  if(c)return Number(c.base_quantity_per_unit||c.conversion_factor||0);
+  if(Number(unitId)===Number(cartonUnitId)&&Number(p.units_per_carton||0)>0)return Number(p.units_per_carton);
+  return 0;
+}
+function addSalesReturnExchangeItemRow(){
+  const row=document.createElement("div");row.className="item-row exchange-item-row";
+  const p=document.createElement("select");p.className="exchange-product";p.required=true;p.innerHTML='<option value="">اختر المنتج البديل</option>';
+  productsCache.filter(x=>x.is_active&&x.can_be_sold).forEach(x=>{const o=document.createElement("option");o.value=String(x.product_id);o.textContent=x.product_name;p.appendChild(o);});
+  const u=document.createElement("select");u.className="exchange-unit";u.required=true;
+  const q=document.createElement("input");q.type="number";q.className="exchange-qty";q.min="0.0001";q.step="0.0001";q.required=true; q.placeholder="الكمية";
+  const price=document.createElement("input");price.type="number";price.className="exchange-price";price.min="0";price.step="0.01";price.required=true;price.placeholder="سعر الوحدة";
+  const pack=document.createElement("select");pack.className="exchange-package-option";
+  const total=document.createElement("div");total.className="item-line-total";
+  const del=document.createElement("button");del.type="button";del.className="btn danger";del.textContent="حذف الصنف";
+  const grid=document.createElement("div");grid.className="grid";
+  [["المنتج البديل *",p],["الوحدة *",u],["خيار التعبئة",pack],["الكمية *",q],["سعر الوحدة *",price]].forEach(([t,x])=>{const d=document.createElement("div");const l=document.createElement("label");l.textContent=t;d.append(l,x);grid.appendChild(d);});
+  row.append(grid,total,del);$("exchangeItems").appendChild(row);
+  const fillPackages=()=>{pack.replaceChildren();const z=document.createElement("option");z.value="";z.textContent="بدون خيار تعبئة";pack.appendChild(z);packageOptionsForProduct(p.value,u.value).forEach(x=>{const o=document.createElement("option");o.value=String(x.package_option_id);o.textContent=x.option_name+" — "+fmtQty(x.weight_kg)+" كجم";pack.appendChild(o);});};
+  const recalc=()=>{total.textContent="الإجمالي: "+fmt(Number(q.value||0)*Number(price.value||0));updateSalesReturnTotals();};
+  const fill=()=>{const pr=productsCache.find(x=>Number(x.product_id)===Number(p.value));u.replaceChildren();const z=document.createElement("option");z.value="";z.textContent="اختر الوحدة";u.appendChild(z);if(pr){[pr.sales_unit_id,pr.base_unit_id,...productUnitConversionsCache.filter(x=>Number(x.product_id)===Number(pr.product_id)).map(x=>x.unit_id)].filter(Boolean).forEach(id=>{if([...u.options].some(o=>o.value===String(id)))return;const un=units.find(x=>Number(x.unit_id)===Number(id));if(un){const o=document.createElement("option");o.value=String(id);o.textContent=un.unit_name;u.appendChild(o);}});u.value=String(pr.sales_unit_id||pr.base_unit_id);}fillPackages();recalc();};
+  p.onchange=fill;u.onchange=()=>{fillPackages();recalc();};pack.onchange=recalc;q.oninput=recalc;price.oninput=recalc;del.onclick=()=>{row.remove();updateSalesReturnTotals();};fill();return row;
+}
+function updateSalesReturnTypeUI(){
+  const isExchange=$("returnType")?.value==="EXCHANGE";$("exchangeSection")?.classList.toggle("hidden",!isExchange);
+  const action=$("returnCashAction");if(action){const current=action.value;const allowed=isExchange?["DEDUCT_DEBT","CUSTOMER_PAYS_CASH","CUSTOMER_PAYS_CREDIT","CASH_BACK","CREDIT_BALANCE"]:["AUTO","DEDUCT_DEBT","CASH_BACK"];[...action.options].forEach(o=>o.hidden=!allowed.includes(o.value));if(!allowed.includes(current))action.value=isExchange?"DEDUCT_DEBT":"AUTO";}
+  if(isExchange&&!$("exchangeItems")?.children.length)addSalesReturnExchangeItemRow();updateSalesReturnTotals();updateSalesReturnCashActionUI();
+}
+function updateSalesReturnTotals(){
+  let a=0,b=0;
+  document.querySelectorAll("#returnItems .item-row").forEach(r=>a+=Number(r.querySelector(".return-qty")?.value||0)*Number(r.querySelector(".return-price")?.value||0));
+  document.querySelectorAll("#exchangeItems .exchange-item-row").forEach(r=>b+=Number(r.querySelector(".exchange-qty")?.value||0)*Number(r.querySelector(".exchange-price")?.value||0));
+  $("returnTotalDisplay").textContent=fmt(a);$("exchangeTotalDisplay").textContent=fmt(b);$("diffDisplay").textContent=fmt(b-a);
+}
 function fillSalesReturnCustomerFilter(){
   const el=$("srCustomerFilter"); if(!el)return;
   const cur=el.value; el.replaceChildren();
@@ -7151,7 +7166,7 @@ async function loadSalesReturns(){
     }
     if(canManageReturns&&["APPROVED","POSTED"].includes(r.status)){
       const cancel=document.createElement("button"); cancel.className="btn danger"; cancel.textContent="إلغاء المرتجع";
-      cancel.onclick=async()=>{const reasonText=prompt("اكتب سبب إلغاء المرتجع:");if(!reasonText)return;const {error:e}=await db.rpc("cancel_sales_return",{p_sales_return_id:Number(r.sales_return_id),p_reason:reasonText.trim()});if(e)showToast("تعذر إلغاء المرتجع: "+err(e),"error",7000);else{showToast("تم إلغاء المرتجع","success");await loadSalesReturns();await loadSales();await loadStock();}};
+      cancel.onclick=async()=>{const reasonText=prompt("اكتب سبب إلغاء المرتجع:");if(!reasonText)return;const {error:e}=await db.rpc(r.return_type==="EXCHANGE"?"cancel_sales_return_exchange_v1":"cancel_sales_return",{p_sales_return_id:Number(r.sales_return_id),p_reason:reasonText.trim()});if(e)showToast("تعذر إلغاء المرتجع: "+err(e),"error",7000);else{showToast("تم إلغاء المرتجع","success");await loadSalesReturns();await loadSales();await loadStock();}};
       actions.appendChild(cancel);
     }
     c.append(title,details,status,reason,actions); box.appendChild(c);
@@ -7246,84 +7261,48 @@ if($("srFromDate"))$("srFromDate").addEventListener("change",loadSalesReturns);
 if($("srToDate"))$("srToDate").addEventListener("change",loadSalesReturns);
 if($("addReturnBtn"))$("addReturnBtn").onclick=resetSalesReturnForm;
 if($("addReturnItemBtn"))$("addReturnItemBtn").onclick=()=>addSalesReturnItemRow($("returnItems"));
+if($("addExchangeItemBtn"))$("addExchangeItemBtn").onclick=()=>addSalesReturnExchangeItemRow();
+if($("returnType"))$("returnType").addEventListener("change",updateSalesReturnTypeUI);
 if($("returnInvoice"))$("returnInvoice").onchange=()=>{const o=$("returnInvoice").selectedOptions[0];if(o?.dataset?.customer)$("returnCustomer").value=o.dataset.customer;$("returnTrip").value=o?.dataset?.trip||"";$("returnTrip").disabled=!!$("returnInvoice").value;updateSalesReturnCashActionUI();};
 if($("returnCashAction"))$("returnCashAction").addEventListener("change",updateSalesReturnCashActionUI);
 if($("returnForm"))$("returnForm").addEventListener("submit",async e=>{
   e.preventDefault();if(!canCreateReturns)return;
   const btn=$("saveReturnBtn");busy(btn,true,"جارٍ...","حفظ المرتجع");
   try{
-    await salesReturnLotOptionsPromise;
-    const current=(await db.auth.getUser()).data.user;
-    const customerId=Number($("returnCustomer").value),invoiceId=Number($("returnInvoice").value);
-    const rows=[...document.querySelectorAll("#returnItems .item-row")];
-    if(!rows.length)throw new Error("أضف صنفًا واحدًا على الأقل للمرتجع.");
-    const returnTotal=rows.reduce((sum,row)=>sum+Number(row.querySelector(".return-qty")?.value||0)*Number(row.querySelector(".return-price")?.value||0),0);
-    const {data:invoice,error:invoiceError}=await db.from("sales_invoices").select("remaining_amount,status,trip_id,sales_rep_id").eq("sales_invoice_id",invoiceId).single();
-    if(invoiceError)throw invoiceError;
-    if(!invoice||invoice.status==="CANCELLED")throw new Error("الفاتورة الأصلية غير صالحة.");
-    let cashAction=$("returnCashAction").value;
-    const invoiceDebt=Number(invoice.remaining_amount||0);
-    if(cashAction==="AUTO"){
-      if(invoiceDebt<=0.01)cashAction="CASH_BACK";
-      else if(invoiceDebt>=returnTotal)cashAction="DEDUCT_DEBT";
-      else throw new Error("قيمة المرتجع أكبر من المديونية المتبقية. قسّم المرتجع إلى جزء يخصم من المديونية وجزء مستقل بعد تسوية الحساب.");
+    const current=(await db.auth.getUser()).data.user;const customerId=Number($("returnCustomer").value),invoiceId=Number($("returnInvoice").value),type=$("returnType").value;
+    const rows=[...document.querySelectorAll("#returnItems .item-row")];if(!rows.length)throw new Error("أضف صنفًا واحدًا على الأقل.");
+    const {data:invoice,error:invoiceError}=await db.from("sales_invoices").select("remaining_amount,status,trip_id,sales_rep_id").eq("sales_invoice_id",invoiceId).single();if(invoiceError)throw invoiceError;if(!invoice||invoice.status==="CANCELLED")throw new Error("الفاتورة الأصلية غير صالحة.");
+    let returnTripStatus=null;if(invoice.trip_id){const {data:trip,error:tripError}=await db.from("trips").select("status").eq("trip_id",invoice.trip_id).maybeSingle();if(tripError)throw tripError;returnTripStatus=trip?.status||null;}
+    const returnTripId=invoice.trip_id?Number(invoice.trip_id):null,activeTrip=["DRAFT","ACTIVE"].includes(returnTripStatus);
+    if(type==="EXCHANGE"){
+      if(!activeTrip)throw new Error("لا يمكن تنفيذ الاستبدال إلا داخل جولة مفتوحة أو نشطة.");
+      const exRows=[...document.querySelectorAll("#exchangeItems .exchange-item-row")];if(!exRows.length)throw new Error("أضف صنفًا بديلًا واحدًا على الأقل.");
+      const returnItems=rows.map(r=>({product_id:Number(r.querySelector(".return-product").value),unit_id:Number(r.querySelector(".return-unit").value),quantity:Number(r.querySelector(".return-qty").value),unit_price:Number(r.querySelector(".return-price").value),lot_id:Number(r.querySelector(".return-lot")?.value||0)||null,package_option_id:Number(r.querySelector(".return-package-option")?.value||0)||null,conversion_factor:salesReturnUnitFactor(r.querySelector(".return-product").value,r.querySelector(".return-unit").value),package_weight_kg:null,request_id:crypto.randomUUID()}));
+      const exchangeItems=exRows.map(r=>({product_id:Number(r.querySelector(".exchange-product").value),unit_id:Number(r.querySelector(".exchange-unit").value),quantity:Number(r.querySelector(".exchange-qty").value),unit_price:Number(r.querySelector(".exchange-price").value),package_option_id:Number(r.querySelector(".exchange-package-option")?.value||0)||null,conversion_factor:salesReturnUnitFactor(r.querySelector(".exchange-product").value,r.querySelector(".exchange-unit").value),package_weight_kg:null,request_id:crypto.randomUUID()}));
+      if(returnItems.some(x=>!x.product_id||!x.unit_id||x.quantity<=0||x.conversion_factor<=0)||exchangeItems.some(x=>!x.product_id||!x.unit_id||x.quantity<=0||x.conversion_factor<=0))throw new Error("راجع المنتج والوحدة والكمية. لا يوجد تحويل صالح للوحدة المختارة.");
+      const returnedTotal=returnItems.reduce((a,x)=>a+x.quantity*x.unit_price,0),exchangeTotal=exchangeItems.reduce((a,x)=>a+x.quantity*x.unit_price,0),difference=Math.round((exchangeTotal-returnedTotal)*100)/100;
+      let action=$("returnCashAction").value;if(action==="AUTO")action=difference>0.01?"CUSTOMER_PAYS_CASH":difference<-0.01?"CREDIT_BALANCE":"DEDUCT_DEBT";
+      if(difference>0.01&&!["CUSTOMER_PAYS_CASH","CUSTOMER_PAYS_CREDIT","DEDUCT_DEBT"].includes(action))throw new Error("اختر طريقة تسوية فرق السعر الموجب.");
+      if(difference<-0.01&&!["CASH_BACK","CREDIT_BALANCE","DEDUCT_DEBT"].includes(action))throw new Error("اختر طريقة تسوية فرق السعر السالب.");
+      if(Math.abs(difference)<=0.01)action="DEDUCT_DEBT";
+      let treasuryId=null;if(["CUSTOMER_PAYS_CASH","CASH_BACK"].includes(action)){treasuryId=activeTrip?8:Number($("returnTreasury")?.value||0)||null;if(!treasuryId)throw new Error("اختر خزنة التسوية.");}
+      const payload={invoice_id:invoiceId,customer_id:customerId,trip_id:returnTripId,type,date:$("returnDate").value,returnItems,exchangeItems,difference,action,treasuryId},requestKey="mm_sales_exchange_pending_"+invoiceId;
+      const req=getSalesReturnRequest(requestKey,payload,returnItems.length+exchangeItems.length);
+      const {data:id,error}=await db.rpc("create_sales_return_exchange_v1",{p_return_number:req.return_number,p_customer_id:customerId,p_trip_id:returnTripId,p_sales_rep_id:invoice.sales_rep_id?Number(invoice.sales_rep_id):null,p_sales_invoice_id:invoiceId,p_return_date:new Date(($("returnDate").value||todayISO())+"T12:00:00").toISOString(),p_reason:$("returnReason").value.trim()||null,p_notes:$("returnNotes").value.trim()||null,p_created_by:current.id,p_cash_action:action,p_treasury_id:treasuryId,p_request_id:req.request_id,p_return_items:returnItems,p_exchange_items:exchangeItems});if(error)throw error;
+      if(canApproveReturns||canManageReturns){const {error:postError}=await db.rpc("post_sales_return_exchange_v1",{p_sales_return_id:Number(id),p_created_by:current.id});if(postError)throw postError;clearRequestId(requestKey);showToast("تم اعتماد وترحيل الاستبدال","success");}else showToast("تم حفظ طلب الاستبدال. ينتظر الاعتماد.","success",7000);
+      logUserAction("SALES_RETURN","تسجيل طلب استبدال للعميل رقم "+customerId);await loadSalesReturns();await loadSales();await loadStock();$("returnFormModal").classList.remove("active");return;
     }
-    if(!["DEDUCT_DEBT","CASH_BACK"].includes(cashAction))throw new Error("هذا النموذج يسجل المرتجع فقط. اختر خصم المديونية أو رد النقدية.");
-    if(cashAction==="DEDUCT_DEBT"&&invoiceDebt<returnTotal)throw new Error("قيمة المرتجع أكبر من المديونية المتبقية.");
-    if(cashAction==="CASH_BACK"&&invoiceDebt>0.01)throw new Error("لا يمكن رد النقدية مع وجود مديونية على الفاتورة. اخصم المرتجع من المديونية أولاً.");
-    $("returnCashAction").value=cashAction;
-    let returnTripStatus=null;
-    if(invoice.trip_id){
-      const {data:trip,error:tripError}=await db.from("trips").select("status").eq("trip_id",invoice.trip_id).maybeSingle();
-      if(tripError)throw tripError;
-      returnTripStatus=trip?.status||null;
-    }
-    const activeTrip=["DRAFT","ACTIVE"].includes(returnTripStatus);
-    if(cashAction==="CASH_BACK")updateSalesReturnCashActionUI(returnTripStatus);
-    const treasuryId=cashAction==="CASH_BACK"?(activeTrip?8:Number($("returnTreasury")?.value||0)||null):null;
-    if(cashAction==="CASH_BACK"&&!activeTrip&&(!treasuryId||treasuryId===8)){
-      $("returnCashAction").value="CASH_BACK";
-      updateSalesReturnCashActionUI(returnTripStatus);
-      throw new Error("اختر خزنة الشركة لرد النقدية. خزنة المناديب مخصصة للجولات النشطة فقط.");
-    }
-    const returnRequestKey="mm_sales_return_pending_"+invoiceId;
-    const returnTripId=invoice.trip_id?Number(invoice.trip_id):null;
-    const returnPayload={invoice_id:invoiceId,customer_id:customerId,trip_id:returnTripId,return_type:"RETURN",return_date:$("returnDate").value,reason:$("returnReason").value.trim()||null,notes:$("returnNotes").value.trim()||null,cash_action:cashAction,treasury_id:treasuryId,items:rows.map(r=>({product_id:r.querySelector(".return-product").value,unit_id:r.querySelector(".return-unit").value,quantity:r.querySelector(".return-qty").value,unit_price:r.querySelector(".return-price").value,lot_id:r.querySelector(".return-lot")?.value||null,package_option_id:r.querySelector(".return-package-option")?.value||null}))};
-    const returnRequest=getSalesReturnRequest(returnRequestKey,returnPayload,rows.length);
-    const returnRequestId=returnRequest.request_id;
-    const {data:id,error}=await db.rpc("create_sales_return_v2",{
-      p_return_number:returnRequest.return_number,p_customer_id:customerId,p_trip_id:returnTripId,
-      p_sales_rep_id:invoice.sales_rep_id?Number(invoice.sales_rep_id):null,p_sales_invoice_id:invoiceId,
-      p_return_type:"RETURN",p_return_date:new Date(($("returnDate").value||todayISO())+"T12:00:00").toISOString(),
-      p_reason:$("returnReason").value.trim()||null,p_notes:$("returnNotes").value.trim()||null,
-      p_created_by:current.id,p_cash_action:cashAction,p_treasury_id:treasuryId,p_request_id:returnRequestId
-    });
-    if(error)throw error;
-    for(let itemIndex=0;itemIndex<rows.length;itemIndex++){
-      const row=rows[itemIndex];
-      const itemRequestId=returnRequest.item_request_ids[itemIndex];
-      const {error:itemError}=await db.rpc("add_sales_return_item_v2",{
-        p_sales_return_id:Number(id),p_product_id:Number(row.querySelector(".return-product").value),
-        p_unit_id:Number(row.querySelector(".return-unit").value),p_quantity:Number(row.querySelector(".return-qty").value),
-        p_unit_price:Number(row.querySelector(".return-price").value),p_discount_amount:0,p_lot_id:(Number(row.querySelector(".return-lot")?.value)||null),p_notes:null,p_package_option_id:row.querySelector(".return-package-option")?.value?Number(row.querySelector(".return-package-option").value):null,p_request_id:itemRequestId
-      });
-      if(itemError)throw itemError;
-    }
-    if(canApproveReturns||canManageReturns){
-      const {error:validationError}=await db.rpc("validate_sales_return",{p_sales_return_id:Number(id)});if(validationError)throw validationError;
-      const {error:postError}=await db.rpc("post_sales_return",{p_sales_return_id:Number(id),p_created_by:current.id});if(postError)throw postError;
-      clearRequestId(returnRequestKey);
-      showToast("تم اعتماد وترحيل المرتجع","success");
-    }else{
-      showToast("تم حفظ طلب المرتجع. ينتظر اعتماد مدير المبيعات أو المحاسب.","success",7000);
-    }
-    logUserAction("SALES_RETURN","تسجيل طلب مرتجع للعميل رقم "+customerId);
-    await loadSalesReturns();await loadSales();await loadStock();
-    $("returnFormModal").classList.remove("active");
-  }catch(e){msg($("returnFormMsg"),"تعذر الحفظ: "+err(e),"error");await loadSalesReturns();}
-  finally{busy(btn,false,"","حفظ المرتجع");}
+    await salesReturnLotOptionsPromise;const invoiceDebt=Number(invoice.remaining_amount||0);let cashAction=$("returnCashAction").value;const returnTotal=rows.reduce((sum,row)=>sum+Number(row.querySelector(".return-qty")?.value||0)*Number(row.querySelector(".return-price")?.value||0),0);
+    if(cashAction==="AUTO"){if(invoiceDebt<=0.01)cashAction="CASH_BACK";else if(invoiceDebt>=returnTotal)cashAction="DEDUCT_DEBT";else throw new Error("قيمة المرتجع أكبر من المديونية المتبقية.");}
+    if(!["DEDUCT_DEBT","CASH_BACK"].includes(cashAction))throw new Error("هذا المسار يسجل المرتجع فقط. اختر خصم المديونية أو رد النقدية.");if(cashAction==="DEDUCT_DEBT"&&invoiceDebt<returnTotal)throw new Error("قيمة المرتجع أكبر من المديونية المتبقية.");if(cashAction==="CASH_BACK"&&invoiceDebt>0.01)throw new Error("لا يمكن رد النقدية مع وجود مديونية على الفاتورة.");
+    $("returnCashAction").value=cashAction;if(cashAction==="CASH_BACK")updateSalesReturnCashActionUI(returnTripStatus);const treasuryId=cashAction==="CASH_BACK"?(activeTrip?8:Number($("returnTreasury")?.value||0)||null):null;if(cashAction==="CASH_BACK"&&!treasuryId)throw new Error("اختر خزنة رد النقدية.");
+    const returnRequestKey="mm_sales_return_pending_"+invoiceId,returnPayload={invoice_id:invoiceId,customer_id:customerId,trip_id:returnTripId,return_type:"RETURN",return_date:$("returnDate").value,reason:$("returnReason").value.trim()||null,notes:$("returnNotes").value.trim()||null,cash_action:cashAction,treasury_id:treasuryId,items:rows.map(r=>({product_id:r.querySelector(".return-product").value,unit_id:r.querySelector(".return-unit").value,quantity:r.querySelector(".return-qty").value,unit_price:r.querySelector(".return-price").value,lot_id:r.querySelector(".return-lot")?.value||null,package_option_id:r.querySelector(".return-package-option")?.value||null}))},returnRequest=getSalesReturnRequest(returnRequestKey,returnPayload,rows.length);
+    const {data:id,error}=await db.rpc("create_sales_return_v2",{p_return_number:returnRequest.return_number,p_customer_id:customerId,p_trip_id:returnTripId,p_sales_rep_id:invoice.sales_rep_id?Number(invoice.sales_rep_id):null,p_sales_invoice_id:invoiceId,p_return_type:"RETURN",p_return_date:new Date(($("returnDate").value||todayISO())+"T12:00:00").toISOString(),p_reason:$("returnReason").value.trim()||null,p_notes:$("returnNotes").value.trim()||null,p_created_by:current.id,p_cash_action:cashAction,p_treasury_id:treasuryId,p_request_id:returnRequest.request_id});if(error)throw error;
+    for(let itemIndex=0;itemIndex<rows.length;itemIndex++){const row=rows[itemIndex];const {error:itemError}=await db.rpc("add_sales_return_item_v2",{p_sales_return_id:Number(id),p_product_id:Number(row.querySelector(".return-product").value),p_unit_id:Number(row.querySelector(".return-unit").value),p_quantity:Number(row.querySelector(".return-qty").value),p_unit_price:Number(row.querySelector(".return-price").value),p_discount_amount:0,p_lot_id:(Number(row.querySelector(".return-lot")?.value)||null),p_notes:null,p_package_option_id:row.querySelector(".return-package-option")?.value?Number(row.querySelector(".return-package-option").value):null,p_request_id:returnRequest.item_request_ids[itemIndex]});if(itemError)throw itemError;}
+    if(canApproveReturns||canManageReturns){const {error:validationError}=await db.rpc("validate_sales_return",{p_sales_return_id:Number(id)});if(validationError)throw validationError;const {error:postError}=await db.rpc("post_sales_return",{p_sales_return_id:Number(id),p_created_by:current.id});if(postError)throw postError;clearRequestId(returnRequestKey);showToast("تم اعتماد وترحيل المرتجع","success");}else showToast("تم حفظ طلب المرتجع. ينتظر الاعتماد.","success",7000);
+    logUserAction("SALES_RETURN","تسجيل طلب مرتجع للعميل رقم "+customerId);await loadSalesReturns();await loadSales();await loadStock();$("returnFormModal").classList.remove("active");
+  }catch(e){msg($("returnFormMsg"),"تعذر الحفظ: "+err(e),"error");await loadSalesReturns();}finally{busy(btn,false,"","حفظ المرتجع");}
 });
-
 // ========== مرتجع مشتريات ==========
 async function loadPurchaseReturns() { 
     const box = $("purchaseReturnsList"); if(!box) return; 
