@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 const fs = require('node:fs');
 const path = require('node:path');
 const qaHtml = fs.readFileSync(path.resolve(__dirname, '..', 'index.html'), 'utf8');
-const exchangeMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115150000_fix_sales_exchange_request_idempotency.sql'), 'utf8');
+const exchangeMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115144036_fix_sales_exchange_request_idempotency.sql'), 'utf8');
 
 test.use({ serviceWorkers: 'block' });
 
