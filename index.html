@@ -6179,11 +6179,45 @@ function resetInvoiceForm(){
 }
 if($("addInvoiceBtn")) $("addInvoiceBtn").addEventListener("click",()=>resetInvoiceForm());
 
-function addPackageSelectToRow(row,productId,unitId){let w=row.querySelector(".package-option-wrap");if(!w){w=document.createElement("div");w.className="package-option-wrap";const l=document.createElement("label");l.textContent="خيار التعبئة";const sel=document.createElement("select");sel.className="item-package-option";w.append(l,sel);row.insertBefore(w,row.querySelector(".item-line-total")||row.lastElementChild);}const sel=w.querySelector("select");const cur=sel.value;sel.replaceChildren();const f=document.createElement("option");f.value="";f.textContent="بدون خيار تعبئة";sel.appendChild(f);packageOptionsForProduct(productId,unitId).forEach(x=>{const o=document.createElement("option");o.value=String(x.package_option_id);o.textContent=x.option_name+" — "+fmtQty(x.weight_kg)+" كجم";sel.appendChild(o);});if([...sel.options].some(o=>o.value===cur))sel.value=cur;}
+function addPackageSelectToRow(row,productId,unitId){let w=row.querySelector(".package-option-wrap");if(!w){w=document.createElement("div");w.className="package-option-wrap";const l=document.createElement("label");l.textContent="خيار التعبئة";const sel=document.createElement("select");sel.className="item-package-option";w.append(l,sel);row.insertBefore(w,row.querySelector(".item-line-total")||row.lastElementChild);}const sel=w.querySelector("select");const cur=sel.value;sel.replaceChildren();const f=document.createElement("option");f.value="";f.textContent="بدون خيار تعبئة";sel.appendChild(f);packageOptionsForProduct(productId,unitId).forEach(x=>{const o=document.createElement("option");o.value=String(x.package_option_id);o.textContent=x.option_name+" — "+fmtQty(x.weight_kg)+" كجم";sel.appendChild(o);});if([...sel.options].some(o=>o.value===cur))sel.value=cur;sel.onchange=()=>{applyCustomerPriceToRow(row);if(typeof row._recalculateInvoiceLine==="function")row._recalculateInvoiceLine();};}
 let invoicePriceListRequest=0;
+function invoiceLineBaseFactor(product,row,unitId){
+ const packageId=Number(row.querySelector(".item-package-option")?.value||0);
+ if(packageId){
+  const option=packagingOptionsCache.find(x=>Number(x.package_option_id)===packageId&&Number(x.product_id)===Number(product.product_id)&&Number(x.unit_id)===Number(unitId)&&x.is_active);
+  if(option&&Number(option.weight_kg)>0)return Number(option.weight_kg);
+ }
+ const qty=Number(row.querySelector(".item-qty")?.value||0);
+ const actualWeight=Number(row.querySelector(".item-actual-weight")?.value||0);
+ if(actualWeight>0&&qty>0&&Number(product.base_unit_id)===1)return actualWeight/qty;
+ if(Number(unitId)===Number(product.base_unit_id))return 1;
+ const conversion=productUnitConversionsCache.find(x=>Number(x.product_id)===Number(product.product_id)&&Number(x.unit_id)===Number(unitId)&&x.is_active);
+ if(conversion&&Number(conversion.base_quantity_per_unit)>0)return Number(conversion.base_quantity_per_unit);
+ if(Number(unitId)===Number(cartonUnitId)&&Number(product.units_per_carton||0)>0)return Number(product.units_per_carton);
+ return 0;
+}
+function invoicePriceMultiplier(product,row,unitId){
+ const salesUnitId=Number(product.sales_unit_id||0);
+ const packageId=Number(row.querySelector(".item-package-option")?.value||0);
+ if(!salesUnitId)return 0;
+ const referenceConversion=productUnitConversionsCache.find(x=>Number(x.product_id)===Number(product.product_id)&&Number(x.unit_id)===salesUnitId&&x.is_active);
+ let referenceFactor=0;
+ if(salesUnitId===Number(product.base_unit_id))referenceFactor=1;
+ else if(referenceConversion&&Number(referenceConversion.base_quantity_per_unit)>0)referenceFactor=Number(referenceConversion.base_quantity_per_unit);
+ else{
+  const options=packagingOptionsCache.filter(x=>Number(x.product_id)===Number(product.product_id)&&Number(x.unit_id)===salesUnitId&&x.is_active);
+  if(options.length===1&&Number(options[0].weight_kg)>0)referenceFactor=Number(options[0].weight_kg);
+  else if(salesUnitId===Number(cartonUnitId)&&Number(product.units_per_carton||0)>0)referenceFactor=Number(product.units_per_carton);
+  else if(salesUnitId===Number(unitId)&&!packageId)return 1;
+ }
+ if(!(referenceFactor>0))return 0;
+ const lineFactor=invoiceLineBaseFactor(product,row,unitId);
+ if(!(lineFactor>0))return 0;
+ return lineFactor/referenceFactor;
+}
 async function refreshInvoicePriceList(){
  const info=$("invoicePriceListInfo");
- if(info)info.textContent="سعر البيع والحدود مأخوذة من بيانات الصنف.";
+ if(info)info.textContent="سعر البيع والحدود مأخوذة من بيانات الصنف بعد تحويلها لوحدة الفاتورة.";
  await Promise.all([...document.querySelectorAll("#invoiceItems .item-row")].map(row=>applyCustomerPriceToRow(row)));
  updateInvoiceTotals();
  return null;
@@ -6201,19 +6235,31 @@ async function applyCustomerPriceToRow(row){
  price.max="";
  row.dataset.minimumPrice="";
  row.dataset.maximumPrice="";
+ row.dataset.priceConversionInvalid="0";
  row.dataset.priceListId="";
  if(hint)hint.textContent="جارٍ تحميل أسعار الصنف...";
  if(error){error.style.display="none";error.textContent="";}
  const product=productsCache.find(x=>String(x.product_id)===String(productId));
  if(Number(row.dataset.priceRequest)!==request)return;
  if(!product){if(hint)hint.textContent="تعذر العثور على بيانات الصنف.";return;}
- const lower=product.min_selling_price!==null&&product.min_selling_price!==undefined&&product.min_selling_price!==""?Number(product.min_selling_price):0;
- const upper=product.max_selling_price!==null&&product.max_selling_price!==undefined&&product.max_selling_price!==""?Number(product.max_selling_price):Infinity;
- const target=product.target_selling_price!==null&&product.target_selling_price!==undefined&&product.target_selling_price!==""?Number(product.target_selling_price):null;
+ const rawMin=product.min_selling_price,rawMax=product.max_selling_price,rawTarget=product.target_selling_price;
+ const configured=[rawMin,rawTarget,rawMax].some(v=>v!==null&&v!==undefined&&v!=="");
+ const multiplier=configured?invoicePriceMultiplier(product,row,unitId):1;
+ if(configured&&!(multiplier>0)){
+  row.dataset.priceConversionInvalid="1";
+  if(hint)hint.textContent="تعذر تحويل حدود السعر إلى وحدة الفاتورة. راجع تحويل وحدة البيع أو وزن العبوة الخاص بهذا الصنف.";
+  if(error){error.style.display="block";error.textContent="لا يمكن استخدام حدود السعر قبل توفر تحويل صحيح بين وحدة التسعير والوحدة المختارة.";}
+  if(typeof row._recalculateInvoiceLine==="function")row._recalculateInvoiceLine();
+  return;
+ }
+ const lower=rawMin!==null&&rawMin!==undefined&&rawMin!==""?Number(rawMin)*multiplier:0;
+ const upper=rawMax!==null&&rawMax!==undefined&&rawMax!==""?Number(rawMax)*multiplier:Infinity;
+ const target=rawTarget!==null&&rawTarget!==undefined&&rawTarget!==""?Number(rawTarget)*multiplier:null;
  if(Number.isFinite(upper)&&lower>upper){
-   if(hint)hint.textContent="حدود السعر في بيانات الصنف تحتاج إلى مراجعة الإدارة.";
-   if(error){error.style.display="block";error.textContent="الحد الأدنى أكبر من الحد الأقصى في بيانات الصنف.";}
-   return;
+  if(hint)hint.textContent="حدود السعر في بيانات الصنف تحتاج إلى مراجعة الإدارة.";
+  if(error){error.style.display="block";error.textContent="الحد الأدنى أكبر من الحد الأقصى في بيانات الصنف.";}
+  row.dataset.priceConversionInvalid="1";
+  return;
  }
  row.dataset.minimumPrice=String(lower);
  row.dataset.maximumPrice=Number.isFinite(upper)?String(upper):"";
@@ -6221,10 +6267,10 @@ async function applyCustomerPriceToRow(row){
  price.max=Number.isFinite(upper)?String(upper):"";
  price.value=target!==null&&Number.isFinite(target)&&target>=lower-0.000001&&target<=upper+0.000001?String(target):"";
  if(hint){
-   const limits=(product.min_selling_price==null&&product.max_selling_price==null)
-     ?"لا توجد حدود سعر مسجلة حاليًا. أدخل سعر الاختبار يدويًا."
-     :"السعر المستهدف: "+(target===null?"غير محدد":fmt(target))+" | المسموح: "+fmt(lower)+" إلى "+(Number.isFinite(upper)?fmt(upper):"غير محدد");
-   hint.textContent=limits+" | الحدود مأخوذة من بيانات الصنف.";
+  const limits=!configured
+   ?"لا توجد حدود سعر مسجلة حاليًا. أدخل سعر الاختبار يدويًا."
+   :"السعر المستهدف: "+(target===null?"غير محدد":fmt(target))+" | المسموح: "+fmt(lower)+" إلى "+(Number.isFinite(upper)?fmt(upper):"غير محدد");
+  hint.textContent=limits+" | الحدود محولة حسب وحدة البيع المختارة.";
  }
  const opt=row.querySelector(".item-product")?.selectedOptions[0];
  if(opt){opt.dataset.minPrice=row.dataset.minimumPrice||"";opt.dataset.maxPrice=row.dataset.maximumPrice||"";}
@@ -6297,9 +6343,9 @@ function addInvoiceItemRow() {
     const maxP = wrap.dataset.maximumPrice ? Number(wrap.dataset.maximumPrice) : Infinity; 
     const invoiceDiscountRate=Math.min(Math.max(Number($("invoiceDiscount")?.value||0),0),100)/100;
     const effectivePrice=p*(1-invoiceDiscountRate);
-    if(p > 0 && (p > maxP || effectivePrice < minP)) { 
+    if(wrap.dataset.priceConversionInvalid==="1" || (wrap.dataset.requiresActualWeight==="1"&&actualWeight<=0) || (p > 0 && (p > maxP || effectivePrice < minP))) { 
       errDiv.style.display = "block"; 
-      errDiv.textContent = `السعر بعد الخصم يجب ألا يقل عن ${minP}${Number.isFinite(maxP)?" وألا يتجاوز السعر قبل الخصم "+maxP:""}`; 
+      errDiv.textContent = wrap.dataset.priceConversionInvalid==="1" ? "تعذر تحويل حدود السعر إلى وحدة الفاتورة." : (wrap.dataset.requiresActualWeight==="1"&&actualWeight<=0 ? "أدخل الوزن الفعلي للصنف قبل الحفظ." : `السعر بعد الخصم يجب ألا يقل عن ${minP}${Number.isFinite(maxP)?" وألا يتجاوز السعر قبل الخصم "+maxP:""}`); 
       price.style.borderColor = "var(--red)"; 
     } else { 
       errDiv.style.display = "none"; 
@@ -6311,7 +6357,7 @@ function addInvoiceItemRow() {
     const actualWeight=Number(weightTotal.value||0);
     const selectedProductId=Number(prodSel.value||0);
     const fixedConversion=productUnitConversionsCache.find(x=>Number(x.product_id)===selectedProductId&&Number(x.unit_id)===unitId);
-    weightWrap.hidden=!(unitId&&baseUnitId==="1"&&unitId!==1&&!fixedConversion);
+    const selectedPackage=Number(wrap.querySelector(".item-package-option")?.value||0);const hasSelectedPackage=selectedPackage&&packagingOptionsCache.some(x=>Number(x.package_option_id)===selectedPackage&&x.is_active);const requiresActualWeight=!!(unitId&&Number(baseUnitId)===1&&unitId!==1&&!fixedConversion&&!hasSelectedPackage);wrap.dataset.requiresActualWeight=requiresActualWeight?"1":"0";weightWrap.hidden=!requiresActualWeight;
     if(actualWeight>0&&q>0){stockHint.textContent="يخصم من المخزون: "+fmtQty(actualWeight)+" كجم";}
     else if(unitId&&baseUnitId&&q>0){ 
       if(unitId===baseUnitId){ stockHint.textContent="يخصم من المخزون: "+fmtQty(q)+" "+unitName(baseUnitId); } 
@@ -6339,14 +6385,14 @@ function addInvoiceItemRow() {
     if(unitsCarton>0&&cartonUnitId){ 
       const op=document.createElement("option");op.value=String(cartonUnitId);op.textContent="كرتونة ("+unitsCarton+")";unitSel.appendChild(op); 
     } 
-    if(baseUnitId)unitSel.value=baseUnitId; 
+    if(salesUnitId)unitSel.value=salesUnitId;else if(baseUnitId)unitSel.value=baseUnitId; 
     addPackageSelectToRow(wrap,prodSel.value,unitSel.value);
     recalc(); 
   };
   prodSel.addEventListener("change",()=>{ price.value=""; populateUnits(); applyCustomerPriceToRow(wrap); }); 
   unitSel.addEventListener("change",()=>{ addPackageSelectToRow(wrap,prodSel.value,unitSel.value); applyCustomerPriceToRow(wrap); recalc(); }); 
   qty.addEventListener("input",recalc);
-  weightTotal.addEventListener("input",recalc);
+  weightTotal.addEventListener("input",recalc);weightTotal.addEventListener("change",()=>applyCustomerPriceToRow(wrap));
   price.addEventListener("input",recalc);
   populateUnits();
 }
@@ -6557,7 +6603,7 @@ if($("invoiceForm")) $("invoiceForm").addEventListener("submit", async e => {
     const maxAllowed=row.dataset.maximumPrice?Number(row.dataset.maximumPrice):Infinity; 
     const invoiceDiscountRate=Math.min(Math.max(Number($("invoiceDiscount")?.value||0),0),100)/100;
     const effectivePrice=price*(1-invoiceDiscountRate);
-    if(!pId || !uId || qty<=0 || price<=0 || price>maxAllowed+0.000001 || effectivePrice<minAllowed-0.000001) valid = false; 
+    if(!pId || !uId || qty<=0 || price<=0 || row.dataset.priceConversionInvalid==="1" || (row.dataset.requiresActualWeight==="1"&&Number(row.querySelector(".item-actual-weight")?.value||0)<=0) || price>maxAllowed+0.000001 || effectivePrice<minAllowed-0.000001) valid = false; 
     else {
       const actualWeight=Number(row.querySelector(".item-actual-weight")?.value||0);
       items.push({product_id:Number(pId),sale_unit_id:Number(uId),quantity:qty,unit_price:price,
