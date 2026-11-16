@@ -301,19 +301,11 @@ test('MeatManagement read-only navigation, permissions and session smoke test', 
     }
   });
 
-  const deployedUrl = new URL(baseURL);
-  const deployedPath = deployedUrl.pathname;
-  await page.route('**/*', async route => {
-    const request = route.request();
-    const requestUrl = new URL(request.url());
-    if (request.isNavigationRequest() && requestUrl.origin === deployedUrl.origin && requestUrl.pathname === deployedPath) {
-      await route.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: qaHtml });
-    } else {
-      await route.continue();
-    }
-  });
-
-  await page.goto(baseURL, { waitUntil: 'domcontentloaded' });
+  const deployedResponse = await page.goto(baseURL, { waitUntil: 'domcontentloaded' });
+  expect(deployedResponse, 'The deployed application should return a document response.').not.toBeNull();
+  expect(deployedResponse.status(), 'The deployed application should return HTTP 200.').toBe(200);
+  expect(deployedResponse.headers()['content-type'] || '').toContain('text/html');
+  expect(await page.title()).toContain('MeatManagement v136');
   await expect(page.locator('#loginForm')).toBeVisible({ timeout: 60000 });
   await page.locator('#email').fill(username);
   await page.locator('#password').fill(password);
@@ -446,19 +438,12 @@ test('MeatManagement Android-sized layout and horizontal overflow check', async 
     throw new Error('BASE_URL, TEST_USERNAME and TEST_PASSWORD must be configured as environment variables.');
   }
 
-  const deployedUrl = new URL(baseURL);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.route('**/*', async route => {
-    const request = route.request();
-    const requestUrl = new URL(request.url());
-    if (request.isNavigationRequest() && requestUrl.origin === deployedUrl.origin && requestUrl.pathname === deployedUrl.pathname) {
-      await route.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: qaHtml });
-    } else {
-      await route.continue();
-    }
-  });
-
-  await page.goto(baseURL, { waitUntil: 'domcontentloaded' });
+  const deployedResponse = await page.goto(baseURL, { waitUntil: 'domcontentloaded' });
+  expect(deployedResponse, 'The deployed application should return a document response.').not.toBeNull();
+  expect(deployedResponse.status(), 'The deployed application should return HTTP 200.').toBe(200);
+  expect(deployedResponse.headers()['content-type'] || '').toContain('text/html');
+  expect(await page.title()).toContain('MeatManagement v136');
   await expect(page.locator('#loginForm')).toBeVisible({ timeout: 60000 });
   await page.locator('#email').fill(username);
   await page.locator('#password').fill(password);
