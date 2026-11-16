@@ -8633,7 +8633,7 @@ if($("collectionForm")) $("collectionForm").addEventListener("submit", async e =
         const tripId = $("collectionTrip").value ? Number($("collectionTrip").value) : null;
         const isRep = currentRoleCode === "SALES_REP";
         const selectedTreasuryId = method === "CASH" && !isRep && !tripId ? Number($("collectionTreasury").value) : null;
-        const receiptDestination = method === "CHEQUE" ? "CHEQUE_PENDING" : method === "CASH" ? (isRep ? "REP_CASH" : "COMPANY_TREASURY") : (isRep ? ($("collectionReceiptDestination")?.value || "COMPANY_TREASURY") : "COMPANY_TREASURY");
+        const receiptDestination = method === "CHEQUE" ? "CHEQUE_PENDING" : method === "CASH" ? ((isRep || tripId) ? "REP_CASH" : "COMPANY_TREASURY") : (isRep ? ($("collectionReceiptDestination")?.value || "COMPANY_TREASURY") : "COMPANY_TREASURY");
         if(method === "CASH" && !isRep && !tripId && !selectedTreasuryId) throw new Error("اختر خزنة الشركة التي استلمت المبلغ النقدي.");
         const referenceNumber = $("collectionReferenceNumber").value.trim();
         if(method === "CHEQUE" && !referenceNumber) throw new Error("اكتب رقم الشيك.");
