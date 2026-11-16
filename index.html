@@ -1461,7 +1461,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <input id="qcCustomerId" type="hidden">
 <div id="qcCustomerInfo" class="info"></div>
 <label for="qcAmount">المبلغ *</label><input id="qcAmount" type="number" min="0.01" step="0.01" required>
-<label for="qcTreasury">الخزنة *</label><select id="qcTreasury" required><option value="">اختر الخزنة</option></select>
+<div id="qcTreasuryWrap"><label for="qcTreasury">خزنة الشركة التي استلمت النقدية *</label><select id="qcTreasury"><option value="">اختر الخزنة</option></select></div>
 <label for="qcDate">التاريخ *</label><input id="qcDate" type="date" required>
 <label for="qcNotes">ملاحظات</label><textarea id="qcNotes" rows="2"></textarea>
 <button id="saveQcBtn" class="btn" type="submit">حفظ التحصيل</button>
@@ -4790,6 +4790,8 @@ function openQuickCollect(c) {
     $("qcCustomerInfo").innerHTML = `<strong>العميل:</strong> ${c.customer_name}<br><strong>الهاتف:</strong> ${c.phone||"-"}`;
     $("qcDate").value = todayISO();
     fillTreasurySelects();
+    if($("qcTreasuryWrap")) $("qcTreasuryWrap").classList.toggle("hidden",currentRoleCode==="SALES_REP");
+    if($("qcTreasury")) $("qcTreasury").required=currentRoleCode!=="SALES_REP";
     $("quickCollectModal").classList.add('active');
 }
 if($("quickCollectForm")) $("quickCollectForm").addEventListener("submit", async e => {
@@ -4800,15 +4802,17 @@ if($("quickCollectForm")) $("quickCollectForm").addEventListener("submit", async
     try {
         const custId = Number($("qcCustomerId").value);
         const amount = Number($("qcAmount").value);
-        const treasuryId = Number($("qcTreasury").value);
+        const isRep=currentRoleCode==="SALES_REP";
+        const treasuryId = isRep ? null : Number($("qcTreasury").value);
         const date = $("qcDate").value;
         const notes = $("qcNotes").value;
         if(!canPostCollections) throw new Error("ليس لديك صلاحية تسجيل التحصيل.");
-        if(!treasuryId) throw new Error("اختر الخزنة.");
+        if(!isRep && !treasuryId) throw new Error("اختر خزنة الشركة التي استلمت النقدية.");
+        const receiptDestination=isRep?"REP_CASH":"COMPANY_TREASURY";
         const requestStorageKey="mm_quick_collection_pending";
-        const requestPayload={customer_id:custId,amount,date,treasury_id:treasuryId,notes:notes||null};
+        const requestPayload={customer_id:custId,amount,date,treasury_id:treasuryId,receipt_destination:receiptDestination,notes:notes||null};
         const requestId=getRequestId(requestStorageKey,requestPayload);
-        const { data: colId, error } = await db.rpc("create_collection_v3", {
+        const { data: colId, error } = await db.rpc("create_collection_v4", {
           p_customer_id: custId,
           p_sales_invoice_id: null,
           p_amount: amount,
@@ -4816,6 +4820,7 @@ if($("quickCollectForm")) $("quickCollectForm").addEventListener("submit", async
           p_collection_date: date,
           p_notes: notes || null,
           p_trip_id: null,
+          p_receipt_destination: receiptDestination,
           p_treasury_id: treasuryId,
           p_reference_number: null,
           p_bank_name: null,
