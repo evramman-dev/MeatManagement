@@ -284,7 +284,7 @@ BEGIN
  'rework_quantity',v_i.warehouse_rework_quantity,'scrap_quantity',v_i.warehouse_scrap_quantity,
  'final_disposition',v_i.final_disposition,'inspection_status',v_i.inspection_status);
 END $$;
-REVOKE ALL ON FUNCTION public.record_sales_return_item_inspection(bigint,text,text,text) FROM PUBLIC,anon;
+REVOKE ALL ON FUNCTION public.record_sales_return_item_inspection(bigint,text,text,text,numeric,numeric,numeric) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.record_sales_return_item_inspection(bigint,text,text,text) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.cleanup_sales_return_holds_on_cancel()
