@@ -1885,7 +1885,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div id="sectionCollections" class="sub-section hidden">
 <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
 <div id="collectionsCard" class="card hidden">
-<div class="row" style="justify-content:space-between"><h2>💰 التحصيلات</h2><button id="addCollectionBtn" class="btn hidden" type="button" onclick="document.getElementById('collectionFormModal').classList.add('active')">＋ تسجيل تحصيل</button></div>
+<div class="row" style="justify-content:space-between;flex-wrap:wrap"><h2>💰 التحصيلات</h2><div class="row" style="gap:8px"><button id="settleUnassignedRepCustodyBtn" class="btn secondary hidden" type="button">تسوية عهدة بدون جولة</button><button id="addCollectionBtn" class="btn hidden" type="button" onclick="document.getElementById('collectionFormModal').classList.add('active')">＋ تسجيل تحصيل</button></div></div>
 <div class="filter-box">
 <div class="grid">
 <div><label>من تاريخ</label><input type="date" id="collectionsFromDate"></div>
@@ -1927,6 +1927,21 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <label for="collectionNotes">ملاحظات</label><textarea id="collectionNotes" rows="2"></textarea>
 <button id="saveCollectionBtn" class="btn" type="submit">حفظ</button>
 <div id="collectionFormMsg" class="status hidden"></div>
+</form>
+</div>
+</div>
+</div>
+
+<div id="unassignedRepCustodyModal" class="modal-form">
+<div class="modal-form-content">
+<div class="modal-header"><h3>تسوية عهدة تحصيلات بدون جولة</h3><button class="close-btn" type="button" onclick="document.getElementById('unassignedRepCustodyModal').classList.remove('active')">&times;</button></div>
+<div class="modal-body">
+<form id="unassignedRepCustodyForm" onsubmit="event.preventDefault();">
+<label for="unassignedRepCustodyRep">المندوب *</label><select id="unassignedRepCustodyRep" required><option value="">اختر المندوب</option></select>
+<div id="unassignedRepCustodySummary" class="item-hint">اختر المندوب لعرض المبلغ المطلوب توريده.</div>
+<label for="unassignedRepCustodyTreasury">خزنة الشركة التي استلمت النقدية *</label><select id="unassignedRepCustodyTreasury" required><option value="">اختر خزنة الشركة</option></select>
+<button id="saveUnassignedRepCustodyBtn" class="btn" type="submit">تأكيد استلام العهدة</button>
+<div id="unassignedRepCustodyMsg" class="status hidden"></div>
 </form>
 </div>
 </div>
@@ -2308,7 +2323,7 @@ try {
   let companySettings={};
 
   let productsCache=[], categories=[], units=[], cartonUnitId=null, packagingOptionsCache=[], productUnitConversionsCache=[];
-  let locationsCache=[], treasuriesCache=[], stockCache=[], customersCache=[], salesCache=[], collectionsCache=[], suppliersCache=[], purchasesCache=[], recipesCache=[], productionCache=[], tripsCache=[], partnersCache=[], usersCache=[], purchaseReturnsCache=[], supplierPaymentsCache=[], reservationsCache=[];
+  let locationsCache=[], treasuriesCache=[], stockCache=[], customersCache=[], salesCache=[], collectionsCache=[], unassignedRepCustodyCache=[], suppliersCache=[], purchasesCache=[], recipesCache=[], productionCache=[], tripsCache=[], partnersCache=[], usersCache=[], purchaseReturnsCache=[], supplierPaymentsCache=[], reservationsCache=[];
   let customerGovernoratesCache=[], customerCitiesCache=[], customerAreasCache=[];
   let expenseTypesCache=[], expenseAccountCodes={}, supplierPayablesCache=[], landedCostsCache=[], fixedAssetsCache=[], vehicleExpensesCache=[];
   let activeCancelRequest=null;
@@ -2922,6 +2937,7 @@ async function userInfo(user){
     if($("addTripBtn")){
       $("addTripBtn").classList.toggle("hidden", !canCreateTrips);
     }
+    if($("settleUnassignedRepCustodyBtn")) $("settleUnassignedRepCustodyBtn").classList.toggle("hidden", !(canManageTrips || canManageCollections));
 
     if(isSystemAdmin){
       // مدير النظام يرى جميع أقسام مركز البيانات دون الاعتماد على صلاحيات فرعية.
@@ -8389,6 +8405,58 @@ function renderCollections(){
     box.appendChild(card); 
   }); 
 }
+
+
+async function loadUnassignedRepCustodyOptions(){
+  const repSelect=$("unassignedRepCustodyRep"), treasurySelect=$("unassignedRepCustodyTreasury");
+  if(!repSelect||!treasurySelect) return;
+  const {data,error}=await db.rpc("get_unassigned_rep_custody_summary");
+  if(error) throw error;
+  unassignedRepCustodyCache=data||[];
+  repSelect.replaceChildren(new Option("اختر المندوب",""));
+  unassignedRepCustodyCache.forEach(r=>repSelect.add(new Option((r.rep_name||("مندوب "+r.sales_rep_id))+" | عهدة "+fmt(r.total_amount),String(r.sales_rep_id))));
+  if(!treasuriesCache.length) await loadTreasuries();
+  treasurySelect.replaceChildren(new Option("اختر خزنة الشركة",""));
+  treasuriesCache.filter(t=>t.is_active&&t.treasury_type==="CASH"&&Number(t.treasury_id)>=1&&Number(t.treasury_id)<=5)
+    .forEach(t=>treasurySelect.add(new Option(t.treasury_name+" ("+fmt(t.current_balance)+")",String(t.treasury_id))));
+  if(Array.from(treasurySelect.options).some(o=>o.value==="5")) treasurySelect.value="5";
+  updateUnassignedRepCustodySummary();
+}
+function updateUnassignedRepCustodySummary(){
+  const id=$("unassignedRepCustodyRep")?.value;
+  const row=unassignedRepCustodyCache.find(r=>String(r.sales_rep_id)===String(id));
+  const box=$("unassignedRepCustodySummary");
+  if(!box) return;
+  if(!row){box.textContent="اختر المندوب لعرض المبلغ المطلوب توريده.";return;}
+  box.textContent="النقدية المستلمة: "+fmt(row.cash_amount)+" | تحويلات إلى حسابه الشخصي: "+fmt(row.personal_amount)+" | إجمالي العهدة المطلوب توريدها نقدًا: "+fmt(row.total_amount);
+}
+if($("settleUnassignedRepCustodyBtn")) $("settleUnassignedRepCustodyBtn").addEventListener("click",async()=>{
+  $("unassignedRepCustodyModal").classList.add("active");
+  $("unassignedRepCustodyForm").reset();
+  $("unassignedRepCustodyMsg").classList.add("hidden");
+  try{await loadUnassignedRepCustodyOptions();}
+  catch(e){msg($("unassignedRepCustodyMsg"),"تعذر تحميل عهد المندوبين: "+err(e),"error");}
+});
+if($("unassignedRepCustodyRep")) $("unassignedRepCustodyRep").addEventListener("change",updateUnassignedRepCustodySummary);
+if($("unassignedRepCustodyForm")) $("unassignedRepCustodyForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const btn=$("saveUnassignedRepCustodyBtn");busy(btn,true,"جارٍ التوريد...","تأكيد استلام العهدة");
+  try{
+    const repId=Number($("unassignedRepCustodyRep").value);
+    const treasuryId=Number($("unassignedRepCustodyTreasury").value);
+    if(!repId||!treasuryId) throw new Error("اختر المندوب وخزنة الشركة.");
+    const key="mm_unassigned_rep_custody_pending";
+    const payload={sales_rep_id:repId,treasury_id:treasuryId};
+    const requestId=getRequestId(key,payload);
+    const {data,error}=await db.rpc("settle_unassigned_rep_collections",{p_sales_rep_id:repId,p_company_treasury_id:treasuryId,p_request_id:requestId});
+    if(error) throw error;
+    clearRequestId(key);
+    showToast("تم تسجيل توريد عهدة المندوب","success");
+    $("unassignedRepCustodyModal").classList.remove("active");
+    await loadCollections();await loadTreasuries();
+  }catch(e){msg($("unassignedRepCustodyMsg"),"تعذر تسجيل التوريد: "+err(e),"error");}
+  finally{busy(btn,false,"","تأكيد استلام العهدة");}
+});
 
 async function loadCustomerCheques(){
   const box=$("customerChequesList");
