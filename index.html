@@ -1065,7 +1065,9 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="row" style="margin-bottom:15px;gap:5px;">
 <button class="tab-btn active" onclick="switchAccTab('accSummary')">الملخص</button>
 <button class="tab-btn" onclick="switchAccTab('accTrial')">ميزان المراجعة</button>
-<button class="tab-btn" onclick="switchAccTab('accJournal')">اليومية</button>
+<button class="tab-btn" onclick="switchAccTab('accJournal')">اليومية الأمريكية</button>
+<button class="tab-btn" onclick="switchAccTab('accLedger')">دفتر الأستاذ</button>
+<button class="tab-btn" onclick="switchAccTab('accAccounts')">دليل الحسابات</button>
 </div>
 
 <div id="accountingPeriodsPanel" class="card" style="margin:15px 0;">
@@ -1094,7 +1096,58 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 <div id="accJournal" class="acc-tab hidden">
 <div class="table-responsive">
-<table class="print-table" id="journalTable"><thead><tr><th>التاريخ</th><th>البيان</th><th>الحساب</th><th>مدين</th><th>دائن</th></tr></thead><tbody></tbody></table>
+<table class="print-table" id="journalTable"><thead><tr><th>التاريخ</th><th>رقم القيد</th><th>البيان</th><th>الحساب</th><th>مدين</th><th>دائن</th></tr></thead><tbody></tbody></table>
+</div>
+</div>
+
+<div id="accLedger" class="acc-tab hidden">
+<div class="card" style="margin:0 0 12px;padding:12px;">
+<label for="ledgerAccountSelect">اختر الحساب</label>
+<select id="ledgerAccountSelect" style="width:100%;margin:6px 0 10px;"><option value="">جارٍ تحميل الحسابات...</option></select>
+<button class="btn" id="btnLoadLedger" type="button" style="width:100%;">عرض حركة الحساب</button>
+<div id="ledgerMessage" class="status hidden"></div>
+</div>
+<div class="table-responsive">
+<table class="print-table" id="ledgerTable">
+<thead><tr><th>التاريخ</th><th>رقم القيد</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+</div>
+
+<div id="accAccounts" class="acc-tab hidden">
+<div id="coaManagePanel" class="card hidden" style="margin:0 0 12px;padding:12px;">
+<h3>إضافة أو تعديل حساب</h3>
+<form id="coaForm" class="form-grid">
+<input type="hidden" id="coaEditId">
+<label>كود الحساب<input id="coaCode" required maxlength="30"></label>
+<label>اسم الحساب<input id="coaName" required maxlength="150"></label>
+<label>نوع الحساب
+<select id="coaType" required>
+<option value="ASSET">أصول</option>
+<option value="LIABILITY">التزامات</option>
+<option value="EQUITY">حقوق ملكية</option>
+<option value="REVENUE">إيرادات</option>
+<option value="EXPENSE">مصروفات</option>
+</select>
+</label>
+<label>الحساب الرئيسي
+<select id="coaParent"><option value="">بدون حساب رئيسي</option></select>
+</label>
+<label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="coaActive" checked> حساب نشط</label>
+<div class="row">
+<button class="btn" id="saveCoaBtn" type="submit">حفظ الحساب</button>
+<button class="btn secondary" id="cancelCoaEditBtn" type="button">إلغاء التعديل</button>
+</div>
+<div id="coaMessage" class="status hidden"></div>
+</form>
+</div>
+<div id="coaViewMessage" class="status hidden"></div>
+<div class="table-responsive">
+<table class="print-table" id="chartAccountsTable">
+<thead><tr><th>الكود</th><th>اسم الحساب</th><th>النوع</th><th>الرئيسي</th><th>الحالة</th><th>إجراء</th></tr></thead>
+<tbody></tbody>
+</table>
 </div>
 </div>
 </div>
