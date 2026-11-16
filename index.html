@@ -6171,7 +6171,7 @@ function resetInvoiceForm(){
   fillInvoiceLocationSelect(); 
   fillTreasurySelects(); 
   fillInvoiceTripSelect(); 
-  if($("invoicePriceListInfo"))$("invoicePriceListInfo").textContent="اختر العميل لعرض قائمة الأسعار المعتمدة السارية.";
+  if($("invoicePriceListInfo"))$("invoicePriceListInfo").textContent="سعر البيع والحدود مأخوذة من بيانات الصنف.";
   const tripField = $("invoiceTrip");
   if(tripField) tripField.required = currentRoleCode === "SALES_REP";
   $("invoiceFormModal").classList.add('active'); 
@@ -6190,12 +6190,46 @@ async function refreshInvoicePriceList(){
  catch(e){if(request!==invoicePriceListRequest)return null;if(info)info.textContent="تعذر تحديد قائمة الأسعار: "+err(e);document.querySelectorAll("#invoiceItems .item-row").forEach(row=>{const price=row.querySelector(".item-price");if(price)price.value="";const hint=row.querySelector(".price-hint");if(hint)hint.textContent="لا يمكن تسعير الصنف قبل تحديد قائمة معتمدة.";});updateInvoiceTotals();return null;}
 }
 async function applyCustomerPriceToRow(row){
- if(!row)return;const customerId=Number($("invoiceCustomer")?.value||0),productId=Number(row.querySelector(".item-product")?.value||0),unitId=Number(row.querySelector(".item-unit")?.value||0),date=$("invoiceDate")?.value||todayISO();
- const price=row.querySelector(".item-price"),hint=row.querySelector(".price-hint"),error=row.querySelector(".error-text");if(!price||!productId||!unitId||!customerId){if(price)price.value="";return;}
- const request=Number(row.dataset.priceRequest||0)+1;row.dataset.priceRequest=String(request);price.value="";price.min="0";price.max="";row.dataset.minimumPrice="";row.dataset.maximumPrice="";if(hint)hint.textContent="جارٍ جلب سعر القائمة المعتمدة...";if(error){error.style.display="none";error.textContent="";}
- try{const {data,error:rpcError}=await db.rpc("get_customer_product_price",{p_customer_id:customerId,p_product_id:productId,p_unit_id:unitId,p_as_of_date:date});if(rpcError)throw rpcError;if(Number(row.dataset.priceRequest)!==request)return;if(Number($("invoiceCustomer")?.value||0)!==customerId||($("invoiceDate")?.value||todayISO())!==date||Number(row.querySelector(".item-product")?.value||0)!==productId||Number(row.querySelector(".item-unit")?.value||0)!==unitId)return;const item=Array.isArray(data)?data[0]:data;if(!item)throw new Error("لا يوجد سعر معتمد لهذا المنتج بهذه الوحدة.");const product=productsCache.find(x=>String(x.product_id)===String(productId));const minValues=[item.minimum_price,product?.min_selling_price].filter(v=>v!==null&&v!==undefined&&v!=="").map(Number).filter(Number.isFinite);const maxValues=[item.maximum_price,product?.max_selling_price].filter(v=>v!==null&&v!==undefined&&v!=="").map(Number).filter(Number.isFinite);const lower=minValues.length?Math.max(...minValues):0;const upper=maxValues.length?Math.min(...maxValues):Infinity;if(lower>upper)throw new Error("لا يوجد نطاق سعر متاح؛ الحد الأدنى يتجاوز الحد الأقصى.");row.dataset.priceListId=String(item.price_list_id);row.dataset.minimumPrice=String(lower);row.dataset.maximumPrice=Number.isFinite(upper)?String(upper):"";price.min=String(lower);price.max=Number.isFinite(upper)?String(upper):"";const target=Number(item.selling_price);price.value=target>=lower-0.000001&&target<=upper+0.000001?String(target):"";if(hint)hint.textContent="القائمة: "+item.price_list_code+" | السعر المستهدف: "+fmt(target)+" | المسموح: "+fmt(lower)+" إلى "+(Number.isFinite(upper)?fmt(upper):"بدون حد أعلى")+" | يمكنك التفاوض داخل الحدود.";}
- catch(e){if(Number(row.dataset.priceRequest)!==request||Number($("invoiceCustomer")?.value||0)!==customerId||($("invoiceDate")?.value||todayISO())!==date||Number(row.querySelector(".item-product")?.value||0)!==productId||Number(row.querySelector(".item-unit")?.value||0)!==unitId)return;price.value="";if(hint)hint.textContent="تعذر جلب السعر: "+err(e);if(error){error.style.display="block";error.textContent="لا يمكن إصدار الفاتورة دون سعر من قائمة معتمدة.";}}
- const opt=row.querySelector(".item-product")?.selectedOptions[0];if(opt){opt.dataset.minPrice=row.dataset.minimumPrice||"";opt.dataset.maxPrice=row.dataset.maximumPrice||"";}if(typeof row._recalculateInvoiceLine==="function")row._recalculateInvoiceLine();else updateInvoiceTotals();
+ if(!row)return;
+ const productId=Number(row.querySelector(".item-product")?.value||0);
+ const unitId=Number(row.querySelector(".item-unit")?.value||0);
+ const price=row.querySelector(".item-price"),hint=row.querySelector(".price-hint"),error=row.querySelector(".error-text");
+ if(!price||!productId||!unitId){if(price)price.value="";return;}
+ const request=Number(row.dataset.priceRequest||0)+1;
+ row.dataset.priceRequest=String(request);
+ price.value="";
+ price.min="0";
+ price.max="";
+ row.dataset.minimumPrice="";
+ row.dataset.maximumPrice="";
+ row.dataset.priceListId="";
+ if(hint)hint.textContent="جارٍ تحميل أسعار الصنف...";
+ if(error){error.style.display="none";error.textContent="";}
+ const product=productsCache.find(x=>String(x.product_id)===String(productId));
+ if(Number(row.dataset.priceRequest)!==request)return;
+ if(!product){if(hint)hint.textContent="تعذر العثور على بيانات الصنف.";return;}
+ const lower=product.min_selling_price!==null&&product.min_selling_price!==undefined&&product.min_selling_price!==""?Number(product.min_selling_price):0;
+ const upper=product.max_selling_price!==null&&product.max_selling_price!==undefined&&product.max_selling_price!==""?Number(product.max_selling_price):Infinity;
+ const target=product.target_selling_price!==null&&product.target_selling_price!==undefined&&product.target_selling_price!==""?Number(product.target_selling_price):null;
+ if(Number.isFinite(upper)&&lower>upper){
+   if(hint)hint.textContent="حدود السعر في بيانات الصنف تحتاج إلى مراجعة الإدارة.";
+   if(error){error.style.display="block";error.textContent="الحد الأدنى أكبر من الحد الأقصى في بيانات الصنف.";}
+   return;
+ }
+ row.dataset.minimumPrice=String(lower);
+ row.dataset.maximumPrice=Number.isFinite(upper)?String(upper):"";
+ price.min=String(lower);
+ price.max=Number.isFinite(upper)?String(upper):"";
+ price.value=target!==null&&Number.isFinite(target)&&target>=lower-0.000001&&target<=upper+0.000001?String(target):"";
+ if(hint){
+   const limits=(product.min_selling_price==null&&product.max_selling_price==null)
+     ?"لا توجد حدود سعر مسجلة حاليًا. أدخل سعر الاختبار يدويًا."
+     :"السعر المستهدف: "+(target===null?"غير محدد":fmt(target))+" | المسموح: "+fmt(lower)+" إلى "+(Number.isFinite(upper)?fmt(upper):"غير محدد");
+   hint.textContent=limits+" | الحدود مأخوذة من بيانات الصنف.";
+ }
+ const opt=row.querySelector(".item-product")?.selectedOptions[0];
+ if(opt){opt.dataset.minPrice=row.dataset.minimumPrice||"";opt.dataset.maxPrice=row.dataset.maximumPrice||"";}
+ if(typeof row._recalculateInvoiceLine==="function")row._recalculateInvoiceLine();else updateInvoiceTotals();
 }
 if($("invoiceCustomer"))$("invoiceCustomer").addEventListener("change",refreshInvoicePriceList);
 if($("invoiceDate"))$("invoiceDate").addEventListener("change",refreshInvoicePriceList);
