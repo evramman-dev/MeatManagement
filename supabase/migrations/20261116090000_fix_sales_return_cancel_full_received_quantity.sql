@@ -288,3 +288,115 @@ BEGIN
   ORDER BY c.sort_order,c.entry_date,c.entry_id;
 END;
 $function$;
+
+
+-- Expose gross purchases, purchase returns and net purchases separately.
+CREATE OR REPLACE FUNCTION public.get_period_summary(p_from date, p_to date)
+RETURNS json
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'pg_catalog','public','pg_temp'
+AS $function$
+DECLARE
+  v_rev numeric;
+  v_purch numeric;
+  v_purch_returns numeric;
+  v_net_purch numeric;
+  v_exp numeric;
+  v_coll numeric;
+  v_cash numeric;
+  v_ar numeric;
+  v_ap numeric;
+  v_profit numeric;
+BEGIN
+  IF NOT public.has_permission('ACCOUNTING_VIEW') THEN
+    RAISE EXCEPTION 'ليس لديك صلاحية عرض ملخص المحاسبة';
+  END IF;
+  IF p_from IS NULL OR p_to IS NULL OR p_from>p_to THEN
+    RAISE EXCEPTION 'فترة التقرير غير صحيحة';
+  END IF;
+
+  SELECT COALESCE(sum(CASE WHEN coa.account_type='REVENUE'
+    THEN jel.credit-jel.debit ELSE 0 END),0)
+  INTO v_rev
+  FROM public.journal_entries je
+  JOIN public.journal_entry_lines jel ON jel.entry_id=je.entry_id
+  JOIN public.chart_of_accounts coa ON coa.account_id=jel.account_id
+  WHERE je.status='POSTED' AND je.entry_date BETWEEN p_from AND p_to;
+
+  SELECT COALESCE(sum(net_total),0) INTO v_purch
+  FROM public.purchase_invoices
+  WHERE invoice_date BETWEEN p_from AND p_to AND status<>'CANCELLED';
+
+  SELECT COALESCE(sum(total_return_amount),0) INTO v_purch_returns
+  FROM public.purchase_returns
+  WHERE return_date BETWEEN p_from AND p_to AND is_cancelled=false;
+
+  v_net_purch := v_purch-v_purch_returns;
+
+  SELECT COALESCE(sum(amount),0) INTO v_exp
+  FROM public.expenses
+  WHERE expense_date BETWEEN p_from AND p_to AND is_cancelled=false;
+
+  SELECT COALESCE(sum(amount),0) INTO v_coll
+  FROM public.customer_collections
+  WHERE collection_date BETWEEN p_from AND p_to AND status='POSTED';
+
+  SELECT COALESCE(sum(current_balance),0) INTO v_cash
+  FROM public.treasuries WHERE is_active=true;
+
+  SELECT
+    COALESCE((
+      SELECT SUM(
+        COALESCE(c.opening_balance,0)
+        - COALESCE((
+            SELECT SUM(cc.amount)
+            FROM public.customer_collections cc
+            WHERE cc.customer_id=c.customer_id
+              AND cc.sales_invoice_id IS NULL
+              AND cc.allocation_type='OPENING_BALANCE'
+              AND cc.status='POSTED'
+          ),0)
+      )
+      FROM public.customers c
+    ),0)
+    + COALESCE((
+        SELECT SUM(GREATEST(COALESCE(si.remaining_amount,0),0))
+        FROM public.sales_invoices si
+        JOIN public.customers c ON c.customer_id=si.customer_id
+        WHERE si.status IN ('POSTED','PAID','PARTIAL')
+          AND COALESCE(si.remaining_amount,0)>0.01
+      ),0)
+  INTO v_ar;
+
+  SELECT
+    COALESCE((SELECT sum(s.opening_balance) FROM public.suppliers s),0)
+    + COALESCE((SELECT sum(pi.net_total) FROM public.purchase_invoices pi
+        WHERE pi.status='POSTED' AND pi.treasury_id IS NULL),0)
+    + COALESCE((SELECT sum(plc.amount) FROM public.purchase_landed_costs plc
+        WHERE plc.source_type='EXTERNAL_SUPPLIER' AND plc.status='ACTIVE'),0)
+    + COALESCE((SELECT sum(fa.acquisition_cost) FROM public.fixed_assets fa
+        WHERE fa.source_type='SUPPLIER_CREDIT' AND fa.status='ACTIVE'),0)
+    - COALESCE((SELECT sum(pr.total_return_amount) FROM public.purchase_returns pr
+        WHERE pr.settlement_method='SUPPLIER_CREDIT' AND pr.is_cancelled=false),0)
+    - COALESCE((SELECT sum(sp.amount) FROM public.supplier_payments sp
+        WHERE sp.is_cancelled=false),0)
+  INTO v_ap;
+
+  SELECT
+    COALESCE(sum(CASE WHEN coa.account_type='REVENUE' THEN jel.credit-jel.debit ELSE 0 END),0)
+    - COALESCE(sum(CASE WHEN coa.account_code='5100' THEN jel.debit-jel.credit ELSE 0 END),0)
+    - COALESCE(sum(CASE WHEN coa.account_type='EXPENSE' AND coa.account_code<>'5100' THEN jel.debit-jel.credit ELSE 0 END),0)
+  INTO v_profit
+  FROM public.journal_entries je
+  JOIN public.journal_entry_lines jel ON jel.entry_id=je.entry_id
+  JOIN public.chart_of_accounts coa ON coa.account_id=jel.account_id
+  WHERE je.status='POSTED' AND je.entry_date BETWEEN p_from AND p_to;
+
+  RETURN json_build_object(
+    'rev',v_rev,'purch',v_purch,'purch_returns',v_purch_returns,
+    'net_purch',v_net_purch,'exp',v_exp,'coll',v_coll,
+    'profit',COALESCE(v_profit,0),'cash',v_cash,'ar',v_ar,'ap',v_ap
+  );
+END;
+$function$;
