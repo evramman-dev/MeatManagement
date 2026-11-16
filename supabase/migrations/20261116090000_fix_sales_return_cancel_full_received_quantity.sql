@@ -20,13 +20,13 @@ BEGIN
     (length(v_definition) - length(replace(v_definition, v_old, '')))
     / length(v_old);
 
-  IF v_occurrences <> 1 THEN
+  IF v_occurrences = 1 THEN
+    EXECUTE replace(v_definition, v_old, v_new);
+  ELSIF position(v_new IN v_definition) = 0 THEN
     RAISE EXCEPTION
-      'Expected exactly one return-quantity expression in cancellation function, found %',
+      'Expected the old or already-fixed return-quantity expression in cancellation function; found % old matches',
       v_occurrences;
   END IF;
-
-  EXECUTE replace(v_definition, v_old, v_new);
 END
 $migration$;
 
@@ -57,13 +57,13 @@ BEGIN
     (length(v_definition) - length(replace(v_definition, v_old, '')))
     / length(v_old);
 
-  IF v_occurrences <> 1 THEN
+  IF v_occurrences = 1 THEN
+    EXECUTE replace(v_definition, v_old, v_new);
+  ELSIF position('UPDATE public.reservations' IN v_definition) = 0 THEN
     RAISE EXCEPTION
-      'Expected exactly one stock-lock block in cancellation function, found %',
+      'Expected the old or already-fixed reservation-release block in cancellation function; found % old matches',
       v_occurrences;
   END IF;
-
-  EXECUTE replace(v_definition, v_old, v_new);
 END
 $migration$;
 
