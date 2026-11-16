@@ -10123,6 +10123,20 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
       msg($("coaMessage"),"لا يمكن أن يكون الحساب تابعًا لنفسه.","error");
       return;
     }
+    if(parentId && editId) {
+      let cursor = chartAccountsCache.find(a => Number(a.account_id) === parentId);
+      const visited = new Set();
+      while(cursor) {
+        if(Number(cursor.account_id) === editId || visited.has(Number(cursor.account_id))) {
+          msg($("coaMessage"),"هذا الاختيار سيكوّن دورة في الحسابات الرئيسية. اختر حسابًا آخر.","error");
+          return;
+        }
+        visited.add(Number(cursor.account_id));
+        cursor = cursor.parent_id
+          ? chartAccountsCache.find(a => Number(a.account_id) === Number(cursor.parent_id))
+          : null;
+      }
+    }
     const payload = {
       account_code: $("coaCode").value.trim(),
       account_name: $("coaName").value.trim(),
