@@ -98,7 +98,7 @@ BEGIN
  IF position(anchor in d)=0 THEN RAISE EXCEPTION 'abnormal waste array validation anchor changed'; END IF;
  d:=replace(d,anchor,anchor||chr(10)||extra);
  EXECUTE d;
- d:=pg_get_functiondef('public.record_sales_return_item_inspection(bigint,text,text,text)'::regprocedure);
+ d:=pg_get_functiondef('public.record_sales_return_item_inspection(bigint,text,text,text,numeric,numeric,numeric)'::regprocedure);
  oldtxt:=$old$IF NOT FOUND OR v_item.status<>'POSTED' THEN$old$;
  newtxt:=$new$IF NOT FOUND OR v_item.status NOT IN ('POSTED','APPROVED') THEN$new$;
  IF position(oldtxt in d)=0 THEN RAISE EXCEPTION 'inspection status source changed'; END IF;
