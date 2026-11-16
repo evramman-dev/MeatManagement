@@ -1600,13 +1600,13 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <form id="invoiceForm" onsubmit="event.preventDefault();">
 <label for="invoiceCustomer">العميل *</label><select id="invoiceCustomer" required><option value="">اختر العميل</option></select>
 <div id="invoicePriceListInfo" class="info">اختر العميل لعرض قائمة الأسعار المعتمدة السارية.</div>
-<label for="invoiceLocation">الموقع *</label><select id="invoiceLocation" required><option value="">اختر الموقع</option></select>
+<div id="invoiceLocationWrap"><label for="invoiceLocation">الموقع *</label><select id="invoiceLocation" required><option value="">اختر الموقع</option></select></div>
 <label for="invoiceDate">التاريخ *</label><input id="invoiceDate" type="date" required>
 <div class="info">يمكنك تسجيل أكثر من وسيلة دفع للفاتورة. أضف المبالغ التي دفعها العميل الآن، وسيظل الفرق المتبقي آجلًا. اترك قائمة الدفعات فارغة إذا لم يدفع العميل وقت إصدار الفاتورة.</div>
 <label>الدفعات عند إصدار الفاتورة</label>
 <div id="invoicePayments"></div>
 <button id="addInvoicePaymentBtn" class="btn secondary" type="button">＋ إضافة وسيلة دفع</button>
-<label for="invoiceTrip">ربط بجولة (اختياري)</label><select id="invoiceTrip"><option value="">بدون ربط</option></select>
+<label for="invoiceTrip">ربط بجولة <span id="invoiceTripRequiredMark"></span></label><select id="invoiceTrip"><option value="">بدون ربط</option></select><div id="invoiceTripSourceInfo" class="info hidden"></div>
 <label for="invoiceDiscount">الخصم (%) - الحد الأقصى 3%</label><input id="invoiceDiscount" type="number" min="0" max="3" step="0.01" value="0">
 <div class="error-text" id="discountError">نسبة الخصم تتجاوز الحد المسموح به</div>
 <label style="margin-top:16px">الأصناف *</label>
@@ -6155,7 +6155,50 @@ function refreshInvoicePaymentRows() {
   document.querySelectorAll("#invoicePayments .item-row").forEach(updateInvoicePaymentRow);
 }
 if($("addInvoicePaymentBtn")) $("addInvoicePaymentBtn").addEventListener("click", addInvoicePaymentRow);
-if($("invoiceTrip")) $("invoiceTrip").addEventListener("change", refreshInvoicePaymentRows);
+
+function syncSalesRepInvoiceSource(){
+  const isRep = currentRoleCode === "SALES_REP";
+  const locationWrap = $("invoiceLocationWrap");
+  const locationField = $("invoiceLocation");
+  const tripField = $("invoiceTrip");
+  const sourceInfo = $("invoiceTripSourceInfo");
+  const requiredMark = $("invoiceTripRequiredMark");
+  if(!locationWrap || !locationField || !tripField) return;
+  if(!isRep){
+    locationWrap.classList.remove("hidden");
+    locationField.required = true;
+    if(sourceInfo) sourceInfo.classList.add("hidden");
+    if(requiredMark) requiredMark.textContent = "(اختياري)";
+    return;
+  }
+  locationWrap.classList.add("hidden");
+  locationField.required = false;
+  if(requiredMark) requiredMark.textContent = "*";
+  const tripId = Number(tripField.value || 0);
+  const trip = tripsCache.find(t => Number(t.trip_id) === tripId);
+  const vehicleLocationId = Number(trip?.vehicle_location_id || 0);
+  if(vehicleLocationId > 0){
+    locationField.value = String(vehicleLocationId);
+    const location = locationsCache.find(l => Number(l.location_id) === vehicleLocationId);
+    if(sourceInfo){
+      sourceInfo.textContent = "مصدر البيع: " + (location?.location_name || "سيارة الجولة") + " | " + (trip?.trip_number || "الجولة المحددة");
+      sourceInfo.classList.remove("hidden");
+    }
+  }else{
+    locationField.value = "";
+    if(sourceInfo){
+      sourceInfo.textContent = "اختر جولة مرتبطة بسيارة محملة حتى يتم تحديد مصدر البيع تلقائيًا.";
+      sourceInfo.classList.remove("hidden");
+    }
+  }
+}
+
+function handleInvoiceTripChange(){
+  syncSalesRepInvoiceSource();
+  refreshInvoicePaymentRows();
+}
+
+if($("invoiceTrip")) $("invoiceTrip").addEventListener("change", handleInvoiceTripChange);
 
 function resetInvoiceForm(){ 
   $("invoiceForm").reset(); 
@@ -6173,7 +6216,14 @@ function resetInvoiceForm(){
   fillInvoiceTripSelect(); 
   if($("invoicePriceListInfo"))$("invoicePriceListInfo").textContent="سعر البيع والحدود مأخوذة من بيانات الصنف.";
   const tripField = $("invoiceTrip");
-  if(tripField) tripField.required = currentRoleCode === "SALES_REP";
+  if(tripField){
+    tripField.required = currentRoleCode === "SALES_REP";
+    if(currentRoleCode === "SALES_REP"){
+      const availableTrips = tripsCache.filter(t=>t.status!=="COMPLETED" && currentSalesRepId && Number(t.sales_rep_id)===Number(currentSalesRepId));
+      if(availableTrips.length === 1) tripField.value = String(availableTrips[0].trip_id);
+    }
+  }
+  syncSalesRepInvoiceSource();
   $("invoiceFormModal").classList.add('active'); 
   clear($("invoiceFormMsg")); 
 }
@@ -6615,8 +6665,22 @@ if($("invoiceForm")) $("invoiceForm").addEventListener("submit", async e => {
   let subTotal = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
   let netTotal = subTotal - (subTotal * (discount/100));
   const tripId = $("invoiceTrip").value ? Number($("invoiceTrip").value) : null;
-  if(currentRoleCode === "SALES_REP" && !tripId) {
-    msg($("invoiceFormMsg"), "اختر الجولة المكلف بها قبل إصدار الفاتورة.", "error");
+  let locationId = $("invoiceLocation").value ? Number($("invoiceLocation").value) : null;
+  if(currentRoleCode === "SALES_REP"){
+    if(!tripId){
+      msg($("invoiceFormMsg"), "اختر الجولة المكلف بها قبل إصدار الفاتورة.", "error");
+      return;
+    }
+    const trip = tripsCache.find(t => Number(t.trip_id) === tripId);
+    const vehicleLocationId = Number(trip?.vehicle_location_id || 0);
+    if(!vehicleLocationId){
+      msg($("invoiceFormMsg"), "الجولة المحددة لا ترتبط بسيارة صالحة للبيع.", "error");
+      return;
+    }
+    locationId = vehicleLocationId;
+    $("invoiceLocation").value = String(vehicleLocationId);
+  }else if(!locationId){
+    msg($("invoiceFormMsg"), "اختر موقع البيع.", "error");
     return;
   }
   const payments = [];
