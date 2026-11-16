@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v133</title>
+<title>MeatManagement v136</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -392,7 +392,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v133]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v136]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1065,7 +1065,9 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="row" style="margin-bottom:15px;gap:5px;">
 <button class="tab-btn active" onclick="switchAccTab('accSummary')">الملخص</button>
 <button class="tab-btn" onclick="switchAccTab('accTrial')">ميزان المراجعة</button>
-<button class="tab-btn" onclick="switchAccTab('accJournal')">اليومية</button>
+<button class="tab-btn" onclick="switchAccTab('accJournal')">اليومية الأمريكية</button>
+<button class="tab-btn" onclick="switchAccTab('accLedger')">دفتر الأستاذ</button>
+<button class="tab-btn" onclick="switchAccTab('accAccounts')">دليل الحسابات</button>
 </div>
 
 <div id="accountingPeriodsPanel" class="card" style="margin:15px 0;">
@@ -1077,6 +1079,8 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="total-box" style="background:var(--g);color:white;margin-bottom:15px;">
 <div class="line"><span>إيرادات الفترة:</span><span id="accRevPeriod">0</span></div>
 <div class="line"><span>مشتريات الفترة:</span><span id="accPurchPeriod">0</span></div>
+<div class="line"><span>مرتجع المشتريات:</span><span id="accPurchReturnPeriod">0</span></div>
+<div class="line"><span>صافي المشتريات:</span><span id="accNetPurchPeriod">0</span></div>
 <div class="line"><span>مصروفات الفترة:</span><span id="accExpPeriod">0</span></div>
 <div class="line" style="color:#d5b16a;"><span>تحصيلات الفترة:</span><span id="accCollPeriod">0</span></div>
 <div class="line grand" style="color:var(--gold);"><span>صافي ربح الفترة:</span><span id="accProfitPeriod">0</span></div>
@@ -1094,7 +1098,58 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 <div id="accJournal" class="acc-tab hidden">
 <div class="table-responsive">
-<table class="print-table" id="journalTable"><thead><tr><th>التاريخ</th><th>البيان</th><th>الحساب</th><th>مدين</th><th>دائن</th></tr></thead><tbody></tbody></table>
+<table class="print-table" id="journalTable"><thead><tr><th>التاريخ</th><th>رقم القيد</th><th>البيان</th><th>الحساب</th><th>مدين</th><th>دائن</th></tr></thead><tbody></tbody></table>
+</div>
+</div>
+
+<div id="accLedger" class="acc-tab hidden">
+<div class="card" style="margin:0 0 12px;padding:12px;">
+<label for="ledgerAccountSelect">اختر الحساب</label>
+<select id="ledgerAccountSelect" style="width:100%;margin:6px 0 10px;"><option value="">جارٍ تحميل الحسابات...</option></select>
+<button class="btn" id="btnLoadLedger" type="button" style="width:100%;">عرض حركة الحساب</button>
+<div id="ledgerMessage" class="status hidden"></div>
+</div>
+<div class="table-responsive">
+<table class="print-table" id="ledgerTable">
+<thead><tr><th>التاريخ</th><th>رقم القيد</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+</div>
+
+<div id="accAccounts" class="acc-tab hidden">
+<div id="coaManagePanel" class="card hidden" style="margin:0 0 12px;padding:12px;">
+<h3>إضافة أو تعديل حساب</h3>
+<form id="coaForm" class="form-grid">
+<input type="hidden" id="coaEditId">
+<label>كود الحساب<input id="coaCode" required maxlength="30"></label>
+<label>اسم الحساب<input id="coaName" required maxlength="150"></label>
+<label>نوع الحساب
+<select id="coaType" required>
+<option value="ASSET">أصول</option>
+<option value="LIABILITY">التزامات</option>
+<option value="EQUITY">حقوق ملكية</option>
+<option value="REVENUE">إيرادات</option>
+<option value="EXPENSE">مصروفات</option>
+</select>
+</label>
+<label>الحساب الرئيسي
+<select id="coaParent"><option value="">بدون حساب رئيسي</option></select>
+</label>
+<label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="coaActive" checked> حساب نشط</label>
+<div class="row">
+<button class="btn" id="saveCoaBtn" type="submit">حفظ الحساب</button>
+<button class="btn secondary" id="cancelCoaEditBtn" type="button">إلغاء التعديل</button>
+</div>
+<div id="coaMessage" class="status hidden"></div>
+</form>
+</div>
+<div id="coaViewMessage" class="status hidden"></div>
+<div class="table-responsive">
+<table class="print-table" id="chartAccountsTable">
+<thead><tr><th>الكود</th><th>اسم الحساب</th><th>النوع</th><th>الرئيسي</th><th>الحالة</th><th>إجراء</th></tr></thead>
+<tbody></tbody>
+</table>
 </div>
 </div>
 </div>
@@ -1268,6 +1323,20 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 </div>
 </div>
+<div id="salesReturnInspectionModal" class="modal-form">
+<div class="modal-form-content">
+<div class="modal-header"><h3>فحص مرتجع المبيعات عند الاستلام</h3><button class="close-btn" type="button" onclick="document.getElementById('salesReturnInspectionModal').classList.remove('active')">&times;</button></div>
+<div class="modal-body">
+<div id="salesReturnInspectionInfo" class="info"></div>
+<div class="info">يعتمد أمين المخزن ومدير الإنتاج التصنيف كلٌ بحسابه. لا يسمح النظام باعتماد الشخص نفسه للدورين.</div>
+<div id="salesReturnInspectionRows"></div>
+<div id="salesReturnInspectionMsg" class="status hidden"></div>
+</div></div></div>
+<div id="productionPackagingWasteModal" class="modal-form">
+<div class="modal-form-content">
+<div class="modal-header"><h3>تفاصيل الاسترداد والهالك</h3><button class="close-btn" type="button" onclick="document.getElementById('productionPackagingWasteModal').classList.remove('active')">&times;</button></div>
+<div class="modal-body"><div id="productionPackagingWasteInfo" class="info"></div><div id="productionPackagingWasteRows"></div></div>
+</div></div>
 <div id="productionExecutionModal" class="modal-form">
 <div class="modal-form-content">
 <div class="modal-header"><h3>تنفيذ أمر التشغيل والتكلفة الفعلية</h3><button class="close-btn" type="button" onclick="document.getElementById('productionExecutionModal').classList.remove('active')">&times;</button></div>
@@ -1276,6 +1345,15 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div id="productionExecutionOrderInfo" class="info"></div>
 <label for="productionExecutionDate">تاريخ التنفيذ</label><input id="productionExecutionDate" type="date" readonly>
 <label for="productionExecutionOutput">كمية الناتج الفعلية *</label><input id="productionExecutionOutput" type="number" min="0.000001" step="0.000001" required>
+<h4>تجهيز مدخلات الإنتاج</h4>
+<div class="info">افحص مخزون الثلاجة والمصنع قبل التنفيذ. أضف هنا المنتج التام الذي قررت إعادة تصنيعه بعد الفحص، أو أي خامة أو منتج نصف مصنع إضافي. المنتج التام لا يدخل الوصفة الدائمة.</div>
+<div id="productionReworkStockSummary" class="info">جارٍ تحميل الكميات المعتمدة لإعادة التصنيع...</div>
+<div class="row">
+<select id="productionExtraProduct"><option value="">اختر مكوّنًا من المخزون</option></select>
+<input id="productionExtraQuantity" type="number" min="0.000001" step="0.000001" placeholder="الكمية بالوحدة الأساسية">
+<button id="addProductionExtraMaterialBtn" class="btn secondary" type="button">إضافة مكوّن</button>
+</div>
+<hr>
 <h4>الخامات المستهلكة فعليًا</h4>
 <div id="productionExecutionMaterials"></div>
 <div class="info">أدخل الكمية المستهلكة لكل خامة بوحدة أمر التشغيل. اترك صفرًا إذا لم تُستهلك الخامة.</div>
@@ -1978,7 +2056,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v133</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v136</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -2210,6 +2288,7 @@ try {
   let canViewTrips=false, canManageTrips=false, canCreateTrips=false, canRequestTripLoads=false, canApproveTripLoads=false, canDispatchTripLoads=false;
   let canViewCustomers=false, canManageCustomers=false, canCreateCustomers=false;
   let canViewSales=false, canViewSalesReturns=false, canManageSales=false, canCreateReturns=false, canApproveReturns=false, canManageReturns=false;
+  let canInspectReturnsWarehouse=false, canInspectReturnsProduction=false;
   let canViewCollections=false, canPostCollections=false, canManageCollections=false;
   let canViewSuppliers=false, canManageSuppliers=false;
   let canViewPurchases=false, canManagePurchases=false;
@@ -2767,7 +2846,7 @@ async function userInfo(user){
     try{ canViewStock=await permission("STOCK_VIEW") || await permission("INVENTORY_VIEW") || isSystemAdmin; canManageStock=await permission("STOCK_MANAGE") || isSystemAdmin; if($("menuStock")) $("menuStock").classList.toggle("hidden",!canViewStock); if($("menuStockSummary")) $("menuStockSummary").classList.toggle("hidden",!canViewStock); if($("menuStockLots")) $("menuStockLots").classList.toggle("hidden",!canViewStock); if($("stockCard")) $("stockCard").classList.toggle("hidden",!canViewStock); if($("adjustStockBtn")) $("adjustStockBtn").classList.toggle("hidden",!canManageStock); }catch(e){}
     try{ canViewStockTransfers=await permission("INVENTORY_TRANSFER") || isSystemAdmin; if($("menuStockTransfers")) $("menuStockTransfers").classList.toggle("hidden",!canViewStockTransfers); }catch(e){}
     try{ canViewSales=await permission("SALES_VIEW") || await permission("INVOICES_VIEW") || isSystemAdmin; canManageSales=await permission("SALES_MANAGE") || isSystemAdmin; canViewSalesReturns=canViewSales || await permission("RETURNS_VIEW") || isSystemAdmin; if($("menuSales")) $("menuSales").classList.toggle("hidden",!canViewSales); if($("salesCard")) $("salesCard").classList.toggle("hidden",!canViewSales); if($("menuSalesReturns")) $("menuSalesReturns").classList.toggle("hidden",!canViewSalesReturns); if($("addInvoiceBtn")) $("addInvoiceBtn").classList.toggle("hidden",!(await permission("INVOICES_CREATE") || canManageSales)); }catch(e){}
-    try{ canCreateReturns=await permission("RETURNS_CREATE") || await permission("RETURNS_MANAGE") || isSystemAdmin; canApproveReturns=await permission("RETURNS_APPROVE") || await permission("RETURNS_MANAGE") || isSystemAdmin; canManageReturns=await permission("RETURNS_MANAGE") || isSystemAdmin; if($("addReturnBtn")) $("addReturnBtn").classList.toggle("hidden",!canCreateReturns); if($("addSalesReturnStandaloneBtn")) $("addSalesReturnStandaloneBtn").classList.toggle("hidden",!canCreateReturns); }catch(e){}
+    try{ canCreateReturns=await permission("RETURNS_CREATE") || await permission("RETURNS_MANAGE") || isSystemAdmin; canApproveReturns=await permission("RETURNS_APPROVE") || await permission("RETURNS_MANAGE") || isSystemAdmin; canManageReturns=await permission("RETURNS_MANAGE") || isSystemAdmin; canInspectReturnsWarehouse=await permission("INVENTORY_ADJUST") || isSystemAdmin; canInspectReturnsProduction=await permission("PRODUCTION_MANAGE") || isSystemAdmin; if($("menuSalesReturns"))$("menuSalesReturns").classList.toggle("hidden",!(canViewSalesReturns||canInspectReturnsWarehouse||canInspectReturnsProduction)); if($("addReturnBtn")) $("addReturnBtn").classList.toggle("hidden",!canCreateReturns); if($("addSalesReturnStandaloneBtn")) $("addSalesReturnStandaloneBtn").classList.toggle("hidden",!canCreateReturns); }catch(e){}
     try{ canViewSupplierPayments=await permission("PURCHASES_VIEW") || await permission("SUPPLIERS_VIEW") || isSystemAdmin; if($("menuSupplierPayments")) $("menuSupplierPayments").classList.toggle("hidden",!canViewSupplierPayments); }catch(e){}
     try{ canViewPurchaseReturns=await permission("RETURNS_VIEW") || await permission("PURCHASES_VIEW") || isSystemAdmin; canManagePurchaseReturns=await permission("PURCHASES_MANAGE") || isSystemAdmin; if($("menuPurchaseReturns")) $("menuPurchaseReturns").classList.toggle("hidden",!canViewPurchaseReturns); }catch(e){}
     try{ canViewReports=await permission("REPORTS_VIEW") || isSystemAdmin; if($("menuReports")) $("menuReports").classList.toggle("hidden",!canViewReports); }catch(e){}
@@ -2869,8 +2948,8 @@ function getRoleMenuIds(roleCode){
   const roleMenus = {
     SALES_REP: ["menuProducts","menuCustomers","menuSales","menuSalesReturns","menuPriceLists","menuCollections","menuTrips"],
     SALES_MANAGER: ["menuProducts","menuCustomers","menuSales","menuSalesReturns","menuPriceLists","menuCollections","menuTrips","menuReports"],
-    WAREHOUSE_KEEPER: ["menuProducts","menuLocations","menuStock","menuStockLots","menuStockTransfers","menuTrips"],
-    PRODUCTION_MANAGER: ["menuProducts","menuLocations","menuStock","menuStockLots","menuRecipes","menuProduction"],
+    WAREHOUSE_KEEPER: ["menuProducts","menuLocations","menuStock","menuStockLots","menuStockTransfers","menuTrips","menuSalesReturns"],
+    PRODUCTION_MANAGER: ["menuProducts","menuLocations","menuStock","menuStockLots","menuRecipes","menuProduction","menuSalesReturns"],
     ACCOUNTANT: ["menuSuppliers","menuPurchases","menuPurchaseReturns","menuSupplierPayments","menuExpenses","menuLandedCosts","menuFixedAssets","menuCustomers","menuSales","menuSalesReturns","menuPriceLists","menuCollections","menuTrips","menuTreasuries","menuTreasuryTransfers","menuPartners","menuAccounting","menuReports"],
     GENERAL_MANAGER: ["menuProducts","menuLocations","menuStock","menuStockLots","menuStockTransfers","menuRecipes","menuProduction","menuReservations","menuSuppliers","menuPurchases","menuPurchaseReturns","menuLandedCosts","menuFixedAssets","menuSupplierPayments","menuExpenses","menuCustomers","menuSales","menuSalesReturns","menuPriceLists","menuCollections","menuTrips","menuTreasuries","menuTreasuryTransfers","menuPartners","menuAccounting","menuReports"],
     // مختبر النظام يرى كل أقسام التشغيل والإعدادات، ولا يرى إدارة المستخدمين.
@@ -7324,6 +7403,9 @@ async function loadSalesReturns(){
     const reason=document.createElement("div"); reason.className="details"; reason.textContent="السبب: "+(r.reason||r.notes||"-");
     const actions=document.createElement("div"); actions.className="actions";
     const view=document.createElement("button"); view.className="btn secondary"; view.textContent="عرض التفاصيل"; view.onclick=()=>viewSalesReturn(r); actions.appendChild(view);
+    if((canInspectReturnsWarehouse||canInspectReturnsProduction)&&["POSTED","APPROVED"].includes(r.status)){
+      const inspect=document.createElement("button");inspect.className="btn secondary";inspect.textContent="فحص استلام المرتجع";inspect.onclick=()=>openSalesReturnInspection(r);actions.appendChild(inspect);
+    }
     if((canApproveReturns||canManageReturns)&&r.status==="DRAFT"){
       const approve=document.createElement("button"); approve.className="btn"; approve.textContent="اعتماد وترحيل المرتجع";
       approve.onclick=async()=>{
@@ -7350,6 +7432,78 @@ async function loadSalesReturns(){
     }
     c.append(title,details,status,reason,actions); box.appendChild(c);
   });
+}
+
+async function openSalesReturnInspection(ret){
+ const modal=$("salesReturnInspectionModal");if(!modal)return;
+ $("salesReturnInspectionInfo").textContent="المرتجع: "+(ret.return_number||"—")+" | العميل: "+customerName(ret.customer_id)+" | التاريخ: "+formatDate(ret.return_date);
+ $("salesReturnInspectionRows").replaceChildren();$("salesReturnInspectionMsg").classList.add("hidden");
+ modal.classList.add("active");
+ try{
+  const {data:items,error:itemsError}=await db.from("sales_return_items").select("return_item_id,product_id,quantity,unit_id,base_quantity,location_id").eq("sales_return_id",Number(ret.sales_return_id)).order("return_item_id");
+  if(itemsError)throw itemsError;
+  if(!items?.length){$("salesReturnInspectionRows").innerHTML="<div class='empty'>لا توجد أصناف في المرتجع.</div>";return;}
+  const ids=items.map(x=>Number(x.return_item_id));
+  const [{data:inspections,error:inspectionError},{data:userData,error:userError}]=await Promise.all([
+   db.from("sales_return_item_inspections").select("*").in("return_item_id",ids),
+   db.auth.getUser()
+  ]);
+  if(inspectionError)throw inspectionError;if(userError)throw userError;
+  const currentUserId=userData?.user?.id||"";
+  const inspectionMap=new Map((inspections||[]).map(x=>[Number(x.return_item_id),x]));
+  const dispositionName=v=>({SELLABLE:"صالح للبيع",REWORK:"يحتاج إعادة تصنيع",SCRAP:"هالك نهائي",MIXED:"تصنيف مختلط"})[v]||"لم يعتمد";
+  items.forEach(item=>{
+   const card=document.createElement("div");card.className="product";
+   const title=document.createElement("div");title.className="pname";title.textContent=productName(item.product_id);
+   const details=document.createElement("div");details.className="details";details.textContent="الكمية: "+fmtQty(item.quantity)+" "+unitName(item.unit_id)+" | الوزن/الكمية الأساسية: "+fmtQty(item.base_quantity)+" "+unitName(productsCache.find(p=>Number(p.product_id)===Number(item.product_id))?.base_unit_id);
+   card.append(title,details);
+   const ins=inspectionMap.get(Number(item.return_item_id));
+   if(!ins){const old=document.createElement("div");old.className="status";old.textContent="لا يوجد سجل فحص لهذا المرتجع. تم ترحيله قبل تفعيل نظام الفحص.";card.appendChild(old);$("salesReturnInspectionRows").appendChild(card);return;}
+   const receipt=document.createElement("div");receipt.className="details";
+   receipt.textContent=ins.received_at?"تم الاستلام في "+locationName(ins.received_location_id)+" بتاريخ "+formatDate(ins.received_at):"في انتظار وصول المرتجع إلى الثلاجة أو المخزن بعد تسوية الجولة.";
+   card.appendChild(receipt);
+   const final=document.createElement("div");final.className="status";
+   final.textContent=ins.final_disposition?"التصنيف النهائي: "+dispositionName(ins.final_disposition):"قرار أمين المخزن: "+dispositionName(ins.warehouse_disposition)+" | قرار مدير الإنتاج: "+dispositionName(ins.production_disposition);
+   card.appendChild(final);
+   if(ins.warehouse_disposition&&ins.production_disposition&&ins.warehouse_disposition!==ins.production_disposition&&!ins.final_disposition){
+    const mismatch=document.createElement("div");mismatch.className="status error";mismatch.textContent="القراران غير متطابقين. يجب أن يتفق الطرفان على التصنيف.";card.appendChild(mismatch);
+   }
+   if(ins.final_disposition||!ins.received_at){$("salesReturnInspectionRows").appendChild(card);return;}
+   const addApproval=(type,allowed,currentDecision,currentNotes,otherInspector)=>{
+    if(!allowed)return;
+    if(otherInspector&&otherInspector===currentUserId){const note=document.createElement("div");note.className="details";note.textContent="هذا الحساب اعتمد الدور الآخر بالفعل. يجب أن يعتمد الحساب الثاني من مستخدم مختلف.";card.appendChild(note);return;}
+    const section=document.createElement("div");section.className="item-row";
+    const label=document.createElement("label");label.textContent=type==="WAREHOUSE"?"فحص أمين المخزن":"فحص مدير الإنتاج";
+    const makeNumber=(name,value)=>{const wrap=document.createElement("label");wrap.textContent=name;const input=document.createElement("input");input.type="number";input.step="any";input.min="0";input.className="input";input.value=value??"";wrap.appendChild(input);section.appendChild(wrap);return input;};
+    const base=Number(item.base_quantity||0);
+    const preSell=currentDecision==="SELLABLE"?base:currentDecision==="MIXED"?Number(type==="WAREHOUSE"?ins.warehouse_sellable_quantity:ins.production_sellable_quantity||0):0;
+    const preRework=currentDecision==="REWORK"?base:currentDecision==="MIXED"?Number(type==="WAREHOUSE"?ins.warehouse_rework_quantity:ins.production_rework_quantity||0):0;
+    const preScrap=currentDecision==="SCRAP"?base:currentDecision==="MIXED"?Number(type==="WAREHOUSE"?ins.warehouse_scrap_quantity:ins.production_scrap_quantity||0):0;
+    const sell=makeNumber("صالح للبيع",preSell),rework=makeNumber("إعادة تصنيع",preRework),scrap=makeNumber("هالك",preScrap);
+    const total=document.createElement("div");total.className="details";section.appendChild(total);
+    const updateTotal=()=>{const t=Number(sell.value||0)+Number(rework.value||0)+Number(scrap.value||0);total.textContent="المجموع: "+fmtQty(t)+" من "+fmtQty(base);total.className=t===base?"details":"status error";};
+    [sell,rework,scrap].forEach(x=>x.addEventListener("input",updateTotal));updateTotal();
+    const notes=document.createElement("textarea");notes.rows=2;notes.placeholder="ملاحظات الفحص";notes.value=currentNotes||"";
+    const save=document.createElement("button");save.type="button";save.className="btn";save.textContent=type==="WAREHOUSE"?"اعتماد أمين المخزن":"اعتماد مدير الإنتاج";
+    save.onclick=async()=>{
+     const sv=Number(sell.value||0),rv=Number(rework.value||0),xv=Number(scrap.value||0);
+     if(Math.abs(sv+rv+xv-base)>0.000001)return showToast("يجب توزيع كامل الكمية بين الحالات الثلاث","error");
+     busy(save,true,"جارٍ الاعتماد...","اعتماد");
+     try{
+      const {error}=await db.rpc("record_sales_return_item_inspection",{p_return_item_id:Number(item.return_item_id),p_inspector_type:type,p_disposition:sv===base?"SELLABLE":rv===base?"REWORK":xv===base?"SCRAP":"MIXED",p_notes:notes.value.trim()||null,p_sellable_quantity:sv,p_rework_quantity:rv,p_scrap_quantity:xv});
+      if(error)throw error;
+      showToast("تم تسجيل قرار الفحص","success");
+      await openSalesReturnInspection(ret);await loadSalesReturns();await loadStock();await loadSales();
+     }catch(e){showToast("تعذر تسجيل الفحص: "+err(e),"error",7000);}
+     finally{busy(save,false,"","اعتماد");}
+    };
+    card.appendChild(section);card.appendChild(notes);card.appendChild(save);
+   };
+   addApproval("WAREHOUSE",canInspectReturnsWarehouse,ins.warehouse_disposition,ins.warehouse_notes,ins.production_inspected_by);
+   addApproval("PRODUCTION",canInspectReturnsProduction,ins.production_disposition,ins.production_notes,ins.warehouse_inspected_by);
+   $("salesReturnInspectionRows").appendChild(card);
+  });
+ }catch(e){msg($("salesReturnInspectionMsg"),"تعذر تحميل فحص المرتجع: "+err(e),"error");}
 }
 
 async function viewSalesReturn(ret){
@@ -8556,10 +8710,10 @@ function fillRecipeOutputSelects(){
 function addRecipeItemRow(item){ 
   recipeItemCounter++; 
   const wrap=document.createElement("div"); wrap.className="item-row"; 
-  const prodLabel=document.createElement("label"); prodLabel.textContent="المكون *"; 
+  const prodLabel=document.createElement("label"); prodLabel.textContent="مكوّن التصنيع *"; 
   const prodSel=document.createElement("select"); prodSel.className="item-product"; prodSel.required=true; 
   const first=document.createElement("option"); first.value=""; first.textContent="اختر المكون"; prodSel.appendChild(first); 
-  productsCache.filter(p=>p.is_active).forEach(p=>{ 
+  productsCache.filter(p=>p.is_active&&["RAW","SEMI_FINISHED"].includes(p.product_type)).forEach(p=>{ 
     const op=document.createElement("option"); 
     op.value=String(p.product_id); 
     op.textContent=p.product_name; 
@@ -8739,7 +8893,7 @@ let productionExecutionMaterials=[];
 function productionExecOption(value,label){const o=document.createElement("option");o.value=String(value??"");o.textContent=label;return o;}
 function productionSourceLabel(m){const p=productsCache.find(x=>String(x.product_id)===String(m.raw_product_id));return (p?.product_name||productName(m.raw_product_id))+" — "+unitName(m.unit_id)+" (الأساسية: "+unitName(p?.base_unit_id)+")";}
 function fillProductionSourceSelect(el){el.replaceChildren(productionExecOption("","اختر الخامة المصدر"));productionExecutionMaterials.forEach(m=>el.appendChild(productionExecOption(m.material_id,productionSourceLabel(m))));}
-function fillProductionRecoveredProductSelect(el){el.replaceChildren(productionExecOption("","اختر المنتج المسترجع"));productsCache.filter(p=>p.is_active&&p.can_be_produced&&["RAW","SEMI_FINISHED","FINISHED"].includes(p.product_type)).forEach(p=>el.appendChild(productionExecOption(p.product_id,p.product_name+" — "+unitName(p.base_unit_id))));}
+function fillProductionRecoveredProductSelect(el){el.replaceChildren(productionExecOption("","اختر المنتج المسترجع"));productsCache.filter(p=>p.is_active&&(p.can_be_produced||(Number(p.category_id)===16&&p.product_name.startsWith("طبق")))&&["RAW","SEMI_FINISHED"].includes(p.product_type)).forEach(p=>el.appendChild(productionExecOption(p.product_id,p.product_name+" — "+unitName(p.base_unit_id))));}
 function addProductionRecoveredRow(){
  const row=document.createElement("div");row.className="item-row production-cost-row";
  const source=document.createElement("select");source.className="production-recovered-source";source.required=true;fillProductionSourceSelect(source);
@@ -8751,13 +8905,25 @@ function addProductionRecoveredRow(){
  const fields=[ ["الخامة المصدر",source],["المنتج المسترجع",product],["كمية المصدر بالوحدة الأساسية",sourceQty],["كمية المسترجع بالوحدة الأساسية",baseQty],["التكلفة المخصصة",cost] ];
  fields.forEach(([label,el])=>{const wrap=document.createElement("label");wrap.textContent=label;wrap.appendChild(el);row.appendChild(wrap);});row.appendChild(remove);$("productionRecoveredRows").appendChild(row);
 }
+function addProductionPackagingWasteItem(container){
+ const item=document.createElement("div");item.className="production-packaging-waste-row item-row";
+ const product=document.createElement("select");product.className="production-packaging-waste-product";product.required=true;product.appendChild(productionExecOption("","اختر مستلزم التعبئة التالف"));
+ productsCache.filter(p=>p.is_active&&Number(p.category_id)===16&&p.product_type==="RAW").forEach(p=>product.appendChild(productionExecOption(p.product_id,p.product_name+" — "+unitName(p.base_unit_id))));
+ const quantity=document.createElement("input");quantity.className="production-packaging-waste-quantity";quantity.type="number";quantity.min="0.000001";quantity.step="0.000001";quantity.placeholder="الكمية بالوحدة الأساسية";quantity.required=true;
+ const remove=document.createElement("button");remove.type="button";remove.className="btn secondary";remove.textContent="حذف";remove.onclick=()=>item.remove();
+ [["مستلزم التعبئة التالف",product],["الكمية",quantity]].forEach(([label,el])=>{const wrap=document.createElement("label");wrap.textContent=label;wrap.appendChild(el);item.appendChild(wrap);});
+ item.appendChild(remove);container.appendChild(item);
+}
 function addProductionWasteRow(){
  const row=document.createElement("div");row.className="item-row production-cost-row";
  const source=document.createElement("select");source.className="production-waste-source";source.required=true;fillProductionSourceSelect(source);
- const qty=document.createElement("input");qty.className="production-waste-qty";qty.type="number";qty.min="0.000001";qty.step="0.000001";qty.placeholder="كمية الفاقد بالوحدة الأساسية";qty.required=true;
- const cost=document.createElement("input");cost.className="production-waste-cost";cost.type="number";cost.min="0.000001";cost.step="0.000001";cost.placeholder="التكلفة المخصصة";cost.required=true;
- const remove=document.createElement("button");remove.type="button";remove.className="btn secondary";remove.textContent="حذف";remove.onclick=()=>row.remove();
- [["الخامة المصدر",source],["كمية الفاقد بالوحدة الأساسية",qty],["التكلفة المخصصة",cost]].forEach(([label,el])=>{const wrap=document.createElement("label");wrap.textContent=label;wrap.appendChild(el);row.appendChild(wrap);});row.appendChild(remove);$("productionWasteRows").appendChild(row);
+ const qty=document.createElement("input");qty.className="production-waste-qty";qty.type="number";qty.min="0";qty.step="0.000001";qty.placeholder="كمية فاقد المحتوى، صفر إذا كان الفاقد تغليفًا فقط";qty.required=true;
+ const cost=document.createElement("input");cost.className="production-waste-cost";cost.type="number";cost.min="0.000001";cost.step="0.000001";cost.placeholder="التكلفة المخصصة للهالك";cost.required=true;
+ const packagingRows=document.createElement("div");packagingRows.className="production-packaging-waste-rows";
+ const addPackaging=document.createElement("button");addPackaging.type="button";addPackaging.className="btn secondary";addPackaging.textContent="إضافة رول أو استيكر أو طبق تالف";addPackaging.onclick=()=>addProductionPackagingWasteItem(packagingRows);
+ const remove=document.createElement("button");remove.type="button";remove.className="btn secondary";remove.textContent="حذف بند الهالك";remove.onclick=()=>row.remove();
+ [["الخامة المصدر",source],["كمية فاقد المحتوى",qty],["التكلفة المخصصة للهالك",cost]].forEach(([label,el])=>{const wrap=document.createElement("label");wrap.textContent=label;wrap.appendChild(el);row.appendChild(wrap);});
+ row.append(packagingRows,addPackaging,remove);$("productionWasteRows").appendChild(row);
 }
 function renderProductionDirectExpenses(items){
  const box=$("productionDirectExpenses");if(!box)return;box.replaceChildren();
@@ -8775,26 +8941,40 @@ function renderProductionDirectExpenses(items){
 async function openProductionExecution(order){
  if(!canManageProduction||!order||order.status!=="DRAFT")return;
  try{
-  const {data,error}=await db.from("production_order_materials").select("material_id,raw_product_id,required_quantity,unit_id").eq("order_id",order.order_id).order("material_id");
+  const {data,error}=await db.from("production_order_materials").select("material_id,raw_product_id,required_quantity,unit_id,is_extra").eq("order_id",order.order_id).order("material_id");
   if(error)throw error;if(!data?.length)throw new Error("أمر التشغيل لا يحتوي على خامات.");
   const {data:directData,error:directError}=await db.rpc("get_available_production_expenses",{p_order_id:Number(order.order_id)});
   if(directError)throw directError;
   productionExecutionOrder=order;productionExecutionMaterials=data;
   $("productionExecutionForm").reset();$("productionExecutionDate").value=todayISO();$("productionExecutionOutput").value=String(order.target_quantity||"");
   $("productionExecutionOrderInfo").textContent="أمر التشغيل: "+order.order_number+" | الناتج: "+productName(order.output_product_id)+" | الوحدة: "+unitName(order.output_unit_id);
+  const extraSelect=$("productionExtraProduct");if(extraSelect){extraSelect.replaceChildren(productionExecOption("","اختر مكوّنًا من المخزون"));productsCache.filter(p=>p.is_active&&["RAW","SEMI_FINISHED","FINISHED"].includes(p.product_type)).forEach(p=>extraSelect.appendChild(productionExecOption(p.product_id,p.product_name+" — "+unitName(p.base_unit_id))));}
+  $("productionExtraQuantity").value="";
+  const reworkSummary=$("productionReworkStockSummary");if(reworkSummary){try{const {data:reworkData,error:reworkError}=await db.rpc("get_sales_return_rework_stock",{p_location_id:Number(order.factory_location_id)});if(reworkError)throw reworkError;reworkSummary.textContent=reworkData?.length?"مرتجعات معتمدة لإعادة التصنيع في موقع المصنع: "+reworkData.map(x=>productName(x.product_id)+" — "+fmtQty(x.available_quantity)+" "+unitName(productsCache.find(p=>Number(p.product_id)===Number(x.product_id))?.base_unit_id)+" — "+x.return_number).join(" | "):"لا توجد كميات مرتجعات معتمدة لإعادة التصنيع في موقع المصنع حاليًا.";}catch(e){reworkSummary.textContent="تعذر تحميل رصيد المرتجعات المعتمدة لإعادة التصنيع.";}}
   const box=$("productionExecutionMaterials");box.replaceChildren();
-  data.forEach(m=>{const row=document.createElement("div");row.className="item-row";row.dataset.materialId=String(m.material_id);const label=document.createElement("label");label.textContent=productName(m.raw_product_id)+" — "+unitName(m.unit_id)+" (المطلوب: "+fmtQty(m.required_quantity)+")";const input=document.createElement("input");input.className="production-actual-material";input.type="number";input.min="0";input.step="0.000001";input.value=String(m.required_quantity??0);input.required=true;label.appendChild(input);row.appendChild(label);box.appendChild(row);});
+  data.forEach(m=>{const row=document.createElement("div");row.className="item-row";row.dataset.materialId=String(m.material_id);const label=document.createElement("label");label.textContent=productName(m.raw_product_id)+" — "+unitName(m.unit_id)+" (المطلوب: "+fmtQty(m.required_quantity)+")"+(m.is_extra?" — مكوّن إضافي":"");const input=document.createElement("input");input.className="production-actual-material";input.type="number";input.min="0";input.step="0.000001";input.value=String(m.required_quantity??0);input.required=true;label.appendChild(input);row.appendChild(label);if(m.is_extra){const remove=document.createElement("button");remove.type="button";remove.className="btn danger";remove.textContent="حذف المكوّن الإضافي";remove.onclick=async()=>{if(!confirm("حذف المكوّن الإضافي من أمر التشغيل؟"))return;try{const {error}=await db.rpc("remove_production_order_extra_material",{p_order_id:Number(order.order_id),p_material_id:Number(m.material_id)});if(error)throw error;await openProductionExecution(order);}catch(e){showToast("تعذر حذف المكوّن الإضافي: "+err(e),"error",7000);}};row.appendChild(remove);}box.appendChild(row);});
   $("productionRecoveredRows").replaceChildren();$("productionWasteRows").replaceChildren();renderProductionDirectExpenses(directData||[]);clear($("productionExecutionMsg"));$("productionExecutionModal").classList.add("active");
  }catch(e){showToast("تعذر فتح تنفيذ أمر التشغيل: "+err(e),"error",7000);}
 }
 if($("addProductionRecoveredBtn"))$("addProductionRecoveredBtn").addEventListener("click",addProductionRecoveredRow);
 if($("addProductionWasteBtn"))$("addProductionWasteBtn").addEventListener("click",addProductionWasteRow);
+async function addProductionExtraMaterial(){
+ if(!canManageProduction||!productionExecutionOrder)return;
+ const productId=Number($("productionExtraProduct")?.value||0),quantity=Number($("productionExtraQuantity")?.value||0);
+ if(!(productId>0&&quantity>0))return msg($("productionExecutionMsg"),"اختر المنتج وأدخل الكمية بوحدته الأساسية.", "error");
+ if(productionExecutionMaterials.some(m=>Number(m.raw_product_id)===productId))return msg($("productionExecutionMsg"),"هذا المنتج موجود بالفعل ضمن مكونات أمر التشغيل.", "error");
+ const btn=$("addProductionExtraMaterialBtn");busy(btn,true,"جارٍ الإضافة...","إضافة مكوّن");
+ try{const {error}=await db.rpc("add_production_order_extra_material",{p_order_id:Number(productionExecutionOrder.order_id),p_product_id:productId,p_quantity:quantity,p_request_id:crypto.randomUUID()});if(error)throw error;showToast("تمت إضافة المكوّن إلى أمر التشغيل","success");await openProductionExecution(productionExecutionOrder);}
+ catch(e){msg($("productionExecutionMsg"),"تعذرت إضافة المكوّن: "+err(e),"error");}
+ finally{busy(btn,false,"","إضافة مكوّن");}
+}
+if($("addProductionExtraMaterialBtn"))$("addProductionExtraMaterialBtn").addEventListener("click",addProductionExtraMaterial);
 if($("productionExecutionForm"))$("productionExecutionForm").addEventListener("submit",async e=>{
  e.preventDefault();if(!canManageProduction||!productionExecutionOrder)return;
  const output=Number($("productionExecutionOutput").value);if(!(output>0))return msg($("productionExecutionMsg"),"كمية الناتج الفعلية يجب أن تكون أكبر من صفر.","error");
  const materials=[];for(const row of $("productionExecutionMaterials").querySelectorAll(".item-row")){const qty=Number(row.querySelector(".production-actual-material").value);if(!Number.isFinite(qty)||qty<0)return msg($("productionExecutionMsg"),"راجع كميات الخامات المستهلكة.","error");materials.push({material_id:Number(row.dataset.materialId),actual_quantity:qty});}
  const recovered=[];for(const row of $("productionRecoveredRows").querySelectorAll(".production-cost-row")){const source=Number(row.querySelector(".production-recovered-source").value),product=Number(row.querySelector(".production-recovered-product").value),sourceQty=Number(row.querySelector(".production-recovered-source-qty").value),baseQty=Number(row.querySelector(".production-recovered-base-qty").value),cost=Number(row.querySelector(".production-recovered-cost").value);if(!(source>0&&product>0&&sourceQty>0&&baseQty>0&&cost>0))return msg($("productionExecutionMsg"),"أكمل بيانات كل مادة مسترجعة، بما فيها كمية المصدر والتكلفة.","error");recovered.push({product_id:product,source_material_id:source,source_base_quantity:sourceQty,base_quantity:baseQty,allocated_cost:cost});}
- const waste=[];for(const row of $("productionWasteRows").querySelectorAll(".production-cost-row")){const source=Number(row.querySelector(".production-waste-source").value),qty=Number(row.querySelector(".production-waste-qty").value),cost=Number(row.querySelector(".production-waste-cost").value);if(!(source>0&&qty>0&&cost>0))return msg($("productionExecutionMsg"),"أكمل بيانات كل بند فاقد، بما فيها الكمية والتكلفة.","error");waste.push({material_id:source,base_quantity:qty,allocated_cost:cost});}
+ const waste=[];for(const row of $("productionWasteRows").querySelectorAll(".production-cost-row")){const source=Number(row.querySelector(".production-waste-source").value),qty=Number(row.querySelector(".production-waste-qty").value),cost=Number(row.querySelector(".production-waste-cost").value),packagingItems=[];for(const itemRow of row.querySelectorAll(".production-packaging-waste-row")){const productId=Number(itemRow.querySelector(".production-packaging-waste-product").value),itemQty=Number(itemRow.querySelector(".production-packaging-waste-quantity").value),product=productsCache.find(p=>Number(p.product_id)===productId);if(!(productId>0&&itemQty>0&&product&&Number(product.category_id)===16))return msg($("productionExecutionMsg"),"أكمل بيانات مستلزمات التعبئة التالفة.", "error");packagingItems.push({product_id:productId,quantity:itemQty,unit_id:Number(product.base_unit_id)});}if(!(source>0&&qty>=0&&cost>0&&(qty>0||packagingItems.length>0)))return msg($("productionExecutionMsg"),"أكمل مصدر الهالك وتكلفته، وأدخل كمية فاقد المحتوى أو مستلزم تعبئة تالف.", "error");waste.push({material_id:source,base_quantity:qty,allocated_cost:cost,packaging_items:packagingItems});}
  const directExpenses=[];for(const row of $("productionDirectExpenses").querySelectorAll(".production-direct-expense-row")){const amount=Number(row.querySelector(".production-direct-expense-amount").value||0),available=Number(row.dataset.available);if(!Number.isFinite(amount)||amount<0||amount>available+0.0001)return msg($("productionExecutionMsg"),"المبلغ المخصص من أحد المصروفات يتجاوز المتاح.","error");if(amount>0)directExpenses.push({expense_id:Number(row.dataset.expenseId),allocated_amount:amount});}
  if($("productionExecutionDate").value!==todayISO())return msg($("productionExecutionMsg"),"تاريخ التنفيذ يجب أن يساوي تاريخ اليوم.","error");
  if(!confirm("سيتم تسجيل صرف الخامات والناتج والمسترجعات والفاقد، وتحميل المصروفات المباشرة التي خصصت لها مبلغًا على تكلفة الناتج. راجع البيانات قبل التأكيد. هل تريد التنفيذ؟"))return;
@@ -8803,6 +8983,52 @@ if($("productionExecutionForm"))$("productionExecutionForm").addEventListener("s
  catch(error){msg($("productionExecutionMsg"),"تعذر تنفيذ أمر التشغيل: "+err(error),"error");}
  finally{busy(btn,false,"","تنفيذ وتسجيل التكلفة");}
 });
+
+async function viewProductionPackagingWaste(order){
+ const modal=$("productionPackagingWasteModal");if(!modal)return;
+ $("productionPackagingWasteInfo").textContent="أمر التشغيل: "+order.order_number;
+ const box=$("productionPackagingWasteRows");box.replaceChildren();modal.classList.add("active");
+ try{
+  const recovered=order.cost_allocation_details?.recovered_materials||[];
+  const waste=order.cost_allocation_details?.abnormal_waste?.allocations||[];
+  const sourceIds=[...new Set([
+   ...recovered.map(x=>Number(x.source_material_id)),
+   ...waste.map(x=>Number(x.material_id))
+  ].filter(x=>x>0))];
+  if(!sourceIds.length){box.innerHTML="<div class='empty'>لا توجد مواد مستردة أو تفاصيل هالك مسجلة في هذا الأمر.</div>";return;}
+  const {data:materials,error}=await db.from("production_order_materials").select("material_id,raw_product_id").in("material_id",sourceIds);
+  if(error)throw error;
+  const sourceMap=new Map((materials||[]).map(x=>[Number(x.material_id),Number(x.raw_product_id)]));
+  if(recovered.length){
+   const heading=document.createElement("h4");heading.textContent="المواد المستردة";box.appendChild(heading);
+   recovered.forEach(item=>{
+    const sourceProductId=sourceMap.get(Number(item.source_material_id));
+    const recoveredProduct=productsCache.find(p=>Number(p.product_id)===Number(item.product_id));
+    const sourceProduct=productsCache.find(p=>Number(p.product_id)===Number(sourceProductId));
+    const card=document.createElement("div");card.className="product";
+    const title=document.createElement("div");title.className="pname";title.textContent=productName(item.product_id);
+    const details=document.createElement("div");details.className="details";
+    details.textContent="المصدر: "+productName(sourceProductId)+" | الكمية المستردة: "+fmtQty(item.base_quantity)+" "+unitName(recoveredProduct?.base_unit_id)+" | كمية المصدر المستخدمة: "+fmtQty(item.source_base_quantity)+" "+unitName(sourceProduct?.base_unit_id)+" | التكلفة المحملة: "+fmt(item.allocated_cost||0);
+    card.append(title,details);box.appendChild(card);
+   });
+  }
+  if(waste.length){
+   const heading=document.createElement("h4");heading.textContent="الهالك ومستلزمات التعبئة التالفة";box.appendChild(heading);
+   waste.forEach(item=>{
+    const packagingItems=item.packaging_items||[];
+    const sourceProductId=sourceMap.get(Number(item.material_id));
+    const sourceProduct=productsCache.find(p=>Number(p.product_id)===Number(sourceProductId));
+    const card=document.createElement("div");card.className="product";
+    const title=document.createElement("div");title.className="pname";title.textContent="المكوّن المصدر: "+productName(sourceProductId);
+    const details=document.createElement("div");details.className="details";
+    details.textContent="فاقد المحتوى: "+fmtQty(item.base_quantity||0)+" "+unitName(sourceProduct?.base_unit_id)+" | إجمالي تكلفة الهالك المخصصة: "+fmt(item.allocated_cost||0);
+    card.append(title,details);
+    packagingItems.forEach(pack=>{const line=document.createElement("div");line.className="details";line.textContent=productName(pack.product_id)+" — الكمية التالفة: "+fmtQty(pack.quantity)+" "+unitName(pack.unit_id);card.appendChild(line);});
+    box.appendChild(card);
+   });
+  }
+ }catch(e){box.textContent="تعذر تحميل التفاصيل: "+err(e);}
+}
 
 function renderProduction(){ 
   const box=$("productionList"); if(!box) return; 
@@ -8828,6 +9054,9 @@ function renderProduction(){
       const edit=document.createElement("button");edit.className="btn secondary";edit.textContent="تعديل المسودة";edit.onclick=()=>openProductionDraftEdit(p);actions.appendChild(edit);
       const exec=document.createElement("button");exec.className="btn";exec.textContent="تنفيذ وتسجيل التكلفة";exec.onclick=()=>openProductionExecution(p);actions.appendChild(exec); 
     } else if(canManageProduction && p.status === "COMPLETED"){
+      if((p.cost_allocation_details?.recovered_materials||[]).length||(p.cost_allocation_details?.abnormal_waste?.allocations||[]).length){
+        const packaging=document.createElement("button");packaging.className="btn secondary";packaging.textContent="تفاصيل الاسترداد والهالك";packaging.onclick=()=>viewProductionPackagingWaste(p);actions.appendChild(packaging);
+      }
       const reverse=document.createElement("button");reverse.className="btn danger";reverse.textContent="عكس أمر الإنتاج";reverse.onclick=()=>reverseProductionOrder(p);actions.appendChild(reverse);
     }
     card.append(title,details,actions); 
@@ -9699,6 +9928,8 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
           if(!periodData) throw new Error("لم تُرجع قاعدة البيانات ملخص الفترة.");
           $("accRevPeriod").textContent = fmt(periodData.rev);
           $("accPurchPeriod").textContent = fmt(periodData.purch);
+          $("accPurchReturnPeriod").textContent = fmt(periodData.purch_returns || 0);
+          $("accNetPurchPeriod").textContent = fmt(periodData.net_purch ?? (Number(periodData.purch || 0) - Number(periodData.purch_returns || 0)));
           $("accExpPeriod").textContent = fmt(periodData.exp);
           $("accCollPeriod").textContent = fmt(periodData.coll || 0);
           $("accProfitPeriod").textContent = fmt(periodData.profit);
@@ -9724,29 +9955,222 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
             tbodyTrial.innerHTML = "<tr><td colspan='3' style='text-align:center;'>لا توجد قيود في هذه الفترة. اضغط على زرار <strong>🔄 ترحيل القيود</strong> عشان تولد القيود من الفواتير والمشتريات والمصروفات.</td></tr>"; 
           }
 
-          const { data: journalData, error: journalErr } = await db.rpc("get_journal_entries", { p_from: from, p_to: to });
+          const { data: journalData, error: journalErr } = await db.rpc("get_journal_entries_full", { p_from: from, p_to: to });
           if(journalErr) throw journalErr;
-          const tbodyJournal = $("journalTable").querySelector("tbody"); 
+          const tbodyJournal = $("journalTable").querySelector("tbody");
           tbodyJournal.innerHTML = "";
-          if(journalData && journalData.length > 0) { 
-            journalData.forEach(row => { 
-              tbodyJournal.innerHTML += `<tr><td>${formatDate(row.entry_date)}</td><td>${row.description}</td><td>${row.account_name}</td><td>${fmt(row.debit)}</td><td>${fmt(row.credit)}</td></tr>`; 
-            }); 
-          } else { 
-            tbodyJournal.innerHTML = "<tr><td colspan='5' style='text-align:center;'>لا توجد قيود في هذه الفترة.</td></tr>"; 
+          if(journalData && journalData.length > 0) {
+            let currentEntry = null;
+            let journalDebit = 0, journalCredit = 0;
+            journalData.forEach(row => {
+              if(currentEntry !== row.entry_id) {
+                currentEntry = row.entry_id;
+                tbodyJournal.innerHTML += `<tr style="background:#e9efe9;font-weight:bold;"><td colspan="6">قيد رقم ${esc(row.entry_number || row.entry_id)} | ${formatDate(row.entry_date)} | ${esc(row.description || "")} | الإجمالي: مدين ${fmt(row.entry_debit)} / دائن ${fmt(row.entry_credit)}</td></tr>`;
+              }
+              journalDebit += Number(row.debit || 0);
+              journalCredit += Number(row.credit || 0);
+              tbodyJournal.innerHTML += `<tr><td>${formatDate(row.entry_date)}</td><td>${esc(row.entry_number || "")}</td><td>${esc(row.line_description || row.description || "")}</td><td>${esc(row.account_code)} - ${esc(row.account_name)}</td><td>${fmt(row.debit)}</td><td>${fmt(row.credit)}</td></tr>`;
+            });
+            tbodyJournal.innerHTML += `<tr style="background:#e9efe9;font-weight:bold;"><td colspan="4">إجمالي الفترة</td><td>${fmt(journalDebit)}</td><td>${fmt(journalCredit)}</td></tr>`;
+          } else {
+            tbodyJournal.innerHTML = "<tr><td colspan='6' style='text-align:center;'>لا توجد قيود في هذه الفترة.</td></tr>";
           }
+          await loadAccountingDirectory();
+          await loadAccountLedger();
       } catch(e){ 
         console.warn("[FINANCIAL]", e); 
         showToast("تعذر تحميل الملخص المالي: " + err(e), "error"); 
       } 
   }
+  // ========== دليل الحسابات ودفتر الأستاذ ==========
+  let chartAccountsCache = [];
+
+  function accountTypeLabel(type) {
+    return ({ASSET:"أصول",LIABILITY:"التزامات",EQUITY:"حقوق ملكية",REVENUE:"إيرادات",EXPENSE:"مصروفات"})[type] || type || "—";
+  }
+
+  function resetChartAccountForm() {
+    const form = $("coaForm");
+    if(form) form.reset();
+    if($("coaEditId")) $("coaEditId").value = "";
+    if($("coaType")) $("coaType").disabled = false;
+    if($("coaActive")) $("coaActive").checked = true;
+    if($("saveCoaBtn")) $("saveCoaBtn").textContent = "حفظ الحساب";
+    if($("coaMessage")) clear($("coaMessage"));
+  }
+
+  async function loadAccountingDirectory() {
+    const { data, error } = await db.from("chart_of_accounts")
+      .select("account_id,account_code,account_name,account_type,parent_id,is_active")
+      .order("account_code");
+    if(error) throw error;
+    chartAccountsCache = data || [];
+
+    const ledgerSelect = $("ledgerAccountSelect");
+    const previousLedgerAccount = ledgerSelect ? ledgerSelect.value : "";
+    if(ledgerSelect) {
+      ledgerSelect.replaceChildren();
+      const first = document.createElement("option");
+      first.value = "";
+      first.textContent = "اختر الحساب";
+      ledgerSelect.appendChild(first);
+      chartAccountsCache.filter(a => a.is_active).forEach(a => {
+        const option = document.createElement("option");
+        option.value = String(a.account_id);
+        option.textContent = a.account_code + " - " + a.account_name;
+        ledgerSelect.appendChild(option);
+      });
+      if(previousLedgerAccount && chartAccountsCache.some(a => String(a.account_id) === previousLedgerAccount && a.is_active)) {
+        ledgerSelect.value = previousLedgerAccount;
+      } else if(ledgerSelect.options.length > 1) {
+        ledgerSelect.selectedIndex = 1;
+      }
+    }
+
+    const parentSelect = $("coaParent");
+    if(parentSelect) {
+      const previousParent = parentSelect.value;
+      parentSelect.replaceChildren();
+      const none = document.createElement("option");
+      none.value = "";
+      none.textContent = "بدون حساب رئيسي";
+      parentSelect.appendChild(none);
+      chartAccountsCache.filter(a => a.is_active).forEach(a => {
+        const option = document.createElement("option");
+        option.value = String(a.account_id);
+        option.textContent = a.account_code + " - " + a.account_name;
+        parentSelect.appendChild(option);
+      });
+      if(previousParent) parentSelect.value = previousParent;
+    }
+
+    const managePanel = $("coaManagePanel");
+    if(managePanel) managePanel.classList.toggle("hidden", !(canManageAccounting || isSystemAdmin));
+
+    const tbody = $("chartAccountsTable")?.querySelector("tbody");
+    if(tbody) {
+      tbody.innerHTML = "";
+      if(!chartAccountsCache.length) {
+        tbody.innerHTML = "<tr><td colspan='6'>لا توجد حسابات مسجلة.</td></tr>";
+      } else {
+        chartAccountsCache.forEach(a => {
+          const parent = chartAccountsCache.find(p => p.account_id === a.parent_id);
+          const action = (canManageAccounting || isSystemAdmin)
+            ? `<button class="btn secondary" type="button" onclick="window.editChartAccount(${Number(a.account_id)})">تعديل</button>`
+            : "—";
+          tbody.innerHTML += `<tr><td>${esc(a.account_code)}</td><td>${esc(a.account_name)}</td><td>${esc(accountTypeLabel(a.account_type))}</td><td>${parent ? esc(parent.account_code + " - " + parent.account_name) : "—"}</td><td>${a.is_active ? "نشط" : "موقوف"}</td><td>${action}</td></tr>`;
+        });
+      }
+    }
+  }
+
+  window.editChartAccount = function(accountId) {
+    if(!(canManageAccounting || isSystemAdmin)) return;
+    const account = chartAccountsCache.find(a => Number(a.account_id) === Number(accountId));
+    if(!account) return;
+    $("coaEditId").value = String(account.account_id);
+    $("coaCode").value = account.account_code || "";
+    $("coaName").value = account.account_name || "";
+    $("coaType").value = account.account_type || "ASSET";
+    $("coaType").disabled = true;
+    $("coaParent").value = account.parent_id ? String(account.parent_id) : "";
+    $("coaActive").checked = !!account.is_active;
+    $("saveCoaBtn").textContent = "حفظ التعديل";
+    clear($("coaMessage"));
+    $("coaManagePanel").scrollIntoView({behavior:"smooth",block:"start"});
+  };
+
+  if($("btnLoadLedger")) $("btnLoadLedger").addEventListener("click", loadAccountLedger);
+  async function loadAccountLedger() {
+    const accountId = Number($("ledgerAccountSelect")?.value || 0);
+    const tbody = $("ledgerTable")?.querySelector("tbody");
+    if(!tbody) return;
+    tbody.innerHTML = "";
+    if(!accountId) {
+      tbody.innerHTML = "<tr><td colspan='6'>اختر حسابًا أولًا.</td></tr>";
+      return;
+    }
+    try {
+      const from = $("accFromDate").value || monthStartISO();
+      const to = $("accToDate").value || todayISO();
+      const { data, error } = await db.rpc("get_account_ledger", {
+        p_account_id: accountId, p_from: from, p_to: to
+      });
+      if(error) throw error;
+      if(!data || !data.length) {
+        tbody.innerHTML = "<tr><td colspan='6'>لا توجد حركة لهذا الحساب خلال الفترة.</td></tr>";
+        return;
+      }
+      let totalDebit = 0, totalCredit = 0;
+      data.forEach(row => {
+        totalDebit += Number(row.debit || 0);
+        totalCredit += Number(row.credit || 0);
+        const balance = Number(row.running_balance || 0);
+        const balanceText = balance === 0 ? "0.00" : fmt(Math.abs(balance)) + (balance > 0 ? " مدين" : " دائن");
+        tbody.innerHTML += `<tr><td>${formatDate(row.entry_date)}</td><td>${esc(row.entry_number || row.entry_id)}</td><td>${esc(row.line_description || row.description || "")}</td><td>${fmt(row.debit)}</td><td>${fmt(row.credit)}</td><td>${balanceText}</td></tr>`;
+      });
+      tbody.innerHTML += `<tr style="background:#e9efe9;font-weight:bold;"><td colspan="3">إجمالي الحركة</td><td>${fmt(totalDebit)}</td><td>${fmt(totalCredit)}</td><td></td></tr>`;
+    } catch(e) {
+      tbody.innerHTML = `<tr><td colspan="6">${esc(err(e))}</td></tr>`;
+      if($("ledgerMessage")) msg($("ledgerMessage"),"تعذر تحميل دفتر الأستاذ: "+err(e),"error");
+    }
+  }
+
+  if($("cancelCoaEditBtn")) $("cancelCoaEditBtn").addEventListener("click", resetChartAccountForm);
+  if($("coaForm")) $("coaForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    if(!(canManageAccounting || isSystemAdmin)) return;
+    const btn = $("saveCoaBtn");
+    const editId = Number($("coaEditId").value || 0);
+    const parentId = Number($("coaParent").value || 0);
+    if(parentId && editId && parentId === editId) {
+      msg($("coaMessage"),"لا يمكن أن يكون الحساب تابعًا لنفسه.","error");
+      return;
+    }
+    if(parentId && editId) {
+      let cursor = chartAccountsCache.find(a => Number(a.account_id) === parentId);
+      const visited = new Set();
+      while(cursor) {
+        if(Number(cursor.account_id) === editId || visited.has(Number(cursor.account_id))) {
+          msg($("coaMessage"),"هذا الاختيار سيكوّن دورة في الحسابات الرئيسية. اختر حسابًا آخر.","error");
+          return;
+        }
+        visited.add(Number(cursor.account_id));
+        cursor = cursor.parent_id
+          ? chartAccountsCache.find(a => Number(a.account_id) === Number(cursor.parent_id))
+          : null;
+      }
+    }
+    const payload = {
+      account_code: $("coaCode").value.trim(),
+      account_name: $("coaName").value.trim(),
+      parent_id: parentId || null,
+      is_active: $("coaActive").checked
+    };
+    if(!editId) payload.account_type = $("coaType").value;
+    busy(btn,true,"جارٍ الحفظ...","حفظ الحساب");
+    try {
+      const result = editId
+        ? await db.from("chart_of_accounts").update(payload).eq("account_id",editId)
+        : await db.from("chart_of_accounts").insert(payload);
+      if(result.error) throw result.error;
+      showToast(editId ? "تم تحديث الحساب" : "تم إضافة الحساب","success");
+      resetChartAccountForm();
+      await loadAccountingDirectory();
+    } catch(e) {
+      msg($("coaMessage"),"تعذر حفظ الحساب: "+err(e),"error");
+    } finally {
+      busy(btn,false,"",editId ? "حفظ التعديل" : "حفظ الحساب");
+    }
+  });
+
   window.switchAccTab = function(tabId) {
       document.querySelectorAll(".acc-tab").forEach(el => el.classList.add("hidden"));
       document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
       if($(tabId)) $(tabId).classList.remove("hidden");
       const btns = document.querySelectorAll('[onclick^="switchAccTab"]');
       btns.forEach(b => b.classList.remove("active"));
-      const map = { accSummary: 0, accTrial: 1, accJournal: 2 };
+      const map = { accSummary: 0, accTrial: 1, accJournal: 2, accLedger: 3, accAccounts: 4 };
       if(map[tabId] !== undefined && btns[map[tabId]]) btns[map[tabId]].classList.add("active");
   }
   if($("btnAccFilter")) $("btnAccFilter").addEventListener("click", loadFinancialSummary);
@@ -10243,9 +10667,10 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
       // showApp() already opens the home page and calls loadHomeDashboard().
       try { await loadNotifications(); } catch(e){ console.error("[BOOT notifications]",e); }
       bootedUserId=user.id;
-      if(taxWarningShownForUserId!==user.id && companySettings.company_tax_number === "000000000"){
+      const officialTaxNumber = String(companySettings.company_tax_number || "").trim();
+      if(taxWarningShownForUserId!==user.id && (!officialTaxNumber || officialTaxNumber === "000000000")){
         taxWarningShownForUserId=user.id;
-        showToast("⚠️ لم يتم تعيين الرقم الضريبي للشركة، يمكنك ضبطه من إعدادات الشركة", "warn", 6000);
+        showToast("لم يتم تسجيل الرقم الضريبي الرسمي للشركة، يمكنك ضبطه من إعدادات الشركة", "warn", 6000);
       }
     })();
     try { await appBootPromise; }
