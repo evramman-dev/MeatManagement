@@ -1079,6 +1079,8 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="total-box" style="background:var(--g);color:white;margin-bottom:15px;">
 <div class="line"><span>إيرادات الفترة:</span><span id="accRevPeriod">0</span></div>
 <div class="line"><span>مشتريات الفترة:</span><span id="accPurchPeriod">0</span></div>
+<div class="line"><span>مرتجع المشتريات:</span><span id="accPurchReturnPeriod">0</span></div>
+<div class="line"><span>صافي المشتريات:</span><span id="accNetPurchPeriod">0</span></div>
 <div class="line"><span>مصروفات الفترة:</span><span id="accExpPeriod">0</span></div>
 <div class="line" style="color:#d5b16a;"><span>تحصيلات الفترة:</span><span id="accCollPeriod">0</span></div>
 <div class="line grand" style="color:var(--gold);"><span>صافي ربح الفترة:</span><span id="accProfitPeriod">0</span></div>
@@ -9926,6 +9928,8 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
           if(!periodData) throw new Error("لم تُرجع قاعدة البيانات ملخص الفترة.");
           $("accRevPeriod").textContent = fmt(periodData.rev);
           $("accPurchPeriod").textContent = fmt(periodData.purch);
+          $("accPurchReturnPeriod").textContent = fmt(periodData.purch_returns || 0);
+          $("accNetPurchPeriod").textContent = fmt(periodData.net_purch ?? (Number(periodData.purch || 0) - Number(periodData.purch_returns || 0)));
           $("accExpPeriod").textContent = fmt(periodData.exp);
           $("accCollPeriod").textContent = fmt(periodData.coll || 0);
           $("accProfitPeriod").textContent = fmt(periodData.profit);
