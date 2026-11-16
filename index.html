@@ -2858,7 +2858,7 @@ async function userInfo(user){
       canRequestTripLoads=await permission("TRIP_LOAD_MANAGE") || isSystemAdmin;
       const approvalRoleAllowed=["SALES_MANAGER","ACCOUNTANT","GENERAL_MANAGER"].includes(currentRoleCode);
       canApproveTripLoads=isSystemAdmin || (approvalRoleAllowed && await permission("TRIP_LOAD_APPROVE"));
-      canDispatchTripLoads=(currentRoleCode==="WAREHOUSE_KEEPER" && await permission("TRIP_LOAD_DISPATCH"));
+      canDispatchTripLoads=(currentRoleCode==="WAREHOUSE_KEEPER");
       canViewTrips=await permission("TRIPS_VIEW") || isSystemAdmin || canApproveTripLoads;
       canManageTrips=await permission("TRIPS_SETTLE") || await permission("TRIPS_MANAGE") || isSystemAdmin;
       canCreateTrips=await permission("TRIPS_SETUP") || isSystemAdmin;
@@ -9175,18 +9175,18 @@ async function loadTrips(){
     const {data,error}=await tripQuery;
     if(error) throw error;
     tripsCache=data||[];
-    const {data:repRows,error:repError}=await db.from("sales_reps").select("sales_rep_id,name");
+    const {data:repRows,error:repError}=await db.rpc("get_trip_sales_rep_names");
     if(repError) throw repError;
-    const repNames=new Map((repRows||[]).map(r=>[String(r.sales_rep_id),r.name||""]));
-    tripsCache=tripsCache.map(t=>({...t,rep_name:repNames.get(String(t.sales_rep_id))||currentSalesRepName||""}));
+    const repNames=new Map((repRows||[]).map(r=>[String(r.trip_id),r.rep_name||""]));
+    tripsCache=tripsCache.map(t=>({...t,rep_name:repNames.get(String(t.trip_id))||currentSalesRepName||""}));
     saveCache('trips', tripsCache);
     renderTrips();
     fillCollectionTripSelect();
     fillExpenseTripSelect();
-    if(canApproveTripLoads) await loadPendingTripLoads();
+    if(canApproveTripLoads || canDispatchTripLoads) await loadPendingTripLoads();
   }catch(e){
     if(box) box.innerHTML=err(e);
-    if(canApproveTripLoads) await loadPendingTripLoads();
+    if(canApproveTripLoads || canDispatchTripLoads) await loadPendingTripLoads();
   }
 }
 function renderTrips(){ 
@@ -9314,7 +9314,7 @@ if($("tripLoadForm")) $("tripLoadForm").addEventListener("submit", async e => {
     logUserAction("TRIP", "طلب تحميل للجولة رقم " + tripId + " للصنف " + productName(productId) + " بكمية " + quantity);
     $("tripLoadForm").reset();
     $("tripLoadModal").classList.add("hidden");
-    if(canApproveTripLoads) await loadPendingTripLoads();
+    if(canApproveTripLoads || canDispatchTripLoads) await loadPendingTripLoads();
     await loadTrips();
   } catch(e) {
     msg($("loadMsg"), "تعذر تسجيل طلب التحميل: " + err(e), "error");
