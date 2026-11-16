@@ -1914,7 +1914,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <form id="collectionForm" onsubmit="event.preventDefault();">
 <label for="collectionCustomer">العميل *</label><select id="collectionCustomer" required><option value="">اختر العميل</option></select>
 <label for="collectionDate">التاريخ *</label><input id="collectionDate" type="date" required>
-<label for="collectionInvoice">الفاتورة (اختياري)</label><select id="collectionInvoice"><option value="">بدون ربط</option></select>
+<div class="item-hint">يُسجل التحصيل على حساب العميل، ويوزع النظام المبلغ تلقائيًا على أقدم الفواتير المستحقة. أي زيادة تُحفظ رصيدًا دائنًا للعميل.</div>
 <label for="collectionAmount">المبلغ *</label><input id="collectionAmount" type="number" min="0.01" step="0.01" required>
 <label for="collectionPaymentMethod">طريقة الدفع *</label><select id="collectionPaymentMethod" required><option value="CASH">نقدي</option><option value="BANK_TRANSFER">تحويل بنكي</option><option value="INSTAPAY">إنستاباي</option><option value="CHEQUE">شيك</option></select>
 <div id="collectionTreasuryWrap"><label for="collectionTreasury">الخزنة النقدية *</label><select id="collectionTreasury"><option value="">اختر الخزنة</option></select></div>
@@ -8546,11 +8546,11 @@ if($("collectionForm")) $("collectionForm").addEventListener("submit", async e =
         if(method === "CHEQUE" && !referenceNumber) throw new Error("اكتب رقم الشيك.");
         if(method === "CHEQUE" && !$("collectionDueDate").value) throw new Error("اختر تاريخ استحقاق الشيك.");
         const collectionRequestKey="mm_collection_pending";
-        const collectionPayload={customer_id:Number($("collectionCustomer").value),invoice_id:$("collectionInvoice").value?Number($("collectionInvoice").value):null,amount:Number($("collectionAmount").value),method,date:$("collectionDate").value,notes:$("collectionNotes").value||null,trip_id:tripId,treasury_id:selectedTreasuryId,reference:referenceNumber||null,bank:$("collectionBankName").value.trim()||null,due:$("collectionDueDate").value||null};
+        const collectionPayload={customer_id:Number($("collectionCustomer").value),amount:Number($("collectionAmount").value),method,date:$("collectionDate").value,notes:$("collectionNotes").value||null,trip_id:tripId,treasury_id:selectedTreasuryId,reference:referenceNumber||null,bank:$("collectionBankName").value.trim()||null,due:$("collectionDueDate").value||null};
         const collectionRequestId=getRequestId(collectionRequestKey,collectionPayload);
         const {data:id,error}=await db.rpc("create_collection_v3",{
           p_customer_id:Number($("collectionCustomer").value),
-          p_sales_invoice_id:$("collectionInvoice").value?Number($("collectionInvoice").value):null,
+          p_sales_invoice_id:null,
           p_amount:Number($("collectionAmount").value),
           p_payment_method:method,
           p_collection_date:$("collectionDate").value,
