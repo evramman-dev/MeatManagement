@@ -6,6 +6,13 @@ DO $$ BEGIN
  END IF;
 END $$;
 CREATE INDEX IF NOT EXISTS reservations_source_return_item_idx ON public.reservations(source_return_item_id) WHERE source_return_item_id IS NOT NULL;
+ALTER TABLE public.sales_return_item_inspections
+ ADD COLUMN IF NOT EXISTS warehouse_sellable_quantity numeric NOT NULL DEFAULT 0 CHECK(warehouse_sellable_quantity>=0),
+ ADD COLUMN IF NOT EXISTS warehouse_rework_quantity numeric NOT NULL DEFAULT 0 CHECK(warehouse_rework_quantity>=0),
+ ADD COLUMN IF NOT EXISTS warehouse_scrap_quantity numeric NOT NULL DEFAULT 0 CHECK(warehouse_scrap_quantity>=0),
+ ADD COLUMN IF NOT EXISTS production_sellable_quantity numeric NOT NULL DEFAULT 0 CHECK(production_sellable_quantity>=0),
+ ADD COLUMN IF NOT EXISTS production_rework_quantity numeric NOT NULL DEFAULT 0 CHECK(production_rework_quantity>=0),
+ ADD COLUMN IF NOT EXISTS production_scrap_quantity numeric NOT NULL DEFAULT 0 CHECK(production_scrap_quantity>=0);
 ALTER TABLE public.production_order_materials ADD COLUMN IF NOT EXISTS is_extra boolean NOT NULL DEFAULT false;
 ALTER TABLE public.production_order_materials ADD COLUMN IF NOT EXISTS request_id uuid;
 CREATE UNIQUE INDEX IF NOT EXISTS production_order_materials_request_id_uq ON public.production_order_materials(request_id) WHERE request_id IS NOT NULL;
@@ -21,7 +28,7 @@ CREATE TABLE IF NOT EXISTS public.sales_return_item_inspections(
  production_disposition text CHECK(production_disposition IN('SELLABLE','REWORK','SCRAP')),
  production_inspected_by uuid REFERENCES auth.users(id),
  production_inspected_at timestamptz, production_notes text,
- final_disposition text CHECK(final_disposition IN('SELLABLE','REWORK','SCRAP')),
+ final_disposition text CHECK(final_disposition IN('SELLABLE','REWORK','SCRAP','MIXED')),
  finalized_at timestamptz, finalized_by uuid REFERENCES auth.users(id),
  created_at timestamptz NOT NULL DEFAULT now(),updated_at timestamptz NOT NULL DEFAULT now(),
  CHECK(warehouse_inspected_by IS NULL OR production_inspected_by IS NULL OR warehouse_inspected_by<>production_inspected_by)
@@ -182,12 +189,17 @@ CREATE TRIGGER trg_stock_movement_return_item_holds AFTER INSERT ON public.stock
 FOR EACH ROW WHEN(NEW.movement_type='RETURN' AND NEW.quantity_change>0 AND NEW.sales_return_id IS NOT NULL)
 EXECUTE FUNCTION public.create_return_item_holds();
 
-CREATE OR REPLACE FUNCTION public.record_sales_return_item_inspection(p_return_item_id bigint,p_inspector_type text,p_disposition text,p_notes text DEFAULT NULL)
+CREATE OR REPLACE FUNCTION public.record_sales_return_item_inspection(
+ p_return_item_id bigint,p_inspector_type text,p_disposition text,p_notes text DEFAULT NULL,
+ p_sellable_quantity numeric DEFAULT NULL,p_rework_quantity numeric DEFAULT NULL,p_scrap_quantity numeric DEFAULT NULL
+)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
-DECLARE v_item record; v_i public.sales_return_item_inspections%ROWTYPE; v_loc_type text; v_res public.reservations%ROWTYPE; v_unit_cost numeric; v_total_cost numeric; v_new_stock numeric; v_movement_id bigint;
+DECLARE
+ v_item record; v_i public.sales_return_item_inspections%ROWTYPE; v_loc_type text;
+ v_total numeric; v_sell numeric; v_rework numeric; v_scrap numeric;
+ v_unit_cost numeric; v_total_cost numeric; v_new_stock numeric; v_res public.reservations%ROWTYPE;
 BEGIN
  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'يجب تسجيل الدخول'; END IF;
- IF upper(p_disposition) NOT IN('SELLABLE','REWORK','SCRAP') THEN RAISE EXCEPTION 'تصنيف المرتجع غير صحيح'; END IF;
  SELECT sri.return_item_id,sri.sales_return_id,sri.product_id,sri.base_quantity,sr.return_number,sr.return_date,sr.status
  INTO v_item FROM public.sales_return_items sri JOIN public.sales_returns sr ON sr.sales_return_id=sri.sales_return_id
  WHERE sri.return_item_id=p_return_item_id FOR UPDATE OF sri,sr;
@@ -197,46 +209,79 @@ BEGIN
  SELECT location_type INTO v_loc_type FROM public.locations WHERE location_id=v_i.received_location_id;
  IF v_loc_type NOT IN('MAIN_WAREHOUSE','FRIDGE') THEN RAISE EXCEPTION 'يجب نقل المرتجع إلى الثلاجة أو المخزن قبل المعاينة'; END IF;
  IF v_i.final_disposition IS NOT NULL THEN RAISE EXCEPTION 'تم اعتماد تصنيف هذا الصنف بالفعل'; END IF;
+ v_sell:=COALESCE(p_sellable_quantity,CASE WHEN upper(p_disposition)='SELLABLE' THEN v_item.base_quantity ELSE 0 END);
+ v_rework:=COALESCE(p_rework_quantity,CASE WHEN upper(p_disposition)='REWORK' THEN v_item.base_quantity ELSE 0 END);
+ v_scrap:=COALESCE(p_scrap_quantity,CASE WHEN upper(p_disposition)='SCRAP' THEN v_item.base_quantity ELSE 0 END);
+ IF v_sell<0 OR v_rework<0 OR v_scrap<0 OR round(v_sell+v_rework+v_scrap,6)<>round(v_item.base_quantity,6) THEN
+   RAISE EXCEPTION 'يجب توزيع كامل كمية المرتجع بين صالح للبيع وإعادة التصنيع والهالك';
+ END IF;
  IF NOT EXISTS(SELECT 1 FROM public.reservations r WHERE r.source_return_item_id=p_return_item_id AND r.status='ACTIVE' AND r.notes LIKE 'RETURN_PENDING:%' AND r.location_id=v_i.received_location_id) THEN
   RAISE EXCEPTION 'لم يتم العثور على كمية المرتجع المحجوزة في موقع الاستلام';
  END IF;
  IF upper(p_inspector_type)='WAREHOUSE' THEN
   IF NOT public.has_permission('INVENTORY_ADJUST') THEN RAISE EXCEPTION 'لا تملك صلاحية فحص أمين المخزن'; END IF;
   IF v_i.production_inspected_by=auth.uid() THEN RAISE EXCEPTION 'يجب أن يعتمد الفحص شخصان مختلفان'; END IF;
-  UPDATE public.sales_return_item_inspections SET warehouse_disposition=upper(p_disposition),warehouse_inspected_by=auth.uid(),warehouse_inspected_at=now(),warehouse_notes=NULLIF(btrim(p_notes),''),updated_at=now() WHERE return_item_id=p_return_item_id;
+  UPDATE public.sales_return_item_inspections SET warehouse_disposition=upper(p_disposition),
+    warehouse_sellable_quantity=v_sell,warehouse_rework_quantity=v_rework,warehouse_scrap_quantity=v_scrap,
+    warehouse_inspected_by=auth.uid(),warehouse_inspected_at=now(),warehouse_notes=NULLIF(btrim(p_notes),''),
+    updated_at=now() WHERE return_item_id=p_return_item_id;
  ELSIF upper(p_inspector_type)='PRODUCTION' THEN
   IF NOT public.has_permission('PRODUCTION_MANAGE') THEN RAISE EXCEPTION 'لا تملك صلاحية فحص مدير الإنتاج'; END IF;
   IF v_i.warehouse_inspected_by=auth.uid() THEN RAISE EXCEPTION 'يجب أن يعتمد الفحص شخصان مختلفان'; END IF;
-  UPDATE public.sales_return_item_inspections SET production_disposition=upper(p_disposition),production_inspected_by=auth.uid(),production_inspected_at=now(),production_notes=NULLIF(btrim(p_notes),''),updated_at=now() WHERE return_item_id=p_return_item_id;
+  UPDATE public.sales_return_item_inspections SET production_disposition=upper(p_disposition),
+    production_sellable_quantity=v_sell,production_rework_quantity=v_rework,production_scrap_quantity=v_scrap,
+    production_inspected_by=auth.uid(),production_inspected_at=now(),production_notes=NULLIF(btrim(p_notes),''),
+    updated_at=now() WHERE return_item_id=p_return_item_id;
  ELSE RAISE EXCEPTION 'نوع الفاحص غير صحيح'; END IF;
+
  SELECT * INTO v_i FROM public.sales_return_item_inspections WHERE return_item_id=p_return_item_id FOR UPDATE;
- IF v_i.warehouse_disposition IS NOT NULL AND v_i.production_disposition IS NOT NULL AND v_i.warehouse_disposition=v_i.production_disposition
-    AND v_i.warehouse_inspected_by<>v_i.production_inspected_by AND v_i.final_disposition IS NULL THEN
-  IF v_i.warehouse_disposition='SELLABLE' THEN
-   UPDATE public.reservations SET status='CANCELLED' WHERE source_return_item_id=p_return_item_id AND status='ACTIVE' AND notes LIKE 'RETURN_PENDING:%';
-  ELSIF v_i.warehouse_disposition='REWORK' THEN
-   UPDATE public.reservations SET notes='RETURN_REWORK:'||p_return_item_id WHERE source_return_item_id=p_return_item_id AND status='ACTIVE' AND notes LIKE 'RETURN_PENDING:%';
-  ELSE
-   SELECT * INTO v_res FROM public.reservations WHERE source_return_item_id=p_return_item_id AND status='ACTIVE' AND notes LIKE 'RETURN_PENDING:%' AND location_id=v_i.received_location_id ORDER BY reservation_id LIMIT 1 FOR UPDATE;
-   IF NOT FOUND THEN RAISE EXCEPTION 'لم يتم العثور على حجز مخزون المرتجع'; END IF;
-   SELECT sm.unit_cost INTO v_unit_cost FROM public.stock_movements sm WHERE sm.sales_return_id=v_item.sales_return_id AND sm.sales_return_item_id=p_return_item_id AND sm.movement_type='RETURN' AND sm.quantity_change>0 ORDER BY sm.movement_id DESC LIMIT 1;
-   IF v_unit_cost IS NULL THEN SELECT sb.average_unit_cost INTO v_unit_cost FROM public.stock_balances sb WHERE sb.location_id=v_i.received_location_id AND sb.product_id=v_item.product_id; END IF;
-   IF v_unit_cost IS NULL THEN RAISE EXCEPTION 'تعذر تحديد تكلفة المرتجع لإثبات الهالك'; END IF;
-   v_total_cost:=round(v_unit_cost*v_res.quantity,4);
-   UPDATE public.reservations SET status='CANCELLED' WHERE source_return_item_id=p_return_item_id AND status='ACTIVE' AND notes LIKE 'RETURN_PENDING:%';
-   UPDATE public.stock_balances SET quantity=quantity-v_res.quantity,updated_at=now()
-   WHERE location_id=v_i.received_location_id AND product_id=v_item.product_id AND quantity>=v_res.quantity
-   RETURNING quantity INTO v_new_stock;
-   IF NOT FOUND THEN RAISE EXCEPTION 'رصيد المرتجع غير كافٍ لإثبات الهالك'; END IF;
-   INSERT INTO public.stock_movements(location_id,product_id,movement_type,quantity_change,quantity_after,notes,created_by,sales_return_id,sales_return_item_id,unit_cost,total_cost)
-   VALUES(v_i.received_location_id,v_item.product_id,'ISSUE',-v_res.quantity,v_new_stock,'هالك مرتجع '||v_item.return_number,auth.uid(),v_item.sales_return_id,p_return_item_id,v_unit_cost,v_total_cost)
-   RETURNING movement_id INTO v_movement_id;
-   IF v_total_cost>0 THEN PERFORM public.create_auto_journal_entry(COALESCE(v_item.return_date,CURRENT_DATE),'هالك مرتجع مبيعات '||v_item.return_number,'SALES_RETURN_SCRAP_LINE',v_movement_id,'5300','1300',v_total_cost); END IF;
+ IF v_i.warehouse_inspected_by IS NOT NULL AND v_i.production_inspected_by IS NOT NULL
+    AND v_i.warehouse_inspected_by<>v_i.production_inspected_by
+    AND v_i.warehouse_sellable_quantity=v_i.production_sellable_quantity
+    AND v_i.warehouse_rework_quantity=v_i.production_rework_quantity
+    AND v_i.warehouse_scrap_quantity=v_i.production_scrap_quantity THEN
+
+  UPDATE public.reservations SET status='CANCELLED'
+  WHERE source_return_item_id=p_return_item_id AND status='ACTIVE' AND notes LIKE 'RETURN_PENDING:%';
+
+  IF v_i.warehouse_rework_quantity>0 THEN
+    INSERT INTO public.reservations(customer_id,product_id,location_id,quantity,reserved_until,notes,status,created_by,request_id,source_return_item_id)
+    VALUES(NULL,v_item.product_id,v_i.received_location_id,v_i.warehouse_rework_quantity,NULL,'RETURN_REWORK:'||p_return_item_id,'ACTIVE',auth.uid(),gen_random_uuid(),p_return_item_id);
   END IF;
-  UPDATE public.sales_return_item_inspections SET final_disposition=v_i.warehouse_disposition,inspection_status='INSPECTED',finalized_at=now(),finalized_by=auth.uid(),updated_at=now() WHERE return_item_id=p_return_item_id;
+
+  IF v_i.warehouse_sellable_quantity>0 THEN
+    INSERT INTO public.reservations(customer_id,product_id,location_id,quantity,reserved_until,notes,status,created_by,request_id,source_return_item_id)
+    VALUES(NULL,v_item.product_id,v_i.received_location_id,v_i.warehouse_sellable_quantity,NULL,'RETURN_SELLABLE_RELEASED:'||p_return_item_id,'ACTIVE',auth.uid(),gen_random_uuid(),p_return_item_id);
+    UPDATE public.reservations SET status='CANCELLED'
+    WHERE source_return_item_id=p_return_item_id AND notes LIKE 'RETURN_SELLABLE_RELEASED:%' AND status='ACTIVE';
+  END IF;
+
+  IF v_i.warehouse_scrap_quantity>0 THEN
+    SELECT sm.unit_cost INTO v_unit_cost FROM public.stock_movements sm
+    WHERE sm.sales_return_id=v_item.sales_return_id AND sm.sales_return_item_id=p_return_item_id
+      AND sm.movement_type='RETURN' AND sm.quantity_change>0 ORDER BY sm.movement_id DESC LIMIT 1;
+    IF v_unit_cost IS NULL THEN SELECT sb.average_unit_cost INTO v_unit_cost FROM public.stock_balances sb WHERE sb.location_id=v_i.received_location_id AND sb.product_id=v_item.product_id; END IF;
+    IF v_unit_cost IS NULL THEN RAISE EXCEPTION 'تعذر تحديد تكلفة المرتجع لإثبات الهالك'; END IF;
+    UPDATE public.stock_balances SET quantity=quantity-v_i.warehouse_scrap_quantity,updated_at=now()
+    WHERE location_id=v_i.received_location_id AND product_id=v_item.product_id AND quantity>=v_i.warehouse_scrap_quantity
+    RETURNING quantity INTO v_new_stock;
+    IF NOT FOUND THEN RAISE EXCEPTION 'رصيد المرتجع غير كاف لإثبات الهالك'; END IF;
+    v_total_cost:=round(v_unit_cost*v_i.warehouse_scrap_quantity,4);
+    INSERT INTO public.stock_movements(location_id,product_id,movement_type,quantity_change,quantity_after,notes,created_by,sales_return_id,sales_return_item_id,unit_cost,total_cost)
+    VALUES(v_i.received_location_id,v_item.product_id,'ISSUE',-v_i.warehouse_scrap_quantity,v_new_stock,'هالك مرتجع '||v_item.return_number,auth.uid(),v_item.sales_return_id,p_return_item_id,v_unit_cost,v_total_cost);
+  END IF;
+  UPDATE public.sales_return_item_inspections SET final_disposition=
+    CASE WHEN v_i.warehouse_scrap_quantity=v_item.base_quantity THEN 'SCRAP'
+         WHEN v_i.warehouse_rework_quantity=v_item.base_quantity THEN 'REWORK'
+         WHEN v_i.warehouse_sellable_quantity=v_item.base_quantity THEN 'SELLABLE'
+         ELSE 'MIXED' END,
+    inspection_status='INSPECTED',finalized_at=now(),finalized_by=auth.uid(),updated_at=now()
+  WHERE return_item_id=p_return_item_id;
  END IF;
  SELECT * INTO v_i FROM public.sales_return_item_inspections WHERE return_item_id=p_return_item_id;
- RETURN jsonb_build_object('return_item_id',p_return_item_id,'warehouse_disposition',v_i.warehouse_disposition,'production_disposition',v_i.production_disposition,'final_disposition',v_i.final_disposition,'inspection_status',v_i.inspection_status,'received_at',v_i.received_at);
+ RETURN jsonb_build_object('return_item_id',p_return_item_id,'sellable_quantity',v_i.warehouse_sellable_quantity,
+ 'rework_quantity',v_i.warehouse_rework_quantity,'scrap_quantity',v_i.warehouse_scrap_quantity,
+ 'final_disposition',v_i.final_disposition,'inspection_status',v_i.inspection_status);
 END $$;
 REVOKE ALL ON FUNCTION public.record_sales_return_item_inspection(bigint,text,text,text) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.record_sales_return_item_inspection(bigint,text,text,text) TO authenticated;
