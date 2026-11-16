@@ -8587,9 +8587,10 @@ function updateCollectionPaymentFields() {
     const cheque = method === "CHEQUE";
     const digital = ["BANK_TRANSFER","INSTAPAY"].includes(method);
     const hasReference = ["BANK_TRANSFER","INSTAPAY","CHEQUE"].includes(method);
+    const tripSelected = !!$("collectionTrip")?.value;
     const treasuryWrap = $("collectionTreasuryWrap");
     const treasury = $("collectionTreasury");
-    const showTreasury = cash && !isRep;
+    const showTreasury = cash && !isRep && !tripSelected;
     if(treasuryWrap) treasuryWrap.classList.toggle("hidden", !showTreasury);
     if(treasury) treasury.required = showTreasury;
     const destinationWrap = $("collectionReceiptDestinationWrap");
@@ -8622,9 +8623,9 @@ if($("collectionForm")) $("collectionForm").addEventListener("submit", async e =
         const method = $("collectionPaymentMethod").value;
         const tripId = $("collectionTrip").value ? Number($("collectionTrip").value) : null;
         const isRep = currentRoleCode === "SALES_REP";
-        const selectedTreasuryId = method === "CASH" && !isRep ? Number($("collectionTreasury").value) : null;
+        const selectedTreasuryId = method === "CASH" && !isRep && !tripId ? Number($("collectionTreasury").value) : null;
         const receiptDestination = method === "CHEQUE" ? "CHEQUE_PENDING" : method === "CASH" ? (isRep ? "REP_CASH" : "COMPANY_TREASURY") : (isRep ? ($("collectionReceiptDestination")?.value || "COMPANY_TREASURY") : "COMPANY_TREASURY");
-        if(method === "CASH" && !isRep && !selectedTreasuryId) throw new Error("اختر خزنة الشركة التي استلمت المبلغ النقدي.");
+        if(method === "CASH" && !isRep && !tripId && !selectedTreasuryId) throw new Error("اختر خزنة الشركة التي استلمت المبلغ النقدي.");
         const referenceNumber = $("collectionReferenceNumber").value.trim();
         if(method === "CHEQUE" && !referenceNumber) throw new Error("اكتب رقم الشيك.");
         if(method === "CHEQUE" && !$("collectionDueDate").value) throw new Error("اختر تاريخ استحقاق الشيك.");
