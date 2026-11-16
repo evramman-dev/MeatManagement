@@ -6182,12 +6182,11 @@ if($("addInvoiceBtn")) $("addInvoiceBtn").addEventListener("click",()=>resetInvo
 function addPackageSelectToRow(row,productId,unitId){let w=row.querySelector(".package-option-wrap");if(!w){w=document.createElement("div");w.className="package-option-wrap";const l=document.createElement("label");l.textContent="خيار التعبئة";const sel=document.createElement("select");sel.className="item-package-option";w.append(l,sel);row.insertBefore(w,row.querySelector(".item-line-total")||row.lastElementChild);}const sel=w.querySelector("select");const cur=sel.value;sel.replaceChildren();const f=document.createElement("option");f.value="";f.textContent="بدون خيار تعبئة";sel.appendChild(f);packageOptionsForProduct(productId,unitId).forEach(x=>{const o=document.createElement("option");o.value=String(x.package_option_id);o.textContent=x.option_name+" — "+fmtQty(x.weight_kg)+" كجم";sel.appendChild(o);});if([...sel.options].some(o=>o.value===cur))sel.value=cur;}
 let invoicePriceListRequest=0;
 async function refreshInvoicePriceList(){
- const customerId=Number($("invoiceCustomer")?.value||0),asOfDate=$("invoiceDate")?.value||todayISO(),info=$("invoicePriceListInfo");
- const request=++invoicePriceListRequest;
- if(!customerId){if(info)info.textContent="اختر العميل لعرض قائمة الأسعار المعتمدة السارية.";document.querySelectorAll("#invoiceItems .item-row").forEach(row=>{const price=row.querySelector(".item-price");if(price)price.value="";const hint=row.querySelector(".price-hint");if(hint)hint.textContent="اختر العميل أولًا.";});updateInvoiceTotals();return null;}
- document.querySelectorAll("#invoiceItems .item-row").forEach(row=>{const price=row.querySelector(".item-price");if(price)price.value="";const hint=row.querySelector(".price-hint");if(hint)hint.textContent="جارٍ التحقق من قائمة الأسعار للعميل...";});updateInvoiceTotals();
- try{const {data,error}=await db.rpc("get_customer_price_list",{p_customer_id:customerId,p_as_of_date:asOfDate});if(error)throw error;if(request!==invoicePriceListRequest)return null;const list=Array.isArray(data)?data[0]:data;if(!list)throw new Error("لا توجد قائمة أسعار معتمدة وسارية لهذا العميل في التاريخ المحدد.");if(info)info.textContent="قائمة الأسعار المعتمدة: "+list.price_list_name+" ("+list.price_list_code+") — سارية من "+formatDate(list.valid_from)+(list.valid_to?" إلى "+formatDate(list.valid_to):"");await Promise.all([...document.querySelectorAll("#invoiceItems .item-row")].map(row=>applyCustomerPriceToRow(row)));return list;}
- catch(e){if(request!==invoicePriceListRequest)return null;if(info)info.textContent="تعذر تحديد قائمة الأسعار: "+err(e);document.querySelectorAll("#invoiceItems .item-row").forEach(row=>{const price=row.querySelector(".item-price");if(price)price.value="";const hint=row.querySelector(".price-hint");if(hint)hint.textContent="لا يمكن تسعير الصنف قبل تحديد قائمة معتمدة.";});updateInvoiceTotals();return null;}
+ const info=$("invoicePriceListInfo");
+ if(info)info.textContent="سعر البيع والحدود مأخوذة من بيانات الصنف.";
+ await Promise.all([...document.querySelectorAll("#invoiceItems .item-row")].map(row=>applyCustomerPriceToRow(row)));
+ updateInvoiceTotals();
+ return null;
 }
 async function applyCustomerPriceToRow(row){
  if(!row)return;
@@ -6296,9 +6295,11 @@ function addInvoiceItemRow() {
     const opt=prodSel.selectedOptions[0]; 
     const minP = wrap.dataset.minimumPrice ? Number(wrap.dataset.minimumPrice) : 0; 
     const maxP = wrap.dataset.maximumPrice ? Number(wrap.dataset.maximumPrice) : Infinity; 
-    if(p > 0 && (p < minP || p > maxP)) { 
+    const invoiceDiscountRate=Math.min(Math.max(Number($("invoiceDiscount")?.value||0),0),100)/100;
+    const effectivePrice=p*(1-invoiceDiscountRate);
+    if(p > 0 && (p > maxP || effectivePrice < minP)) { 
       errDiv.style.display = "block"; 
-      errDiv.textContent = `السعر غير مسموح! بين ${minP} و ${maxP}`; 
+      errDiv.textContent = `السعر بعد الخصم يجب ألا يقل عن ${minP}${Number.isFinite(maxP)?" وألا يتجاوز السعر قبل الخصم "+maxP:""}`; 
       price.style.borderColor = "var(--red)"; 
     } else { 
       errDiv.style.display = "none"; 
@@ -6554,7 +6555,9 @@ if($("invoiceForm")) $("invoiceForm").addEventListener("submit", async e => {
     const price = Number(row.querySelector(".item-price").value||0); 
     const minAllowed=Number(row.dataset.minimumPrice||0); 
     const maxAllowed=row.dataset.maximumPrice?Number(row.dataset.maximumPrice):Infinity; 
-    if(!pId || !uId || qty<=0 || price<=0 || price<minAllowed-0.000001 || price>maxAllowed+0.000001) valid = false; 
+    const invoiceDiscountRate=Math.min(Math.max(Number($("invoiceDiscount")?.value||0),0),100)/100;
+    const effectivePrice=price*(1-invoiceDiscountRate);
+    if(!pId || !uId || qty<=0 || price<=0 || price>maxAllowed+0.000001 || effectivePrice<minAllowed-0.000001) valid = false; 
     else {
       const actualWeight=Number(row.querySelector(".item-actual-weight")?.value||0);
       items.push({product_id:Number(pId),sale_unit_id:Number(uId),quantity:qty,unit_price:price,
