@@ -8407,7 +8407,7 @@ function renderCollections(){
     const trip = col.trip_id ? tripNumber(col.trip_id) : "بدون جولة";
     const statusLabel=col.status==="POSTED"?"مرحّل":col.status==="CANCELLED"?"ملغى":"غير مرحّل";
     const destinationLabel=({REP_CASH:"نقدية مع المندوب",REP_CUSTODY:"حساب شخصي للمندوب - عهدة",COMPANY_TREASURY:"حساب الشركة",CHEQUE_PENDING:"شيك تحت التحصيل"})[col.receipt_destination]||"غير محدد";
-    const custodyLabel=["REP_CASH","REP_CUSTODY"].includes(col.receipt_destination)?(col.custody_settled_at?"تم توريد العهدة":"لم يتم توريد العهدة"):"";
+    const custodyLabel=["REP_CASH","REP_CUSTODY"].includes(col.receipt_destination)?(col.custody_settled_at?"تمت تسوية العهدة":"لم يتمت تسوية العهدة"):"";
     card.innerHTML = `<div class="pname">💰 ${col.collection_number} — ${statusLabel}</div><div class="details">عميل: ${customerName(col.customer_id)} | مبلغ: ${fmt(col.amount)}</div><div class="details">📅 التاريخ: ${formatDate(col.collection_date)} | 👤 المندوب المسؤول: ${repName} | طريقة التحصيل: ${channelLabel} | 🚐 الجولة: ${trip}</div><div class="details">جهة الاستلام: ${destinationLabel}${custodyLabel?" | "+custodyLabel:""}</div>`; 
     box.appendChild(card); 
   }); 
