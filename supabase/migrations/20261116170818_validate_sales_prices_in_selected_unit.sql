@@ -69,7 +69,7 @@ BEGIN
 
   IF COALESCE(v_reference_factor,0)>0 AND COALESCE(NEW.conversion_factor,0)>0 THEN
     v_price_factor:=NEW.conversion_factor/v_reference_factor;
-  ELSIF NEW.unit_id=v_sales_unit_id AND NEW.package_option_id IS NULL THEN
+  ELSIF NEW.unit_id=v_sales_unit_id AND NEW.package_option_id IS NULL AND NEW.package_weight_kg IS NULL THEN
     v_price_factor:=1;
   ELSE
     RAISE EXCEPTION 'لا يمكن تحويل حدود السعر من وحدة البيع المسجلة إلى وحدة الفاتورة. راجع تحويلات وحدات الصنف وخيارات التعبئة.';
