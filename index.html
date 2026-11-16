@@ -9850,26 +9850,32 @@ async function viewTripSummary(t){
     }
 
     if(canViewCollections){
-    html += `<h4 style="color:var(--g);margin-top:20px;">💰 التحصيلات (${collections.length})</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>رقم</th><th>العميل</th><th>وسيلة الدفع</th><th>الخزنة</th><th>المبلغ</th></tr></thead><tbody>`;
-    collections.forEach(c => {
-      html += `<tr><td>${c.collection_number || "-"}</td><td>${customerName(c.customer_id)}</td><td>${methodNames[c.payment_method] || c.payment_method || "أخرى"}</td><td>${c.treasury_id || "-"}</td><td>${fmt(c.amount)}</td></tr>`;
-    });
-    if(!collections.length) html += `<tr><td colspan="5">لا توجد تحصيلات</td></tr>`;
-    html += `</tbody></table></div><div class="mini-summary">`;
-    Object.keys(collectionTotals).sort().forEach(method => {
-      html += `<div class="line"><span>تحصيلات ${methodNames[method] || method}:</span><span style="font-weight:bold;">${fmt(collectionTotals[method])}</span></div>`;
-    });
-    html += `<div class="line"><span>إجمالي التحصيلات:</span><span style="font-weight:bold;">${fmt(totalCollections)}</span></div></div>`;
+      const collectionDestinationName = c => {
+        const destination = String(c?.receipt_destination || "").toUpperCase();
+        if(destination === "REP_CASH") return "خزنة المناديب";
+        if(destination === "REP_CUSTODY") return "حساب المندوب الشخصي";
+        if(destination === "COMPANY_TREASURY") return c?.treasury_id ? "خزنة الشركة (" + c.treasury_id + ")" : "خزنة الشركة";
+        if(destination === "CHEQUE_PENDING") return "شيك تحت التحصيل";
+        if(c?.treasury_id) return "الخزنة " + c.treasury_id;
+        return "غير محدد";
+      };
 
-    }
+      html += `<h4 style="color:var(--g);margin-top:20px;">💰 التحصيلات (${collections.length})</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>رقم التحصيل</th><th>العميل</th><th>طريقة الدفع</th><th>مكان الاستلام</th><th>التاريخ</th><th>المبلغ</th></tr></thead><tbody>`;
+      collections.forEach(c => {
+        html += `<tr><td>${esc(c.collection_number || "-")}</td><td>${esc(customerName(c.customer_id))}</td><td>${esc(methodNames[c.payment_method] || c.payment_method || "أخرى")}</td><td>${esc(collectionDestinationName(c))}</td><td>${c.collection_date ? formatDateTime(c.collection_date) : "—"}</td><td>${fmt(c.amount)}</td></tr>`;
+      });
+      if(!collections.length) html += `<tr><td colspan="6">لا توجد تحصيلات</td></tr>`;
+      html += `</tbody></table></div><div class="mini-summary">`;
+      Object.keys(collectionTotals).sort().forEach(method => {
+        html += `<div class="line"><span>تحصيلات ${methodNames[method] || method}:</span><span style="font-weight:bold;">${fmt(collectionTotals[method])}</span></div>`;
+      });
+      html += `<div class="line"><span>إجمالي التحصيلات:</span><span style="font-weight:bold;">${fmt(totalCollections)}</span></div></div>`;
 
-    if(canViewCollections){
       html += `<h4 style="color:var(--g);margin-top:20px;">عهدة المندوب خارج الجولة (${unassignedRepCustody.length})</h4>
         <div class="info">هذه تحصيلات غير مرتبطة بأي جولة، وما زالت بعهدة مندوب الجولة. لا تدخل في إجمالي تحصيلات الجولة أو صافي نقديتها أو تسويتها.</div>
         <div class="table-responsive"><table class="print-table"><thead><tr><th>رقم التحصيل</th><th>العميل</th><th>طريقة الدفع</th><th>مكان الاستلام</th><th>التاريخ</th><th>المبلغ</th></tr></thead><tbody>`;
       unassignedRepCustody.forEach(c=>{
-        const destinationName=c.receipt_destination==="REP_CASH"?"نقدية مع المندوب":"حساب المندوب الشخصي";
-        html += `<tr><td>${esc(c.collection_number||("COL-"+c.collection_id))}</td><td>${esc(customerName(c.customer_id))}</td><td>${esc(methodNames[c.payment_method]||c.payment_method||"أخرى")}</td><td>${destinationName}</td><td>${c.collection_date?formatDateTime(c.collection_date):"—"}</td><td>${fmt(c.amount)}</td></tr>`;
+        html += `<tr><td>${esc(c.collection_number||("COL-"+c.collection_id))}</td><td>${esc(customerName(c.customer_id))}</td><td>${esc(methodNames[c.payment_method]||c.payment_method||"أخرى")}</td><td>${esc(collectionDestinationName(c))}</td><td>${c.collection_date?formatDateTime(c.collection_date):"—"}</td><td>${fmt(c.amount)}</td></tr>`;
       });
       if(!unassignedRepCustody.length) html += `<tr><td colspan="6">لا توجد عهدة غير مسوّاة خارج الجولة لهذا المندوب.</td></tr>`;
       html += `</tbody></table></div><div class="mini-summary">
