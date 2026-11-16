@@ -9703,12 +9703,22 @@ async function viewTripSummary(t){
   $("tripSummaryBody").innerHTML = "جارٍ التحميل...";
   modal.classList.remove("hidden");
   try {
-    const [invoices, collections, expenses, returns, reconciliation] = await Promise.all([
+    const [invoices, collections, unassignedRepCustody, expenses, returns, reconciliation] = await Promise.all([
       canViewSales
         ? fetchAllRows(db.from("sales_invoices").select("*").eq("trip_id", t.trip_id).in("status", ["POSTED","PAID","PARTIAL"]).order("invoice_date").order("sales_invoice_id"))
         : Promise.resolve([]),
       canViewCollections
         ? fetchAllRows(db.from("customer_collections").select("*").eq("trip_id", t.trip_id).eq("status","POSTED").order("collection_date").order("collection_id"))
+        : Promise.resolve([]),
+      canViewCollections && Number(t.sales_rep_id)>0
+        ? fetchAllRows(db.from("customer_collections")
+            .select("collection_id,collection_number,collection_date,customer_id,payment_method,amount,receipt_destination")
+            .eq("sales_rep_id",Number(t.sales_rep_id))
+            .is("trip_id",null)
+            .eq("status","POSTED")
+            .in("receipt_destination",["REP_CASH","REP_CUSTODY"])
+            .is("custody_settled_at",null)
+            .order("collection_date").order("collection_id"))
         : Promise.resolve([]),
       canViewExpenses
         ? fetchAllRows(db.from("expenses").select("*").eq("is_cancelled",false).eq("trip_id", t.trip_id).order("expense_date").order("expense_id"))
@@ -9728,6 +9738,14 @@ async function viewTripSummary(t){
     const cashCollections = collections
       .filter(c => c.payment_method === "CASH" && Number(c.treasury_id) === MANDOUB_TREASURY_ID)
       .reduce((s, c) => s + Number(c.amount || 0), 0);
+
+    const unassignedCashCustody = unassignedRepCustody
+      .filter(c => c.receipt_destination === "REP_CASH")
+      .reduce((s, c) => s + Number(c.amount || 0), 0);
+    const unassignedPersonalCustody = unassignedRepCustody
+      .filter(c => c.receipt_destination === "REP_CUSTODY")
+      .reduce((s, c) => s + Number(c.amount || 0), 0);
+    const unassignedCustodyTotal = unassignedCashCustody + unassignedPersonalCustody;
 
     const collectionTotals = collections.reduce((totals, c) => {
       const method = c.payment_method || "OTHER";
@@ -9845,6 +9863,21 @@ async function viewTripSummary(t){
 
     }
 
+    if(canViewCollections){
+      html += `<h4 style="color:var(--g);margin-top:20px;">عهدة المندوب خارج الجولة (${unassignedRepCustody.length})</h4>
+        <div class="info">هذه تحصيلات غير مرتبطة بأي جولة، وما زالت بعهدة مندوب الجولة. لا تدخل في إجمالي تحصيلات الجولة أو صافي نقديتها أو تسويتها.</div>
+        <div class="table-responsive"><table class="print-table"><thead><tr><th>رقم التحصيل</th><th>العميل</th><th>طريقة الدفع</th><th>مكان الاستلام</th><th>التاريخ</th><th>المبلغ</th></tr></thead><tbody>`;
+      unassignedRepCustody.forEach(c=>{
+        const destinationName=c.receipt_destination==="REP_CASH"?"نقدية مع المندوب":"حساب المندوب الشخصي";
+        html += `<tr><td>${esc(c.collection_number||("COL-"+c.collection_id))}</td><td>${esc(customerName(c.customer_id))}</td><td>${esc(methodNames[c.payment_method]||c.payment_method||"أخرى")}</td><td>${destinationName}</td><td>${c.collection_date?formatDateTime(c.collection_date):"—"}</td><td>${fmt(c.amount)}</td></tr>`;
+      });
+      if(!unassignedRepCustody.length) html += `<tr><td colspan="6">لا توجد عهدة غير مسوّاة خارج الجولة لهذا المندوب.</td></tr>`;
+      html += `</tbody></table></div><div class="mini-summary">
+        <div class="line"><span>نقدية مع المندوب خارج الجولة:</span><span style="font-weight:bold;">${fmt(unassignedCashCustody)}</span></div>
+        <div class="line"><span>تحصيلات على حسابه الشخصي خارج الجولة:</span><span style="font-weight:bold;">${fmt(unassignedPersonalCustody)}</span></div>
+        <div class="line"><span>إجمالي العهدة خارج الجولة غير المسوّاة:</span><span style="font-weight:bold;">${fmt(unassignedCustodyTotal)}</span></div></div>`;
+    }
+
     if(canViewExpenses){
     html += `<h4 style="color:var(--g);margin-top:20px;">🧾 المصروفات (${expenses.length})</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>النوع</th><th>الحساب</th><th>الخزنة</th><th>المبلغ</th><th>التاريخ</th></tr></thead><tbody>`;
     expenses.forEach(e => {
@@ -9859,7 +9892,10 @@ async function viewTripSummary(t){
 
     const waLines = [`كشف حركة الجولة`,`${t.trip_number} - ${t.rep_name||""}`];
     if(canViewSales)waLines.push(`المبيعات المرحلة: ${fmt(totalSales)}`);
-    if(canViewCollections)waLines.push(`إجمالي التحصيلات: ${fmt(totalCollections)}`);
+    if(canViewCollections){
+      waLines.push(`إجمالي التحصيلات المرتبطة بالجولة: ${fmt(totalCollections)}`);
+      waLines.push(`عهدة المندوب خارج الجولة غير المسوّاة: ${fmt(unassignedCustodyTotal)}`);
+    }
     if(canViewExpenses)waLines.push(`مصروفات الجولة: ${fmt(totalExpenses)}`);
     if(canViewSalesReturns)waLines.push(`إجمالي المرتجعات: ${fmt(totalReturns)}`);
     waLines.push(`عدد الأصناف في مطابقة السيارة: ${reconciliation.length}`,`الأصناف غير المتطابقة: ${mismatchCount}`);
