@@ -285,7 +285,7 @@ BEGIN
  'final_disposition',v_i.final_disposition,'inspection_status',v_i.inspection_status);
 END $$;
 REVOKE ALL ON FUNCTION public.record_sales_return_item_inspection(bigint,text,text,text,numeric,numeric,numeric) FROM PUBLIC,anon;
-GRANT EXECUTE ON FUNCTION public.record_sales_return_item_inspection(bigint,text,text,text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.record_sales_return_item_inspection(bigint,text,text,text,numeric,numeric,numeric) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.cleanup_sales_return_holds_on_cancel()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
