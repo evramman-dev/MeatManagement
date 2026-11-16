@@ -9744,7 +9744,7 @@ async function viewTripSummary(t){
       .reduce((s, c) => s + Number(c.amount || 0), 0);
 
     const tripRepCustody = collections
-      .filter(c => ["REP_CASH","REP_CUSTODY"].includes(c.receipt_destination))
+      .filter(c => ["REP_CASH","REP_CUSTODY"].includes(c.receipt_destination) && !c.custody_settled_at)
       .reduce((s, c) => s + Number(c.amount || 0), 0);
     const unassignedCashCustody = unassignedRepCustody
       .filter(c => c.receipt_destination === "REP_CASH")
