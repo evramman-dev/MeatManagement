@@ -9431,10 +9431,14 @@ async function confirmTripLoadDispatch(loadId,quantityInput,button){
   }
   busy(button,true,"جارٍ تأكيد الصرف...","تأكيد صرف التحميل الفعلي");
   try{
+    const {data:authData,error:authError}=await db.auth.getUser();
+    if(authError) throw authError;
+    const currentUserId=authData?.user?.id;
+    if(!currentUserId) throw new Error("انتهت جلسة الدخول. سجل الدخول مرة أخرى ثم أعد المحاولة.");
     const {data,error}=await db.rpc("confirm_trip_load_dispatch",{
       p_load_id:Number(loadId),
       p_actual_quantity:quantity,
-      p_created_by:user.id
+      p_created_by:currentUserId
     });
     if(error) throw error;
     showToast("تم تأكيد صرف التحميل ونقل البضاعة إلى السيارة.","success");
