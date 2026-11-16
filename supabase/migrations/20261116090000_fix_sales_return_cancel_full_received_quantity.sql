@@ -201,3 +201,90 @@ IS 'Returns every posted journal entry line with voucher number, account details
 
 COMMENT ON FUNCTION public.get_account_ledger(bigint,date,date)
 IS 'Returns account ledger lines for the selected period with opening balance carried forward from all earlier posted journal lines.';
+
+
+-- Include an explicit opening-balance row even when the selected period has no movement.
+CREATE OR REPLACE FUNCTION public.get_account_ledger(
+  p_account_id bigint,p_from date,p_to date
+)
+RETURNS TABLE(
+  entry_id bigint,
+  entry_number text,
+  entry_date date,
+  description text,
+  line_description text,
+  debit numeric,
+  credit numeric,
+  running_balance numeric
+)
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path TO 'pg_catalog','public','pg_temp'
+AS $function$
+BEGIN
+  IF NOT public.has_permission('ACCOUNTING_VIEW') THEN
+    RAISE EXCEPTION 'ليس لديك صلاحية عرض دفتر الأستاذ';
+  END IF;
+  IF p_account_id IS NULL OR p_account_id<=0
+     OR p_from IS NULL OR p_to IS NULL OR p_from>p_to THEN
+    RAISE EXCEPTION 'بيانات تقرير دفتر الأستاذ غير صحيحة';
+  END IF;
+  IF NOT EXISTS(
+    SELECT 1 FROM public.chart_of_accounts coa WHERE coa.account_id=p_account_id
+  ) THEN
+    RAISE EXCEPTION 'الحساب المحدد غير موجود';
+  END IF;
+
+  RETURN QUERY
+  WITH opening AS (
+    SELECT COALESCE(SUM(jel.debit-jel.credit),0)::numeric AS opening_balance
+    FROM public.journal_entries je
+    JOIN public.journal_entry_lines jel ON jel.entry_id=je.entry_id
+    WHERE je.status='POSTED'
+      AND je.entry_date<p_from
+      AND jel.account_id=p_account_id
+  ),
+  lines AS (
+    SELECT
+      je.entry_id,
+      COALESCE(je.entry_number,'')::text AS entry_number,
+      je.entry_date,
+      COALESCE(je.description,'') AS description,
+      COALESCE(jel.description,'') AS line_description,
+      jel.debit,
+      jel.credit,
+      (SELECT opening_balance FROM opening)
+        + SUM(jel.debit-jel.credit) OVER(
+            ORDER BY je.entry_date,je.entry_id,jel.line_id
+            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+          ) AS running_balance
+    FROM public.journal_entries je
+    JOIN public.journal_entry_lines jel ON jel.entry_id=je.entry_id
+    WHERE je.status='POSTED'
+      AND je.entry_date BETWEEN p_from AND p_to
+      AND jel.account_id=p_account_id
+  ),
+  combined AS (
+    SELECT
+      NULL::bigint AS entry_id,
+      '—'::text AS entry_number,
+      p_from AS entry_date,
+      'رصيد أول المدة'::text AS description,
+      'رصيد أول المدة'::text AS line_description,
+      GREATEST(o.opening_balance,0)::numeric AS debit,
+      GREATEST(-o.opening_balance,0)::numeric AS credit,
+      o.opening_balance AS running_balance,
+      0 AS sort_order
+    FROM opening o
+    UNION ALL
+    SELECT l.entry_id,l.entry_number,l.entry_date,l.description,l.line_description,
+           l.debit,l.credit,l.running_balance,1 AS sort_order
+    FROM lines l
+  )
+  SELECT c.entry_id,c.entry_number,c.entry_date,c.description,c.line_description,
+         c.debit,c.credit,c.running_balance
+  FROM combined c
+  ORDER BY c.sort_order,c.entry_date,c.entry_id;
+END;
+$function$;
