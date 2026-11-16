@@ -6640,7 +6640,6 @@ if($("invoiceForm")) $("invoiceForm").addEventListener("submit", async e => {
   e.preventDefault(); clear($("invoiceFormMsg"));
   if(!navigator.onLine) { msg($("invoiceFormMsg"), "لا يمكن الحفظ بدون إنترنت.", "error"); return; }
   const customerId = $("invoiceCustomer").value; 
-  const locationId = $("invoiceLocation").value; 
   const discount = Number($("invoiceDiscount").value||0);
   const items = []; 
   let valid = true;
