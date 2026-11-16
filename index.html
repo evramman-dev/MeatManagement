@@ -9743,6 +9743,9 @@ async function viewTripSummary(t){
       .filter(c => c.payment_method === "CASH" && Number(c.treasury_id) === MANDOUB_TREASURY_ID)
       .reduce((s, c) => s + Number(c.amount || 0), 0);
 
+    const tripRepCustody = collections
+      .filter(c => ["REP_CASH","REP_CUSTODY"].includes(c.receipt_destination))
+      .reduce((s, c) => s + Number(c.amount || 0), 0);
     const unassignedCashCustody = unassignedRepCustody
       .filter(c => c.receipt_destination === "REP_CASH")
       .reduce((s, c) => s + Number(c.amount || 0), 0);
@@ -9750,6 +9753,7 @@ async function viewTripSummary(t){
       .filter(c => c.receipt_destination === "REP_CUSTODY")
       .reduce((s, c) => s + Number(c.amount || 0), 0);
     const unassignedCustodyTotal = unassignedCashCustody + unassignedPersonalCustody;
+    const totalRepCustody = tripRepCustody + unassignedCustodyTotal;
 
     const collectionTotals = collections.reduce((totals, c) => {
       const method = c.payment_method || "OTHER";
@@ -9797,7 +9801,7 @@ async function viewTripSummary(t){
         html += `<div class="line"><span>إجمالي التحصيلات المرتبطة بالجولة:</span><span>${fmt(totalCollections)}</span></div>
           <div class="line"><span>التحصيل النقدي بخزنة المناديب:</span><span>${fmt(cashCollections)}</span></div>
           <div class="line"><span>عهدة المندوب خارج الجولة:</span><span>${fmt(unassignedCustodyTotal)}</span></div>
-          <div class="line"><span>إجمالي العهدة على المندوب:</span><span>${fmt(cashCollections + unassignedCustodyTotal)}</span></div>`;
+          <div class="line"><span>إجمالي العهدة على المندوب:</span><span>${fmt(totalRepCustody)}</span></div>`;
       }
       if(canViewTripExpenses){
         html += `<div class="line"><span>إجمالي مصروفات الجولة:</span><span>${fmt(totalExpenses)}</span></div>
@@ -9918,6 +9922,7 @@ async function viewTripSummary(t){
     if(canViewCollections){
       waLines.push(`إجمالي التحصيلات المرتبطة بالجولة: ${fmt(totalCollections)}`);
       waLines.push(`عهدة المندوب خارج الجولة غير المسوّاة: ${fmt(unassignedCustodyTotal)}`);
+      waLines.push(`إجمالي العهدة على المندوب من تحصيلات الجولة وخارجها: ${fmt(totalRepCustody)}`);
     }
     if(canViewTripExpenses)waLines.push(`مصروفات الجولة: ${fmt(totalExpenses)}`);
     if(canViewTripReturns)waLines.push(`إجمالي المرتجعات: ${fmt(totalReturns)}`);
