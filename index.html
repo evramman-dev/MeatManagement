@@ -9951,29 +9951,208 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
             tbodyTrial.innerHTML = "<tr><td colspan='3' style='text-align:center;'>لا توجد قيود في هذه الفترة. اضغط على زرار <strong>🔄 ترحيل القيود</strong> عشان تولد القيود من الفواتير والمشتريات والمصروفات.</td></tr>"; 
           }
 
-          const { data: journalData, error: journalErr } = await db.rpc("get_journal_entries", { p_from: from, p_to: to });
+          const { data: journalData, error: journalErr } = await db.rpc("get_journal_entries_full", { p_from: from, p_to: to });
           if(journalErr) throw journalErr;
-          const tbodyJournal = $("journalTable").querySelector("tbody"); 
+          const tbodyJournal = $("journalTable").querySelector("tbody");
           tbodyJournal.innerHTML = "";
-          if(journalData && journalData.length > 0) { 
-            journalData.forEach(row => { 
-              tbodyJournal.innerHTML += `<tr><td>${formatDate(row.entry_date)}</td><td>${row.description}</td><td>${row.account_name}</td><td>${fmt(row.debit)}</td><td>${fmt(row.credit)}</td></tr>`; 
-            }); 
-          } else { 
-            tbodyJournal.innerHTML = "<tr><td colspan='5' style='text-align:center;'>لا توجد قيود في هذه الفترة.</td></tr>"; 
+          if(journalData && journalData.length > 0) {
+            let currentEntry = null;
+            let journalDebit = 0, journalCredit = 0;
+            journalData.forEach(row => {
+              if(currentEntry !== row.entry_id) {
+                currentEntry = row.entry_id;
+                tbodyJournal.innerHTML += `<tr style="background:#e9efe9;font-weight:bold;"><td colspan="6">قيد رقم ${esc(row.entry_number || row.entry_id)} | ${formatDate(row.entry_date)} | ${esc(row.description || "")} | الإجمالي: مدين ${fmt(row.entry_debit)} / دائن ${fmt(row.entry_credit)}</td></tr>`;
+              }
+              journalDebit += Number(row.debit || 0);
+              journalCredit += Number(row.credit || 0);
+              tbodyJournal.innerHTML += `<tr><td>${formatDate(row.entry_date)}</td><td>${esc(row.entry_number || "")}</td><td>${esc(row.line_description || row.description || "")}</td><td>${esc(row.account_code)} - ${esc(row.account_name)}</td><td>${fmt(row.debit)}</td><td>${fmt(row.credit)}</td></tr>`;
+            });
+            tbodyJournal.innerHTML += `<tr style="background:#e9efe9;font-weight:bold;"><td colspan="4">إجمالي الفترة</td><td>${fmt(journalDebit)}</td><td>${fmt(journalCredit)}</td></tr>`;
+          } else {
+            tbodyJournal.innerHTML = "<tr><td colspan='6' style='text-align:center;'>لا توجد قيود في هذه الفترة.</td></tr>";
           }
+          await loadAccountingDirectory();
+          await loadAccountLedger();
       } catch(e){ 
         console.warn("[FINANCIAL]", e); 
         showToast("تعذر تحميل الملخص المالي: " + err(e), "error"); 
       } 
   }
+  // ========== دليل الحسابات ودفتر الأستاذ ==========
+  let chartAccountsCache = [];
+
+  function accountTypeLabel(type) {
+    return ({ASSET:"أصول",LIABILITY:"التزامات",EQUITY:"حقوق ملكية",REVENUE:"إيرادات",EXPENSE:"مصروفات"})[type] || type || "—";
+  }
+
+  function resetChartAccountForm() {
+    const form = $("coaForm");
+    if(form) form.reset();
+    if($("coaEditId")) $("coaEditId").value = "";
+    if($("coaType")) $("coaType").disabled = false;
+    if($("coaActive")) $("coaActive").checked = true;
+    if($("saveCoaBtn")) $("saveCoaBtn").textContent = "حفظ الحساب";
+    if($("coaMessage")) clear($("coaMessage"));
+  }
+
+  async function loadAccountingDirectory() {
+    const { data, error } = await db.from("chart_of_accounts")
+      .select("account_id,account_code,account_name,account_type,parent_id,is_active")
+      .order("account_code");
+    if(error) throw error;
+    chartAccountsCache = data || [];
+
+    const ledgerSelect = $("ledgerAccountSelect");
+    const previousLedgerAccount = ledgerSelect ? ledgerSelect.value : "";
+    if(ledgerSelect) {
+      ledgerSelect.replaceChildren();
+      const first = document.createElement("option");
+      first.value = "";
+      first.textContent = "اختر الحساب";
+      ledgerSelect.appendChild(first);
+      chartAccountsCache.filter(a => a.is_active).forEach(a => {
+        const option = document.createElement("option");
+        option.value = String(a.account_id);
+        option.textContent = a.account_code + " - " + a.account_name;
+        ledgerSelect.appendChild(option);
+      });
+      if(previousLedgerAccount && chartAccountsCache.some(a => String(a.account_id) === previousLedgerAccount && a.is_active)) {
+        ledgerSelect.value = previousLedgerAccount;
+      } else if(ledgerSelect.options.length > 1) {
+        ledgerSelect.selectedIndex = 1;
+      }
+    }
+
+    const parentSelect = $("coaParent");
+    if(parentSelect) {
+      const previousParent = parentSelect.value;
+      parentSelect.replaceChildren();
+      const none = document.createElement("option");
+      none.value = "";
+      none.textContent = "بدون حساب رئيسي";
+      parentSelect.appendChild(none);
+      chartAccountsCache.filter(a => a.is_active).forEach(a => {
+        const option = document.createElement("option");
+        option.value = String(a.account_id);
+        option.textContent = a.account_code + " - " + a.account_name;
+        parentSelect.appendChild(option);
+      });
+      if(previousParent) parentSelect.value = previousParent;
+    }
+
+    const managePanel = $("coaManagePanel");
+    if(managePanel) managePanel.classList.toggle("hidden", !(canManageAccounting || isSystemAdmin));
+
+    const tbody = $("chartAccountsTable")?.querySelector("tbody");
+    if(tbody) {
+      tbody.innerHTML = "";
+      if(!chartAccountsCache.length) {
+        tbody.innerHTML = "<tr><td colspan='6'>لا توجد حسابات مسجلة.</td></tr>";
+      } else {
+        chartAccountsCache.forEach(a => {
+          const parent = chartAccountsCache.find(p => p.account_id === a.parent_id);
+          const action = (canManageAccounting || isSystemAdmin)
+            ? `<button class="btn secondary" type="button" onclick="window.editChartAccount(${Number(a.account_id)})">تعديل</button>`
+            : "—";
+          tbody.innerHTML += `<tr><td>${esc(a.account_code)}</td><td>${esc(a.account_name)}</td><td>${esc(accountTypeLabel(a.account_type))}</td><td>${parent ? esc(parent.account_code + " - " + parent.account_name) : "—"}</td><td>${a.is_active ? "نشط" : "موقوف"}</td><td>${action}</td></tr>`;
+        });
+      }
+    }
+  }
+
+  window.editChartAccount = function(accountId) {
+    if(!(canManageAccounting || isSystemAdmin)) return;
+    const account = chartAccountsCache.find(a => Number(a.account_id) === Number(accountId));
+    if(!account) return;
+    $("coaEditId").value = String(account.account_id);
+    $("coaCode").value = account.account_code || "";
+    $("coaName").value = account.account_name || "";
+    $("coaType").value = account.account_type || "ASSET";
+    $("coaType").disabled = true;
+    $("coaParent").value = account.parent_id ? String(account.parent_id) : "";
+    $("coaActive").checked = !!account.is_active;
+    $("saveCoaBtn").textContent = "حفظ التعديل";
+    clear($("coaMessage"));
+    $("coaManagePanel").scrollIntoView({behavior:"smooth",block:"start"});
+  };
+
+  if($("btnLoadLedger")) $("btnLoadLedger").addEventListener("click", loadAccountLedger);
+  async function loadAccountLedger() {
+    const accountId = Number($("ledgerAccountSelect")?.value || 0);
+    const tbody = $("ledgerTable")?.querySelector("tbody");
+    if(!tbody) return;
+    tbody.innerHTML = "";
+    if(!accountId) {
+      tbody.innerHTML = "<tr><td colspan='6'>اختر حسابًا أولًا.</td></tr>";
+      return;
+    }
+    try {
+      const from = $("accFromDate").value || monthStartISO();
+      const to = $("accToDate").value || todayISO();
+      const { data, error } = await db.rpc("get_account_ledger", {
+        p_account_id: accountId, p_from: from, p_to: to
+      });
+      if(error) throw error;
+      if(!data || !data.length) {
+        tbody.innerHTML = "<tr><td colspan='6'>لا توجد حركة لهذا الحساب خلال الفترة.</td></tr>";
+        return;
+      }
+      let totalDebit = 0, totalCredit = 0;
+      data.forEach(row => {
+        totalDebit += Number(row.debit || 0);
+        totalCredit += Number(row.credit || 0);
+        const balance = Number(row.running_balance || 0);
+        const balanceText = balance === 0 ? "0.00" : fmt(Math.abs(balance)) + (balance > 0 ? " مدين" : " دائن");
+        tbody.innerHTML += `<tr><td>${formatDate(row.entry_date)}</td><td>${esc(row.entry_number || row.entry_id)}</td><td>${esc(row.line_description || row.description || "")}</td><td>${fmt(row.debit)}</td><td>${fmt(row.credit)}</td><td>${balanceText}</td></tr>`;
+      });
+      tbody.innerHTML += `<tr style="background:#e9efe9;font-weight:bold;"><td colspan="3">إجمالي الحركة</td><td>${fmt(totalDebit)}</td><td>${fmt(totalCredit)}</td><td></td></tr>`;
+    } catch(e) {
+      tbody.innerHTML = `<tr><td colspan="6">${esc(err(e))}</td></tr>`;
+      if($("ledgerMessage")) msg($("ledgerMessage"),"تعذر تحميل دفتر الأستاذ: "+err(e),"error");
+    }
+  }
+
+  if($("cancelCoaEditBtn")) $("cancelCoaEditBtn").addEventListener("click", resetChartAccountForm);
+  if($("coaForm")) $("coaForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    if(!(canManageAccounting || isSystemAdmin)) return;
+    const btn = $("saveCoaBtn");
+    const editId = Number($("coaEditId").value || 0);
+    const parentId = Number($("coaParent").value || 0);
+    if(parentId && editId && parentId === editId) {
+      msg($("coaMessage"),"لا يمكن أن يكون الحساب تابعًا لنفسه.","error");
+      return;
+    }
+    const payload = {
+      account_code: $("coaCode").value.trim(),
+      account_name: $("coaName").value.trim(),
+      parent_id: parentId || null,
+      is_active: $("coaActive").checked
+    };
+    if(!editId) payload.account_type = $("coaType").value;
+    busy(btn,true,"جارٍ الحفظ...","حفظ الحساب");
+    try {
+      const result = editId
+        ? await db.from("chart_of_accounts").update(payload).eq("account_id",editId)
+        : await db.from("chart_of_accounts").insert(payload);
+      if(result.error) throw result.error;
+      showToast(editId ? "تم تحديث الحساب" : "تم إضافة الحساب","success");
+      resetChartAccountForm();
+      await loadAccountingDirectory();
+    } catch(e) {
+      msg($("coaMessage"),"تعذر حفظ الحساب: "+err(e),"error");
+    } finally {
+      busy(btn,false,"",editId ? "حفظ التعديل" : "حفظ الحساب");
+    }
+  });
+
   window.switchAccTab = function(tabId) {
       document.querySelectorAll(".acc-tab").forEach(el => el.classList.add("hidden"));
       document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
       if($(tabId)) $(tabId).classList.remove("hidden");
       const btns = document.querySelectorAll('[onclick^="switchAccTab"]');
       btns.forEach(b => b.classList.remove("active"));
-      const map = { accSummary: 0, accTrial: 1, accJournal: 2 };
+      const map = { accSummary: 0, accTrial: 1, accJournal: 2, accLedger: 3, accAccounts: 4 };
       if(map[tabId] !== undefined && btns[map[tabId]]) btns[map[tabId]].classList.add("active");
   }
   if($("btnAccFilter")) $("btnAccFilter").addEventListener("click", loadFinancialSummary);
