@@ -7396,7 +7396,7 @@ async function openSalesReturnInspection(ret){
   if(inspectionError)throw inspectionError;if(userError)throw userError;
   const currentUserId=userData?.user?.id||"";
   const inspectionMap=new Map((inspections||[]).map(x=>[Number(x.return_item_id),x]));
-  const dispositionName=v=>({SELLABLE:"صالح للبيع",REWORK:"يحتاج إعادة تصنيع",SCRAP:"هالك نهائي"})[v]||"لم يعتمد";
+  const dispositionName=v=>({SELLABLE:"صالح للبيع",REWORK:"يحتاج إعادة تصنيع",SCRAP:"هالك نهائي",MIXED:"تصنيف مختلط"})[v]||"لم يعتمد";
   items.forEach(item=>{
    const card=document.createElement("div");card.className="product";
    const title=document.createElement("div");title.className="pname";title.textContent=productName(item.product_id);
@@ -7418,24 +7418,31 @@ async function openSalesReturnInspection(ret){
     if(!allowed)return;
     if(otherInspector&&otherInspector===currentUserId){const note=document.createElement("div");note.className="details";note.textContent="هذا الحساب اعتمد الدور الآخر بالفعل. يجب أن يعتمد الحساب الثاني من مستخدم مختلف.";card.appendChild(note);return;}
     const section=document.createElement("div");section.className="item-row";
-    const label=document.createElement("label");label.textContent=type==="WAREHOUSE"?"قرار أمين المخزن":"قرار مدير الإنتاج";
-    const select=document.createElement("select");select.className="input";
-    [["","اختر التصنيف"],["SELLABLE","صالح للبيع"],["REWORK","يحتاج إعادة تصنيع"],["SCRAP","هالك نهائي"]].forEach(([v,t])=>{const o=document.createElement("option");o.value=v;o.textContent=t;select.appendChild(o);});
-    select.value=currentDecision||"";
+    const label=document.createElement("label");label.textContent=type==="WAREHOUSE"?"فحص أمين المخزن":"فحص مدير الإنتاج";
+    const makeNumber=(name,value)=>{const wrap=document.createElement("label");wrap.textContent=name;const input=document.createElement("input");input.type="number";input.step="any";input.min="0";input.className="input";input.value=value??"";wrap.appendChild(input);section.appendChild(wrap);return input;};
+    const base=Number(item.base_quantity||0);
+    const preSell=currentDecision==="SELLABLE"?base:currentDecision==="MIXED"?Number(type==="WAREHOUSE"?ins.warehouse_sellable_quantity:ins.production_sellable_quantity||0):0;
+    const preRework=currentDecision==="REWORK"?base:currentDecision==="MIXED"?Number(type==="WAREHOUSE"?ins.warehouse_rework_quantity:ins.production_rework_quantity||0):0;
+    const preScrap=currentDecision==="SCRAP"?base:currentDecision==="MIXED"?Number(type==="WAREHOUSE"?ins.warehouse_scrap_quantity:ins.production_scrap_quantity||0):0;
+    const sell=makeNumber("صالح للبيع",preSell),rework=makeNumber("إعادة تصنيع",preRework),scrap=makeNumber("هالك",preScrap);
+    const total=document.createElement("div");total.className="details";section.appendChild(total);
+    const updateTotal=()=>{const t=Number(sell.value||0)+Number(rework.value||0)+Number(scrap.value||0);total.textContent="المجموع: "+fmtQty(t)+" من "+fmtQty(base);total.className=t===base?"details":"status error";};
+    [sell,rework,scrap].forEach(x=>x.addEventListener("input",updateTotal));updateTotal();
     const notes=document.createElement("textarea");notes.rows=2;notes.placeholder="ملاحظات الفحص";notes.value=currentNotes||"";
     const save=document.createElement("button");save.type="button";save.className="btn";save.textContent=type==="WAREHOUSE"?"اعتماد أمين المخزن":"اعتماد مدير الإنتاج";
     save.onclick=async()=>{
-     if(!select.value)return showToast("اختر تصنيف المرتجع أولاً","error");
+     const sv=Number(sell.value||0),rv=Number(rework.value||0),xv=Number(scrap.value||0);
+     if(Math.abs(sv+rv+xv-base)>0.000001)return showToast("يجب توزيع كامل الكمية بين الحالات الثلاث","error");
      busy(save,true,"جارٍ الاعتماد...","اعتماد");
      try{
-      const {error}=await db.rpc("record_sales_return_item_inspection",{p_return_item_id:Number(item.return_item_id),p_inspector_type:type,p_disposition:select.value,p_notes:notes.value.trim()||null});
+      const {error}=await db.rpc("record_sales_return_item_inspection",{p_return_item_id:Number(item.return_item_id),p_inspector_type:type,p_disposition:sv===base?"SELLABLE":rv===base?"REWORK":xv===base?"SCRAP":"MIXED",p_notes:notes.value.trim()||null,p_sellable_quantity:sv,p_rework_quantity:rv,p_scrap_quantity:xv});
       if(error)throw error;
       showToast("تم تسجيل قرار الفحص","success");
       await openSalesReturnInspection(ret);await loadSalesReturns();await loadStock();await loadSales();
      }catch(e){showToast("تعذر تسجيل الفحص: "+err(e),"error",7000);}
      finally{busy(save,false,"","اعتماد");}
     };
-    label.appendChild(select);section.append(label,notes,save);card.appendChild(section);
+    card.appendChild(section);card.appendChild(notes);card.appendChild(save);
    };
    addApproval("WAREHOUSE",canInspectReturnsWarehouse,ins.warehouse_disposition,ins.warehouse_notes,ins.production_inspected_by);
    addApproval("PRODUCTION",canInspectReturnsProduction,ins.production_disposition,ins.production_notes,ins.warehouse_inspected_by);
