@@ -10667,9 +10667,10 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
       // showApp() already opens the home page and calls loadHomeDashboard().
       try { await loadNotifications(); } catch(e){ console.error("[BOOT notifications]",e); }
       bootedUserId=user.id;
-      if(taxWarningShownForUserId!==user.id && companySettings.company_tax_number === "000000000"){
+      const officialTaxNumber = String(companySettings.company_tax_number || "").trim();
+      if(taxWarningShownForUserId!==user.id && (!officialTaxNumber || officialTaxNumber === "000000000")){
         taxWarningShownForUserId=user.id;
-        showToast("⚠️ لم يتم تعيين الرقم الضريبي للشركة، يمكنك ضبطه من إعدادات الشركة", "warn", 6000);
+        showToast("لم يتم تسجيل الرقم الضريبي الرسمي للشركة، يمكنك ضبطه من إعدادات الشركة", "warn", 6000);
       }
     })();
     try { await appBootPromise; }
