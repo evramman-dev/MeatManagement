@@ -9703,6 +9703,10 @@ async function viewTripSummary(t){
   $("tripSummaryBody").innerHTML = "جارٍ التحميل...";
   modal.classList.remove("hidden");
   try {
+    // مندوب المبيعات يرى البيانات المالية المرتبطة بجولته فقط.
+    // هذه صلاحية خاصة بكشف الجولة ولا تمنحه صلاحية عامة على المصروفات أو المرتجعات.
+    const canViewTripExpenses = canViewExpenses || currentRoleCode === "SALES_REP";
+    const canViewTripReturns = canViewSalesReturns || currentRoleCode === "SALES_REP";
     const [invoices, collections, unassignedRepCustody, expenses, returns, reconciliation] = await Promise.all([
       canViewSales
         ? fetchAllRows(db.from("sales_invoices").select("*").eq("trip_id", t.trip_id).in("status", ["POSTED","PAID","PARTIAL"]).order("invoice_date").order("sales_invoice_id"))
@@ -9720,10 +9724,10 @@ async function viewTripSummary(t){
             .is("custody_settled_at",null)
             .order("collection_date").order("collection_id"))
         : Promise.resolve([]),
-      canViewExpenses
+      canViewTripExpenses
         ? fetchAllRows(db.from("expenses").select("*").eq("is_cancelled",false).eq("trip_id", t.trip_id).order("expense_date").order("expense_id"))
         : Promise.resolve([]),
-      canViewSalesReturns
+      canViewTripReturns
         ? fetchAllRows(db.rpc("get_trip_returns", { p_trip_id: t.trip_id }))
         : Promise.resolve([]),
       fetchAllRows(db.rpc("get_trip_stock_reconciliation", { p_trip_id: t.trip_id }))
@@ -9786,26 +9790,26 @@ async function viewTripSummary(t){
 
     let html = `<div style="font-size:14px;line-height:1.9;"><div><strong>الجولة:</strong> ${t.trip_number}</div><div><strong>المندوب:</strong> ${t.rep_name||"-"}</div><div><strong>السيارة:</strong> ${locationName(t.vehicle_location_id)}</div><div><strong>التاريخ:</strong> ${tripDateStr}</div></div>`;
 
-    if(canViewSales || canViewCollections || canViewExpenses || canViewSalesReturns){
+    if(canViewSales || canViewCollections || canViewTripExpenses || canViewTripReturns){
       html += `<div class="total-box" style="background:var(--g);color:white;margin-top:15px;">`;
       if(canViewSales) html += `<div class="line"><span>مبيعات الفواتير المرحلة:</span><span>${fmt(totalSales)}</span></div>`;
       if(canViewCollections){
         html += `<div class="line"><span>إجمالي التحصيلات المرتبطة بالجولة:</span><span>${fmt(totalCollections)}</span></div>
           <div class="line"><span>التحصيل النقدي بخزنة المناديب:</span><span>${fmt(cashCollections)}</span></div>`;
       }
-      if(canViewExpenses){
+      if(canViewTripExpenses){
         html += `<div class="line"><span>إجمالي مصروفات الجولة:</span><span>${fmt(totalExpenses)}</span></div>
           <div class="line"><span>مصروفات خزنة المناديب:</span><span>-${fmt(cashExpenses)}</span></div>`;
       }
-      if(canViewSalesReturns){
+      if(canViewTripReturns){
         html += `<div class="line"><span>إجمالي قيمة المرتجعات:</span><span>${fmt(totalReturns)}</span></div>
           <div class="line"><span>مبالغ مردودة نقدًا من خزنة المناديب:</span><span>-${fmt(cashBackReturns)}</span></div>`;
       }
-      if(canViewCollections && canViewExpenses && canViewSalesReturns){
+      if(canViewCollections && canViewTripExpenses && canViewTripReturns){
         html += `<div class="line"><span>عهدة أول المدة:</span><span>${fmt(initialCash)}</span></div>
           <div class="line grand" style="color:var(--gold);"><span>صافي النقدية الفعلية بالجولة:</span><span>${fmt(netCash)}</span></div>`;
       } else {
-        html += `<div class="line" style="font-size:12px;"><span>صافي النقدية الفعلية لا يُحسب هنا لأن بيانات المصروفات أو المرتجعات غير متاحة لهذا المستخدم.</span></div>`;
+        html += `<div class="line" style="font-size:12px;"><span>صافي النقدية الفعلية لا يُحسب هنا لأن بعض بيانات التسوية المطلوبة غير متاحة.</span></div>`;
       }
       html += `</div>`;
     }
@@ -9849,7 +9853,7 @@ async function viewTripSummary(t){
       <div class="line"><span>إجمالي المتبقي على فواتير الجولة:</span><span style="font-weight:bold;color:var(--red);">${fmt(totalInvoiceRemaining)}</span></div>
     </div>`; }
 
-    if(canViewSalesReturns){
+    if(canViewTripReturns){
     html += `<h4 style="color:var(--g);margin-top:20px;">↩️ المرتجعات (${returns.length})</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>رقم</th><th>العميل</th><th>قيمة المرتجع</th><th>الإجراء النقدي</th><th>الأثر المالي</th><th>الخزنة</th></tr></thead><tbody>`;
     returns.forEach(r => {
       const actionName = r.cash_action === "CASH_BACK" ? "رد نقدي" : r.cash_action === "CUSTOMER_PAYS_CASH" ? "تحصيل نقدي" : (r.cash_action || "-");
@@ -9895,7 +9899,7 @@ async function viewTripSummary(t){
         <div class="line"><span>إجمالي العهدة خارج الجولة غير المسوّاة:</span><span style="font-weight:bold;">${fmt(unassignedCustodyTotal)}</span></div></div>`;
     }
 
-    if(canViewExpenses){
+    if(canViewTripExpenses){
     html += `<h4 style="color:var(--g);margin-top:20px;">🧾 المصروفات (${expenses.length})</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>النوع</th><th>الحساب</th><th>الخزنة</th><th>المبلغ</th><th>التاريخ</th></tr></thead><tbody>`;
     expenses.forEach(e => {
       html += `<tr><td>${expenseTypeName(e.expense_type)}</td><td>${expenseAccountCode(e.expense_type)||"—"}</td><td>${e.treasury_id || "-"}</td><td>${fmt(e.amount)}</td><td>${formatDate(e.expense_date)}</td></tr>`;
@@ -9913,8 +9917,8 @@ async function viewTripSummary(t){
       waLines.push(`إجمالي التحصيلات المرتبطة بالجولة: ${fmt(totalCollections)}`);
       waLines.push(`عهدة المندوب خارج الجولة غير المسوّاة: ${fmt(unassignedCustodyTotal)}`);
     }
-    if(canViewExpenses)waLines.push(`مصروفات الجولة: ${fmt(totalExpenses)}`);
-    if(canViewSalesReturns)waLines.push(`إجمالي المرتجعات: ${fmt(totalReturns)}`);
+    if(canViewTripExpenses)waLines.push(`مصروفات الجولة: ${fmt(totalExpenses)}`);
+    if(canViewTripReturns)waLines.push(`إجمالي المرتجعات: ${fmt(totalReturns)}`);
     waLines.push(`عدد الأصناف في مطابقة السيارة: ${reconciliation.length}`,`الأصناف غير المتطابقة: ${mismatchCount}`);
     const waText = waLines.join("\\n");
     $("shareTripWhatsappBtn").onclick = () => {
