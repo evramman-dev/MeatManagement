@@ -9790,7 +9790,7 @@ async function viewTripSummary(t){
       html += `<div class="total-box" style="background:var(--g);color:white;margin-top:15px;">`;
       if(canViewSales) html += `<div class="line"><span>مبيعات الفواتير المرحلة:</span><span>${fmt(totalSales)}</span></div>`;
       if(canViewCollections){
-        html += `<div class="line"><span>إجمالي التحصيلات بكل الوسائل:</span><span>${fmt(totalCollections)}</span></div>
+        html += `<div class="line"><span>إجمالي التحصيلات المرتبطة بالجولة:</span><span>${fmt(totalCollections)}</span></div>
           <div class="line"><span>التحصيل النقدي بخزنة المناديب:</span><span>${fmt(cashCollections)}</span></div>`;
       }
       if(canViewExpenses){
@@ -9805,7 +9805,7 @@ async function viewTripSummary(t){
         html += `<div class="line"><span>عهدة أول المدة:</span><span>${fmt(initialCash)}</span></div>
           <div class="line grand" style="color:var(--gold);"><span>صافي النقدية الفعلية بالجولة:</span><span>${fmt(netCash)}</span></div>`;
       } else {
-        html += `<div class="line" style="font-size:12px;"><span>صافي النقدية غير معروض لأن صلاحيات العرض لا تشمل كل مكونات التسوية.</span></div>`;
+        html += `<div class="line" style="font-size:12px;"><span>صافي النقدية الفعلية لا يُحسب هنا لأن بيانات المصروفات أو المرتجعات غير متاحة لهذا المستخدم.</span></div>`;
       }
       html += `</div>`;
     }
