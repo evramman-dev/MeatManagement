@@ -505,6 +505,12 @@ test('Sales return inspection, rework inputs and packaging recovery are wired', 
   expect(returnInspectionMigrationSql).toContain('source_return_item_id');
   expect(returnInspectionMigrationSql).toContain('warehouse_inspected_by');
   expect(returnInspectionMigrationSql).toContain('production_inspected_by');
+  expect(returnInspectionMigrationSql).toContain('warehouse_sellable_quantity');
+  expect(returnInspectionMigrationSql).toContain('production_rework_quantity');
+  expect(returnInspectionMigrationSql).toContain('p_sellable_quantity');
+  expect(qaHtml).toContain('p_sellable_quantity:sv');
+  expect(qaHtml).toContain('p_rework_quantity:rv');
+  expect(qaHtml).toContain('p_scrap_quantity:xv');
   expect(returnInspectionMigrationSql).toContain('RETURN_PENDING:%');
   expect(returnInspectionMigrationSql).toContain('RETURN_REWORK:%');
   expect(packagingRecoveryMigrationSql).toContain('packaging_items');
