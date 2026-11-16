@@ -6179,12 +6179,12 @@ function resetInvoiceForm(){
 }
 if($("addInvoiceBtn")) $("addInvoiceBtn").addEventListener("click",()=>resetInvoiceForm());
 
-function addPackageSelectToRow(row,productId,unitId){let w=row.querySelector(".package-option-wrap");if(!w){w=document.createElement("div");w.className="package-option-wrap";const l=document.createElement("label");l.textContent="خيار التعبئة";const sel=document.createElement("select");sel.className="item-package-option";w.append(l,sel);row.insertBefore(w,row.querySelector(".item-line-total")||row.lastElementChild);}const sel=w.querySelector("select");const cur=sel.value;sel.replaceChildren();const f=document.createElement("option");f.value="";f.textContent="بدون خيار تعبئة";sel.appendChild(f);packageOptionsForProduct(productId,unitId).forEach(x=>{const o=document.createElement("option");o.value=String(x.package_option_id);o.textContent=x.option_name+" — "+fmtQty(x.weight_kg)+" كجم";sel.appendChild(o);});if([...sel.options].some(o=>o.value===cur))sel.value=cur;sel.onchange=()=>{applyCustomerPriceToRow(row);if(typeof row._recalculateInvoiceLine==="function")row._recalculateInvoiceLine();};}
+function addPackageSelectToRow(row,productId,unitId){let w=row.querySelector(".package-option-wrap");if(!w){w=document.createElement("div");w.className="package-option-wrap";const l=document.createElement("label");l.textContent="خيار التعبئة";const sel=document.createElement("select");sel.className="item-package-option";w.append(l,sel);row.insertBefore(w,row.querySelector(".item-line-total")||row.lastElementChild);}const sel=w.querySelector("select");const cur=sel.value;sel.replaceChildren();const f=document.createElement("option");f.value="";f.textContent="بدون خيار تعبئة";sel.appendChild(f);packageOptionsForProduct(productId,unitId).forEach(x=>{const o=document.createElement("option");o.value=String(x.package_option_id);o.textContent=x.option_name+" — "+fmtQty(x.weight_kg)+" كجم";sel.appendChild(o);});if([...sel.options].some(o=>o.value===cur))sel.value=cur;sel.onchange=()=>{if(sel.value){const weight=row.querySelector(".item-actual-weight");if(weight)weight.value="";}applyCustomerPriceToRow(row);if(typeof row._recalculateInvoiceLine==="function")row._recalculateInvoiceLine();};}
 let invoicePriceListRequest=0;
 function invoiceLineBaseFactor(product,row,unitId){
  const qty=Number(row.querySelector(".item-qty")?.value||0);
  const actualWeight=Number(row.querySelector(".item-actual-weight")?.value||0);
- if(actualWeight>0&&qty>0&&Number(product.base_unit_id)===1)return actualWeight/qty;
+ if(actualWeight>0&&qty>0&&Number(product.base_unit_id)===1&&Number(unitId)!==Number(product.base_unit_id))return actualWeight/qty;
  const packageId=Number(row.querySelector(".item-package-option")?.value||0);
  if(packageId){
   const option=packagingOptionsCache.find(x=>Number(x.package_option_id)===packageId&&Number(x.product_id)===Number(product.product_id)&&Number(x.unit_id)===Number(unitId)&&x.is_active);
@@ -6389,8 +6389,8 @@ function addInvoiceItemRow() {
     addPackageSelectToRow(wrap,prodSel.value,unitSel.value);
     recalc(); 
   };
-  prodSel.addEventListener("change",()=>{ price.value=""; populateUnits(); applyCustomerPriceToRow(wrap); }); 
-  unitSel.addEventListener("change",()=>{ addPackageSelectToRow(wrap,prodSel.value,unitSel.value); applyCustomerPriceToRow(wrap); recalc(); }); 
+  prodSel.addEventListener("change",()=>{ price.value="";weightTotal.value=""; populateUnits(); applyCustomerPriceToRow(wrap); }); 
+  unitSel.addEventListener("change",()=>{if(Number(unitSel.value)===Number(prodSel.selectedOptions[0]?.dataset?.baseUnit||0))weightTotal.value="";addPackageSelectToRow(wrap,prodSel.value,unitSel.value); applyCustomerPriceToRow(wrap); recalc(); }); 
   qty.addEventListener("input",recalc);
   weightTotal.addEventListener("input",recalc);weightTotal.addEventListener("change",()=>applyCustomerPriceToRow(wrap));
   price.addEventListener("input",recalc);
