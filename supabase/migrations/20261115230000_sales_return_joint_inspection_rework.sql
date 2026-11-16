@@ -6,13 +6,7 @@ DO $$ BEGIN
  END IF;
 END $$;
 CREATE INDEX IF NOT EXISTS reservations_source_return_item_idx ON public.reservations(source_return_item_id) WHERE source_return_item_id IS NOT NULL;
-ALTER TABLE public.sales_return_item_inspections
- ADD COLUMN IF NOT EXISTS warehouse_sellable_quantity numeric NOT NULL DEFAULT 0 CHECK(warehouse_sellable_quantity>=0),
- ADD COLUMN IF NOT EXISTS warehouse_rework_quantity numeric NOT NULL DEFAULT 0 CHECK(warehouse_rework_quantity>=0),
- ADD COLUMN IF NOT EXISTS warehouse_scrap_quantity numeric NOT NULL DEFAULT 0 CHECK(warehouse_scrap_quantity>=0),
- ADD COLUMN IF NOT EXISTS production_sellable_quantity numeric NOT NULL DEFAULT 0 CHECK(production_sellable_quantity>=0),
- ADD COLUMN IF NOT EXISTS production_rework_quantity numeric NOT NULL DEFAULT 0 CHECK(production_rework_quantity>=0),
- ADD COLUMN IF NOT EXISTS production_scrap_quantity numeric NOT NULL DEFAULT 0 CHECK(production_scrap_quantity>=0);
+
 ALTER TABLE public.production_order_materials ADD COLUMN IF NOT EXISTS is_extra boolean NOT NULL DEFAULT false;
 ALTER TABLE public.production_order_materials ADD COLUMN IF NOT EXISTS request_id uuid;
 CREATE UNIQUE INDEX IF NOT EXISTS production_order_materials_request_id_uq ON public.production_order_materials(request_id) WHERE request_id IS NOT NULL;
@@ -33,6 +27,13 @@ CREATE TABLE IF NOT EXISTS public.sales_return_item_inspections(
  created_at timestamptz NOT NULL DEFAULT now(),updated_at timestamptz NOT NULL DEFAULT now(),
  CHECK(warehouse_inspected_by IS NULL OR production_inspected_by IS NULL OR warehouse_inspected_by<>production_inspected_by)
 );
+ALTER TABLE public.sales_return_item_inspections
+ ADD COLUMN IF NOT EXISTS warehouse_sellable_quantity numeric NOT NULL DEFAULT 0 CHECK(warehouse_sellable_quantity>=0),
+ ADD COLUMN IF NOT EXISTS warehouse_rework_quantity numeric NOT NULL DEFAULT 0 CHECK(warehouse_rework_quantity>=0),
+ ADD COLUMN IF NOT EXISTS warehouse_scrap_quantity numeric NOT NULL DEFAULT 0 CHECK(warehouse_scrap_quantity>=0),
+ ADD COLUMN IF NOT EXISTS production_sellable_quantity numeric NOT NULL DEFAULT 0 CHECK(production_sellable_quantity>=0),
+ ADD COLUMN IF NOT EXISTS production_rework_quantity numeric NOT NULL DEFAULT 0 CHECK(production_rework_quantity>=0),
+ ADD COLUMN IF NOT EXISTS production_scrap_quantity numeric NOT NULL DEFAULT 0 CHECK(production_scrap_quantity>=0);
 ALTER TABLE public.sales_return_item_inspections ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS sales_return_item_inspections_read ON public.sales_return_item_inspections;
 CREATE POLICY sales_return_item_inspections_read ON public.sales_return_item_inspections FOR SELECT TO authenticated USING(
