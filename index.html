@@ -8580,10 +8580,8 @@ if($("addCollectionBtn")) $("addCollectionBtn").addEventListener("click",()=>{
   fillCollectionTripSelect();
   const treasuryField = $("collectionTreasury");
   const treasuryLabel = document.querySelector('label[for="collectionTreasury"]');
-  const isRep = currentRoleCode === "SALES_REP";
-  if(treasuryField) treasuryField.required = !isRep;
-  if(treasuryField) treasuryField.classList.toggle("hidden", isRep);
-  if(treasuryLabel) treasuryLabel.classList.toggle("hidden", isRep);
+  if(treasuryField) treasuryField.classList.remove("hidden");
+  if(treasuryLabel) treasuryLabel.classList.remove("hidden");
   const tripField = $("collectionTrip");
   const tripLabel = document.querySelector('label[for="collectionTrip"]');
   if(tripField) tripField.required = false;
