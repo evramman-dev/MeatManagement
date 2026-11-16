@@ -6343,6 +6343,7 @@ function addInvoiceItemRow() {
     const maxP = wrap.dataset.maximumPrice ? Number(wrap.dataset.maximumPrice) : Infinity; 
     const invoiceDiscountRate=Math.min(Math.max(Number($("invoiceDiscount")?.value||0),0),100)/100;
     const effectivePrice=p*(1-invoiceDiscountRate);
+    const actualWeight=Number(weightTotal.value||0);
     if(wrap.dataset.priceConversionInvalid==="1" || (wrap.dataset.requiresActualWeight==="1"&&actualWeight<=0) || (p > 0 && (p > maxP || effectivePrice < minP))) { 
       errDiv.style.display = "block"; 
       errDiv.textContent = wrap.dataset.priceConversionInvalid==="1" ? "تعذر تحويل حدود السعر إلى وحدة الفاتورة." : (wrap.dataset.requiresActualWeight==="1"&&actualWeight<=0 ? "أدخل الوزن الفعلي للصنف قبل الحفظ." : `السعر بعد الخصم يجب ألا يقل عن ${minP}${Number.isFinite(maxP)?" وألا يتجاوز السعر قبل الخصم "+maxP:""}`); 
@@ -6354,7 +6355,6 @@ function addInvoiceItemRow() {
     const unitId=Number(unitSel.value||0); 
     const baseUnitId=Number(opt?.dataset?.baseUnit||0); 
     const unitsCarton=Number(opt?.dataset?.unitsCarton||0);
-    const actualWeight=Number(weightTotal.value||0);
     const selectedProductId=Number(prodSel.value||0);
     const fixedConversion=productUnitConversionsCache.find(x=>Number(x.product_id)===selectedProductId&&Number(x.unit_id)===unitId);
     const selectedPackage=Number(wrap.querySelector(".item-package-option")?.value||0);const hasSelectedPackage=selectedPackage&&packagingOptionsCache.some(x=>Number(x.package_option_id)===selectedPackage&&x.is_active);const requiresActualWeight=!!(unitId&&Number(baseUnitId)===1&&unitId!==1&&!fixedConversion&&!hasSelectedPackage);wrap.dataset.requiresActualWeight=requiresActualWeight?"1":"0";weightWrap.hidden=!requiresActualWeight;
