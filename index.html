@@ -9795,7 +9795,9 @@ async function viewTripSummary(t){
       if(canViewSales) html += `<div class="line"><span>مبيعات الفواتير المرحلة:</span><span>${fmt(totalSales)}</span></div>`;
       if(canViewCollections){
         html += `<div class="line"><span>إجمالي التحصيلات المرتبطة بالجولة:</span><span>${fmt(totalCollections)}</span></div>
-          <div class="line"><span>التحصيل النقدي بخزنة المناديب:</span><span>${fmt(cashCollections)}</span></div>`;
+          <div class="line"><span>التحصيل النقدي بخزنة المناديب:</span><span>${fmt(cashCollections)}</span></div>
+          <div class="line"><span>عهدة المندوب خارج الجولة:</span><span>${fmt(unassignedCustodyTotal)}</span></div>
+          <div class="line"><span>إجمالي العهدة على المندوب:</span><span>${fmt(cashCollections + unassignedCustodyTotal)}</span></div>`;
       }
       if(canViewTripExpenses){
         html += `<div class="line"><span>إجمالي مصروفات الجولة:</span><span>${fmt(totalExpenses)}</span></div>
@@ -9887,7 +9889,7 @@ async function viewTripSummary(t){
       html += `<div class="line"><span>إجمالي التحصيلات:</span><span style="font-weight:bold;">${fmt(totalCollections)}</span></div></div>`;
 
       html += `<h4 style="color:var(--g);margin-top:20px;">عهدة المندوب خارج الجولة (${unassignedRepCustody.length})</h4>
-        <div class="info">هذه تحصيلات غير مرتبطة بأي جولة، وما زالت بعهدة مندوب الجولة. لا تدخل في إجمالي تحصيلات الجولة أو صافي نقديتها أو تسويتها.</div>
+        <div class="info">هذه تحصيلات غير مرتبطة بالجولة، لكنها ما زالت ضمن عهدة المندوب. لا تدخل في صافي نقدية الجولة، وتظهر هنا لمتابعة تسوية عهدة المندوب.</div>
         <div class="table-responsive"><table class="print-table"><thead><tr><th>رقم التحصيل</th><th>العميل</th><th>طريقة الدفع</th><th>مكان الاستلام</th><th>التاريخ</th><th>المبلغ</th></tr></thead><tbody>`;
       unassignedRepCustody.forEach(c=>{
         html += `<tr><td>${esc(c.collection_number||("COL-"+c.collection_id))}</td><td>${esc(customerName(c.customer_id))}</td><td>${esc(methodNames[c.payment_method]||c.payment_method||"أخرى")}</td><td>${esc(collectionDestinationName(c))}</td><td>${c.collection_date?formatDateTime(c.collection_date):"—"}</td><td>${fmt(c.amount)}</td></tr>`;
