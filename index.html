@@ -8563,14 +8563,16 @@ if($("viewCollectionsStatementBtn")) $("viewCollectionsStatementBtn").addEventLi
     const statementRows=await enrichCollectionRepNames(data||[]);
     let totalPosted = 0;
     let totalCancelled = 0;
-    let html = `<thead><tr><th>التاريخ</th><th>رقم التحصيل</th><th>العميل</th><th>المندوب المسؤول / طريقة التحصيل</th><th>الحالة</th><th>المبلغ</th></tr></thead><tbody>`;
+    let html = `<thead><tr><th>التاريخ</th><th>رقم التحصيل</th><th>العميل</th><th>المندوب المسؤول / طريقة التحصيل</th><th>جهة الاستلام</th><th>الحالة</th><th>المبلغ</th></tr></thead><tbody>`;
     statementRows.forEach(row => {
       const statusLabel=row.status==="POSTED"?"مرحّل":row.status==="CANCELLED"?"ملغى":"غير مرحّل";
+      const destinationLabel=({REP_CASH:"نقدية مع المندوب",REP_CUSTODY:"حساب شخصي للمندوب - عهدة",COMPANY_TREASURY:"حساب الشركة",CHEQUE_PENDING:"شيك تحت التحصيل"})[row.receipt_destination]||"غير محدد";
+      const custodyStatus=["REP_CASH","REP_CUSTODY"].includes(row.receipt_destination)?(row.custody_settled_at?"تم التوريد":"لم يتم التوريد"):"";
       if(row.status==="POSTED") totalPosted += Number(row.amount||0);
       if(row.status==="CANCELLED") totalCancelled += Number(row.amount||0);
-      html += `<tr><td>${formatDate(row.collection_date)}</td><td>${row.collection_number}</td><td>${customerName(row.customer_id)}</td><td>${row.resolved_sales_rep_name||"غير محدد"} — ${row.collection_channel_label|| (row.trip_id ? "عن طريق المندوب" : "مباشر من الشركة")}</td><td>${statusLabel}</td><td>${fmt(row.amount)}</td></tr>`;
+      html += `<tr><td>${formatDate(row.collection_date)}</td><td>${row.collection_number}</td><td>${customerName(row.customer_id)}</td><td>${row.resolved_sales_rep_name||"غير محدد"} — ${row.collection_channel_label|| (row.trip_id ? "عن طريق المندوب" : "مباشر من الشركة")}</td><td>${destinationLabel}${custodyStatus?" — "+custodyStatus:""}</td><td>${statusLabel}</td><td>${fmt(row.amount)}</td></tr>`;
     });
-    if(!data || !data.length) html += `<tr><td colspan="6">لا توجد تحصيلات</td></tr>`; 
+    if(!data || !data.length) html += `<tr><td colspan="7">لا توجد تحصيلات</td></tr>`; 
     html += `</tbody>`;
     $("genericStatementItems").innerHTML = html; 
     $("genericStatementHeader").innerHTML = `<div><strong>العميل:</strong> ${custName}</div><div><strong>الفترة:</strong> ${periodText || "كل الفترات"}</div>`; 
@@ -8578,7 +8580,9 @@ if($("viewCollectionsStatementBtn")) $("viewCollectionsStatementBtn").addEventLi
     let waText = `*كشف حركة التحصيلات*\nالعميل: ${custName}\n${periodText}\n------------------------\n`; 
     statementRows.forEach(row => {
       const statusLabel=row.status==="POSTED"?"مرحّل":row.status==="CANCELLED"?"ملغى":"غير مرحّل";
-      waText += `▪️ ${formatDate(row.collection_date)} | ${customerName(row.customer_id)} | ${row.collection_number} | الحالة: ${statusLabel} | المندوب المسؤول: ${row.resolved_sales_rep_name||"غير محدد"} | ${row.collection_channel_label|| (row.trip_id ? "عن طريق المندوب" : "مباشر من الشركة")} | ${fmt(row.amount)}\n`;
+      const destinationLabel=({REP_CASH:"نقدية مع المندوب",REP_CUSTODY:"حساب شخصي للمندوب - عهدة",COMPANY_TREASURY:"حساب الشركة",CHEQUE_PENDING:"شيك تحت التحصيل"})[row.receipt_destination]||"غير محدد";
+      const custodyStatus=["REP_CASH","REP_CUSTODY"].includes(row.receipt_destination)?(row.custody_settled_at?"تم التوريد":"لم يتم التوريد"):"";
+      waText += `▪️ ${formatDate(row.collection_date)} | ${customerName(row.customer_id)} | ${row.collection_number} | الحالة: ${statusLabel} | جهة الاستلام: ${destinationLabel} ${custodyStatus} | المندوب المسؤول: ${row.resolved_sales_rep_name||"غير محدد"} | ${row.collection_channel_label|| (row.trip_id ? "عن طريق المندوب" : "مباشر من الشركة")} | ${fmt(row.amount)}\n`;
     });
     waText += `------------------------\n*إجمالي التحصيلات المرحلة: ${fmt(totalPosted)}*\n*إجمالي التحصيلات الملغاة: ${fmt(totalCancelled)}*`;
     $("shareGenericWhatsappBtn").onclick = () => { window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); };
