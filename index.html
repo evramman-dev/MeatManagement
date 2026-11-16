@@ -8514,10 +8514,11 @@ function updateCollectionPaymentFields() {
     const cash = method === "CASH";
     const cheque = method === "CHEQUE";
     const hasReference = ["BANK_TRANSFER","INSTAPAY","CHEQUE"].includes(method);
+    const tripSelected = !!$("collectionTrip")?.value;
     const treasuryWrap = $("collectionTreasuryWrap");
     const treasury = $("collectionTreasury");
-    if(treasuryWrap) treasuryWrap.classList.toggle("hidden", !cash || isRep);
-    if(treasury) treasury.required = cash && !isRep;
+    if(treasuryWrap) treasuryWrap.classList.toggle("hidden", !cash || (isRep && tripSelected));
+    if(treasury) treasury.required = cash && !(isRep && tripSelected);
     const refWrap = $("collectionReferenceWrap");
     if(refWrap) refWrap.classList.toggle("hidden", !hasReference);
     const ref = $("collectionReferenceNumber");
@@ -8536,13 +8537,11 @@ if($("collectionForm")) $("collectionForm").addEventListener("submit", async e =
     const btn=$("saveCollectionBtn"); 
     busy(btn,true,"جارٍ...","حفظ");
     try {
-        if(currentRoleCode === "SALES_REP" && !$("collectionTrip").value) throw new Error("اختر الجولة المكلف بها لتسجيل التحصيل ضمن عهدتها.");
         if(!canPostCollections) throw new Error("ليس لديك صلاحية تسجيل التحصيل.");
-        if(currentRoleCode === "SALES_REP" && !$("collectionTrip").value) throw new Error("اختر الجولة المكلف بها لتسجيل التحصيل ضمن عهدتها.");
         const method = $("collectionPaymentMethod").value;
         const tripId = $("collectionTrip").value ? Number($("collectionTrip").value) : null;
-        const selectedTreasuryId = method === "CASH" && currentRoleCode !== "SALES_REP" ? Number($("collectionTreasury").value) : null;
-        if(method === "CASH" && currentRoleCode !== "SALES_REP" && !selectedTreasuryId) throw new Error("اختر خزنة استلام المبلغ النقدي.");
+        const selectedTreasuryId = method === "CASH" ? Number($("collectionTreasury").value) : null;
+        if(method === "CASH" && !tripId && !selectedTreasuryId) throw new Error("اختر خزنة استلام المبلغ النقدي.");
         const referenceNumber = $("collectionReferenceNumber").value.trim();
         if(method === "CHEQUE" && !referenceNumber) throw new Error("اكتب رقم الشيك.");
         if(method === "CHEQUE" && !$("collectionDueDate").value) throw new Error("اختر تاريخ استحقاق الشيك.");
@@ -8587,8 +8586,8 @@ if($("addCollectionBtn")) $("addCollectionBtn").addEventListener("click",()=>{
   if(treasuryLabel) treasuryLabel.classList.toggle("hidden", isRep);
   const tripField = $("collectionTrip");
   const tripLabel = document.querySelector('label[for="collectionTrip"]');
-  if(tripField) tripField.required = isRep;
-  if(tripLabel && isRep) tripLabel.textContent = "الجولة المكلف بها *";
+  if(tripField) tripField.required = false;
+  if(tripLabel) tripLabel.textContent = "الجولة المكلف بها (اختياري)";
   $("collectionPaymentMethod").value = "CASH";
   $("collectionReferenceNumber").value = "";
   $("collectionBankName").value = "";
