@@ -9831,12 +9831,23 @@ async function viewTripSummary(t){
     if(!reconciliation.length)html+=`<tr><td colspan="10">لا توجد حركة مخزون مسجلة لهذه الجولة.</td></tr>`;
     html += `</tbody></table></div><div class="mini-summary"><div class="line"><span>الأصناف غير المتطابقة:</span><span style="font-weight:bold;color:${mismatchCount?"#b42318":"#176b3a"};">${mismatchCount}</span></div></div>`;
 
-    if(canViewSales){ html += `<h4 style="color:var(--g);margin-top:20px;">🧾 الفواتير المرحلة (${invoices.length})</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>رقم</th><th>العميل</th><th>الصافي</th><th>المدفوع بالفاتورة</th></tr></thead><tbody>`;
+    if(canViewSales){ html += `<h4 style="color:var(--g);margin-top:20px;">🧾 الفواتير المرحلة (${invoices.length})</h4>
+      <div class="info">المدفوع فعليًا على الفاتورة هو المبلغ الذي تم تخصيصه لهذه الفاتورة، وقد يتضمن تحصيلات تمت خارج الجولة. التحصيلات التي تمت داخل الجولة تظهر في قسم التحصيلات بشكل مستقل.</div>
+      <div class="table-responsive"><table class="print-table"><thead><tr><th>رقم</th><th>العميل</th><th>الصافي</th><th>المدفوع فعليًا</th><th>المتبقي</th></tr></thead><tbody>`;
+    let totalInvoicePaid=0,totalInvoiceRemaining=0;
     invoices.forEach(i => {
-      html += `<tr><td>${i.invoice_number}</td><td>${customerName(i.customer_id)}</td><td>${fmt(i.net_total)}</td><td>${fmt(i.paid_amount)}</td></tr>`;
+      const paid=Number(i.paid_amount||0);
+      const remaining=Math.max(0,Number(i.remaining_amount!=null?i.remaining_amount:Number(i.net_total||0)-paid));
+      totalInvoicePaid+=paid;
+      totalInvoiceRemaining+=remaining;
+      html += `<tr><td>${i.invoice_number}</td><td>${customerName(i.customer_id)}</td><td>${fmt(i.net_total)}</td><td>${fmt(paid)}</td><td>${fmt(remaining)}</td></tr>`;
     });
-    if(!invoices.length) html += `<tr><td colspan="4">لا توجد فواتير مرحلة</td></tr>`;
-    html += `</tbody></table></div><div class="mini-summary"><div class="line"><span>إجمالي الفواتير المرحلة:</span><span style="font-weight:bold;">${fmt(totalSales)}</span></div></div>`; }
+    if(!invoices.length) html += `<tr><td colspan="5">لا توجد فواتير مرحلة</td></tr>`;
+    html += `</tbody></table></div><div class="mini-summary">
+      <div class="line"><span>إجمالي الفواتير المرحلة:</span><span style="font-weight:bold;">${fmt(totalSales)}</span></div>
+      <div class="line"><span>إجمالي المدفوع فعليًا على فواتير الجولة:</span><span style="font-weight:bold;">${fmt(totalInvoicePaid)}</span></div>
+      <div class="line"><span>إجمالي المتبقي على فواتير الجولة:</span><span style="font-weight:bold;color:var(--red);">${fmt(totalInvoiceRemaining)}</span></div>
+    </div>`; }
 
     if(canViewSalesReturns){
     html += `<h4 style="color:var(--g);margin-top:20px;">↩️ المرتجعات (${returns.length})</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>رقم</th><th>العميل</th><th>قيمة المرتجع</th><th>الإجراء النقدي</th><th>الأثر المالي</th><th>الخزنة</th></tr></thead><tbody>`;
