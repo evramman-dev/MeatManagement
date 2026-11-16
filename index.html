@@ -1916,7 +1916,9 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <label for="collectionDate">التاريخ *</label><input id="collectionDate" type="date" required>
 <div class="item-hint">يُسجل التحصيل على حساب العميل، ويوزع النظام المبلغ تلقائيًا على أقدم الفواتير المستحقة. أي زيادة تُحفظ رصيدًا دائنًا للعميل.</div>
 <label for="collectionAmount">المبلغ *</label><input id="collectionAmount" type="number" min="0.01" step="0.01" required>
-<label for="collectionPaymentMethod">طريقة الدفع *</label><select id="collectionPaymentMethod" required><option value="CASH">نقدي</option><option value="BANK_TRANSFER">تحويل بنكي</option><option value="INSTAPAY">إنستاباي</option><option value="CHEQUE">شيك</option></select>
+<label for="collectionPaymentMethod">طريقة الدفع *</label><select id="collectionPaymentMethod" required><option value="CASH">نقدي</option><option value="BANK_TRANSFER">تحويل بنكي</option><option value="INSTAPAY">إنستاباي / محفظة</option><option value="CHEQUE">شيك</option></select>
+<div id="collectionReceiptDestinationWrap" class="hidden"><label for="collectionReceiptDestination">جهة استلام المبلغ *</label><select id="collectionReceiptDestination"><option value="COMPANY_TREASURY">حساب أو خزنة الشركة المسجلة</option><option value="REP_CUSTODY">حسابي الشخصي - عهدة على المندوب</option></select></div>
+<div id="collectionReceiptDestinationHint" class="item-hint hidden">المبلغ الذي يصل إلى حسابك الشخصي لا يدخل خزائن الشركة. يجب عليك توريده للشركة نقدًا، ويظهر ضمن عهدتك.</div>
 <div id="collectionTreasuryWrap"><label for="collectionTreasury">الخزنة النقدية *</label><select id="collectionTreasury"><option value="">اختر الخزنة</option></select></div>
 <div id="collectionReferenceWrap" class="hidden"><label for="collectionReferenceNumber">رقم المرجع / رقم الشيك</label><input id="collectionReferenceNumber" type="text" maxlength="150"></div>
 <div id="collectionBankWrap" class="hidden"><label for="collectionBankName">اسم البنك</label><input id="collectionBankName" type="text" maxlength="150"></div>
@@ -8513,12 +8515,20 @@ function updateCollectionPaymentFields() {
     const isRep = currentRoleCode === "SALES_REP";
     const cash = method === "CASH";
     const cheque = method === "CHEQUE";
+    const digital = ["BANK_TRANSFER","INSTAPAY"].includes(method);
     const hasReference = ["BANK_TRANSFER","INSTAPAY","CHEQUE"].includes(method);
-    const tripSelected = !!$("collectionTrip")?.value;
     const treasuryWrap = $("collectionTreasuryWrap");
     const treasury = $("collectionTreasury");
-    if(treasuryWrap) treasuryWrap.classList.toggle("hidden", !cash || (isRep && tripSelected));
-    if(treasury) treasury.required = cash && !(isRep && tripSelected);
+    const showTreasury = cash && !isRep;
+    if(treasuryWrap) treasuryWrap.classList.toggle("hidden", !showTreasury);
+    if(treasury) treasury.required = showTreasury;
+    const destinationWrap = $("collectionReceiptDestinationWrap");
+    const destination = $("collectionReceiptDestination");
+    const showDestination = isRep && digital;
+    if(destinationWrap) destinationWrap.classList.toggle("hidden", !showDestination);
+    if(destination) destination.required = showDestination;
+    const destinationHint = $("collectionReceiptDestinationHint");
+    if(destinationHint) destinationHint.classList.toggle("hidden", !(showDestination && destination?.value === "REP_CUSTODY"));
     const refWrap = $("collectionReferenceWrap");
     if(refWrap) refWrap.classList.toggle("hidden", !hasReference);
     const ref = $("collectionReferenceNumber");
@@ -8531,6 +8541,7 @@ function updateCollectionPaymentFields() {
 
 if($("collectionPaymentMethod")) $("collectionPaymentMethod").addEventListener("change", updateCollectionPaymentFields);
 if($("collectionTrip")) $("collectionTrip").addEventListener("change", updateCollectionPaymentFields);
+if($("collectionReceiptDestination")) $("collectionReceiptDestination").addEventListener("change", updateCollectionPaymentFields);
 
 if($("collectionForm")) $("collectionForm").addEventListener("submit", async e => {
     e.preventDefault(); 
@@ -8540,15 +8551,17 @@ if($("collectionForm")) $("collectionForm").addEventListener("submit", async e =
         if(!canPostCollections) throw new Error("ليس لديك صلاحية تسجيل التحصيل.");
         const method = $("collectionPaymentMethod").value;
         const tripId = $("collectionTrip").value ? Number($("collectionTrip").value) : null;
-        const selectedTreasuryId = method === "CASH" ? Number($("collectionTreasury").value) : null;
-        if(method === "CASH" && !tripId && !selectedTreasuryId) throw new Error("اختر خزنة استلام المبلغ النقدي.");
+        const isRep = currentRoleCode === "SALES_REP";
+        const selectedTreasuryId = method === "CASH" && !isRep ? Number($("collectionTreasury").value) : null;
+        const receiptDestination = method === "CHEQUE" ? "CHEQUE_PENDING" : method === "CASH" ? (isRep ? "REP_CASH" : "COMPANY_TREASURY") : (isRep ? ($("collectionReceiptDestination")?.value || "COMPANY_TREASURY") : "COMPANY_TREASURY");
+        if(method === "CASH" && !isRep && !selectedTreasuryId) throw new Error("اختر خزنة الشركة التي استلمت المبلغ النقدي.");
         const referenceNumber = $("collectionReferenceNumber").value.trim();
         if(method === "CHEQUE" && !referenceNumber) throw new Error("اكتب رقم الشيك.");
         if(method === "CHEQUE" && !$("collectionDueDate").value) throw new Error("اختر تاريخ استحقاق الشيك.");
         const collectionRequestKey="mm_collection_pending";
-        const collectionPayload={customer_id:Number($("collectionCustomer").value),amount:Number($("collectionAmount").value),method,date:$("collectionDate").value,notes:$("collectionNotes").value||null,trip_id:tripId,treasury_id:selectedTreasuryId,reference:referenceNumber||null,bank:$("collectionBankName").value.trim()||null,due:$("collectionDueDate").value||null};
+        const collectionPayload={customer_id:Number($("collectionCustomer").value),amount:Number($("collectionAmount").value),method,date:$("collectionDate").value,notes:$("collectionNotes").value||null,trip_id:tripId,receipt_destination:receiptDestination,treasury_id:selectedTreasuryId,reference:referenceNumber||null,bank:$("collectionBankName").value.trim()||null,due:$("collectionDueDate").value||null};
         const collectionRequestId=getRequestId(collectionRequestKey,collectionPayload);
-        const {data:id,error}=await db.rpc("create_collection_v3",{
+        const {data:id,error}=await db.rpc("create_collection_v4",{
           p_customer_id:Number($("collectionCustomer").value),
           p_sales_invoice_id:null,
           p_amount:Number($("collectionAmount").value),
@@ -8556,6 +8569,7 @@ if($("collectionForm")) $("collectionForm").addEventListener("submit", async e =
           p_collection_date:$("collectionDate").value,
           p_notes:$("collectionNotes").value || null,
           p_trip_id:tripId,
+          p_receipt_destination:receiptDestination,
           p_treasury_id:selectedTreasuryId,
           p_reference_number:referenceNumber || null,
           p_bank_name:$("collectionBankName").value.trim() || null,
@@ -8587,6 +8601,7 @@ if($("addCollectionBtn")) $("addCollectionBtn").addEventListener("click",()=>{
   if(tripField) tripField.required = false;
   if(tripLabel) tripLabel.textContent = "الجولة المكلف بها (اختياري)";
   $("collectionPaymentMethod").value = "CASH";
+  if($("collectionReceiptDestination")) $("collectionReceiptDestination").value = "COMPANY_TREASURY";
   $("collectionReferenceNumber").value = "";
   $("collectionBankName").value = "";
   $("collectionDueDate").value = "";
