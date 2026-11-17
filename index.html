@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v136</title>
+<title>MeatManagement v141</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -9883,7 +9883,7 @@ async function viewTripSummary(t){
 
       html += `<h4 style="color:var(--g);margin-top:20px;">💰 التحصيلات (${collections.length})</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>رقم التحصيل</th><th>العميل</th><th>طريقة الدفع</th><th>مكان الاستلام</th><th>التاريخ</th><th>المبلغ</th></tr></thead><tbody>`;
       collections.forEach(c => {
-        html += `<tr><td>${esc(c.collection_number || "-")}</td><td>${esc(customerName(c.customer_id))}</td><td>${esc(methodNames[c.payment_method] || c.payment_method || "أخرى")}</td><td>${esc(collectionDestinationName(c))}</td><td>${c.collection_date ? formatDateTime(c.collection_date) : "—"}</td><td>${fmt(c.amount)}</td></tr>`;
+        html += `<tr><td>${esc(c.collection_number || "-")}</td><td>${esc(customerName(c.customer_id))}</td><td>${esc(methodNames[c.payment_method] || c.payment_method || "أخرى")}</td><td>${esc(collectionDestinationName(c))}</td><td>${c.collection_date ? formatDate(c.collection_date) : "—"}</td><td>${fmt(c.amount)}</td></tr>`;
       });
       if(!collections.length) html += `<tr><td colspan="6">لا توجد تحصيلات</td></tr>`;
       html += `</tbody></table></div><div class="mini-summary">`;
@@ -9896,7 +9896,7 @@ async function viewTripSummary(t){
         <div class="info">هذه تحصيلات غير مرتبطة بالجولة، لكنها ما زالت ضمن عهدة المندوب. لا تدخل في صافي نقدية الجولة، وتظهر هنا لمتابعة تسوية عهدة المندوب.</div>
         <div class="table-responsive"><table class="print-table"><thead><tr><th>رقم التحصيل</th><th>العميل</th><th>طريقة الدفع</th><th>مكان الاستلام</th><th>التاريخ</th><th>المبلغ</th></tr></thead><tbody>`;
       unassignedRepCustody.forEach(c=>{
-        html += `<tr><td>${esc(c.collection_number||("COL-"+c.collection_id))}</td><td>${esc(customerName(c.customer_id))}</td><td>${esc(methodNames[c.payment_method]||c.payment_method||"أخرى")}</td><td>${esc(collectionDestinationName(c))}</td><td>${c.collection_date?formatDateTime(c.collection_date):"—"}</td><td>${fmt(c.amount)}</td></tr>`;
+        html += `<tr><td>${esc(c.collection_number||("COL-"+c.collection_id))}</td><td>${esc(customerName(c.customer_id))}</td><td>${esc(methodNames[c.payment_method]||c.payment_method||"أخرى")}</td><td>${esc(collectionDestinationName(c))}</td><td>${c.collection_date?formatDate(c.collection_date):"—"}</td><td>${fmt(c.amount)}</td></tr>`;
       });
       if(!unassignedRepCustody.length) html += `<tr><td colspan="6">لا توجد عهدة غير مسوّاة خارج الجولة لهذا المندوب.</td></tr>`;
       html += `</tbody></table></div><div class="mini-summary">
