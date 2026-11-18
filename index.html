@@ -5709,17 +5709,13 @@ async function loadInventorySummaryReport(){
     movementByProduct.set(id,row);
     return;
    }
-   {
-    if(time<startTime){
-     row.openingQty+=qty;
-     row.openingValue+=qty>=0?cost:-cost;
-    }else if(time<endTime){
-     row.hasMovement=true;
-     if(qty>0){row.inQty+=qty;row.inValue+=cost;}
-     else if(qty<0){row.outQty+=Math.abs(qty);row.outValue+=cost;}
-    }
-   }else if(time<startTime){
-    // التحويلات الداخلية لا تغير إجمالي رصيد الشركة.
+   if(time<startTime){
+    row.openingQty+=qty;
+    row.openingValue+=qty>=0?cost:-cost;
+   }else if(time<endTime){
+    row.hasMovement=true;
+    if(qty>0){row.inQty+=qty;row.inValue+=cost;}
+    else if(qty<0){row.outQty+=Math.abs(qty);row.outValue+=cost;}
    }
    movementByProduct.set(id,row);
   });
