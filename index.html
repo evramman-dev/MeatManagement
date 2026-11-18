@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v141</title>
+<title>MeatManagement v142</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -2073,7 +2073,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v141</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v142</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -3412,6 +3412,79 @@ async function sendTaskNotification(){
     busy(button,false,"","إرسال تنبيه المهمة");
   }
 }
+
+async function appendReturnInspectionTasks(target){
+  if(!target || (!canInspectReturnsWarehouse && !canInspectReturnsProduction)) return;
+  try{
+    const currentUserId=await getSignedInUserId();
+    const {data:rows,error}=await db.from("sales_return_item_inspections")
+      .select("return_item_id,warehouse_inspected_by,production_inspected_by")
+      .eq("inspection_status","PENDING").limit(300);
+    if(error)throw error;
+    const actionable=(rows||[]).filter(row=>{
+      const warehouseNeeded=canInspectReturnsWarehouse && !row.warehouse_inspected_by;
+      const productionNeeded=canInspectReturnsProduction && !row.production_inspected_by
+        && !!row.warehouse_inspected_by && row.warehouse_inspected_by!==currentUserId;
+      return warehouseNeeded || productionNeeded;
+    });
+    if(!actionable.length){
+      const empty=document.createElement("div");
+      empty.className="empty";
+      empty.textContent="لا توجد مهام فحص مرتجعات معلقة لحسابك حالياً.";
+      target.appendChild(empty);
+      return;
+    }
+    const ids=actionable.map(row=>Number(row.return_item_id));
+    const {data:items,error:itemError}=await db.from("sales_return_items")
+      .select("return_item_id,sales_return_id,product_id,quantity,unit_id,base_quantity")
+      .in("return_item_id",ids);
+    if(itemError)throw itemError;
+    const returnIds=[...new Set((items||[]).map(item=>Number(item.sales_return_id)))];
+    if(!returnIds.length)return;
+    const {data:returns,error:returnError}=await db.from("sales_returns")
+      .select("sales_return_id,return_number,customer_id,return_date,status")
+      .in("sales_return_id",returnIds);
+    if(returnError)throw returnError;
+    const returnMap=new Map((returns||[]).map(ret=>[Number(ret.sales_return_id),ret]));
+    const section=document.createElement("div");
+    section.className="task-box";
+    section.style.cssText="margin-bottom:12px;padding:12px;border:1px solid var(--line);border-radius:10px;background:#fff";
+    const heading=document.createElement("h3");
+    heading.textContent="فحص مرتجعات المبيعات عند الاستلام ("+actionable.length+")";
+    section.appendChild(heading);
+    const actionMap=new Map(actionable.map(row=>[Number(row.return_item_id),row]));
+    (items||[]).forEach(item=>{
+      const ret=returnMap.get(Number(item.sales_return_id));
+      const inspection=actionMap.get(Number(item.return_item_id));
+      if(!ret||!inspection)return;
+      const card=document.createElement("div");
+      card.className="task-item";
+      card.style.cssText="padding:10px;margin-top:8px;border:1px solid var(--line);border-radius:9px";
+      const role=canInspectReturnsWarehouse && !inspection.warehouse_inspected_by
+        ?"مطلوب اعتماد أمين المخزن":"مطلوب اعتماد مدير الإنتاج";
+      const info=document.createElement("div");
+      info.textContent=(ret.return_number||("مرتجع رقم "+ret.sales_return_id))+" | "+productName(item.product_id)
+        +" | "+fmtQty(item.quantity)+" "+unitName(item.unit_id)
+        +" | "+fmtQty(item.base_quantity)+" "+unitName(productsCache.find(p=>Number(p.product_id)===Number(item.product_id))?.base_unit_id)
+        +" | "+role;
+      const button=document.createElement("button");
+      button.type="button";
+      button.className="btn secondary";
+      button.textContent="فتح فحص المرتجع";
+      button.style.marginTop="8px";
+      button.addEventListener("click",()=>openSalesReturnInspection(ret));
+      card.append(info,button);
+      section.appendChild(card);
+    });
+    target.appendChild(section);
+  }catch(error){
+    const message=document.createElement("div");
+    message.className="status error";
+    message.textContent="تعذر تحميل مهام فحص المرتجعات: "+err(error);
+    target.appendChild(message);
+  }
+}
+
 async function loadTasks() {
   const box = $("tasksList"); if(!box) return;
   if (!navigator.onLine) { box.innerHTML = "<div class='empty'>أنت أوفلاين حالياً.</div>"; return; }
@@ -3426,7 +3499,7 @@ async function loadTasks() {
     if(dash) dash.innerHTML = quickLinks.map(([section,icon,label])=>
       `<div class="home-card"><div class="hc-label">${icon} ${label}</div><div class="hc-value">متابعة العمل</div><button class="btn secondary" onclick="window.openSection('${section}')">فتح القسم</button></div>`
     ).join("");
-    if(box) box.innerHTML = "<div class='empty'>تظهر هنا المهام والتنبيهات الخاصة بدورك. تم إخفاء المؤشرات المالية والتشغيلية العامة عن الأدوار غير الإدارية.</div>";
+    if(box){box.replaceChildren();await appendReturnInspectionTasks(box);}
     return;
   }
   // إعادة إظهار عناصر التحليل عند دخول دور إداري أو محاسبي.
@@ -3568,6 +3641,7 @@ async function loadTasks() {
     if (draftProdRes.data && draftProdRes.data.length > 0) { html += `<div class="task-box"><h3>🏭 أوامر تشغيل معلقة (${draftProdRes.data.length})</h3>`; draftProdRes.data.slice(0,5).forEach(p => html += `<div class="task-item">⚙️ أمر <b>${p.order_number}</b> | ${p.recipes?.recipe_name || '-'}</div>`); html += `<button class="btn secondary" onclick="window.openSection('production')">الإنتاج</button></div>`; }
     if(!html) html = "<div class='empty'>✅ مفيش تنبيهات حالياً.</div>";
     box.innerHTML = html;
+    await appendReturnInspectionTasks(box);
   } catch (e) { box.innerHTML = `<div class="empty error">خطأ: ${err(e)}</div>`; }
 }
 if($("tasksFilterBtn")) $("tasksFilterBtn").addEventListener("click", loadTasks);
