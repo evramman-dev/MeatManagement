@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v142</title>
+<title>MeatManagement v143</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -392,7 +392,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v142]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v143]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -2073,7 +2073,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v142</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v143</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -5687,7 +5687,7 @@ async function loadInventorySummaryReport(){
   let offset=0;
   while(true){
    const {data,error}=await db.from("stock_movements")
-    .select("movement_id,product_id,quantity_change,total_cost,created_at,stock_transfer_id")
+    .select("movement_id,product_id,quantity_change,total_cost,created_at,stock_transfer_id,movement_type,trip_load_id,notes")
     .lt("created_at",endExclusive.toISOString())
     .order("movement_id",{ascending:true}).range(offset,offset+999);
    if(error)throw error;
@@ -5704,17 +5704,18 @@ async function loadInventorySummaryReport(){
    const id=Number(m.product_id),row=movementByProduct.get(id)||{openingQty:0,openingValue:0,inQty:0,inValue:0,outQty:0,outValue:0,hasMovement:false};
    const qty=inventorySummaryNumber(m.quantity_change),cost=Math.abs(inventorySummaryNumber(m.total_cost));
    const time=new Date(m.created_at).getTime();
-   if(m.stock_transfer_id==null){
-    if(time<startTime){
-     row.openingQty+=qty;
-     row.openingValue+=qty>=0?cost:-cost;
-    }else if(time<endTime){
-     row.hasMovement=true;
-     if(qty>0){row.inQty+=qty;row.inValue+=cost;}
-     else if(qty<0){row.outQty+=Math.abs(qty);row.outValue+=cost;}
-    }
-   }else if(time<startTime){
-    // التحويلات الداخلية لا تغير إجمالي رصيد الشركة.
+   const isInternalTransfer=m.stock_transfer_id!=null||m.trip_load_id!=null||m.movement_type==="TRANSFER_IN"||m.movement_type==="TRANSFER_OUT"||String(m.notes||"").includes("فائض جولة");
+   if(isInternalTransfer){
+    movementByProduct.set(id,row);
+    return;
+   }
+   if(time<startTime){
+    row.openingQty+=qty;
+    row.openingValue+=qty>=0?cost:-cost;
+   }else if(time<endTime){
+    row.hasMovement=true;
+    if(qty>0){row.inQty+=qty;row.inValue+=cost;}
+    else if(qty<0){row.outQty+=Math.abs(qty);row.outValue+=cost;}
    }
    movementByProduct.set(id,row);
   });
@@ -5764,7 +5765,7 @@ async function loadInventorySummaryReport(){
    waText+="إجمالي القيمة الحالية للتصنيف: "+inventorySummaryMoney(sums.currentValue)+"\n";
   });
   if(content)content.innerHTML=output||'<div class="empty">لا توجد أصناف لعرضها.</div>';
-  $("inventorySummaryMeta").innerHTML='<div><strong>الفترة:</strong> '+inventorySummaryEscape(formatDate(from))+' إلى '+inventorySummaryEscape(formatDate(to))+'</div><div><strong>نطاق التقرير:</strong> جميع المواقع المخزنية</div><div><strong>عدد الأصناف:</strong> '+relevantProducts.length+'</div><div><strong>تاريخ إعداد التقرير:</strong> '+inventorySummaryEscape(formatDateTime(new Date().toISOString()))+'</div>';
+  $("inventorySummaryMeta").innerHTML='<div><strong>الفترة:</strong> '+inventorySummaryEscape(formatDate(from))+' إلى '+inventorySummaryEscape(formatDate(to))+'</div><div><strong>نطاق التقرير:</strong> جميع المواقع المخزنية</div><div><strong>طريقة التجميع:</strong> يستبعد التحويلات الداخلية بين المواقع من إجمالي الدخول والخروج</div><div><strong>عدد الأصناف:</strong> '+relevantProducts.length+'</div><div><strong>تاريخ إعداد التقرير:</strong> '+inventorySummaryEscape(formatDateTime(new Date().toISOString()))+'</div>';
   $("inventorySummaryGrandTotal").innerHTML='<div class="line"><span>إجمالي قيمة رصيد أول المدة</span><strong>'+inventorySummaryMoney(grandValue.openingValue)+'</strong></div><div class="line"><span>إجمالي قيمة الدخول</span><strong>'+inventorySummaryMoney(grandValue.inValue)+'</strong></div><div class="line"><span>إجمالي قيمة الخروج</span><strong>'+inventorySummaryMoney(grandValue.outValue)+'</strong></div><div class="line grand"><span>إجمالي قيمة الرصيد الحالي</span><strong>'+inventorySummaryMoney(grandValue.currentValue)+'</strong></div>';
   waText+="\nالإجمالي العام\nقيمة أول المدة: "+inventorySummaryMoney(grandValue.openingValue)+"\nقيمة الدخول: "+inventorySummaryMoney(grandValue.inValue)+"\nقيمة الخروج: "+inventorySummaryMoney(grandValue.outValue)+"\nقيمة الرصيد الحالي: "+inventorySummaryMoney(grandValue.currentValue);
   window.inventorySummaryWhatsappText=waText;
