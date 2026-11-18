@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v143</title>
+<title>MeatManagement v144</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -392,7 +392,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v143]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v144]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -2073,7 +2073,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v143</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v144</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -5585,12 +5585,12 @@ async function viewStockMovements(productId, locationId) {
     $("movementProductInfo").textContent = `المنتج: ${p?.product_name} | الموقع: ${l?.location_name || "كل المواقع"}`; 
     const table = $("movementsTable");
     table.querySelector("thead").innerHTML = allLocations
-      ? "<tr><th>التاريخ</th><th>الموقع</th><th>الحركة</th><th>التغيير</th><th>الرصيد بعدها</th><th>البيان</th></tr>"
+      ? "<tr><th>التاريخ</th><th>الموقع</th><th>الحركة</th><th>التغيير</th><th>رصيد الموقع بعدها</th><th>البيان</th></tr>"
       : "<tr><th>التاريخ</th><th>الحركة</th><th>التغيير</th><th>الرصيد بعدها</th><th>البيان</th></tr>";
     const tbody = table.querySelector("tbody"); tbody.innerHTML = `<tr><td colspan='${allLocations?6:5}'>جارٍ التحميل...</td></tr>`; 
     $("movementSummary").innerHTML = ""; $("stockMovementsModal").style.zIndex="1200"; $("stockMovementsModal").classList.remove("hidden"); 
     try { 
-        let movementQuery = db.from("stock_movements").select("movement_id, movement_type, quantity_change, quantity_after, notes, created_at, location_id").eq("product_id", Number(productId));
+        let movementQuery = db.from("stock_movements").select("movement_id, movement_type, quantity_change, quantity_after, notes, created_at, location_id, stock_transfer_id, trip_load_id").eq("product_id", Number(productId));
         if(!allLocations) movementQuery = movementQuery.eq("location_id", Number(locationId));
         const { data, error } = await movementQuery.order("movement_id", { ascending: true }); 
         if (error) throw error; 
@@ -5611,7 +5611,11 @@ async function viewStockMovements(productId, locationId) {
             if (m.movement_type === 'ISSUE') typeName = 'صرف'; 
             if (m.movement_type === 'RETURN') typeName = 'مرتجع'; 
             const change = Number(m.quantity_change); 
-            if(change > 0) totalIn += change; else if(change < 0) totalOut += Math.abs(change); netChange += change;
+            const isInternalTransfer=allLocations&&(m.stock_transfer_id!=null||m.trip_load_id!=null||m.movement_type==="TRANSFER_IN"||m.movement_type==="TRANSFER_OUT"||String(m.notes||"").includes("فائض جولة"));
+            if(!isInternalTransfer){
+              if(change > 0) totalIn += change; else if(change < 0) totalOut += Math.abs(change);
+              netChange += change;
+            }
             const changeStr = (change > 0 ? '+' : '') + fmtQty(change); 
             const movementLocation = locationsCache.find(x => String(x.location_id) === String(m.location_id));
             const noteText = String(m.notes || "-").replace(/[&<>"]/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
@@ -5625,8 +5629,8 @@ async function viewStockMovements(productId, locationId) {
         const lastBalance = allLocations
           ? Number(currentAllLocationsBalance || 0)
           : Number(data[data.length-1].quantity_after || 0);
-        $("movementSummary").innerHTML = `<h4>ملخص حركة الصنف</h4><div class="line"><span>إجمالي الوارد:</span><span style="color:green;">${fmtQty(totalIn)} ${unitLabel}</span></div><div class="line"><span>إجمالي الصادر:</span><span style="color:red;">${fmtQty(totalOut)} ${unitLabel}</span></div><div class="line"><span>صافي الحركة:</span><span style="font-weight:bold;">${fmtQty(netChange)} ${unitLabel}</span></div><div class="line"><span>${allLocations?"إجمالي الرصيد الحالي بكل المواقع:":"الرصيد الحالي:"}</span><span style="font-weight:bold;color:var(--g);">${fmtQty(lastBalance)} ${unitLabel}</span></div>`;
-        waText += `------------------------\n*ملخص:*\nوارد: ${fmtQty(totalIn)}\nصادر: ${fmtQty(totalOut)}\nرصيد: ${fmtQty(lastBalance)}`;
+        $("movementSummary").innerHTML = `<h4>ملخص حركة الصنف</h4>${allLocations?'<div class="details">تم استبعاد التحويلات الداخلية بين المواقع من إجمالي الوارد والصادر.</div>':""}<div class="line"><span>${allLocations?"إجمالي الوارد الخارجي:":"إجمالي الوارد:"}</span><span style="color:green;">${fmtQty(totalIn)} ${unitLabel}</span></div><div class="line"><span>${allLocations?"إجمالي الصادر الخارجي:":"إجمالي الصادر:"}</span><span style="color:red;">${fmtQty(totalOut)} ${unitLabel}</span></div><div class="line"><span>صافي الحركة:</span><span style="font-weight:bold;">${fmtQty(netChange)} ${unitLabel}</span></div><div class="line"><span>${allLocations?"إجمالي الرصيد الحالي بكل المواقع:":"الرصيد الحالي:"}</span><span style="font-weight:bold;color:var(--g);">${fmtQty(lastBalance)} ${unitLabel}</span></div>`;
+        waText += `------------------------\n*ملخص:*\n${allLocations?"الوارد الخارجي":"الوارد"}: ${fmtQty(totalIn)}\n${allLocations?"الصادر الخارجي":"الصادر"}: ${fmtQty(totalOut)}\nصافي الحركة: ${fmtQty(netChange)}\nرصيد: ${fmtQty(lastBalance)}`;
         $("shareMovementWhatsappBtn").onclick = () => { window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank'); };
         fillPrintHeaders();
     } catch(e) { tbody.innerHTML = `<tr><td colspan='${allLocations?6:5}' style="color:red;">خطأ: ${err(e)}</td></tr>`; } 
