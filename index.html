@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v152</title>
+<title>MeatManagement v153</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -254,6 +254,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 #barcodeScanner .scanner-footer{padding:12px;background:var(--g);color:white;text-align:center;font-size:13px}
 #barcodeScanner .close-scan{background:none;border:0;color:white;font-size:22px}
 @media print{
+  .invoice-lots-print-hide{display:none!important;visibility:hidden!important}
   .inventory-report-section:not([open])>.inventory-report-section-body{display:block!important}
   .inventory-report-section>summary{display:list-item!important}
   .inventory-report-section{break-inside:avoid}
@@ -2073,7 +2074,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v152</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v153</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -2089,7 +2090,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <div class="print-header" id="invoicePrintHeader"></div>
 <div id="modalInvoiceHeader" style="font-size:14px;line-height:1.8;margin-bottom:15px;"></div>
 <div class="table-responsive"><table class="print-table" id="modalInvoiceItems"></table></div>
-<div id="modalInvoiceLots" class="total-box" style="margin-top:12px;background:#f9fbf9;border:1px solid #ddd;border-radius:10px;"></div>
+<div id="modalInvoiceLots" class="total-box invoice-lots-print-hide" style="margin-top:12px;background:#f9fbf9;border:1px solid #ddd;border-radius:10px;"></div>
 <div id="modalInvoiceTotals" class="total-box" style="background:none;border-top:1px solid #eee;border-radius:0;margin-top:10px;"></div>
 <div id="modalInvoiceAccountSummary" class="total-box" style="background:#f9fbf9;border:1px solid #ddd;border-radius:10px;margin-top:15px;font-size:14px;"></div>
 <div class="print-footer" id="invoicePrintFooter"></div>
@@ -6718,7 +6719,7 @@ async function viewInvoice(inv) {
               const lotCell=document.createElement("td");
               lotCell.textContent=allocation.lot_code||("تشغيلة "+allocation.lot_id);
               const quantityCell=document.createElement("td");
-              quantityCell.textContent=fmtQty(allocation.allocated_quantity)+(allocation.unit_id?" "+unitName(allocation.unit_id):"");
+              const allocationUnitId=Number(allocation.unit_id||0); const conversion=productUnitConversionsCache.find(x=>Number(x.product_id)===Number(allocation.product_id)&&Number(x.unit_id)===allocationUnitId&&x.is_active&&Number(x.base_quantity_per_unit)>0); const displayQuantity=conversion?Number(allocation.allocated_quantity||0)/Number(conversion.base_quantity_per_unit):Number(allocation.allocated_quantity||0); quantityCell.textContent=fmtQty(displayQuantity)+(allocationUnitId?" "+unitName(allocationUnitId):"");
               const expiryCell=document.createElement("td");
               expiryCell.textContent=allocation.expires_on?formatDate(allocation.expires_on):"غير محدد";
               row.append(productCell,lotCell,quantityCell,expiryCell);
@@ -6752,7 +6753,8 @@ async function viewInvoice(inv) {
         let waText = `*MeatManagement*\nفاتورة رقم: ${inv.invoice_number}\nالتاريخ: ${invoiceTime}\nالعميل: ${customerName(inv.customer_id)}\n------------------------\n`;
         (items || []).forEach(item => { 
           const p = productsCache.find(x => String(x.product_id) === String(item.product_id)); 
-          waText += `▪️ ${p?.product_name || 'منتج'} - ${fmtQty(item.quantity)} × ${fmt(item.unit_price)}\n`; 
+          const itemUnitName = unitName(item.unit_id);
+          waText += `▪️ ${p?.product_name || "منتج"} | ${fmtQty(item.quantity)} ${itemUnitName} × ${fmt(item.unit_price)} = ${fmt(item.line_total)}\n`;
         });
         waText += `\n------------------------\n`;
         waText += `*الإجمالي:* ${fmt(inv.net_total)}\n`;
