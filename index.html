@@ -11190,6 +11190,7 @@ async function mmPartnerExtras(){
      .in("transaction_type",["PROFIT_PAYOUT","PROFIT_PAYOUT_REVERSAL"])
      .order("transaction_id",{ascending:false});
     if(payoutRowsError){
+     hasPayouts=true;
      const payoutError=document.createElement("div");payoutError.className="empty";
      payoutError.textContent="تعذر تحميل تفاصيل عمليات الصرف: "+err(payoutRowsError);x.appendChild(payoutError);
     }else{
