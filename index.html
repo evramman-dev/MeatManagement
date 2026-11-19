@@ -11215,7 +11215,7 @@ async function mmPartnerExtras(){
     }
    }
   }
-  if(d.status==="POSTED"&&canManageAccounting&&!hasOutstanding){
+  if(d.status==="POSTED"&&canManageAccounting&&!itemError&&!hasOutstanding){
    const z=document.createElement("button");z.className="btn danger";z.style.marginTop="8px";z.textContent="إلغاء التخصيص";
    z.onclick=async()=>{
     const reason=prompt("سبب إلغاء التخصيص");if(!reason)return;
