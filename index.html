@@ -11184,6 +11184,37 @@ async function mmPartnerExtras(){
     row.style.marginTop="8px";
     row.textContent=item.partner_name+" | المخصص: "+fmt(item.allocated_amount)+" | المصروف: "+fmt(item.paid_amount)+" | المتبقي: "+fmt(item.remaining_amount);
     x.appendChild(row);
+    const {data:payoutRows,error:payoutRowsError}=await db.from("partner_transactions")
+     .select("transaction_id,transaction_type,amount,transaction_date,reverses_transaction_id")
+     .eq("profit_distribution_item_id",item.distribution_item_id)
+     .in("transaction_type",["PROFIT_PAYOUT","PROFIT_PAYOUT_REVERSAL"])
+     .order("transaction_id",{ascending:false});
+    if(payoutRowsError){
+     const payoutError=document.createElement("div");payoutError.className="empty";
+     payoutError.textContent="تعذر تحميل تفاصيل عمليات الصرف: "+err(payoutRowsError);x.appendChild(payoutError);
+    }else{
+     const reversedPayoutIds=new Set(payoutRows.filter(t=>t.transaction_type==="PROFIT_PAYOUT_REVERSAL"&&t.reverses_transaction_id!==null).map(t=>String(t.reverses_transaction_id)));
+     payoutRows.filter(t=>t.transaction_type==="PROFIT_PAYOUT"&&!reversedPayoutIds.has(String(t.transaction_id))).forEach(payout=>{
+      if(d.status==="POSTED"&&canManageAccounting){
+       const reverse=document.createElement("button");reverse.className="btn danger";reverse.style.marginTop="6px";
+       reverse.textContent="عكس صرف "+fmt(payout.amount)+" للشريك";
+       reverse.onclick=async()=>{
+        const reason=prompt("سبب عكس صرف الأرباح");
+        if(!reason||!reason.trim())return;
+        if(!confirm("سيتم عكس القيد المحاسبي واسترداد المبلغ إلى الخزنة وإعادة المستحق إلى رصيد الشريك. هل تريد المتابعة؟"))return;
+        try{
+         const key="mm_partner_profit_payout_reversal_"+payout.transaction_id;
+         const requestId=getRequestId(key,{transaction_id:payout.transaction_id,reason:reason.trim()});
+         const {error}=await db.rpc("cancel_partner_profit_payout",{p_transaction_id:Number(payout.transaction_id),p_reason:reason.trim(),p_request_id:requestId});
+         if(error)throw error;
+         clearRequestId(key);showToast("تم عكس صرف الأرباح واسترداد المبلغ إلى الخزنة","success");
+         await loadTreasuries();await originalPartners();await mmPartnerExtras();
+        }catch(e){showToast("تعذر عكس صرف الأرباح: "+err(e),"error");}
+       };
+       x.appendChild(reverse);
+      }
+     });
+    }
     if(Number(item.remaining_amount)>0.009)hasOutstanding=true;
     if(d.status==="POSTED"&&canManageAccounting&&Number(item.remaining_amount)>0.009){
      const pay=document.createElement("button");pay.className="btn";pay.style.marginTop="6px";pay.textContent="صرف مستحق "+item.partner_name;
