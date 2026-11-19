@@ -11175,7 +11175,7 @@ async function mmPartnerExtras(){
   const title=document.createElement("div");title.className="pname";title.textContent="تخصيص أرباح "+formatDate(d.period_from)+" إلى "+formatDate(d.period_to);x.appendChild(title);
   const details=document.createElement("div");details.className="details";details.textContent="إجمالي الربح المخصص: "+fmt(d.profit_amount)+" | "+(d.status==="POSTED"?"معتمد":"ملغى");x.appendChild(details);
   const {data:items,error:itemError}=await db.rpc("get_partner_profit_distribution_items",{p_distribution_id:d.distribution_id});
-  let hasOutstanding=false;
+  let hasPayouts=false;
   if(itemError){
    const er=document.createElement("div");er.className="empty";er.textContent="تعذر تحميل مستحقات الشركاء: "+err(itemError);x.appendChild(er);
   }else if(items?.length){
@@ -11215,7 +11215,7 @@ async function mmPartnerExtras(){
       }
      });
     }
-    if(Number(item.remaining_amount)>0.009)hasOutstanding=true;
+    if(Number(item.paid_amount)>0.009)hasPayouts=true;
     if(d.status==="POSTED"&&canManageAccounting&&Number(item.remaining_amount)>0.009){
      const pay=document.createElement("button");pay.className="btn";pay.style.marginTop="6px";pay.textContent="صرف مستحق "+item.partner_name;
      pay.onclick=async()=>{
@@ -11246,7 +11246,7 @@ async function mmPartnerExtras(){
     }
    }
   }
-  if(d.status==="POSTED"&&canManageAccounting&&!itemError&&!hasOutstanding){
+  if(d.status==="POSTED"&&canManageAccounting&&!itemError&&!hasPayouts){
    const z=document.createElement("button");z.className="btn danger";z.style.marginTop="8px";z.textContent="إلغاء التخصيص";
    z.onclick=async()=>{
     const reason=prompt("سبب إلغاء التخصيص");if(!reason)return;
