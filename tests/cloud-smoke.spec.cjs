@@ -377,6 +377,18 @@ test('MeatManagement read-only navigation, permissions and session smoke test', 
 
     await expect(target, 'Section ' + section + ' should open when its menu is visible').toBeVisible({ timeout: 15000 });
     await page.waitForTimeout(800);
+    if (section === 'partners') {
+      await expect(page.locator('#partnersList')).not.toContainText('جارٍ تحميل الشركاء...', { timeout: 30000 });
+      await expect(page.locator('#partnersList')).not.toContainText('تعذر تحميل', { timeout: 30000 });
+      await expect(page.locator('#partnerTransactionsList')).not.toContainText('جارٍ تحميل حركات الشركاء...', { timeout: 30000 });
+      await expect(page.locator('#partnerTransactionsList')).not.toContainText('تعذر تحميل', { timeout: 30000 });
+      const profitList = page.locator('#mmProfitList');
+      if (await profitList.count()) {
+        await expect(profitList).not.toContainText('جارٍ التحميل...', { timeout: 30000 });
+        await expect(profitList).not.toContainText('تعذر تحميل توزيعات الأرباح', { timeout: 30000 });
+      }
+      await page.screenshot({ path: 'test-results/partners-read-only.png', fullPage: true });
+    }
     if (section === 'suppliers') {
       const supplierList = page.locator('#suppliersList');
       const supplierCards = supplierList.locator(':scope > .product');
