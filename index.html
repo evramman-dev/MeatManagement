@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v144</title>
+<title>MeatManagement v145</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -392,7 +392,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v144]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v145]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -999,7 +999,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <form id="partnerTransactionForm" onsubmit="event.preventDefault();">
 <label for="ptPartner">الشريك *</label><select id="ptPartner" required><option value="">اختر الشريك</option></select>
 <label for="ptType">نوع الحركة *</label>
-<select id="ptType" required><option value="CAPITAL_IN">مساهمة نقدية (إيداع)</option><option value="WITHDRAWAL">سحب شخصي</option><option value="PROFIT">توزيع أرباح</option><option value="CAPITAL_OUT" disabled>مساهمة عينية (موقوفة لحين ربطها بحساب أصل)</option></select>
+<select id="ptType" required><option value="CAPITAL_IN">مساهمة نقدية (إيداع)</option><option value="WITHDRAWAL">سحب شخصي</option><option value="CAPITAL_OUT" disabled>مساهمة عينية (موقوفة لحين ربطها بحساب أصل)</option></select>
 <label for="ptAmount">المبلغ *</label><input id="ptAmount" type="number" min="0.01" step="0.01" required>
 <label for="ptDate">التاريخ *</label><input id="ptDate" type="date" required>
 <label for="ptTreasury">الخزنة (لو الحركة نقدية)</label><select id="ptTreasury" required><option value="">اختر الخزنة</option></select>
@@ -2073,7 +2073,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v144</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v145</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -10065,7 +10065,7 @@ async function loadPartnerTransactions(){
     const box=$("partnerTransactionsList"); if(!box) return; 
     if(!data || !data.length){ box.innerHTML="<div class='empty'>لا توجد حركات مسجلة.</div>"; } 
     else { 
-      const typeMap={CAPITAL_IN:"مساهمة نقدية",WITHDRAWAL:"سحب شخصي",PROFIT:"توزيع أرباح",CAPITAL_OUT:"مساهمة عينية"}; 
+      const typeMap={CAPITAL_IN:"مساهمة نقدية",WITHDRAWAL:"سحب شخصي",PROFIT:"صرف أرباح قديم",CAPITAL_OUT:"مساهمة عينية",PROFIT_ALLOCATION:"تخصيص أرباح",PROFIT_ALLOCATION_REVERSAL:"عكس تخصيص أرباح",PROFIT_PAYOUT:"صرف أرباح مستحقة",PROFIT_PAYOUT_REVERSAL:"عكس صرف أرباح"}; 
       box.innerHTML = data.map(t=>{ 
         const p=partnersCache.find(x=>String(x.partner_id)===String(t.partner_id)); 
         return `<div class="product"><div class="pname">${typeMap[t.transaction_type]||t.transaction_type} - ${p?.partner_name||"شريك"}</div><div class="details">المبلغ: ${fmt(t.amount)} | التاريخ: ${t.transaction_date}</div></div>`; 
@@ -10265,10 +10265,10 @@ async function viewPartnerStatement(p) {
     let runningBalance = openingBalance;
     let totalIn=0, totalOut=0;
     let html = `<thead><tr><th>التاريخ</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead><tbody><tr><td>-</td><td>الرصيد الافتتاحي</td><td style="color:red">${openingBalance<0?fmt(Math.abs(openingBalance)):'-'}</td><td style="color:green">${openingBalance>0?fmt(openingBalance):'-'}</td><td>${fmt(runningBalance)}</td></tr>`; 
-    const typeMap={CAPITAL_IN:"مساهمة نقدية",WITHDRAWAL:"سحب شخصي",PROFIT:"توزيع أرباح",CAPITAL_OUT:"مساهمة عينية"}; 
+    const typeMap={CAPITAL_IN:"مساهمة نقدية",WITHDRAWAL:"سحب شخصي",PROFIT:"صرف أرباح قديم",CAPITAL_OUT:"مساهمة عينية",PROFIT_ALLOCATION:"تخصيص أرباح",PROFIT_ALLOCATION_REVERSAL:"عكس تخصيص أرباح",PROFIT_PAYOUT:"صرف أرباح مستحقة",PROFIT_PAYOUT_REVERSAL:"عكس صرف أرباح"}; 
     (tx||[]).forEach(t => { 
       let inAmt = 0, outAmt = 0; 
-      if(t.transaction_type === 'WITHDRAWAL' || t.transaction_type === 'PROFIT') { 
+      if(['WITHDRAWAL','PROFIT','PROFIT_PAYOUT','PROFIT_ALLOCATION_REVERSAL'].includes(t.transaction_type)) { 
         outAmt = Number(t.amount); 
         runningBalance -= outAmt; 
         totalOut += outAmt; 
@@ -11129,9 +11129,104 @@ async function mmPartnerLedger(p){
 async function mmPartnerExtras(){
  if(!canViewPartners)return;
  const card=$("partnerProfitDistributionCard");
- if(!card){const host=$("partnerTransactionsCard");if(host){const d=document.createElement("div");d.id="partnerProfitDistributionCard";d.className="card";d.style.marginTop="20px";d.innerHTML='<div class="row" style="justify-content:space-between"><h2>📊 توزيع الأرباح</h2><button id="mmProfitBtn" class="btn" style="width:auto;margin:0">توزيع الأرباح</button></div><div id="mmProfitList"><div class="empty">جارٍ التحميل...</div></div>';host.parentNode.insertBefore(d,host.nextSibling);}}
- const b=$("mmProfitBtn");if(b){b.classList.toggle("hidden",!canManageAccounting);b.onclick=()=>{const m=mmModal("mmProfitModal","توزيع أرباح الفترة",'<form id="mmProfitForm"><label>من تاريخ<input id="mmProfitFrom" type="date" required></label><label>إلى تاريخ<input id="mmProfitTo" type="date" required></label><button class="btn" type="submit">تنفيذ توزيع الأرباح</button><div id="mmProfitMsg" class="status hidden"></div></form>');$("mmProfitFrom").value=monthStartISO();$("mmProfitTo").value=todayISO();m.classList.add("active");$("mmProfitForm").onsubmit=async e=>{e.preventDefault();try{const {error}=await db.rpc("create_partner_profit_distribution",{p_from:$("mmProfitFrom").value,p_to:$("mmProfitTo").value,p_request_id:crypto.randomUUID()});if(error)throw error;m.classList.remove("active");showToast("تم توزيع الأرباح","success");await loadPartners();}catch(x){msg($("mmProfitMsg"),err(x),"error");}};};}
- const list=$("mmProfitList");if(list){const {data,error}=await db.from("partner_profit_distributions").select("*").order("distribution_id",{ascending:false}).limit(50);if(!error){list.innerHTML="";if(!data?.length)list.innerHTML="<div class='empty'>لا توجد توزيعات أرباح.</div>";(data||[]).forEach(d=>{const x=document.createElement("div");x.className="product";x.innerHTML='<div class="pname">توزيع أرباح '+formatDate(d.period_from)+' إلى '+formatDate(d.period_to)+'</div><div class="details">المبلغ: '+fmt(d.profit_amount)+' | '+(d.status==="POSTED"?"معتمد":"ملغى")+'</div>';if(d.status==="POSTED"&&canManageAccounting){const z=document.createElement("button");z.className="btn danger";z.textContent="إلغاء التوزيع";z.onclick=async()=>{const r=prompt("سبب الإلغاء");if(!r)return;const q=await db.rpc("cancel_partner_profit_distribution",{p_distribution_id:d.distribution_id,p_reason:r,p_request_id:crypto.randomUUID()});if(q.error)showToast("تعذر الإلغاء: "+err(q.error),"error");else{showToast("تم الإلغاء","success");await loadPartners();}};x.appendChild(z);}list.appendChild(x);});}}
+ if(!card){
+  const host=$("partnerTransactionsCard");
+  if(host){
+   const d=document.createElement("div");
+   d.id="partnerProfitDistributionCard";d.className="card";d.style.marginTop="20px";
+   d.innerHTML='<div class="row" style="justify-content:space-between"><h2>توزيع الأرباح وصرف المستحقات</h2><button id="mmProfitBtn" class="btn" style="width:auto;margin:0">تخصيص أرباح فترة مغلقة</button></div><div id="mmProfitList"><div class="empty">جارٍ التحميل...</div></div>';
+   host.parentNode.insertBefore(d,host.nextSibling);
+  }
+ }
+ const b=$("mmProfitBtn");
+ if(b){
+  b.classList.toggle("hidden",!canManageAccounting);
+  b.onclick=async()=>{
+   try{
+    const {data:periods,error}=await db.from("accounting_periods").select("period_id,period_name,start_date,end_date,status").eq("status","CLOSED").order("end_date",{ascending:false});
+    if(error)throw error;
+    if(!periods?.length){showToast("لا توجد فترة محاسبية مغلقة لتوزيع أرباحها","error");return;}
+    const m=mmModal("mmProfitModal","تخصيص أرباح فترة مغلقة",'<form id="mmProfitForm"><label>الفترة المحاسبية<select id="mmProfitPeriod" required></select></label><button class="btn" type="submit">تخصيص الأرباح للشركاء</button><div id="mmProfitMsg" class="status hidden"></div></form>');
+    const sel=$("mmProfitPeriod");
+    periods.forEach(p=>{const o=document.createElement("option");o.value=p.period_id;o.textContent=p.period_name+" ("+formatDate(p.start_date)+" إلى "+formatDate(p.end_date)+")";sel.appendChild(o);});
+    m.classList.add("active");
+    $("mmProfitForm").onsubmit=async e=>{
+     e.preventDefault();
+     const p=periods.find(x=>String(x.period_id)===String(sel.value));
+     if(!p)return;
+     try{
+      const {error}=await db.rpc("create_partner_profit_distribution",{p_from:p.start_date,p_to:p.end_date,p_request_id:crypto.randomUUID()});
+      if(error)throw error;
+      m.classList.remove("active");showToast("تم تخصيص الأرباح للشركاء","success");
+      await originalPartners();await mmPartnerExtras();
+     }catch(x){msg($("mmProfitMsg"),err(x),"error");}
+    };
+   }catch(e){showToast("تعذر تحميل الفترات المغلقة: "+err(e),"error");}
+  };
+ }
+ const list=$("mmProfitList");
+ if(!list)return;
+ const {data,error}=await db.from("partner_profit_distributions").select("*").order("distribution_id",{ascending:false}).limit(50);
+ if(error){list.innerHTML='<div class="empty">تعذر تحميل توزيعات الأرباح: '+err(error)+'</div>';return;}
+ list.replaceChildren();
+ if(!data?.length){list.innerHTML='<div class="empty">لا توجد توزيعات أرباح.</div>';return;}
+ for(const d of data){
+  const x=document.createElement("div");x.className="product";
+  const title=document.createElement("div");title.className="pname";title.textContent="تخصيص أرباح "+formatDate(d.period_from)+" إلى "+formatDate(d.period_to);x.appendChild(title);
+  const details=document.createElement("div");details.className="details";details.textContent="إجمالي الربح المخصص: "+fmt(d.profit_amount)+" | "+(d.status==="POSTED"?"معتمد":"ملغى");x.appendChild(details);
+  const {data:items,error:itemError}=await db.rpc("get_partner_profit_distribution_items",{p_distribution_id:d.distribution_id});
+  let hasOutstanding=false;
+  if(itemError){
+   const er=document.createElement("div");er.className="empty";er.textContent="تعذر تحميل مستحقات الشركاء: "+err(itemError);x.appendChild(er);
+  }else if(items?.length){
+   for(const item of items){
+    const row=document.createElement("div");row.className="details";
+    row.style.marginTop="8px";
+    row.textContent=item.partner_name+" | المخصص: "+fmt(item.allocated_amount)+" | المصروف: "+fmt(item.paid_amount)+" | المتبقي: "+fmt(item.remaining_amount);
+    x.appendChild(row);
+    if(Number(item.remaining_amount)>0.009)hasOutstanding=true;
+    if(d.status==="POSTED"&&canManageAccounting&&Number(item.remaining_amount)>0.009){
+     const pay=document.createElement("button");pay.className="btn";pay.style.marginTop="6px";pay.textContent="صرف مستحق "+item.partner_name;
+     pay.onclick=async()=>{
+      try{
+       await loadTreasuries();
+       const m=mmModal("mmPartnerProfitPayoutModal","صرف مستحق أرباح الشريك",'<div class="info" id="mmPayoutInfo"></div><form id="mmPayoutForm"><label>المبلغ<input id="mmPayoutAmount" type="number" min="0.01" step="0.01" required></label><label>الخزنة<select id="mmPayoutTreasury" required><option value="">اختر الخزنة</option></select></label><label>التاريخ<input id="mmPayoutDate" type="date" required></label><label>ملاحظات<textarea id="mmPayoutNotes" rows="2"></textarea></label><button class="btn" type="submit">تأكيد صرف الأرباح</button><div id="mmPayoutMsg" class="status hidden"></div></form>');
+       $("mmPayoutInfo").textContent=item.partner_name+" | المتبقي "+fmt(item.remaining_amount);
+       $("mmPayoutAmount").value=Number(item.remaining_amount).toFixed(2);$("mmPayoutAmount").max=Number(item.remaining_amount).toFixed(2);$("mmPayoutDate").value=todayISO();
+       const ts=$("mmPayoutTreasury");
+       (treasuriesCache||[]).filter(t=>t.is_active!==false).forEach(t=>{const o=document.createElement("option");o.value=t.treasury_id;o.textContent=t.treasury_name+" ("+fmt(t.current_balance)+")";ts.appendChild(o);});
+       m.classList.add("active");
+       $("mmPayoutForm").onsubmit=async e=>{
+        e.preventDefault();
+        const amount=Number($("mmPayoutAmount").value),date=$("mmPayoutDate").value,treasuryId=Number(ts.value),notes=$("mmPayoutNotes").value.trim()||null;
+        if(!treasuryId||!date||amount<=0||amount>Number(item.remaining_amount)+0.001){msg($("mmPayoutMsg"),"راجع المبلغ والخزنة والتاريخ.","error");return;}
+        try{
+         const key="mm_partner_profit_payout_"+item.distribution_item_id;
+         const requestId=getRequestId(key,{item_id:item.distribution_item_id,amount,date,treasury_id:treasuryId,notes});
+         const {error}=await db.rpc("pay_partner_profit_distribution_item",{p_distribution_item_id:Number(item.distribution_item_id),p_amount:amount,p_payment_date:date,p_treasury_id:treasuryId,p_notes:notes,p_request_id:requestId});
+         if(error)throw error;
+         clearRequestId(key);m.classList.remove("active");showToast("تم صرف مستحق الأرباح","success");
+         await loadTreasuries();await originalPartners();await mmPartnerExtras();
+        }catch(e){msg($("mmPayoutMsg"),err(e),"error");}
+       };
+      }catch(e){showToast("تعذر فتح شاشة الصرف: "+err(e),"error");}
+     };
+     x.appendChild(pay);
+    }
+   }
+  }
+  if(d.status==="POSTED"&&canManageAccounting&&!itemError&&!hasOutstanding){
+   const z=document.createElement("button");z.className="btn danger";z.style.marginTop="8px";z.textContent="إلغاء التخصيص";
+   z.onclick=async()=>{
+    const reason=prompt("سبب إلغاء التخصيص");if(!reason)return;
+    const q=await db.rpc("cancel_partner_profit_distribution",{p_distribution_id:d.distribution_id,p_reason:reason,p_request_id:crypto.randomUUID()});
+    if(q.error)showToast("تعذر الإلغاء: "+err(q.error),"error");
+    else{showToast("تم إلغاء التخصيص","success");await originalPartners();await mmPartnerExtras();}
+   };
+   x.appendChild(z);
+  }
+  list.appendChild(x);
+ }
 }
 async function mmAssetAction(x,mode){
  if(mode==="config"){const m=mmModal("mmAssetConfig","إعداد إهلاك الأصل",'<label>العمر الإنتاجي بالشهور<input id="mmLife" type="number" min="1" value="'+(x.useful_life_months||60)+'"></label><label>القيمة التخريدية<input id="mmResidual" type="number" min="0" step="0.01" value="'+(x.residual_value||0)+'"></label><button id="mmSaveConfig" class="btn">حفظ</button><div id="mmConfigMsg" class="status hidden"></div>');m.classList.add("active");$("mmSaveConfig").onclick=async()=>{try{const {error}=await db.rpc("configure_fixed_asset_depreciation",{p_asset_id:x.asset_id,p_useful_life_months:Number($("mmLife").value),p_residual_value:Number($("mmResidual").value),p_depreciation_method:"STRAIGHT_LINE"});if(error)throw error;m.classList.remove("active");showToast("تم حفظ إعداد الإهلاك","success");await loadFixedAssets();}catch(e){msg($("mmConfigMsg"),err(e),"error");}};return;}
