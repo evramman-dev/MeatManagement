@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v148</title>
+<title>MeatManagement v149</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -392,7 +392,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v148]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v149]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -2073,7 +2073,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v148</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v149</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -7830,21 +7830,21 @@ async function viewSalesReturnStatement(){
   const from=$("srFromDate")?.value||"",to=$("srToDate")?.value||"",customerId=$("srCustomerFilter")?.value||"";
   let customerLabel=customerId?customerName(customerId):"كل العملاء";
   let periodText=(from?"من: "+formatDate(from):"")+(to?" إلى: "+formatDate(to):"");
-  let query=db.from("sales_returns").select("*").neq("status","CANCELLED").order("return_date",{ascending:true});
-  if(from)query=query.gte("return_date",from);
-  if(to)query=query.lte("return_date",to);
-  if(customerId)query=query.eq("customer_id",Number(customerId));
-  const {data,error}=await query;
+  const {data,error}=await db.rpc("get_sales_returns_for_current_user",{
+    p_from:from||null,
+    p_to:to||null,
+    p_customer_id:customerId?Number(customerId):null
+  });
   if(error){$("genericStatementHeader").innerHTML="خطأ: "+err(error);return;}
   let total=0;
   let html="<thead><tr><th>التاريخ</th><th>رقم المرتجع</th><th>العميل</th><th>المبلغ</th><th>الحالة</th></tr></thead><tbody>";
-  (data||[]).forEach(row=>{const amount=Number(row.net_total??row.total_returned_value??0);total+=amount;html+="<tr><td>"+formatDate(row.return_date)+"</td><td>"+row.return_number+"</td><td>"+customerName(row.customer_id)+"</td><td>"+fmt(amount)+"</td><td>"+salesReturnStatusName(row.status)+"</td></tr>";});
+  (data||[]).forEach(row=>{const amount=Number(row.net_total??row.total_returned_value??0);total+=amount;html+="<tr><td>"+formatDate(row.return_date)+"</td><td>"+row.return_number+"</td><td>"+salesReturnCustomerName(row)+"</td><td>"+fmt(amount)+"</td><td>"+salesReturnStatusName(row.status)+"</td></tr>";});
   if(!data?.length)html+="<tr><td colspan='5'>لا توجد مرتجعات</td></tr>";
   html+="</tbody>";
   $("genericStatementItems").innerHTML=html;
   $("genericStatementHeader").innerHTML="<div><strong>العميل:</strong> "+customerLabel+"</div><div><strong>الفترة:</strong> "+(periodText||"كل الفترات")+"</div>";
   $("genericStatementSummary").innerHTML="<div class='line grand'><span>إجمالي المرتجعات:</span><span>"+fmt(total)+"</span></div>";
-  const waText=["كشف حركة مرتجعات المبيعات","العميل: "+customerLabel,periodText,...(data||[]).map(row=>formatDate(row.return_date)+" | "+row.return_number+" | "+customerName(row.customer_id)+" | "+fmt(row.net_total??row.total_returned_value??0)),"إجمالي المرتجعات: "+fmt(total)].filter(Boolean).join("\n");
+  const waText=["كشف حركة مرتجعات المبيعات","العميل: "+customerLabel,periodText,...(data||[]).map(row=>formatDate(row.return_date)+" | "+row.return_number+" | "+salesReturnCustomerName(row)+" | "+fmt(row.net_total??row.total_returned_value??0)),"إجمالي المرتجعات: "+fmt(total)].filter(Boolean).join("\n");
   $("shareGenericWhatsappBtn").onclick=()=>window.open("https://wa.me/?text="+encodeURIComponent(waText),"_blank");
   fillPrintHeaders();
 }
