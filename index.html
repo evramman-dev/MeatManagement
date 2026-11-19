@@ -11196,7 +11196,7 @@ async function mmPartnerExtras(){
     }else{
      const reversedPayoutIds=new Set(payoutRows.filter(t=>t.transaction_type==="PROFIT_PAYOUT_REVERSAL"&&t.reverses_transaction_id!==null).map(t=>String(t.reverses_transaction_id)));
      payoutRows.filter(t=>t.transaction_type==="PROFIT_PAYOUT"&&!reversedPayoutIds.has(String(t.transaction_id))).forEach(payout=>{
-      if(d.status==="POSTED"&&(canManageAccounting||canManagePartnerTransactions)){
+      if(d.status==="POSTED"&&canManageAccounting){
        const reverse=document.createElement("button");reverse.className="btn danger";reverse.style.marginTop="6px";
        reverse.textContent="عكس صرف "+fmt(payout.amount)+" للشريك";
        reverse.onclick=async()=>{
