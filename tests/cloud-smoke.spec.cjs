@@ -323,7 +323,7 @@ test('MeatManagement read-only navigation, permissions and session smoke test', 
   expect(deployedResponse, 'The deployed application should return a document response.').not.toBeNull();
   expect(deployedResponse.status(), 'The deployed application should return HTTP 200.').toBe(200);
   expect(deployedResponse.headers()['content-type'] || '').toContain('text/html');
-  expect(await page.title()).toContain('MeatManagement v146');
+  expect(await page.title()).toContain('MeatManagement v147');
   await expect(page.locator('#loginForm')).toBeVisible({ timeout: 60000 });
   await page.locator('#email').fill(username);
   await page.locator('#password').fill(password);
@@ -473,7 +473,7 @@ test('MeatManagement Android-sized layout and horizontal overflow check', async 
   expect(deployedResponse, 'The deployed application should return a document response.').not.toBeNull();
   expect(deployedResponse.status(), 'The deployed application should return HTTP 200.').toBe(200);
   expect(deployedResponse.headers()['content-type'] || '').toContain('text/html');
-  expect(await page.title()).toContain('MeatManagement v146');
+  expect(await page.title()).toContain('MeatManagement v147');
   await expect(page.locator('#loginForm')).toBeVisible({ timeout: 60000 });
   await page.locator('#email').fill(username);
   await page.locator('#password').fill(password);
