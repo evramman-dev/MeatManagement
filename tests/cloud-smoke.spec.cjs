@@ -262,6 +262,8 @@ test('Partner workflow UI and permission-gated operations are wired', () => {
   expect(qaHtml).toContain('db.rpc("create_partner_profit_distribution"');
   expect(qaHtml).toContain('db.rpc("pay_partner_profit_distribution_item"');
   expect(qaHtml).toContain('db.rpc("cancel_partner_profit_payout"');
+  expect(qaHtml).toContain('if(Number(item.paid_amount)>0.009)hasPayouts=true;');
+  expect(qaHtml).toContain('!hasPayouts');
   expect(qaHtml).toContain('لا توجد توزيعات أرباح.');
 });
 
