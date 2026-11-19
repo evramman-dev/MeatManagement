@@ -253,6 +253,18 @@ test('Profit and loss report never substitutes purchase totals for cost of sales
   expect(reportSource).not.toContain('تكلفة المبيعات (المشتريات)');
 });
 
+test('Partner workflow UI and permission-gated operations are wired', () => {
+  expect(qaHtml).toContain('if(canManagePartners)');
+  expect(qaHtml).toContain('db.from("partners").insert(payload)');
+  expect(qaHtml).toContain('db.rpc("create_partner_transaction_v2"');
+  expect(qaHtml).toContain('db.rpc("create_partner_inventory_contribution"');
+  expect(qaHtml).toContain('create_partner_vehicle_contribution');
+  expect(qaHtml).toContain('db.rpc("create_partner_profit_distribution"');
+  expect(qaHtml).toContain('db.rpc("pay_partner_profit_distribution_item"');
+  expect(qaHtml).toContain('db.rpc("cancel_partner_profit_payout"');
+  expect(qaHtml).toContain('لا توجد توزيعات أرباح.');
+});
+
 test('MeatManagement read-only navigation, permissions and session smoke test', async ({ page }) => {
   test.setTimeout(300000);
 
@@ -305,7 +317,7 @@ test('MeatManagement read-only navigation, permissions and session smoke test', 
   expect(deployedResponse, 'The deployed application should return a document response.').not.toBeNull();
   expect(deployedResponse.status(), 'The deployed application should return HTTP 200.').toBe(200);
   expect(deployedResponse.headers()['content-type'] || '').toContain('text/html');
-  expect(await page.title()).toContain('MeatManagement v136');
+  expect(await page.title()).toContain('MeatManagement v145');
   await expect(page.locator('#loginForm')).toBeVisible({ timeout: 60000 });
   await page.locator('#email').fill(username);
   await page.locator('#password').fill(password);
@@ -443,7 +455,7 @@ test('MeatManagement Android-sized layout and horizontal overflow check', async 
   expect(deployedResponse, 'The deployed application should return a document response.').not.toBeNull();
   expect(deployedResponse.status(), 'The deployed application should return HTTP 200.').toBe(200);
   expect(deployedResponse.headers()['content-type'] || '').toContain('text/html');
-  expect(await page.title()).toContain('MeatManagement v136');
+  expect(await page.title()).toContain('MeatManagement v145');
   await expect(page.locator('#loginForm')).toBeVisible({ timeout: 60000 });
   await page.locator('#email').fill(username);
   await page.locator('#password').fill(password);
