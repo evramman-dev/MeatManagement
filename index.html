@@ -6100,7 +6100,7 @@ async function loadReservations() {
         if(!reservationsCache.length) { box.innerHTML = "<div class='empty'>لا توجد حجوزات.</div>"; return; }
         const statusMap = { ACTIVE:"نشط", DELIVERED:"تم التسليم", CANCELLED:"ملغي" };
         box.innerHTML = reservationsCache.map(r => {
-            const custName = salesReturnCustomerName(r);
+            const custName = customerName(r.customer_id);
             const prodName = productName(r.product_id);
             const locName = locationName(r.location_id);
             return `<div class="product"><div class="pname">🔒 ${prodName}</div><div class="details">العميل: ${custName} | الكمية: ${fmtQty(r.quantity)} | الموقع: ${locName}</div><div class="details">الحالة: ${statusMap[r.status]||r.status}${r.reserved_until?" | حتى: "+formatDate(r.reserved_until):""}</div>${r.status==="ACTIVE"?`<div class="actions"><button class="btn secondary" onclick="window.cancelReservation(${r.reservation_id})">إلغاء الحجز</button></div>`:""}</div>`;
