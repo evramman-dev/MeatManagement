@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v150</title>
+<title>MeatManagement v151</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -2073,7 +2073,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v150</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v151</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -2589,23 +2589,74 @@ async function loadLatestFactoryResetStatus(){
   const message=$("adminFactoryResetMsg"),result=$("adminFactoryResetResult"),actions=$("adminFactoryResetActions");
   if(!isSystemAdmin)return;
   clear(message);result.replaceChildren();actions.replaceChildren();
+  const showJson=(heading,value)=>{
+    const box=document.createElement("div");box.className="product";
+    const title=document.createElement("div");title.className="pname";title.textContent=heading;
+    const pre=document.createElement("pre");pre.className="details";pre.style.cssText="white-space:pre-wrap;overflow-wrap:anywhere;direction:ltr;text-align:left";pre.textContent=JSON.stringify(value||{},null,2);
+    box.append(title,pre);result.appendChild(box);
+  };
   try{
     const {data:latest,error}=await db.rpc("admin_factory_reset_get_latest");
     if(error)throw error;
-    if(latest?.completed===true&&latest.status==="COMPLETED"){
+    if(latest?.prepared===true && ["PREPARED","APPROVED"].includes(latest.status)){
       const summary=document.createElement("div");summary.className="product";
-      const title=document.createElement("div");title.className="pname";title.textContent="آخر عملية ضبط مصنع";
+      const title=document.createElement("div");title.className="pname";title.textContent="تقرير ضبط مصنع محفوظ";
+      const info=document.createElement("div");info.className="details";info.style.cssText="overflow-wrap:anywhere;line-height:1.9";
+      info.textContent="رقم التقرير: "+latest.plan_id+" | الحالة: "+latest.status+" | ينتهي: "+(latest.expires_at?new Date(latest.expires_at).toLocaleString("ar-EG"):"غير متاح");
+      summary.append(title,info);result.appendChild(summary);
+      showJson("معاينة البيانات المحفوظة",latest.preview);
+      const approveBtn=document.createElement("button");approveBtn.className="btn";approveBtn.type="button";
+      approveBtn.textContent=latest.status==="APPROVED"?"التقرير معتمد بالفعل":"اعتماد التقرير المحفوظ";
+      approveBtn.disabled=latest.status==="APPROVED";
+      const executeBtn=document.createElement("button");executeBtn.className="btn danger";executeBtn.type="button";
+      executeBtn.textContent="تنفيذ استعادة ضبط المصنع";executeBtn.disabled=latest.status!=="APPROVED";
+      const status=document.createElement("div");status.className="details";
+      status.textContent=latest.status==="APPROVED"?"التقرير معتمد. التنفيذ متاح بعد مراجعة المعاينة.":"تم استرجاع التقرير دون إنشاء تقرير جديد أو حذف بيانات.";
+      actions.append(approveBtn,executeBtn,status);
+      approveBtn.addEventListener("click",async()=>{
+        if(Date.parse(latest.expires_at||"")<=Date.now()){msg(status,"انتهت صلاحية التقرير. جهز تقريرًا جديدًا.","error");approveBtn.disabled=true;return;}
+        if(!window.confirm("هل تعتمد التقرير المحفوظ؟ الاعتماد لا يحذف أي بيانات."))return;
+        busy(approveBtn,true,"جارٍ اعتماد التقرير...","اعتماد التقرير");
+        try{
+          const {data,error}=await db.rpc("admin_factory_reset_approve",{p_plan_id:latest.plan_id,p_plan_hash:latest.plan_hash});
+          if(error)throw error;
+          if(!data||data.approved!==true||data.status!=="APPROVED")throw new Error(data?.message||"لم يؤكد الخادم الاعتماد.");
+          latest.status="APPROVED";approveBtn.disabled=true;approveBtn.textContent="التقرير معتمد";executeBtn.disabled=false;
+          status.textContent=data.already_approved?"كان التقرير معتمدًا بالفعل. لم يُنشأ اعتماد إضافي.":"تم اعتماد التقرير. لم تُحذف أي بيانات.";
+          msg(message,data.message||"تم اعتماد التقرير. لم تُحذف أي بيانات.","success");
+        }catch(e){msg(status,"تعذر اعتماد التقرير: "+err(e),"error");}
+        finally{busy(approveBtn,false,"","اعتماد التقرير");}
+      });
+      executeBtn.addEventListener("click",async()=>{
+        if(executeBtn.disabled)return;
+        if(Date.parse(latest.expires_at||"")<=Date.now()){msg(status,"انتهت صلاحية التقرير. جهز تقريرًا جديدًا.","error");executeBtn.disabled=true;return;}
+        if(!window.confirm("سيتم حذف بيانات التشغيل المحددة في المعاينة فقط. هل تريد المتابعة؟"))return;
+        if(!window.confirm("تأكيد أخير: هل توافق على مسح بيانات التشغيل والإبقاء على بيانات النظام والبيانات الأساسية؟"))return;
+        busy(executeBtn,true,"جارٍ تنفيذ ضبط المصنع...","تنفيذ ضبط المصنع");approveBtn.disabled=true;
+        try{
+          const {data,error}=await db.rpc("admin_factory_reset_execute",{p_plan_id:latest.plan_id,p_plan_hash:latest.plan_hash});
+          if(error)throw error;
+          if(!data||data.executed!==true||data.status!=="COMPLETED")throw new Error(data?.message||"لم يؤكد الخادم اكتمال التنفيذ.");
+          msg(message,"اكتملت العملية. يتم الآن تحديث سجلها.","success");
+          await loadLatestFactoryResetStatus();
+        }catch(e){msg(status,"توقفت العملية: "+err(e),"error");approveBtn.disabled=false;}
+        finally{busy(executeBtn,false,"","تنفيذ ضبط المصنع");}
+      });
+      msg(message,"تم استرجاع التقرير السابق وبصمة التحقق. لم يتم إنشاء تقرير جديد أو حذف أي بيانات.","success");
+    }else if(latest?.completed===true&&latest.status==="COMPLETED"){
+      const summary=document.createElement("div");summary.className="product";
+      const title=document.createElement("div");title.className="pname";title.textContent="آخر عملية ضبط مصنع مكتملة";
       const info=document.createElement("div");info.className="details";info.style.cssText="overflow-wrap:anywhere;line-height:1.9";
       info.textContent="رقم التقرير: "+latest.plan_id+" | الحالة: COMPLETED | وقت التنفيذ: "+(latest.execution_finished_at?new Date(latest.execution_finished_at).toLocaleString("ar-EG"):"غير متاح");
       summary.append(title,info);result.appendChild(summary);
-      if(latest.result){
-        const done=document.createElement("pre");done.className="details";done.style.cssText="white-space:pre-wrap;overflow-wrap:anywhere;direction:ltr;text-align:left";done.textContent=JSON.stringify(latest.result,null,2);result.appendChild(done);
-      }
+      if(latest.result)showJson("نتيجة آخر عملية",latest.result);
       msg(message,"تم استرجاع آخر عملية مكتملة. لم يتم تجهيز تقرير جديد أو حذف أي بيانات.","success");
     }else if(latest?.registry_invalid){
       msg(message,latest.message||"تعريف بيانات ضبط المصنع يحتاج إلى مراجعة.","error");
+    }else if(latest?.stale){
+      msg(message,latest.message||"تغيرت البيانات منذ التقرير السابق. جهز تقريرًا جديدًا.","error");
     }else{
-      msg(message,"لا يوجد تنفيذ سابق لعرضه. اضغط «تجهيز تقرير جديد» عند الحاجة. لم يتم إنشاء تقرير أو حذف أي بيانات.","success");
+      msg(message,latest?.expired?"انتهت صلاحية التقرير السابق. جهز تقريرًا جديدًا.":"لا يوجد تقرير سابق صالح. اضغط «تجهيز تقرير جديد» عند الحاجة. لم يتم إنشاء تقرير أو حذف أي بيانات.","success");
     }
   }catch(e){msg(message,"تعذر تحميل حالة ضبط المصنع السابقة: "+err(e),"error");}
 }
@@ -10007,7 +10058,7 @@ async function viewTripSummary(t){
     if(canViewTripExpenses)waLines.push(`مصروفات الجولة: ${fmt(totalExpenses)}`);
     if(canViewTripReturns)waLines.push(`إجمالي المرتجعات: ${fmt(totalReturns)}`);
     waLines.push(`عدد الأصناف في مطابقة السيارة: ${reconciliation.length}`,`الأصناف غير المتطابقة: ${mismatchCount}`);
-    const waText = waLines.join("\\n");
+    const waText = waLines.join("[v151]n");
     $("shareTripWhatsappBtn").onclick = () => {
       window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, "_blank");
     };
