@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v151</title>
+<title>MeatManagement v152</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -392,7 +392,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v151]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v152]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -2073,7 +2073,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v151</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v152</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -6993,8 +6993,9 @@ function addPurchaseItemRow() {
     const baseUnitId=Number(opt?.dataset?.baseUnit||0);
     const purchaseUnitId=Number(opt?.dataset?.purchaseUnit||0);
     const unitsCarton=Number(opt?.dataset?.unitsCarton||0);
-    const actualWeight=Number(weightTotal.value||0);
-    weightWrap.hidden=!(unitId&&baseUnitId===1&&unitId!==1);
+    const fixedConversion=productUnitConversionsCache.find(x=>Number(x.product_id)===Number(prodSel.value)&&Number(x.unit_id)===unitId&&x.is_active&&Number(x.base_quantity_per_unit)>0);
+    const actualWeight=fixedConversion?0:Number(weightTotal.value||0);
+    weightWrap.hidden=!(unitId&&baseUnitId===1&&unitId!==1&&!fixedConversion);
     if(actualWeight>0&&q>0){hint.textContent="يدخل: "+fmtQty(actualWeight)+" كجم";}
     else if(unitId&&baseUnitId&&q>0){
       const inputUnit=units.find(x=>Number(x.unit_id)===unitId);
@@ -7003,6 +7004,9 @@ function addPurchaseItemRow() {
         hint.textContent="يدخل: "+fmtQty(q)+" "+unitName(baseUnitId);
       }else if(inputUnit?.unit_type==="WEIGHT"&&baseUnit?.unit_type==="WEIGHT"&&Number(inputUnit.conversion_to_kg)>0&&Number(baseUnit.conversion_to_kg)>0){
         const baseQty=q*Number(inputUnit.conversion_to_kg)/Number(baseUnit.conversion_to_kg);
+        hint.textContent="يدخل: "+fmtQty(baseQty)+" "+unitName(baseUnitId);
+      }else if(fixedConversion){
+        const baseQty=q*Number(fixedConversion.base_quantity_per_unit);
         hint.textContent="يدخل: "+fmtQty(baseQty)+" "+unitName(baseUnitId);
       }else if(unitId===purchaseUnitId&&unitId===cartonUnitId&&unitsCarton>0){
         const baseQty=q*unitsCarton;
@@ -7043,10 +7047,11 @@ function addPurchaseItemRow() {
     manufacturedWrap.hidden=isPackaging;
     expiresWrap.hidden=isPackaging;
   };
-  prodSel.addEventListener("change",()=>{ populateUnits(); updateLotDateVisibility(); }); 
-  unitSel.addEventListener("change",recalc); 
+  prodSel.addEventListener("change",()=>{ weightTotal.value=""; populateUnits(); updateLotDateVisibility(); });
+  unitSel.addEventListener("change",()=>{ weightTotal.value=""; recalc(); }); 
   qty.addEventListener("input",recalc); 
-  price.addEventListener("input",recalc); 
+  price.addEventListener("input",recalc);
+  weightTotal.addEventListener("input",recalc); 
   populateUnits();
   updateLotDateVisibility();
 }
