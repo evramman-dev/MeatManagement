@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v146</title>
+<title>MeatManagement v147</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -392,7 +392,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v146]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v147]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -2073,7 +2073,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v146</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v147</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -10206,11 +10206,18 @@ if($("partnerForm")) $("partnerForm").addEventListener("submit", async e => {
   const btn = $("savePartnerBtn"); 
   busy(btn, true, "جارٍ...", "حفظ"); 
   const id = $("partnerEditId").value; 
-  const payload = { partner_name: $("partnerName").value.trim(), phone: $("partnerPhone").value.trim()||null, share_percentage: Number($("partnerShare").value)||0, notes: $("partnerNotes").value.trim()||null, is_active: $("partnerActive").checked }; 
-  if(!payload.partner_name){ 
-    msg($("partnerFormMsg"),"اسم الشريك مطلوب","error"); 
-    busy(btn,false,"","حفظ"); 
-    return; 
+  const rawShare = $("partnerShare").value.trim();
+  const parsedShare = rawShare === "" ? null : Number(rawShare);
+  const payload = { partner_name: $("partnerName").value.trim(), phone: $("partnerPhone").value.trim()||null, share_percentage: parsedShare, notes: $("partnerNotes").value.trim()||null, is_active: $("partnerActive").checked };
+  if(!payload.partner_name){
+    msg($("partnerFormMsg"),"اسم الشريك مطلوب","error");
+    busy(btn,false,"","حفظ");
+    return;
+  }
+  if(parsedShare !== null && (!Number.isFinite(parsedShare) || parsedShare < 0 || parsedShare > 100)){
+    msg($("partnerFormMsg"),"نسبة الملكية يجب أن تكون بين 0 و100","error");
+    busy(btn,false,"","حفظ");
+    return;
   } 
   try { 
     if(id) { 
