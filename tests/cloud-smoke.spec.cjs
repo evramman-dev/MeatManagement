@@ -43,6 +43,23 @@ const menuIds = {
 };
 
 
+test('Regular stock transfer selectors exclude vehicle locations and show location codes', () => {
+  const start = qaHtml.indexOf('function fillStockTransferSelects(){');
+  const end = qaHtml.indexOf('function fillPartnerSelect(){', start);
+  expect(start, 'Stock transfer selector function should exist.').toBeGreaterThanOrEqual(0);
+  expect(end, 'Stock transfer selector function should have a clear boundary.').toBeGreaterThan(start);
+  const source = qaHtml.slice(start, end);
+
+  expect(source).toContain('locationsCache.filter(l=>l.is_active && l.location_type!=="VEHICLE")');
+  expect(source).toContain('l.location_name+" ("+l.location_code+")"');
+  expect(source).toContain('op1.textContent=label');
+  expect(source).toContain('op2.textContent=label');
+  expect(source).toContain('s.appendChild(op1)');
+  expect(source).toContain('d.appendChild(op2)');
+  expect(source).not.toContain('locationsCache.filter(l=>l.is_active).forEach');
+});
+
+
 
 test('Purchase and purchase-return preview matches database rounding rules', () => {
   expect(qaHtml).toContain('let priorGrossTotal = 0;');
