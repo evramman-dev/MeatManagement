@@ -392,7 +392,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v150]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v151]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -10058,7 +10058,7 @@ async function viewTripSummary(t){
     if(canViewTripExpenses)waLines.push(`مصروفات الجولة: ${fmt(totalExpenses)}`);
     if(canViewTripReturns)waLines.push(`إجمالي المرتجعات: ${fmt(totalReturns)}`);
     waLines.push(`عدد الأصناف في مطابقة السيارة: ${reconciliation.length}`,`الأصناف غير المتطابقة: ${mismatchCount}`);
-    const waText = waLines.join("[v151]n");
+    const waText = waLines.join("\n");
     $("shareTripWhatsappBtn").onclick = () => {
       window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, "_blank");
     };
