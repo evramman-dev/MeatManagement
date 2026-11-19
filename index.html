@@ -7047,8 +7047,8 @@ function addPurchaseItemRow() {
     manufacturedWrap.hidden=isPackaging;
     expiresWrap.hidden=isPackaging;
   };
-  prodSel.addEventListener("change",()=>{ populateUnits(); updateLotDateVisibility(); }); 
-  unitSel.addEventListener("change",recalc); 
+  prodSel.addEventListener("change",()=>{ weightTotal.value=""; populateUnits(); updateLotDateVisibility(); });
+  unitSel.addEventListener("change",()=>{ weightTotal.value=""; recalc(); }); 
   qty.addEventListener("input",recalc); 
   price.addEventListener("input",recalc);
   weightTotal.addEventListener("input",recalc); 
