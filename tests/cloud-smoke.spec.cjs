@@ -253,6 +253,24 @@ test('Profit and loss report never substitutes purchase totals for cost of sales
   expect(reportSource).not.toContain('تكلفة المبيعات (المشتريات)');
 });
 
+test('Partner workflow UI and permission-gated operations are wired', () => {
+  expect(qaHtml).toContain('if(canManagePartners)');
+  expect(qaHtml).toContain('permission("PARTNERS_TRANSACTIONS_MANAGE")');
+  expect(qaHtml).toContain('!canManagePartnerTransactions');
+  expect(qaHtml).toContain('db.from("partners").insert(payload)');
+  expect(qaHtml).toContain('db.rpc("create_partner_transaction_v2"');
+  expect(qaHtml).toContain('db.rpc("create_partner_inventory_contribution"');
+  expect(qaHtml).toContain('create_partner_vehicle_contribution');
+  expect(qaHtml).toContain('db.rpc("create_partner_profit_distribution"');
+  expect(qaHtml).toContain('db.rpc("pay_partner_profit_distribution_item"');
+  expect(qaHtml).toContain('db.rpc("cancel_partner_profit_payout"');
+  expect(qaHtml).toContain('if(d.status==="POSTED"&&canManageAccounting){');
+  expect(qaHtml).toContain('if(Number(item.paid_amount)>0.009)hasPayouts=true;');
+  expect(qaHtml).toContain('!hasPayouts');
+  expect(qaHtml).toContain('if(payoutRowsError){\n     hasPayouts=true;');
+  expect(qaHtml).toContain('لا توجد توزيعات أرباح.');
+});
+
 test('MeatManagement read-only navigation, permissions and session smoke test', async ({ page }) => {
   test.setTimeout(300000);
 
@@ -305,7 +323,7 @@ test('MeatManagement read-only navigation, permissions and session smoke test', 
   expect(deployedResponse, 'The deployed application should return a document response.').not.toBeNull();
   expect(deployedResponse.status(), 'The deployed application should return HTTP 200.').toBe(200);
   expect(deployedResponse.headers()['content-type'] || '').toContain('text/html');
-  expect(await page.title()).toContain('MeatManagement v136');
+  expect(await page.title()).toContain('MeatManagement v145');
   await expect(page.locator('#loginForm')).toBeVisible({ timeout: 60000 });
   await page.locator('#email').fill(username);
   await page.locator('#password').fill(password);
@@ -363,6 +381,18 @@ test('MeatManagement read-only navigation, permissions and session smoke test', 
 
     await expect(target, 'Section ' + section + ' should open when its menu is visible').toBeVisible({ timeout: 15000 });
     await page.waitForTimeout(800);
+    if (section === 'partners') {
+      await expect(page.locator('#partnersList')).not.toContainText('جارٍ تحميل الشركاء...', { timeout: 30000 });
+      await expect(page.locator('#partnersList')).not.toContainText('تعذر تحميل', { timeout: 30000 });
+      await expect(page.locator('#partnerTransactionsList')).not.toContainText('جارٍ تحميل حركات الشركاء...', { timeout: 30000 });
+      await expect(page.locator('#partnerTransactionsList')).not.toContainText('تعذر تحميل', { timeout: 30000 });
+      const profitList = page.locator('#mmProfitList');
+      if (await profitList.count()) {
+        await expect(profitList).not.toContainText('جارٍ التحميل...', { timeout: 30000 });
+        await expect(profitList).not.toContainText('تعذر تحميل توزيعات الأرباح', { timeout: 30000 });
+      }
+      await page.screenshot({ path: 'test-results/partners-read-only.png', fullPage: true });
+    }
     if (section === 'suppliers') {
       const supplierList = page.locator('#suppliersList');
       const supplierCards = supplierList.locator(':scope > .product');
@@ -443,7 +473,7 @@ test('MeatManagement Android-sized layout and horizontal overflow check', async 
   expect(deployedResponse, 'The deployed application should return a document response.').not.toBeNull();
   expect(deployedResponse.status(), 'The deployed application should return HTTP 200.').toBe(200);
   expect(deployedResponse.headers()['content-type'] || '').toContain('text/html');
-  expect(await page.title()).toContain('MeatManagement v136');
+  expect(await page.title()).toContain('MeatManagement v145');
   await expect(page.locator('#loginForm')).toBeVisible({ timeout: 60000 });
   await page.locator('#email').fill(username);
   await page.locator('#password').fill(password);

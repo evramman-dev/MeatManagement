@@ -2297,7 +2297,7 @@ try {
   let canViewLocations=false, canManageLocations=false, canLoadLocations=false;
   let canViewTreasuries=false, canManageTreasuries=false;
   let canViewExpenses=false, canManageExpenses=false;
-  let canViewPartners=false, canManagePartners=false;
+  let canViewPartners=false, canManagePartners=false, canManagePartnerTransactions=false;
   let canViewStock=false, canManageStock=false;
   let canViewRecipes=false, canManageRecipes=false;
   let canViewProduction=false, canManageProduction=false;
@@ -2887,7 +2887,7 @@ async function userInfo(user){
     try{ canViewExpenses=await permission("EXPENSES_VIEW") || isSystemAdmin; canManageExpenses=await permission("EXPENSES_MANAGE") || isSystemAdmin; if($("menuExpenses")) $("menuExpenses").classList.toggle("hidden",!canViewExpenses); if($("expensesCard")) $("expensesCard").classList.toggle("hidden",!canViewExpenses); if($("addExpenseBtn")) $("addExpenseBtn").classList.toggle("hidden",!canManageExpenses); }catch(e){}
     try{ canManageLandedCosts=await permission("PURCHASES_MANAGE") || isSystemAdmin; canViewLandedCosts=await permission("PURCHASES_VIEW") || canManageLandedCosts || isSystemAdmin; if($("menuLandedCosts")) $("menuLandedCosts").classList.toggle("hidden",!canViewLandedCosts); if($("addLandedCostBtn")) $("addLandedCostBtn").classList.toggle("hidden",!canManageLandedCosts); }catch(e){}
     try{ canManageFixedAssets=await permission("ACCOUNTING_MANAGE") || isSystemAdmin; canViewFixedAssets=await permission("ACCOUNTING_VIEW") || canManageFixedAssets || isSystemAdmin; if($("menuFixedAssets")) $("menuFixedAssets").classList.toggle("hidden",!canViewFixedAssets); if($("addFixedAssetBtn")) $("addFixedAssetBtn").classList.toggle("hidden",!canManageFixedAssets); }catch(e){}
-    try{ canViewPartners=await permission("PARTNERS_VIEW") || isSystemAdmin; canManagePartners=await permission("PARTNERS_MANAGE") || isSystemAdmin; if($("menuPartners")) $("menuPartners").classList.toggle("hidden",!canViewPartners); if($("partnersCard")) $("partnersCard").classList.toggle("hidden",!canViewPartners); if($("addPartnerBtn")) $("addPartnerBtn").classList.toggle("hidden",!canManagePartners); if($("addPartnerTransactionBtn")) $("addPartnerTransactionBtn").classList.toggle("hidden",!canManagePartners); }catch(e){}
+    try{ canViewPartners=await permission("PARTNERS_VIEW") || isSystemAdmin; canManagePartners=await permission("PARTNERS_MANAGE") || isSystemAdmin; canManagePartnerTransactions=await permission("PARTNERS_TRANSACTIONS_MANAGE") || await permission("ACCOUNTING_MANAGE") || isSystemAdmin; if($("menuPartners")) $("menuPartners").classList.toggle("hidden",!canViewPartners); if($("partnersCard")) $("partnersCard").classList.toggle("hidden",!canViewPartners); if($("addPartnerBtn")) $("addPartnerBtn").classList.toggle("hidden",!canManagePartners); if($("addPartnerTransactionBtn")) $("addPartnerTransactionBtn").classList.toggle("hidden",!canManagePartnerTransactions); }catch(e){}
     try{ canManagePartnerInventoryContributions=await permission("ACCOUNTING_MANAGE") || await permission("PARTNERS_TRANSACTIONS_MANAGE") || isSystemAdmin; canViewPartnerInventoryContributions=await permission("ACCOUNTING_VIEW") || await permission("PARTNERS_TRANSACTIONS_VIEW") || canManagePartnerInventoryContributions; canCancelPartnerInventoryContributions=await permission("ACCOUNTING_MANAGE") || isSystemAdmin; canManagePartnerVehicleContributions=await permission("ACCOUNTING_MANAGE") || isSystemAdmin; canCancelPartnerVehicleContributions=canManagePartnerVehicleContributions; canViewPartnerVehicleContributions=canViewFixedAssets; if($("partnerInventoryContributionsCard")) $("partnerInventoryContributionsCard").classList.toggle("hidden",!canViewPartnerInventoryContributions); if($("addPartnerInventoryContributionBtn")) $("addPartnerInventoryContributionBtn").classList.toggle("hidden",!canManagePartnerInventoryContributions); if($("partnerVehicleContributionsCard")) $("partnerVehicleContributionsCard").classList.toggle("hidden",!canViewPartnerVehicleContributions); if($("addPartnerVehicleContributionBtn")) $("addPartnerVehicleContributionBtn").classList.toggle("hidden",!canManagePartnerVehicleContributions); }catch(e){}
     try{ canViewProduction=await permission("PRODUCTION_VIEW") || isSystemAdmin; canManageProduction=await permission("PRODUCTION_MANAGE") || isSystemAdmin; canLoadLocations=canViewLocations || canViewStockTransfers || await permission("INVENTORY_VIEW") || canViewProduction || canManageProduction || isSystemAdmin; if($("menuProduction")) $("menuProduction").classList.toggle("hidden",!canViewProduction); if($("menuProductionDailySummary")) $("menuProductionDailySummary").classList.toggle("hidden",!canViewProduction); if($("productionCard")) $("productionCard").classList.toggle("hidden",!canViewProduction); if($("addProductionBtn")) $("addProductionBtn").classList.toggle("hidden",!canManageProduction); }catch(e){}
     try{ canViewRecipes=await permission("RECIPES_VIEW") || canViewProduction || canManageProduction || isSystemAdmin; canManageRecipes=await permission("RECIPES_MANAGE") || canManageProduction || isSystemAdmin; if($("menuRecipes")) $("menuRecipes").classList.toggle("hidden",!canViewRecipes); if($("recipesCard")) $("recipesCard").classList.toggle("hidden",!canViewRecipes); if($("addRecipeBtn")) $("addRecipeBtn").classList.toggle("hidden",!canManageRecipes); }catch(e){}
@@ -11175,7 +11175,7 @@ async function mmPartnerExtras(){
   const title=document.createElement("div");title.className="pname";title.textContent="تخصيص أرباح "+formatDate(d.period_from)+" إلى "+formatDate(d.period_to);x.appendChild(title);
   const details=document.createElement("div");details.className="details";details.textContent="إجمالي الربح المخصص: "+fmt(d.profit_amount)+" | "+(d.status==="POSTED"?"معتمد":"ملغى");x.appendChild(details);
   const {data:items,error:itemError}=await db.rpc("get_partner_profit_distribution_items",{p_distribution_id:d.distribution_id});
-  let hasOutstanding=false;
+  let hasPayouts=false;
   if(itemError){
    const er=document.createElement("div");er.className="empty";er.textContent="تعذر تحميل مستحقات الشركاء: "+err(itemError);x.appendChild(er);
   }else if(items?.length){
@@ -11184,7 +11184,39 @@ async function mmPartnerExtras(){
     row.style.marginTop="8px";
     row.textContent=item.partner_name+" | المخصص: "+fmt(item.allocated_amount)+" | المصروف: "+fmt(item.paid_amount)+" | المتبقي: "+fmt(item.remaining_amount);
     x.appendChild(row);
-    if(Number(item.remaining_amount)>0.009)hasOutstanding=true;
+    const {data:payoutRows,error:payoutRowsError}=await db.from("partner_transactions")
+     .select("transaction_id,transaction_type,amount,transaction_date,reverses_transaction_id")
+     .eq("profit_distribution_item_id",item.distribution_item_id)
+     .in("transaction_type",["PROFIT_PAYOUT","PROFIT_PAYOUT_REVERSAL"])
+     .order("transaction_id",{ascending:false});
+    if(payoutRowsError){
+     hasPayouts=true;
+     const payoutError=document.createElement("div");payoutError.className="empty";
+     payoutError.textContent="تعذر تحميل تفاصيل عمليات الصرف: "+err(payoutRowsError);x.appendChild(payoutError);
+    }else{
+     const reversedPayoutIds=new Set(payoutRows.filter(t=>t.transaction_type==="PROFIT_PAYOUT_REVERSAL"&&t.reverses_transaction_id!==null).map(t=>String(t.reverses_transaction_id)));
+     payoutRows.filter(t=>t.transaction_type==="PROFIT_PAYOUT"&&!reversedPayoutIds.has(String(t.transaction_id))).forEach(payout=>{
+      if(d.status==="POSTED"&&canManageAccounting){
+       const reverse=document.createElement("button");reverse.className="btn danger";reverse.style.marginTop="6px";
+       reverse.textContent="عكس صرف "+fmt(payout.amount)+" للشريك";
+       reverse.onclick=async()=>{
+        const reason=prompt("سبب عكس صرف الأرباح");
+        if(!reason||!reason.trim())return;
+        if(!confirm("سيتم عكس القيد المحاسبي واسترداد المبلغ إلى الخزنة وإعادة المستحق إلى رصيد الشريك. هل تريد المتابعة؟"))return;
+        try{
+         const key="mm_partner_profit_payout_reversal_"+payout.transaction_id;
+         const requestId=getRequestId(key,{transaction_id:payout.transaction_id,reason:reason.trim()});
+         const {error}=await db.rpc("cancel_partner_profit_payout",{p_transaction_id:Number(payout.transaction_id),p_reason:reason.trim(),p_request_id:requestId});
+         if(error)throw error;
+         clearRequestId(key);showToast("تم عكس صرف الأرباح واسترداد المبلغ إلى الخزنة","success");
+         await loadTreasuries();await originalPartners();await mmPartnerExtras();
+        }catch(e){showToast("تعذر عكس صرف الأرباح: "+err(e),"error");}
+       };
+       x.appendChild(reverse);
+      }
+     });
+    }
+    if(Number(item.paid_amount)>0.009)hasPayouts=true;
     if(d.status==="POSTED"&&canManageAccounting&&Number(item.remaining_amount)>0.009){
      const pay=document.createElement("button");pay.className="btn";pay.style.marginTop="6px";pay.textContent="صرف مستحق "+item.partner_name;
      pay.onclick=async()=>{
@@ -11215,7 +11247,7 @@ async function mmPartnerExtras(){
     }
    }
   }
-  if(d.status==="POSTED"&&canManageAccounting&&!itemError&&!hasOutstanding){
+  if(d.status==="POSTED"&&canManageAccounting&&!itemError&&!hasPayouts){
    const z=document.createElement("button");z.className="btn danger";z.style.marginTop="8px";z.textContent="إلغاء التخصيص";
    z.onclick=async()=>{
     const reason=prompt("سبب إلغاء التخصيص");if(!reason)return;
