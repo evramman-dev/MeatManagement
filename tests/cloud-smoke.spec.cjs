@@ -255,6 +255,8 @@ test('Profit and loss report never substitutes purchase totals for cost of sales
 
 test('Partner workflow UI and permission-gated operations are wired', () => {
   expect(qaHtml).toContain('if(canManagePartners)');
+  expect(qaHtml).toContain('permission("PARTNERS_TRANSACTIONS_MANAGE")');
+  expect(qaHtml).toContain('!canManagePartnerTransactions');
   expect(qaHtml).toContain('db.from("partners").insert(payload)');
   expect(qaHtml).toContain('db.rpc("create_partner_transaction_v2"');
   expect(qaHtml).toContain('db.rpc("create_partner_inventory_contribution"');
