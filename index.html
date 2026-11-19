@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v147</title>
+<title>MeatManagement v148</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -392,7 +392,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v147]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v148]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -2073,7 +2073,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v147</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v148</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -6100,7 +6100,7 @@ async function loadReservations() {
         if(!reservationsCache.length) { box.innerHTML = "<div class='empty'>لا توجد حجوزات.</div>"; return; }
         const statusMap = { ACTIVE:"نشط", DELIVERED:"تم التسليم", CANCELLED:"ملغي" };
         box.innerHTML = reservationsCache.map(r => {
-            const custName = customerName(r.customer_id);
+            const custName = salesReturnCustomerName(r);
             const prodName = productName(r.product_id);
             const locName = locationName(r.location_id);
             return `<div class="product"><div class="pname">🔒 ${prodName}</div><div class="details">العميل: ${custName} | الكمية: ${fmtQty(r.quantity)} | الموقع: ${locName}</div><div class="details">الحالة: ${statusMap[r.status]||r.status}${r.reserved_until?" | حتى: "+formatDate(r.reserved_until):""}</div>${r.status==="ACTIVE"?`<div class="actions"><button class="btn secondary" onclick="window.cancelReservation(${r.reservation_id})">إلغاء الحجز</button></div>`:""}</div>`;
@@ -7625,6 +7625,7 @@ function fillSalesReturnCustomerFilter(){
 function salesReturnStatusName(v){return({DRAFT:"مسودة",APPROVED:"معتمد",POSTED:"مرحّل",CANCELLED:"ملغى"})[v]||v||"غير محدد";}
 function salesReturnCashActionName(v){return({DEDUCT_DEBT:"خصم من مديونية العميل",CASH_BACK:"رد نقدية من خزنة المناديب",CUSTOMER_PAYS_CASH:"تحصيل نقدي من العميل"})[v]||v||"غير محدد";}
 function salesReturnTypeName(v){return({RETURN:"مرتجع",EXCHANGE:"استبدال"})[v]||v||"غير محدد";}
+function salesReturnCustomerName(ret){return ret?.customer_name||customerName(ret?.customer_id);}
 
 async function loadSalesReturns(){
   const box=$("salesReturnsList"); if(!box)return;
@@ -7633,11 +7634,11 @@ async function loadSalesReturns(){
   const from=$("srFromDate")?.value||"";
   const to=$("srToDate")?.value||"";
   const customerId=$("srCustomerFilter")?.value||"";
-  let query=db.from("sales_returns").select("*").neq("status","CANCELLED").order("sales_return_id",{ascending:false}).limit(200);
-  if(from)query=query.gte("return_date",from);
-  if(to)query=query.lte("return_date",to);
-  if(customerId)query=query.eq("customer_id",Number(customerId));
-  const {data,error}=await query;
+  const {data,error}=await db.rpc("get_sales_returns_for_current_user",{
+    p_from:from||null,
+    p_to:to||null,
+    p_customer_id:customerId?Number(customerId):null
+  });
   if(error){msg($("salesReturnsMsg"),"تعذر تحميل المرتجعات: "+err(error),"error");return;}
   box.replaceChildren();
   if(!data?.length){box.innerHTML="<div class='empty'>لا توجد مرتجعات مطابقة للبحث.</div>";return;}
@@ -7645,7 +7646,7 @@ async function loadSalesReturns(){
     const c=document.createElement("div"); c.className="product";
     const title=document.createElement("div"); title.className="pname"; title.textContent="↩️ "+(r.return_number||"مرتجع");
     const details=document.createElement("div"); details.className="details";
-    details.textContent="العميل: "+customerName(r.customer_id)+" | المبلغ: "+fmt(r.net_total||r.total_returned_value||0)+" | التاريخ: "+formatDate(r.return_date);
+    details.textContent="العميل: "+salesReturnCustomerName(r)+" | المبلغ: "+fmt(r.net_total||r.total_returned_value||0)+" | التاريخ: "+formatDate(r.return_date);
     const status=document.createElement("span"); status.className="badge"+(r.status==="POSTED"||r.status==="APPROVED"?" badge-paid":r.status==="DRAFT"?" badge-partial":"");
     status.textContent="الحالة: "+salesReturnStatusName(r.status);
     const reason=document.createElement("div"); reason.className="details"; reason.textContent="السبب: "+(r.reason||r.notes||"-");
@@ -7684,7 +7685,7 @@ async function loadSalesReturns(){
 
 async function openSalesReturnInspection(ret){
  const modal=$("salesReturnInspectionModal");if(!modal)return;
- $("salesReturnInspectionInfo").textContent="المرتجع: "+(ret.return_number||"—")+" | العميل: "+customerName(ret.customer_id)+" | التاريخ: "+formatDate(ret.return_date);
+ $("salesReturnInspectionInfo").textContent="المرتجع: "+(ret.return_number||"—")+" | العميل: "+salesReturnCustomerName(ret)+" | التاريخ: "+formatDate(ret.return_date);
  $("salesReturnInspectionRows").replaceChildren();$("salesReturnInspectionMsg").classList.add("hidden");
  modal.classList.add("active");
  try{
@@ -7776,7 +7777,7 @@ async function viewSalesReturn(ret){
     const esc=value=>String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
     $("genericStatementHeader").innerHTML=
       "<div><strong>رقم المرتجع:</strong> "+esc(ret.return_number)+"</div>"+
-      "<div><strong>العميل:</strong> "+esc(customerName(ret.customer_id))+"</div>"+
+      "<div><strong>العميل:</strong> "+esc(salesReturnCustomerName(ret))+"</div>"+
       "<div><strong>التاريخ:</strong> "+formatDate(ret.return_date)+" | <strong>الفاتورة الأصلية:</strong> "+esc(invoiceNumber)+"</div>"+
       "<div><strong>الجولة:</strong> "+esc(trip?.trip_number||"بدون جولة")+" | <strong>المندوب:</strong> "+esc(trip?.rep_name||currentSalesRepName||"—")+"</div>"+
       "<div><strong>نوع المرتجع:</strong> "+esc(salesReturnTypeName(ret.return_type))+" | <strong>حركة الفلوس:</strong> "+esc(cashActionLabel)+"</div>"+
@@ -7813,7 +7814,7 @@ async function viewSalesReturn(ret){
       const p=productsCache.find(x=>String(x.product_id)===String(item.product_id));
       return (p?.product_name||("صنف "+item.product_id))+" - "+fmtQty(item.quantity)+" "+unitName(item.unit_id)+" - "+fmt(item.line_total);
     });
-    const waText=["تفاصيل مرتجع المبيعات","رقم: "+ret.return_number,"العميل: "+customerName(ret.customer_id),"التاريخ: "+formatDate(ret.return_date),"الفاتورة الأصلية: "+invoiceNumber,"حركة الفلوس: "+cashActionLabel,"الخزنة: "+(ret.treasury_id?treasuryName(ret.treasury_id):"—"),...waLines,"الإجمالي: "+fmt(ret.net_total??ret.total_returned_value??0),financialImpactLabel+": "+fmt(financialImpactAmount)].join("\n");
+    const waText=["تفاصيل مرتجع المبيعات","رقم: "+ret.return_number,"العميل: "+salesReturnCustomerName(ret),"التاريخ: "+formatDate(ret.return_date),"الفاتورة الأصلية: "+invoiceNumber,"حركة الفلوس: "+cashActionLabel,"الخزنة: "+(ret.treasury_id?treasuryName(ret.treasury_id):"—"),...waLines,"الإجمالي: "+fmt(ret.net_total??ret.total_returned_value??0),financialImpactLabel+": "+fmt(financialImpactAmount)].join("\n");
     $("shareGenericWhatsappBtn").onclick=()=>window.open("https://wa.me/?text="+encodeURIComponent(waText),"_blank");
     fillPrintHeaders();
   }catch(e){$("genericStatementHeader").textContent="تعذر تحميل التفاصيل: "+err(e);}
