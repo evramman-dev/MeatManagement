@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v155</title>
+<title>MeatManagement v156</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -393,7 +393,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v155]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v156]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -2064,6 +2064,15 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <label class="check"><input id="canProduce" type="checkbox">يمكن إنتاجه</label>
 <label class="check"><input id="canSell" type="checkbox">يمكن بيعه</label>
 <label class="check"><input id="canLoad" type="checkbox">يمكن تحميله</label>
+<label class="check"><input id="canBeRecipeIngredient" type="checkbox">يمكن استخدامه كمكوّن في تصنيع منتج آخر</label>
+</div>
+<div class="card" style="margin-top:12px">
+  <div class="row" style="justify-content:space-between;align-items:center">
+    <strong>تحويلات وحدات الصنف</strong>
+    <button id="addProductConversionBtn" class="btn secondary" type="button" style="width:auto;margin:0">إضافة وحدة</button>
+  </div>
+  <div class="details">أدخل كمية الوحدة الواحدة بما يعادلها من وحدة المخزون الأساسية. مثال: كرتونة = 20 كجم، وطبق 450 جرام = 0.45 كجم.</div>
+  <div id="productConversionRows"></div>
 </div>
 <label class="check"><input id="active" type="checkbox" checked>المنتج نشط</label>
 <button id="saveBtn" class="btn" type="submit">حفظ</button>
@@ -2074,7 +2083,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v155</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v156</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -4207,14 +4216,14 @@ function renderProducts(){
       const unitDetails='الوحدات: مخزون '+esc(unitName(p.base_unit_id))+' | شراء '+esc(unitName(p.purchase_unit_id))+' | بيع '+esc(unitName(p.sales_unit_id));
       const hasPrices=[p.min_selling_price,p.target_selling_price,p.max_selling_price].some(v=>v!==null&&v!==undefined&&v!=="");
       const priceDetails=hasPrices?'<div class="details">أسعار البيع — أدنى: '+(p.min_selling_price==null?"—":esc(fmt(p.min_selling_price)))+' | مستهدف: '+(p.target_selling_price==null?"—":esc(fmt(p.target_selling_price)))+' | أقصى: '+(p.max_selling_price==null?"—":esc(fmt(p.max_selling_price)))+'</div>':"";
-      const uses=[["can_be_purchased","شراء"],["can_be_produced","إنتاج"],["can_be_sold","بيع"],["can_be_loaded","تحميل"]].filter(([key])=>p[key]).map(([,label])=>label);
+      const uses=[["can_be_purchased","شراء"],["can_be_produced","إنتاج"],["can_be_sold","بيع"],["can_be_loaded","تحميل"],["can_be_recipe_ingredient","مكوّن تصنيع"]].filter(([key])=>p[key]).map(([,label])=>label);
       const statusBadge=p.is_active?'<span class="badge badge-paid">نشط</span>':'<span class="badge badge-cancel">موقوف</span>';
       const usageBadges=uses.length?uses.map(label=>'<span class="badge">'+label+'</span>').join(""):'<span class="badge">لا توجد استخدامات مفعلة</span>';
       card.innerHTML='<div class="pname">'+esc(p.product_name)+'</div><div class="details">الكود: '+esc(p.product_code||"—")+' | التصنيف: '+esc(category)+(p.barcode?' | الباركود: '+esc(p.barcode):"")+'</div>'+operatingTypeDetails+'<div class="details">'+unitDetails+(p.units_per_carton?' | عدد الوحدات بالكرتونة: '+esc(fmtQty(p.units_per_carton)):"")+(p.shelf_life_months?' | صلاحية الإنتاج: '+esc(p.shelf_life_months)+' شهر':(p.shelf_life_days?' | صلاحية الإنتاج: '+esc(p.shelf_life_days)+' يوم':""))+'</div><div class="details">حد إعادة الطلب: '+(p.minimum_stock==null?"—":esc(fmtQty(p.minimum_stock)))+'</div>'+priceDetails+'<div>'+statusBadge+usageBadges+'</div>';
       if(canViewStock){const historyBtn=document.createElement("button");historyBtn.type="button";historyBtn.className="btn secondary";historyBtn.style.marginTop="10px";historyBtn.textContent="حركة الصنف / كارت الصنف";historyBtn.onclick=()=>viewProductStockMovements(p.product_id);card.appendChild(historyBtn);}
       if(canManage){const btn=document.createElement("button");btn.className="btn secondary";btn.textContent="تعديل بيانات الصنف";btn.onclick=()=>{
         refreshProductCategoryOptions(p.category_id);
-        $("editId").value=p.product_id;$("pname").value=p.product_name;$("pcode").value=p.product_code;$("barcode").value=p.barcode||"";$("ptype").value=p.product_type;$("category").value=p.category_id;$("baseUnit").value=String(p.base_unit_id||"");$("purchaseUnit").value=String(p.purchase_unit_id||"");$("salesUnit").value=String(p.sales_unit_id||"");$("minStock").value=p.minimum_stock;$("minPrice").value=p.min_selling_price||"";$("targetPrice").value=p.target_selling_price||"";$("maxPrice").value=p.max_selling_price||"";$("unitsCarton").value=p.units_per_carton||"";$("shelfLifeMonths").value=p.shelf_life_months||"";$("shelfLifeDays").value=p.shelf_life_months?"":(p.shelf_life_days||"");$("active").checked=p.is_active;$("canPurchase").checked=p.can_be_purchased;$("canProduce").checked=p.can_be_produced;$("canSell").checked=p.can_be_sold;$("canLoad").checked=p.can_be_loaded;$("formTitle").textContent="تعديل الصنف";if($("formMsg"))clear($("formMsg"));$("productFormModal").classList.add("active");
+        $("editId").value=p.product_id;$("pname").value=p.product_name;$("pcode").value=p.product_code;$("barcode").value=p.barcode||"";$("ptype").value=p.product_type;$("category").value=p.category_id;$("baseUnit").value=String(p.base_unit_id||"");$("purchaseUnit").value=String(p.purchase_unit_id||"");$("salesUnit").value=String(p.sales_unit_id||"");$("minStock").value=p.minimum_stock;$("minPrice").value=p.min_selling_price||"";$("targetPrice").value=p.target_selling_price||"";$("maxPrice").value=p.max_selling_price||"";$("unitsCarton").value=p.units_per_carton||"";$("shelfLifeMonths").value=p.shelf_life_months||"";$("shelfLifeDays").value=p.shelf_life_months?"":(p.shelf_life_days||"");$("active").checked=p.is_active;$("canPurchase").checked=p.can_be_purchased;$("canProduce").checked=p.can_be_produced;$("canSell").checked=p.can_be_sold;$("canLoad").checked=p.can_be_loaded;$("canBeRecipeIngredient").checked=!!p.can_be_recipe_ingredient;loadProductConversionEditor(p.product_id);$("formTitle").textContent="تعديل الصنف";if($("formMsg"))clear($("formMsg"));$("productFormModal").classList.add("active");
       };card.appendChild(btn);}
       heading.appendChild(card);
     });
@@ -4224,6 +4233,8 @@ function renderProducts(){
 window.openNewProductForm=function(){
   const form=$("productForm");
   if(form) form.reset();
+  productConversionOriginalUnits=[];
+  $("productConversionRows")?.replaceChildren();
   $("editId").value="";
   $("formTitle").textContent="إضافة منتج جديد";
   refreshProductCategoryOptions();
@@ -4246,6 +4257,41 @@ if($("packageOptionForm"))$("packageOptionForm").addEventListener("submit",async
 
 if($("shelfLifeMonths")) $("shelfLifeMonths").addEventListener("input",()=>{if($("shelfLifeMonths").value)$("shelfLifeDays").value="";});
 if($("shelfLifeDays")) $("shelfLifeDays").addEventListener("input",()=>{if($("shelfLifeDays").value)$("shelfLifeMonths").value="";});
+
+let productConversionOriginalUnits=[];
+function addProductConversionRow(conversion=null){
+  const box=$("productConversionRows");if(!box)return;
+  const row=document.createElement("div");row.className="item-row product-conversion-row";
+  const unit=document.createElement("select");unit.className="product-conversion-unit";unit.required=true;
+  const first=document.createElement("option");first.value="";first.textContent="اختر وحدة التحويل";unit.appendChild(first);
+  units.filter(x=>x.is_active!==false).forEach(x=>{const op=document.createElement("option");op.value=String(x.unit_id);op.textContent=x.unit_name;unit.appendChild(op);});
+  const factor=document.createElement("input");factor.className="product-conversion-factor";factor.type="number";factor.min="0.000001";factor.step="0.000001";factor.placeholder="كمية الوحدة من وحدة المخزون";factor.required=true;
+  const remove=document.createElement("button");remove.type="button";remove.className="btn danger";remove.textContent="حذف";remove.onclick=()=>row.remove();
+  const unitLabel=document.createElement("label");unitLabel.textContent="الوحدة";unitLabel.appendChild(unit);
+  const factorLabel=document.createElement("label");factorLabel.textContent="المعادِل بوحدة المخزون الأساسية";factorLabel.appendChild(factor);
+  row.append(unitLabel,factorLabel,remove);box.appendChild(row);
+  if(conversion){unit.value=String(conversion.unit_id);factor.value=String(conversion.base_quantity_per_unit);}
+}
+function loadProductConversionEditor(productId){
+  const box=$("productConversionRows");if(!box)return;box.replaceChildren();
+  const rows=productUnitConversionsCache.filter(x=>Number(x.product_id)===Number(productId)&&x.is_active!==false);
+  productConversionOriginalUnits=rows.map(x=>Number(x.unit_id));
+  rows.forEach(x=>addProductConversionRow(x));
+}
+function readProductConversionRows(){
+  const rows=[...document.querySelectorAll("#productConversionRows .product-conversion-row")].map(row=>({
+    unit_id:Number(row.querySelector(".product-conversion-unit")?.value||0),
+    factor:Number(row.querySelector(".product-conversion-factor")?.value||0)
+  }));
+  const seen=new Set();
+  for(const row of rows){
+    if(!(row.unit_id>0&&row.factor>0))throw new Error("أكمل وحدة التحويل ومعاملها بقيمة أكبر من صفر.");
+    if(seen.has(row.unit_id))throw new Error("لا يمكن تكرار وحدة التحويل للصنف نفسه.");
+    seen.add(row.unit_id);
+  }
+  return rows;
+}
+if($("addProductConversionBtn"))$("addProductConversionBtn").addEventListener("click",()=>addProductConversionRow());
 
 if($("productForm")) $("productForm").addEventListener("submit", async e => { 
   e.preventDefault(); 
@@ -4272,13 +4318,28 @@ if($("productForm")) $("productForm").addEventListener("submit", async e => {
     can_be_purchased:$("canPurchase").checked, 
     can_be_produced:$("canProduce").checked, 
     can_be_sold:$("canSell").checked, 
-    can_be_loaded:$("canLoad").checked 
+    can_be_loaded:$("canLoad").checked,
+    can_be_recipe_ingredient:$("canBeRecipeIngredient").checked
   }; 
-  try{ 
+  try{
+    const conversionRows=readProductConversionRows();
     const result=id
-      ? await db.from("products").update(payload).eq("product_id",id)
-      : await db.from("products").insert(payload);
+      ? await db.from("products").update(payload).eq("product_id",id).select("product_id").single()
+      : await db.from("products").insert(payload).select("product_id").single();
     if(result.error) throw result.error;
+    const savedProductId=Number(result.data?.product_id||id||0);
+    if(!savedProductId)throw new Error("تعذر تحديد الصنف بعد الحفظ.");
+    if(conversionRows.length){
+      const rows=conversionRows.map(x=>({product_id:savedProductId,unit_id:x.unit_id,base_quantity_per_unit:x.factor,is_active:true,updated_at:new Date().toISOString()}));
+      const {error:conversionSaveError}=await db.from("product_unit_conversions").upsert(rows,{onConflict:"product_id,unit_id"});
+      if(conversionSaveError)throw conversionSaveError;
+    }
+    const retainedUnits=conversionRows.map(x=>x.unit_id);
+    const removedUnits=productConversionOriginalUnits.filter(x=>!retainedUnits.includes(x));
+    if(removedUnits.length){
+      const {error:conversionDisableError}=await db.from("product_unit_conversions").update({is_active:false,updated_at:new Date().toISOString()}).eq("product_id",savedProductId).in("unit_id",removedUnits);
+      if(conversionDisableError)throw conversionDisableError;
+    }
     $("productFormModal").classList.remove('active'); 
     $("productForm").reset(); 
     loadProducts(); 
@@ -6592,7 +6653,10 @@ function addInvoiceItemRow() {
     unitSel.replaceChildren(); 
     const firstU=document.createElement("option");firstU.value="";firstU.textContent="اختر الوحدة";unitSel.appendChild(firstU); 
     const conversionIds=productUnitConversionsCache.filter(x=>Number(x.product_id)===Number(prodSel.value)).map(x=>Number(x.unit_id));
-    [baseUnitId,salesUnitId,...conversionIds].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i).forEach(unitId=>{
+    const selectedProduct=productsCache.find(p=>Number(p.product_id)===Number(prodSel.value));
+    const isRawMeatCartonOnly=selectedProduct?.product_type==="RAW"&&Number(selectedProduct.category_id)===19;
+    const selectableUnitIds=isRawMeatCartonOnly?[salesUnitId,...conversionIds]:[baseUnitId,salesUnitId,...conversionIds];
+    selectableUnitIds.filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i).forEach(unitId=>{
       const unitOption=document.createElement("option");unitOption.value=String(unitId);unitOption.textContent=unitName(unitId);unitSel.appendChild(unitOption);
     });
     if(unitsCarton>0&&cartonUnitId){ 
@@ -9105,7 +9169,7 @@ function addRecipeItemRow(item){
   const prodLabel=document.createElement("label"); prodLabel.textContent="مكوّن التصنيع *"; 
   const prodSel=document.createElement("select"); prodSel.className="item-product"; prodSel.required=true; 
   const first=document.createElement("option"); first.value=""; first.textContent="اختر المكون"; prodSel.appendChild(first); 
-  productsCache.filter(p=>p.is_active&&["RAW","SEMI_FINISHED"].includes(p.product_type)).forEach(p=>{ 
+  productsCache.filter(p=>p.is_active&&(["RAW","SEMI_FINISHED"].includes(p.product_type)||p.can_be_recipe_ingredient===true)).forEach(p=>{ 
     const op=document.createElement("option"); 
     op.value=String(p.product_id); 
     op.textContent=p.product_name; 
