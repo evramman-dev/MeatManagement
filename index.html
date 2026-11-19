@@ -4330,7 +4330,7 @@ if($("productForm")) $("productForm").addEventListener("submit", async e => {
     const savedProductId=Number(result.data?.product_id||id||0);
     if(!savedProductId)throw new Error("تعذر تحديد الصنف بعد الحفظ.");
     if(conversionRows.length){
-      const rows=conversionRows.map(x=>({product_id:savedProductId,unit_id:x.unit_id,base_quantity_per_unit:x.factor,is_active:true}));
+      const rows=conversionRows.map(x=>({product_id:savedProductId,unit_id:x.unit_id,base_quantity_per_unit:x.factor,is_active:true,updated_at:new Date().toISOString()}));
       const {error:conversionSaveError}=await db.from("product_unit_conversions").upsert(rows,{onConflict:"product_id,unit_id"});
       if(conversionSaveError)throw conversionSaveError;
     }
@@ -6653,7 +6653,10 @@ function addInvoiceItemRow() {
     unitSel.replaceChildren(); 
     const firstU=document.createElement("option");firstU.value="";firstU.textContent="اختر الوحدة";unitSel.appendChild(firstU); 
     const conversionIds=productUnitConversionsCache.filter(x=>Number(x.product_id)===Number(prodSel.value)).map(x=>Number(x.unit_id));
-    [baseUnitId,salesUnitId,...conversionIds].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i).forEach(unitId=>{
+    const selectedProduct=productsCache.find(p=>Number(p.product_id)===Number(prodSel.value));
+    const isRawMeatCartonOnly=selectedProduct?.product_type==="RAW"&&Number(selectedProduct.category_id)===19;
+    const selectableUnitIds=isRawMeatCartonOnly?[salesUnitId,...conversionIds]:[baseUnitId,salesUnitId,...conversionIds];
+    selectableUnitIds.filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i).forEach(unitId=>{
       const unitOption=document.createElement("option");unitOption.value=String(unitId);unitOption.textContent=unitName(unitId);unitSel.appendChild(unitOption);
     });
     if(unitsCarton>0&&cartonUnitId){ 
