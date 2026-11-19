@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v149</title>
+<title>MeatManagement v150</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -392,7 +392,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v149]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v150]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -2073,7 +2073,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v149</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v150</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -2809,7 +2809,7 @@ function fillProductionRecipeSelect(){ const el=$("productionRecipe"); if(!el)re
 function fillTripSourceSelect(){ const el=$("tripSource"); if(!el) return; const cur=el.value; el.replaceChildren(); const first=document.createElement("option"); first.value=""; first.textContent="اختر مخزن المصدر"; el.appendChild(first); locationsCache.filter(l=>l.is_active && ["MAIN_WAREHOUSE","FRIDGE"].includes(l.location_type)).forEach(l=>{ const op=document.createElement("option"); op.value=String(l.location_id); op.textContent=l.location_name+" ("+l.location_code+")"; el.appendChild(op); }); el.value=cur; }
 function fillTripVehicleSelect(){ const el=$("tripVehicle"); if(!el) return; const cur=el.value; el.replaceChildren(); const first=document.createElement("option"); first.value=""; first.textContent="اختر السيارة"; el.appendChild(first); locationsCache.filter(l=>l.is_active && l.location_type==="VEHICLE").forEach(l=>{ const op=document.createElement("option"); op.value=String(l.location_id); op.textContent=l.location_name+" ("+l.location_code+")"; el.appendChild(op); }); el.value=cur; }
 async function fillTripRepSelect(){ const el=$("tripRepSelect"); if(!el) return; el.replaceChildren(); const first=document.createElement("option"); first.value=""; first.textContent="جارٍ تحميل المندوبين..."; el.appendChild(first); const {data,error}=await db.from("sales_reps").select("sales_rep_id,name,rep_name,is_active").eq("is_active",true).order("sales_rep_id"); if(error) throw error; el.replaceChildren(); const choose=document.createElement("option"); choose.value=""; choose.textContent="اختر المندوب"; el.appendChild(choose); (data||[]).forEach(r=>{ const op=document.createElement("option"); op.value=String(r.sales_rep_id); op.textContent=r.name||r.rep_name||("مندوب رقم "+r.sales_rep_id); el.appendChild(op); }); if(!data||!data.length) choose.textContent="لا يوجد مندوبون نشطون"; }
-function fillStockTransferSelects(){ const s=$("stSource"); const d=$("stDest"); if(s&&d){ const cs=s.value, cd=d.value; s.replaceChildren(); d.replaceChildren(); const f1=document.createElement("option");f1.value="";f1.textContent="اختر الموقع";s.appendChild(f1); const f2=document.createElement("option");f2.value="";f2.textContent="اختر الموقع";d.appendChild(f2); locationsCache.filter(l=>l.is_active).forEach(l=>{ const op1=document.createElement("option");op1.value=String(l.location_id);op1.textContent=l.location_name;s.appendChild(op1); const op2=document.createElement("option");op2.value=String(l.location_id);op2.textContent=l.location_name;d.appendChild(op2); }); s.value=cs; d.value=cd; } }
+function fillStockTransferSelects(){ const s=$("stSource"); const d=$("stDest"); if(s&&d){ const cs=s.value, cd=d.value; s.replaceChildren(); d.replaceChildren(); const f1=document.createElement("option");f1.value="";f1.textContent="اختر المخزن أو الموقع";s.appendChild(f1); const f2=document.createElement("option");f2.value="";f2.textContent="اختر المخزن أو الموقع";d.appendChild(f2); locationsCache.filter(l=>l.is_active && l.location_type!=="VEHICLE").forEach(l=>{ const label=l.location_name+" ("+l.location_code+")"; const op1=document.createElement("option");op1.value=String(l.location_id);op1.textContent=label;s.appendChild(op1); const op2=document.createElement("option");op2.value=String(l.location_id);op2.textContent=label;d.appendChild(op2); }); s.value=cs; d.value=cd; } }
 function fillPartnerSelect(){ const el=$("ptPartner"); if(!el)return; const cur=el.value; el.replaceChildren(); const first=document.createElement("option"); first.value=""; first.textContent="اختر الشريك"; el.appendChild(first); partnersCache.filter(p=>p.is_active).forEach(p=>{ const op=document.createElement("option"); op.value=String(p.partner_id); op.textContent=p.partner_name; el.appendChild(op); }); el.value=cur; }
 function fillPartnerTreasurySelect(){ const el=$("ptTreasury"); if(!el)return; const cur=el.value; el.replaceChildren(); const first=document.createElement("option"); first.value=""; first.textContent="اختر الخزنة"; el.appendChild(first); treasuriesCache.filter(t=>t.is_active).forEach(t=>{ const op=document.createElement("option"); op.value=String(t.treasury_id); op.textContent=t.treasury_name; el.appendChild(op); }); el.value=cur; }
 function fillExpenseTripSelect() { const el = $("expenseTrip"); if(!el) return; const cur = el.value; el.replaceChildren(); const first = document.createElement("option"); first.value = ""; first.textContent = "بدون ربط"; el.appendChild(first); tripsCache.filter(t => t.status === "ACTIVE").forEach(t => { const op = document.createElement("option"); op.value = String(t.trip_id); op.textContent = t.trip_number + " (" + (t.rep_name||"") + ")"; el.appendChild(op); }); el.value = cur; syncExpenseTreasuryForTrip(); }
