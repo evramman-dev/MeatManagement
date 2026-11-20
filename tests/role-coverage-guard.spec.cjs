@@ -157,3 +157,40 @@ test('Warehouse and production return-inspection permissions remain separate', (
   expect(appHtml).toContain('canInspectReturnsProduction=await permission("PRODUCTION_MANAGE") || isSystemAdmin');
   expect(appHtml).not.toContain('canInspectReturnsProduction=canInspectReturnsWarehouse');
 });
+
+
+const returnInspectionSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261116065753_sales_return_joint_inspection_rework.sql'), 'utf8');
+const notificationReadSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261120132214_block_partner_notification_read_updates_20261120.sql'), 'utf8');
+const notificationGrantSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115152852_restrict_notification_recipient_updates_to_read_at.sql'), 'utf8');
+
+test('Database enforces two different users for the two return inspection stages', () => {
+  expect(returnInspectionSql).toContain('CHECK(warehouse_inspected_by IS NULL OR production_inspected_by IS NULL OR warehouse_inspected_by<>production_inspected_by)');
+  const start = returnInspectionSql.indexOf('CREATE OR REPLACE FUNCTION public.record_sales_return_item_inspection(');
+  const end = returnInspectionSql.indexOf('REVOKE ALL ON FUNCTION public.record_sales_return_item_inspection', start);
+  const fn = start < 0 || end < 0 ? null : returnInspectionSql.slice(start, end);
+  expect(fn, 'Inspection RPC definition should exist').not.toBeNull();
+  expect(fn).toContain('SECURITY DEFINER');
+  expect(fn).toContain('IF auth.uid() IS NULL');
+  expect(fn).toContain("public.has_permission('INVENTORY_ADJUST')");
+  expect(fn).toContain("public.has_permission('PRODUCTION_MANAGE')");
+  expect(fn).toContain('v_i.production_inspected_by=auth.uid()');
+  expect(fn).toContain('v_i.warehouse_inspected_by=auth.uid()');
+  expect(fn).toContain('FOR UPDATE');
+});
+
+test('Return inspection RPC is not executable by public or anonymous users', () => {
+  expect(returnInspectionSql).toContain('REVOKE ALL ON FUNCTION public.record_sales_return_item_inspection(bigint,text,text,text,numeric,numeric,numeric) FROM PUBLIC,anon');
+  expect(returnInspectionSql).toContain('GRANT EXECUTE ON FUNCTION public.record_sales_return_item_inspection(bigint,text,text,text,numeric,numeric,numeric) TO authenticated');
+});
+
+test('Notification recipients can only update their read timestamp through table grants', () => {
+  expect(notificationGrantSql).toContain('REVOKE UPDATE ON TABLE public.notification_recipients FROM authenticated');
+  expect(notificationGrantSql).toContain('GRANT UPDATE (read_at) ON TABLE public.notification_recipients TO authenticated');
+});
+
+test('Marking a notification read is limited to its recipient and blocks partner accounts', () => {
+  expect(notificationReadSql).toContain("IF auth.uid() IS NULL THEN");
+  expect(notificationReadSql).toContain("IF public.get_current_user_role() = 'PARTNER' THEN");
+  expect(notificationReadSql).toContain('WHERE notification_id = p_notification_id');
+  expect(notificationReadSql).toContain('AND user_id = auth.uid()');
+});
