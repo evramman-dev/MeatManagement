@@ -355,8 +355,8 @@ test('MeatManagement read-only navigation, permissions and session smoke test', 
   await expect(partnerSummaryButton, 'Partner management summary should be visible to the signed-in partner or system administrator.').toBeVisible();
   await partnerSummaryButton.click();
   await expect(page.locator('#homePartnerSummaryPanel')).toBeVisible();
-  await expect(page.locator('#partnerSummaryFrom')).toHaveValue(/\\d{4}-\\d{2}-\\d{2}/);
-  await expect(page.locator('#partnerSummaryTo')).toHaveValue(/\\d{4}-\\d{2}-\\d{2}/);
+  await expect(page.locator('#partnerSummaryFrom')).toHaveValue(/[0-9]{4}-[0-9]{2}-[0-9]{2}/);
+  await expect(page.locator('#partnerSummaryTo')).toHaveValue(/[0-9]{4}-[0-9]{2}-[0-9]{2}/);
   await page.locator('#refreshPartnerSummary').click();
   const partnerSummaryContent = page.locator('#partnerManagementSummaryContent');
   await expect(partnerSummaryContent).not.toContainText('جارٍ إعداد التقرير ومراجعة الأرقام...', { timeout: 90000 });
