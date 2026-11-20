@@ -133,3 +133,27 @@ test('Return inspection requires warehouse review first and a different producti
   expect(inspection).toContain('canInspectReturnsProduction && !row.production_inspected_by');
   expect(inspection).toContain('!!row.warehouse_inspected_by && row.warehouse_inspected_by!==currentUserId');
 });
+
+
+test('Return inspection controls require the matching permission and block the previous inspector', () => {
+  const inspection = sourceBetween('async function openSalesReturnInspection(ret){', 'async function viewSalesReturn(ret){');
+  expect(inspection, 'Return inspection modal should exist').not.toBeNull();
+  expect(inspection).toContain('addApproval("WAREHOUSE",canInspectReturnsWarehouse');
+  expect(inspection).toContain('addApproval("PRODUCTION",canInspectReturnsProduction');
+  expect(inspection).toContain('if(otherInspector&&otherInspector===currentUserId)');
+});
+
+test('Return inspection submits the selected stage and validates the full quantity split', () => {
+  const inspection = sourceBetween('async function openSalesReturnInspection(ret){', 'async function viewSalesReturn(ret){');
+  expect(inspection).not.toBeNull();
+  expect(inspection).toContain('p_inspector_type:type');
+  expect(inspection).toContain('db.rpc("record_sales_return_item_inspection"');
+  expect(inspection).toContain('Math.abs(sv+rv+xv-base)>0.000001');
+  expect(inspection).toContain('p_sellable_quantity:sv,p_rework_quantity:rv,p_scrap_quantity:xv');
+});
+
+test('Warehouse and production return-inspection permissions remain separate', () => {
+  expect(appHtml).toContain('canInspectReturnsWarehouse=await permission("INVENTORY_ADJUST") || isSystemAdmin');
+  expect(appHtml).toContain('canInspectReturnsProduction=await permission("PRODUCTION_MANAGE") || isSystemAdmin');
+  expect(appHtml).not.toContain('canInspectReturnsProduction=canInspectReturnsWarehouse');
+});
