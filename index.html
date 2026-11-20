@@ -8612,6 +8612,37 @@ async function loadCollections(){
     renderCollections();
     await loadCustomerCheques();
 }
+async function cancelPostedCollection(col,button){
+  if(!col || col.status!=="POSTED" || !canManageCollections) return;
+  if(col.receipt_destination==="CHEQUE_PENDING"){
+    showToast("يجب تسجيل ارتداد الشيك من شاشة الشيكات.", "error");
+    return;
+  }
+  const reason=prompt("اكتب سبب إلغاء التحصيل "+(col.collection_number||"")+".");
+  if(reason===null) return;
+  if(!reason.trim()){
+    showToast("سبب الإلغاء مطلوب.", "error");
+    return;
+  }
+  const confirmed=confirm("سيؤدي إلغاء التحصيل إلى عكس توزيعه على الفواتير والرصيد الدائن، وخصم المبلغ من الخزنة، وإعادة المديونية المستحقة على العميل عند الحاجة. هل تريد المتابعة؟");
+  if(!confirmed) return;
+  const originalText=button?.textContent||"إلغاء التحصيل";
+  busy(button,true,"جارٍ الإلغاء...",originalText);
+  try{
+    const {error}=await db.rpc("cancel_collection_v2",{
+      p_collection_id:Number(col.collection_id),
+      p_reason:reason.trim()
+    });
+    if(error) throw error;
+    showToast("تم إلغاء التحصيل وعكس توزيعه بنجاح.", "success");
+    await loadCollections();
+    await loadTreasuries();
+  }catch(e){
+    showToast("تعذر إلغاء التحصيل: "+err(e), "error",6000);
+    busy(button,false,"جارٍ الإلغاء...",originalText);
+  }
+}
+
 function renderCollections(){ 
   const box=$("collectionsList"); if(!box) return; 
   box.replaceChildren(); 
@@ -8626,7 +8657,24 @@ function renderCollections(){
     const statusLabel=col.status==="POSTED"?"مرحّل":col.status==="CANCELLED"?"ملغى":"غير مرحّل";
     const destinationLabel=({REP_CASH:"نقدية مع المندوب",REP_CUSTODY:"حساب شخصي للمندوب - عهدة",COMPANY_TREASURY:"حساب الشركة",CHEQUE_PENDING:"شيك تحت التحصيل"})[col.receipt_destination]||"غير محدد";
     const custodyLabel=["REP_CASH","REP_CUSTODY"].includes(col.receipt_destination)?(col.custody_settled_at?"تمت تسوية العهدة":"لم تتم تسوية العهدة"):"";
-    card.innerHTML = `<div class="pname">💰 ${col.collection_number} — ${statusLabel}</div><div class="details">عميل: ${customerName(col.customer_id)} | مبلغ: ${fmt(col.amount)}</div><div class="details">📅 التاريخ: ${formatDate(col.collection_date)} | 👤 المندوب المسؤول: ${repName} | طريقة التحصيل: ${channelLabel} | 🚐 الجولة: ${trip}</div><div class="details">جهة الاستلام: ${destinationLabel}${custodyLabel?" | "+custodyLabel:""}</div>`; 
+    card.innerHTML = `<div class="pname">💰 ${col.collection_number} — ${statusLabel}</div><div class="details">عميل: ${customerName(col.customer_id)} | مبلغ: ${fmt(col.amount)}</div><div class="details">📅 التاريخ: ${formatDate(col.collection_date)} | 👤 المندوب المسؤول: ${repName} | طريقة التحصيل: ${channelLabel} | 🚐 الجولة: ${trip}</div><div class="details">جهة الاستلام: ${destinationLabel}${custodyLabel?" | "+custodyLabel:""}</div>`;
+    if(col.status==="POSTED" && canManageCollections && col.receipt_destination!=="CHEQUE_PENDING"){
+      const actions=document.createElement("div");
+      actions.className="actions";
+      actions.style.marginTop="10px";
+      const cancelBtn=document.createElement("button");
+      cancelBtn.type="button";
+      cancelBtn.className="btn btn-danger";
+      cancelBtn.textContent="إلغاء التحصيل";
+      cancelBtn.addEventListener("click",()=>cancelPostedCollection(col,cancelBtn));
+      actions.appendChild(cancelBtn);
+      card.appendChild(actions);
+    }else if(col.status==="POSTED" && canManageCollections && col.receipt_destination==="CHEQUE_PENDING"){
+      const note=document.createElement("div");
+      note.className="details";
+      note.textContent="لإلغاء هذا التحصيل استخدم إجراء ارتداد الشيك من شاشة الشيكات.";
+      card.appendChild(note);
+    }
     box.appendChild(card); 
   }); 
 }
