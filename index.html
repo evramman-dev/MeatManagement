@@ -4729,17 +4729,54 @@ async function loadPartnerManagementSummary(){
     const staleRows=!slowRes.error?(slowRes.data||[]).slice(0,8):[];
     const inspections=(inspectionRes.data||[]).filter(row=>row.inspection_status!=="CANCELLED");
     let pendingQty=0,sellableQty=0,reworkQty=0,scrapQty=0;
-    let pendingInspectionUnavailable=false;
-    const pendingIds=inspections.filter(row=>!row.final_disposition&&row.inspection_status!=="INSPECTED").map(row=>row.return_item_id);
-    if(pendingIds.length){
-      const pendingRes=await db.from("sales_return_items").select("return_item_id,base_quantity").in("return_item_id",pendingIds);
-      if(!pendingRes.error)pendingQty=(pendingRes.data||[]).reduce((sum,row)=>sum+Number(row.base_quantity||0),0);
+    let pendingValue=0,sellableValue=0,reworkValue=0,scrapValue=0;
+    let pendingInspectionUnavailable=false,inspectionCostUnavailable=false;
+    const inspectionIds=inspections.map(row=>row.return_item_id);
+    const inspectionItemsById={},inspectionCostsById={};
+    if(inspectionIds.length){
+      const [inspectionItemsRes,movementsRes]=await Promise.all([
+        db.from("sales_return_items").select("return_item_id,base_quantity").in("return_item_id",inspectionIds),
+        db.from("stock_movements").select("sales_return_item_id,movement_type,quantity_change,unit_cost,total_cost,notes").in("sales_return_item_id",inspectionIds).in("movement_type",["RETURN","ISSUE"])
+      ]);
+      if(!inspectionItemsRes.error)(inspectionItemsRes.data||[]).forEach(row=>inspectionItemsById[String(row.return_item_id)]=Number(row.base_quantity||0));
       else pendingInspectionUnavailable=true;
+      if(!movementsRes.error)(movementsRes.data||[]).forEach(row=>{
+        const key=String(row.sales_return_item_id);
+        if(!inspectionCostsById[key])inspectionCostsById[key]={unitCost:null,scrapCost:0,hasScrapMovement:false};
+        if(row.movement_type==="RETURN"&&Number(row.quantity_change||0)>0&&row.unit_cost!==null)inspectionCostsById[key].unitCost=Number(row.unit_cost);
+        if(row.movement_type==="ISSUE"&&Number(row.quantity_change||0)<0&&String(row.notes||"").startsWith("هالك مرتجع")){
+          inspectionCostsById[key].scrapCost+=Number(row.total_cost||0);
+          inspectionCostsById[key].hasScrapMovement=true;
+        }
+      });
+      else inspectionCostUnavailable=true;
     }
+    let missingPendingCost=false,missingSellableCost=false,missingReworkCost=false,missingScrapCost=false;
     inspections.forEach(row=>{
-      if(row.final_disposition==="SELLABLE")sellableQty+=Number(row.warehouse_sellable_quantity||0);
-      if(row.final_disposition==="REWORK")reworkQty+=Math.max(Number(row.warehouse_rework_quantity||0),Number(row.production_rework_quantity||0));
-      if(row.final_disposition==="SCRAP")scrapQty+=Math.max(Number(row.warehouse_scrap_quantity||0),Number(row.production_scrap_quantity||0));
+      const key=String(row.return_item_id),baseQty=inspectionItemsById[key]||0,cost=inspectionCostsById[key]||{};
+      const unitCost=cost.unitCost;
+      const isPending=!row.final_disposition&&row.inspection_status!=="INSPECTED";
+      if(isPending){
+        pendingQty+=baseQty;
+        if(unitCost===null||unitCost===undefined)missingPendingCost=true;
+        else pendingValue+=unitCost*baseQty;
+        return;
+      }
+      if(row.inspection_status!=="INSPECTED"||!row.final_disposition)return;
+      const sell=Number(row.warehouse_sellable_quantity||0);
+      const rework=Number(row.warehouse_rework_quantity||0);
+      const scrap=Number(row.warehouse_scrap_quantity||0);
+      sellableQty+=sell;reworkQty+=rework;scrapQty+=scrap;
+      if(unitCost===null||unitCost===undefined){
+        if(sell>0)missingSellableCost=true;
+        if(rework>0)missingReworkCost=true;
+        if(scrap>0&&!cost.hasScrapMovement)missingScrapCost=true;
+      }else{
+        sellableValue+=unitCost*sell;
+        reworkValue+=unitCost*rework;
+        if(scrap>0)scrapValue+=cost.hasScrapMovement?cost.scrapCost:unitCost*scrap;
+      }
+      if(scrap>0&&cost.hasScrapMovement&&unitCost===null)scrapValue+=cost.scrapCost;
     });
     const typeNames={MAIN_WAREHOUSE:"المخزن الرئيسي",FRIDGE:"الثلاجات",VEHICLE:"مخازن السيارات",FACTORY:"المصنع",SHOWROOM:"المعارض"};
     const treasuryTypeNames={CASH:"خزائن نقدية",BANK:"حسابات بنكية",INSTAPAY:"إنستاباي",CHEQUE:"شيكات"};
@@ -4751,7 +4788,8 @@ async function loadPartnerManagementSummary(){
     const warnings=[];
     if(expenseRes.error)warnings.push("تعذر تحميل تفاصيل المصروفات.");
     if(invoiceRes.error||itemDetailsUnavailable)warnings.push("تعذر تحميل تفاصيل أكثر المنتجات مبيعًا بالكامل.");
-    if(pendingInspectionUnavailable)warnings.push("تعذر تحميل كمية المرتجعات التي ما زالت تحت الفحص.");
+    if(pendingInspectionUnavailable)warnings.push("تعذر تحميل كميات بعض بنود المرتجعات.");
+    if(inspectionCostUnavailable)warnings.push("تعذر تحميل تكلفة حركة بعض المرتجعات.");
     if(slowRes.error)warnings.push("تعذر تحميل الأصناف التي لم تسجل صرفًا خلال 30 يومًا.");
     if(inspectionRes.error)warnings.push("تعذر تحميل تصنيف مرتجعات البيع.");
     const profit=profitRow?Number(profitRow.profit||0):null;
@@ -4780,7 +4818,7 @@ async function loadPartnerManagementSummary(){
       "<h3>المصروفات حسب النوع</h3><div class='info'>إجمالي المصروفات المسجلة في شاشة المصروفات: "+fmt(expenseRecordsTotal)+". مصروفات قائمة الأرباح والخسائر من القيود المرحلة: "+(exp===null?"غير متاح":fmt(exp))+". قد يظهر فرق بسبب قيود محاسبية أخرى مثل الإهلاك أو التسويات.</div><div class='table-responsive'><table class='print-table'><thead><tr><th>نوع المصروف</th><th>القيمة</th></tr></thead><tbody>"+expenseHtml+"</tbody></table></div>"+
       "<h3>أكثر المنتجات مبيعًا بالقيمة</h3><div class='info'>الترتيب حسب قيمة بنود فواتير البيع المرحلة خلال الفترة، قبل خصم مرتجعات البيع.</div><div class='table-responsive'><table class='print-table'><thead><tr><th>المنتج</th><th>الكمية الأساسية</th><th>قيمة البيع</th></tr></thead><tbody>"+productHtml+"</tbody></table></div>"+
       "<h3>الأصناف التي لم تسجل صرفًا خلال 30 يومًا</h3><div class='table-responsive'><table class='print-table'><thead><tr><th>المنتج</th><th>الموقع</th><th>الكمية</th><th>آخر صرف</th></tr></thead><tbody>"+staleHtml+"</tbody></table></div>"+
-      "<h3>حالة مرتجعات البيع بعد الفحص</h3><div class='info'>الكميات بوحدة الصنف الأساسية. قيمة التكلفة للبضاعة التالفة أو تحت الفحص غير متاحة من سجل الفحص الحالي، لذلك لا نعرض قيمة مالية تقديرية.</div><div class='total-box'><div class='line'><span>صالح للبيع</span><strong>"+fmtQty(sellableQty)+"</strong></div><div class='line'><span>إعادة تصنيع</span><strong>"+fmtQty(reworkQty)+"</strong></div><div class='line'><span>تالف / إعدام</span><strong>"+fmtQty(scrapQty)+"</strong></div><div class='line'><span>تحت الفحص</span><strong>"+fmtQty(pendingQty)+"</strong></div></div>"+
+      "<h3>حالة مرتجعات البيع بعد الفحص</h3><div class='info'>الكميات بوحدة الصنف الأساسية. القيمة محسوبة من تكلفة حركة استلام المرتجع المسجلة في المخزون، وتكلفة الهالك من حركة الإعدام. إذا تعذر العثور على تكلفة مسجلة لبند، يظهر تنبيه بذلك.</div><div class='total-box'><div class='line'><span>صالح للبيع</span><strong>"+fmtQty(sellableQty)+" | "+(missingSellableCost?"التكلفة غير مكتملة":fmt(sellableValue))+"</strong></div><div class='line'><span>إعادة تصنيع</span><strong>"+fmtQty(reworkQty)+" | "+(missingReworkCost?"التكلفة غير مكتملة":fmt(reworkValue))+"</strong></div><div class='line'><span>تالف / إعدام</span><strong>"+fmtQty(scrapQty)+" | "+(missingScrapCost?"التكلفة غير مكتملة":fmt(scrapValue))+"</strong></div><div class='line'><span>تحت الفحص</span><strong>"+fmtQty(pendingQty)+" | "+(missingPendingCost?"التكلفة غير مكتملة":fmt(pendingValue))+"</strong></div></div>"+
       "<div class='info'>صافي الربح لا يساوي النقدية المتاحة. الربح يعتمد على الإيرادات وتكلفة المبيعات والمصروفات المرحلة. النقدية هي أرصدة الخزائن والبنوك الحالية. وقد تتبقى ديون على العملاء أو التزامات للموردين حتى مع وجود ربح.</div>";
   }catch(e){
     box.innerHTML="<div class='empty error'>تعذر إعداد التقرير: "+esc(err(e))+"</div>";
