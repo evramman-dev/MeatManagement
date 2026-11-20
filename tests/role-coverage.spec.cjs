@@ -27,6 +27,8 @@ const menuIds = [
 for (const role of roles) {
   test('Independent role login and visible-menu report: ' + role.code, async ({ page }) => {
     test.setTimeout(120000);
+    test.skip(process.env.QA_ROLE_TESTS_SAFE_ENVIRONMENT !== 'true',
+      'Skipped safely: QA_ROLE_TESTS_SAFE_ENVIRONMENT is not true. A separate safe database environment is required.');
     test.skip(!baseURL || !role.username || !role.password,
       'Skipped safely: credentials for ' + role.code + ' are not configured.');
 
