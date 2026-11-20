@@ -53,14 +53,20 @@ test('Role coverage never falls back to the shared production smoke-test account
 
 const appHtml = fs.readFileSync(path.resolve(__dirname, '..', 'index.html'), 'utf8');
 
+function getPermissionHelper() {
+  const start = appHtml.indexOf('async function permission(code){');
+  const end = appHtml.indexOf('\n}', start);
+  return start < 0 || end < 0 ? null : appHtml.slice(start, end + 2);
+}
+
 test('Application permission helper fails closed and uses the database permission RPC', () => {
-  const helper = appHtml.match(/async function permission\\(code\\)\\s*\\{[\\s\\S]*?\\n\\}/);
+  const helper = getPermissionHelper();
   expect(helper, 'Permission helper should exist').not.toBeNull();
-  expect(helper[0]).toContain('if(isSystemAdmin) return true');
-  expect(helper[0]).toContain('if(!navigator.onLine) return false');
-  expect(helper[0]).toContain('db.rpc("has_permission",{p_permission_code:code})');
-  expect(helper[0]).toContain('return data===true');
-  expect(helper[0]).toContain('catch (e) { return false; }');
+  expect(helper).toContain('if(isSystemAdmin) return true');
+  expect(helper).toContain('if(!navigator.onLine) return false');
+  expect(helper).toContain('db.rpc("has_permission",{p_permission_code:code})');
+  expect(helper).toContain('return data===true');
+  expect(helper).toContain('catch (e) { return false; }');
 });
 
 test('Trip-load approval and physical dispatch remain separate role actions', () => {
@@ -79,7 +85,7 @@ test('Collection viewing, posting and management use separate permission codes',
 });
 
 test('Permission lookup errors do not grant access', () => {
-  const helper = appHtml.match(/async function permission\\(code\\)\\s*\\{[\\s\\S]*?\\n\\}/);
+  const helper = getPermissionHelper();
   expect(helper).not.toBeNull();
-  expect(helper[0]).toMatch(/catch\\s*\\([^)]*\\)\\s*\\{\\s*return false;\\s*\\}/);
+  expect(helper).toContain('catch (e) { return false; }');
 });
