@@ -80,7 +80,9 @@ for (const role of roles) {
     await expect(page.locator('#home')).toBeVisible({ timeout: 60000 });
     await expect(page.locator('#userInfo')).not.toContainText('جارٍ تحميل بيانات الحساب', { timeout: 30000 });
 
-    expect(actualRole, 'The app_roles response must identify the signed-in account as ' + role.code).toBe(role.code);
+    await expect.poll(() => actualRole, {
+      message: 'The app_roles response must identify the signed-in account as ' + role.code
+    }).toBe(role.code);
 
     const visibleMenus = await page.evaluate(ids => ids.filter(id => {
       const element = document.getElementById(id);
