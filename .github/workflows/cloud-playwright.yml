@@ -58,7 +58,7 @@ jobs:
           exit 1
 
       - name: Run safe pull-request browser checks
-        if: github.event_name == 'pull_request'
+        if: github.event_name != 'push'
         env:
           BASE_URL: https://evramman-dev.github.io/MeatManagement/
           PLAYWRIGHT_HTML_OPEN: never
@@ -68,7 +68,7 @@ jobs:
           --trace retain-on-failure --reporter=list,html
 
       - name: Run full browser checks outside pull requests
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'push'
         env:
           BASE_URL: https://evramman-dev.github.io/MeatManagement/
           TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
