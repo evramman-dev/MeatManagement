@@ -336,6 +336,7 @@ test('MeatManagement read-only navigation, permissions and session smoke test', 
     }
   });
 
+  await page.route(baseURL, route => route.fulfill({ path: path.resolve(__dirname, '..', 'index.html'), contentType: 'text/html' }));
   const deployedResponse = await page.goto(baseURL, { waitUntil: 'domcontentloaded' });
   expect(deployedResponse, 'The deployed application should return a document response.').not.toBeNull();
   expect(deployedResponse.status(), 'The deployed application should return HTTP 200.').toBe(200);
@@ -508,6 +509,7 @@ test('MeatManagement Android-sized layout and horizontal overflow check', async 
   }
 
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.route(baseURL, route => route.fulfill({ path: path.resolve(__dirname, '..', 'index.html'), contentType: 'text/html' }));
   const deployedResponse = await page.goto(baseURL, { waitUntil: 'domcontentloaded' });
   expect(deployedResponse, 'The deployed application should return a document response.').not.toBeNull();
   expect(deployedResponse.status(), 'The deployed application should return HTTP 200.').toBe(200);
