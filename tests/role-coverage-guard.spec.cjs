@@ -89,3 +89,47 @@ test('Permission lookup errors do not grant access', () => {
   expect(helper).not.toBeNull();
   expect(helper).toContain('catch (e) { return false; }');
 });
+
+
+function sourceBetween(startMarker, endMarker) {
+  const start = appHtml.indexOf(startMarker);
+  const end = appHtml.indexOf(endMarker, start);
+  return start < 0 || end < 0 ? null : appHtml.slice(start, end);
+}
+
+test('General and selected-user notifications are restricted to system administrators', () => {
+  const sender = sourceBetween('async function sendManualNotification(){', 'if($("notificationSendAll"))');
+  expect(sender, 'Manual notification sender should exist').not.toBeNull();
+  expect(sender).toContain('if(!isSystemAdmin)throw new Error("إرسال التنبيهات متاح لمدير النظام فقط.")');
+  expect(sender).toContain('const notificationType=sendAll?"GENERAL":"MANUAL"');
+  expect(sender).toContain('p_user_ids:users');
+  expect(sender).toContain('audience:sendAll?"ALL_ACTIVE_USERS":"SELECTED_USERS"');
+});
+
+test('Task notifications are restricted to system administrators and selected recipients', () => {
+  const sender = sourceBetween('async function sendTaskNotification(){', 'async function appendReturnInspectionTasks');
+  expect(sender, 'Task notification sender should exist').not.toBeNull();
+  expect(sender).toContain('if(!isSystemAdmin)throw new Error("إرسال تنبيهات المهام متاح لمدير النظام فقط.")');
+  expect(sender).toContain('p_notification_type:"TASK"');
+  expect(sender).toContain('p_user_ids:users');
+  expect(sender).toContain('audience:"SELECTED_USERS"');
+});
+
+test('General notifications and task notifications remain separated in each user inbox', () => {
+  const generalInbox = sourceBetween('async function loadNotifications(){', 'async function markAllNotificationsRead(){');
+  const taskInbox = sourceBetween('async function loadTaskNotifications(){', 'async function sendTaskNotification(){');
+  expect(generalInbox, 'General notification inbox should exist').not.toBeNull();
+  expect(taskInbox, 'Task notification inbox should exist').not.toBeNull();
+  expect(generalInbox).toContain('.eq("user_id",userId)');
+  expect(generalInbox).toContain('notification_type!=="TASK"');
+  expect(taskInbox).toContain('.eq("user_id",userId)');
+  expect(taskInbox).toContain('notification_type==="TASK"');
+});
+
+test('Return inspection requires warehouse review first and a different production reviewer', () => {
+  const inspection = sourceBetween('async function appendReturnInspectionTasks(target){', 'async function loadTasks()');
+  expect(inspection, 'Return inspection task builder should exist').not.toBeNull();
+  expect(inspection).toContain('canInspectReturnsWarehouse && !row.warehouse_inspected_by');
+  expect(inspection).toContain('canInspectReturnsProduction && !row.production_inspected_by');
+  expect(inspection).toContain('!!row.warehouse_inspected_by && row.warehouse_inspected_by!==currentUserId');
+});
