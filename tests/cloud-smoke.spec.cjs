@@ -2,15 +2,15 @@ const { test, expect } = require('@playwright/test');
 const fs = require('node:fs');
 const path = require('node:path');
 const qaHtml = fs.readFileSync(path.resolve(__dirname, '..', 'index.html'), 'utf8');
-const returnInspectionMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115230000_sales_return_joint_inspection_rework.sql'), 'utf8');
-const packagingRecoveryMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115232000_support_packaging_recovery_and_partial_rework.sql'), 'utf8');
+const returnInspectionMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261116065753_sales_return_joint_inspection_rework.sql'), 'utf8');
+const packagingRecoveryMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261116065754_support_packaging_recovery_and_partial_rework.sql'), 'utf8');
 
 const exchangeMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115144036_fix_sales_exchange_request_idempotency.sql'), 'utf8');
 const exchangeCancellationMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115144743_fix_sales_exchange_cancellation_accounting.sql'), 'utf8');
 const exchangeCancellationOrderMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115144800_fix_sales_exchange_cancellation_stock_reversal_order.sql'), 'utf8');
 const legacyExchangeCancelGuardSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115145032_guard_legacy_sales_return_cancel_from_exchanges.sql'), 'utf8');
 const fixedAssetsPolicyMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115145626_consolidate_fixed_assets_select_policies.sql'), 'utf8');
-const openingBalanceAdminMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115150500_restrict_stock_opening_balance_to_system_admin.sql'), 'utf8');
+const openingBalanceAdminMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115150347_restrict_stock_opening_balance_to_system_admin.sql'), 'utf8');
 const salesReturnIdempotencyMigrationSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261115160755_guard_sales_return_request_number_idempotency.sql'), 'utf8');
 
 test.use({ serviceWorkers: 'block' });
