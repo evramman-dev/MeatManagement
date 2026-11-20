@@ -4706,12 +4706,15 @@ async function loadPartnerManagementSummary(){
     const expenseRows=Object.entries(expenses).sort((a,b)=>b[1]-a[1]).slice(0,8);
     const expenseRecordsTotal=Object.values(expenses).reduce((sum,value)=>sum+value,0);
     let topProducts=[];
+    let itemDetailsUnavailable=false;
     if(!invoiceRes.error&&invoiceRes.data?.length){
       const invoiceIds=invoiceRes.data.map(row=>row.sales_invoice_id);
       const itemRes=await db.from("sales_invoice_items").select("product_id,quantity,base_quantity,line_total").in("sales_invoice_id",invoiceIds).limit(10000);
+      if(itemRes.error)itemDetailsUnavailable=true;
       if(!itemRes.error&&itemRes.data?.length){
         const productIds=[...new Set(itemRes.data.map(row=>row.product_id))];
         const productRes=await db.from("products").select("product_id,product_name").in("product_id",productIds);
+        if(productRes.error)itemDetailsUnavailable=true;
         const names={};(productRes.data||[]).forEach(row=>names[String(row.product_id)]=row.product_name);
         const grouped={};
         itemRes.data.forEach(row=>{
@@ -4726,10 +4729,12 @@ async function loadPartnerManagementSummary(){
     const staleRows=!slowRes.error?(slowRes.data||[]).slice(0,8):[];
     const inspections=(inspectionRes.data||[]).filter(row=>row.inspection_status!=="CANCELLED");
     let pendingQty=0,sellableQty=0,reworkQty=0,scrapQty=0;
+    let pendingInspectionUnavailable=false;
     const pendingIds=inspections.filter(row=>!row.final_disposition&&row.inspection_status!=="INSPECTED").map(row=>row.return_item_id);
     if(pendingIds.length){
       const pendingRes=await db.from("sales_return_items").select("return_item_id,base_quantity").in("return_item_id",pendingIds);
       if(!pendingRes.error)pendingQty=(pendingRes.data||[]).reduce((sum,row)=>sum+Number(row.base_quantity||0),0);
+      else pendingInspectionUnavailable=true;
     }
     inspections.forEach(row=>{
       if(row.final_disposition==="SELLABLE")sellableQty+=Number(row.warehouse_sellable_quantity||0);
@@ -4745,7 +4750,8 @@ async function loadPartnerManagementSummary(){
     const staleHtml=staleRows.length?staleRows.map(row=>"<tr><td>"+esc(row.product_name||"")+"</td><td>"+esc(row.location_name||"")+"</td><td>"+fmtQty(row.quantity)+"</td><td>"+(row.last_movement_date?formatDate(String(row.last_movement_date).slice(0,10)):"لا يوجد صرف مسجل")+"</td></tr>").join(""):"<tr><td colspan='4'>لا توجد أرصدة بلا صرف خلال 30 يومًا.</td></tr>";
     const warnings=[];
     if(expenseRes.error)warnings.push("تعذر تحميل تفاصيل المصروفات.");
-    if(invoiceRes.error)warnings.push("تعذر تحميل أكثر المنتجات مبيعًا.");
+    if(invoiceRes.error||itemDetailsUnavailable)warnings.push("تعذر تحميل تفاصيل أكثر المنتجات مبيعًا بالكامل.");
+    if(pendingInspectionUnavailable)warnings.push("تعذر تحميل كمية المرتجعات التي ما زالت تحت الفحص.");
     if(slowRes.error)warnings.push("تعذر تحميل الأصناف التي لم تسجل صرفًا خلال 30 يومًا.");
     if(inspectionRes.error)warnings.push("تعذر تحميل تصنيف مرتجعات البيع.");
     const profit=profitRow?Number(profitRow.profit||0):null;
