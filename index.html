@@ -4656,6 +4656,7 @@ async function loadPartnerManagementSummary(){
       db.rpc("get_profit_loss",{p_from:from,p_to:to}),
       db.rpc("get_period_summary",{p_from:from,p_to:to}),
       db.rpc("get_aged_receivables_v2"),
+      db.from("customer_credit_balances").select("balance"),
       db.rpc("get_supplier_payable_balances"),
       db.from("treasuries").select("treasury_name,treasury_type,current_balance").eq("is_active",true),
       db.from("stock_balances").select("location_id,product_id,quantity,inventory_value").gt("quantity",0).limit(5000),
@@ -4665,24 +4666,30 @@ async function loadPartnerManagementSummary(){
       db.rpc("get_slow_moving_stock",{p_days:30}),
       db.from("sales_return_item_inspections").select("return_item_id,inspection_status,final_disposition,warehouse_sellable_quantity,warehouse_rework_quantity,warehouse_scrap_quantity,production_sellable_quantity,production_rework_quantity,production_scrap_quantity").limit(2000)
     ]);
-    const [profitRes,periodRes,agedRes,supplierRes,treasuryRes,stockRes,locationRes,expenseRes,invoiceRes,slowRes,inspectionRes]=results;
+    const [profitRes,periodRes,agedRes,customerCreditRes,supplierRes,treasuryRes,stockRes,locationRes,expenseRes,invoiceRes,slowRes,inspectionRes]=results;
     const failures=[];
-    const required=[["الأرباح والخسائر",profitRes],["الأرصدة المالية",periodRes],["أعمار ديون العملاء",agedRes],["أرصدة الموردين",supplierRes],["الخزائن",treasuryRes],["المخزون",stockRes],["المواقع",locationRes]];
+    const required=[["الأرباح والخسائر",profitRes],["الأرصدة المالية",periodRes],["أعمار ديون العملاء",agedRes],["أرصدة دائنة للعملاء",customerCreditRes],["أرصدة الموردين",supplierRes],["الخزائن",treasuryRes],["المخزون",stockRes],["المواقع",locationRes]];
     required.forEach(([label,res])=>{if(res.error)failures.push(label+": "+err(res.error));});
     if(failures.length)throw new Error(failures.join(" | "));
     const profitRow=Array.isArray(profitRes.data)?profitRes.data[0]:profitRes.data;
     const period=periodRes.data||{};
-    const ar=Number(period.ar||0),ap=Number(period.ap||0),cash=Number(period.cash||0);
-    const netPosition=ar-ap;
+    const ar=Number(period.ar||0),ap=Number(period.ap||0);
+    const customerCredits=(customerCreditRes.data||[]).reduce((sum,row)=>sum+Math.max(0,Number(row.balance||0)),0);
+    const netPosition=ar-ap-customerCredits;
     const agedRows=agedRes.data||[];
     const overdueOver30=agedRows.reduce((sum,row)=>sum+Number(row.days_31_60||0)+Number(row.days_61_90||0)+Number(row.days_over_90||0),0);
     const within30=agedRows.reduce((sum,row)=>sum+Number(row.days_0_30||0),0);
     const supplierRows=supplierRes.data||[];
     const supplierPositive=supplierRows.reduce((sum,row)=>sum+Math.max(0,Number(row.current_payable||0)),0);
     const supplierCredit=supplierRows.reduce((sum,row)=>sum+Math.max(0,-Number(row.current_payable||0)),0);
+    const supplierDetailNet=supplierPositive-supplierCredit;
+    const supplierUnallocated=ap-supplierDetailNet;
     const treasuries=treasuryRes.data||[];
     const cashByType={};
     treasuries.forEach(row=>{const key=String(row.treasury_type||"غير محدد");cashByType[key]=(cashByType[key]||0)+Number(row.current_balance||0);});
+    const totalTreasuryBalance=Object.values(cashByType).reduce((sum,value)=>sum+value,0);
+    const cashAvailable=totalTreasuryBalance-(cashByType.CHEQUE||0);
+    const chequeBalance=cashByType.CHEQUE||0;
     const locations={};
     (locationRes.data||[]).forEach(row=>locations[String(row.location_id)]={name:row.location_name||"موقع غير مسمى",type:row.location_type||"غير محدد"});
     const stockGroups={};
@@ -4697,6 +4704,7 @@ async function loadPartnerManagementSummary(){
     const expenses={};
     if(!expenseRes.error)(expenseRes.data||[]).forEach(row=>{const key=row.expense_type||"غير مصنف";expenses[key]=(expenses[key]||0)+Number(row.amount||0);});
     const expenseRows=Object.entries(expenses).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    const expenseRecordsTotal=Object.values(expenses).reduce((sum,value)=>sum+value,0);
     let topProducts=[];
     if(!invoiceRes.error&&invoiceRes.data?.length){
       const invoiceIds=invoiceRes.data.map(row=>row.sales_invoice_id);
@@ -4729,7 +4737,8 @@ async function loadPartnerManagementSummary(){
       if(row.final_disposition==="SCRAP")scrapQty+=Math.max(Number(row.warehouse_scrap_quantity||0),Number(row.production_scrap_quantity||0));
     });
     const typeNames={MAIN_WAREHOUSE:"المخزن الرئيسي",FRIDGE:"الثلاجات",VEHICLE:"مخازن السيارات",FACTORY:"المصنع",SHOWROOM:"المعارض"};
-    const cashRows=Object.entries(cashByType).map(([key,value])=>"<tr><td>"+esc(key)+"</td><td>"+fmt(value)+"</td></tr>").join("");
+    const treasuryTypeNames={CASH:"خزائن نقدية",BANK:"حسابات بنكية",INSTAPAY:"إنستاباي",CHEQUE:"شيكات"};
+    const cashRows=Object.entries(cashByType).map(([key,value])=>"<tr><td>"+esc(treasuryTypeNames[key]||key)+"</td><td>"+fmt(value)+"</td></tr>").join("");
     const stockRows=Object.entries(stockGroups).map(([key,value])=>"<tr><td>"+esc(typeNames[key]||key)+"</td><td>"+fmt(value.value)+"</td><td>"+[...value.locations].map(esc).join("، ")+"</td></tr>").join("");
     const expenseHtml=expenseRows.length?expenseRows.map(([name,value])=>"<tr><td>"+esc(name)+"</td><td>"+fmt(value)+"</td></tr>").join(""):"<tr><td colspan='2'>لا توجد مصروفات مسجلة في الفترة.</td></tr>";
     const productHtml=topProducts.length?topProducts.map(row=>"<tr><td>"+esc(row.name)+"</td><td>"+fmtQty(row.quantity)+"</td><td>"+fmt(row.value)+"</td></tr>").join(""):"<tr><td colspan='3'>لا توجد فواتير مبيعات مرحلة في الفترة.</td></tr>";
@@ -4750,18 +4759,19 @@ async function loadPartnerManagementSummary(){
       "<div class='home-card green'><div class='hc-label'>صافي الربح المحاسبي</div><div class='hc-value'>"+(profit===null?"غير متاح":fmt(profit))+"</div></div>"+
       "<div class='home-card'><div class='hc-label'>مستحقات العملاء</div><div class='hc-value'>"+fmt(ar)+"</div></div>"+
       "<div class='home-card gold'><div class='hc-label'>مستحقات الموردين</div><div class='hc-value'>"+fmt(ap)+"</div></div>"+
+      "<div class='home-card'><div class='hc-label'>أرصدة دائنة للعملاء</div><div class='hc-value'>"+fmt(customerCredits)+"</div></div>"+
       "<div class='home-card "+(netPosition>=0?"green":"red")+"'><div class='hc-label'>الفرق بين المستحقات</div><div class='hc-value'>"+fmt(Math.abs(netPosition))+"</div><div class='details'>"+(netPosition>0?"لصالح الشركة":netPosition<0?"التزامات أكثر على الشركة":"متساوية")+"</div></div>"+
-      "<div class='home-card'><div class='hc-label'>النقدية الحالية</div><div class='hc-value'>"+fmt(cash)+"</div></div>"+
+      "<div class='home-card'><div class='hc-label'>النقدية المتاحة دون الشيكات</div><div class='hc-value'>"+fmt(cashAvailable)+"</div></div>"+
       "<div class='home-card green'><div class='hc-label'>قيمة المخزون الحالية</div><div class='hc-value'>"+fmt(inventoryTotal)+"</div></div>"+
       "</div>"+
       "<h3>تفاصيل الربح المحاسبي</h3><div class='table-responsive'><table class='print-table'><thead><tr><th>الإيرادات</th><th>تكلفة المبيعات</th><th>المصروفات</th><th>صافي الربح</th></tr></thead><tbody><tr><td>"+(revenue===null?"غير متاح":fmt(revenue))+"</td><td>"+(cogs===null?"غير متاح":fmt(cogs))+"</td><td>"+(exp===null?"غير متاح":fmt(exp))+"</td><td>"+(profit===null?"غير متاح":fmt(profit))+"</td></tr></tbody></table></div>"+
-      "<h3>النقدية حسب نوع الخزنة</h3><div class='table-responsive'><table class='print-table'><thead><tr><th>النوع</th><th>الرصيد</th></tr></thead><tbody>"+(cashRows||"<tr><td colspan='2'>لا توجد خزائن نشطة.</td></tr>")+"</tbody></table></div>"+
+      "<h3>النقدية حسب نوع الخزنة والحساب</h3><div class='table-responsive'><table class='print-table'><thead><tr><th>النوع</th><th>الرصيد</th></tr></thead><tbody>"+(cashRows||"<tr><td colspan='2'>لا توجد خزائن نشطة.</td></tr>")+"</tbody></table></div><div class='info'>إجمالي الشيكات: "+fmt(chequeBalance)+". إجمالي أرصدة الخزائن والحسابات بما فيها الشيكات: "+fmt(totalTreasuryBalance)+". "+(Math.abs(totalTreasuryBalance-Number(period.cash||0))>0.01?"يوجد فرق يحتاج مراجعة بين مجموع الخزائن والملخص المحاسبي.":"تمت مطابقة مجموع الخزائن مع الملخص المحاسبي.")+"</div>"+
       "<h3>قيمة المخزون حسب الموقع</h3><div class='table-responsive'><table class='print-table'><thead><tr><th>نوع الموقع</th><th>القيمة</th><th>المواقع</th></tr></thead><tbody>"+(stockRows||"<tr><td colspan='3'>لا توجد أرصدة مخزون.</td></tr>")+"</tbody></table></div>"+
       "<h3>الديون المتأخرة للعملاء</h3><div class='info'>المبلغ التالي يمثل الأرصدة التي تجاوز استحقاقها 30 يومًا، وفق تقرير أعمار الديون. شريحة 0 إلى 30 يومًا قد تضم فواتير لم يحن موعدها بعد.</div><div class='total-box'><div class='line'><span>أكثر من 30 يومًا</span><strong>"+fmt(overdueOver30)+"</strong></div><div class='line'><span>شريحة 0 إلى 30 يومًا</span><strong>"+fmt(within30)+"</strong></div></div>"+
       "<h3>مستحقات الموردين المتأخرة</h3><div class='info'>غير متاح بدقة. بيانات فواتير الموردين الحالية لا تحتوي على تاريخ استحقاق مستقل أو مدة ائتمان للمورد. إجمالي المستحقات الحالي: "+fmt(ap)+".</div>"+
       "<h3>تفصيل أرصدة الموردين</h3><div class='table-responsive'><table class='print-table'><thead><tr><th>المورد</th><th>الرصيد</th></tr></thead><tbody>"+(supplierRows.length?supplierRows.map(row=>"<tr><td>"+esc(row.supplier_name||"")+"</td><td>"+fmt(row.current_payable)+"</td></tr>").join(""):"<tr><td colspan='2'>لا توجد أرصدة موردين.</td></tr>")+"</tbody></table></div>"+
-      "<div class='info'>إجمالي أرصدة الموردين الموجبة: "+fmt(supplierPositive)+"، والأرصدة الدائنة للشركة لدى الموردين: "+fmt(supplierCredit)+".</div>"+
-      "<h3>المصروفات حسب النوع</h3><div class='table-responsive'><table class='print-table'><thead><tr><th>نوع المصروف</th><th>القيمة</th></tr></thead><tbody>"+expenseHtml+"</tbody></table></div>"+
+      "<div class='info'>إجمالي أرصدة الموردين الموجبة: "+fmt(supplierPositive)+"، والأرصدة الدائنة للشركة لدى الموردين: "+fmt(supplierCredit)+". فرق غير موزع على حسابات الموردين: "+fmt(supplierUnallocated)+".</div>"+
+      "<h3>المصروفات حسب النوع</h3><div class='info'>إجمالي المصروفات المسجلة في شاشة المصروفات: "+fmt(expenseRecordsTotal)+". مصروفات قائمة الأرباح والخسائر من القيود المرحلة: "+(exp===null?"غير متاح":fmt(exp))+". قد يظهر فرق بسبب قيود محاسبية أخرى مثل الإهلاك أو التسويات.</div><div class='table-responsive'><table class='print-table'><thead><tr><th>نوع المصروف</th><th>القيمة</th></tr></thead><tbody>"+expenseHtml+"</tbody></table></div>"+
       "<h3>أكثر المنتجات مبيعًا بالقيمة</h3><div class='info'>الترتيب حسب قيمة بنود فواتير البيع المرحلة خلال الفترة، قبل خصم مرتجعات البيع.</div><div class='table-responsive'><table class='print-table'><thead><tr><th>المنتج</th><th>الكمية الأساسية</th><th>قيمة البيع</th></tr></thead><tbody>"+productHtml+"</tbody></table></div>"+
       "<h3>الأصناف التي لم تسجل صرفًا خلال 30 يومًا</h3><div class='table-responsive'><table class='print-table'><thead><tr><th>المنتج</th><th>الموقع</th><th>الكمية</th><th>آخر صرف</th></tr></thead><tbody>"+staleHtml+"</tbody></table></div>"+
       "<h3>حالة مرتجعات البيع بعد الفحص</h3><div class='info'>الكميات بوحدة الصنف الأساسية. قيمة التكلفة للبضاعة التالفة أو تحت الفحص غير متاحة من سجل الفحص الحالي، لذلك لا نعرض قيمة مالية تقديرية.</div><div class='total-box'><div class='line'><span>صالح للبيع</span><strong>"+fmtQty(sellableQty)+"</strong></div><div class='line'><span>إعادة تصنيع</span><strong>"+fmtQty(reworkQty)+"</strong></div><div class='line'><span>تالف / إعدام</span><strong>"+fmtQty(scrapQty)+"</strong></div><div class='line'><span>تحت الفحص</span><strong>"+fmtQty(pendingQty)+"</strong></div></div>"+
