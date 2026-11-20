@@ -41,6 +41,12 @@ input[type=number],input[type=date]{direction:ltr;text-align:left}
 .success{background:#e9f6ec;color:#1c6330}
 .error{background:#fff0f0;color:var(--red)}
 .hidden{display:none!important}
+.password-field{position:relative;display:block;width:100%}
+.password-field input{padding-inline-end:48px}
+.password-visibility-toggle{position:absolute;inset-inline-end:6px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:0;border-radius:8px;background:transparent;color:var(--g);font-size:20px;line-height:1;display:grid;place-items:center;cursor:pointer}
+.password-visibility-toggle:focus-visible{outline:2px solid var(--g2);outline-offset:1px}
+.partner-read-only #userManagementCard > button,.partner-read-only #addSalesRepBtn,.partner-read-only #salesRepAreaForm,.partner-read-only #salesRepFormModal,.partner-read-only #saveSettingsBtn,.partner-read-only #runAdminFactoryResetPreviewBtn,.partner-read-only #adminFactoryResetActions,.partner-read-only #markAllNotificationsReadBtn,.partner-read-only #notificationSendPanel,.partner-read-only #taskNotificationSendPanel,.partner-read-only #salesRepsList .actions,.partner-read-only #salesRepAreasList button,.partner-read-only .notification-read-btn,.partner-read-only .task-notification-read-btn,.partner-read-only #stockTransferForm,.partner-read-only #treasuryTransferForm,.partner-read-only #sectionPackaging form{display:none!important}
+.partner-read-only .sub-section form,.partner-read-only .modal-form{display:none!important}
 .info{background:#e9efe9;border-radius:12px;padding:12px;margin-bottom:12px;line-height:1.8;font-size:14px}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .row input{flex:1;min-width:160px}
@@ -719,7 +725,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 <form id="userCreateForm" onsubmit="event.preventDefault();">
 <label for="newUserName">اسم الموظف *</label><input id="newUserName" type="text" maxlength="150" required>
 <label for="newUserUsername">اسم المستخدم للدخول *</label><input id="newUserUsername" type="text" minlength="3" maxlength="32" pattern="[A-Za-z0-9._-]{3,32}" required>
-<label for="newUserPassword">كلمة المرور المؤقتة *</label><input id="newUserPassword" type="password" minlength="12" maxlength="128" required>
+<label for="newUserPassword">كلمة المرور المؤقتة *</label><input id="newUserPassword" type="password" minlength="12" maxlength="128" autocomplete="new-password" required><label for="newUserPasswordConfirm">تأكيد كلمة المرور *</label><input id="newUserPasswordConfirm" type="password" minlength="12" maxlength="128" autocomplete="new-password" required>
 <label for="newUserRole">الدور الوظيفي *</label><select id="newUserRole" required><option value="">جارٍ تحميل الأدوار...</option></select>
 <div id="salesRepWrap" class="hidden"><label for="newUserSalesRep">ربط بحساب مندوب المبيعات *</label><select id="newUserSalesRep"><option value="">اختر المندوب</option></select></div>
 <button id="createUserBtn" class="btn" type="submit">إنشاء حساب الموظف</button>
@@ -2301,9 +2307,22 @@ try {
 
   const db=window.supabase.createClient(URL,KEY,{ auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true, flowType:"implicit" } });
   const $=id=>document.getElementById(id);
+  function installPasswordVisibilityToggles(){
+    document.querySelectorAll('input[type="password"]').forEach(input=>{
+      if(input.dataset.visibilityToggle==="ready")return;
+      const wrapper=document.createElement("div");wrapper.className="password-field";
+      input.parentNode.insertBefore(wrapper,input);wrapper.appendChild(input);
+      const toggle=document.createElement("button");toggle.type="button";toggle.className="password-visibility-toggle";
+      toggle.setAttribute("aria-label","إظهار كلمة المرور");toggle.title="إظهار كلمة المرور";
+      toggle.innerHTML='<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+      toggle.addEventListener("click",()=>{const visible=input.type==="text";input.type=visible?"password":"text";toggle.setAttribute("aria-label",visible?"إظهار كلمة المرور":"إخفاء كلمة المرور");toggle.title=visible?"إظهار كلمة المرور":"إخفاء كلمة المرور";});
+      wrapper.appendChild(toggle);input.dataset.visibilityToggle="ready";
+    });
+  }
+  installPasswordVisibilityToggles();
 
   // ========== المتغيرات ==========
-  let canManage=false, isSystemAdmin=false, currentRoleCode=null, currentSalesRepId=null, currentSalesRepName=null;
+  let canManage=false, isSystemAdmin=false, isPartner=false, currentRoleCode=null, currentSalesRepId=null, currentSalesRepName=null;
   let canViewLocations=false, canManageLocations=false, canLoadLocations=false;
   let canViewTreasuries=false, canManageTreasuries=false;
   let canViewExpenses=false, canManageExpenses=false;
@@ -2340,7 +2359,7 @@ try {
   let customerGeoLoaded=false;
   let invoiceItemCounter=0, purchaseItemCounter=0, recipeItemCounter=0, returnItemCounter=0, exchangeItemCounter=0, stItemCounter=0, prItemCounter=0;
 
-  const allowedRoles={ SALES_MANAGER:"مدير المبيعات", SALES_REP:"مندوب المبيعات", WAREHOUSE_KEEPER:"أمين المخزن", PRODUCTION_MANAGER:"مسؤول الإنتاج", ACCOUNTANT:"المحاسب", GENERAL_MANAGER:"المدير العام", SYSTEM_TESTER:"مختبر النظام" };
+  const allowedRoles={ SALES_MANAGER:"مدير المبيعات", SALES_REP:"مندوب المبيعات", WAREHOUSE_KEEPER:"أمين المخزن", PRODUCTION_MANAGER:"مسؤول الإنتاج", ACCOUNTANT:"المحاسب", GENERAL_MANAGER:"المدير العام", SYSTEM_TESTER:"مختبر النظام", PARTNER:"شريك - مشاهدة فقط" };
 
   // ========== المساعدات ==========
   function msg(el,text,type=""){ if(!el) return; el.textContent=text; el.className="status"+(type?" "+type:""); }
@@ -2475,7 +2494,7 @@ window.openSection = function(name) {
   const sectionMenuMap = { products:"menuProducts", locations:"menuLocations", stock:"menuStock", stockSummary:"menuStock", stockLots:"menuStockLots", stockTransfers:"menuStockTransfers", recipes:"menuRecipes", production:"menuProduction", productionDailySummary:"menuProduction", reservations:"menuReservations", suppliers:"menuSuppliers", purchases:"menuPurchases", purchaseReturns:"menuPurchaseReturns", landedCosts:"menuLandedCosts", fixedAssets:"menuFixedAssets", supplierPayments:"menuSupplierPayments", expenses:"menuExpenses", customers:"menuCustomers", sales:"menuSales", salesReturns:"menuSalesReturns", priceLists:"menuPriceLists", collections:"menuCollections", trips:"menuTrips", salesReps:"menuSalesReps", treasuries:"menuTreasuries", treasuryTransfers:"menuTreasuryTransfers", partners:"menuPartners", accounting:"menuAccounting", reports:"menuReports", users:"menuUsers", systemReset:"menuSystemReset", settings:"menuSettings" };
   const allowedIds = getRoleMenuIds(currentRoleCode);
   const requestedMenuId = sectionMenuMap[name];
-  if(!isSystemAdmin && (!requestedMenuId || !allowedIds.has(requestedMenuId))) {
+  if(!isSystemAdmin && !isPartner && (!requestedMenuId || !allowedIds.has(requestedMenuId))) {
     showToast("هذا القسم غير متاح لحسابك.", "error");
     return;
   }
@@ -2507,8 +2526,12 @@ window.openSection = function(name) {
   if (name === "fixedAssets") loadFixedAssets();
   if (name === "reports") loadReports();
   if (name === "systemReset" && isSystemAdmin) {
-    loadLatestFactoryResetStatus();
-  }
+     loadLatestFactoryResetStatus();
+   } else if(name === "systemReset" && isPartner) {
+     if($("runAdminFactoryResetPreviewBtn"))$("runAdminFactoryResetPreviewBtn").classList.add("hidden");
+     if($("adminFactoryResetActions"))$("adminFactoryResetActions").replaceChildren();
+     if($("adminFactoryResetMsg"))msg($("adminFactoryResetMsg"),"المشاهدة فقط. لا يمكن لحساب الشريك تجهيز أو تنفيذ ضبط المصنع.","success");
+   }
   if (name === "stockTransfers") { fillStockTransferSelects(); if(!$("stItems").children.length) addStItemRow(); }
   if (name === "production") { fillProductionRecipeSelect(); fillProductionLocationSelect(); }
   if (name === "recipes") loadRecipes();
@@ -2882,7 +2905,7 @@ function fillReservationSelects() { const cs = $("rsCustomer"); if(cs){ const cu
 
 // ========== سجل المستخدمين ==========
 async function logUserAction(actionType, description){
-  try { if(!navigator.onLine) return; const {data:s} = await db.auth.getSession(); const uid = s?.session?.user?.id; if(!uid) return; await db.from("user_logs").insert({ user_id: uid, action_type: actionType, description: description }); } catch(e){ console.warn("[LOG]", e); }
+   try { if(isPartner && actionType!=="LOGIN") return; if(!navigator.onLine) return; const {data:s} = await db.auth.getSession(); const uid = s?.session?.user?.id; if(!uid) return; await db.from("user_logs").insert({ user_id: uid, action_type: actionType, description: description }); } catch(e){ console.warn("[LOG]", e); }
 }
 window.viewUserLogs = async function(userId, displayName){
   const modal = $("userLogsModal"); $("userLogsHeader").innerHTML = "جارٍ التحميل..."; $("userLogsTable").querySelector("tbody").innerHTML = ""; modal.classList.remove("hidden");
@@ -2912,17 +2935,20 @@ async function userInfo(user){
       currentSalesRepName=repProfile?.name||null;
     }
     isSystemAdmin=currentRoleCode==="SYSTEM_ADMIN";
-    if($("notificationSendPanel"))$("notificationSendPanel").classList.toggle("hidden",!isSystemAdmin); 
+     isPartner=currentRoleCode==="PARTNER";
+     document.body.classList.toggle("partner-read-only",isPartner);
+    if($("notificationSendPanel"))$("notificationSendPanel").classList.toggle("hidden",!isSystemAdmin);
+     if(isPartner){if($("salesRepAreaForm"))$("salesRepAreaForm").classList.add("hidden");if($("saveSettingsBtn"))$("saveSettingsBtn").classList.add("hidden");document.querySelectorAll("#sectionSettings input,#sectionSettings select,#sectionSettings textarea").forEach(el=>el.disabled=true);} 
     if($("userInfo")) $("userInfo").textContent="مرحبًا "+(data.display_name||"بك");
-    await db.from("app_users").update({ last_login: new Date().toISOString() }).eq("user_id", user.id);
+    if(!isPartner) await db.from("app_users").update({ last_login: new Date().toISOString() }).eq("user_id", user.id);
     logUserAction("LOGIN", "تسجيل دخول");
 
-    canManage=await permission("PRODUCTS_MANAGE") || isSystemAdmin; if($("menuProducts")) $("menuProducts").classList.toggle("hidden", !canManage); if($("menuPackaging")) $("menuPackaging").classList.toggle("hidden", !canManage); if($("addBtn")) $("addBtn").classList.toggle("hidden",!canManage); if($("packagingManagement")) $("packagingManagement").style.display="block";
+    canManage=await permission("PRODUCTS_MANAGE") || isSystemAdmin; const canViewProducts=await permission("PRODUCTS_VIEW") || canManage; if($("menuProducts")) $("menuProducts").classList.toggle("hidden", !canViewProducts); if($("menuPackaging")) $("menuPackaging").classList.toggle("hidden", !canViewProducts); if($("addBtn")) $("addBtn").classList.toggle("hidden",!canManage); if($("packagingManagement")) $("packagingManagement").style.display="block";
     try{ canViewLocations=await permission("LOCATIONS_VIEW") || isSystemAdmin; canManageLocations=await permission("LOCATIONS_MANAGE") || isSystemAdmin; if($("menuLocations")) $("menuLocations").classList.toggle("hidden",!canViewLocations); if($("locationsCard")) $("locationsCard").classList.toggle("hidden",!canViewLocations); if($("addLocationBtn")) $("addLocationBtn").classList.toggle("hidden",!canManageLocations); }catch(e){}
     try{ canViewTreasuries=await permission("TREASURIES_VIEW") || isSystemAdmin; canManageTreasuries=await permission("TREASURIES_MANAGE") || isSystemAdmin; if($("menuTreasuries")) $("menuTreasuries").classList.toggle("hidden",!canViewTreasuries); if($("treasuriesCard")) $("treasuriesCard").classList.toggle("hidden",!canViewTreasuries); if($("addTreasuryBtn")) $("addTreasuryBtn").classList.toggle("hidden",!canManageTreasuries); }catch(e){}
-    try{ canViewTreasuryTransfers=await permission("TREASURIES_MANAGE") || await permission("ACCOUNTING_MANAGE") || isSystemAdmin; if($("menuTreasuryTransfers")) $("menuTreasuryTransfers").classList.toggle("hidden",!canViewTreasuryTransfers); }catch(e){}
+    try{ canViewTreasuryTransfers=await permission("TREASURIES_MANAGE") || await permission("ACCOUNTING_MANAGE") || isSystemAdmin || isPartner; if($("menuTreasuryTransfers")) $("menuTreasuryTransfers").classList.toggle("hidden",!canViewTreasuryTransfers); }catch(e){}
     try{ canViewStock=await permission("STOCK_VIEW") || await permission("INVENTORY_VIEW") || isSystemAdmin; canManageStock=await permission("STOCK_MANAGE") || isSystemAdmin; if($("menuStock")) $("menuStock").classList.toggle("hidden",!canViewStock); if($("menuStockSummary")) $("menuStockSummary").classList.toggle("hidden",!canViewStock); if($("menuStockLots")) $("menuStockLots").classList.toggle("hidden",!canViewStock); if($("stockCard")) $("stockCard").classList.toggle("hidden",!canViewStock); if($("adjustStockBtn")) $("adjustStockBtn").classList.toggle("hidden",!canManageStock); }catch(e){}
-    try{ canViewStockTransfers=await permission("INVENTORY_TRANSFER") || isSystemAdmin; if($("menuStockTransfers")) $("menuStockTransfers").classList.toggle("hidden",!canViewStockTransfers); }catch(e){}
+    try{ canViewStockTransfers=await permission("INVENTORY_TRANSFER") || isSystemAdmin || isPartner; if($("menuStockTransfers")) $("menuStockTransfers").classList.toggle("hidden",!canViewStockTransfers); }catch(e){}
     try{ canViewSales=await permission("SALES_VIEW") || await permission("INVOICES_VIEW") || isSystemAdmin; canManageSales=await permission("SALES_MANAGE") || isSystemAdmin; canViewSalesReturns=canViewSales || await permission("RETURNS_VIEW") || isSystemAdmin; if($("menuSales")) $("menuSales").classList.toggle("hidden",!canViewSales); if($("salesCard")) $("salesCard").classList.toggle("hidden",!canViewSales); if($("menuSalesReturns")) $("menuSalesReturns").classList.toggle("hidden",!canViewSalesReturns); if($("addInvoiceBtn")) $("addInvoiceBtn").classList.toggle("hidden",!(await permission("INVOICES_CREATE") || canManageSales)); }catch(e){}
     try{ canCreateReturns=await permission("RETURNS_CREATE") || await permission("RETURNS_MANAGE") || isSystemAdmin; canApproveReturns=await permission("RETURNS_APPROVE") || await permission("RETURNS_MANAGE") || isSystemAdmin; canManageReturns=await permission("RETURNS_MANAGE") || isSystemAdmin; canInspectReturnsWarehouse=await permission("INVENTORY_ADJUST") || isSystemAdmin; canInspectReturnsProduction=await permission("PRODUCTION_MANAGE") || isSystemAdmin; if($("menuSalesReturns"))$("menuSalesReturns").classList.toggle("hidden",!(canViewSalesReturns||canInspectReturnsWarehouse||canInspectReturnsProduction)); if($("addReturnBtn")) $("addReturnBtn").classList.toggle("hidden",!canCreateReturns); if($("addSalesReturnStandaloneBtn")) $("addSalesReturnStandaloneBtn").classList.toggle("hidden",!canCreateReturns); }catch(e){}
     try{ canViewSupplierPayments=await permission("PURCHASES_VIEW") || await permission("SUPPLIERS_VIEW") || isSystemAdmin; if($("menuSupplierPayments")) $("menuSupplierPayments").classList.toggle("hidden",!canViewSupplierPayments); }catch(e){}
@@ -3000,8 +3026,8 @@ async function userInfo(user){
     }
     if($("settleUnassignedRepCustodyBtn")) $("settleUnassignedRepCustodyBtn").classList.toggle("hidden", !(canManageTrips || canManageCollections));
 
-    if(isSystemAdmin){
-      // مدير النظام يرى جميع أقسام مركز البيانات دون الاعتماد على صلاحيات فرعية.
+    if(isSystemAdmin||isPartner){
+      // مدير النظام والشريك يشاهدان جميع الأقسام، وتظل عمليات الكتابة خاصة بالصلاحيات المصرح بها.
       document.querySelectorAll("#dataDashboard .dash-item").forEach(el=>el.classList.remove("hidden"));
       document.querySelectorAll("#dataDashboard .dashboard-group").forEach(el=>el.classList.remove("hidden"));
       ["menuUsers","menuSalesReps","menuAccounting","menuSettings"].forEach(id=>{ if($(id)) $(id).classList.remove("hidden"); });
@@ -3065,7 +3091,7 @@ function getRoleQuickLinks(roleCode){
 }
 
 function applyRoleWorkspace(){
-  if(isSystemAdmin){
+  if(isSystemAdmin||isPartner){
     document.querySelectorAll("#dataDashboard .dash-item").forEach(el=>el.classList.remove("hidden"));
     document.querySelectorAll("#dataDashboard .dashboard-group").forEach(el=>el.classList.remove("hidden"));
     return;
@@ -3105,7 +3131,7 @@ function renderSalesReps(){
   }).join("");
 }
 async function loadSalesReps(){
-  if(!isSystemAdmin){ if($("salesRepsCard")) $("salesRepsCard").classList.add("hidden"); return; }
+  if(!isSystemAdmin && !isPartner){ if($("salesRepsCard")) $("salesRepsCard").classList.add("hidden"); return; }
   const box=$("salesRepsList"); if(box) box.innerHTML='<div class="empty">جارٍ تحميل المندوبين...</div>';
   try{
     const {data,error}=await db.from("sales_reps").select("sales_rep_id,name,is_active,auth_user_id").order("sales_rep_id");
@@ -3168,8 +3194,9 @@ if($("salesRepForm")) $("salesRepForm").addEventListener("submit",async e=>{
 });
 
 async function loadUserManagementLookups(){
-  if(!isSystemAdmin){ if($("userManagementCard")) $("userManagementCard").classList.add("hidden"); return; }
+  if(!isSystemAdmin && !isPartner){ if($("userManagementCard")) $("userManagementCard").classList.add("hidden"); return; }
   if($("userManagementCard")) $("userManagementCard").classList.remove("hidden"); clear($("userCreateMsg"));
+  if(isPartner){if($("userFormModal"))$("userFormModal").classList.remove("active");return;}
   try{
     const {data:roles,error:rolesError}=await db.from("app_roles").select("role_id,role_code,is_active").eq("is_active",true).order("role_id"); if(rolesError)throw rolesError;
     const usableRoles=(roles||[]).filter(r=> r.role_code!=="SYSTEM_ADMIN" && Object.prototype.hasOwnProperty.call(allowedRoles,r.role_code) );
@@ -3183,11 +3210,12 @@ if($("newUserRole")) $("newUserRole").addEventListener("change",()=>{ updateSale
 if($("userCreateForm")) $("userCreateForm").addEventListener("submit",async e=>{
   e.preventDefault(); clear($("userCreateMsg")); const btn=$("createUserBtn");
   if(!isSystemAdmin){ msg($("userCreateMsg"),"هذه العملية لمدير النظام فقط.","error"); return; }
-  const name=$("newUserName").value.trim(); const username=$("newUserUsername").value.trim(); const password=$("newUserPassword").value; const roleId=$("newUserRole").value; const salesRepId=$("newUserSalesRep").value;
+  const name=$("newUserName").value.trim(); const username=$("newUserUsername").value.trim(); const password=$("newUserPassword").value; const passwordConfirm=$("newUserPasswordConfirm").value; const roleId=$("newUserRole").value; const salesRepId=$("newUserSalesRep").value;
   let roleCode=null; try{ const roleMap=JSON.parse($("newUserRole").dataset.roleCodes||"{}"); roleCode=roleMap[String(roleId)]||null; }catch(_){}
   if(!name||!username||!roleId||!roleCode){ msg($("userCreateMsg"),"أكمل البيانات.","error"); return; }
   if(!/^[A-Za-z0-9._-]{3,32}$/.test(username)){ msg($("userCreateMsg"),"اسم المستخدم غير صحيح.","error"); return; }
   if(password.length<12){ msg($("userCreateMsg"),"كلمة المرور 12 حرف على الأقل.","error"); return; }
+   if(password!==passwordConfirm){ msg($("userCreateMsg"),"كلمتا المرور غير متطابقتين.","error"); return; }
   if(roleCode==="SALES_REP"&&!salesRepId){ msg($("userCreateMsg"),"اختر المندوب.","error"); return; }
   busy(btn,true,"جارٍ...","إنشاء الحساب");
   try{
@@ -3202,7 +3230,7 @@ if($("userCreateForm")) $("userCreateForm").addEventListener("submit",async e=>{
 });
 
 async function loadUsersList() {
-  if(!isSystemAdmin) return; const box = $("usersList"); if(!box) return; box.innerHTML = "<div class='empty'>جارٍ التحميل...</div>";
+   if(!isSystemAdmin && !isPartner) return; const box = $("usersList"); if(!box) return; box.innerHTML = "<div class='empty'>جارٍ التحميل...</div>";
   try {
     const { data: users, error: uErr } = await db.from("app_users").select("*"); if(uErr) throw uErr;
     const { data: roles, error: rolesError } = await db.from("app_roles").select("role_id,role_name,role_code");
@@ -3216,10 +3244,10 @@ async function loadUsersList() {
       const status = u.is_active ? "<span class='badge badge-paid'>نشط</span>" : "<span class='badge badge-cancel'>موقوف</span>";
       const safeName = String(u.display_name || '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
       const safeUsername = String(u.username || '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-      const resetButton = String(u.username || '').toLowerCase() === 'rep-01' && u.is_active
+      const resetButton = isSystemAdmin && String(u.username || '').toLowerCase() === 'rep-01' && u.is_active
         ? `<button class="btn secondary" type="button" onclick="window.openRepPasswordModal()">🔑 تغيير كلمة المرور</button>`
         : '';
-      const deleteTesterButton = roleCodeMap[u.role_id] === "SYSTEM_TESTER"
+      const deleteTesterButton = isSystemAdmin && roleCodeMap[u.role_id] === "SYSTEM_TESTER"
         ? `<button class="btn secondary" style="background:#a52b2b;color:#fff;" type="button" onclick="window.deleteTesterAccount('${u.user_id}')">حذف حساب المختبر</button>`
         : '';
       html += `<div class="product"><div class="pname">${safeName} (${safeUsername})</div><div class="details">الدور: ${roleMap[u.role_id] || 'غير محدد'} ${status}</div><div class="actions"><button class="btn secondary" onclick="window.viewUserLogs('${u.user_id}','${safeName.replace(/'/g,'&#39;')}')">📋 سجل التتبع</button>${resetButton}${deleteTesterButton}</div></div>`;
@@ -3321,7 +3349,7 @@ if($("saveSettingsBtn")) $("saveSettingsBtn").addEventListener("click", async ()
 async function loadHomeDashboard() {
   const box = $("homeDashboard"); if(!box) return;
   if(!navigator.onLine) { box.innerHTML = "<div class='empty'>أنت أوفلاين.</div>"; return; }
-  if(!isSystemAdmin){
+  if(!isSystemAdmin && !isPartner){
     if($("homeGeoSummary")) $("homeGeoSummary").classList.add("hidden");
     const quickLinks = getRoleQuickLinks(currentRoleCode);
     if(!quickLinks.length){
@@ -3377,7 +3405,7 @@ async function loadHomeDashboard() {
 // ========== المهام والتنبيهات (v27 - مُصلَّحة) ==========
 let tasksSalesChart = null, tasksExpensesChart = null, tasksTripsChart = null;
 function openTasksChartsScreen() {
-  if(!isSystemAdmin) { showToast("هذه التحليلات متاحة لمدير النظام فقط.", "error"); return; }
+  if(!isSystemAdmin && !isPartner) { showToast("هذه التحليلات متاحة لمدير النظام والشريك.", "error"); return; }
   if($("home")) $("home").classList.add("hidden");
   if($("tasks")) $("tasks").classList.add("hidden");
   if($("data")) $("data").classList.add("hidden");
@@ -3551,8 +3579,8 @@ async function loadTasks() {
   if (!navigator.onLine) { box.innerHTML = "<div class='empty'>أنت أوفلاين حالياً.</div>"; return; }
   const taskSendPanel=$("taskNotificationSendPanel");if(taskSendPanel)taskSendPanel.classList.toggle("hidden",!isSystemAdmin);
   await loadTaskNotifications();
-  if(!isSystemAdmin){
-    const filterBox = document.querySelector("#tasks .filter-box");
+  if(!isSystemAdmin && !isPartner){
+     const filterBox = document.querySelector("#tasks .filter-box");
     if(filterBox) filterBox.classList.add("hidden");
     const chartsToggle=$("tasksChartsToggle"); if(chartsToggle) chartsToggle.classList.add("hidden");
     const dash=$("tasksDashboard");
@@ -4597,7 +4625,7 @@ function supplierBalanceStatsHtml(rows){
 
 async function loadHomeGeoSummary(){
   const box=$("homeGeoSummary"),itemsBox=$("homeGeoItemsSummary"),customersBox=$("homeCustomersSummary"),suppliersBox=$("homeSuppliersSummary");
-  if(!box||!isSystemAdmin){["openHomeGeoSummary","openHomeItemsSummary","openHomeCustomersSummary","openHomeSuppliersSummary"].forEach(id=>$(id)?.classList.add("hidden"));return;}
+  if(!box||(!isSystemAdmin&&!isPartner)){["openHomeGeoSummary","openHomeItemsSummary","openHomeCustomersSummary","openHomeSuppliersSummary"].forEach(id=>$(id)?.classList.add("hidden"));return;}
   ["openHomeGeoSummary","openHomeItemsSummary","openHomeCustomersSummary","openHomeSuppliersSummary"].forEach(id=>$(id)?.classList.remove("hidden"));
   const from=monthStartISO(),to=todayISO();
   box.innerHTML='<h3>ملخص المبيعات والتحصيلات حسب المحافظة</h3><div class="info">جارٍ تحميل الملخص...</div>';
@@ -11116,7 +11144,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
     try {
       const { error } = await db.auth.signOut();
       if(error) throw error;
-      logUserAction("LOGIN","تسجيل خروج");
+      if(!isPartner)logUserAction("LOGIN","تسجيل خروج");
       bootedUserId=null;
       appBootPromise=null;
       taxWarningShownForUserId=null;
@@ -11152,7 +11180,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
       const rows=(data||[]).filter(x=>x.notifications&&x.notifications.notification_type!=="TASK").sort((a,b)=>new Date(b.notifications.created_at||0)-new Date(a.notifications.created_at||0));
       const unread=rows.filter(x=>!x.read_at).length;
       if($("notificationUnreadCount"))$("notificationUnreadCount").textContent=String(unread);if($("homeNotificationButtonCount"))$("homeNotificationButtonCount").textContent=String(unread);
-      if($("markAllNotificationsReadBtn"))$("markAllNotificationsReadBtn").disabled=unread===0;
+      if($("markAllNotificationsReadBtn")){$("markAllNotificationsReadBtn").disabled=unread===0;$("markAllNotificationsReadBtn").classList.toggle("hidden",isPartner);}
       if(!rows.length){list.innerHTML='<div class="empty">لا توجد تنبيهات حتى الآن.</div>';}
       else list.innerHTML=rows.map(x=>{const n=x.notifications;return `<article class="notification-item ${x.read_at?'':'unread'}"><strong>${notificationEscape(n.title)}</strong><div style="margin-top:6px;white-space:pre-wrap;line-height:1.7;">${notificationEscape(n.body)}</div><div class="notification-meta"><span>${notificationEscape(formatDateTime(n.created_at))}</span><span>${x.read_at?'مقروء':'غير مقروء'}</span></div>${x.read_at?'':`<div class="notification-actions"><button class="btn secondary notification-read-btn" type="button" data-id="${notificationEscape(x.notification_id)}">تعليم كمقروء</button></div>`}</article>`;}).join("");
       list.querySelectorAll(".notification-read-btn").forEach(btn=>btn.addEventListener("click",async()=>{btn.disabled=true;try{const {error}=await db.rpc("mark_notification_read",{p_notification_id:btn.dataset.id});if(error)throw error;await loadNotifications();}catch(e){btn.disabled=false;showToast("تعذر تحديث التنبيه: "+err(e),"error",7000);}}));
@@ -11160,7 +11188,8 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
     }catch(e){list.innerHTML=`<div class="status error">تعذر تحميل التنبيهات: ${notificationEscape(err(e))}</div>`;}
   }
   async function markAllNotificationsRead(){
-    const btn=$("markAllNotificationsReadBtn");if(btn)btn.disabled=true;
+     if(isPartner)return;
+     const btn=$("markAllNotificationsReadBtn");if(btn)btn.disabled=true;
     try{
       const userId=await getSignedInUserId();
       const {data:pending,error:pendingError}=await db.from("notification_recipients")
