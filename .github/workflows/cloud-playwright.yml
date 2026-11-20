@@ -43,6 +43,20 @@ jobs:
           npx playwright install --with-deps chromium
           mkdir -p test-results/sections
 
+      - name: Serve checked-out branch for browser tests
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory . >/tmp/meatmanagement-http.log 2>&1 &
+          echo $! >/tmp/meatmanagement-http.pid
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then
+              echo "Checked-out branch is available at http://127.0.0.1:4173/"
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/meatmanagement-http.log
+          exit 1
+
       - name: Run read-only browser tests
         env:
           BASE_URL: https://evramman-dev.github.io/MeatManagement/
