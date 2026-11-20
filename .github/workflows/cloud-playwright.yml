@@ -62,8 +62,8 @@ jobs:
           cat /tmp/meatmanagement-http.log
           exit 1
 
-      - name: Run safe pull-request browser checks
-        if: github.event_name != 'push'
+      - name: Run safe browser checks without production login
+        if: github.event_name != 'push' || github.ref != 'refs/heads/main' || vars.QA_LIVE_SMOKE_APPROVED != 'true'
         env:
           BASE_URL: https://evramman-dev.github.io/MeatManagement/
           PLAYWRIGHT_HTML_OPEN: never
@@ -72,8 +72,8 @@ jobs:
           --grep-invert "MeatManagement read-only navigation, permissions and session smoke test|MeatManagement Android-sized layout and horizontal overflow check"
           --trace retain-on-failure --reporter=list,html
 
-      - name: Run full browser checks outside pull requests
-        if: github.event_name == 'push'
+      - name: Run full browser checks only after explicit approval
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.QA_LIVE_SMOKE_APPROVED == 'true'
         env:
           BASE_URL: https://evramman-dev.github.io/MeatManagement/
           TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
