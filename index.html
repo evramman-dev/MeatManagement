@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v159</title>
+<title>MeatManagement v160</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -4535,7 +4535,7 @@ function closeHomeDetail(){
 }
 let homeQuickPrintShareText="";
 function homeQuickReportData(type){
-  const configs={notifications:{title:"مركز التنبيهات",source:"notificationsList"},geo:{title:"ملخص تعاملات المحافظة",source:"homeGeoSummary"},items:{title:"ملخص حركة الأصناف",source:"homeGeoItemsSummary"},customers:{title:"ملخص العملاء",source:"homeCustomersSummary"},suppliers:{title:"ملخص الموردين",source:"homeSuppliersSummary"},partners:{title:"ملخص الشركاء",source:"partnerManagementSummaryContent"}};
+  const configs={notifications:{title:"مركز التنبيهات",source:"notificationsList"},geo:{title:"ملخص تعاملات المحافظة",source:"homeGeoSummary"},items:{title:"ملخص حركة الأصناف",source:"homeGeoItemsSummary"},customers:{title:"ملخص العملاء",source:"homeCustomersSummary"},suppliers:{title:"ملخص الموردين",source:"homeSuppliersSummary"},partners:{title:"الموقف العام",source:"partnerManagementSummaryContent"}};
   const config=configs[type];if(!config)throw new Error("نوع التقرير غير معروف");
   const source=$(config.source);if(!source)throw new Error("محتوى التقرير غير متاح");
   const clone=source.cloneNode(true);clone.removeAttribute("id");
@@ -4637,6 +4637,26 @@ function supplierBalanceStatsHtml(rows){
   return '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin:12px 0;">'+stats.map(([label,value])=>'<div style="background:#f4f7f4;border:1px solid #dce5dc;border-radius:9px;padding:10px;text-align:center;"><div style="font-size:12px;color:#526257;margin-bottom:5px;">'+label+'</div><strong style="font-size:16px;color:#173c2c;">'+value+'</strong></div>').join("")+'</div>';
 }
 
+
+function collapsePartnerSummarySections(box){
+  if(!box)return;
+  const headings=Array.from(box.querySelectorAll(":scope > h3"));
+  headings.forEach((heading)=>{
+    const details=document.createElement("details");
+    details.className="partner-report-section";
+    const summary=document.createElement("summary");
+    summary.textContent=heading.textContent.trim();
+    details.appendChild(summary);
+    let node=heading.nextSibling;
+    while(node){
+      const next=node.nextSibling;
+      details.appendChild(node);
+      node=next;
+      if(node && node.nodeType===1 && node.tagName==="H3")break;
+    }
+    heading.replaceWith(details);
+  });
+}
 
 async function loadPartnerManagementSummary(){
   if(!isSystemAdmin&&!isPartner){showToast("هذا التقرير متاح لمدير النظام والشريك فقط.","error");return;}
@@ -4786,6 +4806,8 @@ async function loadPartnerManagementSummary(){
     const productHtml=topProducts.length?topProducts.map(row=>"<tr><td>"+esc(row.name)+"</td><td>"+fmtQty(row.quantity)+"</td><td>"+fmt(row.value)+"</td></tr>").join(""):"<tr><td colspan='3'>لا توجد فواتير مبيعات مرحلة في الفترة.</td></tr>";
     const staleHtml=staleRows.length?staleRows.map(row=>"<tr><td>"+esc(row.product_name||"")+"</td><td>"+esc(row.location_name||"")+"</td><td>"+fmtQty(row.quantity)+"</td><td>"+(row.last_movement_date?formatDate(String(row.last_movement_date).slice(0,10)):"لا يوجد صرف مسجل")+"</td></tr>").join(""):"<tr><td colspan='4'>لا توجد أرصدة بلا صرف خلال 30 يومًا.</td></tr>";
     const warnings=[];
+    const hasTestSuppliers=supplierRows.some(row=>/اختبار|QA|TEST/i.test(String(row.supplier_name||"")));
+    if(hasTestSuppliers)warnings.push("تنبيه: قاعدة البيانات الحالية تحتوي على سجلات اختبار. الأرقام الظاهرة الآن لا تمثل حسابات تشغيل فعلية حتى الانتهاء من تنظيف بيانات الاختبار.");
     if(expenseRes.error)warnings.push("تعذر تحميل تفاصيل المصروفات.");
     if(invoiceRes.error||itemDetailsUnavailable)warnings.push("تعذر تحميل تفاصيل أكثر المنتجات مبيعًا بالكامل.");
     if(pendingInspectionUnavailable)warnings.push("تعذر تحميل كميات بعض بنود المرتجعات.");
@@ -4820,6 +4842,7 @@ async function loadPartnerManagementSummary(){
       "<h3>الأصناف التي لم تسجل صرفًا خلال 30 يومًا</h3><div class='table-responsive'><table class='print-table'><thead><tr><th>المنتج</th><th>الموقع</th><th>الكمية</th><th>آخر صرف</th></tr></thead><tbody>"+staleHtml+"</tbody></table></div>"+
       "<h3>حالة مرتجعات البيع بعد الفحص</h3><div class='info'>الكميات بوحدة الصنف الأساسية. القيمة محسوبة من تكلفة حركة استلام المرتجع المسجلة في المخزون، وتكلفة الهالك من حركة الإعدام. إذا تعذر العثور على تكلفة مسجلة لبند، يظهر تنبيه بذلك.</div><div class='total-box'><div class='line'><span>صالح للبيع</span><strong>"+fmtQty(sellableQty)+" | "+(missingSellableCost?"التكلفة غير مكتملة":fmt(sellableValue))+"</strong></div><div class='line'><span>إعادة تصنيع</span><strong>"+fmtQty(reworkQty)+" | "+(missingReworkCost?"التكلفة غير مكتملة":fmt(reworkValue))+"</strong></div><div class='line'><span>تالف / إعدام</span><strong>"+fmtQty(scrapQty)+" | "+(missingScrapCost?"التكلفة غير مكتملة":fmt(scrapValue))+"</strong></div><div class='line'><span>تحت الفحص</span><strong>"+fmtQty(pendingQty)+" | "+(missingPendingCost?"التكلفة غير مكتملة":fmt(pendingValue))+"</strong></div></div>"+
       "<div class='info'>صافي الربح لا يساوي النقدية المتاحة. الربح يعتمد على الإيرادات وتكلفة المبيعات والمصروفات المرحلة. النقدية هي أرصدة الخزائن والبنوك الحالية. وقد تتبقى ديون على العملاء أو التزامات للموردين حتى مع وجود ربح.</div>";
+    collapsePartnerSummarySections(box);
   }catch(e){
     box.innerHTML="<div class='empty error'>تعذر إعداد التقرير: "+esc(err(e))+"</div>";
   }
