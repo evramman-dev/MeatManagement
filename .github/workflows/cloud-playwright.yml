@@ -57,12 +57,24 @@ jobs:
           cat /tmp/meatmanagement-http.log
           exit 1
 
-      - name: Run read-only browser tests
+      - name: Run safe pull-request browser checks
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_URL: https://evramman-dev.github.io/MeatManagement/
+          PLAYWRIGHT_HTML_OPEN: never
+        run: >-
+          npx playwright test tests/cloud-smoke.spec.cjs tests/role-coverage.spec.cjs
+          --grep-invert "MeatManagement read-only navigation, permissions and session smoke test|MeatManagement Android-sized layout and horizontal overflow check"
+          --trace retain-on-failure --reporter=list,html
+
+      - name: Run full browser checks outside pull requests
+        if: github.event_name != 'pull_request'
         env:
           BASE_URL: https://evramman-dev.github.io/MeatManagement/
           TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
           QA_ROLE_TESTS_SAFE_ENVIRONMENT: ${{ secrets.QA_ROLE_TESTS_SAFE_ENVIRONMENT }}
+          QA_SUPABASE_URL: ${{ secrets.QA_SUPABASE_URL }}
           QA_SYSTEM_ADMIN_USERNAME: ${{ secrets.QA_SYSTEM_ADMIN_USERNAME }}
           QA_SYSTEM_ADMIN_PASSWORD: ${{ secrets.QA_SYSTEM_ADMIN_PASSWORD }}
           QA_SALES_MANAGER_USERNAME: ${{ secrets.QA_SALES_MANAGER_USERNAME }}
