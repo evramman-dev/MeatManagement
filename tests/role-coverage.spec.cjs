@@ -1,5 +1,9 @@
 const { test, expect } = require('@playwright/test');
 const path = require('node:path');
+const fs = require('node:fs');
+const qaHtml = fs.readFileSync(path.resolve(__dirname, '..', 'index.html'), 'utf8');
+const appSupabaseUrl = qaHtml.match(/const URL="(https:\/\/[^\"]+)";/)?.[1] || null;
+const productionSupabaseUrl = 'https://mklbemoisdkoyrwcrmoj.supabase.co';
 
 test.use({ serviceWorkers: 'block' });
 
@@ -31,6 +35,10 @@ for (const role of roles) {
       'Skipped safely: QA_ROLE_TESTS_SAFE_ENVIRONMENT is not true. A separate safe database environment is required.');
     test.skip(!baseURL || !role.username || !role.password,
       'Skipped safely: credentials for ' + role.code + ' are not configured.');
+    test.skip(!appSupabaseUrl || appSupabaseUrl === productionSupabaseUrl,
+      'Blocked safely: this app build points to the production Supabase project. Role login tests require a separate test-project build.');
+    test.skip(!process.env.QA_SUPABASE_URL || appSupabaseUrl !== process.env.QA_SUPABASE_URL,
+      'Blocked safely: QA_SUPABASE_URL must exactly match the Supabase URL embedded in the test app build.');
 
     const pageErrors = [];
     const consoleErrors = [];
