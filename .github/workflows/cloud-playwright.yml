@@ -66,6 +66,23 @@ jobs:
         if: github.event_name != 'push' || github.ref != 'refs/heads/main' || vars.QA_LIVE_SMOKE_APPROVED != 'true'
         env:
           BASE_URL: https://evramman-dev.github.io/MeatManagement/
+          QA_ROLE_TESTS_SAFE_ENVIRONMENT: ${{ secrets.QA_ROLE_TESTS_SAFE_ENVIRONMENT }}
+          QA_SUPABASE_URL: ${{ secrets.QA_SUPABASE_URL }}
+          QA_SUPABASE_ANON_KEY: ${{ secrets.QA_SUPABASE_ANON_KEY }}
+          QA_SYSTEM_ADMIN_USERNAME: ${{ secrets.QA_SYSTEM_ADMIN_USERNAME }}
+          QA_SYSTEM_ADMIN_PASSWORD: ${{ secrets.QA_SYSTEM_ADMIN_PASSWORD }}
+          QA_SALES_MANAGER_USERNAME: ${{ secrets.QA_SALES_MANAGER_USERNAME }}
+          QA_SALES_MANAGER_PASSWORD: ${{ secrets.QA_SALES_MANAGER_PASSWORD }}
+          QA_SALES_REP_USERNAME: ${{ secrets.QA_SALES_REP_USERNAME }}
+          QA_SALES_REP_PASSWORD: ${{ secrets.QA_SALES_REP_PASSWORD }}
+          QA_WAREHOUSE_KEEPER_USERNAME: ${{ secrets.QA_WAREHOUSE_KEEPER_USERNAME }}
+          QA_WAREHOUSE_KEEPER_PASSWORD: ${{ secrets.QA_WAREHOUSE_KEEPER_PASSWORD }}
+          QA_PRODUCTION_MANAGER_USERNAME: ${{ secrets.QA_PRODUCTION_MANAGER_USERNAME }}
+          QA_PRODUCTION_MANAGER_PASSWORD: ${{ secrets.QA_PRODUCTION_MANAGER_PASSWORD }}
+          QA_ACCOUNTANT_USERNAME: ${{ secrets.QA_ACCOUNTANT_USERNAME }}
+          QA_ACCOUNTANT_PASSWORD: ${{ secrets.QA_ACCOUNTANT_PASSWORD }}
+          QA_GENERAL_MANAGER_USERNAME: ${{ secrets.QA_GENERAL_MANAGER_USERNAME }}
+          QA_GENERAL_MANAGER_PASSWORD: ${{ secrets.QA_GENERAL_MANAGER_PASSWORD }}
           PLAYWRIGHT_HTML_OPEN: never
         run: >-
           npx playwright test tests/cloud-smoke.spec.cjs tests/role-coverage.spec.cjs
