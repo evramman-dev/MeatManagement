@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v157</title>
+<title>MeatManagement v158</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -399,7 +399,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v157]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v158]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -475,6 +475,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
   <button id="openHomeItemsSummary" class="home-card green" type="button"><span class="hc-label">📦 ملخص حركة الأصناف</span><span class="hc-value">عرض</span></button>
   <button id="openHomeCustomersSummary" class="home-card" type="button"><span class="hc-label">👥 ملخص العملاء</span><span class="hc-value">عرض</span></button>
   <button id="openHomeSuppliersSummary" class="home-card gold" type="button"><span class="hc-label">🏭 ملخص الموردين</span><span class="hc-value">عرض</span></button>
+  <button id="openPartnerManagementSummary" class="home-card green hidden" type="button"><span class="hc-label">ملخص الشركاء</span><span class="hc-value">تقرير شهري</span></button>
 </div>
 </div>
 <div id="homeNotificationPanel" class="card hidden" style="margin-top:14px;">
@@ -512,6 +513,19 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
   <button class="btn secondary home-detail-back" type="button" style="width:auto;margin-bottom:12px;">رجوع للرئيسية</button>
   <div class="notification-actions"><button class="btn secondary" type="button" data-home-print="suppliers">طباعة / PDF</button><button class="btn" type="button" data-home-share="suppliers" style="background:#25D366;">واتساب</button></div>
   <div id="homeSuppliersSummary" style="margin-top:12px;"><h3>ملخص الموردين</h3><div class="info">جارٍ تحميل ملخص الموردين...</div></div>
+</div>
+<div id="homePartnerSummaryPanel" class="card hidden" style="margin-top:14px;">
+  <button class="btn secondary home-detail-back" type="button" style="width:auto;margin-bottom:12px;">رجوع للرئيسية</button>
+  <div class="row" style="justify-content:space-between;align-items:center;">
+    <h2 style="margin:0;">ملخص الشركاء</h2>
+    <button class="btn secondary" type="button" data-home-print="partners" style="width:auto;margin:0;">طباعة / PDF</button>
+  </div>
+  <div class="grid" style="margin-top:10px;">
+    <div><label for="partnerSummaryFrom">من تاريخ</label><input id="partnerSummaryFrom" type="date"></div>
+    <div><label for="partnerSummaryTo">إلى تاريخ</label><input id="partnerSummaryTo" type="date"></div>
+  </div>
+  <button id="refreshPartnerSummary" class="btn" type="button">عرض التقرير</button>
+  <div id="partnerManagementSummaryContent" style="margin-top:14px;"><div class="empty">اختر الفترة ثم اضغط عرض التقرير.</div></div>
 </div>
 <button id="logoutBtn" class="btn secondary" type="button" style="margin-top:16px;">تسجيل الخروج</button>
 </div>
@@ -2089,7 +2103,7 @@ input[type="date"] { direction: ltr !important; text-align: left !important; uni
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v157</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v158</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -4511,17 +4525,17 @@ async function loadGeoSalesReport(){
 }
 function openHomeDetail(panelId){
   $("homeOverview")?.classList.add("hidden");
-  ["homeNotificationPanel","homeGeoPanel","homeItemsPanel","homeCustomersPanel","homeSuppliersPanel"].forEach(id=>$(id)?.classList.toggle("hidden",id!==panelId));
+  ["homeNotificationPanel","homeGeoPanel","homeItemsPanel","homeCustomersPanel","homeSuppliersPanel","homePartnerSummaryPanel"].forEach(id=>$(id)?.classList.toggle("hidden",id!==panelId));
   window.scrollTo(0,0);
 }
 function closeHomeDetail(){
-  ["homeNotificationPanel","homeGeoPanel","homeItemsPanel","homeCustomersPanel","homeSuppliersPanel"].forEach(id=>$(id)?.classList.add("hidden"));
+  ["homeNotificationPanel","homeGeoPanel","homeItemsPanel","homeCustomersPanel","homeSuppliersPanel","homePartnerSummaryPanel"].forEach(id=>$(id)?.classList.add("hidden"));
   $("homeOverview")?.classList.remove("hidden");
   window.scrollTo(0,0);
 }
 let homeQuickPrintShareText="";
 function homeQuickReportData(type){
-  const configs={notifications:{title:"مركز التنبيهات",source:"notificationsList"},geo:{title:"ملخص تعاملات المحافظة",source:"homeGeoSummary"},items:{title:"ملخص حركة الأصناف",source:"homeGeoItemsSummary"},customers:{title:"ملخص العملاء",source:"homeCustomersSummary"},suppliers:{title:"ملخص الموردين",source:"homeSuppliersSummary"}};
+  const configs={notifications:{title:"مركز التنبيهات",source:"notificationsList"},geo:{title:"ملخص تعاملات المحافظة",source:"homeGeoSummary"},items:{title:"ملخص حركة الأصناف",source:"homeGeoItemsSummary"},customers:{title:"ملخص العملاء",source:"homeCustomersSummary"},suppliers:{title:"ملخص الموردين",source:"homeSuppliersSummary"},partners:{title:"ملخص الشركاء",source:"partnerManagementSummaryContent"}};
   const config=configs[type];if(!config)throw new Error("نوع التقرير غير معروف");
   const source=$(config.source);if(!source)throw new Error("محتوى التقرير غير متاح");
   const clone=source.cloneNode(true);clone.removeAttribute("id");
@@ -4623,10 +4637,144 @@ function supplierBalanceStatsHtml(rows){
   return '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin:12px 0;">'+stats.map(([label,value])=>'<div style="background:#f4f7f4;border:1px solid #dce5dc;border-radius:9px;padding:10px;text-align:center;"><div style="font-size:12px;color:#526257;margin-bottom:5px;">'+label+'</div><strong style="font-size:16px;color:#173c2c;">'+value+'</strong></div>').join("")+'</div>';
 }
 
+
+async function loadPartnerManagementSummary(){
+  if(!isSystemAdmin&&!isPartner){showToast("هذا التقرير متاح لمدير النظام والشريك فقط.","error");return;}
+  const box=$("partnerManagementSummaryContent");
+  const fromEl=$("partnerSummaryFrom"),toEl=$("partnerSummaryTo");
+  if(!box||!fromEl||!toEl)return;
+  if(!fromEl.value)fromEl.value=monthStartISO();
+  if(!toEl.value)toEl.value=todayISO();
+  const from=fromEl.value,to=toEl.value;
+  if(!from||!to||from>to){box.innerHTML="<div class='empty error'>راجع تاريخ بداية ونهاية التقرير.</div>";return;}
+  const endDate=new Date(to+"T00:00:00");
+  endDate.setDate(endDate.getDate()+1);
+  const endExclusive=endDate.getFullYear()+"-"+String(endDate.getMonth()+1).padStart(2,"0")+"-"+String(endDate.getDate()).padStart(2,"0");
+  box.innerHTML="<div class='empty'>جارٍ إعداد التقرير ومراجعة الأرقام...</div>";
+  try{
+    const results=await Promise.all([
+      db.rpc("get_profit_loss",{p_from:from,p_to:to}),
+      db.rpc("get_period_summary",{p_from:from,p_to:to}),
+      db.rpc("get_aged_receivables_v2"),
+      db.rpc("get_supplier_payable_balances"),
+      db.from("treasuries").select("treasury_name,treasury_type,current_balance").eq("is_active",true),
+      db.from("stock_balances").select("location_id,product_id,quantity,inventory_value").gt("quantity",0).limit(5000),
+      db.from("locations").select("location_id,location_name,location_type"),
+      db.from("expenses").select("expense_type,amount").gte("expense_date",from).lte("expense_date",to).eq("is_cancelled",false).limit(5000),
+      db.from("sales_invoices").select("sales_invoice_id").gte("invoice_date",from+"T00:00:00").lt("invoice_date",endExclusive+"T00:00:00").in("status",["POSTED","PAID","PARTIAL"]).limit(3000),
+      db.rpc("get_slow_moving_stock",{p_days:30}),
+      db.from("sales_return_item_inspections").select("return_item_id,inspection_status,final_disposition,warehouse_sellable_quantity,warehouse_rework_quantity,warehouse_scrap_quantity,production_sellable_quantity,production_rework_quantity,production_scrap_quantity").limit(2000)
+    ]);
+    const [profitRes,periodRes,agedRes,supplierRes,treasuryRes,stockRes,locationRes,expenseRes,invoiceRes,slowRes,inspectionRes]=results;
+    const failures=[];
+    const required=[["الأرباح والخسائر",profitRes],["الأرصدة المالية",periodRes],["أعمار ديون العملاء",agedRes],["أرصدة الموردين",supplierRes],["الخزائن",treasuryRes],["المخزون",stockRes],["المواقع",locationRes]];
+    required.forEach(([label,res])=>{if(res.error)failures.push(label+": "+err(res.error));});
+    if(failures.length)throw new Error(failures.join(" | "));
+    const profitRow=Array.isArray(profitRes.data)?profitRes.data[0]:profitRes.data;
+    const period=periodRes.data||{};
+    const ar=Number(period.ar||0),ap=Number(period.ap||0),cash=Number(period.cash||0);
+    const netPosition=ar-ap;
+    const agedRows=agedRes.data||[];
+    const overdueOver30=agedRows.reduce((sum,row)=>sum+Number(row.days_31_60||0)+Number(row.days_61_90||0)+Number(row.days_over_90||0),0);
+    const within30=agedRows.reduce((sum,row)=>sum+Number(row.days_0_30||0),0);
+    const supplierRows=supplierRes.data||[];
+    const supplierPositive=supplierRows.reduce((sum,row)=>sum+Math.max(0,Number(row.current_payable||0)),0);
+    const supplierCredit=supplierRows.reduce((sum,row)=>sum+Math.max(0,-Number(row.current_payable||0)),0);
+    const treasuries=treasuryRes.data||[];
+    const cashByType={};
+    treasuries.forEach(row=>{const key=String(row.treasury_type||"غير محدد");cashByType[key]=(cashByType[key]||0)+Number(row.current_balance||0);});
+    const locations={};
+    (locationRes.data||[]).forEach(row=>locations[String(row.location_id)]={name:row.location_name||"موقع غير مسمى",type:row.location_type||"غير محدد"});
+    const stockGroups={};
+    let inventoryTotal=0;
+    (stockRes.data||[]).forEach(row=>{
+      const loc=locations[String(row.location_id)]||{name:"موقع غير معروف",type:"غير محدد"};
+      const key=loc.type;
+      if(!stockGroups[key])stockGroups[key]={value:0,locations:new Set()};
+      const value=Number(row.inventory_value||0);
+      stockGroups[key].value+=value;stockGroups[key].locations.add(loc.name);inventoryTotal+=value;
+    });
+    const expenses={};
+    if(!expenseRes.error)(expenseRes.data||[]).forEach(row=>{const key=row.expense_type||"غير مصنف";expenses[key]=(expenses[key]||0)+Number(row.amount||0);});
+    const expenseRows=Object.entries(expenses).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    let topProducts=[];
+    if(!invoiceRes.error&&invoiceRes.data?.length){
+      const invoiceIds=invoiceRes.data.map(row=>row.sales_invoice_id);
+      const itemRes=await db.from("sales_invoice_items").select("product_id,quantity,base_quantity,line_total").in("sales_invoice_id",invoiceIds).limit(10000);
+      if(!itemRes.error&&itemRes.data?.length){
+        const productIds=[...new Set(itemRes.data.map(row=>row.product_id))];
+        const productRes=await db.from("products").select("product_id,product_name").in("product_id",productIds);
+        const names={};(productRes.data||[]).forEach(row=>names[String(row.product_id)]=row.product_name);
+        const grouped={};
+        itemRes.data.forEach(row=>{
+          const key=String(row.product_id);
+          if(!grouped[key])grouped[key]={name:names[key]||("صنف رقم "+key),quantity:0,value:0};
+          grouped[key].quantity+=Number(row.base_quantity??row.quantity??0);
+          grouped[key].value+=Number(row.line_total||0);
+        });
+        topProducts=Object.values(grouped).sort((a,b)=>b.value-a.value).slice(0,8);
+      }
+    }
+    const staleRows=!slowRes.error?(slowRes.data||[]).slice(0,8):[];
+    const inspections=(inspectionRes.data||[]).filter(row=>row.inspection_status!=="CANCELLED");
+    let pendingQty=0,sellableQty=0,reworkQty=0,scrapQty=0;
+    const pendingIds=inspections.filter(row=>!row.final_disposition&&row.inspection_status!=="INSPECTED").map(row=>row.return_item_id);
+    if(pendingIds.length){
+      const pendingRes=await db.from("sales_return_items").select("return_item_id,base_quantity").in("return_item_id",pendingIds);
+      if(!pendingRes.error)pendingQty=(pendingRes.data||[]).reduce((sum,row)=>sum+Number(row.base_quantity||0),0);
+    }
+    inspections.forEach(row=>{
+      if(row.final_disposition==="SELLABLE")sellableQty+=Number(row.warehouse_sellable_quantity||0);
+      if(row.final_disposition==="REWORK")reworkQty+=Math.max(Number(row.warehouse_rework_quantity||0),Number(row.production_rework_quantity||0));
+      if(row.final_disposition==="SCRAP")scrapQty+=Math.max(Number(row.warehouse_scrap_quantity||0),Number(row.production_scrap_quantity||0));
+    });
+    const typeNames={MAIN_WAREHOUSE:"المخزن الرئيسي",FRIDGE:"الثلاجات",VEHICLE:"مخازن السيارات",FACTORY:"المصنع",SHOWROOM:"المعارض"};
+    const cashRows=Object.entries(cashByType).map(([key,value])=>"<tr><td>"+esc(key)+"</td><td>"+fmt(value)+"</td></tr>").join("");
+    const stockRows=Object.entries(stockGroups).map(([key,value])=>"<tr><td>"+esc(typeNames[key]||key)+"</td><td>"+fmt(value.value)+"</td><td>"+[...value.locations].map(esc).join("، ")+"</td></tr>").join("");
+    const expenseHtml=expenseRows.length?expenseRows.map(([name,value])=>"<tr><td>"+esc(name)+"</td><td>"+fmt(value)+"</td></tr>").join(""):"<tr><td colspan='2'>لا توجد مصروفات مسجلة في الفترة.</td></tr>";
+    const productHtml=topProducts.length?topProducts.map(row=>"<tr><td>"+esc(row.name)+"</td><td>"+fmtQty(row.quantity)+"</td><td>"+fmt(row.value)+"</td></tr>").join(""):"<tr><td colspan='3'>لا توجد فواتير مبيعات مرحلة في الفترة.</td></tr>";
+    const staleHtml=staleRows.length?staleRows.map(row=>"<tr><td>"+esc(row.product_name||"")+"</td><td>"+esc(row.location_name||"")+"</td><td>"+fmtQty(row.quantity)+"</td><td>"+(row.last_movement_date?formatDate(String(row.last_movement_date).slice(0,10)):"لا يوجد صرف مسجل")+"</td></tr>").join(""):"<tr><td colspan='4'>لا توجد أرصدة بلا صرف خلال 30 يومًا.</td></tr>";
+    const warnings=[];
+    if(expenseRes.error)warnings.push("تعذر تحميل تفاصيل المصروفات.");
+    if(invoiceRes.error)warnings.push("تعذر تحميل أكثر المنتجات مبيعًا.");
+    if(slowRes.error)warnings.push("تعذر تحميل الأصناف التي لم تسجل صرفًا خلال 30 يومًا.");
+    if(inspectionRes.error)warnings.push("تعذر تحميل تصنيف مرتجعات البيع.");
+    const profit=profitRow?Number(profitRow.profit||0):null;
+    const revenue=profitRow?Number(profitRow.revenue||0):null;
+    const cogs=profitRow?Number(profitRow.cogs||0):null;
+    const exp=profitRow?Number(profitRow.expenses||0):null;
+    box.innerHTML=
+      "<div class='info'>الفترة المالية: "+formatDate(from)+" إلى "+formatDate(to)+". الربح والمصروفات وحركة المبيعات تخص هذه الفترة. أرصدة العملاء والموردين والخزائن والمخزون تعرض الرصيد الحالي وقت إعداد التقرير.</div>"+
+      (warnings.length?"<div class='info'>"+warnings.map(esc).join("<br>")+"</div>":"")+
+      "<div class='home-dashboard'>"+
+      "<div class='home-card green'><div class='hc-label'>صافي الربح المحاسبي</div><div class='hc-value'>"+(profit===null?"غير متاح":fmt(profit))+"</div></div>"+
+      "<div class='home-card'><div class='hc-label'>مستحقات العملاء</div><div class='hc-value'>"+fmt(ar)+"</div></div>"+
+      "<div class='home-card gold'><div class='hc-label'>مستحقات الموردين</div><div class='hc-value'>"+fmt(ap)+"</div></div>"+
+      "<div class='home-card "+(netPosition>=0?"green":"red")+"'><div class='hc-label'>الفرق بين المستحقات</div><div class='hc-value'>"+fmt(Math.abs(netPosition))+"</div><div class='details'>"+(netPosition>0?"لصالح الشركة":netPosition<0?"التزامات أكثر على الشركة":"متساوية")+"</div></div>"+
+      "<div class='home-card'><div class='hc-label'>النقدية الحالية</div><div class='hc-value'>"+fmt(cash)+"</div></div>"+
+      "<div class='home-card green'><div class='hc-label'>قيمة المخزون الحالية</div><div class='hc-value'>"+fmt(inventoryTotal)+"</div></div>"+
+      "</div>"+
+      "<h3>تفاصيل الربح المحاسبي</h3><div class='table-responsive'><table class='print-table'><thead><tr><th>الإيرادات</th><th>تكلفة المبيعات</th><th>المصروفات</th><th>صافي الربح</th></tr></thead><tbody><tr><td>"+(revenue===null?"غير متاح":fmt(revenue))+"</td><td>"+(cogs===null?"غير متاح":fmt(cogs))+"</td><td>"+(exp===null?"غير متاح":fmt(exp))+"</td><td>"+(profit===null?"غير متاح":fmt(profit))+"</td></tr></tbody></table></div>"+
+      "<h3>النقدية حسب نوع الخزنة</h3><div class='table-responsive'><table class='print-table'><thead><tr><th>النوع</th><th>الرصيد</th></tr></thead><tbody>"+(cashRows||"<tr><td colspan='2'>لا توجد خزائن نشطة.</td></tr>")+"</tbody></table></div>"+
+      "<h3>قيمة المخزون حسب الموقع</h3><div class='table-responsive'><table class='print-table'><thead><tr><th>نوع الموقع</th><th>القيمة</th><th>المواقع</th></tr></thead><tbody>"+(stockRows||"<tr><td colspan='3'>لا توجد أرصدة مخزون.</td></tr>")+"</tbody></table></div>"+
+      "<h3>الديون المتأخرة للعملاء</h3><div class='info'>المبلغ التالي يمثل الأرصدة التي تجاوز استحقاقها 30 يومًا، وفق تقرير أعمار الديون. شريحة 0 إلى 30 يومًا قد تضم فواتير لم يحن موعدها بعد.</div><div class='total-box'><div class='line'><span>أكثر من 30 يومًا</span><strong>"+fmt(overdueOver30)+"</strong></div><div class='line'><span>شريحة 0 إلى 30 يومًا</span><strong>"+fmt(within30)+"</strong></div></div>"+
+      "<h3>مستحقات الموردين المتأخرة</h3><div class='info'>غير متاح بدقة. بيانات فواتير الموردين الحالية لا تحتوي على تاريخ استحقاق مستقل أو مدة ائتمان للمورد. إجمالي المستحقات الحالي: "+fmt(ap)+".</div>"+
+      "<h3>تفصيل أرصدة الموردين</h3><div class='table-responsive'><table class='print-table'><thead><tr><th>المورد</th><th>الرصيد</th></tr></thead><tbody>"+(supplierRows.length?supplierRows.map(row=>"<tr><td>"+esc(row.supplier_name||"")+"</td><td>"+fmt(row.current_payable)+"</td></tr>").join(""):"<tr><td colspan='2'>لا توجد أرصدة موردين.</td></tr>")+"</tbody></table></div>"+
+      "<div class='info'>إجمالي أرصدة الموردين الموجبة: "+fmt(supplierPositive)+"، والأرصدة الدائنة للشركة لدى الموردين: "+fmt(supplierCredit)+".</div>"+
+      "<h3>المصروفات حسب النوع</h3><div class='table-responsive'><table class='print-table'><thead><tr><th>نوع المصروف</th><th>القيمة</th></tr></thead><tbody>"+expenseHtml+"</tbody></table></div>"+
+      "<h3>أكثر المنتجات مبيعًا بالقيمة</h3><div class='info'>الترتيب حسب قيمة بنود فواتير البيع المرحلة خلال الفترة، قبل خصم مرتجعات البيع.</div><div class='table-responsive'><table class='print-table'><thead><tr><th>المنتج</th><th>الكمية الأساسية</th><th>قيمة البيع</th></tr></thead><tbody>"+productHtml+"</tbody></table></div>"+
+      "<h3>الأصناف التي لم تسجل صرفًا خلال 30 يومًا</h3><div class='table-responsive'><table class='print-table'><thead><tr><th>المنتج</th><th>الموقع</th><th>الكمية</th><th>آخر صرف</th></tr></thead><tbody>"+staleHtml+"</tbody></table></div>"+
+      "<h3>حالة مرتجعات البيع بعد الفحص</h3><div class='info'>الكميات بوحدة الصنف الأساسية. قيمة التكلفة للبضاعة التالفة أو تحت الفحص غير متاحة من سجل الفحص الحالي، لذلك لا نعرض قيمة مالية تقديرية.</div><div class='total-box'><div class='line'><span>صالح للبيع</span><strong>"+fmtQty(sellableQty)+"</strong></div><div class='line'><span>إعادة تصنيع</span><strong>"+fmtQty(reworkQty)+"</strong></div><div class='line'><span>تالف / إعدام</span><strong>"+fmtQty(scrapQty)+"</strong></div><div class='line'><span>تحت الفحص</span><strong>"+fmtQty(pendingQty)+"</strong></div></div>"+
+      "<div class='info'>صافي الربح لا يساوي النقدية المتاحة. الربح يعتمد على الإيرادات وتكلفة المبيعات والمصروفات المرحلة. النقدية هي أرصدة الخزائن والبنوك الحالية. وقد تتبقى ديون على العملاء أو التزامات للموردين حتى مع وجود ربح.</div>";
+  }catch(e){
+    box.innerHTML="<div class='empty error'>تعذر إعداد التقرير: "+esc(err(e))+"</div>";
+  }
+}
+
 async function loadHomeGeoSummary(){
   const box=$("homeGeoSummary"),itemsBox=$("homeGeoItemsSummary"),customersBox=$("homeCustomersSummary"),suppliersBox=$("homeSuppliersSummary");
-  if(!box||(!isSystemAdmin&&!isPartner)){["openHomeGeoSummary","openHomeItemsSummary","openHomeCustomersSummary","openHomeSuppliersSummary"].forEach(id=>$(id)?.classList.add("hidden"));return;}
-  ["openHomeGeoSummary","openHomeItemsSummary","openHomeCustomersSummary","openHomeSuppliersSummary"].forEach(id=>$(id)?.classList.remove("hidden"));
+  if(!box||(!isSystemAdmin&&!isPartner)){["openHomeGeoSummary","openHomeItemsSummary","openHomeCustomersSummary","openHomeSuppliersSummary","openPartnerManagementSummary"].forEach(id=>$(id)?.classList.add("hidden"));return;}
+  ["openHomeGeoSummary","openHomeItemsSummary","openHomeCustomersSummary","openHomeSuppliersSummary","openPartnerManagementSummary"].forEach(id=>$(id)?.classList.remove("hidden"));
   const from=monthStartISO(),to=todayISO();
   box.innerHTML='<h3>ملخص المبيعات والتحصيلات حسب المحافظة</h3><div class="info">جارٍ تحميل الملخص...</div>';
   if(itemsBox)itemsBox.innerHTML='<h3>ملخص حركة الأصناف</h3><div class="info">جارٍ تحميل حركة الأصناف...</div>';
@@ -11230,6 +11378,8 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
   if($("openHomeItemsSummary"))$("openHomeItemsSummary").addEventListener("click",()=>openHomeDetail("homeItemsPanel"));
   if($("openHomeCustomersSummary"))$("openHomeCustomersSummary").addEventListener("click",()=>openHomeDetail("homeCustomersPanel"));
   if($("openHomeSuppliersSummary"))$("openHomeSuppliersSummary").addEventListener("click",()=>openHomeDetail("homeSuppliersPanel"));
+  if($("openPartnerManagementSummary"))$("openPartnerManagementSummary").addEventListener("click",()=>{openHomeDetail("homePartnerSummaryPanel");loadPartnerManagementSummary();});
+  if($("refreshPartnerSummary"))$("refreshPartnerSummary").addEventListener("click",loadPartnerManagementSummary);
   document.querySelectorAll(".home-detail-back").forEach(btn=>btn.addEventListener("click",closeHomeDetail));
   document.querySelectorAll("[data-home-print]").forEach(btn=>btn.addEventListener("click",()=>openHomeQuickPrint(btn.dataset.homePrint)));
   document.querySelectorAll("[data-home-share]").forEach(btn=>btn.addEventListener("click",()=>shareHomeQuickReport(btn.dataset.homeShare)));
