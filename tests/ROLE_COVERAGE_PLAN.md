@@ -110,3 +110,22 @@
 - لم تتغير واجهة التطبيق أو ملف الخدمة.
 - لم تُنشأ حسابات أو معاملات اختبار.
 - لم تُشغّل اختبارات جديدة على قاعدة التشغيل.
+
+
+## 10. تنفيذ اختبار الدخول المستقل
+
+أُضيف ملف `tests/role-coverage.spec.cjs` لتشغيل اختبار دخول منفصل لكل دور من الأدوار السبعة. يقرأ الاختبار الأسرار التالية من إعدادات GitHub Actions:
+
+| الدور | اسم المستخدم | كلمة المرور |
+|---|---|---|
+| SYSTEM_ADMIN | `QA_SYSTEM_ADMIN_USERNAME` | `QA_SYSTEM_ADMIN_PASSWORD` |
+| SALES_MANAGER | `QA_SALES_MANAGER_USERNAME` | `QA_SALES_MANAGER_PASSWORD` |
+| SALES_REP | `QA_SALES_REP_USERNAME` | `QA_SALES_REP_PASSWORD` |
+| WAREHOUSE_KEEPER | `QA_WAREHOUSE_KEEPER_USERNAME` | `QA_WAREHOUSE_KEEPER_PASSWORD` |
+| PRODUCTION_MANAGER | `QA_PRODUCTION_MANAGER_USERNAME` | `QA_PRODUCTION_MANAGER_PASSWORD` |
+| ACCOUNTANT | `QA_ACCOUNTANT_USERNAME` | `QA_ACCOUNTANT_PASSWORD` |
+| GENERAL_MANAGER | `QA_GENERAL_MANAGER_USERNAME` | `QA_GENERAL_MANAGER_PASSWORD` |
+
+يتحقق الاختبار من أن الدور الفعلي داخل جلسة التطبيق يطابق الدور المطلوب، ثم يسجل القوائم الظاهرة والمخفية وأخطاء الصفحة في تقرير مستقل. إذا غابت بيانات أي دور، يتخطى الاختبار ولا يستخدم حسابًا بديلًا.
+
+هذا الاختبار لا يثبت وحده صحة مصفوفة الصلاحيات أو سياسات RLS. يحتاج ذلك إلى مصفوفة معتمدة وحسابات مناسبة وبيئة آمنة. تسجيل الدخول الحالي في التطبيق يحدث بيانات آخر دخول وسجل النشاط، لذلك لا يُشغّل هذا الاختبار على قاعدة التشغيل قبل موافقة صريحة على أثر تسجيل الدخول أو توفير بيئة اختبار معزولة.
