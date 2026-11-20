@@ -59,7 +59,7 @@ jobs:
 
       - name: Run read-only browser tests
         env:
-          BASE_URL: http://127.0.0.1:4173/
+          BASE_URL: https://evramman-dev.github.io/MeatManagement/
           TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
           PLAYWRIGHT_HTML_OPEN: never
