@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v161</title>
+<title>MeatManagement v162</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -565,7 +565,7 @@ nav{
 
 <header>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v161]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v162]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -2269,7 +2269,7 @@ nav{
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v161</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v162</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -2290,7 +2290,7 @@ nav{
 <div id="modalInvoiceAccountSummary" class="total-box" style="background:#f9fbf9;border:1px solid #ddd;border-radius:10px;margin-top:15px;font-size:14px;"></div>
 <div class="print-footer" id="invoicePrintFooter"></div>
 </div>
-<div class="no-print" style="margin-top:20px;display:flex;gap:10px;"><button class="btn" onclick="window.print()" style="background:var(--gold);color:var(--g);flex:1;">🖨️ طباعة / PDF</button><button class="btn" id="shareWhatsappBtn" style="background:#25D366;flex:1;">💬 واتساب</button><button class="btn" id="exportInvoiceJsonBtn" style="background:#24563e;flex:1;">📤 JSON للضرائب</button></div>
+<div class="no-print" style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;"><button class="btn" onclick="window.print()" style="background:var(--gold);color:var(--g);flex:1;min-width:125px;">🖨️ طباعة / PDF</button><div style="display:flex;gap:6px;flex:1;min-width:180px;"><select id="thermalPaperWidth" aria-label="مقاس رول الطابعة" style="width:82px;padding:8px;"><option value="58">58 مم</option><option value="80">80 مم</option></select><button class="btn" id="thermalPrintBtn" type="button" style="flex:1;margin:0;background:#173c2c;">طباعة حرارية</button></div><button class="btn" id="shareWhatsappBtn" style="background:#25D366;flex:1;min-width:110px;">💬 واتساب</button><button class="btn" id="exportInvoiceJsonBtn" style="background:#24563e;flex:1;min-width:110px;">📤 JSON للضرائب</button></div>
 </div>
 </div>
 </div>
@@ -7265,6 +7265,38 @@ async function viewInvoice(inv) {
         };
         if($("exportInvoiceJsonBtn")) $("exportInvoiceJsonBtn").onclick = () => exportInvoiceJSON(inv, items);
         fillPrintHeaders();
+        const thermalWidth=$("thermalPaperWidth");
+        const thermalButton=$("thermalPrintBtn");
+        if(thermalWidth){
+          try{thermalWidth.value=localStorage.getItem("mm_thermal_paper_width")==="80"?"80":"58";}catch(e){thermalWidth.value="58";}
+          thermalWidth.onchange=()=>{try{localStorage.setItem("mm_thermal_paper_width",thermalWidth.value==="80"?"80":"58");}catch(e){}};
+        }
+        if(thermalButton) thermalButton.onclick=()=>{
+          const width=thermalWidth&&thermalWidth.value==="80"?80:58;
+          const printWindow=window.open("","_blank","width=420,height=720");
+          if(!printWindow){showToast("اسمح بفتح نافذة الطباعة ثم حاول مرة أخرى","error");return;}
+          const escapeReceipt=value=>String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+          const companyName=companySettings.company_name||"MeatManagement";
+          const companyPhone=companySettings.company_phone_1||companySettings.company_phone_2||"";
+          const rows=(items||[]).map(item=>{
+            const product=productsCache.find(x=>String(x.product_id)===String(item.product_id));
+            const name=product?.product_name||("صنف "+item.product_id);
+            const unit=unitName(item.unit_id)||"";
+            return '<tr><td class="item-name">'+escapeReceipt(name)+'<small>'+fmtQty(item.quantity)+' '+escapeReceipt(unit)+' × '+fmt(item.unit_price)+'</small></td><td class="amount">'+fmt(item.line_total)+'</td></tr>';
+          }).join("");
+          const receiptTotals=[
+            ["الإجمالي قبل الخصم",fmt(inv.subtotal)],
+            ["الخصم",fmt(inv.discount_amount)],
+            ["الإجمالي",fmt(inv.net_total),"grand"],
+            ["المدفوع",fmt(inv.paid_amount)],
+            ["مرتجع مخصوم من المديونية",fmt(debtReturns)],
+            ...(cashBackReturns>0?[["مرتجع نقدي",fmt(cashBackReturns)]]:[]),
+            ["المتبقي",fmt(invoiceRemaining),"grand"]
+          ];
+          const totalRows=receiptTotals.map(row=>'<div class="total '+(row[2]||"")+'"><span>'+escapeReceipt(row[0])+'</span><strong>'+escapeReceipt(row[1])+'</strong></div>').join("");
+          const receipt='<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>فاتورة '+escapeReceipt(inv.invoice_number)+'</title><style>@page{size:'+width+'mm auto;margin:2mm}*{box-sizing:border-box}html,body{margin:0;padding:0;width:100%;background:#fff;color:#000;font-family:Tahoma,Arial,sans-serif;font-size:11px}body{width:100%;padding:0}.receipt{width:100%;margin:0 auto}.center{text-align:center}.company{font-size:15px;font-weight:bold;margin:0 0 4px}.sub{font-size:10px;margin:2px 0}.rule{border:0;border-top:1px dashed #555;margin:7px 0}.meta{line-height:1.8}.meta div{display:flex;justify-content:space-between;gap:5px}.meta strong{font-weight:bold}table{width:100%;border-collapse:collapse;margin:7px 0}td{padding:5px 1px;border-bottom:1px dashed #aaa;vertical-align:top}.item-name{width:72%;font-weight:bold}.item-name small{display:block;font-size:9px;font-weight:normal;margin-top:3px}.amount{text-align:left;direction:ltr;white-space:nowrap;font-weight:bold}.total{display:flex;justify-content:space-between;gap:6px;padding:3px 0}.total strong{direction:ltr;white-space:nowrap}.grand{font-size:12px;font-weight:bold;border-top:1px solid #555;margin-top:4px;padding-top:5px}.thanks{margin-top:10px;text-align:center;font-size:10px;line-height:1.7}.no-print{display:none}@media print{body{width:100%}}</style></head><body><main class="receipt"><header class="center"><p class="company">'+escapeReceipt(companyName)+'</p>'+(companyPhone?'<p class="sub">هاتف: '+escapeReceipt(companyPhone)+'</p>':'')+'<p class="sub">فاتورة بيع</p></header><hr class="rule"><section class="meta"><div><span>رقم الفاتورة</span><strong>'+escapeReceipt(inv.invoice_number)+'</strong></div><div><span>التاريخ</span><strong>'+escapeReceipt(invoiceTime)+'</strong></div><div><span>العميل</span><strong>'+escapeReceipt(customerName(inv.customer_id))+'</strong></div></section><hr class="rule"><table><tbody>'+rows+'</tbody></table><hr class="rule"><section>'+totalRows+'</section><hr class="rule"><footer class="thanks">شكراً لتعاملكم معنا<br>'+escapeReceipt(companyName)+'</footer></main><script>window.onload=function(){setTimeout(function(){window.focus();window.print();},350)};<\/script></body></html>';
+          printWindow.document.open();printWindow.document.write(receipt);printWindow.document.close();
+        };
     } catch(e) { alert(err(e)); }
 }
 
@@ -11884,7 +11916,7 @@ const originalAssets=loadFixedAssets;loadFixedAssets=async function(){await orig
 // ====== PWA ======
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=178', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
+    navigator.serviceWorker.register('./sw.js?v=179', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
   });
 }
 
