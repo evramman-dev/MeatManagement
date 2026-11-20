@@ -62,6 +62,7 @@ jobs:
           BASE_URL: https://evramman-dev.github.io/MeatManagement/
           TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+          QA_ROLE_TESTS_SAFE_ENVIRONMENT: ${{ secrets.QA_ROLE_TESTS_SAFE_ENVIRONMENT }}
           QA_SYSTEM_ADMIN_USERNAME: ${{ secrets.QA_SYSTEM_ADMIN_USERNAME }}
           QA_SYSTEM_ADMIN_PASSWORD: ${{ secrets.QA_SYSTEM_ADMIN_PASSWORD }}
           QA_SALES_MANAGER_USERNAME: ${{ secrets.QA_SALES_MANAGER_USERNAME }}
