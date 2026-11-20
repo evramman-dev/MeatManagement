@@ -2,8 +2,12 @@ const { test, expect } = require('@playwright/test');
 const path = require('node:path');
 const fs = require('node:fs');
 const qaHtml = fs.readFileSync(path.resolve(__dirname, '..', 'index.html'), 'utf8');
-const appSupabaseUrl = qaHtml.match(/const URL="(https:\/\/[^\"]+)";/)?.[1] || null;
 const productionSupabaseUrl = 'https://mklbemoisdkoyrwcrmoj.supabase.co';
+const qaSupabaseUrl = process.env.QA_SUPABASE_URL;
+const qaSupabaseAnonKey = process.env.QA_SUPABASE_ANON_KEY;
+const qaAppHtml = qaHtml
+  .replace(/const URL="[^"]+";/, 'const URL=' + JSON.stringify(qaSupabaseUrl) + ';')
+  .replace(/const KEY="[^"]+";/, 'const KEY=' + JSON.stringify(qaSupabaseAnonKey) + ';');
 
 test.use({ serviceWorkers: 'block' });
 
@@ -35,10 +39,17 @@ for (const role of roles) {
       'Skipped safely: QA_ROLE_TESTS_SAFE_ENVIRONMENT is not true. A separate safe database environment is required.');
     test.skip(!baseURL || !role.username || !role.password,
       'Skipped safely: credentials for ' + role.code + ' are not configured.');
-    test.skip(!appSupabaseUrl || appSupabaseUrl === productionSupabaseUrl,
-      'Blocked safely: this app build points to the production Supabase project. Role login tests require a separate test-project build.');
-    test.skip(!process.env.QA_SUPABASE_URL || appSupabaseUrl !== process.env.QA_SUPABASE_URL,
-      'Blocked safely: QA_SUPABASE_URL must exactly match the Supabase URL embedded in the test app build.');
+    test.skip(!qaSupabaseUrl || !qaSupabaseAnonKey,
+      'Skipped safely: QA_SUPABASE_URL and QA_SUPABASE_ANON_KEY must point to a separate test project.');
+    test.skip(qaSupabaseUrl === productionSupabaseUrl,
+      'Blocked safely: role login tests cannot use the production Supabase project.');
+    let qaUrlIsValid = false;
+    try {
+      const parsedQaUrl = new URL(qaSupabaseUrl);
+      qaUrlIsValid = parsedQaUrl.protocol === 'https:' && parsedQaUrl.hostname.endsWith('.supabase.co');
+    } catch (_) {}
+    test.skip(!qaUrlIsValid || qaAppHtml === qaHtml,
+      'Blocked safely: the test app could not be configured for the separate Supabase project.');
 
     const pageErrors = [];
     const consoleErrors = [];
@@ -66,7 +77,7 @@ for (const role of roles) {
     });
 
     await page.route(baseURL, route => route.fulfill({
-      path: path.resolve(__dirname, '..', 'index.html'),
+      body: qaAppHtml,
       contentType: 'text/html'
     }));
 
