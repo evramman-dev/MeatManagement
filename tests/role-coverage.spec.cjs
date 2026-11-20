@@ -42,7 +42,20 @@ for (const role of roles) {
 
     const pageErrors = [];
     const consoleErrors = [];
+    let actualRole = null;
     page.on('pageerror', error => pageErrors.push(error.message));
+    page.on('response', async response => {
+      try {
+        const responseUrl = new URL(response.url());
+        if (response.ok() && responseUrl.pathname.endsWith('/rest/v1/app_roles')) {
+          const payload = await response.json();
+          const row = Array.isArray(payload) ? payload[0] : payload;
+          if (row && typeof row.role_code === 'string') actualRole = row.role_code;
+        }
+      } catch (_) {
+        // Ignore unrelated or non-JSON responses; the role assertion below will fail if no role was returned.
+      }
+    });
     page.on('console', message => {
       if (message.type() === 'error') {
         const value = message.text();
@@ -67,10 +80,7 @@ for (const role of roles) {
     await expect(page.locator('#home')).toBeVisible({ timeout: 60000 });
     await expect(page.locator('#userInfo')).not.toContainText('جارٍ تحميل بيانات الحساب', { timeout: 30000 });
 
-    const actualRole = await page.evaluate(() =>
-      typeof currentRoleCode === 'undefined' ? null : currentRoleCode
-    );
-    expect(actualRole, 'The signed-in account must actually have role ' + role.code).toBe(role.code);
+    expect(actualRole, 'The app_roles response must identify the signed-in account as ' + role.code).toBe(role.code);
 
     const visibleMenus = await page.evaluate(ids => ids.filter(id => {
       const element = document.getElementById(id);
