@@ -50,3 +50,36 @@ test('Role coverage never falls back to the shared production smoke-test account
   expect(roleSpec).not.toContain('process.env.TEST_USERNAME');
   expect(roleSpec).not.toContain('process.env.TEST_PASSWORD');
 });
+
+const appHtml = fs.readFileSync(path.resolve(__dirname, '..', 'index.html'), 'utf8');
+
+test('Application permission helper fails closed and uses the database permission RPC', () => {
+  const helper = appHtml.match(/async function permission\\(code\\)\\s*\\{[\\s\\S]*?\\n\\}/);
+  expect(helper, 'Permission helper should exist').not.toBeNull();
+  expect(helper[0]).toContain('if(isSystemAdmin) return true');
+  expect(helper[0]).toContain('if(!navigator.onLine) return false');
+  expect(helper[0]).toContain('db.rpc("has_permission",{p_permission_code:code})');
+  expect(helper[0]).toContain('return data===true');
+  expect(helper[0]).toContain('catch (e) { return false; }');
+});
+
+test('Trip-load approval and physical dispatch remain separate role actions', () => {
+  expect(appHtml).toContain('const approvalRoleAllowed=["SALES_MANAGER","ACCOUNTANT","GENERAL_MANAGER"].includes(currentRoleCode)');
+  expect(appHtml).toContain('canApproveTripLoads=isSystemAdmin || (approvalRoleAllowed && await permission("TRIP_LOAD_APPROVE"))');
+  expect(appHtml).toContain('canDispatchTripLoads=(currentRoleCode==="WAREHOUSE_KEEPER")');
+  expect(appHtml).not.toContain('const approvalRoleAllowed=["SALES_MANAGER","ACCOUNTANT","GENERAL_MANAGER","WAREHOUSE_KEEPER"]');
+});
+
+test('Collection viewing, posting and management use separate permission codes', () => {
+  expect(appHtml).toContain('canViewCollections=await permission("COLLECTIONS_VIEW") || isSystemAdmin');
+  expect(appHtml).toContain('canPostCollections=await permission("COLLECTIONS_POST") || isSystemAdmin');
+  expect(appHtml).toContain('canManageCollections=await permission("COLLECTIONS_MANAGE") || isSystemAdmin');
+  expect(appHtml).toContain('classList.toggle("hidden",!canViewCollections)');
+  expect(appHtml).toContain('classList.toggle("hidden",!canPostCollections)');
+});
+
+test('Permission lookup errors do not grant access', () => {
+  const helper = appHtml.match(/async function permission\\(code\\)\\s*\\{[\\s\\S]*?\\n\\}/);
+  expect(helper).not.toBeNull();
+  expect(helper[0]).toMatch(/catch\\s*\\([^)]*\\)\\s*\\{\\s*return false;\\s*\\}/);
+});
