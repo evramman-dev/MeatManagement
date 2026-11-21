@@ -3207,12 +3207,19 @@ async function userInfo(user){
     if($("settleUnassignedRepCustodyBtn")) $("settleUnassignedRepCustodyBtn").classList.toggle("hidden", !(canManageTrips || canManageCollections));
 
     if(isSystemAdmin||isPartner){
-      // مدير النظام والشريك يشاهدان جميع الأقسام، وتظل عمليات الكتابة خاصة بالصلاحيات المصرح بها.
+      // مدير النظام والشريك يشاهدان بيانات النشاط، مع حصر إدارة الحسابات والمندوبين وضبط المصنع بمدير النظام.
       document.querySelectorAll("#dataDashboard .dash-item").forEach(el=>el.classList.remove("hidden"));
       document.querySelectorAll("#dataDashboard .dashboard-group").forEach(el=>el.classList.remove("hidden"));
-      ["menuUsers","menuSalesReps","menuAccounting","menuSettings"].forEach(id=>{ if($(id)) $(id).classList.remove("hidden"); });
-      ["userManagementCard","salesRepsCard","accountingCard","systemResetCard"].forEach(id=>{ if($(id)) $(id).classList.remove("hidden"); });
-      await loadUserManagementLookups();
+      if(isSystemAdmin){
+        ["menuUsers","menuSalesReps","menuAccounting","menuSettings","menuSystemReset"].forEach(id=>{ if($(id)) $(id).classList.remove("hidden"); });
+        ["userManagementCard","salesRepsCard","accountingCard","systemResetCard"].forEach(id=>{ if($(id)) $(id).classList.remove("hidden"); });
+        await loadUserManagementLookups();
+      }else{
+        ["menuUsers","menuSalesReps","menuSystemReset"].forEach(id=>{ if($(id)) $(id).classList.add("hidden"); });
+        ["userManagementCard","salesRepsCard","systemResetCard"].forEach(id=>{ if($(id)) $(id).classList.add("hidden"); });
+        ["menuAccounting","menuSettings"].forEach(id=>{ if($(id)) $(id).classList.remove("hidden"); });
+        if($("accountingCard")) $("accountingCard").classList.remove("hidden");
+      }
     } else {
       if($("menuUsers")) $("menuUsers").classList.add("hidden");
       if($("menuSystemReset")) $("menuSystemReset").classList.add("hidden");
