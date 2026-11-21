@@ -3120,7 +3120,10 @@ async function userInfo(user){
     if($("notificationSendPanel"))$("notificationSendPanel").classList.toggle("hidden",!isSystemAdmin);
      if(isPartner){if($("salesRepAreaForm"))$("salesRepAreaForm").classList.add("hidden");if($("saveSettingsBtn"))$("saveSettingsBtn").classList.add("hidden");document.querySelectorAll("#sectionSettings input,#sectionSettings select,#sectionSettings textarea").forEach(el=>el.disabled=true);} 
     if($("userInfo")) $("userInfo").textContent="مرحبًا "+(data.display_name||"بك");
-    if(!isPartner) await db.from("app_users").update({ last_login: new Date().toISOString() }).eq("user_id", user.id);
+    if(!isPartner){
+      const {data:loginRecorded,error:loginError}=await db.rpc("record_current_user_login");
+      if(loginError || loginRecorded!==true) console.warn("[LOGIN] تعذر تسجيل وقت آخر دخول.",loginError||"الحساب غير نشط أو غير مسجل.");
+    }
     logUserAction("LOGIN", "تسجيل دخول");
 
     canManage=await permission("PRODUCTS_MANAGE") || isSystemAdmin; const canViewProducts=await permission("PRODUCTS_VIEW") || canManage; if($("menuProducts")) $("menuProducts").classList.toggle("hidden", !canViewProducts); if($("menuPackaging")) $("menuPackaging").classList.toggle("hidden", !canViewProducts); if($("addBtn")) $("addBtn").classList.toggle("hidden",!canManage); if($("packagingManagement")) $("packagingManagement").style.display="block";
