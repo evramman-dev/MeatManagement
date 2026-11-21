@@ -134,6 +134,66 @@ Deno.serve(async (req: Request) => {
   } catch {
     return respond({ success: false, error: "بيانات الطلب غير صالحة." }, 400);
   }
+  // ربط حساب PARTNER بسجل شريك واحد، بعد التحقق من الدور والحالة وعدم وجود ربط سابق.
+  if (body.action === "link_partner") {
+    const targetUserId = typeof body.target_user_id === "string" ? body.target_user_id.trim() : "";
+    const partnerId = Number(body.partner_id);
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(targetUserId)) {
+      return respond({ success: false, error: "معرف حساب الشريك غير صالح." }, 400);
+    }
+    if (!Number.isSafeInteger(partnerId) || partnerId <= 0) {
+      return respond({ success: false, error: "سجل الشريك المحدد غير صالح." }, 400);
+    }
+    const { data: targetProfile, error: targetProfileError } = await admin
+      .from("app_users")
+      .select("user_id, role_id, partner_id, is_active")
+      .eq("user_id", targetUserId)
+      .maybeSingle();
+    if (targetProfileError || !targetProfile) {
+      return respond({ success: false, error: "تعذر العثور على حساب المستخدم المطلوب." }, 404);
+    }
+    const { data: targetRole, error: targetRoleError } = await admin
+      .from("app_roles")
+      .select("role_code, is_active")
+      .eq("role_id", targetProfile.role_id)
+      .maybeSingle();
+    if (targetRoleError || !targetRole || targetRole.role_code !== "PARTNER" || targetRole.is_active !== true) {
+      return respond({ success: false, error: "يمكن ربط سجل شريك بحساب يحمل دور الشريك النشط فقط." }, 400);
+    }
+    if (targetProfile.partner_id !== null && Number(targetProfile.partner_id) !== partnerId) {
+      return respond({ success: false, error: "هذا الحساب مرتبط بالفعل بسجل شريك آخر." }, 409);
+    }
+    const { data: partner, error: partnerError } = await admin
+      .from("partners")
+      .select("partner_id, is_active")
+      .eq("partner_id", partnerId)
+      .maybeSingle();
+    if (partnerError || !partner || partner.is_active !== true) {
+      return respond({ success: false, error: "سجل الشريك غير موجود أو غير نشط." }, 404);
+    }
+    const { data: linkedUsers, error: linkedUsersError } = await admin
+      .from("app_users")
+      .select("user_id")
+      .eq("partner_id", partnerId)
+      .neq("user_id", targetUserId)
+      .limit(1);
+    if (linkedUsersError) {
+      return respond({ success: false, error: "تعذر التحقق من ارتباط سجل الشريك." }, 500);
+    }
+    if (linkedUsers && linkedUsers.length > 0) {
+      return respond({ success: false, error: "سجل الشريك مرتبط بالفعل بحساب مستخدم آخر." }, 409);
+    }
+    const { error: linkError } = await admin
+      .from("app_users")
+      .update({ partner_id: partnerId })
+      .eq("user_id", targetUserId)
+      .is("partner_id", null);
+    if (linkError) {
+      return respond({ success: false, error: "تعذر حفظ ربط حساب الشريك: " + cleanError(linkError) }, 500);
+    }
+    return respond({ success: true, message: "تم ربط حساب الشريك بسجله بنجاح." });
+  }
+
   // حذف حساب مختبر النظام فقط. لا يحذف أي حركات أو بيانات تشغيلية أنشأها الحساب.
   if (body.action === "delete_tester") {
     const targetUserId =
