@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v171</title>
+<title>MeatManagement v174</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -622,6 +622,55 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
   .header-exit-btn{left:9px;min-width:82px;padding-inline:9px}
 }
 
+
+/* Centered brand row with independent version line on narrow screens */
+@media(max-width:600px){
+  header{padding:22px 12px 18px}
+  header h1{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+    padding:0 98px;
+    margin:0 0 8px;
+    font-size:18px;
+    line-height:1.2;
+    text-align:center;
+  }
+  header h1 .header-brand{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+    direction:ltr;
+    white-space:nowrap;
+    font-size:inherit;
+    letter-spacing:-.35px;
+  }
+  header h1 .header-version{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    margin:0;
+    padding:3px 9px;
+    border:1px solid rgba(213,177,106,.5);
+    border-radius:999px;
+    background:rgba(255,255,255,.08);
+    color:#f1dfb6!important;
+    font-size:11px!important;
+    line-height:1.35;
+    white-space:nowrap;
+  }
+  .header-menu-btn{right:12px;top:14px;width:44px;height:42px;border-radius:11px}
+  .header-exit-btn{left:12px;top:14px;min-width:82px;min-height:42px;padding:8px 11px;border-radius:11px}
+}
+@media(max-width:380px){
+  header h1{padding-inline:88px;font-size:16px}
+  .header-menu-btn{right:9px;width:40px}
+  .header-exit-btn{left:9px;min-width:76px;padding-inline:8px}
+}
+
 </style>
 </head>
 <body>
@@ -636,7 +685,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v172]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v174]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -2512,7 +2561,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v172</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v174</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -12382,7 +12431,7 @@ $("hrCreatePeriod")?.addEventListener("click",async()=>{try{const r=await db.rpc
 // ====== PWA ======
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=186', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
+    navigator.serviceWorker.register('./sw.js?v=187', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
   });
 }
 
