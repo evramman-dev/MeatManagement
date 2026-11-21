@@ -418,3 +418,27 @@ Commit: `1041981952e2f57e27f0d0d6f46c7c717a2986a7`
 
 | 20261121103031 | require_linked_active_partner_for_partner_read_access_20261121 | Require PARTNER accounts to have an active linked partner record before the shared read-only partner policies grant access. The currently linked active account retains its existing read access; unlinked or inactive partner accounts are denied. Applied to the connected Supabase project. |
 | 20261121105602 | `record_current_user_login_securely_20261121` | Add a restricted private SECURITY DEFINER helper that updates only the authenticated user's active app_users.last_login, expose it through an authenticated SECURITY INVOKER RPC, and revoke public/anon execution. Applied to the connected Supabase project. |
+
+
+## مطابقة محدثة لسجل الترحيلات – 2026-11-21
+
+تمت إعادة المطابقة للقراءة فقط بعد دمج PR #194، باستخدام سجل الترحيلات الفعلي في Supabase وشجرة ملفات GitHub على main عند commit `4ba3ec851eb985fd1e5550c81dbcf459fe4e8f90`.
+
+| البند | العدد |
+|---|---:|
+| الترحيلات المسجلة في Supabase | 326 |
+| ملفات SQL التنفيذية في `supabase/migrations` | 46 |
+| ملفات تطابق رقم ترحيل مسجل | 46 |
+| ملفات محلية لا يقابل رقمها ترحيل في Supabase | 0 |
+| ترحيلات Supabase التي لا يوجد لها ملف SQL تنفيذي مطابق | 280 |
+| ملفات SQL المحفوظة في الأرشيف | 17 |
+
+كل الملفات التنفيذية الـ46 تطابق أرقامًا مسجلة في Supabase. لا توجد ملفات محلية معلقة أو ذات أرقام غير مطبقة. فجوة الملفات الأصلية ما زالت 280 ترحيلًا.
+
+تتكون ملفات الأرشيف من 14 مصدرًا تاريخيًا مستردًا من QA و3 ملفات ذات أرقام غير مطابقة. بعض المصادر التاريخية توثق أو تشير إلى تغييرات مرتبطة بترحيلات مفقودة، لكنها لقطات نهائية أو حزم QA وليست نصوص SQL الأصلية الكاملة لكل ترحيل. لذلك لا تخصم من عدد الملفات الأصلية المفقودة ولا تنقل إلى مجلد التنفيذ.
+
+تم فحص فروع GitHub المرتبطة بمراجعة واسترداد الترحيلات. لم يظهر فيها مصدر تنفيذي إضافي للترحيلات المفقودة. كما أن سجل تغييرات المسار `supabase/migrations` لا يوفر النصوص الأصلية لبقية السجل.
+
+التفاصيل الكاملة للأرقام والأسماء المفقودة في [تقرير فجوة الترحيلات](MIGRATION_GAP_AUDIT_2026-11-21.md).
+
+هذه مطابقة توثيقية فقط. لم يتم تنفيذ SQL أو تعديل قاعدة البيانات أو تغيير سجل الترحيلات في Supabase.
