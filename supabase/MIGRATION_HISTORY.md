@@ -417,3 +417,4 @@ Commit: `1041981952e2f57e27f0d0d6f46c7c717a2986a7`
 
 
 | 20261121103031 | require_linked_active_partner_for_partner_read_access_20261121 | Require PARTNER accounts to have an active linked partner record before the shared read-only partner policies grant access. The currently linked active account retains its existing read access; unlinked or inactive partner accounts are denied. Applied to the connected Supabase project. |
+| 20261121105602 | `record_current_user_login_securely_20261121` | Add a restricted private SECURITY DEFINER helper that updates only the authenticated user's active app_users.last_login, expose it through an authenticated SECURITY INVOKER RPC, and revoke public/anon execution. Applied to the connected Supabase project. |
