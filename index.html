@@ -289,8 +289,6 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 #barcodeScanner .close-scan{background:none;border:0;color:white;font-size:22px}
 @media print{
   .invoice-lots-print-hide{display:none!important;visibility:hidden!important}
-  .inventory-report-section:not([open])>.inventory-report-section-body{display:block!important}
-  .inventory-report-section>summary{display:list-item!important}
   .inventory-report-section{break-inside:avoid}
   @page{margin:8mm;size:A4 portrait}
   body{background:#fff!important}
@@ -3030,6 +3028,7 @@ window.openSection = function(name) {
   if($("dataCategoryHome")) $("dataCategoryHome").classList.add("hidden");
   document.querySelectorAll(".data-group-page").forEach(el=>el.classList.add("hidden"));
   document.querySelectorAll(".sub-section").forEach(el => el.classList.add("hidden"));
+  if(name==="products" && window.closeProductCategory)window.closeProductCategory();
   
   let target = $(`section${name.charAt(0).toUpperCase() + name.slice(1)}`);
   if(target) {
@@ -6783,7 +6782,7 @@ async function loadInventorySummaryReport(){
    const rows=(rowsByGroup.get(group.key)||[]).sort((a,b)=>String(a.product.product_name||"").localeCompare(String(b.product.product_name||""),"ar"));
    if(group.parent==="FINISHED"&&group.key==="FINISHED_MEAT"){
     const parentCount=(rowsByGroup.get("FINISHED_MEAT")||[]).length+(rowsByGroup.get("FINISHED_POULTRY")||[]).length;
-    output+='<details class="inventory-report-section"><summary class="dashboard-title">المنتجات التامة ('+parentCount+' صنف)</summary><div class="inventory-report-section-body">';
+    output+='<section class="inventory-report-section"><h3 class="dashboard-title">المنتجات التامة ('+parentCount+' صنف)</h3><div class="inventory-report-section-body">';
    }
    const totalsByUnit=new Map();
    const sums={openingValue:0,inValue:0,outValue:0,currentValue:0};
@@ -6795,8 +6794,8 @@ async function loadInventorySummaryReport(){
    });
    const body=rows.length?rows.map(r=>'<tr><td>'+inventorySummaryEscape(r.product.product_name)+'</td><td>'+inventorySummaryEscape(r.unit||"—")+'</td><td>'+inventorySummaryQty(r.openingQty)+'</td><td>'+inventorySummaryMoney(r.openingValue)+'</td><td>'+inventorySummaryQty(r.inQty)+'</td><td>'+inventorySummaryMoney(r.inValue)+'</td><td>'+inventorySummaryQty(r.outQty)+'</td><td>'+inventorySummaryMoney(r.outValue)+'</td><td>'+inventorySummaryQty(r.currentQty)+'</td><td>'+inventorySummaryMoney(r.currentValue)+'</td></tr>').join(""):'<tr><td colspan="10" class="empty">لا توجد أصناف في هذا التصنيف.</td></tr>';
    const summaryRows=[...totalsByUnit.entries()].sort((a,b)=>a[0].localeCompare(b[0],"ar")).map(([unit,t])=>'<tr><td>'+inventorySummaryEscape(unit)+'</td><td>'+inventorySummaryQty(t.openingQty)+'</td><td>'+inventorySummaryQty(t.inQty)+'</td><td>'+inventorySummaryQty(t.outQty)+'</td><td>'+inventorySummaryQty(t.currentQty)+'</td></tr>').join("");
-   const sectionHeading=group.parent==="FINISHED"?'<h3 class="dashboard-title">'+inventorySummaryEscape(group.title)+' ('+rows.length+' صنف)</h3>':'<details class="inventory-report-section"><summary class="dashboard-title">'+inventorySummaryEscape(group.title)+' ('+rows.length+' صنف)</summary><div class="inventory-report-section-body">';
-   output+=(group.parent==="FINISHED"?sectionHeading:sectionHeading)+'<div class="table-responsive"><table class="print-table"><thead><tr><th rowspan="2">الصنف</th><th rowspan="2">الوحدة</th><th colspan="2">رصيد أول المدة</th><th colspan="2">إجمالي دخول</th><th colspan="2">إجمالي خروج</th><th colspan="2">الرصيد الحالي</th></tr><tr><th>الكمية</th><th>القيمة</th><th>الكمية</th><th>القيمة</th><th>الكمية</th><th>القيمة</th><th>الكمية</th><th>القيمة</th></tr></thead><tbody>'+body+'</tbody></table></div><div class="mini-summary"><h4>ملخص '+inventorySummaryEscape(group.title)+'</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>الوحدة</th><th>رصيد أول المدة</th><th>إجمالي دخول</th><th>إجمالي خروج</th><th>الرصيد الحالي</th></tr></thead><tbody>'+summaryRows+'</tbody></table></div><div class="line"><span>قيمة رصيد أول المدة</span><strong>'+inventorySummaryMoney(sums.openingValue)+'</strong></div><div class="line"><span>قيمة إجمالي الدخول</span><strong>'+inventorySummaryMoney(sums.inValue)+'</strong></div><div class="line"><span>قيمة إجمالي الخروج</span><strong>'+inventorySummaryMoney(sums.outValue)+'</strong></div><div class="line"><span>قيمة الرصيد الحالي</span><strong>'+inventorySummaryMoney(sums.currentValue)+'</strong></div></div>'+(group.parent==="FINISHED"?(group.key==="FINISHED_POULTRY"?"</div></details>":""):'</div></div></details>');
+   const sectionHeading=group.parent==="FINISHED"?'<h3 class="dashboard-title">'+inventorySummaryEscape(group.title)+' ('+rows.length+' صنف)</h3>':'<section class="inventory-report-section"><h3 class="dashboard-title">'+inventorySummaryEscape(group.title)+' ('+rows.length+' صنف)</h3><div class="inventory-report-section-body">';
+   output+=(group.parent==="FINISHED"?sectionHeading:sectionHeading)+'<div class="table-responsive"><table class="print-table"><thead><tr><th rowspan="2">الصنف</th><th rowspan="2">الوحدة</th><th colspan="2">رصيد أول المدة</th><th colspan="2">إجمالي دخول</th><th colspan="2">إجمالي خروج</th><th colspan="2">الرصيد الحالي</th></tr><tr><th>الكمية</th><th>القيمة</th><th>الكمية</th><th>القيمة</th><th>الكمية</th><th>القيمة</th><th>الكمية</th><th>القيمة</th></tr></thead><tbody>'+body+'</tbody></table></div><div class="mini-summary"><h4>ملخص '+inventorySummaryEscape(group.title)+'</h4><div class="table-responsive"><table class="print-table"><thead><tr><th>الوحدة</th><th>رصيد أول المدة</th><th>إجمالي دخول</th><th>إجمالي خروج</th><th>الرصيد الحالي</th></tr></thead><tbody>'+summaryRows+'</tbody></table></div><div class="line"><span>قيمة رصيد أول المدة</span><strong>'+inventorySummaryMoney(sums.openingValue)+'</strong></div><div class="line"><span>قيمة إجمالي الدخول</span><strong>'+inventorySummaryMoney(sums.inValue)+'</strong></div><div class="line"><span>قيمة إجمالي الخروج</span><strong>'+inventorySummaryMoney(sums.outValue)+'</strong></div><div class="line"><span>قيمة الرصيد الحالي</span><strong>'+inventorySummaryMoney(sums.currentValue)+'</strong></div></div>'+(group.parent==="FINISHED"?(group.key==="FINISHED_POULTRY"?"</div></section>":""):'</div></section>');
    waText+="\n"+group.title+"\n";
    rows.forEach(r=>{waText+=r.product.product_name+" ("+r.unit+"): أول المدة "+inventorySummaryQty(r.openingQty)+" / "+inventorySummaryMoney(r.openingValue)+"، دخول "+inventorySummaryQty(r.inQty)+" / "+inventorySummaryMoney(r.inValue)+"، خروج "+inventorySummaryQty(r.outQty)+" / "+inventorySummaryMoney(r.outValue)+"، حالي "+inventorySummaryQty(r.currentQty)+" / "+inventorySummaryMoney(r.currentValue)+"\n";});
    waText+="إجمالي القيمة الحالية للتصنيف: "+inventorySummaryMoney(sums.currentValue)+"\n";
