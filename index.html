@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v176</title>
+<title>MeatManagement v177</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -100,6 +100,21 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 .dashboard-group.mm-search-no-match{display:none!important}
 .data-search-row{position:sticky;top:0;z-index:4;background:var(--card);padding:8px 0}
 .data-search-row input{min-height:44px}
+.data-category-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin-top:14px}
+.data-category-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;min-height:116px;padding:14px 10px;background:#fff;border:1px solid var(--line);border-radius:15px;box-shadow:0 2px 8px rgba(20,45,25,.05);color:var(--g);cursor:pointer;text-align:center}
+.data-category-card:active{transform:scale(.98)}
+.data-category-card:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.data-category-icon{font-size:27px;line-height:1.2}
+.data-category-title{font-size:14px;font-weight:700;line-height:1.5}
+.data-category-subtitle{font-size:11px;color:var(--muted);line-height:1.4}
+.data-group-page{margin-top:4px}
+.data-group-back{width:auto;margin:0 0 12px}
+.data-group-card{padding:15px}
+.data-group-card h2{margin:0 0 5px}
+.data-group-card .desc{margin-bottom:14px}
+.data-group-items{margin-top:12px}
+.data-group-items .dash-item{min-height:100px}
+@media(max-width:360px){.data-category-grid{gap:8px}.data-category-card{min-height:105px;padding:11px 7px}.data-category-title{font-size:13px}}
 .dash-item{display:flex;flex-direction:column;align-items:center;justify-content:center;background:white;border:1px solid var(--line);border-radius:14px;padding:16px 10px;cursor:pointer;box-shadow:0 2px 8px #142d1905;transition:transform .1s}
 .dash-item:active{transform:scale(0.95)}
 .product-menu-group{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 2px 8px #142d1905}
@@ -707,7 +722,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v176]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v177]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1030,78 +1045,76 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 
 <section id="data" class="hidden">
 <div id="dataDashboard" class="card">
+<div id="dataCategoryHome">
 <h2>🗂️ مركز البيانات</h2>
-<p class="desc">ابحث عن القسم الذي تريد فتحه، أو اختره من المجموعات.</p>
+<p class="desc">اختر القسم الرئيسي للوصول إلى الصفحات التابعة له.</p>
 <div class="data-search-row"><input id="dataSectionSearch" type="search" placeholder="ابحث عن قسم مثل المخزون أو العملاء..." autocomplete="off"><button id="clearDataSectionSearch" class="btn secondary" type="button">مسح</button></div>
-<details class="product-menu-group dashboard-group">
-<summary><span class="dashboard-title">إدارة المنتجات</span><span class="product-menu-hint">جارٍ تحميل الأقسام...</span></summary>
-<div class="dashboard-grid">
-<div class="dash-item hidden" id="menuProducts" onclick="window.openSection('products')"><div class="dash-icon">📦</div><div class="dash-title">إدارة المنتجات</div></div>
-<div class="dash-item hidden" id="menuStockSummary" onclick="window.openSection('stockSummary')"><div class="dash-icon">📋</div><div class="dash-title">ملخص أرصدة الأصناف</div></div>
-<div class="dash-item hidden" id="menuProductionDailySummary" onclick="window.openSection('productionDailySummary')"><div class="dash-icon">📅</div><div class="dash-title">ملخص الإنتاج اليومي</div></div>
+<div class="data-category-grid"><button type="button" class="data-category-card" id="dataCategoryCardproducts" onclick="window.openDataGroup('products')"><span class="data-category-icon">📦</span><span class="data-category-title">إدارة المنتجات</span><span class="data-category-subtitle" id="dataCategoryCountproducts">3 أقسام</span></button>
+<button type="button" class="data-category-card" id="dataCategoryCardinventory" onclick="window.openDataGroup('inventory')"><span class="data-category-icon">🏭</span><span class="data-category-title">المخزون</span><span class="data-category-subtitle" id="dataCategoryCountinventory">5 أقسام</span></button>
+<button type="button" class="data-category-card" id="dataCategoryCardproduction" onclick="window.openDataGroup('production')"><span class="data-category-icon">📝</span><span class="data-category-title">الإنتاج</span><span class="data-category-subtitle" id="dataCategoryCountproduction">3 أقسام</span></button>
+<button type="button" class="data-category-card" id="dataCategoryCardhr" onclick="window.openDataGroup('hr')"><span class="data-category-icon">👥</span><span class="data-category-title">👥 الموارد البشرية</span><span class="data-category-subtitle" id="dataCategoryCounthr">1 أقسام</span></button>
+<button type="button" class="data-category-card" id="dataCategoryCardprocurement" onclick="window.openDataGroup('procurement')"><span class="data-category-icon">🛒</span><span class="data-category-title">🛒 المشتريات والموردين</span><span class="data-category-subtitle" id="dataCategoryCountprocurement">7 أقسام</span></button>
+<button type="button" class="data-category-card" id="dataCategoryCardsales" onclick="window.openDataGroup('sales')"><span class="data-category-icon">💰</span><span class="data-category-title">💰 المبيعات والتوزيع</span><span class="data-category-subtitle" id="dataCategoryCountsales">7 أقسام</span></button>
+<button type="button" class="data-category-card" id="dataCategoryCardfinance" onclick="window.openDataGroup('finance')"><span class="data-category-icon">🧮</span><span class="data-category-title">🧮 الحسابات والإدارة</span><span class="data-category-subtitle" id="dataCategoryCountfinance">8 أقسام</span></button>
 </div>
-</details>
-<details class="product-menu-group dashboard-group">
-<summary><span class="dashboard-title">المخزون</span><span class="product-menu-hint">جارٍ تحميل الأقسام...</span></summary>
-<div class="dashboard-grid">
-<div class="dash-item hidden" id="menuLocations" onclick="window.openSection('locations')"><div class="dash-icon">🏭</div><div class="dash-title">المواقع والمخازن</div></div>
+<div id="dataSearchEmpty" class="empty hidden">لا توجد أقسام مطابقة لبحثك.</div>
+</div>
+<div id="dataGroupPageproducts" class="data-group-page hidden" data-group-key="products" data-group-title="إدارة المنتجات">
+<button type="button" class="btn secondary data-group-back" onclick="window.closeDataGroup()">⬅ العودة إلى مركز البيانات</button>
+<div class="card data-group-card"><h2>📦 إدارة المنتجات</h2><p class="desc">الأصناف والأرصدة والتقارير</p><div class="dashboard-grid data-group-items"><div class="dash-item hidden" id="menuProducts" onclick="window.openSection('products')"><div class="dash-icon">📦</div><div class="dash-title">إدارة المنتجات</div></div>
+<div class="dash-item hidden" id="menuStockSummary" onclick="window.openSection('stockSummary')"><div class="dash-icon">📋</div><div class="dash-title">ملخص أرصدة الأصناف</div></div>
+<div class="dash-item hidden" id="menuProductionDailySummary" onclick="window.openSection('productionDailySummary')"><div class="dash-icon">📅</div><div class="dash-title">ملخص الإنتاج اليومي</div></div></div></div>
+</div>
+<div id="dataGroupPageinventory" class="data-group-page hidden" data-group-key="inventory" data-group-title="المخزون">
+<button type="button" class="btn secondary data-group-back" onclick="window.closeDataGroup()">⬅ العودة إلى مركز البيانات</button>
+<div class="card data-group-card"><h2>🏭 المخزون</h2><p class="desc">المخازن والحركات والحجوزات</p><div class="dashboard-grid data-group-items"><div class="dash-item hidden" id="menuLocations" onclick="window.openSection('locations')"><div class="dash-icon">🏭</div><div class="dash-title">المواقع والمخازن</div></div>
 <div class="dash-item hidden" id="menuStock" onclick="window.openSection('stock')"><div class="dash-icon">📊</div><div class="dash-title">أرصدة المخزون</div></div>
 <div class="dash-item hidden" id="menuStockTransfers" onclick="window.openSection('stockTransfers')"><div class="dash-icon">🔄</div><div class="dash-title">تحويل المخازن</div></div>
 <div class="dash-item hidden" id="menuPackaging" onclick="window.openSection('packaging')"><div class="dash-icon">📦</div><div class="dash-title">خيارات التعبئة</div></div>
-<div class="dash-item hidden" id="menuReservations" onclick="window.openSection('reservations')"><div class="dash-icon">🔒</div><div class="dash-title">الحجوزات</div></div>
+<div class="dash-item hidden" id="menuReservations" onclick="window.openSection('reservations')"><div class="dash-icon">🔒</div><div class="dash-title">الحجوزات</div></div></div></div>
 </div>
-</details>
-<details class="product-menu-group dashboard-group">
-<summary><span class="dashboard-title">الإنتاج</span><span class="product-menu-hint">جارٍ تحميل الأقسام...</span></summary>
-<div class="dashboard-grid">
-<div class="dash-item hidden" id="menuRecipes" onclick="window.openSection('recipes')"><div class="dash-icon">📝</div><div class="dash-title">الوصفات</div></div>
+<div id="dataGroupPageproduction" class="data-group-page hidden" data-group-key="production" data-group-title="الإنتاج">
+<button type="button" class="btn secondary data-group-back" onclick="window.closeDataGroup()">⬅ العودة إلى مركز البيانات</button>
+<div class="card data-group-card"><h2>📝 الإنتاج</h2><p class="desc">الوصفات وأوامر التشغيل</p><div class="dashboard-grid data-group-items"><div class="dash-item hidden" id="menuRecipes" onclick="window.openSection('recipes')"><div class="dash-icon">📝</div><div class="dash-title">الوصفات</div></div>
 <div class="dash-item hidden" id="menuProduction" onclick="window.openSection('production')"><div class="dash-icon">🏭</div><div class="dash-title">أوامر التشغيل</div></div>
-<div class="dash-item hidden" id="menuStockLots" onclick="window.openSection('stockLots')"><div class="dash-icon">🏷️</div><div class="dash-title">تتبع التشغيلات</div></div>
+<div class="dash-item hidden" id="menuStockLots" onclick="window.openSection('stockLots')"><div class="dash-icon">🏷️</div><div class="dash-title">تتبع التشغيلات</div></div></div></div>
 </div>
-</details>
-<details class="product-menu-group dashboard-group" id="hrDashboardGroup">
-<summary><span class="dashboard-title">👥 الموارد البشرية</span><span class="product-menu-hint">جارٍ تحميل الأقسام...</span></summary>
-<div class="dashboard-grid">
-<div class="dash-item hidden" id="menuHR" onclick="window.openSection('hr')"><div class="dash-icon">👥</div><div class="dash-title">الموارد البشرية</div></div>
+<div id="dataGroupPagehr" class="data-group-page hidden" data-group-key="hr" data-group-title="👥 الموارد البشرية">
+<button type="button" class="btn secondary data-group-back" onclick="window.closeDataGroup()">⬅ العودة إلى مركز البيانات</button>
+<div class="card data-group-card"><h2>👥 👥 الموارد البشرية</h2><p class="desc">الموظفون والحضور والرواتب</p><div class="dashboard-grid data-group-items"><div class="dash-item hidden" id="menuHR" onclick="window.openSection('hr')"><div class="dash-icon">👥</div><div class="dash-title">الموارد البشرية</div></div></div></div>
 </div>
-</details>
-<details class="product-menu-group dashboard-group">
-<summary><span class="dashboard-title">🛒 المشتريات والموردين</span><span class="product-menu-hint">جارٍ تحميل الأقسام...</span></summary>
-<div class="dashboard-grid">
-<div class="dash-item hidden" id="menuSuppliers" onclick="window.openSection('suppliers')"><div class="dash-icon">🚚</div><div class="dash-title">الموردين</div></div>
+<div id="dataGroupPageprocurement" class="data-group-page hidden" data-group-key="procurement" data-group-title="🛒 المشتريات والموردين">
+<button type="button" class="btn secondary data-group-back" onclick="window.closeDataGroup()">⬅ العودة إلى مركز البيانات</button>
+<div class="card data-group-card"><h2>🛒 🛒 المشتريات والموردين</h2><p class="desc">الموردون والمشتريات والمصروفات</p><div class="dashboard-grid data-group-items"><div class="dash-item hidden" id="menuSuppliers" onclick="window.openSection('suppliers')"><div class="dash-icon">🚚</div><div class="dash-title">الموردين</div></div>
 <div class="dash-item hidden" id="menuPurchases" onclick="window.openSection('purchases')"><div class="dash-icon">🛒</div><div class="dash-title">فواتير المشتريات</div></div>
 <div class="dash-item hidden" id="menuPurchaseReturns" onclick="window.openSection('purchaseReturns')"><div class="dash-icon">↩️</div><div class="dash-title">مرتجع مشتريات</div></div>
 <div class="dash-item hidden" id="menuLandedCosts" onclick="window.openSection('landedCosts')"><div class="dash-icon">🚚</div><div class="dash-title">تكلفة نقل الخامات</div></div>
 <div class="dash-item hidden" id="menuFixedAssets" onclick="window.openSection('fixedAssets')"><div class="dash-icon">🏭</div><div class="dash-title">الأصول الثابتة</div></div>
 <div class="dash-item hidden" id="menuSupplierPayments" onclick="window.openSection('supplierPayments')"><div class="dash-icon">💸</div><div class="dash-title">سداد موردين</div></div>
-<div class="dash-item hidden" id="menuExpenses" onclick="window.openSection('expenses')"><div class="dash-icon">🧾</div><div class="dash-title">المصروفات</div></div>
+<div class="dash-item hidden" id="menuExpenses" onclick="window.openSection('expenses')"><div class="dash-icon">🧾</div><div class="dash-title">المصروفات</div></div></div></div>
 </div>
-</details>
-<details class="product-menu-group dashboard-group">
-<summary><span class="dashboard-title">💰 المبيعات والتوزيع</span><span class="product-menu-hint">جارٍ تحميل الأقسام...</span></summary>
-<div class="dashboard-grid">
-<div class="dash-item hidden" id="menuCustomers" onclick="window.openSection('customers')"><div class="dash-icon">👥</div><div class="dash-title">العملاء</div></div>
+<div id="dataGroupPagesales" class="data-group-page hidden" data-group-key="sales" data-group-title="💰 المبيعات والتوزيع">
+<button type="button" class="btn secondary data-group-back" onclick="window.closeDataGroup()">⬅ العودة إلى مركز البيانات</button>
+<div class="card data-group-card"><h2>💰 💰 المبيعات والتوزيع</h2><p class="desc">العملاء والفواتير والتحصيل والتوزيع</p><div class="dashboard-grid data-group-items"><div class="dash-item hidden" id="menuCustomers" onclick="window.openSection('customers')"><div class="dash-icon">👥</div><div class="dash-title">العملاء</div></div>
 <div class="dash-item hidden" id="menuSales" onclick="window.openSection('sales')"><div class="dash-icon">🧾</div><div class="dash-title">فواتير البيع</div></div>
 <div class="dash-item hidden" id="menuSalesReturns" onclick="window.openSection('salesReturns')"><div class="dash-icon">↩️</div><div class="dash-title">مرتجع مبيعات</div></div>
 <div class="dash-item hidden" id="menuPriceLists" onclick="window.openSection('priceLists')"><div class="dash-icon">🏷️</div><div class="dash-title">قوائم الأسعار</div></div>
 <div class="dash-item hidden" id="menuCollections" onclick="window.openSection('collections')"><div class="dash-icon">💰</div><div class="dash-title">التحصيلات</div></div>
 <div class="dash-item hidden" id="menuTrips" onclick="window.openSection('trips')"><div class="dash-icon">🚐</div><div class="dash-title">الجولات</div></div>
-<div class="dash-item hidden" id="menuSalesReps" onclick="window.openSection('salesReps')"><div class="dash-icon">🧑‍💼</div><div class="dash-title">إدارة المندوبين</div></div>
+<div class="dash-item hidden" id="menuSalesReps" onclick="window.openSection('salesReps')"><div class="dash-icon">🧑‍💼</div><div class="dash-title">إدارة المندوبين</div></div></div></div>
 </div>
-</details>
-<details class="product-menu-group dashboard-group">
-<summary><span class="dashboard-title">🧮 الحسابات والإدارة</span><span class="product-menu-hint">جارٍ تحميل الأقسام...</span></summary>
-<div class="dashboard-grid">
-<div class="dash-item hidden" id="menuTreasuries" onclick="window.openSection('treasuries')"><div class="dash-icon">💵</div><div class="dash-title">الخزائن</div></div>
+<div id="dataGroupPagefinance" class="data-group-page hidden" data-group-key="finance" data-group-title="🧮 الحسابات والإدارة">
+<button type="button" class="btn secondary data-group-back" onclick="window.closeDataGroup()">⬅ العودة إلى مركز البيانات</button>
+<div class="card data-group-card"><h2>🧮 🧮 الحسابات والإدارة</h2><p class="desc">الخزائن والحسابات والإدارة</p><div class="dashboard-grid data-group-items"><div class="dash-item hidden" id="menuTreasuries" onclick="window.openSection('treasuries')"><div class="dash-icon">💵</div><div class="dash-title">الخزائن</div></div>
 <div class="dash-item hidden" id="menuTreasuryTransfers" onclick="window.openSection('treasuryTransfers')"><div class="dash-icon">🔄</div><div class="dash-title">تحويل خزائن</div></div>
 <div class="dash-item hidden" id="menuPartners" onclick="window.openSection('partners')"><div class="dash-icon">🤝</div><div class="dash-title">الشركاء</div></div>
 <div class="dash-item hidden" id="menuAccounting" onclick="window.openSection('accounting')"><div class="dash-icon">🧮</div><div class="dash-title">المحاسبة</div></div>
 <div class="dash-item hidden" id="menuReports" onclick="window.openSection('reports')"><div class="dash-icon">📈</div><div class="dash-title">التقارير</div></div>
 <div class="dash-item hidden" id="menuUsers" onclick="window.openSection('users')"><div class="dash-icon">👤</div><div class="dash-title">المستخدمون</div></div>
 <div class="dash-item hidden" id="menuSystemReset" onclick="window.openSection('systemReset')"><div class="dash-icon">♻️</div><div class="dash-title">إعادة تهيئة النظام</div></div>
-<div class="dash-item hidden" id="menuSettings" onclick="window.openSection('settings')"><div class="dash-icon">⚙️</div><div class="dash-title">إعدادات الشركة</div></div>
+<div class="dash-item hidden" id="menuSettings" onclick="window.openSection('settings')"><div class="dash-icon">⚙️</div><div class="dash-title">إعدادات الشركة</div></div></div></div>
 </div>
-</details>
+
 </div>
 <!-- شاشة الموارد البشرية -->
 <div id="sectionHR" class="sub-section hidden">
@@ -2592,7 +2605,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v176</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v177</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -2994,6 +3007,27 @@ try {
     footerIds.forEach(id => { const el = $(id); if(el) el.innerHTML = footerHtml; });
   }
     
+// ========== التنقل بين مركز البيانات وأقسامه ==========
+let currentDataGroup = null;
+window.openDataGroup = function(key){
+  const page=document.querySelector('.data-group-page[data-group-key="'+key+'"]');
+  const card=$("dataCategoryCard"+key);
+  if(!page||!card||card.classList.contains("hidden")){showToast("هذا القسم غير متاح لحسابك.","error");return;}
+  currentDataGroup=key;
+  if($("dataCategoryHome"))$("dataCategoryHome").classList.add("hidden");
+  document.querySelectorAll(".data-group-page").forEach(el=>el.classList.toggle("hidden",el!==page));
+  document.querySelectorAll(".sub-section").forEach(el=>el.classList.add("hidden"));
+  if($("data"))$("data").classList.remove("hidden");
+  window.scrollTo(0,0);
+};
+window.closeDataGroup = function(){
+  currentDataGroup=null;
+  document.querySelectorAll(".data-group-page,.sub-section").forEach(el=>el.classList.add("hidden"));
+  if($("dataCategoryHome"))$("dataCategoryHome").classList.remove("hidden");
+  if($("data"))$("data").classList.remove("hidden");
+  if($("dataDashboard"))$("dataDashboard").classList.remove("hidden");
+  window.scrollTo(0,0);
+};
 // ========== التنقل ==========
 function hideSections(){ ["login","recovery","newPass","home","tasks","tasksChartsScreen","data","nav"].forEach(id=>{ if($(id)) $(id).classList.add("hidden"); }); }
 function showLogin(){ hideSections(); if($("login")) $("login").classList.remove("hidden"); }
@@ -3014,7 +3048,9 @@ window.openSection = function(name) {
   if($("tasks")) $("tasks").classList.add("hidden"); 
   if($("data")) $("data").classList.remove("hidden");
   document.querySelectorAll(".navbtn").forEach(b=>{ b.classList.toggle("active",b.dataset.page==="data"); });
-  if($("dataDashboard")) $("dataDashboard").classList.add("hidden");
+  if($("dataDashboard")) $("dataDashboard").classList.remove("hidden");
+  if($("dataCategoryHome")) $("dataCategoryHome").classList.add("hidden");
+  document.querySelectorAll(".data-group-page").forEach(el=>el.classList.add("hidden"));
   document.querySelectorAll(".sub-section").forEach(el => el.classList.add("hidden"));
   
   let target = $(`section${name.charAt(0).toUpperCase() + name.slice(1)}`);
@@ -3107,6 +3143,12 @@ window.refreshDateDisplayInputs = refreshDateDisplayInputs;
 window.closeSection = function() {
   document.querySelectorAll(".sub-section").forEach(el => el.classList.add("hidden"));
   if($("dataDashboard")) $("dataDashboard").classList.remove("hidden");
+  document.querySelectorAll(".data-group-page").forEach(el=>el.classList.toggle("hidden",el.dataset.groupKey!==currentDataGroup));
+  if(currentDataGroup){
+    if($("dataCategoryHome"))$("dataCategoryHome").classList.add("hidden");
+  }else{
+    if($("dataCategoryHome"))$("dataCategoryHome").classList.remove("hidden");
+  }
   refreshDateDisplayInputs();
   window.scrollTo(0, 0);
 }
@@ -3119,6 +3161,7 @@ function page(name){
   if(name==="tasks"){ loadTasks(); }
   if(name==="home"){ loadHomeDashboard(); }
   if(name==="data"){
+    currentDataGroup=null;
     window.closeSection();
     if(navigator.onLine) { 
         loadProducts(); if(canLoadLocations)loadLocations(); if(canViewTreasuries)loadTreasuries(); if(canViewStock)loadStock(); 
@@ -3494,7 +3537,7 @@ async function userInfo(user){
     try{ canViewProduction=await permission("PRODUCTION_VIEW") || isSystemAdmin; canManageProduction=await permission("PRODUCTION_MANAGE") || isSystemAdmin; canLoadLocations=canViewLocations || canViewStockTransfers || await permission("INVENTORY_VIEW") || canViewProduction || canManageProduction || isSystemAdmin; if($("menuProduction")) $("menuProduction").classList.toggle("hidden",!canViewProduction); if($("menuProductionDailySummary")) $("menuProductionDailySummary").classList.toggle("hidden",!canViewProduction); if($("productionCard")) $("productionCard").classList.toggle("hidden",!canViewProduction); if($("addProductionBtn")) $("addProductionBtn").classList.toggle("hidden",!canManageProduction); }catch(e){}
     try{ canViewRecipes=await permission("RECIPES_VIEW") || canViewProduction || canManageProduction || isSystemAdmin; canManageRecipes=await permission("RECIPES_MANAGE") || canManageProduction || isSystemAdmin; if($("menuRecipes")) $("menuRecipes").classList.toggle("hidden",!canViewRecipes); if($("recipesCard")) $("recipesCard").classList.toggle("hidden",!canViewRecipes); if($("addRecipeBtn")) $("addRecipeBtn").classList.toggle("hidden",!canManageRecipes); }catch(e){}
     try{ canViewAccounting=await permission("ACCOUNTING_VIEW") || isSystemAdmin; canManageAccounting=await permission("ACCOUNTING_MANAGE") || isSystemAdmin; if($("menuAccounting")) $("menuAccounting").classList.toggle("hidden",!canViewAccounting); if($("accountingCard")) $("accountingCard").classList.toggle("hidden",!canViewAccounting); if($("btnPostEntries")) $("btnPostEntries").classList.toggle("hidden",!canManageAccounting); if($("btnAdjustment")) $("btnAdjustment").classList.toggle("hidden",!canManageAccounting); if($("btnBackup")) $("btnBackup").classList.toggle("hidden",!isSystemAdmin); }catch(e){}
-    try{canViewHR=await permission("HR_EMPLOYEES_VIEW")||await permission("HR_ATTENDANCE_MANAGE")||await permission("HR_LEAVES_MANAGE")||await permission("HR_PAYROLL_MANAGE")||await permission("HR_PAYROLL_APPROVE")||await permission("HR_PAYROLL_PAY")||isSystemAdmin;canManageHR=await permission("HR_EMPLOYEES_MANAGE")||isSystemAdmin;canManageHRAttendance=await permission("HR_ATTENDANCE_MANAGE")||isSystemAdmin;canManageHRLeaves=await permission("HR_LEAVES_MANAGE")||isSystemAdmin;canManageHRPayroll=await permission("HR_PAYROLL_MANAGE")||isSystemAdmin;canApproveHRPayroll=await permission("HR_PAYROLL_APPROVE")||isSystemAdmin;canPayHRPayroll=await permission("HR_PAYROLL_PAY")||isSystemAdmin;if($("menuHR"))$("menuHR").classList.toggle("hidden",!canViewHR);if($("hrDashboardGroup"))$("hrDashboardGroup").classList.toggle("hidden",!canViewHR);}catch(e){canViewHR=false;}
+    try{canViewHR=await permission("HR_EMPLOYEES_VIEW")||await permission("HR_ATTENDANCE_MANAGE")||await permission("HR_LEAVES_MANAGE")||await permission("HR_PAYROLL_MANAGE")||await permission("HR_PAYROLL_APPROVE")||await permission("HR_PAYROLL_PAY")||isSystemAdmin;canManageHR=await permission("HR_EMPLOYEES_MANAGE")||isSystemAdmin;canManageHRAttendance=await permission("HR_ATTENDANCE_MANAGE")||isSystemAdmin;canManageHRLeaves=await permission("HR_LEAVES_MANAGE")||isSystemAdmin;canManageHRPayroll=await permission("HR_PAYROLL_MANAGE")||isSystemAdmin;canApproveHRPayroll=await permission("HR_PAYROLL_APPROVE")||isSystemAdmin;canPayHRPayroll=await permission("HR_PAYROLL_PAY")||isSystemAdmin;if($("menuHR"))$("menuHR").classList.toggle("hidden",!canViewHR);if($("dataCategoryCardhr"))$("dataCategoryCardhr").classList.toggle("hidden",!canViewHR);}catch(e){canViewHR=false;}
     try{ canViewReservations=await permission("RESERVATIONS_VIEW") || isSystemAdmin; canManageReservations=await permission("RESERVATIONS_MANAGE") || isSystemAdmin; if($("menuReservations")) $("menuReservations").classList.toggle("hidden",!canViewReservations); if($("addReservationBtn")) $("addReservationBtn").classList.toggle("hidden",!canManageReservations); }catch(e){}
     try{ canViewPriceLists=await permission("PRICES_VIEW") || await permission("PRICES_MANAGE") || isSystemAdmin; canManagePriceLists=await permission("PRICES_MANAGE") || isSystemAdmin; }catch(e){ canViewPriceLists=false; canManagePriceLists=false; }
     if($("menuPriceLists")) $("menuPriceLists").classList.toggle("hidden",!canViewPriceLists);
@@ -3615,8 +3658,8 @@ function getRoleQuickLinks(roleCode){
 
 function applyRoleWorkspace(){
   if(isSystemAdmin||isPartner){
-    document.querySelectorAll("#dataDashboard .dash-item").forEach(el=>el.classList.remove("hidden"));
-    document.querySelectorAll("#dataDashboard .dashboard-group").forEach(el=>el.classList.remove("hidden"));
+    document.querySelectorAll("#dataDashboard .data-group-items .dash-item").forEach(el=>el.classList.remove("hidden"));
+    if(window.refreshDataCategoryCards)window.refreshDataCategoryCards();
     return;
   }
   const allowedMenuIds = getRoleMenuIds(currentRoleCode);
@@ -3626,10 +3669,7 @@ function applyRoleWorkspace(){
     if(el.id==="menuFixedAssets")allowed=allowed&&canViewFixedAssets;
     el.classList.toggle("hidden", !allowed);
   });
-  document.querySelectorAll("#dataDashboard .dashboard-group").forEach(group=>{
-    const hasVisibleItem = Array.from(group.querySelectorAll(".dash-item")).some(item=>!item.classList.contains("hidden"));
-    group.classList.toggle("hidden", !hasVisibleItem);
-  });
+  if(window.refreshDataCategoryCards)window.refreshDataCategoryCards();
 }
 
 function updateSalesRepField(){
@@ -12493,43 +12533,46 @@ $("hrSaveLeave")?.addEventListener("click",async()=>{try{if(!canManageHRLeaves)t
 $("hrCreatePeriod")?.addEventListener("click",async()=>{try{const r=await db.rpc("hr_create_payroll_period",{p_period_code:$("hrPeriodCode").value.trim(),p_period_start:$("hrPeriodStart").value,p_period_end:$("hrPeriodEnd").value});if(r.error)throw r.error;showToast("تم إنشاء فترة الرواتب","success");await loadHR();}catch(e){msg($("hrPayrollMsg"),err(e),"error");}});
 });
 
-// ====== مركز البيانات: بحث متزامن مع تحميل الصلاحيات ======
+// ====== مركز البيانات: البحث داخل الأقسام الرئيسية والفرعية ======
 (function(){
   const input=document.getElementById("dataSectionSearch");
   const clear=document.getElementById("clearDataSectionSearch");
   const root=document.getElementById("dataDashboard");
   if(!input||!clear||!root)return;
-  const groups=[...root.querySelectorAll("details.dashboard-group")];
-  function filter(){
+  const groups=[...root.querySelectorAll(".data-group-page")];
+  function refresh(){
     const q=String(input.value||"").trim().toLocaleLowerCase("ar");
+    let visible=0;
     groups.forEach(group=>{
-      let matches=0,available=0;
-      group.querySelectorAll(".dash-item").forEach(item=>{
-        const permitted=!item.classList.contains("hidden");
-        if(!permitted){item.style.removeProperty("display");return;}
-        available++;
-        const title=String(item.textContent||"").toLocaleLowerCase("ar");
-        const show=!q||title.includes(q);
-        item.style.display=show?"":"none";
-        if(show)matches++;
-      });
-      const hint=group.querySelector(".product-menu-hint");
-      if(hint)hint.textContent=available+" أقسام متاحة";
-      group.classList.toggle("mm-search-no-match",q.length>0&&matches===0);
-      group.open=q.length>0&&matches>0;
+      const key=group.dataset.groupKey;
+      const items=[...group.querySelectorAll(".data-group-items .dash-item")];
+      const available=items.filter(item=>!item.classList.contains("hidden"));
+      const title=String(group.dataset.groupTitle||"").toLocaleLowerCase("ar");
+      const match=available.some(item=>String(item.textContent||"").toLocaleLowerCase("ar").includes(q));
+      const show=available.length>0&&(!q||title.includes(q)||match);
+      const card=document.getElementById("dataCategoryCard"+key);
+      if(card){
+        card.classList.toggle("hidden",!show);
+        const count=document.getElementById("dataCategoryCount"+key);
+        if(count)count.textContent=available.length+" أقسام متاحة";
+      }
+      if(show)visible++;
     });
+    const empty=document.getElementById("dataSearchEmpty");
+    if(empty)empty.classList.toggle("hidden",visible>0);
   }
-  input.addEventListener("input",filter);
-  clear.addEventListener("click",()=>{input.value="";filter();input.focus();});
-  const observer=new MutationObserver(filter);
+  input.addEventListener("input",refresh);
+  clear.addEventListener("click",()=>{input.value="";refresh();input.focus();});
+  const observer=new MutationObserver(refresh);
   observer.observe(root,{subtree:true,attributes:true,attributeFilter:["class"]});
-  filter();
+  refresh();
+  window.refreshDataCategoryCards=refresh;
 })();
 
 // ====== PWA ======
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=189', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
+    navigator.serviceWorker.register('./sw.js?v=190', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
   });
 }
 
