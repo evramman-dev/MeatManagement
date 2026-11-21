@@ -2469,7 +2469,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v171</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v172</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -11790,16 +11790,16 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
       const l=await db.from("hr_leave_types").select("leave_type_id,leave_code,leave_name,paid").eq("is_active",true).order("leave_name");
       if(l.error)throw l.error;hrLeaveTypesCache=l.data||[];
     }else hrLeaveTypesCache=[];
-    const ds=$("hrEmployeeDept"),jsel=$("hrEmployeeJob"),ls=$("hrLeaveType");
+    const ds=$("hrEmployeeDept"),jsel=$("hrV2EmployeeJob"),ls=$("hrLeaveType");
     if(ds)ds.innerHTML='<option value="">اختر القسم</option>'+hrDepartmentsCache.map(x=>'<option value="'+x.department_id+'">'+hrText(x.department_name)+'</option>').join("");
     if(jsel)jsel.innerHTML='<option value="">اختر الوظيفة</option>'+hrJobsCache.map(x=>'<option value="'+x.job_id+'">'+hrText(x.job_name)+'</option>').join("");
     if(ls)ls.innerHTML='<option value="">اختر النوع</option>'+hrLeaveTypesCache.map(x=>'<option value="'+x.leave_type_id+'">'+hrText(x.leave_name)+' — '+(x.paid?"مدفوعة":"غير مدفوعة")+'</option>').join("");
     ["hrAttendanceEmployee","hrLeaveEmployee","hrOvertimeEmployee","hrAdvanceEmployee"].forEach(hrEmployeeOptions);
-    const list=$("hrEmployeesList");if(list)list.innerHTML=hrEmployeesCache.length?hrEmployeesCache.map(x=>'<div class="product"><div class="pname">'+hrText(x.full_name)+'</div><div class="details">الكود: '+hrText(x.employee_code)+' | الحالة: '+hrText(x.employment_status)+' | الأساسي: '+fmt(x.base_salary)+'</div></div>').join(""):'<div class="empty">لا يوجد موظفون.</div>';
-    if(canManageHRLeaves)await hrLoadLeaves();else if($("hrLeavesList"))$("hrLeavesList").innerHTML='<div class="empty">هذا الحساب لا يملك صلاحية إدارة الإجازات.</div>';
+    const list=$("hrV2EmployeesList");if(list)list.innerHTML=hrEmployeesCache.length?hrEmployeesCache.map(x=>'<div class="product"><div class="pname">'+hrText(x.full_name)+'</div><div class="details">الكود: '+hrText(x.employee_code)+' | الحالة: '+hrText(x.employment_status)+' | الأساسي: '+fmt(x.base_salary)+'</div></div>').join(""):'<div class="empty">لا يوجد موظفون.</div>';
+    if(canManageHRLeaves)await hrLoadLeaves();else if($("hrV2LeavesList"))$("hrV2LeavesList").innerHTML='<div class="empty">هذا الحساب لا يملك صلاحية إدارة الإجازات.</div>';
     if(canManageHRPayroll||canApproveHRPayroll||canPayHRPayroll){await hrLoadOvertime();await hrLoadAdvances();await hrLoadPayrollPeriods();}
     else{
-      if($("hrOvertimeList"))$("hrOvertimeList").innerHTML='<div class="empty">لا توجد صلاحية لعرض الإضافي.</div>';
+      if($("hrV2OvertimeList"))$("hrV2OvertimeList").innerHTML='<div class="empty">لا توجد صلاحية لعرض الإضافي.</div>';
       if($("hrAdvanceList"))$("hrAdvanceList").innerHTML='<div class="empty">لا توجد صلاحية لعرض السلف.</div>';
       if($("hrPayrollList"))$("hrPayrollList").innerHTML='<div class="empty">لا توجد صلاحية لعرض مسيرات الرواتب.</div>';
     }
