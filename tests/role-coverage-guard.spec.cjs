@@ -194,3 +194,14 @@ test('Marking a notification read is limited to its recipient and blocks partner
   expect(notificationReadSql).toContain('WHERE notification_id = p_notification_id');
   expect(notificationReadSql).toContain('AND user_id = auth.uid()');
 });
+
+
+test('Legacy sales-return cancellation wrappers delegate to permission-checked internal functions', () => {
+  expect(appHtml).toContain('public.cancel_sales_return_internal_return_hold(p_sales_return_id,p_reason)');
+  expect(appHtml).toContain('public.cancel_sales_return_exchange_v1_internal_return_hold(p_sales_return_id,p_reason)');
+});
+
+test('Stock-transfer and trip-settlement public wrappers delegate to guarded internals', () => {
+  expect(appHtml).toContain('public.create_stock_transfer_internal_return_rework(p_source_location_id,p_destination_location_id,p_transfer_date,p_items,p_notes,p_request_id)');
+  expect(appHtml).toContain('public.settle_trip_internal_return_hold(p_trip_id,p_target_location_id)');
+});
