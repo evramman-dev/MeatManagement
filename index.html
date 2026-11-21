@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v169</title>
+<title>MeatManagement v170</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -593,7 +593,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v169]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v170]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -698,10 +698,8 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
    const persisted=await client.auth.getSession();
    if(persisted.error)throw persisted.error;
    if(!persisted.data.session?.user?.id)throw new Error("لم يتم حفظ جلسة الدخول على الجهاز.");
-   if(typeof window.__MM_BOOT_AFTER_LOGIN__!=="function")throw new Error("تعذر تهيئة التطبيق بعد الدخول. أعد تحميل الصفحة وحاول مرة أخرى.");
-   if(msg){msg.className="status";msg.textContent="تم التحقق من الجلسة. جارٍ فتح التطبيق...";}
-   await window.__MM_BOOT_AFTER_LOGIN__(persisted.data.session.user);
-   if(msg){msg.className="status success";msg.textContent="تم تسجيل الدخول وفتح التطبيق.";}
+   if(msg){msg.className="status success";msg.textContent="تم تسجيل الدخول. جارٍ فتح التطبيق...";}
+   setTimeout(()=>location.reload(),500);
   }catch(error){
    if(msg){msg.className="status error";msg.textContent="تعذر الدخول: "+(error?.message||String(error));}
    if(button){button.disabled=false;button.textContent="تسجيل الدخول";}
@@ -2460,7 +2458,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrPayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div><button type="button" class="btn secondary" onclick="window.closeSection()">رجوع إلى مركز البيانات</button></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v169</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrPayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div><button type="button" class="btn secondary" onclick="window.closeSection()">رجوع إلى مركز البيانات</button></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v170</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -2683,7 +2681,6 @@ try {
   let appBootPromise=null;
   let bootedUserId=null;
   let taxWarningShownForUserId=null;
-  window.__MM_BOOT_AFTER_LOGIN__=bootAppAfterLogin;
   function installPasswordVisibilityToggles(){
     document.querySelectorAll('input[type="password"]').forEach(input=>{
       if(input.dataset.visibilityToggle==="ready")return;
