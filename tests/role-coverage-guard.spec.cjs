@@ -266,3 +266,10 @@ test('Last-login tracking updates only the authenticated active account through 
   expect(appHtml).toContain('db.rpc("record_current_user_login")');
   expect(appHtml).not.toContain('db.from("app_users").update({ last_login:');
 });
+
+test('Public last-login RPC stays invoker-only and accepts no caller-selected account', () => {
+  const publicLoginRpc = loginTrackingSql.slice(loginTrackingSql.indexOf('CREATE OR REPLACE FUNCTION public.record_current_user_login()'));
+  expect(publicLoginRpc).toContain('SECURITY INVOKER');
+  expect(publicLoginRpc).toContain('SELECT private.record_current_user_login()');
+  expect(publicLoginRpc).not.toMatch(/p_user_id|user_id\s*uuid/i);
+});
