@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v162</title>
+<title>MeatManagement v163</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -552,6 +552,31 @@ nav{
   .home-dashboard{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 
+
+/* Navigation drawer and personal appearance preferences */
+.header-menu-btn{position:absolute;right:18px;top:16px;width:42px;height:38px;border:1px solid #ffffff70;border-radius:9px;background:#ffffff18;color:#fff;font-size:23px;line-height:1}
+#mmSideDrawer{position:fixed;inset:0;z-index:10020;display:none;background:#0008}
+#mmSideDrawer.open{display:block}
+#mmSideDrawer .mm-drawer-panel{position:absolute;top:0;right:0;bottom:0;width:min(88vw,360px);overflow:auto;background:#fff;padding:16px 14px calc(24px + env(safe-area-inset-bottom));box-shadow:-8px 0 28px #0002}
+.mm-drawer-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 4px 16px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.mm-drawer-head strong{color:var(--g);font-size:18px}
+.mm-drawer-close{border:0;background:#edf1ed;border-radius:8px;padding:7px 12px;color:var(--g);font-size:20px}
+.mm-drawer-link{display:flex;width:100%;align-items:center;gap:10px;text-align:right;border:1px solid var(--line);background:#fff;color:var(--g);border-radius:10px;padding:12px;margin:7px 0;font-weight:700}
+.mm-drawer-link:active{background:#edf3ed}
+.mm-drawer-group{font-size:12px;color:var(--muted);padding:12px 4px 3px}
+#mmDrawerSections .dash-item{display:flex;flex-direction:row;justify-content:flex-start;align-items:center;gap:10px;min-height:0;margin:7px 0;padding:11px;border:1px solid var(--line);border-radius:10px;box-shadow:none;background:#fff;color:var(--g)}
+#mmDrawerSections .dash-icon{font-size:20px;margin:0}
+#mmDrawerSections .dash-title{font-size:13px;text-align:right}
+#mmAppearanceModal{position:fixed;inset:0;z-index:10030;display:none;align-items:center;justify-content:center;background:#0009;padding:14px}
+#mmAppearanceModal.open{display:flex}
+#mmAppearanceModal .mm-appearance-card{width:100%;max-width:520px;max-height:90vh;overflow:auto;background:#fff;border-radius:16px;padding:18px}
+#mmAppearanceModal h2{color:var(--g);margin:0 0 8px}
+#mmAppearanceModal .mm-appearance-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+#mmAppearanceModal .mm-appearance-actions button{flex:1;min-width:120px}
+#mmAppearanceModal input[type=color]{height:48px;padding:4px}
+#mmAppearanceModal .mm-preview{border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:12px;background:var(--bg);color:var(--g)}
+@media(max-width:480px){.header-menu-btn{right:12px;top:14px}header h1{padding-inline:38px}}
+
 </style>
 </head>
 <body>
@@ -564,8 +589,9 @@ nav{
 </div>
 
 <header>
+<button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v162]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v163]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -592,6 +618,36 @@ nav{
 })();
 </script>
 </header>
+
+<div id="mmSideDrawer" aria-hidden="true">
+ <div class="mm-drawer-panel" role="dialog" aria-label="القائمة الرئيسية">
+  <div class="mm-drawer-head"><strong>قائمة البرنامج</strong><button id="mmDrawerClose" class="mm-drawer-close" type="button" aria-label="إغلاق">×</button></div>
+  <button class="mm-drawer-link" type="button" data-mm-page="home">الرئيسية</button>
+  <button class="mm-drawer-link" type="button" data-mm-page="tasks">مهامي</button>
+  <button class="mm-drawer-link" type="button" data-mm-page="data">البيانات والأقسام</button>
+  <div class="mm-drawer-group">الأقسام المتاحة لحسابك</div>
+  <div id="mmDrawerSections"></div>
+  <div class="mm-drawer-group">إعدادات العرض</div>
+  <button id="mmOpenAppearance" class="mm-drawer-link" type="button">المظهر والألوان والخط</button>
+ </div>
+</div>
+<div id="mmAppearanceModal" aria-hidden="true">
+ <div class="mm-appearance-card" role="dialog" aria-modal="true" aria-labelledby="mmAppearanceTitle">
+  <div class="row" style="justify-content:space-between;align-items:center"><h2 id="mmAppearanceTitle">إعدادات المظهر</h2><button id="mmAppearanceClose" class="btn secondary" type="button" style="width:auto;margin:0">إغلاق</button></div>
+  <p class="desc">هذه الإعدادات تخص حسابك على هذا الجهاز فقط.</p>
+  <label for="mmThemeChoice">ألوان البرنامج</label>
+  <select id="mmThemeChoice"><option value="green">الأخضر الحالي</option><option value="blue">الأزرق</option><option value="slate">الرمادي</option><option value="custom">لون تختاره</option></select>
+  <label for="mmCustomColor">اللون الأساسي</label><input id="mmCustomColor" type="color" value="#173c2c">
+  <label for="mmFontChoice">نوع الخط</label>
+  <select id="mmFontChoice"><option value="system">خط الجهاز الافتراضي</option><option value="arial">Arial</option><option value="tahoma">Tahoma</option><option value="cairo">Cairo إذا كان مثبتًا على الجهاز</option><option value="tajawal">Tajawal إذا كان مثبتًا على الجهاز</option></select>
+  <label for="mmFontSize">حجم الخط</label>
+  <select id="mmFontSize"><option value="13px">صغير</option><option value="14px">متوسط</option><option value="16px">كبير</option><option value="18px">كبير جدًا</option></select>
+  <div class="mm-preview" id="mmAppearancePreview"><strong>معاينة شكل البرنامج</strong><div style="margin-top:8px">هذا مثال على النص بعد تطبيق اختياراتك.</div></div>
+  <div class="mm-appearance-actions"><button id="mmAppearanceSave" class="btn" type="button">حفظ الإعدادات</button><button id="mmAppearanceReset" class="btn secondary" type="button">استعادة الافتراضي</button></div>
+  <div id="mmAppearanceMsg" class="status hidden"></div>
+ </div>
+</div>
+
 <main>
 <section id="login" class="card">
 <h2>🔐 تسجيل الدخول</h2>
@@ -2269,7 +2325,7 @@ nav{
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v162</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v163</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -7346,7 +7402,71 @@ async function viewInvoice(inv) {
             ["المتبقي",fmt(invoiceRemaining),"grand"]
           ];
           const totalRows=receiptTotals.map(row=>'<div class="total '+(row[2]||"")+'"><span>'+escapeReceipt(row[0])+'</span><strong>'+escapeReceipt(row[1])+'</strong></div>').join("");
-          const receipt='<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>فاتورة '+escapeReceipt(inv.invoice_number)+'</title><style>@page{margin:2mm}*{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff;color:#000;font-family:Tahoma,Arial,sans-serif;font-size:11px}body{width:'+(width-4)+'mm;padding:0}.receipt{width:100%;margin:0 auto}.center{text-align:center}.company{font-size:15px;font-weight:bold;margin:0 0 4px}.sub{font-size:10px;margin:2px 0}.rule{border:0;border-top:1px dashed #555;margin:7px 0}.meta{line-height:1.8}.meta div{display:flex;justify-content:space-between;gap:5px}.meta strong{font-weight:bold}table{width:100%;border-collapse:collapse;margin:7px 0}td{padding:5px 1px;border-bottom:1px dashed #aaa;vertical-align:top}.item-name{width:72%;font-weight:bold}.item-name small{display:block;font-size:9px;font-weight:normal;margin-top:3px}.amount{text-align:left;direction:ltr;white-space:nowrap;font-weight:bold}.total{display:flex;justify-content:space-between;gap:6px;padding:3px 0}.total strong{direction:ltr;white-space:nowrap}.grand{font-size:12px;font-weight:bold;border-top:1px solid #555;margin-top:4px;padding-top:5px}.thanks{margin-top:10px;text-align:center;font-size:10px;line-height:1.7}.no-print{display:none}@media print{body{width:'+(width-4)+'mm}}</style></head><body><main class="receipt"><header class="center"><p class="company">'+escapeReceipt(companyName)+'</p>'+(companyPhone?'<p class="sub">هاتف: '+escapeReceipt(companyPhone)+'</p>':'')+'<p class="sub">فاتورة بيع</p></header><hr class="rule"><section class="meta"><div><span>رقم الفاتورة</span><strong>'+escapeReceipt(inv.invoice_number)+'</strong></div><div><span>التاريخ</span><strong>'+escapeReceipt(invoiceTime)+'</strong></div><div><span>العميل</span><strong>'+escapeReceipt(customerName(inv.customer_id))+'</strong></div></section><hr class="rule"><table><tbody>'+rows+'</tbody></table><hr class="rule"><section>'+totalRows+'</section><hr class="rule"><footer class="thanks">شكراً لتعاملكم معنا<br>'+escapeReceipt(companyName)+'</footer></main><script>window.onload=function(){setTimeout(function(){window.focus();window.print();},350)};<\/script></body></html>';
+          const receipt='<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>فاتورة '+escapeReceipt(inv.invoice_number)+'</title><style>@page{margin:2mm}*{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff;color:#000;font-family:Tahoma,Arial,sans-serif;font-size:11px}body{width:'+(width-4)+'mm;padding:0}.receipt{width:100%;margin:0 auto}.center{text-align:center}.company{font-size:15px;font-weight:bold;margin:0 0 4px}.sub{font-size:10px;margin:2px 0}.rule{border:0;border-top:1px dashed #555;margin:7px 0}.meta{line-height:1.8}.meta div{display:flex;justify-content:space-between;gap:5px}.meta strong{font-weight:bold}table{width:100%;border-collapse:collapse;margin:7px 0}td{padding:5px 1px;border-bottom:1px dashed #aaa;vertical-align:top}.item-name{width:72%;font-weight:bold}.item-name small{display:block;font-size:9px;font-weight:normal;margin-top:3px}.amount{text-align:left;direction:ltr;white-space:nowrap;font-weight:bold}.total{display:flex;justify-content:space-between;gap:6px;padding:3px 0}.total strong{direction:ltr;white-space:nowrap}.grand{font-size:12px;font-weight:bold;border-top:1px solid #555;margin-top:4px;padding-top:5px}.thanks{margin-top:10px;text-align:center;font-size:10px;line-height:1.7}.no-print{display:none}@media print{body{width:'+(width-4)+'mm}}</style></head><body><main class="receipt"><header class="center"><p class="company">'+escapeReceipt(companyName)+'</p>'+(companyPhone?'<p class="sub">هاتف: '+escapeReceipt(companyPhone)+'</p>':'')+'<p class="sub">فاتورة بيع</p></header><hr class="rule"><section class="meta"><div><span>رقم الفاتورة</span><strong>'+escapeReceipt(inv.invoice_number)+'</strong></div><div><span>التاريخ</span><strong>'+escapeReceipt(invoiceTime)+'</strong></div><div><span>العميل</span><strong>'+escapeReceipt(customerName(inv.customer_id))+'</strong></div></section><hr class="rule"><table><tbody>'+rows+'</tbody></table><hr class="rule"><section>'+totalRows+'</section><hr class="rule"><footer class="thanks">شكراً لتعاملكم معنا<br>'+escapeReceipt(companyName)+'</footer></main><script>window.onload=function(){setTimeout(function(){window.focus();window.print();},350)};<\/script><script>
+
+/* ===== القائمة الجانبية وإعدادات المظهر الشخصية ===== */
+(function(){
+ const $mm=id=>document.getElementById(id);
+ const drawer=$mm("mmSideDrawer"),toggle=$mm("mmMenuToggle"),sections=$mm("mmDrawerSections"),appearance=$mm("mmAppearanceModal");
+ if(!drawer||!toggle||!sections||!appearance)return;
+ const closeDrawer=()=>{drawer.classList.remove("open");drawer.setAttribute("aria-hidden","true");toggle.setAttribute("aria-expanded","false");};
+ const openDrawer=()=>{
+  sections.replaceChildren();
+  document.querySelectorAll("#dataDashboard .dash-item:not(.hidden)").forEach(source=>{
+   const clone=source.cloneNode(true);
+   clone.removeAttribute("id");
+   clone.querySelectorAll("[id]").forEach(el=>el.removeAttribute("id"));
+   clone.classList.remove("hidden");
+   clone.addEventListener("click",closeDrawer);
+   sections.appendChild(clone);
+  });
+  drawer.classList.add("open");drawer.setAttribute("aria-hidden","false");toggle.setAttribute("aria-expanded","true");
+ };
+ toggle.addEventListener("click",openDrawer);
+ $mm("mmDrawerClose").addEventListener("click",closeDrawer);
+ drawer.addEventListener("click",e=>{if(e.target===drawer)closeDrawer();});
+ drawer.querySelectorAll("[data-mm-page]").forEach(btn=>btn.addEventListener("click",()=>{closeDrawer();if(typeof page==="function")page(btn.dataset.mmPage);}));
+ const palettes={
+  green:{g:"#173c2c",g2:"#24563e"},
+  blue:{g:"#17436b",g2:"#28658f"},
+  slate:{g:"#3d4650",g2:"#596572"}
+ };
+ const defaults={theme:"green",custom:"#173c2c",font:"system",size:"14px"};
+ let activeKey="meatmanagement_appearance_guest";
+ async function getKey(){
+  try{const auth=window.db?.auth;if(auth){const {data}=await auth.getUser();if(data?.user?.id)return "meatmanagement_appearance_"+data.user.id;}}catch(e){}
+  return activeKey;
+ }
+ function apply(cfg){
+  const root=document.documentElement,theme=cfg.theme||"green";
+  let primary=palettes[theme]?.g||cfg.custom||defaults.custom;
+  let secondary=palettes[theme]?.g2||primary;
+  if(theme==="custom"){primary=cfg.custom||defaults.custom;secondary=primary;}
+  root.style.setProperty("--g",primary);
+  root.style.setProperty("--g2",secondary);
+  root.style.setProperty("--app-font-size",cfg.size||defaults.size);
+  const fonts={system:"system-ui, sans-serif",arial:"Arial, sans-serif",tahoma:"Tahoma, Arial, sans-serif",cairo:"Cairo, Tahoma, sans-serif",tajawal:"Tajawal, Tahoma, sans-serif"};
+  document.body.style.fontFamily=fonts[cfg.font]||fonts.system;
+  const preview=$mm("mmAppearancePreview");
+  if(preview){preview.style.background=primary;preview.style.color="#fff";}
+ }
+ function readControls(){return {theme:$mm("mmThemeChoice").value,custom:$mm("mmCustomColor").value,font:$mm("mmFontChoice").value,size:$mm("mmFontSize").value};}
+ function writeControls(cfg){$mm("mmThemeChoice").value=cfg.theme||"green";$mm("mmCustomColor").value=cfg.custom||"#173c2c";$mm("mmFontChoice").value=cfg.font||"system";$mm("mmFontSize").value=cfg.size||"14px";}
+ async function loadSaved(){activeKey=await getKey();let cfg=defaults;try{cfg={...defaults,...JSON.parse(localStorage.getItem(activeKey)||"{}")};}catch(e){}writeControls(cfg);apply(cfg);}
+ async function save(){const cfg=readControls();activeKey=await getKey();try{localStorage.setItem(activeKey,JSON.stringify(cfg));apply(cfg);$mm("mmAppearanceMsg").textContent="تم حفظ إعدادات المظهر على هذا الجهاز."; $mm("mmAppearanceMsg").classList.remove("hidden","error");$mm("mmAppearanceMsg").classList.add("success");}catch(e){$mm("mmAppearanceMsg").textContent="تعذر حفظ الإعدادات على هذا الجهاز.";$mm("mmAppearanceMsg").classList.remove("hidden","success");$mm("mmAppearanceMsg").classList.add("error");}}
+ const openAppearance=async()=>{closeDrawer();await loadSaved();appearance.classList.add("open");appearance.setAttribute("aria-hidden","false");};
+ $mm("mmOpenAppearance").addEventListener("click",openAppearance);
+ $mm("mmAppearanceClose").addEventListener("click",()=>{appearance.classList.remove("open");appearance.setAttribute("aria-hidden","true");});
+ appearance.addEventListener("click",e=>{if(e.target===appearance){appearance.classList.remove("open");appearance.setAttribute("aria-hidden","true");}});
+ ["mmThemeChoice","mmCustomColor","mmFontChoice","mmFontSize"].forEach(id=>$mm(id).addEventListener("change",()=>apply(readControls())));
+ $mm("mmAppearanceSave").addEventListener("click",save);
+ $mm("mmAppearanceReset").addEventListener("click",async()=>{writeControls(defaults);apply(defaults);activeKey=await getKey();try{localStorage.removeItem(activeKey);}catch(e){}$mm("mmAppearanceMsg").textContent="تمت استعادة إعدادات المظهر الافتراضية.";$mm("mmAppearanceMsg").classList.remove("hidden","error");$mm("mmAppearanceMsg").classList.add("success");});
+ document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeDrawer();appearance.classList.remove("open");appearance.setAttribute("aria-hidden","true");}});
+ window.addEventListener("load",()=>{loadSaved();});
+})();
+
+</script>
+</body></html>';
           printWindow.document.open();printWindow.document.write(receipt);printWindow.document.close();
         };
     } catch(e) { alert(err(e)); }
@@ -11968,7 +12088,7 @@ const originalAssets=loadFixedAssets;loadFixedAssets=async function(){await orig
 // ====== PWA ======
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=179', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
+    navigator.serviceWorker.register('./sw.js?v=180', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
   });
 }
 
