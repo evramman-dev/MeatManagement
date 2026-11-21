@@ -160,7 +160,10 @@ Deno.serve(async (req: Request) => {
     if (targetRoleError || !targetRole || targetRole.role_code !== "PARTNER" || targetRole.is_active !== true) {
       return respond({ success: false, error: "يمكن ربط سجل شريك بحساب يحمل دور الشريك النشط فقط." }, 400);
     }
-    if (targetProfile.is_active !== true) {\n      return respond({ success: false, error: "حساب الشريك غير نشط." }, 409);\n    }\n    if (targetProfile.partner_id !== null && Number(targetProfile.partner_id) !== partnerId) {
+    if (targetProfile.is_active !== true) {
+      return respond({ success: false, error: "حساب الشريك غير نشط." }, 409);
+    }
+    if (targetProfile.partner_id !== null && Number(targetProfile.partner_id) !== partnerId) {
       return respond({ success: false, error: "هذا الحساب مرتبط بالفعل بسجل شريك آخر." }, 409);
     }
     const { data: partner, error: partnerError } = await admin
