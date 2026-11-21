@@ -414,3 +414,6 @@ Commit: `1041981952e2f57e27f0d0d6f46c7c717a2986a7`
 | 20261121101604 | scope_partner_read_rpcs_to_linked_partner_20261121 | Restrict the partner ledger and profit distribution detail RPCs to the currently linked partner when called by PARTNER accounts. Other authorized roles retain their existing view access. Applied to the connected Supabase project. |
 
 | 20261121101812 | hide_sales_rep_private_fields_from_partners_20261121 | Remove partner access to sales representative profiles containing phone numbers, commission rates, and auth links. Hide employee administration and factory reset screens from partner accounts while preserving trip representative names through the limited trip-name RPC. Applied to the connected Supabase project. |
+
+
+| 20261121103031 | require_linked_active_partner_for_partner_read_access_20261121 | Require PARTNER accounts to have an active linked partner record before the shared read-only partner policies grant access. The currently linked active account retains its existing read access; unlinked or inactive partner accounts are denied. Applied to the connected Supabase project. |
