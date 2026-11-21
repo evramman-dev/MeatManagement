@@ -388,3 +388,21 @@ Commit: `1041981952e2f57e27f0d0d6f46c7c717a2986a7`
 | 20261120131810 | `add_partner_read_only_role_20261120` | موجود |
 | 20261120132214 | `block_partner_notification_read_updates_20261120` | موجود |
 | 20261120154853 | `add_accounting_period_closure_fk_indexes` | موجود |
+
+
+## مزامنة صلاحيات Sequences – 2026-11-21
+
+تمت مطابقة ترحيلين مطبقين في قاعدة Supabase مع ملفيهما التنفيذيين في GitHub:
+
+| Version | Migration | الحالة |
+|---|---|---|
+| 20261121071324 | `revoke_anon_public_sequence_access_20261121` | موجود في قاعدة Supabase، وأضيف ملف SQL المطابق إلى GitHub |
+| 20261121071909 | `revoke_anon_default_sequence_privileges_20261121` | موجود في قاعدة Supabase، وأضيف ملف SQL المطابق إلى GitHub |
+
+التغييران:
+- سحب `USAGE` و`SELECT` و`UPDATE` من `anon` على كل Sequences الحالية في `public`.
+- منع منح صلاحيات تلقائية لـ`anon` على Sequences الجديدة التي ينشئها المالك `postgres` داخل `public`.
+
+تم التحقق من إعدادات الصلاحيات الافتراضية بعد التنفيذ. لا يملك `anon` صلاحيات افتراضية على Sequences الخاصة بـ`postgres`. بقيت إعدادات `supabase_admin` دون تغيير، كما بقيت صلاحيات `authenticated` و`service_role` دون تغيير.
+
+هذه الإضافة توثق الحالة الحالية ولا تعيد تنفيذ التغييرات على قاعدة البيانات. لقطة الأعداد الواردة في بداية هذا الملف تخص تاريخ 2026-11-20 ولا تشمل هذين الترحيلين.
