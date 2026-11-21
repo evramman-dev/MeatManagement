@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v165</title>
+<title>MeatManagement v166</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -859,6 +859,12 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div class="dash-item hidden" id="menuRecipes" onclick="window.openSection('recipes')"><div class="dash-icon">📝</div><div class="dash-title">الوصفات</div></div>
 <div class="dash-item hidden" id="menuProduction" onclick="window.openSection('production')"><div class="dash-icon">🏭</div><div class="dash-title">أوامر التشغيل</div></div>
 <div class="dash-item hidden" id="menuStockLots" onclick="window.openSection('stockLots')"><div class="dash-icon">🏷️</div><div class="dash-title">تتبع التشغيلات</div></div>
+</div>
+</div>
+<div class="dashboard-group" id="hrDashboardGroup">
+<div class="dashboard-title">👥 الموارد البشرية</div>
+<div class="dashboard-grid">
+<div class="dash-item hidden" id="menuHR" onclick="window.openSection('hr')"><div class="dash-icon">👥</div><div class="dash-title">الموارد البشرية</div></div>
 </div>
 </div>
 <div class="dashboard-group">
@@ -2328,7 +2334,38 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v164</p>
+<section id="sectionHr" class="sub-section hidden"><div class="card"><h2>👥 الموارد البشرية</h2><p class="desc">إدارة الموظفين والحضور والإجازات ومسيرات الرواتب.</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">إعداد HR</h3>
+<div class="grid">
+<div><label>كود القسم<input id="hrDeptCode"></label></div><div><label>اسم القسم<input id="hrDeptName"></label></div>
+<div><label>كود الوظيفة<input id="hrJobCode"></label></div><div><label>اسم الوظيفة<input id="hrJobName"></label></div>
+<div><label>كود الإجازة<input id="hrLeaveCode"></label></div><div><label>اسم الإجازة<input id="hrLeaveName"></label></div>
+</div>
+<label class="check"><input id="hrLeavePaid" type="checkbox" checked>إجازة مدفوعة</label>
+<div class="actions">
+<button id="hrSaveDept" class="btn">حفظ القسم</button>
+<button id="hrSaveJob" class="btn">حفظ الوظيفة</button>
+<button id="hrSaveLeaveType" class="btn">حفظ نوع الإجازة</button>
+</div>
+<div id="hrSetupMsg" class="status hidden"></div>
+</div>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">الموظفون</h3><div id="hrEmployeeFormWrap"><div class="grid">
+<div><label>كود الموظف<input id="hrEmployeeCode"></label></div><div><label>اسم الموظف<input id="hrEmployeeName"></label></div>
+<div><label>القسم<select id="hrEmployeeDept"><option value="">اختر القسم</option></select></label></div><div><label>الوظيفة<select id="hrEmployeeJob"><option value="">اختر الوظيفة</option></select></label></div>
+<div><label>تاريخ التعيين<input id="hrHireDate" type="date"></label></div><div><label>الراتب الأساسي<input id="hrBaseSalary" type="number" min="0" step="0.01" value="0"></label></div></div>
+<button id="hrSaveEmployee" class="btn">حفظ الموظف</button><div id="hrEmployeeMsg" class="status hidden"></div></div><div id="hrEmployeesList"></div></div>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">الحضور</h3><div class="grid">
+<div><label>الموظف<select id="hrAttendanceEmployee"><option value="">اختر الموظف</option></select></label></div><div><label>التاريخ<input id="hrAttendanceDate" type="date"></label></div>
+<div><label>الحالة<select id="hrAttendanceCode"><option value="PRESENT">حضور</option><option value="ABSENT">غياب</option><option value="EXCUSED">غياب بعذر</option><option value="MISSION">مأمورية</option></select></label></div></div>
+<button id="hrSaveAttendance" class="btn">تسجيل الحضور</button><div id="hrAttendanceMsg" class="status hidden"></div></div>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">الإجازات</h3><div class="grid">
+<div><label>الموظف<select id="hrLeaveEmployee"><option value="">اختر الموظف</option></select></label></div><div><label>نوع الإجازة<select id="hrLeaveType"><option value="">اختر النوع</option></select></label></div>
+<div><label>من<input id="hrLeaveStart" type="date"></label></div><div><label>إلى<input id="hrLeaveEnd" type="date"></label></div></div><label>السبب<textarea id="hrLeaveReason" rows="2"></textarea></label>
+<button id="hrSaveLeave" class="btn">طلب إجازة</button><div id="hrLeaveMsg" class="status hidden"></div><div id="hrLeavesList"></div></div>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">مسيرات الرواتب</h3><div class="grid">
+<div><label>كود الفترة<input id="hrPeriodCode" placeholder="مثال 2026-11"></label></div><div><label>من<input id="hrPeriodStart" type="date"></label></div><div><label>إلى<input id="hrPeriodEnd" type="date"></label></div></div>
+<button id="hrCreatePeriod" class="btn">إنشاء فترة</button><div id="hrPayrollMsg" class="status hidden"></div><div id="hrPayrollList"></div></div>
+<button type="button" class="btn secondary" onclick="window.closeSection()">رجوع إلى مركز البيانات</button></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v166</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -2581,6 +2618,7 @@ try {
   let canViewSupplierPayments=false;
   let canViewPurchaseReturns=false, canManagePurchaseReturns=false;
   let canViewFixedAssets=false, canManageFixedAssets=false, canViewLandedCosts=false, canManageLandedCosts=false;
+  let canViewHR=false, canManageHR=false, canManageHRAttendance=false, canManageHRLeaves=false, canManageHRPayroll=false, canApproveHRPayroll=false, canPayHRPayroll=false;
   let canViewPartnerInventoryContributions=false, canManagePartnerInventoryContributions=false, canCancelPartnerInventoryContributions=false, canViewPartnerVehicleContributions=false, canManagePartnerVehicleContributions=false, canCancelPartnerVehicleContributions=false;
   let partnerInventoryContributionsCache=[];
   let partnerVehicleContributionsCache=[];
@@ -2731,10 +2769,11 @@ function showLogin(){ hideSections(); if($("login")) $("login").classList.remove
 function showApp(){ hideSections(); if($("nav")) $("nav").classList.remove("hidden"); page("home"); }
 
 window.openSection = function(name) {
-  const sectionMenuMap = { products:"menuProducts", locations:"menuLocations", stock:"menuStock", stockSummary:"menuStock", stockLots:"menuStockLots", stockTransfers:"menuStockTransfers", recipes:"menuRecipes", production:"menuProduction", productionDailySummary:"menuProduction", reservations:"menuReservations", suppliers:"menuSuppliers", purchases:"menuPurchases", purchaseReturns:"menuPurchaseReturns", landedCosts:"menuLandedCosts", fixedAssets:"menuFixedAssets", supplierPayments:"menuSupplierPayments", expenses:"menuExpenses", customers:"menuCustomers", sales:"menuSales", salesReturns:"menuSalesReturns", priceLists:"menuPriceLists", collections:"menuCollections", trips:"menuTrips", salesReps:"menuSalesReps", treasuries:"menuTreasuries", treasuryTransfers:"menuTreasuryTransfers", partners:"menuPartners", accounting:"menuAccounting", reports:"menuReports", users:"menuUsers", systemReset:"menuSystemReset", settings:"menuSettings" };
+  const sectionMenuMap = { products:"menuProducts", locations:"menuLocations", stock:"menuStock", stockSummary:"menuStock", stockLots:"menuStockLots", stockTransfers:"menuStockTransfers", recipes:"menuRecipes", production:"menuProduction", productionDailySummary:"menuProduction", reservations:"menuReservations", suppliers:"menuSuppliers", purchases:"menuPurchases", purchaseReturns:"menuPurchaseReturns", landedCosts:"menuLandedCosts", fixedAssets:"menuFixedAssets", supplierPayments:"menuSupplierPayments", expenses:"menuExpenses", customers:"menuCustomers", sales:"menuSales", salesReturns:"menuSalesReturns", priceLists:"menuPriceLists", collections:"menuCollections", trips:"menuTrips", salesReps:"menuSalesReps", treasuries:"menuTreasuries", treasuryTransfers:"menuTreasuryTransfers", partners:"menuPartners", accounting:"menuAccounting", reports:"menuReports", users:"menuUsers", systemReset:"menuSystemReset", settings:"menuSettings", hr:"menuHR" };
   const allowedIds = getRoleMenuIds(currentRoleCode);
   const requestedMenuId = sectionMenuMap[name];
-  if(!isSystemAdmin && !isPartner && (!requestedMenuId || !allowedIds.has(requestedMenuId))) {
+  if(name==="hr" && !canViewHR && !isSystemAdmin){ showToast("ليس لديك صلاحية عرض الموارد البشرية.", "error"); return; }
+  if(name!=="hr" && !isSystemAdmin && !isPartner && (!requestedMenuId || !allowedIds.has(requestedMenuId))) {
     showToast("هذا القسم غير متاح لحسابك.", "error");
     return;
   }
@@ -2792,6 +2831,7 @@ window.openSection = function(name) {
    if (name === "stockLots") loadStockLots();
   if (name === "reservations") loadReservations();
   if (name === "settings") loadSettings();
+  if (name === "hr") loadHR();
 }
 
 function formatDateDisplayValue(value){
@@ -3222,6 +3262,7 @@ async function userInfo(user){
     try{ canViewProduction=await permission("PRODUCTION_VIEW") || isSystemAdmin; canManageProduction=await permission("PRODUCTION_MANAGE") || isSystemAdmin; canLoadLocations=canViewLocations || canViewStockTransfers || await permission("INVENTORY_VIEW") || canViewProduction || canManageProduction || isSystemAdmin; if($("menuProduction")) $("menuProduction").classList.toggle("hidden",!canViewProduction); if($("menuProductionDailySummary")) $("menuProductionDailySummary").classList.toggle("hidden",!canViewProduction); if($("productionCard")) $("productionCard").classList.toggle("hidden",!canViewProduction); if($("addProductionBtn")) $("addProductionBtn").classList.toggle("hidden",!canManageProduction); }catch(e){}
     try{ canViewRecipes=await permission("RECIPES_VIEW") || canViewProduction || canManageProduction || isSystemAdmin; canManageRecipes=await permission("RECIPES_MANAGE") || canManageProduction || isSystemAdmin; if($("menuRecipes")) $("menuRecipes").classList.toggle("hidden",!canViewRecipes); if($("recipesCard")) $("recipesCard").classList.toggle("hidden",!canViewRecipes); if($("addRecipeBtn")) $("addRecipeBtn").classList.toggle("hidden",!canManageRecipes); }catch(e){}
     try{ canViewAccounting=await permission("ACCOUNTING_VIEW") || isSystemAdmin; canManageAccounting=await permission("ACCOUNTING_MANAGE") || isSystemAdmin; if($("menuAccounting")) $("menuAccounting").classList.toggle("hidden",!canViewAccounting); if($("accountingCard")) $("accountingCard").classList.toggle("hidden",!canViewAccounting); if($("btnPostEntries")) $("btnPostEntries").classList.toggle("hidden",!canManageAccounting); if($("btnAdjustment")) $("btnAdjustment").classList.toggle("hidden",!canManageAccounting); if($("btnBackup")) $("btnBackup").classList.toggle("hidden",!isSystemAdmin); }catch(e){}
+    try{canViewHR=await permission("HR_EMPLOYEES_VIEW")||await permission("HR_ATTENDANCE_MANAGE")||await permission("HR_LEAVES_MANAGE")||await permission("HR_PAYROLL_MANAGE")||await permission("HR_PAYROLL_APPROVE")||await permission("HR_PAYROLL_PAY")||isSystemAdmin;canManageHR=await permission("HR_EMPLOYEES_MANAGE")||isSystemAdmin;canManageHRAttendance=await permission("HR_ATTENDANCE_MANAGE")||isSystemAdmin;canManageHRLeaves=await permission("HR_LEAVES_MANAGE")||isSystemAdmin;canManageHRPayroll=await permission("HR_PAYROLL_MANAGE")||isSystemAdmin;canApproveHRPayroll=await permission("HR_PAYROLL_APPROVE")||isSystemAdmin;canPayHRPayroll=await permission("HR_PAYROLL_PAY")||isSystemAdmin;if($("menuHR"))$("menuHR").classList.toggle("hidden",!canViewHR);if($("hrDashboardGroup"))$("hrDashboardGroup").classList.toggle("hidden",!canViewHR);}catch(e){canViewHR=false;}
     try{ canViewReservations=await permission("RESERVATIONS_VIEW") || isSystemAdmin; canManageReservations=await permission("RESERVATIONS_MANAGE") || isSystemAdmin; if($("menuReservations")) $("menuReservations").classList.toggle("hidden",!canViewReservations); if($("addReservationBtn")) $("addReservationBtn").classList.toggle("hidden",!canManageReservations); }catch(e){}
     try{ canViewPriceLists=await permission("PRICES_VIEW") || await permission("PRICES_MANAGE") || isSystemAdmin; canManagePriceLists=await permission("PRICES_MANAGE") || isSystemAdmin; }catch(e){ canViewPriceLists=false; canManagePriceLists=false; }
     if($("menuPriceLists")) $("menuPriceLists").classList.toggle("hidden",!canViewPriceLists);
@@ -12028,6 +12069,34 @@ const originalAssets=loadFixedAssets;loadFixedAssets=async function(){await orig
 
 
 })();
+
+
+// ===== الموارد البشرية =====
+let hrEmployeesCache=[],hrDepartmentsCache=[],hrJobsCache=[],hrLeaveTypesCache=[],hrPeriodsCache=[];
+function hrEscape(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
+function hrDate(v){return v?String(v).slice(0,10):"";}
+async function loadHR(){if(!canViewHR&&!isSystemAdmin)return;try{
+const [e,d,j,l,p]=await Promise.all([db.from("hr_employees").select("employee_id,employee_code,full_name,department_id,job_id,hire_date,employment_status,base_salary").order("employee_id",{ascending:false}).limit(300),db.from("hr_departments").select("department_id,department_code,department_name").eq("is_active",true).order("department_name"),db.from("hr_jobs").select("job_id,job_code,job_name").eq("is_active",true).order("job_name"),db.from("hr_leave_types").select("leave_type_id,leave_code,leave_name,paid").eq("is_active",true).order("leave_name"),db.from("hr_payroll_periods").select("*").order("period_start",{ascending:false}).limit(50)]);if(e.error)throw e.error;if(d.error)throw d.error;if(j.error)throw j.error;if(l.error)throw l.error;if(p.error)throw p.error;
+hrEmployeesCache=e.data||[];hrDepartmentsCache=d.data||[];hrJobsCache=j.data||[];hrLeaveTypesCache=l.data||[];hrPeriodsCache=p.data||[];
+const fill=(id,rows,value,text,first)=>{const s=$(id);if(!s)return;s.innerHTML='<option value="">'+first+'</option>';rows.forEach(x=>{const o=document.createElement("option");o.value=x[value];o.textContent=x[text];s.appendChild(o);});};fill("hrEmployeeDept",hrDepartmentsCache,"department_id","department_name","اختر القسم");fill("hrEmployeeJob",hrJobsCache,"job_id","job_name","اختر الوظيفة");fill("hrAttendanceEmployee",hrEmployeesCache,"employee_id","full_name","اختر الموظف");fill("hrLeaveEmployee",hrEmployeesCache,"employee_id","full_name","اختر الموظف");fill("hrLeaveType",hrLeaveTypesCache,"leave_type_id","leave_name","اختر النوع");
+$("hrEmployeesList").innerHTML=hrEmployeesCache.length?hrEmployeesCache.map(x=>'<div class="item-row"><strong>'+hrEscape(x.full_name)+'</strong><div class="details">'+hrEscape(x.employee_code)+' | '+hrEscape(x.employment_status)+' | '+fmt(x.base_salary||0)+'</div></div>').join(""):'<div class="empty">لا يوجد موظفون.</div>';
+const leaves=await db.from("hr_leave_requests").select("leave_request_id,employee_id,leave_type_id,start_date,end_date,requested_days,reason,status").order("leave_request_id",{ascending:false}).limit(100);if(leaves.error)throw leaves.error;$("hrLeavesList").innerHTML=(leaves.data||[]).map(x=>{const en=hrEmployeesCache.find(e=>e.employee_id===x.employee_id)?.full_name||x.employee_id;const lt=hrLeaveTypesCache.find(t=>t.leave_type_id===x.leave_type_id)?.leave_name||x.leave_type_id;let a="";if(x.status==="PENDING"&&canManageHRLeaves)a='<div class="actions"><button class="btn" onclick="hrLeaveAction('+x.leave_request_id+',true)">اعتماد</button><button class="btn danger" onclick="hrLeaveAction('+x.leave_request_id+',false)">رفض</button></div>';return '<div class="item-row"><strong>'+hrEscape(en)+'</strong><div class="details">'+hrEscape(lt)+' | '+hrDate(x.start_date)+' إلى '+hrDate(x.end_date)+' | '+hrEscape(x.status)+'</div><div class="item-hint">'+hrEscape(x.reason||"")+'</div>'+a+'</div>';}).join("")||'<div class="empty">لا توجد طلبات إجازة.</div>';
+$("hrPayrollList").innerHTML=hrPeriodsCache.map(x=>{let a="";if(x.status==="OPEN"&&canManageHRPayroll)a='<button class="btn" onclick="hrCalc('+x.payroll_period_id+')">حساب</button>';if(x.status==="CALCULATED"&&canManageHRPayroll)a='<button class="btn" onclick="hrReview('+x.payroll_period_id+')">مراجعة</button>';if(x.status==="REVIEWED"&&canApproveHRPayroll)a='<button class="btn" onclick="hrApprove('+x.payroll_period_id+')">اعتماد</button>';if(x.status==="APPROVED"&&canPayHRPayroll)a='<button class="btn" onclick="hrPay('+x.payroll_period_id+')">صرف</button>';return '<div class="item-row"><strong>'+hrEscape(x.period_code)+'</strong><div class="details">'+hrDate(x.period_start)+' إلى '+hrDate(x.period_end)+' | '+hrEscape(x.status)+'</div><div class="actions">'+a+'</div></div>';}).join("")||'<div class="empty">لا توجد مسيرات.</div>';
+$("hrSaveEmployee").classList.toggle("hidden",!canManageHR);$("hrSaveAttendance").classList.toggle("hidden",!canManageHRAttendance);$("hrSaveLeave").classList.toggle("hidden",!canManageHRLeaves);$("hrCreatePeriod").classList.toggle("hidden",!canManageHRPayroll);
+}catch(e){showToast("تعذر تحميل HR: "+err(e),"error");}}
+async function hrLeaveAction(id,approve){try{const r=approve?await db.rpc("hr_approve_leave",{p_leave_request_id:id}):await db.rpc("hr_reject_leave",{p_leave_request_id:id,p_reason:prompt("سبب الرفض")||"بدون سبب"});if(r.error)throw r.error;showToast(approve?"تم اعتماد الإجازة":"تم رفض الإجازة","success");await loadHR();}catch(e){showToast(err(e),"error");}}
+async function hrCalc(id){try{const r=await db.rpc("hr_calculate_payroll",{p_payroll_period_id:id});if(r.error)throw r.error;showToast("تم حساب المسيرة","success");await loadHR();}catch(e){showToast(err(e),"error");}}
+async function hrReview(id){try{const r=await db.rpc("hr_review_payroll",{p_payroll_period_id:id});if(r.error)throw r.error;showToast("تمت مراجعة المسيرة","success");await loadHR();}catch(e){showToast(err(e),"error");}}
+async function hrApprove(id){try{const r=await db.rpc("hr_approve_payroll",{p_payroll_period_id:id});if(r.error)throw r.error;showToast("تم اعتماد المسيرة","success");await loadHR();}catch(e){showToast(err(e),"error");}}
+async function hrPay(id){const ref=prompt("مرجع الصرف");if(!ref)return;try{const r=await db.rpc("hr_pay_payroll",{p_payroll_period_id:id,p_payment_reference:ref});if(r.error)throw r.error;showToast("تم تسجيل صرف المسيرة","success");await loadHR();}catch(e){showToast(err(e),"error");}}
+document.addEventListener("DOMContentLoaded",()=>{$("hrSaveDept")?.addEventListener("click",async()=>{try{if(!canManageHR)throw new Error("ليس لديك صلاحية إدارة أقسام HR.");const r=await db.from("hr_departments").insert({department_code:$("hrDeptCode").value.trim(),department_name:$("hrDeptName").value.trim(),is_active:true});if(r.error)throw r.error;showToast("تم حفظ القسم","success");await loadHR();}catch(e){msg($("hrSetupMsg"),err(e),"error");}});
+$("hrSaveJob")?.addEventListener("click",async()=>{try{if(!canManageHR)throw new Error("ليس لديك صلاحية إدارة وظائف HR.");const r=await db.from("hr_jobs").insert({job_code:$("hrJobCode").value.trim(),job_name:$("hrJobName").value.trim(),is_active:true});if(r.error)throw r.error;showToast("تم حفظ الوظيفة","success");await loadHR();}catch(e){msg($("hrSetupMsg"),err(e),"error");}});
+$("hrSaveLeaveType")?.addEventListener("click",async()=>{try{if(!canManageHRLeaves)throw new Error("ليس لديك صلاحية إدارة أنواع الإجازات.");const r=await db.from("hr_leave_types").insert({leave_code:$("hrLeaveCode").value.trim(),leave_name:$("hrLeaveName").value.trim(),paid:$("hrLeavePaid").checked,is_active:true});if(r.error)throw r.error;showToast("تم حفظ نوع الإجازة","success");await loadHR();}catch(e){msg($("hrSetupMsg"),err(e),"error");}});
+$("hrSaveEmployee")?.addEventListener("click",async()=>{try{if(!canManageHR)throw new Error("ليس لديك صلاحية إدارة الموظفين.");const r=await db.from("hr_employees").insert({employee_code:$("hrEmployeeCode").value.trim(),full_name:$("hrEmployeeName").value.trim(),department_id:Number($("hrEmployeeDept").value),job_id:Number($("hrEmployeeJob").value),hire_date:$("hrHireDate").value,base_salary:Number($("hrBaseSalary").value||0),employment_status:"ACTIVE"});if(r.error)throw r.error;showToast("تم حفظ الموظف","success");$("hrEmployeeCode").value="";$("hrEmployeeName").value="";await loadHR();}catch(e){msg($("hrEmployeeMsg"),err(e),"error");}});
+$("hrSaveAttendance")?.addEventListener("click",async()=>{try{if(!canManageHRAttendance)throw new Error("ليس لديك صلاحية إدارة الحضور.");const r=await db.from("hr_attendance").insert({employee_id:Number($("hrAttendanceEmployee").value),attendance_date:$("hrAttendanceDate").value,absence_code:$("hrAttendanceCode").value,source:"MANUAL"});if(r.error)throw r.error;showToast("تم تسجيل الحضور","success");}catch(e){msg($("hrAttendanceMsg"),err(e),"error");}});
+$("hrSaveLeave")?.addEventListener("click",async()=>{try{if(!canManageHRLeaves)throw new Error("ليس لديك صلاحية إدارة الإجازات.");const s=$("hrLeaveStart").value,e=$("hrLeaveEnd").value;if(!s||!e)throw new Error("حدد بداية ونهاية الإجازة.");const days=Math.floor((new Date(e)-new Date(s))/86400000)+1;const r=await db.from("hr_leave_requests").insert({employee_id:Number($("hrLeaveEmployee").value),leave_type_id:Number($("hrLeaveType").value),start_date:s,end_date:e,requested_days:days,reason:$("hrLeaveReason").value.trim(),status:"PENDING",requested_by:(await db.auth.getUser()).data.user?.id});if(r.error)throw r.error;showToast("تم إنشاء طلب الإجازة","success");await loadHR();}catch(e){msg($("hrLeaveMsg"),err(e),"error");}});
+$("hrCreatePeriod")?.addEventListener("click",async()=>{try{const r=await db.rpc("hr_create_payroll_period",{p_period_code:$("hrPeriodCode").value.trim(),p_period_start:$("hrPeriodStart").value,p_period_end:$("hrPeriodEnd").value});if(r.error)throw r.error;showToast("تم إنشاء فترة الرواتب","success");await loadHR();}catch(e){msg($("hrPayrollMsg"),err(e),"error");}});
+});
 
 // ====== PWA ======
 if ('serviceWorker' in navigator) {
