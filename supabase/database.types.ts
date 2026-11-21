@@ -6377,6 +6377,7 @@ export type Database = {
         Args: { p_sales_return_id: number }
         Returns: undefined
       }
+      record_current_user_login: { Args: never; Returns: boolean }
       record_sales_return_item_inspection: {
         Args: {
           p_disposition: string
