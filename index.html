@@ -11651,21 +11651,30 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
   }
   async function hrLoadSetup(){
     if(!canViewHR)return;
-    const [d,j,l,e]=await Promise.all([
+    const core=await Promise.all([
       db.from("hr_departments").select("department_id,department_code,department_name").eq("is_active",true).order("department_name"),
       db.from("hr_jobs").select("job_id,job_code,job_name").eq("is_active",true).order("job_name"),
-      db.from("hr_leave_types").select("leave_type_id,leave_code,leave_name,paid").eq("is_active",true).order("leave_name"),
       db.from("hr_employees").select("employee_id,employee_code,full_name,department_id,job_id,hire_date,base_salary,employment_status").order("full_name")
     ]);
-    if(d.error)throw d.error;if(j.error)throw j.error;if(l.error)throw l.error;if(e.error)throw e.error;
-    hrDepartmentsCache=d.data||[];hrJobsCache=j.data||[];hrLeaveTypesCache=l.data||[];hrEmployeesCache=e.data||[];
+    if(core[0].error)throw core[0].error;if(core[1].error)throw core[1].error;if(core[2].error)throw core[2].error;
+    hrDepartmentsCache=core[0].data||[];hrJobsCache=core[1].data||[];hrEmployeesCache=core[2].data||[];
+    if(canManageHRLeaves){
+      const l=await db.from("hr_leave_types").select("leave_type_id,leave_code,leave_name,paid").eq("is_active",true).order("leave_name");
+      if(l.error)throw l.error;hrLeaveTypesCache=l.data||[];
+    }else hrLeaveTypesCache=[];
     const ds=$("hrEmployeeDept"),jsel=$("hrEmployeeJob"),ls=$("hrLeaveType");
     if(ds)ds.innerHTML='<option value="">اختر القسم</option>'+hrDepartmentsCache.map(x=>'<option value="'+x.department_id+'">'+hrText(x.department_name)+'</option>').join("");
     if(jsel)jsel.innerHTML='<option value="">اختر الوظيفة</option>'+hrJobsCache.map(x=>'<option value="'+x.job_id+'">'+hrText(x.job_name)+'</option>').join("");
     if(ls)ls.innerHTML='<option value="">اختر النوع</option>'+hrLeaveTypesCache.map(x=>'<option value="'+x.leave_type_id+'">'+hrText(x.leave_name)+' — '+(x.paid?"مدفوعة":"غير مدفوعة")+'</option>').join("");
     ["hrAttendanceEmployee","hrLeaveEmployee","hrOvertimeEmployee","hrAdvanceEmployee"].forEach(hrEmployeeOptions);
     const list=$("hrEmployeesList");if(list)list.innerHTML=hrEmployeesCache.length?hrEmployeesCache.map(x=>'<div class="product"><div class="pname">'+hrText(x.full_name)+'</div><div class="details">الكود: '+hrText(x.employee_code)+' | الحالة: '+hrText(x.employment_status)+' | الأساسي: '+fmt(x.base_salary)+'</div></div>').join(""):'<div class="empty">لا يوجد موظفون.</div>';
-    await Promise.all([hrLoadLeaves(),hrLoadOvertime(),hrLoadAdvances(),hrLoadPayrollPeriods()]);
+    if(canManageHRLeaves)await hrLoadLeaves();else if($("hrLeavesList"))$("hrLeavesList").innerHTML='<div class="empty">هذا الحساب لا يملك صلاحية إدارة الإجازات.</div>';
+    if(canManageHRPayroll||canApproveHRPayroll||canPayHRPayroll){await hrLoadOvertime();await hrLoadAdvances();await hrLoadPayrollPeriods();}
+    else{
+      if($("hrOvertimeList"))$("hrOvertimeList").innerHTML='<div class="empty">لا توجد صلاحية لعرض الإضافي.</div>';
+      if($("hrAdvanceList"))$("hrAdvanceList").innerHTML='<div class="empty">لا توجد صلاحية لعرض السلف.</div>';
+      if($("hrPayrollList"))$("hrPayrollList").innerHTML='<div class="empty">لا توجد صلاحية لعرض مسيرات الرواتب.</div>';
+    }
   }
   async function hrInsert(table,data,msgId,refresh=true){
     const {error}=await db.from(table).insert(data);if(error)throw error;hrSetMsg(msgId,"تم الحفظ.","success");if(refresh)await hrLoadSetup();
