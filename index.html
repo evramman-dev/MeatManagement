@@ -12330,7 +12330,7 @@ $("hrCreatePeriod")?.addEventListener("click",async()=>{try{const r=await db.rpc
 // ====== PWA ======
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=185', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
+    navigator.serviceWorker.register('./sw.js?v=186', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
   });
 }
 
