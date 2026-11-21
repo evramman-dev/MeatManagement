@@ -242,3 +242,12 @@ test('Partner dashboard hides employee administration and factory reset screens'
   expect(appHtml).toContain('["menuUsers","menuSalesReps","menuSystemReset"].forEach');
   expect(appHtml).toContain('["userManagementCard","salesRepsCard","systemResetCard"].forEach');
 });
+
+
+const partnerLinkedGuardSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261121103031_require_linked_active_partner_for_partner_read_access_20261121.sql'), 'utf8');
+test('Partner read access requires an active linked partner record', () => {
+  expect(partnerLinkedGuardSql).toContain('JOIN public.partners p ON p.partner_id = au.partner_id');
+  expect(partnerLinkedGuardSql).toContain("AND au.partner_id IS NOT NULL");
+  expect(partnerLinkedGuardSql).toContain('AND p.is_active = TRUE');
+  expect(partnerLinkedGuardSql).toContain("ar.role_code = 'PARTNER'");
+});
