@@ -106,7 +106,7 @@ ON public.partner_profit_distribution_items FOR SELECT TO authenticated
 USING (public.is_partner_user() AND partner_id = (SELECT public.current_partner_id()));
 
 DROP POLICY IF EXISTS partner_read_only_select ON public.partner_profit_distributions;
-DROP POLICY IF EXISTS partner_profit_distribution_authenticated_select ON public.partner_profit_distribution_authenticated_select;
+DROP POLICY IF EXISTS partner_profit_distribution_authenticated_select ON public.partner_profit_distributions;
 CREATE POLICY partner_profit_distribution_authenticated_select
 ON public.partner_profit_distributions FOR SELECT TO authenticated
 USING (
