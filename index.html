@@ -593,7 +593,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v164]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v166]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -11783,7 +11783,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
     const names=Object.fromEntries(hrEmployeesCache.map(x=>[x.employee_id,x.full_name]));box.innerHTML=data?.length?'<div class="table-responsive"><table class="print-table"><thead><tr><th>الموظف</th><th>الأساسي</th><th>إضافي</th><th>خصومات</th><th>صافي</th><th>الحالة</th></tr></thead><tbody>'+data.map(r=>'<tr><td>'+hrText(names[r.employee_id]||r.employee_id)+'</td><td>'+fmt(r.base_salary)+'</td><td>'+fmt(r.overtime_amount)+'</td><td>'+fmt(Number(r.penalty_amount||0)+Number(r.absence_deduction||0)+Number(r.advance_deduction||0)+Number(r.other_deduction||0))+'</td><td><strong>'+fmt(r.net_amount)+'</strong></td><td>'+hrText(r.status)+'</td></tr>').join("")+'</tbody></table></div>':'<div class="empty">لا توجد بنود. احسب المسير أولًا.</div>';
   }
   function hrApplyVisibility(){[["hrSaveDept",canManageHR],["hrSaveJob",canManageHR],["hrSaveLeaveType",canManageHR],["hrSaveEmployee",canManageHR],["hrSaveAttendance",canManageHRAttendance],["hrSaveLeave",canManageHRLeaves],["hrSaveOvertime",canManageHRPayroll],["hrSaveAdvance",canManageHRPayroll],["hrCreatePeriod",canManageHRPayroll]].forEach(x=>{const e=$(x[0]);if(e)e.classList.toggle("hidden",!x[1]);});}
-  function hrInit(){if($("hrAttendanceDate"))$("hrAttendanceDate").value=hrDate();if($("hrOvertimeDate"))$("hrOvertimeDate").value=hrDate();if($("hrAdvanceDate"))$("hrAdvanceDate").value=hrDate();if($("hrSaveDept"))$("hrSaveDept").onclick=()=>hrSaveSetup("dept");if($("hrSaveJob"))$("hrSaveJob").onclick=()=>hrSaveSetup("job");if($("hrSaveLeaveType"))$("hrSaveLeaveType").onclick=()=>hrSaveSetup("leave");if($("hrSaveEmployee"))$("hrSaveEmployee").onclick=hrSaveEmployee;if($("hrSaveAttendance"))$("hrSaveAttendance").onclick=hrSaveAttendance;if($("hrSaveLeave"))$("hrSaveLeave").onclick=hrSaveLeave;if($("hrSaveOvertime"))$("hrSaveOvertime").onclick=hrSaveOvertime;if($("hrSaveAdvance"))$("hrSaveAdvance").onclick=hrSaveAdvance;if($("hrCreatePeriod"))$("hrCreatePeriod").onclick=hrCreatePayroll);hrApplyVisibility();}
+  function hrInit(){if($("hrAttendanceDate"))$("hrAttendanceDate").value=hrDate();if($("hrOvertimeDate"))$("hrOvertimeDate").value=hrDate();if($("hrAdvanceDate"))$("hrAdvanceDate").value=hrDate();if($("hrSaveDept"))$("hrSaveDept").onclick=()=>hrSaveSetup("dept");if($("hrSaveJob"))$("hrSaveJob").onclick=()=>hrSaveSetup("job");if($("hrSaveLeaveType"))$("hrSaveLeaveType").onclick=()=>hrSaveSetup("leave");if($("hrSaveEmployee"))$("hrSaveEmployee").onclick=hrSaveEmployee;if($("hrSaveAttendance"))$("hrSaveAttendance").onclick=hrSaveAttendance;if($("hrSaveLeave"))$("hrSaveLeave").onclick=hrSaveLeave;if($("hrSaveOvertime"))$("hrSaveOvertime").onclick=hrSaveOvertime;if($("hrSaveAdvance"))$("hrSaveAdvance").onclick=hrSaveAdvance;if($("hrCreatePeriod"))$("hrCreatePeriod").onclick=hrCreatePayroll;hrApplyVisibility();}
   hrInit();
 
 
