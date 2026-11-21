@@ -747,8 +747,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
   <div class="grid" style="margin-top:10px;">
     <div><label for="partnerSummaryFrom">من تاريخ</label><input id="partnerSummaryFrom" type="date"></div>
     <div><label for="partnerSummaryTo">إلى تاريخ</label><input id="partnerSummaryTo" type="date"></div>
-  </div>
-  <button id="refreshPartnerSummary" class="btn" type="button">عرض التقرير</button>
+  </div>  <button id="refreshPartnerSummary" class="btn" type="button">عرض التقرير</button>
   <div id="partnerManagementSummaryContent" style="margin-top:14px;"><div class="empty">اختر الفترة ثم اضغط عرض التقرير.</div></div>
 </div>
 <button id="logoutBtn" class="btn secondary" type="button" style="margin-top:16px;">تسجيل الخروج</button>
@@ -905,6 +904,36 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 </div>
 </div>
+<!-- شاشة الموارد البشرية -->
+<div id="sectionHR" class="sub-section hidden">
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<div class="card">
+<div class="row" style="justify-content:space-between;align-items:center"><h2>👥 الموارد البشرية</h2><button id="refreshHRBtn" class="btn secondary" type="button" style="width:auto;margin:0">تحديث</button></div>
+<div id="hrMsg" class="status hidden"></div>
+<div class="dashboard-grid" style="margin-top:12px">
+<div class="dash-item" onclick="window.hrSwitchTab('employees')"><div class="dash-icon">👤</div><div class="dash-title">الموظفون</div></div>
+<div class="dash-item" onclick="window.hrSwitchTab('attendance')"><div class="dash-icon">🕘</div><div class="dash-title">الحضور</div></div>
+<div class="dash-item" onclick="window.hrSwitchTab('leaves')"><div class="dash-icon">🌴</div><div class="dash-title">الإجازات</div></div>
+<div class="dash-item" onclick="window.hrSwitchTab('overtime')"><div class="dash-icon">⏱️</div><div class="dash-title">الإضافي</div></div>
+<div class="dash-item" onclick="window.hrSwitchTab('advances')"><div class="dash-icon">💳</div><div class="dash-title">السلف</div></div>
+<div class="dash-item" onclick="window.hrSwitchTab('payroll')"><div class="dash-icon">💰</div><div class="dash-title">الرواتب</div></div>
+</div></div>
+<div id="hrTabEmployees" class="card hr-tab"><div class="row" style="justify-content:space-between"><h3>الموظفون</h3><button id="hrAddEmployeeBtn" class="btn hidden" type="button" style="width:auto;margin:0">＋ موظف جديد</button></div><div id="hrEmployeesList"><div class="empty">جارٍ التحميل...</div></div></div>
+<div id="hrTabAttendance" class="card hr-tab hidden"><h3>الحضور والانصراف</h3>
+<form id="hrAttendanceForm" class="form-grid"><label>الموظف<select id="hrAttendanceEmployee" required></select></label><label>التاريخ<input id="hrAttendanceDate" type="date" required></label><label>الحالة<select id="hrAttendanceCode"><option value="PRESENT">حاضر</option><option value="ABSENT">غائب</option><option value="EXCUSED">مستأذن</option><option value="MISSION">مأمورية</option><option value="LEAVE">إجازة</option><option value="HOLIDAY">عطلة</option></select></label><label>دخول<input id="hrAttendanceIn" type="time"></label><label>خروج<input id="hrAttendanceOut" type="time"></label><label>ملاحظات<textarea id="hrAttendanceNotes" rows="2"></textarea></label><button id="hrSaveAttendanceBtn" class="btn" type="submit">حفظ الحضور</button></form>
+<div id="hrAttendanceList"><div class="empty">جارٍ التحميل...</div></div></div>
+<div id="hrTabLeaves" class="card hr-tab hidden"><h3>طلبات الإجازات</h3><div id="hrLeavesList"><div class="empty">جارٍ التحميل...</div></div></div>
+<div id="hrTabOvertime" class="card hr-tab hidden"><h3>الإضافي</h3><div id="hrOvertimeList"><div class="empty">جارٍ التحميل...</div></div></div>
+<div id="hrTabAdvances" class="card hr-tab hidden"><h3>السلف</h3><div id="hrAdvancesList"><div class="empty">جارٍ التحميل...</div></div></div>
+<div id="hrTabPayroll" class="card hr-tab hidden">
+<div class="row" style="justify-content:space-between"><h3>مسيرات الرواتب</h3><button id="hrCreatePeriodBtn" class="btn hidden" type="button" style="width:auto;margin:0">＋ فترة رواتب</button></div>
+<div class="info">مسير الرواتب يظل منفصلًا عن المحاسبة والخزائن حتى اعتماد تكامل مستقل.</div>
+<div id="hrPayrollPeriodForm" class="hidden"><form id="hrPeriodForm" class="form-grid"><label>كود الفترة<input id="hrPeriodCode" required placeholder="2026-11"></label><label>من تاريخ<input id="hrPeriodStart" type="date" required></label><label>إلى تاريخ<input id="hrPeriodEnd" type="date" required></label><button class="btn" type="submit">إنشاء الفترة</button></form></div>
+<label>الفترة</label><select id="hrPayrollPeriodSelect"><option value="">اختر الفترة</option></select>
+<div class="row" style="margin-top:10px;gap:8px"><button id="hrCalculatePayrollBtn" class="btn" type="button">حساب المسير</button><button id="hrReviewPayrollBtn" class="btn secondary" type="button">مراجعة</button><button id="hrApprovePayrollBtn" class="btn secondary" type="button">اعتماد</button><button id="hrPayPayrollBtn" class="btn" type="button">صرف</button></div>
+<div id="hrPayrollStatus" class="status hidden"></div><div id="hrPayrollItems"><div class="empty">اختر فترة لعرض المسير.</div></div></div></div>
+<div id="hrEmployeeModal" class="modal-form"><div class="modal-form-content"><div class="modal-header"><h3>إضافة موظف</h3><button class="close-btn" type="button" onclick="document.getElementById('hrEmployeeModal').classList.remove('active')">&times;</button></div><div class="modal-body"><form id="hrEmployeeForm" onsubmit="event.preventDefault();">
+<label>كود الموظف<input id="hrEmployeeCode" required maxlength="50"></label><label>اسم الموظف<input id="hrEmployeeName" required maxlength="200"></label><label>القسم<select id="hrEmployeeDepartment"></select></label><label>الوظيفة<select id="hrEmployeeJob"></select></label><label>تاريخ التعيين<input id="hrEmployeeHireDate" type="date" required></label><label>الراتب الأساسي<input id="hrEmployeeSalary" type="number" min="0" step="0.01" required></label><label>سعر ساعة الإضافي<input id="hrEmployeeOvertimeRate" type="number" min="0" step="0.01" value="0"></label><label>ساعات العمل اليومية<input id="hrEmployeeWorkHours" type="number" min="0.1" step="0.1" value="8"></label><label>يوم الإجازة الأسبوعية<select id="hrEmployeeOffDay"><option value="">بدون تحديد</option><option value="0">الأحد</option><option value="1">الاثنين</option><option value="2">الثلاثاء</option><option value="3">الأربعاء</option><option value="4">الخميس</option><option value="5">الجمعة</option><option value="6">السبت</option></select></label><label>ملاحظات<textarea id="hrEmployeeNotes" rows="2"></textarea></label><button id="hrSaveEmployeeBtn" class="btn" type="submit">حفظ الموظف</button><div id="hrEmployeeMsg" class="status hidden"></div></form></div></div></div>
 <!-- شاشة المستخدمين -->
 <div id="sectionUsers" class="sub-section hidden">
 <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
@@ -1497,8 +1526,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <label>إلى موقع (الوجهة) *</label><select id="stDest" required><option value="">اختر الموقع</option></select>
 <label>التاريخ *</label><input id="stDate" type="date" required>
 <label>ملاحظات</label><textarea id="stNotes" rows="2"></textarea>
-<label style="margin-top:10px;">الأصناف المحولة *</label>
-<div id="stItems"></div>
+<label style="margin-top:10px;">الأصناف المحولة *</label><div id="stItems"></div>
 <button type="button" class="btn secondary" onclick="addStItemRow()" style="margin-top:8px;">＋ إضافة صنف</button>
 <button id="saveStBtn" class="btn" type="submit">تنفيذ التحويل</button>
 <div id="stMsg" class="status hidden"></div>
@@ -2247,8 +2275,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div class="dashboard-grid">
 <button type="button" class="dash-item" onclick="window.openProductList('RAW_MEAT','اللحوم')"><span class="dash-icon">🥩</span><span class="dash-title">لحوم</span></button>
 <button type="button" class="dash-item" onclick="window.openProductList('RAW_POULTRY','الدواجن')"><span class="dash-icon">🍗</span><span class="dash-title">دواجن</span></button>
-<button type="button" class="dash-item" id="rawOtherMenuItem" onclick="window.openProductList('RAW_OTHER','خامات أخرى')"><span class="dash-icon">📦</span><span class="dash-title">خامات أخرى</span></button>
-<button type="button" class="dash-item" onclick="window.openProductList('RAW_FISH','أسماك وسي فود')"><span class="dash-icon">🐟</span><span class="dash-title">أسماك وسي فود</span></button>
+<button type="button" class="dash-item" id="rawOtherMenuItem" onclick="window.openProductList('RAW_OTHER','خامات أخرى')"><span class="dash-icon">📦</span><span class="dash-title">خامات أخرى</span></button><button type="button" class="dash-item" onclick="window.openProductList('RAW_FISH','أسماك وسي فود')"><span class="dash-icon">🐟</span><span class="dash-title">أسماك وسي فود</span></button>
 </div>
 </div></div></div>
 <div id="finishedSubcategoryModal" class="modal-form" style="z-index:900" onclick="if(event.target===this)window.closeFinishedProductsMenu()">
@@ -2646,7 +2673,7 @@ try {
   let customerGeoLoaded=false;
   let invoiceItemCounter=0, purchaseItemCounter=0, recipeItemCounter=0, returnItemCounter=0, exchangeItemCounter=0, stItemCounter=0, prItemCounter=0;
 
-  const allowedRoles={ SALES_MANAGER:"مدير المبيعات", SALES_REP:"مندوب المبيعات", WAREHOUSE_KEEPER:"أمين المخزن", PRODUCTION_MANAGER:"مسؤول الإنتاج", ACCOUNTANT:"المحاسب", GENERAL_MANAGER:"المدير العام", SYSTEM_TESTER:"مختبر النظام", PARTNER:"شريك - مشاهدة فقط" };
+  const allowedRoles={ SALES_MANAGER:"مدير المبيعات", SALES_REP:"مندوب المبيعات", WAREHOUSE_KEEPER:"أمين المخزن", PRODUCTION_MANAGER:"مسؤول الإنتاج", ACCOUNTANT:"المحاسب", GENERAL_MANAGER:"المدير العام", HR_MANAGER:"مدير الموارد البشرية", SYSTEM_TESTER:"مختبر النظام", PARTNER:"شريك - مشاهدة فقط" };
 
   // ========== المساعدات ==========
   function msg(el,text,type=""){ if(!el) return; el.textContent=text; el.className="status"+(type?" "+type:""); }
@@ -2997,8 +3024,7 @@ if($("runAdminFactoryResetPreviewBtn")) $("runAdminFactoryResetPreviewBtn").addE
     if(!Number.isFinite(reportExpiresAt)||reportExpiresAt<=Date.now())throw new Error("انتهت صلاحية التقرير قبل عرضه. اضغط «تجهيز تقرير جديد» لإنشاء تقرير جديد.");
     const preview=prepared.preview;
     const labels={app_roles:"الأدوار",app_permissions:"الصلاحيات",app_role_permissions:"ربط الأدوار بالصلاحيات",app_users:"حسابات المستخدمين",chart_of_accounts:"دليل الحسابات",accounting_periods:"الفترات المحاسبية",company_settings:"إعدادات الشركة",governorates:"المحافظات",cities:"المدن",areas:"المناطق",units:"الوحدات",notification_rules:"قواعد الإشعارات",customers:"العملاء",customer_groups:"مجموعات العملاء",suppliers:"الموردون",products:"الأصناف",product_categories:"تصنيفات الأصناف",product_unit_conversions:"تحويلات وحدات الأصناف",product_packaging_options:"خيارات التعبئة",sales_reps:"مندوبو المبيعات",sales_rep_areas:"مناطق المندوبين",locations:"المخازن والمواقع",treasuries:"الخزائن",partners:"الشركاء",fixed_assets:"الأصول الثابتة",price_lists:"قوائم الأسعار",price_list_items:"بنود قوائم الأسعار",customer_price_lists:"قوائم أسعار العملاء",expense_types:"أنواع المصروفات",recipes:"الوصفات",recipe_items:"مكونات الوصفات",sales_invoices:"فواتير البيع",sales_invoice_items:"بنود البيع",sales_returns:"مرتجعات البيع",sales_return_items:"بنود المرتجعات",sales_return_exchange_items:"بنود استبدال المرتجعات",purchase_invoices:"فواتير الشراء",purchase_invoice_items:"بنود الشراء",purchase_returns:"مرتجعات الشراء",purchase_return_items:"بنود مرتجعات الشراء",supplier_payments:"مدفوعات الموردين",customer_collections:"تحصيلات العملاء",customer_cheques:"شيكات العملاء",stock_movements:"حركات المخزون",stock_balances:"أرصدة المخزون",stock_lots:"تشغيلات المخزون",stock_lot_balances:"أرصدة التشغيلات",stock_movement_lot_allocations:"تخصيصات حركات التشغيلات",stock_transfers:"تحويلات المخزون",stock_transfer_items:"بنود تحويل المخزون",stock_transfer_reversals:"عكس التحويلات",production_orders:"أوامر الإنتاج",production_order_materials:"خامات الإنتاج",production_order_expense_allocations:"مصروفات الإنتاج",recipe_movements:"حركات الوصفات",trips:"الرحلات",trip_loads:"تحميل السيارات",trip_customers:"عملاء الرحلات",treasury_transactions:"حركات الخزائن",expenses:"المصروفات",journal_entries:"القيود المحاسبية",journal_entry_lines:"سطور القيود",journal_adjustments:"التسويات المحاسبية",notifications:"الإشعارات",notification_recipients:"مستلمو الإشعارات",reservations:"الحجوزات",inventory_count_sessions:"جلسات الجرد",inventory_count_lines:"بنود الجرد",purchase_landed_costs:"التكاليف الإضافية للمشتريات",purchase_landed_cost_allocations:"توزيعات التكاليف الإضافية",partner_inventory_contributions:"مساهمات الشركاء في المخزون",partner_transactions:"حركات الشركاء",partner_profit_distributions:"توزيعات أرباح الشركاء",partner_profit_distribution_items:"بنود توزيعات الأرباح",fixed_asset_depreciation_entries:"قيود إهلاك الأصول",accounting_period_closures:"إقفالات الفترات المحاسبية",customer_collection_allocations:"توزيعات تحصيلات العملاء",production_rework_consumptions:"استهلاك إعادة التصنيع",sales_rep_custody_settlements:"تسويات عهدة المندوبين",sales_return_item_inspections:"فحوص بنود مرتجعات المبيعات",user_logs:"سجل التتبع"};
-    const addTable=(headingText,obj)=>{
-      const section=document.createElement("div");section.className="product";
+    const addTable=(headingText,obj)=>{      const section=document.createElement("div");section.className="product";
       const heading=document.createElement("div");heading.className="pname";heading.textContent=headingText;section.appendChild(heading);
       const table=document.createElement("table");table.className="print-table";const body=document.createElement("tbody");
       Object.entries(obj||{}).forEach(([key,value])=>{const row=document.createElement("tr"),name=document.createElement("td"),count=document.createElement("td");name.textContent=labels[key]||key;count.textContent=Number(value||0).toLocaleString("ar-EG");row.append(name,count);body.appendChild(row);});
@@ -3356,8 +3382,9 @@ function getRoleMenuIds(roleCode){
     SALES_MANAGER: ["menuProducts","menuCustomers","menuSales","menuSalesReturns","menuPriceLists","menuCollections","menuTrips","menuReports"],
     WAREHOUSE_KEEPER: ["menuProducts","menuLocations","menuStock","menuStockLots","menuStockTransfers","menuTrips","menuSalesReturns"],
     PRODUCTION_MANAGER: ["menuProducts","menuLocations","menuStock","menuStockLots","menuRecipes","menuProduction","menuSalesReturns"],
-    ACCOUNTANT: ["menuSuppliers","menuPurchases","menuPurchaseReturns","menuSupplierPayments","menuExpenses","menuLandedCosts","menuFixedAssets","menuCustomers","menuSales","menuSalesReturns","menuPriceLists","menuCollections","menuTrips","menuTreasuries","menuTreasuryTransfers","menuPartners","menuAccounting","menuReports"],
-    GENERAL_MANAGER: ["menuProducts","menuLocations","menuStock","menuStockLots","menuStockTransfers","menuRecipes","menuProduction","menuReservations","menuSuppliers","menuPurchases","menuPurchaseReturns","menuLandedCosts","menuFixedAssets","menuSupplierPayments","menuExpenses","menuCustomers","menuSales","menuSalesReturns","menuPriceLists","menuCollections","menuTrips","menuTreasuries","menuTreasuryTransfers","menuPartners","menuAccounting","menuReports"],
+    ACCOUNTANT: ["menuSuppliers","menuPurchases","menuPurchaseReturns","menuSupplierPayments","menuExpenses","menuLandedCosts","menuFixedAssets","menuCustomers","menuSales","menuSalesReturns","menuPriceLists","menuCollections","menuTrips","menuTreasuries","menuTreasuryTransfers","menuPartners","menuAccounting","menuReports","menuHR"],
+    GENERAL_MANAGER: ["menuProducts","menuLocations","menuStock","menuStockLots","menuStockTransfers","menuRecipes","menuProduction","menuReservations","menuSuppliers","menuPurchases","menuPurchaseReturns","menuLandedCosts","menuFixedAssets","menuSupplierPayments","menuExpenses","menuCustomers","menuSales","menuSalesReturns","menuPriceLists","menuCollections","menuTrips","menuTreasuries","menuTreasuryTransfers","menuPartners","menuAccounting","menuReports","menuHR"],
+    HR_MANAGER: ["menuHR"],
     // مختبر النظام يرى كل أقسام التشغيل والإعدادات، ولا يرى إدارة المستخدمين.
     SYSTEM_TESTER: ["menuProducts","menuLocations","menuStock","menuStockLots","menuStockTransfers","menuRecipes","menuProduction","menuReservations","menuSuppliers","menuPurchases","menuPurchaseReturns","menuLandedCosts","menuFixedAssets","menuSupplierPayments","menuExpenses","menuCustomers","menuSales","menuSalesReturns","menuPriceLists","menuCollections","menuTrips","menuSalesReps","menuTreasuries","menuTreasuryTransfers","menuPartners","menuAccounting","menuReports","menuSettings"]
   };
@@ -3657,7 +3684,50 @@ if($("repPasswordForm")) $("repPasswordForm").addEventListener("submit", async e
   finally{ busy(btn,false,"","حفظ كلمة المرور"); }
 });
 
-// ========== إعدادات الشركة ==========
+
+// ========== الموارد البشرية ==========
+let hrEmployeesCache=[],hrDepartmentsCache=[],hrJobsCache=[],hrAttendanceCache=[],hrLeavesCache=[],hrOvertimeCache=[],hrAdvancesCache=[],hrPayrollPeriodsCache=[];
+function hrEmployeeName(id){return hrEmployeesCache.find(e=>String(e.employee_id)===String(id))?.full_name||("موظف "+id);}
+function hrStatusLabel(v){return({ACTIVE:"نشط",SUSPENDED:"موقوف مؤقتًا",TERMINATED:"منتهي",PENDING:"قيد الانتظار",APPROVED:"معتمد",REJECTED:"مرفوض",CANCELLED:"ملغى",CALCULATED:"محسوب",REVIEWED:"مراجع",PAID:"مصروف",OPEN:"مفتوحة"})[v]||v||"-";}
+function hrSetStatus(text,type){msg($("hrMsg"),text,type);}
+function hrFillEmployeeSelect(id){const el=$(id);if(!el)return;const cur=el.value;el.replaceChildren(new Option("اختر الموظف",""));hrEmployeesCache.filter(e=>e.employment_status!=="TERMINATED").forEach(e=>el.appendChild(new Option(e.full_name+" ("+e.employee_code+")",String(e.employee_id))));el.value=cur;}
+function hrFillLookups(){const dep=$("hrEmployeeDepartment"),job=$("hrEmployeeJob");if(dep){dep.replaceChildren(new Option("بدون قسم",""));hrDepartmentsCache.filter(x=>x.is_active!==false).forEach(x=>dep.appendChild(new Option(x.department_name,String(x.department_id))));}if(job){job.replaceChildren(new Option("بدون وظيفة",""));hrJobsCache.filter(x=>x.is_active!==false).forEach(x=>job.appendChild(new Option(x.job_name,String(x.job_id))));}hrFillEmployeeSelect("hrAttendanceEmployee");}
+async function loadHR(){if(!canViewHR&&!isSystemAdmin)return;try{const [deps,jobs,emps,att,leaves,ot,adv,periods]=await Promise.all([
+db.from("hr_departments").select("department_id,department_code,department_name,is_active").order("department_id"),
+db.from("hr_jobs").select("job_id,job_code,job_name,is_active").order("job_id"),
+db.from("hr_employees").select("employee_id,employee_code,full_name,department_id,job_id,hire_date,termination_date,employment_status,base_salary,overtime_rate,work_hours_per_day,weekly_off_day,notes").order("employee_id"),
+db.from("hr_attendance").select("attendance_id,employee_id,attendance_date,check_in,check_out,worked_minutes,late_minutes,absence_code,source,source_reference,notes").order("attendance_date",{ascending:false}).limit(100),
+db.from("hr_leave_requests").select("leave_request_id,employee_id,leave_type_id,start_date,end_date,requested_days,reason,status,approved_by,approved_at,rejection_reason").order("start_date",{ascending:false}).limit(100),
+db.from("hr_overtime").select("overtime_id,employee_id,work_date,minutes,rate,amount,reason,status,approved_by,approved_at,source_reference").order("work_date",{ascending:false}).limit(100),
+db.from("hr_advances").select("advance_id,employee_id,advance_date,amount,installment_amount,installment_count,outstanding_amount,status,approved_by,approved_at,notes").order("advance_date",{ascending:false}).limit(100),
+db.from("hr_payroll_periods").select("payroll_period_id,period_code,period_start,period_end,status,calculated_at,reviewed_at,approved_at,paid_at,payment_reference").order("period_start",{ascending:false}).limit(24)]);for(const x of [deps,jobs,emps,att,leaves,ot,adv,periods])if(x.error)throw x.error;hrDepartmentsCache=deps.data||[];hrJobsCache=jobs.data||[];hrEmployeesCache=emps.data||[];hrAttendanceCache=att.data||[];hrLeavesCache=leaves.data||[];hrOvertimeCache=ot.data||[];hrAdvancesCache=adv.data||[];hrPayrollPeriodsCache=periods.data||[];hrFillLookups();renderHREmployees();renderHRAttendance();renderHRLeaves();renderHROvertime();renderHRAdvances();fillHRPayrollPeriods();renderHRPayrollItems();$("hrAddEmployeeBtn")?.classList.toggle("hidden",!canManageHR);$("hrCreatePeriodBtn")?.classList.toggle("hidden",!canManageHRPayroll);$("hrCalculatePayrollBtn")?.classList.toggle("hidden",!canManageHRPayroll);$("hrReviewPayrollBtn")?.classList.toggle("hidden",!canManageHRPayroll);$("hrApprovePayrollBtn")?.classList.toggle("hidden",!canApproveHRPayroll);$("hrPayPayrollBtn")?.classList.toggle("hidden",!canPayHRPayroll);if($("hrPayrollPeriodForm"))$("hrPayrollPeriodForm").classList.toggle("hidden",!canManageHRPayroll);if($("hrAttendanceForm"))$("hrAttendanceForm").classList.toggle("hidden",!canManageHRAttendance);}catch(e){hrSetStatus("تعذر تحميل بيانات الموارد البشرية: "+err(e),"error");}}
+function renderHREmployees(){const box=$("hrEmployeesList");if(!box)return;if(!hrEmployeesCache.length){box.innerHTML='<div class="empty">لا يوجد موظفون.</div>';return;}box.replaceChildren();hrEmployeesCache.forEach(e=>{const d=hrDepartmentsCache.find(x=>String(x.department_id)===String(e.department_id)),j=hrJobsCache.find(x=>String(x.job_id)===String(e.job_id)),card=document.createElement("div");card.className="product";card.innerHTML='<div class="pname">'+esc(e.full_name)+' <span class="badge">'+esc(e.employee_code)+'</span></div><div class="details">القسم: '+esc(d?.department_name||"-")+' | الوظيفة: '+esc(j?.job_name||"-")+' | الحالة: '+hrStatusLabel(e.employment_status)+' | الراتب الأساسي: '+fmt(e.base_salary)+'</div>';box.appendChild(card);});}
+function renderHRAttendance(){const box=$("hrAttendanceList");if(!box)return;if(!hrAttendanceCache.length){box.innerHTML='<div class="empty">لا توجد سجلات حضور.</div>';return;}box.replaceChildren();hrAttendanceCache.slice(0,50).forEach(a=>{const card=document.createElement("div");card.className="product";card.innerHTML='<div class="pname">'+esc(hrEmployeeName(a.employee_id))+' <span class="badge">'+formatDate(a.attendance_date)+'</span></div><div class="details">الحالة: '+hrStatusLabel(a.absence_code)+' | دخول: '+(a.check_in||"-")+' | خروج: '+(a.check_out||"-")+' | دقائق العمل: '+Number(a.worked_minutes||0)+' | التأخير: '+Number(a.late_minutes||0)+' | المصدر: '+esc(a.source||"-")+'</div>';box.appendChild(card);});}
+function renderHRLeaves(){const box=$("hrLeavesList");if(!box)return;if(!hrLeavesCache.length){box.innerHTML='<div class="empty">لا توجد طلبات إجازات.</div>';return;}box.replaceChildren();hrLeavesCache.forEach(r=>{const card=document.createElement("div");card.className="product";const actions=r.status==="PENDING"&&canManageHRLeaves?'<div class="actions"><button class="btn" type="button" data-hr-leave-approve="'+r.leave_request_id+'">اعتماد</button><button class="btn danger" type="button" data-hr-leave-reject="'+r.leave_request_id+'">رفض</button></div>':"";card.innerHTML='<div class="pname">'+esc(hrEmployeeName(r.employee_id))+' <span class="badge">'+hrStatusLabel(r.status)+'</span></div><div class="details">من '+formatDate(r.start_date)+' إلى '+formatDate(r.end_date)+' | الأيام: '+fmtQty(r.requested_days)+' | السبب: '+esc(r.reason||"-")+'</div>'+actions;box.appendChild(card);});box.querySelectorAll("[data-hr-leave-approve]").forEach(b=>b.onclick=()=>hrApproveLeave(Number(b.dataset.hrLeaveApprove)));box.querySelectorAll("[data-hr-leave-reject]").forEach(b=>b.onclick=()=>hrRejectLeave(Number(b.dataset.hrLeaveReject)));}
+function renderHROvertime(){const box=$("hrOvertimeList");if(!box)return;if(!hrOvertimeCache.length){box.innerHTML='<div class="empty">لا توجد سجلات إضافي.</div>';return;}box.replaceChildren();hrOvertimeCache.forEach(r=>{const card=document.createElement("div");card.className="product";const actions=r.status==="PENDING"&&canManageHRPayroll?'<div class="actions"><button class="btn" type="button" data-hr-ot-approve="'+r.overtime_id+'">اعتماد</button><button class="btn danger" type="button" data-hr-ot-reject="'+r.overtime_id+'">رفض</button></div>':"";card.innerHTML='<div class="pname">'+esc(hrEmployeeName(r.employee_id))+' <span class="badge">'+hrStatusLabel(r.status)+'</span></div><div class="details">التاريخ: '+formatDate(r.work_date)+' | الدقائق: '+fmtQty(r.minutes)+' | السعر: '+fmt(r.rate)+' | القيمة: '+fmt(r.amount)+' | السبب: '+esc(r.reason||"-")+'</div>'+actions;box.appendChild(card);});box.querySelectorAll("[data-hr-ot-approve]").forEach(b=>b.onclick=()=>hrApproveOvertime(Number(b.dataset.hrOtApprove),true));box.querySelectorAll("[data-hr-ot-reject]").forEach(b=>b.onclick=()=>hrApproveOvertime(Number(b.dataset.hrOtReject),false));}
+function renderHRAdvances(){const box=$("hrAdvancesList");if(!box)return;if(!hrAdvancesCache.length){box.innerHTML='<div class="empty">لا توجد سلف.</div>';return;}box.replaceChildren();hrAdvancesCache.forEach(r=>{const card=document.createElement("div");card.className="product";const actions=r.status==="PENDING"&&canManageHRPayroll?'<div class="actions"><button class="btn" type="button" data-hr-adv-approve="'+r.advance_id+'">اعتماد</button><button class="btn danger" type="button" data-hr-adv-reject="'+r.advance_id+'">رفض</button></div>':"";card.innerHTML='<div class="pname">'+esc(hrEmployeeName(r.employee_id))+' <span class="badge">'+hrStatusLabel(r.status)+'</span></div><div class="details">التاريخ: '+formatDate(r.advance_date)+' | المبلغ: '+fmt(r.amount)+' | القسط: '+fmt(r.installment_amount)+' | عدد الأقساط: '+fmtQty(r.installment_count)+' | المتبقي: '+fmt(r.outstanding_amount)+'</div>'+actions;box.appendChild(card);});box.querySelectorAll("[data-hr-adv-approve]").forEach(b=>b.onclick=()=>hrApproveAdvance(Number(b.dataset.hrAdvApprove),true));box.querySelectorAll("[data-hr-adv-reject]").forEach(b=>b.onclick=()=>hrApproveAdvance(Number(b.dataset.hrAdvReject),false));}
+function fillHRPayrollPeriods(){const el=$("hrPayrollPeriodSelect");if(!el)return;const cur=el.value;el.replaceChildren(new Option("اختر الفترة",""));hrPayrollPeriodsCache.forEach(p=>el.appendChild(new Option(p.period_code+" | "+formatDate(p.period_start)+" - "+formatDate(p.period_end)+" | "+hrStatusLabel(p.status),String(p.payroll_period_id))));el.value=cur;}
+async function renderHRPayrollItems(){const box=$("hrPayrollItems");if(!box)return;const id=Number($("hrPayrollPeriodSelect")?.value);if(!id){box.innerHTML='<div class="empty">اختر فترة لعرض المسير.</div>';return;}const {data,error}=await db.from("hr_payroll_items").select("payroll_item_id,employee_id,base_salary,overtime_amount,bonus_amount,allowance_amount,penalty_amount,absence_deduction,advance_deduction,other_deduction,gross_amount,net_amount,status").eq("payroll_period_id",id).order("employee_id");if(error){box.innerHTML='<div class="empty error">تعذر تحميل بنود المسير: '+esc(err(error))+'</div>';return;}if(!data?.length){box.innerHTML='<div class="empty">لا توجد بنود محسوبة لهذه الفترة.</div>';return;}box.replaceChildren();data.forEach(r=>{const card=document.createElement("div");card.className="product";card.innerHTML='<div class="pname">'+esc(hrEmployeeName(r.employee_id))+' <span class="badge">'+hrStatusLabel(r.status)+'</span></div><div class="details">أساسي: '+fmt(r.base_salary)+' | إضافي: '+fmt(r.overtime_amount)+' | مكافآت: '+fmt(r.bonus_amount)+' | بدلات: '+fmt(r.allowance_amount)+' | جزاءات: '+fmt(r.penalty_amount)+' | غياب: '+fmt(r.absence_deduction)+' | سلف: '+fmt(r.advance_deduction)+' | صافي: <strong>'+fmt(r.net_amount)+'</strong></div>';box.appendChild(card);});}
+async function hrApproveLeave(id){if(!canManageHRLeaves)return;try{const {error}=await db.rpc("hr_approve_leave",{p_leave_request_id:id});if(error)throw error;hrSetStatus("تم اعتماد الإجازة وتسجيل الحضور المرتبط بها.","success");await loadHR();}catch(e){hrSetStatus("تعذر اعتماد الإجازة: "+err(e),"error");}}
+async function hrRejectLeave(id){if(!canManageHRLeaves)return;const reason=prompt("سبب رفض الإجازة");if(reason===null)return;try{const {error}=await db.rpc("hr_reject_leave",{p_leave_request_id:id,p_reason:reason.trim()||"رفض من إدارة الموارد البشرية"});if(error)throw error;hrSetStatus("تم رفض الإجازة.","success");await loadHR();}catch(e){hrSetStatus("تعذر رفض الإجازة: "+err(e),"error");}}
+async function hrApproveOvertime(id,approve){if(!canManageHRPayroll)return;try{const {error}=await db.rpc("hr_approve_overtime",{p_overtime_id:id,p_approve:approve,p_reason:approve?null:"رفض من إدارة الموارد البشرية"});if(error)throw error;hrSetStatus(approve?"تم اعتماد الإضافي.":"تم رفض الإضافي.","success");await loadHR();}catch(e){hrSetStatus("تعذر تحديث الإضافي: "+err(e),"error");}}
+async function hrApproveAdvance(id,approve){if(!canManageHRPayroll)return;try{const {error}=await db.rpc("hr_approve_advance",{p_advance_id:id,p_approve:approve,p_reason:approve?null:"رفض من إدارة الموارد البشرية"});if(error)throw error;hrSetStatus(approve?"تم اعتماد السلفة.":"تم رفض السلفة.","success");await loadHR();}catch(e){hrSetStatus("تعذر تحديث السلفة: "+err(e),"error");}}
+async function hrCreatePayrollPeriod(){if(!canManageHRPayroll)return;const code=$("hrPeriodCode").value.trim(),start=$("hrPeriodStart").value,end=$("hrPeriodEnd").value;if(!code||!start||!end)return hrSetStatus("أكمل بيانات فترة الرواتب.","error");try{const {data,error}=await db.rpc("hr_create_payroll_period",{p_period_code:code,p_period_start:start,p_period_end:end});if(error)throw error;$("hrPeriodForm").reset();hrSetStatus("تم إنشاء فترة الرواتب رقم "+data,"success");await loadHR();}catch(e){hrSetStatus("تعذر إنشاء الفترة: "+err(e),"error");}}
+async function hrRunPayrollAction(fn,args,success){try{const {error}=await db.rpc(fn,args);if(error)throw error;hrSetStatus(success,"success");await loadHR();}catch(e){hrSetStatus("تعذر تنفيذ العملية: "+err(e),"error");}}
+window.hrSwitchTab=function(name){document.querySelectorAll(".hr-tab").forEach(el=>el.classList.add("hidden"));const el=$("hrTab"+name.charAt(0).toUpperCase()+name.slice(1));if(el)el.classList.remove("hidden");};
+if($("refreshHRBtn"))$("refreshHRBtn").addEventListener("click",loadHR);
+if($("hrAddEmployeeBtn"))$("hrAddEmployeeBtn").addEventListener("click",()=>{$("hrEmployeeForm").reset();$("hrEmployeeModal").classList.add("active");});
+if($("hrPeriodCode"))$("hrPeriodCode").addEventListener("focus",()=>{if(!$("hrPeriodCode").value)$("hrPeriodCode").value=new Date().toISOString().slice(0,7);});
+if($("hrPayrollPeriodSelect"))$("hrPayrollPeriodSelect").addEventListener("change",renderHRPayrollItems);
+if($("hrCreatePeriodBtn"))$("hrCreatePeriodBtn").addEventListener("click",()=>$("hrPayrollPeriodForm").classList.toggle("hidden"));
+if($("hrPeriodForm"))$("hrPeriodForm").addEventListener("submit",async e=>{e.preventDefault();await hrCreatePayrollPeriod();});
+if($("hrCalculatePayrollBtn"))$("hrCalculatePayrollBtn").addEventListener("click",async()=>{const id=Number($("hrPayrollPeriodSelect").value);if(!id)return hrSetStatus("اختر فترة الرواتب.","error");await hrRunPayrollAction("hr_calculate_payroll",{p_payroll_period_id:id},"تم حساب مسير الرواتب.");});
+if($("hrReviewPayrollBtn"))$("hrReviewPayrollBtn").addEventListener("click",async()=>{const id=Number($("hrPayrollPeriodSelect").value);if(!id)return hrSetStatus("اختر فترة الرواتب.","error");await hrRunPayrollAction("hr_review_payroll",{p_payroll_period_id:id},"تمت مراجعة مسير الرواتب.");});
+if($("hrApprovePayrollBtn"))$("hrApprovePayrollBtn").addEventListener("click",async()=>{const id=Number($("hrPayrollPeriodSelect").value);if(!id)return hrSetStatus("اختر فترة الرواتب.","error");await hrRunPayrollAction("hr_approve_payroll",{p_payroll_period_id:id},"تم اعتماد مسير الرواتب.");});
+if($("hrPayPayrollBtn"))$("hrPayPayrollBtn").addEventListener("click",async()=>{const id=Number($("hrPayrollPeriodSelect").value);if(!id)return hrSetStatus("اختر فترة الرواتب.","error");const ref=prompt("مرجع الصرف");if(ref===null)return;if(!ref.trim())return hrSetStatus("مرجع الصرف مطلوب.","error");await hrRunPayrollAction("hr_pay_payroll",{p_payroll_period_id:id,p_payment_reference:ref.trim()},"تم صرف مسير الرواتب وتسجيل مرجع الصرف.");});
+if($("hrAttendanceForm"))$("hrAttendanceForm").addEventListener("submit",async e=>{e.preventDefault();if(!canManageHRAttendance)return;const employee_id=Number($("hrAttendanceEmployee").value),attendance_date=$("hrAttendanceDate").value,absence_code=$("hrAttendanceCode").value,check_in=$("hrAttendanceIn").value||null,check_out=$("hrAttendanceOut").value||null;if(!employee_id||!attendance_date)return hrSetStatus("اختر الموظف والتاريخ.","error");let worked_minutes=0;if(check_in&&check_out){const a=check_in.split(":").map(Number),b=check_out.split(":").map(Number);worked_minutes=Math.max(0,(b[0]*60+b[1])-(a[0]*60+a[1]));}try{const {error}=await db.from("hr_attendance").upsert({employee_id,attendance_date,check_in,check_out,worked_minutes,absence_code,source:"MANUAL",notes:$("hrAttendanceNotes").value.trim()||null},{onConflict:"employee_id,attendance_date"});if(error)throw error;$("hrAttendanceForm").reset();$("hrAttendanceDate").value=todayISO();hrSetStatus("تم حفظ الحضور.","success");await loadHR();}catch(e){hrSetStatus("تعذر حفظ الحضور: "+err(e),"error");}});
+if($("hrEmployeeForm"))$("hrEmployeeForm").addEventListener("submit",async e=>{e.preventDefault();if(!canManageHR)return;const payload={employee_code:$("hrEmployeeCode").value.trim(),full_name:$("hrEmployeeName").value.trim(),department_id:Number($("hrEmployeeDepartment").value)||null,job_id:Number($("hrEmployeeJob").value)||null,hire_date:$("hrEmployeeHireDate").value,base_salary:Number($("hrEmployeeSalary").value||0),overtime_rate:Number($("hrEmployeeOvertimeRate").value||0),work_hours_per_day:Number($("hrEmployeeWorkHours").value||8),weekly_off_day:$("hrEmployeeOffDay").value===""?null:Number($("hrEmployeeOffDay").value),notes:$("hrEmployeeNotes").value.trim()||null};if(!payload.employee_code||!payload.full_name||!payload.hire_date)return msg($("hrEmployeeMsg"),"أكمل بيانات الموظف.","error");const btn=$("hrSaveEmployeeBtn");busy(btn,true,"جارٍ الحفظ...","حفظ الموظف");try{const {error}=await db.from("hr_employees").insert(payload);if(error)throw error;$("hrEmployeeModal").classList.remove("active");hrSetStatus("تمت إضافة الموظف.","success");await loadHR();}catch(e){msg($("hrEmployeeMsg"),"تعذر حفظ الموظف: "+err(e),"error");}finally{busy(btn,false,"","حفظ الموظف");}});
+\n// ========== إعدادات الشركة ==========
 function loadSettings() {
   $("setCompanyName").value = companySettings.company_name || "";
   $("setCompanySubtitle").value = companySettings.company_subtitle || "";
@@ -3747,8 +3817,7 @@ async function loadHomeDashboard() {
     
 // ========== المهام والتنبيهات (v27 - مُصلَّحة) ==========
 let tasksSalesChart = null, tasksExpensesChart = null, tasksTripsChart = null;
-function openTasksChartsScreen() {
-  if(!isSystemAdmin && !isPartner) { showToast("هذه التحليلات متاحة لمدير النظام والشريك.", "error"); return; }
+function openTasksChartsScreen() {  if(!isSystemAdmin && !isPartner) { showToast("هذه التحليلات متاحة لمدير النظام والشريك.", "error"); return; }
   if($("home")) $("home").classList.add("hidden");
   if($("tasks")) $("tasks").classList.add("hidden");
   if($("data")) $("data").classList.add("hidden");
@@ -4497,8 +4566,7 @@ window.openFinishedProductsMenu=function(){const m=$("finishedSubcategoryModal")
 window.closeFinishedProductsMenu=function(){const m=$("finishedSubcategoryModal");if(m)m.classList.remove("active");};
 window.openProductList=function(section,title){
   activeProductSection=section;
-  const heading=$("productListTitle");if(heading)heading.textContent=title||"إدارة الأصناف";
-  const modal=$("productListModal");if(modal)modal.classList.add("active");
+  const heading=$("productListTitle");if(heading)heading.textContent=title||"إدارة الأصناف";  const modal=$("productListModal");if(modal)modal.classList.add("active");
   window.closeRawMaterialsMenu();
   window.closeFinishedProductsMenu();
   if($("search"))$("search").value="";
@@ -5247,8 +5315,7 @@ async function loadCustomerGeoData(){
   customerGeoLoaded=true;
 }
 function fillCustomerGovernorates(selectedId=""){
-  const el=$("customerGovernorate"); if(!el) return;
-  el.replaceChildren();
+  const el=$("customerGovernorate"); if(!el) return;  el.replaceChildren();
   const first=document.createElement("option"); first.value=""; first.textContent="اختر المحافظة"; el.appendChild(first);
   customerGovernoratesCache.forEach(g=>{ const op=document.createElement("option"); op.value=String(g.governorate_id); op.textContent=g.name; el.appendChild(op); });
   el.value=selectedId?String(selectedId):"";
@@ -5997,8 +6064,7 @@ async function openLotQrPreview(lot,product){
     "التشغيلة: "+payload.lot,
     "تاريخ الإنتاج: "+(payload.manufactured_on?formatDate(payload.manufactured_on):"غير محدد"),
     "الصلاحية: "+(payload.expires_on?formatDate(payload.expires_on):"غير محددة")
-  ].join("\n");
-  const qrBox=$("lotQrCode"),errorBox=$("lotQrError");
+  ].join("\n");  const qrBox=$("lotQrCode"),errorBox=$("lotQrError");
   qrBox.replaceChildren();errorBox.classList.add("hidden");errorBox.textContent="";
   $("lotQrProduct").textContent=payload.product;
   $("lotQrLot").textContent="رقم التشغيلة: "+payload.lot;
@@ -6747,8 +6813,7 @@ if($("inventoryCountWhatsappBtn"))$("inventoryCountWhatsappBtn").addEventListene
 async function viewProductStockMovements(productId) {
     if(!canViewStock) { showToast("ليس لديك صلاحية عرض حركة المخزون","error"); return; }
     if(!navigator.onLine) { showToast("اتصل بالإنترنت لعرض كارت الصنف","error"); return; }
-    await viewStockMovements(productId, null);
-}
+    await viewStockMovements(productId, null);}
 
 if($("stockForm")) $("stockForm").addEventListener("submit", async e => { 
   e.preventDefault(); 
@@ -7497,8 +7562,7 @@ if($("invoiceForm")) $("invoiceForm").addEventListener("submit", async e => {
     const minAllowed=Number(row.dataset.minimumPrice||0); 
     const maxAllowed=row.dataset.maximumPrice?Number(row.dataset.maximumPrice):Infinity; 
     const invoiceDiscountRate=Math.min(Math.max(Number($("invoiceDiscount")?.value||0),0),100)/100;
-    const effectivePrice=price*(1-invoiceDiscountRate);
-    if(!pId || !uId || qty<=0 || price<=0 || row.dataset.priceConversionInvalid==="1" || (row.dataset.requiresActualWeight==="1"&&Number(row.querySelector(".item-actual-weight")?.value||0)<=0) || price>maxAllowed+0.000001 || effectivePrice<minAllowed-0.000001) valid = false; 
+    const effectivePrice=price*(1-invoiceDiscountRate);    if(!pId || !uId || qty<=0 || price<=0 || row.dataset.priceConversionInvalid==="1" || (row.dataset.requiresActualWeight==="1"&&Number(row.querySelector(".item-actual-weight")?.value||0)<=0) || price>maxAllowed+0.000001 || effectivePrice<minAllowed-0.000001) valid = false; 
     else {
       const actualWeight=Number(row.querySelector(".item-actual-weight")?.value||0);
       items.push({product_id:Number(pId),sale_unit_id:Number(uId),quantity:qty,unit_price:price,
@@ -8247,8 +8311,7 @@ function fillSalesReturnLotSelect(row){
   const previous=lot.value;
   lot.replaceChildren();
   const first=document.createElement("option");first.value="";
-  first.textContent="اختر تشغيلة الفاتورة الأصلية";
-  lot.appendChild(first);
+  first.textContent="اختر تشغيلة الفاتورة الأصلية";  lot.appendChild(first);
   const options=salesReturnLotOptionsCache.filter(x=>
     Number(x.product_id)===productId&&Number(x.unit_id)===unitId&&
     (Number(x.package_option_id||0)||null)===packageId
@@ -8997,8 +9060,7 @@ function addPrItemRow(invoiceItem = null, rowIndex = null){
             : prInvoiceItemsCache.indexOf(invoiceItem);
         prodSel.value = String(index);
         applyInvoiceItem();
-    }
-}
+    }}
 
 window.addPrItemRow = addPrItemRow;
 window.openPurchaseReturnForm = openPurchaseReturnForm;
@@ -9747,8 +9809,7 @@ function renderLandedCosts(){
   landedCostsCache.forEach(x=>{const inv=purchasesCache.find(i=>String(i.purchase_invoice_id)===String(x.purchase_invoice_id));const card=document.createElement("div");card.className="product";const title=document.createElement("div");title.className="pname";title.textContent="🚚 تكلفة نقل رقم "+x.landed_cost_id;const details=document.createElement("div");details.className="details";const source=x.source_type==="EXTERNAL_SUPPLIER"?"المورد: "+supplierName(x.supplier_id):x.source_type==="EXTERNAL_TREASURY"?"المصدر: خزنة "+treasuryName(x.treasury_id):"المصدر: مصروف سيارة رقم "+(x.expense_id||"-");details.textContent="فاتورة: "+(inv?.invoice_number||x.purchase_invoice_id)+" | "+source+" | التاريخ: "+formatDate(x.cost_date)+" | المبلغ: "+fmt(x.amount)+" | الحالة: "+(x.status==="ACTIVE"?"نشط":"ملغي");card.append(title,details);const actions=document.createElement("div");actions.className="actions";const dist=document.createElement("button");dist.className="btn secondary";dist.textContent="عرض توزيع التكلفة";dist.onclick=()=>showLandedCostAllocation(x.landed_cost_id,card);actions.appendChild(dist);if(x.status==="ACTIVE"&&canManageLandedCosts){const b=document.createElement("button");b.className="btn danger";b.textContent="إلغاء المستند";b.onclick=()=>openRecordCancel("LANDED_COST",x.landed_cost_id,x.source_type);actions.appendChild(b);}card.appendChild(actions);box.appendChild(card);});
 }
 async function showLandedCostAllocation(id,card){let area=card.querySelector(".landed-allocation");if(area){area.remove();return;}area=document.createElement("div");area.className="landed-allocation";area.style.marginTop="10px";area.textContent="جارٍ تحميل توزيع التكلفة...";card.appendChild(area);try{const {data,error}=await db.from("purchase_landed_cost_allocations").select("product_id,allocated_amount,invoice_base_quantity,allocated_cost_per_base_unit").eq("landed_cost_id",id).order("product_id");if(error)throw error;if(!data?.length){area.textContent="لا توجد تفاصيل توزيع.";return;}const table=document.createElement("div");table.className="table-responsive";table.innerHTML="<table class='print-table'><thead><tr><th>الصنف</th><th>نصيب النقل</th><th>كمية الأساس</th><th>تكلفة النقل للوحدة</th></tr></thead><tbody></tbody></table>";const body=table.querySelector("tbody");data.forEach(a=>{const tr=document.createElement("tr");const name=productsCache.find(p=>String(p.product_id)===String(a.product_id))?.product_name||("صنف "+a.product_id);[name,fmt(a.allocated_amount),fmtQty(a.invoice_base_quantity),fmt(a.allocated_cost_per_base_unit)].forEach(v=>{const td=document.createElement("td");td.textContent=v;tr.appendChild(td);});body.appendChild(tr);});area.replaceChildren(table);}catch(e){area.textContent="تعذر عرض التوزيع: "+err(e);}}
-if($("addLandedCostBtn"))$("addLandedCostBtn").addEventListener("click",async()=>{if(!canManageLandedCosts)return;try{if(!purchasesCache.length)await loadPurchases();if(!suppliersCache.length)await loadSuppliers();if(!treasuriesCache.length)await loadTreasuries();await loadExpenseTypes();if(!landedCostsCache.length)await loadLandedCosts();fillLandedInvoiceSelect();fillLandedSupplierSelect();fillTreasurySelects();fillLandedVehicleExpenses();$("landedCostForm").reset();$("landedCostDate")&&($("landedCostDate").value=todayISO());$("landedCostFormMsg").className="status hidden";$("landedCostFormModal").classList.add("active");setLandedSourceFields();}catch(e){showToast("تعذر تجهيز النموذج: "+err(e),"error",7000);}});
-if($("landedSourceType"))$("landedSourceType").addEventListener("change",setLandedSourceFields);
+if($("addLandedCostBtn"))$("addLandedCostBtn").addEventListener("click",async()=>{if(!canManageLandedCosts)return;try{if(!purchasesCache.length)await loadPurchases();if(!suppliersCache.length)await loadSuppliers();if(!treasuriesCache.length)await loadTreasuries();await loadExpenseTypes();if(!landedCostsCache.length)await loadLandedCosts();fillLandedInvoiceSelect();fillLandedSupplierSelect();fillTreasurySelects();fillLandedVehicleExpenses();$("landedCostForm").reset();$("landedCostDate")&&($("landedCostDate").value=todayISO());$("landedCostFormMsg").className="status hidden";$("landedCostFormModal").classList.add("active");setLandedSourceFields();}catch(e){showToast("تعذر تجهيز النموذج: "+err(e),"error",7000);}});if($("landedSourceType"))$("landedSourceType").addEventListener("change",setLandedSourceFields);
 if($("landedCostForm"))$("landedCostForm").addEventListener("submit",async e=>{e.preventDefault();if(!canManageLandedCosts)return;const btn=$("saveLandedCostBtn");const invoiceId=Number($("landedInvoice").value),source=$("landedSourceType").value,amount=Number($("landedAmount").value),notes=$("landedNotes").value.trim();if(!invoiceId||!Number.isFinite(amount)||amount<=0){msg($("landedCostFormMsg"),"اختر الفاتورة وأدخل مبلغًا صحيحًا.","error");return;}busy(btn,true,"جارٍ الحفظ...","حفظ تكلفة النقل");try{let rpc,args;const payload={invoiceId,source,amount,treasuryId:source==="EXTERNAL_TREASURY"?Number($("landedTreasury").value)||null:null,expenseId:source==="VEHICLE_EXPENSE"?Number($("landedVehicleExpense").value)||null:null,supplierId:source==="EXTERNAL_SUPPLIER"?Number($("landedSupplier").value)||null:null,costDate:$("landedCostDate").value||todayISO(),notes};if(source==="EXTERNAL_SUPPLIER"){if(!payload.supplierId)throw new Error("اختر مورد النقل.");rpc="create_purchase_landed_cost_on_credit";const key="mm_landed_cost_pending";const rid=getRequestId(key,payload);args={p_invoice_id:invoiceId,p_supplier_id:payload.supplierId,p_amount:amount,p_cost_date:payload.costDate,p_request_id:rid,p_notes:notes||null};const r=await db.rpc(rpc,args);if(r.error)throw r.error;clearRequestId(key);}else{if(source==="EXTERNAL_TREASURY"&&!payload.treasuryId)throw new Error("اختر خزنة الدفع.");if(source==="VEHICLE_EXPENSE"&&!payload.expenseId)throw new Error("اختر مصروف السيارة.");rpc="create_purchase_landed_cost_v2";const key="mm_landed_cost_pending";const rid=getRequestId(key,payload);args={p_invoice_id:invoiceId,p_source_type:source,p_amount:amount,p_treasury_id:payload.treasuryId,p_expense_id:payload.expenseId,p_request_id:rid,p_notes:notes||null};const r=await db.rpc(rpc,args);if(r.error)throw r.error;clearRequestId(key);}$("landedCostFormModal").classList.remove("active");showToast("تم تسجيل تكلفة النقل وتوزيعها على أصناف الفاتورة","success");await loadLandedCosts();await loadStock();if(canViewTreasuries)await loadTreasuries();}catch(e){msg($("landedCostFormMsg"),"تعذر حفظ تكلفة النقل: "+err(e),"error");}finally{busy(btn,false,"","حفظ تكلفة النقل");}});
 
 function setFixedAssetPurchaseFields(){const type=$("fixedAssetPurchaseType")?.value,credit=type==="SUPPLIER_CREDIT",partner=type==="PARTNER_CONTRIBUTION";$("fixedAssetTreasuryWrap")?.classList.toggle("hidden",credit||partner);$("fixedAssetSupplierWrap")?.classList.toggle("hidden",!credit);$("fixedAssetPartnerWrap")?.classList.toggle("hidden",!partner);$("fixedAssetCategoryWrap")?.classList.toggle("hidden",!partner);if($("fixedAssetTreasury"))$("fixedAssetTreasury").required=!credit&&!partner;if($("fixedAssetSupplier"))$("fixedAssetSupplier").required=credit;if($("fixedAssetPartner"))$("fixedAssetPartner").required=partner;if($("fixedAssetFormTitle"))$("fixedAssetFormTitle").textContent=partner?"تسجيل مساهمة عينية في أصل":"شراء معدة أو آلة إنتاج";if($("saveFixedAssetBtn"))$("saveFixedAssetBtn").textContent=partner?"حفظ المساهمة العينية":"حفظ الأصل الثابت";}
@@ -10497,8 +10558,7 @@ async function loadPendingTripLoads(){
       if(item.load_status==="APPROVED" && canDispatchTripLoads){
         const dispatch=document.createElement("button");
         dispatch.type="button";
-        dispatch.className="btn";
-        dispatch.textContent="تأكيد صرف التحميل الفعلي";
+        dispatch.className="btn";        dispatch.textContent="تأكيد صرف التحميل الفعلي";
         dispatch.addEventListener("click",()=>confirmTripLoadDispatch(item.load_id,qty,dispatch));
         row.appendChild(dispatch);
       }
@@ -11247,8 +11307,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
     const tbody = $("chartAccountsTable")?.querySelector("tbody");
     if(tbody) {
       tbody.innerHTML = "";
-      if(!chartAccountsCache.length) {
-        tbody.innerHTML = "<tr><td colspan='6'>لا توجد حسابات مسجلة.</td></tr>";
+      if(!chartAccountsCache.length) {        tbody.innerHTML = "<tr><td colspan='6'>لا توجد حسابات مسجلة.</td></tr>";
       } else {
         chartAccountsCache.forEach(a => {
           const parent = chartAccountsCache.find(p => p.account_id === a.parent_id);
@@ -11997,8 +12056,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
           showApp(); 
           $("userInfo").textContent="أنت أوفلاين (بدون إنترنت). البيانات للعرض فقط.";
           $("offlineBanner").style.display="block";
-          productsCache = getCache('products'); 
-          locationsCache = getCache('locations'); 
+          productsCache = getCache('products');           locationsCache = getCache('locations'); 
           treasuriesCache = getCache('treasuries');
           salesCache = getCache('sales'); 
           customersCache = getCache('customers'); 
