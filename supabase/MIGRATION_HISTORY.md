@@ -410,3 +410,5 @@ Commit: `1041981952e2f57e27f0d0d6f46c7c717a2986a7`
 | 20261121101207 | scope_partner_read_access_and_link_accounts_20261121 | Add partner account-to-partner mapping and restrict partner-specific rows. Remove partner access to employee profiles, notifications, recipients, and activity logs. Preserve company-wide read-only visibility while limiting partner ledgers, contributions, profit items, and partner-owned assets to the linked partner. Applied to the production project. |
 
 | 20261121101450 | move_partner_scope_helper_to_private_schema_20261121 | Move the partner lookup helper into the non-exposed private schema and update partner row policies to use it, avoiding a public RPC endpoint. Applied to the connected Supabase project. |
+
+| 20261121101620 | scope_partner_read_rpcs_to_linked_partner_20261121 | Restrict the partner ledger and profit distribution detail RPCs to the currently linked partner when called by PARTNER accounts. Other authorized roles retain their existing view access. Applied to the connected Supabase project. |
