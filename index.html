@@ -11758,7 +11758,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
   }
 
   // ========== واجهة الموارد البشرية ==========
-  let hrEmployeesCache=[],hrDepartmentsCache=[],hrJobsCache=[],hrLeaveTypesCache=[];
+  let hrLeaveTypesCache=[];
   function hrText(v){return notificationEscape(String(v??""));}
   function hrDate(){return new Date().toISOString().slice(0,10);}
   function hrSetMsg(id,t,type){const e=$(id);if(!e)return;e.textContent=t;e.className="status "+(type||"");e.classList.remove("hidden");}
