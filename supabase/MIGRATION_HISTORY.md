@@ -412,3 +412,5 @@ Commit: `1041981952e2f57e27f0d0d6f46c7c717a2986a7`
 | 20261121101450 | move_partner_scope_helper_to_private_schema_20261121 | Move the partner lookup helper into the non-exposed private schema and update partner row policies to use it, avoiding a public RPC endpoint. Applied to the connected Supabase project. |
 
 | 20261121101620 | scope_partner_read_rpcs_to_linked_partner_20261121 | Restrict the partner ledger and profit distribution detail RPCs to the currently linked partner when called by PARTNER accounts. Other authorized roles retain their existing view access. Applied to the connected Supabase project. |
+
+| 20261121101830 | hide_sales_rep_private_fields_from_partners_20261121 | Remove partner access to sales representative profiles containing phone numbers, commission rates, and auth links. Hide employee administration and factory reset screens from partner accounts while preserving trip representative names through the limited trip-name RPC. Applied to the connected Supabase project. |
