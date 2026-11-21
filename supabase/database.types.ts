@@ -1,6 +1,3 @@
-// Generated from Supabase project mklbemoisdkoyrwcrmoj on 2026-11-20.
-// Reference snapshot only. This file is not a database migration or a full schema backup.
-
 export type Json =
   | string
   | number
@@ -197,6 +194,7 @@ export type Database = {
           display_name: string
           is_active: boolean
           last_login: string | null
+          partner_id: number | null
           role_id: number
           sales_rep_id: number | null
           updated_at: string
@@ -208,6 +206,7 @@ export type Database = {
           display_name: string
           is_active?: boolean
           last_login?: string | null
+          partner_id?: number | null
           role_id: number
           sales_rep_id?: number | null
           updated_at?: string
@@ -219,6 +218,7 @@ export type Database = {
           display_name?: string
           is_active?: boolean
           last_login?: string | null
+          partner_id?: number | null
           role_id?: number
           sales_rep_id?: number | null
           updated_at?: string
@@ -226,6 +226,13 @@ export type Database = {
           username?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "app_users_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["partner_id"]
+          },
           {
             foreignKeyName: "app_users_role_id_fkey"
             columns: ["role_id"]
