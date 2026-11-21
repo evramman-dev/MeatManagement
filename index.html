@@ -2309,7 +2309,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <label class="check"><input id="canSell" type="checkbox">يمكن بيعه</label>
 <label class="check"><input id="canLoad" type="checkbox">يمكن تحميله</label>
 <label class="check"><input id="canBeRecipeIngredient" type="checkbox">يمكن استخدامه كمكوّن في تصنيع منتج آخر</label>
-<label class="check"><input id="requiresRefrigeration" type="checkbox">يحتاج إلى تخزين مبرد</label>
+<label class="check"><input id="requiresRefrigeration" type="checkbox">يتطلب تخزينًا مبردًا</label>
 </div>
 <div class="card" style="margin-top:12px">
   <div class="row" style="justify-content:space-between;align-items:center">
@@ -4538,8 +4538,8 @@ function renderProducts(){
       const priceDetails=hasPrices?'<div class="details">أسعار البيع — أدنى: '+(p.min_selling_price==null?"—":esc(fmt(p.min_selling_price)))+' | مستهدف: '+(p.target_selling_price==null?"—":esc(fmt(p.target_selling_price)))+' | أقصى: '+(p.max_selling_price==null?"—":esc(fmt(p.max_selling_price)))+'</div>':"";
       const uses=[["can_be_purchased","شراء"],["can_be_produced","إنتاج"],["can_be_sold","بيع"],["can_be_loaded","تحميل"],["can_be_recipe_ingredient","مكوّن تصنيع"]].filter(([key])=>p[key]).map(([,label])=>label);
       const statusBadge=p.is_active?'<span class="badge badge-paid">نشط</span>':'<span class="badge badge-cancel">موقوف</span>';
-      const usageBadges=uses.length?uses.map(label=>'<span class="badge">'+label+'</span>').join(""):'<span class="badge">لا توجد استخدامات مفعلة</span>';
       const storageBadge=p.requires_refrigeration?'<span class="badge">تخزين مبرد</span>':'<span class="badge">تخزين عادي</span>';
+      const usageBadges=uses.length?uses.map(label=>'<span class="badge">'+label+'</span>').join(""):'<span class="badge">لا توجد استخدامات مفعلة</span>';
       card.innerHTML='<div class="pname">'+esc(p.product_name)+'</div><div class="details">الكود: '+esc(p.product_code||"—")+' | التصنيف: '+esc(category)+(p.barcode?' | الباركود: '+esc(p.barcode):"")+'</div>'+operatingTypeDetails+'<div class="details">'+unitDetails+(p.units_per_carton?' | عدد الوحدات بالكرتونة: '+esc(fmtQty(p.units_per_carton)):"")+(p.shelf_life_months?' | صلاحية الإنتاج: '+esc(p.shelf_life_months)+' شهر':(p.shelf_life_days?' | صلاحية الإنتاج: '+esc(p.shelf_life_days)+' يوم':""))+'</div><div class="details">حد إعادة الطلب: '+(p.minimum_stock==null?"—":esc(fmtQty(p.minimum_stock)))+'</div>'+priceDetails+'<div>'+statusBadge+usageBadges+storageBadge+'</div>';
       if(canViewStock){const historyBtn=document.createElement("button");historyBtn.type="button";historyBtn.className="btn secondary";historyBtn.style.marginTop="10px";historyBtn.textContent="حركة الصنف / كارت الصنف";historyBtn.onclick=()=>viewProductStockMovements(p.product_id);card.appendChild(historyBtn);}
       if(canManage){const btn=document.createElement("button");btn.className="btn secondary";btn.textContent="تعديل بيانات الصنف";btn.onclick=()=>{
