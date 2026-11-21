@@ -554,6 +554,8 @@ nav{
 
 
 /* Navigation drawer and personal appearance preferences */
+body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.status,.info,.btn,.navbtn,.dash-title,.pname,.foot){font-size:calc(14px * var(--app-font-scale,1))}
+
 .header-menu-btn{position:absolute;right:18px;top:16px;width:42px;height:38px;border:1px solid #ffffff70;border-radius:9px;background:#ffffff18;color:#fff;font-size:23px;line-height:1}
 #mmSideDrawer{position:fixed;inset:0;z-index:10020;display:none;background:#0008}
 #mmSideDrawer.open{display:block}
@@ -2542,6 +2544,7 @@ try {
   const USERNAME_LOGIN_URL=URL+"/functions/v1/username-login";
 
   const db=window.supabase.createClient(URL,KEY,{ auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true, flowType:"implicit" } });
+  window.mmAppearanceAuthClient=db;
   const $=id=>document.getElementById(id);
   function installPasswordVisibilityToggles(){
     document.querySelectorAll('input[type="password"]').forEach(input=>{
@@ -7425,7 +7428,7 @@ async function viewInvoice(inv) {
  toggle.addEventListener("click",openDrawer);
  $mm("mmDrawerClose").addEventListener("click",closeDrawer);
  drawer.addEventListener("click",e=>{if(e.target===drawer)closeDrawer();});
- drawer.querySelectorAll("[data-mm-page]").forEach(btn=>btn.addEventListener("click",()=>{closeDrawer();if(typeof page==="function")page(btn.dataset.mmPage);}));
+ drawer.querySelectorAll("[data-mm-page]").forEach(btn=>btn.addEventListener("click",()=>{closeDrawer();document.querySelector('.navbtn[data-page="'+btn.dataset.mmPage+'"]')?.click();}));
  const palettes={
   green:{g:"#173c2c",g2:"#24563e"},
   blue:{g:"#17436b",g2:"#28658f"},
@@ -7434,7 +7437,7 @@ async function viewInvoice(inv) {
  const defaults={theme:"green",custom:"#173c2c",font:"system",size:"14px"};
  let activeKey="meatmanagement_appearance_guest";
  async function getKey(){
-  try{const auth=window.db?.auth;if(auth){const {data}=await auth.getUser();if(data?.user?.id)return "meatmanagement_appearance_"+data.user.id;}}catch(e){}
+  try{const auth=window.mmAppearanceAuthClient?.auth;if(auth){const {data}=await auth.getUser();if(data?.user?.id)return "meatmanagement_appearance_"+data.user.id;}}catch(e){}
   return activeKey;
  }
  function apply(cfg){
@@ -7445,6 +7448,7 @@ async function viewInvoice(inv) {
   root.style.setProperty("--g",primary);
   root.style.setProperty("--g2",secondary);
   root.style.setProperty("--app-font-size",cfg.size||defaults.size);
+  const scales={"13px":"0.93","14px":"1","16px":"1.14","18px":"1.29"};root.style.setProperty("--app-font-scale",scales[cfg.size]||"1");
   const fonts={system:"system-ui, sans-serif",arial:"Arial, sans-serif",tahoma:"Tahoma, Arial, sans-serif",cairo:"Cairo, Tahoma, sans-serif",tajawal:"Tajawal, Tahoma, sans-serif"};
   document.body.style.fontFamily=fonts[cfg.font]||fonts.system;
   const preview=$mm("mmAppearancePreview");
