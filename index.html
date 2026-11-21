@@ -7405,71 +7405,7 @@ async function viewInvoice(inv) {
             ["المتبقي",fmt(invoiceRemaining),"grand"]
           ];
           const totalRows=receiptTotals.map(row=>'<div class="total '+(row[2]||"")+'"><span>'+escapeReceipt(row[0])+'</span><strong>'+escapeReceipt(row[1])+'</strong></div>').join("");
-          const receipt='<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>فاتورة '+escapeReceipt(inv.invoice_number)+'</title><style>@page{margin:2mm}*{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff;color:#000;font-family:Tahoma,Arial,sans-serif;font-size:11px}body{width:'+(width-4)+'mm;padding:0}.receipt{width:100%;margin:0 auto}.center{text-align:center}.company{font-size:15px;font-weight:bold;margin:0 0 4px}.sub{font-size:10px;margin:2px 0}.rule{border:0;border-top:1px dashed #555;margin:7px 0}.meta{line-height:1.8}.meta div{display:flex;justify-content:space-between;gap:5px}.meta strong{font-weight:bold}table{width:100%;border-collapse:collapse;margin:7px 0}td{padding:5px 1px;border-bottom:1px dashed #aaa;vertical-align:top}.item-name{width:72%;font-weight:bold}.item-name small{display:block;font-size:9px;font-weight:normal;margin-top:3px}.amount{text-align:left;direction:ltr;white-space:nowrap;font-weight:bold}.total{display:flex;justify-content:space-between;gap:6px;padding:3px 0}.total strong{direction:ltr;white-space:nowrap}.grand{font-size:12px;font-weight:bold;border-top:1px solid #555;margin-top:4px;padding-top:5px}.thanks{margin-top:10px;text-align:center;font-size:10px;line-height:1.7}.no-print{display:none}@media print{body{width:'+(width-4)+'mm}}</style></head><body><main class="receipt"><header class="center"><p class="company">'+escapeReceipt(companyName)+'</p>'+(companyPhone?'<p class="sub">هاتف: '+escapeReceipt(companyPhone)+'</p>':'')+'<p class="sub">فاتورة بيع</p></header><hr class="rule"><section class="meta"><div><span>رقم الفاتورة</span><strong>'+escapeReceipt(inv.invoice_number)+'</strong></div><div><span>التاريخ</span><strong>'+escapeReceipt(invoiceTime)+'</strong></div><div><span>العميل</span><strong>'+escapeReceipt(customerName(inv.customer_id))+'</strong></div></section><hr class="rule"><table><tbody>'+rows+'</tbody></table><hr class="rule"><section>'+totalRows+'</section><hr class="rule"><footer class="thanks">شكراً لتعاملكم معنا<br>'+escapeReceipt(companyName)+'</footer></main><script>window.onload=function(){setTimeout(function(){window.focus();window.print();},350)};<\/script><script>
-
-/* ===== القائمة الجانبية وإعدادات المظهر الشخصية ===== */
-(function(){
- const $mm=id=>document.getElementById(id);
- const drawer=$mm("mmSideDrawer"),toggle=$mm("mmMenuToggle"),sections=$mm("mmDrawerSections"),appearance=$mm("mmAppearanceModal");
- if(!drawer||!toggle||!sections||!appearance)return;
- const closeDrawer=()=>{drawer.classList.remove("open");drawer.setAttribute("aria-hidden","true");toggle.setAttribute("aria-expanded","false");};
- const openDrawer=()=>{
-  sections.replaceChildren();
-  document.querySelectorAll("#dataDashboard .dash-item:not(.hidden)").forEach(source=>{
-   const clone=source.cloneNode(true);
-   clone.removeAttribute("id");
-   clone.querySelectorAll("[id]").forEach(el=>el.removeAttribute("id"));
-   clone.classList.remove("hidden");
-   clone.addEventListener("click",closeDrawer);
-   sections.appendChild(clone);
-  });
-  drawer.classList.add("open");drawer.setAttribute("aria-hidden","false");toggle.setAttribute("aria-expanded","true");
- };
- toggle.addEventListener("click",openDrawer);
- $mm("mmDrawerClose").addEventListener("click",closeDrawer);
- drawer.addEventListener("click",e=>{if(e.target===drawer)closeDrawer();});
- drawer.querySelectorAll("[data-mm-page]").forEach(btn=>btn.addEventListener("click",()=>{closeDrawer();document.querySelector('.navbtn[data-page="'+btn.dataset.mmPage+'"]')?.click();}));
- const palettes={
-  green:{g:"#173c2c",g2:"#24563e"},
-  blue:{g:"#17436b",g2:"#28658f"},
-  slate:{g:"#3d4650",g2:"#596572"}
- };
- const defaults={theme:"green",custom:"#173c2c",font:"system",size:"14px"};
- let activeKey="meatmanagement_appearance_guest";
- async function getKey(){
-  try{const auth=window.mmAppearanceAuthClient?.auth;if(auth){const {data}=await auth.getUser();if(data?.user?.id)return "meatmanagement_appearance_"+data.user.id;}}catch(e){}
-  return activeKey;
- }
- function apply(cfg){
-  const root=document.documentElement,theme=cfg.theme||"green";
-  let primary=palettes[theme]?.g||cfg.custom||defaults.custom;
-  let secondary=palettes[theme]?.g2||primary;
-  if(theme==="custom"){primary=cfg.custom||defaults.custom;secondary=primary;}
-  root.style.setProperty("--g",primary);
-  root.style.setProperty("--g2",secondary);
-  root.style.setProperty("--app-font-size",cfg.size||defaults.size);
-  const scales={"13px":"0.93","14px":"1","16px":"1.14","18px":"1.29"};root.style.setProperty("--app-font-scale",scales[cfg.size]||"1");
-  const fonts={system:"system-ui, sans-serif",arial:"Arial, sans-serif",tahoma:"Tahoma, Arial, sans-serif",cairo:"Cairo, Tahoma, sans-serif",tajawal:"Tajawal, Tahoma, sans-serif"};
-  document.body.style.fontFamily=fonts[cfg.font]||fonts.system;
-  const preview=$mm("mmAppearancePreview");
-  if(preview){preview.style.background=primary;preview.style.color="#fff";}
- }
- function readControls(){return {theme:$mm("mmThemeChoice").value,custom:$mm("mmCustomColor").value,font:$mm("mmFontChoice").value,size:$mm("mmFontSize").value};}
- function writeControls(cfg){$mm("mmThemeChoice").value=cfg.theme||"green";$mm("mmCustomColor").value=cfg.custom||"#173c2c";$mm("mmFontChoice").value=cfg.font||"system";$mm("mmFontSize").value=cfg.size||"14px";}
- async function loadSaved(){activeKey=await getKey();let cfg=defaults;try{cfg={...defaults,...JSON.parse(localStorage.getItem(activeKey)||"{}")};}catch(e){}writeControls(cfg);apply(cfg);}
- async function save(){const cfg=readControls();activeKey=await getKey();try{localStorage.setItem(activeKey,JSON.stringify(cfg));apply(cfg);$mm("mmAppearanceMsg").textContent="تم حفظ إعدادات المظهر على هذا الجهاز."; $mm("mmAppearanceMsg").classList.remove("hidden","error");$mm("mmAppearanceMsg").classList.add("success");}catch(e){$mm("mmAppearanceMsg").textContent="تعذر حفظ الإعدادات على هذا الجهاز.";$mm("mmAppearanceMsg").classList.remove("hidden","success");$mm("mmAppearanceMsg").classList.add("error");}}
- const openAppearance=async()=>{closeDrawer();await loadSaved();appearance.classList.add("open");appearance.setAttribute("aria-hidden","false");};
- $mm("mmOpenAppearance").addEventListener("click",openAppearance);
- $mm("mmAppearanceClose").addEventListener("click",()=>{appearance.classList.remove("open");appearance.setAttribute("aria-hidden","true");});
- appearance.addEventListener("click",e=>{if(e.target===appearance){appearance.classList.remove("open");appearance.setAttribute("aria-hidden","true");}});
- ["mmThemeChoice","mmCustomColor","mmFontChoice","mmFontSize"].forEach(id=>$mm(id).addEventListener("change",()=>apply(readControls())));
- $mm("mmAppearanceSave").addEventListener("click",save);
- $mm("mmAppearanceReset").addEventListener("click",async()=>{writeControls(defaults);apply(defaults);activeKey=await getKey();try{localStorage.removeItem(activeKey);}catch(e){}$mm("mmAppearanceMsg").textContent="تمت استعادة إعدادات المظهر الافتراضية.";$mm("mmAppearanceMsg").classList.remove("hidden","error");$mm("mmAppearanceMsg").classList.add("success");});
- document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeDrawer();appearance.classList.remove("open");appearance.setAttribute("aria-hidden","true");}});
- window.addEventListener("load",()=>{loadSaved();});
-})();
-
-</script>
+          const receipt='<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>فاتورة '+escapeReceipt(inv.invoice_number)+'</title><style>@page{margin:2mm}*{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff;color:#000;font-family:Tahoma,Arial,sans-serif;font-size:11px}body{width:'+(width-4)+'mm;padding:0}.receipt{width:100%;margin:0 auto}.center{text-align:center}.company{font-size:15px;font-weight:bold;margin:0 0 4px}.sub{font-size:10px;margin:2px 0}.rule{border:0;border-top:1px dashed #555;margin:7px 0}.meta{line-height:1.8}.meta div{display:flex;justify-content:space-between;gap:5px}.meta strong{font-weight:bold}table{width:100%;border-collapse:collapse;margin:7px 0}td{padding:5px 1px;border-bottom:1px dashed #aaa;vertical-align:top}.item-name{width:72%;font-weight:bold}.item-name small{display:block;font-size:9px;font-weight:normal;margin-top:3px}.amount{text-align:left;direction:ltr;white-space:nowrap;font-weight:bold}.total{display:flex;justify-content:space-between;gap:6px;padding:3px 0}.total strong{direction:ltr;white-space:nowrap}.grand{font-size:12px;font-weight:bold;border-top:1px solid #555;margin-top:4px;padding-top:5px}.thanks{margin-top:10px;text-align:center;font-size:10px;line-height:1.7}.no-print{display:none}@media print{body{width:'+(width-4)+'mm}}</style></head><body><main class="receipt"><header class="center"><p class="company">'+escapeReceipt(companyName)+'</p>'+(companyPhone?'<p class="sub">هاتف: '+escapeReceipt(companyPhone)+'</p>':'')+'<p class="sub">فاتورة بيع</p></header><hr class="rule"><section class="meta"><div><span>رقم الفاتورة</span><strong>'+escapeReceipt(inv.invoice_number)+'</strong></div><div><span>التاريخ</span><strong>'+escapeReceipt(invoiceTime)+'</strong></div><div><span>العميل</span><strong>'+escapeReceipt(customerName(inv.customer_id))+'</strong></div></section><hr class="rule"><table><tbody>'+rows+'</tbody></table><hr class="rule"><section>'+totalRows+'</section><hr class="rule"><footer class="thanks">شكراً لتعاملكم معنا<br>'+escapeReceipt(companyName)+'</footer></main><script>window.onload=function(){setTimeout(function(){window.focus();window.print();},350)};<\/script>
 </body></html>';
           printWindow.document.open();printWindow.document.write(receipt);printWindow.document.close();
         };
@@ -12109,6 +12045,69 @@ const enhance=()=>{
 const s=document.getElementById("fixedAssetsList");if(s)new MutationObserver(enhance).observe(s,{childList:true});
 const sec=document.getElementById("sectionFixedAssets");if(sec)new MutationObserver(enhance).observe(sec,{attributes:true,attributeFilter:["class"]});
 })();
+/* ===== القائمة الجانبية وإعدادات المظهر الشخصية ===== */
+(function(){
+ const $mm=id=>document.getElementById(id);
+ const drawer=$mm("mmSideDrawer"),toggle=$mm("mmMenuToggle"),sections=$mm("mmDrawerSections"),appearance=$mm("mmAppearanceModal");
+ if(!drawer||!toggle||!sections||!appearance)return;
+ const closeDrawer=()=>{drawer.classList.remove("open");drawer.setAttribute("aria-hidden","true");toggle.setAttribute("aria-expanded","false");};
+ const openDrawer=()=>{
+  sections.replaceChildren();
+  document.querySelectorAll("#dataDashboard .dash-item:not(.hidden)").forEach(source=>{
+   const clone=source.cloneNode(true);
+   clone.removeAttribute("id");
+   clone.querySelectorAll("[id]").forEach(el=>el.removeAttribute("id"));
+   clone.classList.remove("hidden");
+   clone.addEventListener("click",closeDrawer);
+   sections.appendChild(clone);
+  });
+  drawer.classList.add("open");drawer.setAttribute("aria-hidden","false");toggle.setAttribute("aria-expanded","true");
+ };
+ toggle.addEventListener("click",openDrawer);
+ $mm("mmDrawerClose").addEventListener("click",closeDrawer);
+ drawer.addEventListener("click",e=>{if(e.target===drawer)closeDrawer();});
+ drawer.querySelectorAll("[data-mm-page]").forEach(btn=>btn.addEventListener("click",()=>{closeDrawer();document.querySelector('.navbtn[data-page="'+btn.dataset.mmPage+'"]')?.click();}));
+ const palettes={
+  green:{g:"#173c2c",g2:"#24563e"},
+  blue:{g:"#17436b",g2:"#28658f"},
+  slate:{g:"#3d4650",g2:"#596572"}
+ };
+ const defaults={theme:"green",custom:"#173c2c",font:"system",size:"14px"};
+ let activeKey="meatmanagement_appearance_guest";
+ async function getKey(){
+  try{const auth=window.mmAppearanceAuthClient?.auth;if(auth){const {data}=await auth.getUser();if(data?.user?.id)return "meatmanagement_appearance_"+data.user.id;}}catch(e){}
+  return activeKey;
+ }
+ function apply(cfg){
+  const root=document.documentElement,theme=cfg.theme||"green";
+  let primary=palettes[theme]?.g||cfg.custom||defaults.custom;
+  let secondary=palettes[theme]?.g2||primary;
+  if(theme==="custom"){primary=cfg.custom||defaults.custom;secondary=primary;}
+  root.style.setProperty("--g",primary);
+  root.style.setProperty("--g2",secondary);
+  root.style.setProperty("--app-font-size",cfg.size||defaults.size);
+  const scales={"13px":"0.93","14px":"1","16px":"1.14","18px":"1.29"};root.style.setProperty("--app-font-scale",scales[cfg.size]||"1");
+  const fonts={system:"system-ui, sans-serif",arial:"Arial, sans-serif",tahoma:"Tahoma, Arial, sans-serif",cairo:"Cairo, Tahoma, sans-serif",tajawal:"Tajawal, Tahoma, sans-serif"};
+  document.body.style.fontFamily=fonts[cfg.font]||fonts.system;
+  const preview=$mm("mmAppearancePreview");
+  if(preview){preview.style.background=primary;preview.style.color="#fff";}
+ }
+ function readControls(){return {theme:$mm("mmThemeChoice").value,custom:$mm("mmCustomColor").value,font:$mm("mmFontChoice").value,size:$mm("mmFontSize").value};}
+ function writeControls(cfg){$mm("mmThemeChoice").value=cfg.theme||"green";$mm("mmCustomColor").value=cfg.custom||"#173c2c";$mm("mmFontChoice").value=cfg.font||"system";$mm("mmFontSize").value=cfg.size||"14px";}
+ async function loadSaved(){activeKey=await getKey();let cfg=defaults;try{cfg={...defaults,...JSON.parse(localStorage.getItem(activeKey)||"{}")};}catch(e){}writeControls(cfg);apply(cfg);}
+ async function save(){const cfg=readControls();activeKey=await getKey();try{localStorage.setItem(activeKey,JSON.stringify(cfg));apply(cfg);$mm("mmAppearanceMsg").textContent="تم حفظ إعدادات المظهر على هذا الجهاز."; $mm("mmAppearanceMsg").classList.remove("hidden","error");$mm("mmAppearanceMsg").classList.add("success");}catch(e){$mm("mmAppearanceMsg").textContent="تعذر حفظ الإعدادات على هذا الجهاز.";$mm("mmAppearanceMsg").classList.remove("hidden","success");$mm("mmAppearanceMsg").classList.add("error");}}
+ const openAppearance=async()=>{closeDrawer();await loadSaved();appearance.classList.add("open");appearance.setAttribute("aria-hidden","false");};
+ $mm("mmOpenAppearance").addEventListener("click",openAppearance);
+ $mm("mmAppearanceClose").addEventListener("click",()=>{appearance.classList.remove("open");appearance.setAttribute("aria-hidden","true");});
+ appearance.addEventListener("click",e=>{if(e.target===appearance){appearance.classList.remove("open");appearance.setAttribute("aria-hidden","true");}});
+ ["mmThemeChoice","mmCustomColor","mmFontChoice","mmFontSize"].forEach(id=>$mm(id).addEventListener("change",()=>apply(readControls())));
+ $mm("mmAppearanceSave").addEventListener("click",save);
+ $mm("mmAppearanceReset").addEventListener("click",async()=>{writeControls(defaults);apply(defaults);activeKey=await getKey();try{localStorage.removeItem(activeKey);}catch(e){}$mm("mmAppearanceMsg").textContent="تمت استعادة إعدادات المظهر الافتراضية.";$mm("mmAppearanceMsg").classList.remove("hidden","error");$mm("mmAppearanceMsg").classList.add("success");});
+ document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeDrawer();appearance.classList.remove("open");appearance.setAttribute("aria-hidden","true");}});
+ window.addEventListener("load",()=>{loadSaved();});
+})();
+
+
 </script>
 </body>
 </html>
