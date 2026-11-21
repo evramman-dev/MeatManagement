@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v163</title>
+<title>MeatManagement v164</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -593,7 +593,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v163]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v164]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -2309,6 +2309,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <label class="check"><input id="canSell" type="checkbox">يمكن بيعه</label>
 <label class="check"><input id="canLoad" type="checkbox">يمكن تحميله</label>
 <label class="check"><input id="canBeRecipeIngredient" type="checkbox">يمكن استخدامه كمكوّن في تصنيع منتج آخر</label>
+<label class="check"><input id="requiresRefrigeration" type="checkbox">يتطلب تخزينًا مبردًا</label>
 </div>
 <div class="card" style="margin-top:12px">
   <div class="row" style="justify-content:space-between;align-items:center">
@@ -2327,7 +2328,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 
 </section>
-<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v163</p>
+<p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v164</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -4537,12 +4538,13 @@ function renderProducts(){
       const priceDetails=hasPrices?'<div class="details">أسعار البيع — أدنى: '+(p.min_selling_price==null?"—":esc(fmt(p.min_selling_price)))+' | مستهدف: '+(p.target_selling_price==null?"—":esc(fmt(p.target_selling_price)))+' | أقصى: '+(p.max_selling_price==null?"—":esc(fmt(p.max_selling_price)))+'</div>':"";
       const uses=[["can_be_purchased","شراء"],["can_be_produced","إنتاج"],["can_be_sold","بيع"],["can_be_loaded","تحميل"],["can_be_recipe_ingredient","مكوّن تصنيع"]].filter(([key])=>p[key]).map(([,label])=>label);
       const statusBadge=p.is_active?'<span class="badge badge-paid">نشط</span>':'<span class="badge badge-cancel">موقوف</span>';
+      const storageBadge=p.requires_refrigeration?'<span class="badge">تخزين مبرد</span>':'<span class="badge">تخزين عادي</span>';
       const usageBadges=uses.length?uses.map(label=>'<span class="badge">'+label+'</span>').join(""):'<span class="badge">لا توجد استخدامات مفعلة</span>';
-      card.innerHTML='<div class="pname">'+esc(p.product_name)+'</div><div class="details">الكود: '+esc(p.product_code||"—")+' | التصنيف: '+esc(category)+(p.barcode?' | الباركود: '+esc(p.barcode):"")+'</div>'+operatingTypeDetails+'<div class="details">'+unitDetails+(p.units_per_carton?' | عدد الوحدات بالكرتونة: '+esc(fmtQty(p.units_per_carton)):"")+(p.shelf_life_months?' | صلاحية الإنتاج: '+esc(p.shelf_life_months)+' شهر':(p.shelf_life_days?' | صلاحية الإنتاج: '+esc(p.shelf_life_days)+' يوم':""))+'</div><div class="details">حد إعادة الطلب: '+(p.minimum_stock==null?"—":esc(fmtQty(p.minimum_stock)))+'</div>'+priceDetails+'<div>'+statusBadge+usageBadges+'</div>';
+      card.innerHTML='<div class="pname">'+esc(p.product_name)+'</div><div class="details">الكود: '+esc(p.product_code||"—")+' | التصنيف: '+esc(category)+(p.barcode?' | الباركود: '+esc(p.barcode):"")+'</div>'+operatingTypeDetails+'<div class="details">'+unitDetails+(p.units_per_carton?' | عدد الوحدات بالكرتونة: '+esc(fmtQty(p.units_per_carton)):"")+(p.shelf_life_months?' | صلاحية الإنتاج: '+esc(p.shelf_life_months)+' شهر':(p.shelf_life_days?' | صلاحية الإنتاج: '+esc(p.shelf_life_days)+' يوم':""))+'</div><div class="details">حد إعادة الطلب: '+(p.minimum_stock==null?"—":esc(fmtQty(p.minimum_stock)))+'</div>'+priceDetails+'<div>'+statusBadge+usageBadges+storageBadge+'</div>';
       if(canViewStock){const historyBtn=document.createElement("button");historyBtn.type="button";historyBtn.className="btn secondary";historyBtn.style.marginTop="10px";historyBtn.textContent="حركة الصنف / كارت الصنف";historyBtn.onclick=()=>viewProductStockMovements(p.product_id);card.appendChild(historyBtn);}
       if(canManage){const btn=document.createElement("button");btn.className="btn secondary";btn.textContent="تعديل بيانات الصنف";btn.onclick=()=>{
         refreshProductCategoryOptions(p.category_id);
-        $("editId").value=p.product_id;$("pname").value=p.product_name;$("pcode").value=p.product_code;$("barcode").value=p.barcode||"";$("ptype").value=p.product_type;$("category").value=p.category_id;$("baseUnit").value=String(p.base_unit_id||"");$("purchaseUnit").value=String(p.purchase_unit_id||"");$("salesUnit").value=String(p.sales_unit_id||"");$("minStock").value=p.minimum_stock;$("minPrice").value=p.min_selling_price||"";$("targetPrice").value=p.target_selling_price||"";$("maxPrice").value=p.max_selling_price||"";$("unitsCarton").value=p.units_per_carton||"";$("shelfLifeMonths").value=p.shelf_life_months||"";$("shelfLifeDays").value=p.shelf_life_months?"":(p.shelf_life_days||"");$("active").checked=p.is_active;$("canPurchase").checked=p.can_be_purchased;$("canProduce").checked=p.can_be_produced;$("canSell").checked=p.can_be_sold;$("canLoad").checked=p.can_be_loaded;$("canBeRecipeIngredient").checked=!!p.can_be_recipe_ingredient;loadProductConversionEditor(p.product_id);$("formTitle").textContent="تعديل الصنف";if($("formMsg"))clear($("formMsg"));$("productFormModal").classList.add("active");
+        $("editId").value=p.product_id;$("pname").value=p.product_name;$("pcode").value=p.product_code;$("barcode").value=p.barcode||"";$("ptype").value=p.product_type;$("category").value=p.category_id;$("baseUnit").value=String(p.base_unit_id||"");$("purchaseUnit").value=String(p.purchase_unit_id||"");$("salesUnit").value=String(p.sales_unit_id||"");$("minStock").value=p.minimum_stock;$("minPrice").value=p.min_selling_price||"";$("targetPrice").value=p.target_selling_price||"";$("maxPrice").value=p.max_selling_price||"";$("unitsCarton").value=p.units_per_carton||"";$("shelfLifeMonths").value=p.shelf_life_months||"";$("shelfLifeDays").value=p.shelf_life_months?"":(p.shelf_life_days||"");$("active").checked=p.is_active;$("canPurchase").checked=p.can_be_purchased;$("canProduce").checked=p.can_be_produced;$("canSell").checked=p.can_be_sold;$("canLoad").checked=p.can_be_loaded;$("canBeRecipeIngredient").checked=!!p.can_be_recipe_ingredient;$("requiresRefrigeration").checked=!!p.requires_refrigeration;loadProductConversionEditor(p.product_id);$("formTitle").textContent="تعديل الصنف";if($("formMsg"))clear($("formMsg"));$("productFormModal").classList.add("active");
       };card.appendChild(btn);}
       heading.appendChild(card);
     });
@@ -4560,6 +4562,7 @@ window.openNewProductForm=function(){
   const allowed=productCategoryIdsForSection();
   if(allowed.length===1 && $("category"))$("category").value=String(allowed[0]);
   if($("active")) $("active").checked=true;
+  if($("requiresRefrigeration")) $("requiresRefrigeration").checked=false;
   if($("productFormModal")) $("productFormModal").classList.add("active");
   if($("formMsg")) clear($("formMsg"));
 };
@@ -4638,7 +4641,8 @@ if($("productForm")) $("productForm").addEventListener("submit", async e => {
     can_be_produced:$("canProduce").checked, 
     can_be_sold:$("canSell").checked, 
     can_be_loaded:$("canLoad").checked,
-    can_be_recipe_ingredient:$("canBeRecipeIngredient").checked
+    can_be_recipe_ingredient:$("canBeRecipeIngredient").checked,
+    requires_refrigeration:$("requiresRefrigeration").checked
   }; 
   try{
     const conversionRows=readProductConversionRows();
