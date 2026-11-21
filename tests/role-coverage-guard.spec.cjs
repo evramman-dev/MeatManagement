@@ -194,3 +194,38 @@ test('Marking a notification read is limited to its recipient and blocks partner
   expect(notificationReadSql).toContain('WHERE notification_id = p_notification_id');
   expect(notificationReadSql).toContain('AND user_id = auth.uid()');
 });
+
+
+const partnerAccessSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261121101207_scope_partner_read_access_and_link_accounts_20261121.sql'), 'utf8');
+const partnerPrivateSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261121101450_move_partner_scope_helper_to_private_schema_20261121.sql'), 'utf8');
+const partnerRpcSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261121101620_scope_partner_read_rpcs_to_linked_partner_20261121.sql'), 'utf8');
+const manageUsersSource = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'functions', 'Manage-users', 'index.ts'), 'utf8');
+
+test('Partner RLS blocks employee profiles, notifications, recipients, and activity logs', () => {
+  expect(partnerAccessSql).toContain('DROP POLICY IF EXISTS partner_read_only_select ON public.app_users');
+  expect(partnerAccessSql).toContain('DROP POLICY IF EXISTS partner_read_only_select ON public.notifications');
+  expect(partnerAccessSql).toContain('DROP POLICY IF EXISTS partner_read_only_select ON public.notification_recipients');
+  expect(partnerAccessSql).toContain('DROP POLICY IF EXISTS partner_read_only_select ON public.user_logs');
+});
+
+test('Partner-specific rows use a private helper and a unique account mapping', () => {
+  expect(partnerAccessSql).toContain('ADD COLUMN IF NOT EXISTS partner_id bigint');
+  expect(partnerAccessSql).toContain('CREATE UNIQUE INDEX IF NOT EXISTS app_users_partner_id_unique');
+  expect(partnerPrivateSql).toContain('CREATE SCHEMA IF NOT EXISTS private');
+  expect(partnerPrivateSql).toContain('GRANT EXECUTE ON FUNCTION private.current_partner_id() TO authenticated');
+  expect(partnerPrivateSql).toContain('DROP FUNCTION IF EXISTS public.current_partner_id()');
+});
+
+test('Partner ledger RPCs reject requests for another partner', () => {
+  expect(partnerRpcSql).toContain("p_partner_id=(SELECT private.current_partner_id())");
+  expect(partnerRpcSql).toContain("i.partner_id=(SELECT private.current_partner_id())");
+});
+
+test('Only System Admin can link an active PARTNER account to an unused active partner record', () => {
+  expect(manageUsersSource).toContain('body.action === "link_partner"');
+  expect(manageUsersSource).toContain('targetRole.role_code !== "PARTNER"');
+  expect(manageUsersSource).toContain('targetProfile.is_active !== true');
+  expect(manageUsersSource).toContain('partner.is_active !== true');
+  expect(manageUsersSource).toContain('.eq("partner_id", partnerId)');
+  expect(manageUsersSource).toContain('.update({ partner_id: partnerId })');
+});
