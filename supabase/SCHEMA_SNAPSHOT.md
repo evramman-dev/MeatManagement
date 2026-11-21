@@ -1,9 +1,9 @@
 # Live schema reference snapshot
 
-Snapshot date: 2026-11-20  
+Snapshot date: 2026-11-21  
 Supabase project: `mklbemoisdkoyrwcrmoj`  
 Source: Supabase-generated TypeScript database types  
-Branch: `main` at commit `b9b05322501da572dbcdf078ccbfbef532751f43`
+Branch: `main` at commit `7a1c0cead5edd277ed699ba4ba72c2dae0cda652`
 
 ## Purpose
 
