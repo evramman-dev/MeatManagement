@@ -197,8 +197,8 @@ test('Marking a notification read is limited to its recipient and blocks partner
 
 
 const partnerAccessSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261121101207_scope_partner_read_access_and_link_accounts_20261121.sql'), 'utf8');
-const partnerPrivateSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261121101450_move_partner_scope_helper_to_private_schema_20261121.sql'), 'utf8');
-const partnerRpcSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261121101620_scope_partner_read_rpcs_to_linked_partner_20261121.sql'), 'utf8');
+const partnerPrivateSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261121101515_move_partner_scope_helper_to_private_schema_20261121.sql'), 'utf8');
+const partnerRpcSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261121101604_scope_partner_read_rpcs_to_linked_partner_20261121.sql'), 'utf8');
 const manageUsersSource = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'functions', 'Manage-users', 'index.ts'), 'utf8');
 
 test('Partner RLS blocks employee profiles, notifications, recipients, and activity logs', () => {
@@ -231,7 +231,7 @@ test('Only System Admin can link an active PARTNER account to an unused active p
 });
 
 
-const partnerPersonalSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261121101830_hide_sales_rep_private_fields_from_partners_20261121.sql'), 'utf8');
+const partnerPersonalSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261121101812_hide_sales_rep_private_fields_from_partners_20261121.sql'), 'utf8');
 test('Partner accounts cannot read sales representative phone, commission, or login-link fields', () => {
   expect(partnerPersonalSql).toContain('DROP POLICY IF EXISTS partner_read_only_select ON public.sales_reps');
   expect(partnerPersonalSql).toContain("public.get_current_user_role()) <> 'PARTNER'");
