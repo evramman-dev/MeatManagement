@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v170</title>
+<title>MeatManagement v171</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -2419,6 +2419,16 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 
 </section>
 <section id="sectionHr" class="sub-section hidden"><div class="card"><h2>👥 الموارد البشرية</h2><p class="desc">إدارة الموظفين والحضور والإجازات ومسيرات الرواتب.</p>
+<div id="hrMenuGrid" class="dashboard-grid" style="margin-top:16px">
+<div class="dash-item" role="button" tabindex="0" onclick="window.hrOpenPanel('setup')"><div class="dash-icon">⚙️</div><div class="dash-title">إعداد HR</div></div>
+<div class="dash-item" role="button" tabindex="0" onclick="window.hrOpenPanel('employees')"><div class="dash-icon">👥</div><div class="dash-title">الموظفون</div></div>
+<div class="dash-item" role="button" tabindex="0" onclick="window.hrOpenPanel('attendance')"><div class="dash-icon">🕘</div><div class="dash-title">الحضور</div></div>
+<div class="dash-item" role="button" tabindex="0" onclick="window.hrOpenPanel('leaves')"><div class="dash-icon">🌴</div><div class="dash-title">الإجازات</div></div>
+<div class="dash-item" role="button" tabindex="0" onclick="window.hrOpenPanel('payroll')"><div class="dash-icon">💰</div><div class="dash-title">مسيرات الرواتب</div></div>
+<div class="dash-item" role="button" tabindex="0" onclick="window.hrOpenPanel('overtime')"><div class="dash-icon">⏱️</div><div class="dash-title">الإضافي</div></div>
+<div class="dash-item" role="button" tabindex="0" onclick="window.hrOpenPanel('advances')"><div class="dash-icon">💳</div><div class="dash-title">السلف</div></div>
+<div class="dash-item" role="button" tabindex="0" onclick="window.hrOpenPanel('payrollDetails')"><div class="dash-icon">📊</div><div class="dash-title">تفاصيل مسير الرواتب</div></div>
+</div>
 <div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">إعداد HR</h3>
 <div class="grid">
 <div><label>كود القسم<input id="hrDeptCode"></label></div><div><label>اسم القسم<input id="hrDeptName"></label></div>
@@ -2458,7 +2468,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrPayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div><button type="button" class="btn secondary" onclick="window.closeSection()">رجوع إلى مركز البيانات</button></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v170</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrPayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div><button type="button" class="btn secondary" onclick="window.closeSection()">رجوع إلى مركز البيانات</button></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v171</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -11863,7 +11873,25 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
     const names=Object.fromEntries(hrEmployeesCache.map(x=>[x.employee_id,x.full_name]));box.innerHTML=data?.length?'<div class="table-responsive"><table class="print-table"><thead><tr><th>الموظف</th><th>الأساسي</th><th>إضافي</th><th>خصومات</th><th>صافي</th><th>الحالة</th></tr></thead><tbody>'+data.map(r=>'<tr><td>'+hrText(names[r.employee_id]||r.employee_id)+'</td><td>'+fmt(r.base_salary)+'</td><td>'+fmt(r.overtime_amount)+'</td><td>'+fmt(Number(r.penalty_amount||0)+Number(r.absence_deduction||0)+Number(r.advance_deduction||0)+Number(r.other_deduction||0))+'</td><td><strong>'+fmt(r.net_amount)+'</strong></td><td>'+hrText(r.status)+'</td></tr>').join("")+'</tbody></table></div>':'<div class="empty">لا توجد بنود. احسب المسير أولًا.</div>';
   }
   function hrApplyVisibility(){[["hrSaveDept",canManageHR],["hrSaveJob",canManageHR],["hrSaveLeaveType",canManageHR],["hrSaveEmployee",canManageHR],["hrSaveAttendance",canManageHRAttendance],["hrSaveLeave",canManageHRLeaves],["hrSaveOvertime",canManageHRPayroll],["hrSaveAdvance",canManageHRPayroll],["hrCreatePeriod",canManageHRPayroll]].forEach(x=>{const e=$(x[0]);if(e)e.classList.toggle("hidden",!x[1]);});}
-  function hrInit(){if($("hrAttendanceDate"))$("hrAttendanceDate").value=hrDate();if($("hrOvertimeDate"))$("hrOvertimeDate").value=hrDate();if($("hrAdvanceDate"))$("hrAdvanceDate").value=hrDate();if($("hrSaveDept"))$("hrSaveDept").onclick=()=>hrSaveSetup("dept");if($("hrSaveJob"))$("hrSaveJob").onclick=()=>hrSaveSetup("job");if($("hrSaveLeaveType"))$("hrSaveLeaveType").onclick=()=>hrSaveSetup("leave");if($("hrSaveEmployee"))$("hrSaveEmployee").onclick=hrSaveEmployee;if($("hrSaveAttendance"))$("hrSaveAttendance").onclick=hrSaveAttendance;if($("hrSaveLeave"))$("hrSaveLeave").onclick=hrSaveLeave;if($("hrSaveOvertime"))$("hrSaveOvertime").onclick=hrSaveOvertime;if($("hrSaveAdvance"))$("hrSaveAdvance").onclick=hrSaveAdvance;if($("hrCreatePeriod"))$("hrCreatePeriod").onclick=hrCreatePayroll;hrApplyVisibility();}
+  function hrInitPanels(){
+    const root=$("sectionHr"),menu=$("hrMenuGrid");if(!root||!menu)return;
+    const panels=[...root.querySelectorAll(":scope > .card > .card")];
+    const keys=["setup","employees","attendance","leaves","payroll","overtime","advances","payrollDetails"];
+    panels.forEach((p,i)=>{p.classList.add("hr-work-panel","hidden");p.dataset.hrPanel=keys[i]||("extra"+i);});
+    window.hrOpenPanel=function(name){
+      menu.classList.add("hidden");
+      panels.forEach(p=>p.classList.toggle("hidden",p.dataset.hrPanel!==name));
+      const active=panels.find(p=>p.dataset.hrPanel===name);
+      if(active&&!active.querySelector(".hr-back-menu")){
+        const back=document.createElement("button");back.type="button";back.className="btn secondary hr-back-menu";back.textContent="⬅ رجوع لقائمة الموارد البشرية";back.style.cssText="width:auto;margin:0 0 14px";
+        back.addEventListener("click",window.hrBackToMenu);active.insertBefore(back,active.firstChild);
+      }
+      window.scrollTo(0,0);
+    };
+    window.hrBackToMenu=function(){panels.forEach(p=>p.classList.add("hidden"));menu.classList.remove("hidden");window.scrollTo(0,0);};
+    menu.querySelectorAll('[role="button"]').forEach(b=>b.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();b.click();}}));
+  }
+  function hrInit(){hrInitPanels();if($("hrAttendanceDate"))$("hrAttendanceDate").value=hrDate();if($("hrOvertimeDate"))$("hrOvertimeDate").value=hrDate();if($("hrAdvanceDate"))$("hrAdvanceDate").value=hrDate();if($("hrSaveDept"))$("hrSaveDept").onclick=()=>hrSaveSetup("dept");if($("hrSaveJob"))$("hrSaveJob").onclick=()=>hrSaveSetup("job");if($("hrSaveLeaveType"))$("hrSaveLeaveType").onclick=()=>hrSaveSetup("leave");if($("hrSaveEmployee"))$("hrSaveEmployee").onclick=hrSaveEmployee;if($("hrSaveAttendance"))$("hrSaveAttendance").onclick=hrSaveAttendance;if($("hrSaveLeave"))$("hrSaveLeave").onclick=hrSaveLeave;if($("hrSaveOvertime"))$("hrSaveOvertime").onclick=hrSaveOvertime;if($("hrSaveAdvance"))$("hrSaveAdvance").onclick=hrSaveAdvance;if($("hrCreatePeriod"))$("hrCreatePeriod").onclick=hrCreatePayroll;hrApplyVisibility();}
   hrInit();
 
 
