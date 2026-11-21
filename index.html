@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v176</title>
+<title>MeatManagement v177</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -100,6 +100,21 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 .dashboard-group.mm-search-no-match{display:none!important}
 .data-search-row{position:sticky;top:0;z-index:4;background:var(--card);padding:8px 0}
 .data-search-row input{min-height:44px}
+.data-category-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin-top:14px}
+.data-category-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;min-height:116px;padding:14px 10px;background:#fff;border:1px solid var(--line);border-radius:15px;box-shadow:0 2px 8px rgba(20,45,25,.05);color:var(--g);cursor:pointer;text-align:center}
+.data-category-card:active{transform:scale(.98)}
+.data-category-card:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.data-category-icon{font-size:27px;line-height:1.2}
+.data-category-title{font-size:14px;font-weight:700;line-height:1.5}
+.data-category-subtitle{font-size:11px;color:var(--muted);line-height:1.4}
+.data-group-page{margin-top:4px}
+.data-group-back{width:auto;margin:0 0 12px}
+.data-group-card{padding:15px}
+.data-group-card h2{margin:0 0 5px}
+.data-group-card .desc{margin-bottom:14px}
+.data-group-items{margin-top:12px}
+.data-group-items .dash-item{min-height:100px}
+@media(max-width:360px){.data-category-grid{gap:8px}.data-category-card{min-height:105px;padding:11px 7px}.data-category-title{font-size:13px}}
 .dash-item{display:flex;flex-direction:column;align-items:center;justify-content:center;background:white;border:1px solid var(--line);border-radius:14px;padding:16px 10px;cursor:pointer;box-shadow:0 2px 8px #142d1905;transition:transform .1s}
 .dash-item:active{transform:scale(0.95)}
 .product-menu-group{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 2px 8px #142d1905}
@@ -707,7 +722,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v176]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v177]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1030,82 +1045,80 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 
 <section id="data" class="hidden">
 <div id="dataDashboard" class="card">
+<div id="dataCategoryHome">
 <h2>🗂️ مركز البيانات</h2>
-<p class="desc">ابحث عن القسم الذي تريد فتحه، أو اختره من المجموعات.</p>
+<p class="desc">اختر القسم الرئيسي للوصول إلى الصفحات التابعة له.</p>
 <div class="data-search-row"><input id="dataSectionSearch" type="search" placeholder="ابحث عن قسم مثل المخزون أو العملاء..." autocomplete="off"><button id="clearDataSectionSearch" class="btn secondary" type="button">مسح</button></div>
-<details class="product-menu-group dashboard-group">
-<summary><span class="dashboard-title">إدارة المنتجات</span><span class="product-menu-hint">جارٍ تحميل الأقسام...</span></summary>
-<div class="dashboard-grid">
-<div class="dash-item hidden" id="menuProducts" onclick="window.openSection('products')"><div class="dash-icon">📦</div><div class="dash-title">إدارة المنتجات</div></div>
-<div class="dash-item hidden" id="menuStockSummary" onclick="window.openSection('stockSummary')"><div class="dash-icon">📋</div><div class="dash-title">ملخص أرصدة الأصناف</div></div>
-<div class="dash-item hidden" id="menuProductionDailySummary" onclick="window.openSection('productionDailySummary')"><div class="dash-icon">📅</div><div class="dash-title">ملخص الإنتاج اليومي</div></div>
+<div class="data-category-grid"><button type="button" class="data-category-card" id="dataCategoryCardproducts" onclick="window.openDataGroup('products')"><span class="data-category-icon">📦</span><span class="data-category-title">إدارة المنتجات</span><span class="data-category-subtitle" id="dataCategoryCountproducts">3 أقسام</span></button>
+<button type="button" class="data-category-card" id="dataCategoryCardinventory" onclick="window.openDataGroup('inventory')"><span class="data-category-icon">🏭</span><span class="data-category-title">المخزون</span><span class="data-category-subtitle" id="dataCategoryCountinventory">5 أقسام</span></button>
+<button type="button" class="data-category-card" id="dataCategoryCardproduction" onclick="window.openDataGroup('production')"><span class="data-category-icon">📝</span><span class="data-category-title">الإنتاج</span><span class="data-category-subtitle" id="dataCategoryCountproduction">3 أقسام</span></button>
+<button type="button" class="data-category-card" id="dataCategoryCardhr" onclick="window.openDataGroup('hr')"><span class="data-category-icon">👥</span><span class="data-category-title">الموارد البشرية</span><span class="data-category-subtitle" id="dataCategoryCounthr">1 أقسام</span></button>
+<button type="button" class="data-category-card" id="dataCategoryCardprocurement" onclick="window.openDataGroup('procurement')"><span class="data-category-icon">🛒</span><span class="data-category-title">المشتريات والموردين</span><span class="data-category-subtitle" id="dataCategoryCountprocurement">7 أقسام</span></button>
+<button type="button" class="data-category-card" id="dataCategoryCardsales" onclick="window.openDataGroup('sales')"><span class="data-category-icon">💰</span><span class="data-category-title">المبيعات والتوزيع</span><span class="data-category-subtitle" id="dataCategoryCountsales">7 أقسام</span></button>
+<button type="button" class="data-category-card" id="dataCategoryCardfinance" onclick="window.openDataGroup('finance')"><span class="data-category-icon">🧮</span><span class="data-category-title">الحسابات والإدارة</span><span class="data-category-subtitle" id="dataCategoryCountfinance">8 أقسام</span></button>
 </div>
-</details>
-<details class="product-menu-group dashboard-group">
-<summary><span class="dashboard-title">المخزون</span><span class="product-menu-hint">جارٍ تحميل الأقسام...</span></summary>
-<div class="dashboard-grid">
-<div class="dash-item hidden" id="menuLocations" onclick="window.openSection('locations')"><div class="dash-icon">🏭</div><div class="dash-title">المواقع والمخازن</div></div>
+<div id="dataSearchEmpty" class="empty hidden">لا توجد أقسام مطابقة لبحثك.</div>
+</div>
+<div id="dataGroupPageproducts" class="data-group-page hidden" data-group-key="products" data-group-title="إدارة المنتجات">
+<button type="button" class="btn secondary data-group-back" onclick="window.closeDataGroup()">⬅ العودة إلى مركز البيانات</button>
+<div class="card data-group-card"><h2>📦 إدارة المنتجات</h2><p class="desc">الأصناف والأرصدة والتقارير</p><div class="dashboard-grid data-group-items"><div class="dash-item hidden" id="menuProducts" onclick="window.openSection('products')"><div class="dash-icon">📦</div><div class="dash-title">إدارة المنتجات</div></div>
+<div class="dash-item hidden" id="menuStockSummary" onclick="window.openSection('stockSummary')"><div class="dash-icon">📋</div><div class="dash-title">ملخص أرصدة الأصناف</div></div>
+<div class="dash-item hidden" id="menuProductionDailySummary" onclick="window.openSection('productionDailySummary')"><div class="dash-icon">📅</div><div class="dash-title">ملخص الإنتاج اليومي</div></div></div></div>
+</div>
+<div id="dataGroupPageinventory" class="data-group-page hidden" data-group-key="inventory" data-group-title="المخزون">
+<button type="button" class="btn secondary data-group-back" onclick="window.closeDataGroup()">⬅ العودة إلى مركز البيانات</button>
+<div class="card data-group-card"><h2>🏭 المخزون</h2><p class="desc">المخازن والحركات والحجوزات</p><div class="dashboard-grid data-group-items"><div class="dash-item hidden" id="menuLocations" onclick="window.openSection('locations')"><div class="dash-icon">🏭</div><div class="dash-title">المواقع والمخازن</div></div>
 <div class="dash-item hidden" id="menuStock" onclick="window.openSection('stock')"><div class="dash-icon">📊</div><div class="dash-title">أرصدة المخزون</div></div>
 <div class="dash-item hidden" id="menuStockTransfers" onclick="window.openSection('stockTransfers')"><div class="dash-icon">🔄</div><div class="dash-title">تحويل المخازن</div></div>
 <div class="dash-item hidden" id="menuPackaging" onclick="window.openSection('packaging')"><div class="dash-icon">📦</div><div class="dash-title">خيارات التعبئة</div></div>
-<div class="dash-item hidden" id="menuReservations" onclick="window.openSection('reservations')"><div class="dash-icon">🔒</div><div class="dash-title">الحجوزات</div></div>
+<div class="dash-item hidden" id="menuReservations" onclick="window.openSection('reservations')"><div class="dash-icon">🔒</div><div class="dash-title">الحجوزات</div></div></div></div>
 </div>
-</details>
-<details class="product-menu-group dashboard-group">
-<summary><span class="dashboard-title">الإنتاج</span><span class="product-menu-hint">جارٍ تحميل الأقسام...</span></summary>
-<div class="dashboard-grid">
-<div class="dash-item hidden" id="menuRecipes" onclick="window.openSection('recipes')"><div class="dash-icon">📝</div><div class="dash-title">الوصفات</div></div>
+<div id="dataGroupPageproduction" class="data-group-page hidden" data-group-key="production" data-group-title="الإنتاج">
+<button type="button" class="btn secondary data-group-back" onclick="window.closeDataGroup()">⬅ العودة إلى مركز البيانات</button>
+<div class="card data-group-card"><h2>📝 الإنتاج</h2><p class="desc">الوصفات وأوامر التشغيل</p><div class="dashboard-grid data-group-items"><div class="dash-item hidden" id="menuRecipes" onclick="window.openSection('recipes')"><div class="dash-icon">📝</div><div class="dash-title">الوصفات</div></div>
 <div class="dash-item hidden" id="menuProduction" onclick="window.openSection('production')"><div class="dash-icon">🏭</div><div class="dash-title">أوامر التشغيل</div></div>
-<div class="dash-item hidden" id="menuStockLots" onclick="window.openSection('stockLots')"><div class="dash-icon">🏷️</div><div class="dash-title">تتبع التشغيلات</div></div>
+<div class="dash-item hidden" id="menuStockLots" onclick="window.openSection('stockLots')"><div class="dash-icon">🏷️</div><div class="dash-title">تتبع التشغيلات</div></div></div></div>
 </div>
-</details>
-<details class="product-menu-group dashboard-group" id="hrDashboardGroup">
-<summary><span class="dashboard-title">👥 الموارد البشرية</span><span class="product-menu-hint">جارٍ تحميل الأقسام...</span></summary>
-<div class="dashboard-grid">
-<div class="dash-item hidden" id="menuHR" onclick="window.openSection('hr')"><div class="dash-icon">👥</div><div class="dash-title">الموارد البشرية</div></div>
+<div id="dataGroupPagehr" class="data-group-page hidden" data-group-key="hr" data-group-title="👥 الموارد البشرية">
+<button type="button" class="btn secondary data-group-back" onclick="window.closeDataGroup()">⬅ العودة إلى مركز البيانات</button>
+<div class="card data-group-card"><h2>👥 الموارد البشرية</h2><p class="desc">الموظفون والحضور والرواتب</p><div class="dashboard-grid data-group-items"><div class="dash-item hidden" id="menuHR" onclick="window.openSection('hr')"><div class="dash-icon">👥</div><div class="dash-title">الموارد البشرية</div></div></div></div>
 </div>
-</details>
-<details class="product-menu-group dashboard-group">
-<summary><span class="dashboard-title">🛒 المشتريات والموردين</span><span class="product-menu-hint">جارٍ تحميل الأقسام...</span></summary>
-<div class="dashboard-grid">
-<div class="dash-item hidden" id="menuSuppliers" onclick="window.openSection('suppliers')"><div class="dash-icon">🚚</div><div class="dash-title">الموردين</div></div>
+<div id="dataGroupPageprocurement" class="data-group-page hidden" data-group-key="procurement" data-group-title="🛒 المشتريات والموردين">
+<button type="button" class="btn secondary data-group-back" onclick="window.closeDataGroup()">⬅ العودة إلى مركز البيانات</button>
+<div class="card data-group-card"><h2>🛒 المشتريات والموردين</h2><p class="desc">الموردون والمشتريات والمصروفات</p><div class="dashboard-grid data-group-items"><div class="dash-item hidden" id="menuSuppliers" onclick="window.openSection('suppliers')"><div class="dash-icon">🚚</div><div class="dash-title">الموردين</div></div>
 <div class="dash-item hidden" id="menuPurchases" onclick="window.openSection('purchases')"><div class="dash-icon">🛒</div><div class="dash-title">فواتير المشتريات</div></div>
 <div class="dash-item hidden" id="menuPurchaseReturns" onclick="window.openSection('purchaseReturns')"><div class="dash-icon">↩️</div><div class="dash-title">مرتجع مشتريات</div></div>
 <div class="dash-item hidden" id="menuLandedCosts" onclick="window.openSection('landedCosts')"><div class="dash-icon">🚚</div><div class="dash-title">تكلفة نقل الخامات</div></div>
 <div class="dash-item hidden" id="menuFixedAssets" onclick="window.openSection('fixedAssets')"><div class="dash-icon">🏭</div><div class="dash-title">الأصول الثابتة</div></div>
 <div class="dash-item hidden" id="menuSupplierPayments" onclick="window.openSection('supplierPayments')"><div class="dash-icon">💸</div><div class="dash-title">سداد موردين</div></div>
-<div class="dash-item hidden" id="menuExpenses" onclick="window.openSection('expenses')"><div class="dash-icon">🧾</div><div class="dash-title">المصروفات</div></div>
+<div class="dash-item hidden" id="menuExpenses" onclick="window.openSection('expenses')"><div class="dash-icon">🧾</div><div class="dash-title">المصروفات</div></div></div></div>
 </div>
-</details>
-<details class="product-menu-group dashboard-group">
-<summary><span class="dashboard-title">💰 المبيعات والتوزيع</span><span class="product-menu-hint">جارٍ تحميل الأقسام...</span></summary>
-<div class="dashboard-grid">
-<div class="dash-item hidden" id="menuCustomers" onclick="window.openSection('customers')"><div class="dash-icon">👥</div><div class="dash-title">العملاء</div></div>
+<div id="dataGroupPagesales" class="data-group-page hidden" data-group-key="sales" data-group-title="💰 المبيعات والتوزيع">
+<button type="button" class="btn secondary data-group-back" onclick="window.closeDataGroup()">⬅ العودة إلى مركز البيانات</button>
+<div class="card data-group-card"><h2>💰 المبيعات والتوزيع</h2><p class="desc">العملاء والفواتير والتحصيل والتوزيع</p><div class="dashboard-grid data-group-items"><div class="dash-item hidden" id="menuCustomers" onclick="window.openSection('customers')"><div class="dash-icon">👥</div><div class="dash-title">العملاء</div></div>
 <div class="dash-item hidden" id="menuSales" onclick="window.openSection('sales')"><div class="dash-icon">🧾</div><div class="dash-title">فواتير البيع</div></div>
 <div class="dash-item hidden" id="menuSalesReturns" onclick="window.openSection('salesReturns')"><div class="dash-icon">↩️</div><div class="dash-title">مرتجع مبيعات</div></div>
 <div class="dash-item hidden" id="menuPriceLists" onclick="window.openSection('priceLists')"><div class="dash-icon">🏷️</div><div class="dash-title">قوائم الأسعار</div></div>
 <div class="dash-item hidden" id="menuCollections" onclick="window.openSection('collections')"><div class="dash-icon">💰</div><div class="dash-title">التحصيلات</div></div>
 <div class="dash-item hidden" id="menuTrips" onclick="window.openSection('trips')"><div class="dash-icon">🚐</div><div class="dash-title">الجولات</div></div>
-<div class="dash-item hidden" id="menuSalesReps" onclick="window.openSection('salesReps')"><div class="dash-icon">🧑‍💼</div><div class="dash-title">إدارة المندوبين</div></div>
+<div class="dash-item hidden" id="menuSalesReps" onclick="window.openSection('salesReps')"><div class="dash-icon">🧑‍💼</div><div class="dash-title">إدارة المندوبين</div></div></div></div>
 </div>
-</details>
-<details class="product-menu-group dashboard-group">
-<summary><span class="dashboard-title">🧮 الحسابات والإدارة</span><span class="product-menu-hint">جارٍ تحميل الأقسام...</span></summary>
-<div class="dashboard-grid">
-<div class="dash-item hidden" id="menuTreasuries" onclick="window.openSection('treasuries')"><div class="dash-icon">💵</div><div class="dash-title">الخزائن</div></div>
+<div id="dataGroupPagefinance" class="data-group-page hidden" data-group-key="finance" data-group-title="🧮 الحسابات والإدارة">
+<button type="button" class="btn secondary data-group-back" onclick="window.closeDataGroup()">⬅ العودة إلى مركز البيانات</button>
+<div class="card data-group-card"><h2>🧮 الحسابات والإدارة</h2><p class="desc">الخزائن والحسابات والإدارة</p><div class="dashboard-grid data-group-items"><div class="dash-item hidden" id="menuTreasuries" onclick="window.openSection('treasuries')"><div class="dash-icon">💵</div><div class="dash-title">الخزائن</div></div>
 <div class="dash-item hidden" id="menuTreasuryTransfers" onclick="window.openSection('treasuryTransfers')"><div class="dash-icon">🔄</div><div class="dash-title">تحويل خزائن</div></div>
 <div class="dash-item hidden" id="menuPartners" onclick="window.openSection('partners')"><div class="dash-icon">🤝</div><div class="dash-title">الشركاء</div></div>
 <div class="dash-item hidden" id="menuAccounting" onclick="window.openSection('accounting')"><div class="dash-icon">🧮</div><div class="dash-title">المحاسبة</div></div>
 <div class="dash-item hidden" id="menuReports" onclick="window.openSection('reports')"><div class="dash-icon">📈</div><div class="dash-title">التقارير</div></div>
 <div class="dash-item hidden" id="menuUsers" onclick="window.openSection('users')"><div class="dash-icon">👤</div><div class="dash-title">المستخدمون</div></div>
 <div class="dash-item hidden" id="menuSystemReset" onclick="window.openSection('systemReset')"><div class="dash-icon">♻️</div><div class="dash-title">إعادة تهيئة النظام</div></div>
-<div class="dash-item hidden" id="menuSettings" onclick="window.openSection('settings')"><div class="dash-icon">⚙️</div><div class="dash-title">إعدادات الشركة</div></div>
+<div class="dash-item hidden" id="menuSettings" onclick="window.openSection('settings')"><div class="dash-icon">⚙️</div><div class="dash-title">إعدادات الشركة</div></div></div></div>
 </div>
-</details>
+
 </div>
 <!-- شاشة الموارد البشرية -->
 <div id="sectionHR" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div class="card"><div class="row" style="justify-content:space-between;align-items:center"><h2>👥 الموارد البشرية</h2><button id="refreshHRBtn" class="btn secondary" type="button" style="width:auto;margin:0">تحديث</button></div><div id="hrMsg" class="status hidden"></div><div class="dashboard-grid" style="margin-top:12px"><div class="dash-item" onclick="window.hrSwitchTab('employees')"><div class="dash-icon">👤</div><div class="dash-title">الموظفون</div></div><div class="dash-item" onclick="window.hrSwitchTab('attendance')"><div class="dash-icon">🕘</div><div class="dash-title">الحضور</div></div><div class="dash-item" onclick="window.hrSwitchTab('leaves')"><div class="dash-icon">🌴</div><div class="dash-title">الإجازات</div></div><div class="dash-item" onclick="window.hrSwitchTab('overtime')"><div class="dash-icon">⏱️</div><div class="dash-title">الإضافي</div></div><div class="dash-item" onclick="window.hrSwitchTab('advances')"><div class="dash-icon">💳</div><div class="dash-title">السلف</div></div><div class="dash-item" onclick="window.hrSwitchTab('payroll')"><div class="dash-icon">💰</div><div class="dash-title">الرواتب</div></div></div></div>
 <div id="hrTabEmployees" class="card hr-tab"><div class="row" style="justify-content:space-between"><h3>الموظفون</h3><button id="hrAddEmployeeBtn" class="btn hidden" type="button" style="width:auto;margin:0">＋ موظف جديد</button></div><div id="hrEmployeesList"><div class="empty">جارٍ التحميل...</div></div></div>
 <div id="hrTabAttendance" class="card hr-tab hidden"><h3>الحضور والانصراف</h3><form id="hrAttendanceForm" class="form-grid"><label>الموظف<select id="hrAttendanceEmployee" required></select></label><label>التاريخ<input id="hrAttendanceDate" type="date" required></label><label>الحالة<select id="hrAttendanceCode"><option value="PRESENT">حاضر</option><option value="ABSENT">غائب</option><option value="EXCUSED">مستأذن</option><option value="MISSION">مأمورية</option><option value="LEAVE">إجازة</option><option value="HOLIDAY">عطلة</option></select></label><label>دخول<input id="hrAttendanceIn" type="time"></label><label>خروج<input id="hrAttendanceOut" type="time"></label><label>ملاحظات<textarea id="hrAttendanceNotes" rows="2"></textarea></label><button id="hrSaveAttendanceBtn" class="btn" type="submit">حفظ الحضور</button></form><div id="hrAttendanceList"><div class="empty">جارٍ التحميل...</div></div></div>
@@ -1116,7 +1129,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div id="hrEmployeeModal" class="modal-form"><div class="modal-form-content"><div class="modal-header"><h3>إضافة موظف</h3><button class="close-btn" type="button" onclick="document.getElementById('hrEmployeeModal').classList.remove('active')">&times;</button></div><div class="modal-body"><form id="hrEmployeeForm" onsubmit="event.preventDefault();"><label>كود الموظف<input id="hrEmployeeCode" required maxlength="50"></label><label>اسم الموظف<input id="hrEmployeeName" required maxlength="200"></label><label>القسم<select id="hrEmployeeDepartment"></select></label><label>الوظيفة<select id="hrEmployeeJob"></select></label><label>تاريخ التعيين<input id="hrEmployeeHireDate" type="date" required></label><label>الراتب الأساسي<input id="hrEmployeeSalary" type="number" min="0" step="0.01" required></label><label>سعر ساعة الإضافي<input id="hrEmployeeOvertimeRate" type="number" min="0" step="0.01" value="0"></label><label>ساعات العمل اليومية<input id="hrEmployeeWorkHours" type="number" min="0.1" step="0.1" value="8"></label><label>يوم الإجازة الأسبوعية<select id="hrEmployeeOffDay"><option value="">بدون تحديد</option><option value="0">الأحد</option><option value="1">الاثنين</option><option value="2">الثلاثاء</option><option value="3">الأربعاء</option><option value="4">الخميس</option><option value="5">الجمعة</option><option value="6">السبت</option></select></label><label>ملاحظات<textarea id="hrEmployeeNotes" rows="2"></textarea></label><button id="hrSaveEmployeeBtn" class="btn" type="submit">حفظ الموظف</button><div id="hrEmployeeMsg" class="status hidden"></div></form></div></div></div>
 <!-- شاشة المستخدمين -->
 <div id="sectionUsers" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div id="userManagementCard" class="card hidden">
 <h2>👥 إدارة المستخدمين</h2>
 <button class="btn" onclick="document.getElementById('userFormModal').classList.add('active')">＋ إضافة مستخدم جديد</button>
@@ -1124,7 +1137,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 </div>
 <div id="sectionSystemReset" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div id="systemResetCard" class="card hidden">
 <h2>استعادة ضبط المصنع</h2>
 <p class="desc">عملية واحدة تنظف بيانات التشغيل وتعيد البرنامج إلى وضع تشغيل نظيف. لا تحذف بيانات النظام أو البيانات الأساسية الحالية. أي تصنيف أو صنف أو وصفة أو عميل أو مورد أو مخزن أو خزنة أو قائمة أسعار أو أصل أو شريك أو أي بيانات أساسية تضيفها مستقبلًا تظل موجودة بعد ضبط المصنع. الحذف أو الإيقاف أو التعديل على هذه البيانات يتم يدويًا من شاشات الإدارة.</p>
@@ -1136,7 +1149,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 <!-- شاشة إدارة المندوبين -->
 <div id="sectionSalesReps" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div id="salesRepsCard" class="card hidden">
 <div class="row" style="justify-content:space-between"><h2>🧑‍💼 إدارة المندوبين</h2><button id="addSalesRepBtn" class="btn" type="button" onclick="window.openSalesRepForm()" style="width:auto;margin:0;">＋ إضافة مندوب</button></div>
 <div class="row"><input id="salesRepSearch" type="search" placeholder="ابحث باسم المندوب..."><button id="refreshSalesRepsBtn" class="btn secondary" type="button">تحديث</button></div>
@@ -1220,7 +1233,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 
 <!-- شاشة إعدادات الشركة -->
 <div id="sectionSettings" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div class="card">
 <h2>⚙️ إعدادات الشركة</h2>
 <div id="settingsMsg" class="status hidden"></div>
@@ -1236,7 +1249,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 
 <div id="sectionLocations" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div id="locationsCard" class="card hidden">
 <div class="row" style="justify-content:space-between">
 <h2>🏭 إدارة المواقع</h2><button id="addLocationBtn" class="btn hidden" type="button" onclick="document.getElementById('locationFormModal').classList.add('active')">＋ إضافة</button>
@@ -1264,7 +1277,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 
 <div id="sectionTreasuries" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div id="treasuriesCard" class="card hidden">
 <div class="row" style="justify-content:space-between">
 <h2>💵 إدارة الخزائن</h2>
@@ -1294,7 +1307,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 
 <div id="sectionTreasuryTransfers" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div class="card">
 <h2>🔄 تحويل بين الخزائن</h2>
 <form id="treasuryTransferForm" onsubmit="event.preventDefault();">
@@ -1308,7 +1321,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 </div>
 <div id="sectionExpenses" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div id="expensesCard" class="card hidden">
 <div class="row" style="justify-content:space-between"><h2>🧾 المصروفات</h2><button id="addExpenseBtn" class="btn hidden" type="button" onclick="document.getElementById('expenseFormModal').classList.add('active')">＋ مصروف جديد</button></div>
 <div class="filter-box">
@@ -1347,7 +1360,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 
 <div id="sectionLandedCosts" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div class="card" id="landedCostsCard">
 <div class="row" style="justify-content:space-between"><h2>🚚 تكلفة نقل الخامات</h2><button id="addLandedCostBtn" class="btn" type="button" style="width:auto;">＋ تكلفة نقل جديدة</button></div>
 <p class="desc">تُوزع تكلفة النقل على أصناف فاتورة المشتريات حسب صافي قيمة كل صنف بعد الخصم.</p>
@@ -1369,7 +1382,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </form></div></div></div>
 
 <div id="sectionFixedAssets" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div class="card" id="fixedAssetsCard">
 <div class="row" style="justify-content:space-between"><h2>🏭 الأصول الثابتة</h2><button id="addFixedAssetBtn" class="btn" type="button" style="width:auto;">＋ شراء معدة أو آلة</button></div>
 <p class="desc">تُسجل معدات الإنتاج المشتراة أو المقدمة كمساهمة عينية من شريك، مع ربط كل حركة بقيدها المحاسبي.</p>
@@ -1400,7 +1413,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </form></div></div></div>
 
 <div id="sectionPartners" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div id="partnersCard" class="card hidden">
 <div class="row" style="justify-content:space-between">
 <h2>🤝 الشركاء</h2>
@@ -1507,7 +1520,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <button id="confirmPartnerVehicleContributionCancelBtn" class="btn danger" type="submit">تأكيد الإلغاء</button><div id="partnerVehicleContributionCancelMsg" class="status hidden"></div>
 </form></div></div></div>
 <div id="sectionAccounting" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div id="accountingCard" class="card hidden">
 <h2>🧮 المحاسبة والتقارير</h2>
 <div class="row" style="margin-bottom:15px;background:#f9fbf9;padding:10px;border-radius:10px;border:1px solid var(--line);display:flex;flex-direction:column;gap:10px;">
@@ -1651,7 +1664,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 
 <div id="sectionStock" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div id="stockCard" class="card hidden">
 <div class="row" style="justify-content:space-between"><h2>📊 أرصدة المخزون</h2><button id="adjustStockBtn" class="btn hidden" type="button" onclick="document.getElementById('stockFormModal').classList.add('active')">＋ تسوية</button></div>
 <div id="stockLocationTabs" style="display:flex;gap:5px;overflow-x:auto;padding-bottom:8px;margin-bottom:10px;"></div>
@@ -1662,7 +1675,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 </div>
 <div id="sectionStockSummary" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div class="card">
 <h2>ملخص إجمالي أرصدة المخزون</h2>
 <p class="desc">إجمالي رصيد كل صنف في جميع المواقع، مع عدد المواقع التي يتوفر بها الصنف.</p>
@@ -1671,7 +1684,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 </div>
 <div id="sectionStockLots" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div class="card" id="stockLotsCard">
 <h2>🏷️ تتبع التشغيلات</h2>
 <p class="desc">متابعة التشغيلات حسب المنتج والموقع والمصدر وتاريخ الإنتاج والصلاحية والرصيد المتبقي.</p>
@@ -1697,7 +1710,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 
 <div id="sectionStockTransfers" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div class="card">
 <h2>🔄 تحويل بين المخازن</h2>
 <form id="stockTransferForm" onsubmit="event.preventDefault();">
@@ -1715,7 +1728,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 
 <div id="sectionRecipes" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div id="recipesCard" class="card hidden">
 <div class="row" style="justify-content:space-between"><h2>📝 الوصفات</h2><button id="addRecipeBtn" class="btn hidden" type="button" onclick="document.getElementById('recipeFormModal').classList.add('active')">＋ إضافة وصفة</button></div>
 <div class="row"><input id="recipeSearch" type="search" placeholder="ابحث..."><button id="refreshRecipesBtn" class="btn secondary" type="button">تحديث</button></div>
@@ -1746,7 +1759,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 
 <div id="sectionProduction" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div id="productionCard" class="card hidden">
 <div class="row" style="justify-content:space-between"><h2>🏭 أوامر التشغيل</h2><button id="addProductionBtn" class="btn hidden" type="button" onclick="document.getElementById('productionFormModal').classList.add('active')">＋ أمر تشغيل</button></div>
 <div class="row"><input id="productionSearch" type="search" placeholder="ابحث..."><button id="refreshProductionBtn" class="btn secondary" type="button">تحديث</button></div>
@@ -1755,7 +1768,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 </div>
 <div id="sectionProductionDailySummary" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div class="card">
 <h2>ملخص الإنتاج اليومي</h2>
 <p class="desc">الكميات التي اكتملت في التاريخ المحدد، مجمعة حسب الصنف.</p>
@@ -1839,7 +1852,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 
 <div id="sectionTrips" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div id="tripsCard" class="card hidden">
 <div class="row" style="justify-content:space-between"><h2>🚐 الجولات</h2><button id="addTripBtn" class="btn hidden" type="button" onclick="document.getElementById('tripFormModal').classList.add('active')">＋ جولة جديدة</button></div>
 <div class="row"><input id="tripSearch" type="search" placeholder="ابحث..."><button id="refreshTripsBtn" class="btn secondary" type="button">تحديث</button></div>
@@ -1867,7 +1880,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 
 <div id="sectionCustomers" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div id="customersCard" class="card hidden">
 <div class="row" style="justify-content:space-between"><h2>👥 العملاء</h2><button id="addCustomerBtn" class="btn hidden" type="button" onclick="window.openCustomerForm()">＋ إضافة عميل</button></div>
 <div class="row"><input id="customerSearch" type="search" placeholder="ابحث بالاسم أو الموبايل"><button id="refreshCustomersBtn" class="btn secondary" type="button">تحديث</button></div>
@@ -1931,7 +1944,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 
 <div id="sectionSuppliers" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div id="suppliersCard" class="card hidden">
 <div class="row" style="justify-content:space-between"><h2>🚚 الموردين</h2><button id="addSupplierBtn" class="btn hidden" type="button" onclick="openNewSupplierForm()">＋ إضافة مورد</button></div>
 <div class="row"><input id="supplierSearch" type="search" placeholder="ابحث..."><button id="refreshSuppliersBtn" class="btn secondary" type="button">تحديث</button></div>
@@ -1959,7 +1972,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 
 <div id="sectionSales" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div id="salesCard" class="card hidden">
 <div class="row" style="justify-content:space-between"><h2>🧾 فواتير البيع</h2>
 <div style="display:flex;gap:8px;">
@@ -1975,7 +1988,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 
 <div id="sectionSalesReturns" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div class="card">
 <div class="row" style="justify-content:space-between">
 <h2>↩️ مرتجع مبيعات</h2>
@@ -1999,7 +2012,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 
 <div id="sectionPriceLists" class="sub-section hidden">
-  <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+  <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
   <div class="card">
     <h2>قوائم الأسعار</h2>
     <div id="priceListsMsg" class="status hidden"></div>
@@ -2133,7 +2146,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 
 <div id="sectionPurchases" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div id="purchasesCard" class="card hidden">
 <div class="row" style="justify-content:space-between"><h2>🛒 فواتير المشتريات</h2><button id="addPurchaseBtn" class="btn hidden" type="button" onclick="document.getElementById('purchaseFormModal').classList.add('active')">＋ فاتورة مشتريات</button></div>
 <div class="row"><input id="purchasesSearch" type="search" placeholder="ابحث..."><button id="refreshPurchasesBtn" class="btn secondary" type="button">تحديث</button></div>
@@ -2184,7 +2197,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 
 <div id="sectionSupplierPayments" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div class="card">
 <h2>💸 سداد الموردين</h2>
 <div class="filter-box">
@@ -2224,7 +2237,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 
 <div id="sectionPurchaseReturns" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div class="card">
 <h2>↩️ مرتجع مشتريات</h2>
 <div class="filter-box">
@@ -2279,7 +2292,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 
 <div id="sectionReports" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div class="card">
 <h2>📈 التقارير المتقدمة</h2>
 <div class="row" style="margin-bottom:15px;gap:5px;">
@@ -2317,7 +2330,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 
 <div id="sectionReservations" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div class="card">
 <div class="row" style="justify-content:space-between"><h2>🔒 الحجوزات</h2><button id="addReservationBtn" class="btn" type="button">＋ حجز جديد</button></div>
 <div id="reservationsList" style="margin-top:15px;"><div class="empty">جارٍ التحميل...</div></div>
@@ -2342,7 +2355,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 
 <div id="sectionCollections" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div id="collectionsCard" class="card hidden">
 <div class="row" style="justify-content:space-between;flex-wrap:wrap"><h2>💰 التحصيلات</h2><div class="row" style="gap:8px"><button id="settleUnassignedRepCustodyBtn" class="btn secondary hidden" type="button">تسوية عهدة بدون جولة</button><button id="addCollectionBtn" class="btn hidden" type="button" onclick="document.getElementById('collectionFormModal').classList.add('active')">＋ تسجيل تحصيل</button></div></div>
 <div class="filter-box">
@@ -2406,7 +2419,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 </div>
 <div id="sectionProducts" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div class="card product-hub">
 <div class="row" style="justify-content:space-between"><div><h2 style="margin:0">إدارة المنتجات</h2><div class="details">اختر نوع الأصناف لفتح شاشة الإدارة الخاصة به</div></div><button id="addBtn" class="btn hidden" type="button" onclick="window.openNewProductForm()">إضافة صنف</button></div>
 <div class="product-menu-groups" style="margin-top:16px;display:grid;gap:12px">
@@ -2479,7 +2492,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div id="products"><div class="empty">جارٍ تحميل المنتجات...</div></div>
 </div></div></div>
 <div id="sectionPackaging" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">رجوع للقائمة</button>
+<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div class="card">
 <h2>خيارات التعبئة</h2>
 <div id="packagingManagement" class="card" style="margin-top:14px;">
@@ -2592,7 +2605,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v176</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v177</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -2994,6 +3007,27 @@ try {
     footerIds.forEach(id => { const el = $(id); if(el) el.innerHTML = footerHtml; });
   }
     
+// ========== التنقل بين مركز البيانات وأقسامه ==========
+let currentDataGroup = null;
+window.openDataGroup = function(key){
+  const page=document.querySelector('.data-group-page[data-group-key="'+key+'"]');
+  const card=$("dataCategoryCard"+key);
+  if(!page||!card||card.classList.contains("hidden")){showToast("هذا القسم غير متاح لحسابك.","error");return;}
+  currentDataGroup=key;
+  if($("dataCategoryHome"))$("dataCategoryHome").classList.add("hidden");
+  document.querySelectorAll(".data-group-page").forEach(el=>el.classList.toggle("hidden",el!==page));
+  document.querySelectorAll(".sub-section").forEach(el=>el.classList.add("hidden"));
+  if($("data"))$("data").classList.remove("hidden");
+  window.scrollTo(0,0);
+};
+window.closeDataGroup = function(){
+  currentDataGroup=null;
+  document.querySelectorAll(".data-group-page,.sub-section").forEach(el=>el.classList.add("hidden"));
+  if($("dataCategoryHome"))$("dataCategoryHome").classList.remove("hidden");
+  if($("data"))$("data").classList.remove("hidden");
+  if($("dataDashboard"))$("dataDashboard").classList.remove("hidden");
+  window.scrollTo(0,0);
+};
 // ========== التنقل ==========
 function hideSections(){ ["login","recovery","newPass","home","tasks","tasksChartsScreen","data","nav"].forEach(id=>{ if($(id)) $(id).classList.add("hidden"); }); }
 function showLogin(){ hideSections(); if($("login")) $("login").classList.remove("hidden"); }
@@ -3014,7 +3048,9 @@ window.openSection = function(name) {
   if($("tasks")) $("tasks").classList.add("hidden"); 
   if($("data")) $("data").classList.remove("hidden");
   document.querySelectorAll(".navbtn").forEach(b=>{ b.classList.toggle("active",b.dataset.page==="data"); });
-  if($("dataDashboard")) $("dataDashboard").classList.add("hidden");
+  if($("dataDashboard")) $("dataDashboard").classList.remove("hidden");
+  if($("dataCategoryHome")) $("dataCategoryHome").classList.add("hidden");
+  document.querySelectorAll(".data-group-page").forEach(el=>el.classList.add("hidden"));
   document.querySelectorAll(".sub-section").forEach(el => el.classList.add("hidden"));
   
   let target = $(`section${name.charAt(0).toUpperCase() + name.slice(1)}`);
@@ -3107,11 +3143,18 @@ window.refreshDateDisplayInputs = refreshDateDisplayInputs;
 window.closeSection = function() {
   document.querySelectorAll(".sub-section").forEach(el => el.classList.add("hidden"));
   if($("dataDashboard")) $("dataDashboard").classList.remove("hidden");
+  document.querySelectorAll(".data-group-page").forEach(el=>el.classList.toggle("hidden",el.dataset.groupKey!==currentDataGroup));
+  if(currentDataGroup){
+    if($("dataCategoryHome"))$("dataCategoryHome").classList.add("hidden");
+  }else{
+    if($("dataCategoryHome"))$("dataCategoryHome").classList.remove("hidden");
+  }
   refreshDateDisplayInputs();
   window.scrollTo(0, 0);
 }
 
 function page(name){
+  if(name!=="data")currentDataGroup=null;
   if($("home")) $("home").classList.toggle("hidden",name!=="home");
   if($("tasks")) $("tasks").classList.toggle("hidden",name!=="tasks");
   if($("data")) $("data").classList.toggle("hidden",name!=="data");
@@ -3119,6 +3162,7 @@ function page(name){
   if(name==="tasks"){ loadTasks(); }
   if(name==="home"){ loadHomeDashboard(); }
   if(name==="data"){
+    currentDataGroup=null;
     window.closeSection();
     if(navigator.onLine) { 
         loadProducts(); if(canLoadLocations)loadLocations(); if(canViewTreasuries)loadTreasuries(); if(canViewStock)loadStock(); 
@@ -3494,7 +3538,7 @@ async function userInfo(user){
     try{ canViewProduction=await permission("PRODUCTION_VIEW") || isSystemAdmin; canManageProduction=await permission("PRODUCTION_MANAGE") || isSystemAdmin; canLoadLocations=canViewLocations || canViewStockTransfers || await permission("INVENTORY_VIEW") || canViewProduction || canManageProduction || isSystemAdmin; if($("menuProduction")) $("menuProduction").classList.toggle("hidden",!canViewProduction); if($("menuProductionDailySummary")) $("menuProductionDailySummary").classList.toggle("hidden",!canViewProduction); if($("productionCard")) $("productionCard").classList.toggle("hidden",!canViewProduction); if($("addProductionBtn")) $("addProductionBtn").classList.toggle("hidden",!canManageProduction); }catch(e){}
     try{ canViewRecipes=await permission("RECIPES_VIEW") || canViewProduction || canManageProduction || isSystemAdmin; canManageRecipes=await permission("RECIPES_MANAGE") || canManageProduction || isSystemAdmin; if($("menuRecipes")) $("menuRecipes").classList.toggle("hidden",!canViewRecipes); if($("recipesCard")) $("recipesCard").classList.toggle("hidden",!canViewRecipes); if($("addRecipeBtn")) $("addRecipeBtn").classList.toggle("hidden",!canManageRecipes); }catch(e){}
     try{ canViewAccounting=await permission("ACCOUNTING_VIEW") || isSystemAdmin; canManageAccounting=await permission("ACCOUNTING_MANAGE") || isSystemAdmin; if($("menuAccounting")) $("menuAccounting").classList.toggle("hidden",!canViewAccounting); if($("accountingCard")) $("accountingCard").classList.toggle("hidden",!canViewAccounting); if($("btnPostEntries")) $("btnPostEntries").classList.toggle("hidden",!canManageAccounting); if($("btnAdjustment")) $("btnAdjustment").classList.toggle("hidden",!canManageAccounting); if($("btnBackup")) $("btnBackup").classList.toggle("hidden",!isSystemAdmin); }catch(e){}
-    try{canViewHR=await permission("HR_EMPLOYEES_VIEW")||await permission("HR_ATTENDANCE_MANAGE")||await permission("HR_LEAVES_MANAGE")||await permission("HR_PAYROLL_MANAGE")||await permission("HR_PAYROLL_APPROVE")||await permission("HR_PAYROLL_PAY")||isSystemAdmin;canManageHR=await permission("HR_EMPLOYEES_MANAGE")||isSystemAdmin;canManageHRAttendance=await permission("HR_ATTENDANCE_MANAGE")||isSystemAdmin;canManageHRLeaves=await permission("HR_LEAVES_MANAGE")||isSystemAdmin;canManageHRPayroll=await permission("HR_PAYROLL_MANAGE")||isSystemAdmin;canApproveHRPayroll=await permission("HR_PAYROLL_APPROVE")||isSystemAdmin;canPayHRPayroll=await permission("HR_PAYROLL_PAY")||isSystemAdmin;if($("menuHR"))$("menuHR").classList.toggle("hidden",!canViewHR);if($("hrDashboardGroup"))$("hrDashboardGroup").classList.toggle("hidden",!canViewHR);}catch(e){canViewHR=false;}
+    try{canViewHR=await permission("HR_EMPLOYEES_VIEW")||await permission("HR_ATTENDANCE_MANAGE")||await permission("HR_LEAVES_MANAGE")||await permission("HR_PAYROLL_MANAGE")||await permission("HR_PAYROLL_APPROVE")||await permission("HR_PAYROLL_PAY")||isSystemAdmin;canManageHR=await permission("HR_EMPLOYEES_MANAGE")||isSystemAdmin;canManageHRAttendance=await permission("HR_ATTENDANCE_MANAGE")||isSystemAdmin;canManageHRLeaves=await permission("HR_LEAVES_MANAGE")||isSystemAdmin;canManageHRPayroll=await permission("HR_PAYROLL_MANAGE")||isSystemAdmin;canApproveHRPayroll=await permission("HR_PAYROLL_APPROVE")||isSystemAdmin;canPayHRPayroll=await permission("HR_PAYROLL_PAY")||isSystemAdmin;if($("menuHR"))$("menuHR").classList.toggle("hidden",!canViewHR);if($("dataCategoryCardhr"))$("dataCategoryCardhr").classList.toggle("hidden",!canViewHR);}catch(e){canViewHR=false;}
     try{ canViewReservations=await permission("RESERVATIONS_VIEW") || isSystemAdmin; canManageReservations=await permission("RESERVATIONS_MANAGE") || isSystemAdmin; if($("menuReservations")) $("menuReservations").classList.toggle("hidden",!canViewReservations); if($("addReservationBtn")) $("addReservationBtn").classList.toggle("hidden",!canManageReservations); }catch(e){}
     try{ canViewPriceLists=await permission("PRICES_VIEW") || await permission("PRICES_MANAGE") || isSystemAdmin; canManagePriceLists=await permission("PRICES_MANAGE") || isSystemAdmin; }catch(e){ canViewPriceLists=false; canManagePriceLists=false; }
     if($("menuPriceLists")) $("menuPriceLists").classList.toggle("hidden",!canViewPriceLists);
@@ -3615,8 +3659,8 @@ function getRoleQuickLinks(roleCode){
 
 function applyRoleWorkspace(){
   if(isSystemAdmin||isPartner){
-    document.querySelectorAll("#dataDashboard .dash-item").forEach(el=>el.classList.remove("hidden"));
-    document.querySelectorAll("#dataDashboard .dashboard-group").forEach(el=>el.classList.remove("hidden"));
+    document.querySelectorAll("#dataDashboard .data-group-items .dash-item").forEach(el=>el.classList.remove("hidden"));
+    if(window.refreshDataCategoryCards)window.refreshDataCategoryCards();
     return;
   }
   const allowedMenuIds = getRoleMenuIds(currentRoleCode);
@@ -3626,10 +3670,7 @@ function applyRoleWorkspace(){
     if(el.id==="menuFixedAssets")allowed=allowed&&canViewFixedAssets;
     el.classList.toggle("hidden", !allowed);
   });
-  document.querySelectorAll("#dataDashboard .dashboard-group").forEach(group=>{
-    const hasVisibleItem = Array.from(group.querySelectorAll(".dash-item")).some(item=>!item.classList.contains("hidden"));
-    group.classList.toggle("hidden", !hasVisibleItem);
-  });
+  if(window.refreshDataCategoryCards)window.refreshDataCategoryCards();
 }
 
 function updateSalesRepField(){
@@ -12493,43 +12534,46 @@ $("hrSaveLeave")?.addEventListener("click",async()=>{try{if(!canManageHRLeaves)t
 $("hrCreatePeriod")?.addEventListener("click",async()=>{try{const r=await db.rpc("hr_create_payroll_period",{p_period_code:$("hrPeriodCode").value.trim(),p_period_start:$("hrPeriodStart").value,p_period_end:$("hrPeriodEnd").value});if(r.error)throw r.error;showToast("تم إنشاء فترة الرواتب","success");await loadHR();}catch(e){msg($("hrPayrollMsg"),err(e),"error");}});
 });
 
-// ====== مركز البيانات: بحث متزامن مع تحميل الصلاحيات ======
+// ====== مركز البيانات: البحث داخل الأقسام الرئيسية والفرعية ======
 (function(){
   const input=document.getElementById("dataSectionSearch");
   const clear=document.getElementById("clearDataSectionSearch");
   const root=document.getElementById("dataDashboard");
   if(!input||!clear||!root)return;
-  const groups=[...root.querySelectorAll("details.dashboard-group")];
-  function filter(){
+  const groups=[...root.querySelectorAll(".data-group-page")];
+  function refresh(){
     const q=String(input.value||"").trim().toLocaleLowerCase("ar");
+    let visible=0;
     groups.forEach(group=>{
-      let matches=0,available=0;
-      group.querySelectorAll(".dash-item").forEach(item=>{
-        const permitted=!item.classList.contains("hidden");
-        if(!permitted){item.style.removeProperty("display");return;}
-        available++;
-        const title=String(item.textContent||"").toLocaleLowerCase("ar");
-        const show=!q||title.includes(q);
-        item.style.display=show?"":"none";
-        if(show)matches++;
-      });
-      const hint=group.querySelector(".product-menu-hint");
-      if(hint)hint.textContent=available+" أقسام متاحة";
-      group.classList.toggle("mm-search-no-match",q.length>0&&matches===0);
-      group.open=q.length>0&&matches>0;
+      const key=group.dataset.groupKey;
+      const items=[...group.querySelectorAll(".data-group-items .dash-item")];
+      const available=items.filter(item=>!item.classList.contains("hidden"));
+      const title=String(group.dataset.groupTitle||"").toLocaleLowerCase("ar");
+      const match=available.some(item=>String(item.textContent||"").toLocaleLowerCase("ar").includes(q));
+      const show=available.length>0&&(!q||title.includes(q)||match);
+      const card=document.getElementById("dataCategoryCard"+key);
+      if(card){
+        card.classList.toggle("hidden",!show);
+        const count=document.getElementById("dataCategoryCount"+key);
+        if(count)count.textContent=available.length+" أقسام متاحة";
+      }
+      if(show)visible++;
     });
+    const empty=document.getElementById("dataSearchEmpty");
+    if(empty)empty.classList.toggle("hidden",visible>0);
   }
-  input.addEventListener("input",filter);
-  clear.addEventListener("click",()=>{input.value="";filter();input.focus();});
-  const observer=new MutationObserver(filter);
+  input.addEventListener("input",refresh);
+  clear.addEventListener("click",()=>{input.value="";refresh();input.focus();});
+  const observer=new MutationObserver(refresh);
   observer.observe(root,{subtree:true,attributes:true,attributeFilter:["class"]});
-  filter();
+  refresh();
+  window.refreshDataCategoryCards=refresh;
 })();
 
 // ====== PWA ======
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=189', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
+    navigator.serviceWorker.register('./sw.js?v=190', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
   });
 }
 
