@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v175</title>
+<title>MeatManagement v176</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -89,9 +89,17 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 .total-box .line{display:flex;justify-content:space-between;padding:4px 0;font-size:14px}
 .total-box .grand{font-weight:bold;font-size:17px;border-top:1px solid #c9d5c9;margin-top:6px;padding-top:8px;color:var(--g)}
 .invoice-info{background:#f9fbf9;border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:8px;font-size:13px;line-height:1.9}
-.dashboard-group{margin-bottom:20px}
+.dashboard-group{margin-bottom:12px}
 .dashboard-title{font-size:16px;font-weight:bold;color:var(--g);margin-bottom:10px;padding-bottom:5px;border-bottom:2px solid var(--gold);display:inline-block}
 .dashboard-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:12px}
+.product-menu-group.dashboard-group{margin-bottom:10px}
+.product-menu-group.dashboard-group>summary{padding:13px 12px;min-height:58px}
+.product-menu-group.dashboard-group>summary .dashboard-title{display:block;margin:0;padding:0;border:0;font-size:15px;line-height:1.5}
+.product-menu-group.dashboard-group>summary .product-menu-hint{font-size:11px;white-space:nowrap}
+.product-menu-group.dashboard-group>.dashboard-grid{padding:10px}
+.dashboard-group.mm-search-no-match{display:none!important}
+.data-search-row{position:sticky;top:0;z-index:4;background:var(--card);padding:8px 0}
+.data-search-row input{min-height:44px}
 .dash-item{display:flex;flex-direction:column;align-items:center;justify-content:center;background:white;border:1px solid var(--line);border-radius:14px;padding:16px 10px;cursor:pointer;box-shadow:0 2px 8px #142d1905;transition:transform .1s}
 .dash-item:active{transform:scale(0.95)}
 .product-menu-group{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 2px 8px #142d1905}
@@ -699,7 +707,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v175]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v176]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1025,16 +1033,16 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <h2>🗂️ مركز البيانات</h2>
 <p class="desc">ابحث عن القسم الذي تريد فتحه، أو اختره من المجموعات.</p>
 <div class="data-search-row"><input id="dataSectionSearch" type="search" placeholder="ابحث عن قسم مثل المخزون أو العملاء..." autocomplete="off"><button id="clearDataSectionSearch" class="btn secondary" type="button">مسح</button></div>
-<div class="dashboard-group">
-<div class="dashboard-title">إدارة المنتجات</div>
+<details class="product-menu-group dashboard-group">
+<summary><span class="dashboard-title">إدارة المنتجات</span><span class="product-menu-hint">جارٍ تحميل الأقسام...</span></summary>
 <div class="dashboard-grid">
 <div class="dash-item hidden" id="menuProducts" onclick="window.openSection('products')"><div class="dash-icon">📦</div><div class="dash-title">إدارة المنتجات</div></div>
 <div class="dash-item hidden" id="menuStockSummary" onclick="window.openSection('stockSummary')"><div class="dash-icon">📋</div><div class="dash-title">ملخص أرصدة الأصناف</div></div>
 <div class="dash-item hidden" id="menuProductionDailySummary" onclick="window.openSection('productionDailySummary')"><div class="dash-icon">📅</div><div class="dash-title">ملخص الإنتاج اليومي</div></div>
 </div>
-</div>
-<div class="dashboard-group">
-<div class="dashboard-title">المخزون</div>
+</details>
+<details class="product-menu-group dashboard-group">
+<summary><span class="dashboard-title">المخزون</span><span class="product-menu-hint">جارٍ تحميل الأقسام...</span></summary>
 <div class="dashboard-grid">
 <div class="dash-item hidden" id="menuLocations" onclick="window.openSection('locations')"><div class="dash-icon">🏭</div><div class="dash-title">المواقع والمخازن</div></div>
 <div class="dash-item hidden" id="menuStock" onclick="window.openSection('stock')"><div class="dash-icon">📊</div><div class="dash-title">أرصدة المخزون</div></div>
@@ -1042,23 +1050,23 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div class="dash-item hidden" id="menuPackaging" onclick="window.openSection('packaging')"><div class="dash-icon">📦</div><div class="dash-title">خيارات التعبئة</div></div>
 <div class="dash-item hidden" id="menuReservations" onclick="window.openSection('reservations')"><div class="dash-icon">🔒</div><div class="dash-title">الحجوزات</div></div>
 </div>
-</div>
-<div class="dashboard-group">
-<div class="dashboard-title">الإنتاج</div>
+</details>
+<details class="product-menu-group dashboard-group">
+<summary><span class="dashboard-title">الإنتاج</span><span class="product-menu-hint">جارٍ تحميل الأقسام...</span></summary>
 <div class="dashboard-grid">
 <div class="dash-item hidden" id="menuRecipes" onclick="window.openSection('recipes')"><div class="dash-icon">📝</div><div class="dash-title">الوصفات</div></div>
 <div class="dash-item hidden" id="menuProduction" onclick="window.openSection('production')"><div class="dash-icon">🏭</div><div class="dash-title">أوامر التشغيل</div></div>
 <div class="dash-item hidden" id="menuStockLots" onclick="window.openSection('stockLots')"><div class="dash-icon">🏷️</div><div class="dash-title">تتبع التشغيلات</div></div>
 </div>
-</div>
-<div class="dashboard-group" id="hrDashboardGroup">
-<div class="dashboard-title">👥 الموارد البشرية</div>
+</details>
+<details class="product-menu-group dashboard-group" id="hrDashboardGroup">
+<summary><span class="dashboard-title">👥 الموارد البشرية</span><span class="product-menu-hint">جارٍ تحميل الأقسام...</span></summary>
 <div class="dashboard-grid">
 <div class="dash-item hidden" id="menuHR" onclick="window.openSection('hr')"><div class="dash-icon">👥</div><div class="dash-title">الموارد البشرية</div></div>
 </div>
-</div>
-<div class="dashboard-group">
-<div class="dashboard-title">🛒 المشتريات والموردين</div>
+</details>
+<details class="product-menu-group dashboard-group">
+<summary><span class="dashboard-title">🛒 المشتريات والموردين</span><span class="product-menu-hint">جارٍ تحميل الأقسام...</span></summary>
 <div class="dashboard-grid">
 <div class="dash-item hidden" id="menuSuppliers" onclick="window.openSection('suppliers')"><div class="dash-icon">🚚</div><div class="dash-title">الموردين</div></div>
 <div class="dash-item hidden" id="menuPurchases" onclick="window.openSection('purchases')"><div class="dash-icon">🛒</div><div class="dash-title">فواتير المشتريات</div></div>
@@ -1068,9 +1076,9 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div class="dash-item hidden" id="menuSupplierPayments" onclick="window.openSection('supplierPayments')"><div class="dash-icon">💸</div><div class="dash-title">سداد موردين</div></div>
 <div class="dash-item hidden" id="menuExpenses" onclick="window.openSection('expenses')"><div class="dash-icon">🧾</div><div class="dash-title">المصروفات</div></div>
 </div>
-</div>
-<div class="dashboard-group">
-<div class="dashboard-title">💰 المبيعات والتوزيع</div>
+</details>
+<details class="product-menu-group dashboard-group">
+<summary><span class="dashboard-title">💰 المبيعات والتوزيع</span><span class="product-menu-hint">جارٍ تحميل الأقسام...</span></summary>
 <div class="dashboard-grid">
 <div class="dash-item hidden" id="menuCustomers" onclick="window.openSection('customers')"><div class="dash-icon">👥</div><div class="dash-title">العملاء</div></div>
 <div class="dash-item hidden" id="menuSales" onclick="window.openSection('sales')"><div class="dash-icon">🧾</div><div class="dash-title">فواتير البيع</div></div>
@@ -1080,9 +1088,9 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div class="dash-item hidden" id="menuTrips" onclick="window.openSection('trips')"><div class="dash-icon">🚐</div><div class="dash-title">الجولات</div></div>
 <div class="dash-item hidden" id="menuSalesReps" onclick="window.openSection('salesReps')"><div class="dash-icon">🧑‍💼</div><div class="dash-title">إدارة المندوبين</div></div>
 </div>
-</div>
-<div class="dashboard-group">
-<div class="dashboard-title">🧮 الحسابات والإدارة</div>
+</details>
+<details class="product-menu-group dashboard-group">
+<summary><span class="dashboard-title">🧮 الحسابات والإدارة</span><span class="product-menu-hint">جارٍ تحميل الأقسام...</span></summary>
 <div class="dashboard-grid">
 <div class="dash-item hidden" id="menuTreasuries" onclick="window.openSection('treasuries')"><div class="dash-icon">💵</div><div class="dash-title">الخزائن</div></div>
 <div class="dash-item hidden" id="menuTreasuryTransfers" onclick="window.openSection('treasuryTransfers')"><div class="dash-icon">🔄</div><div class="dash-title">تحويل خزائن</div></div>
@@ -1093,7 +1101,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div class="dash-item hidden" id="menuSystemReset" onclick="window.openSection('systemReset')"><div class="dash-icon">♻️</div><div class="dash-title">إعادة تهيئة النظام</div></div>
 <div class="dash-item hidden" id="menuSettings" onclick="window.openSection('settings')"><div class="dash-icon">⚙️</div><div class="dash-title">إعدادات الشركة</div></div>
 </div>
-</div>
+</details>
 </div>
 <!-- شاشة الموارد البشرية -->
 <div id="sectionHR" class="sub-section hidden">
@@ -2584,7 +2592,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v175</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v176</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -12485,35 +12493,43 @@ $("hrSaveLeave")?.addEventListener("click",async()=>{try{if(!canManageHRLeaves)t
 $("hrCreatePeriod")?.addEventListener("click",async()=>{try{const r=await db.rpc("hr_create_payroll_period",{p_period_code:$("hrPeriodCode").value.trim(),p_period_start:$("hrPeriodStart").value,p_period_end:$("hrPeriodEnd").value});if(r.error)throw r.error;showToast("تم إنشاء فترة الرواتب","success");await loadHR();}catch(e){msg($("hrPayrollMsg"),err(e),"error");}});
 });
 
-// ====== مركز البيانات: البحث السريع داخل الأقسام المتاحة ======
+// ====== مركز البيانات: بحث متزامن مع تحميل الصلاحيات ======
 (function(){
   const input=document.getElementById("dataSectionSearch");
   const clear=document.getElementById("clearDataSectionSearch");
   const root=document.getElementById("dataDashboard");
   if(!input||!clear||!root)return;
+  const groups=[...root.querySelectorAll("details.dashboard-group")];
   function filter(){
     const q=String(input.value||"").trim().toLocaleLowerCase("ar");
-    root.querySelectorAll(".dashboard-group").forEach(group=>{
-      let matches=0;
+    groups.forEach(group=>{
+      let matches=0,available=0;
       group.querySelectorAll(".dash-item").forEach(item=>{
         const permitted=!item.classList.contains("hidden");
+        if(!permitted){item.style.removeProperty("display");return;}
+        available++;
         const title=String(item.textContent||"").toLocaleLowerCase("ar");
-        const show=permitted&&(!q||title.includes(q));
+        const show=!q||title.includes(q);
         item.style.display=show?"":"none";
         if(show)matches++;
       });
-      group.classList.toggle("mm-search-no-match",matches===0);
+      const hint=group.querySelector(".product-menu-hint");
+      if(hint)hint.textContent=available+" أقسام متاحة";
+      group.classList.toggle("mm-search-no-match",q.length>0&&matches===0);
+      group.open=q.length>0&&matches>0;
     });
   }
   input.addEventListener("input",filter);
   clear.addEventListener("click",()=>{input.value="";filter();input.focus();});
+  const observer=new MutationObserver(filter);
+  observer.observe(root,{subtree:true,attributes:true,attributeFilter:["class"]});
   filter();
 })();
 
 // ====== PWA ======
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=188', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
+    navigator.serviceWorker.register('./sw.js?v=189', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
   });
 }
 
