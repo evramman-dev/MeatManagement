@@ -593,7 +593,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v170]</span></h1>
+<h1>🥩 MeatManagement <span style="font-size:12px;color:#aaa;">[v172]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -2428,12 +2428,13 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div class="dash-item" role="button" tabindex="0" onclick="window.hrOpenPanel('overtime')"><div class="dash-icon">⏱️</div><div class="dash-title">الإضافي</div></div>
 <div class="dash-item" role="button" tabindex="0" onclick="window.hrOpenPanel('advances')"><div class="dash-icon">💳</div><div class="dash-title">السلف</div></div>
 <div class="dash-item" role="button" tabindex="0" onclick="window.hrOpenPanel('payrollDetails')"><div class="dash-icon">📊</div><div class="dash-title">تفاصيل مسير الرواتب</div></div>
-</div>
+</div><button id="hrBackToData" type="button" class="btn secondary" onclick="window.closeSection()" style="width:auto;margin:12px 0">⬅ رجوع إلى مركز البيانات</button>
+
 <div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">إعداد HR</h3>
 <div class="grid">
-<div><label>كود القسم<input id="hrDeptCode"></label></div><div><label>اسم القسم<input id="hrDeptName"></label></div>
-<div><label>كود الوظيفة<input id="hrJobCode"></label></div><div><label>اسم الوظيفة<input id="hrJobName"></label></div>
-<div><label>كود الإجازة<input id="hrLeaveCode"></label></div><div><label>اسم الإجازة<input id="hrLeaveName"></label></div>
+<div class="info">ينشئ البرنامج كود القسم تلقائيًا عند الحفظ.</div><div><label>اسم القسم<input id="hrDeptName"></label></div>
+<div class="info">ينشئ البرنامج كود الوظيفة تلقائيًا عند الحفظ.</div><div><label>اسم الوظيفة<input id="hrJobName"></label></div>
+<div class="info">ينشئ البرنامج كود نوع الإجازة تلقائيًا عند الحفظ.</div><div><label>اسم الإجازة<input id="hrLeaveName"></label></div>
 </div>
 <label class="check"><input id="hrLeavePaid" type="checkbox" checked>إجازة مدفوعة</label>
 <div class="actions">
@@ -2444,31 +2445,31 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div id="hrSetupMsg" class="status hidden"></div>
 </div>
 <div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">الموظفون</h3><div id="hrEmployeeFormWrap"><div class="grid">
-<div><label>كود الموظف<input id="hrEmployeeCode"></label></div><div><label>اسم الموظف<input id="hrEmployeeName"></label></div>
-<div><label>القسم<select id="hrEmployeeDept"><option value="">اختر القسم</option></select></label></div><div><label>الوظيفة<select id="hrEmployeeJob"><option value="">اختر الوظيفة</option></select></label></div>
+<div><label>اسم الموظف<input id="hrV2EmployeeName"></label></div>
+<div><label>القسم<select id="hrEmployeeDept"><option value="">اختر القسم</option></select></label></div><div><label>الوظيفة<select id="hrV2EmployeeJob"><option value="">اختر الوظيفة</option></select></label></div>
 <div><label>تاريخ التعيين<input id="hrHireDate" type="date"></label></div><div><label>الراتب الأساسي<input id="hrBaseSalary" type="number" min="0" step="0.01" value="0"></label></div></div>
-<button id="hrSaveEmployee" class="btn">حفظ الموظف</button><div id="hrEmployeeMsg" class="status hidden"></div></div><div id="hrEmployeesList"></div></div>
+<button id="hrSaveEmployee" class="btn">حفظ الموظف</button><div id="hrV2EmployeeMsg" class="status hidden"></div></div><div id="hrV2EmployeesList"></div></div>
 <div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">الحضور</h3><div class="grid">
-<div><label>الموظف<select id="hrAttendanceEmployee"><option value="">اختر الموظف</option></select></label></div><div><label>التاريخ<input id="hrAttendanceDate" type="date"></label></div>
-<div><label>الحالة<select id="hrAttendanceCode"><option value="PRESENT">حضور</option><option value="ABSENT">غياب</option><option value="EXCUSED">غياب بعذر</option><option value="MISSION">مأمورية</option></select></label></div></div>
+<div><label>الموظف<select id="hrV2AttendanceEmployee"><option value="">اختر الموظف</option></select></label></div><div><label>التاريخ<input id="hrV2AttendanceDate" type="date"></label></div>
+<div><label>الحالة<select id="hrV2AttendanceCode"><option value="PRESENT">حضور</option><option value="ABSENT">غياب</option><option value="EXCUSED">غياب بعذر</option><option value="MISSION">مأمورية</option></select></label></div></div>
 <button id="hrSaveAttendance" class="btn">تسجيل الحضور</button><div id="hrAttendanceMsg" class="status hidden"></div></div>
 <div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">الإجازات</h3><div class="grid">
 <div><label>الموظف<select id="hrLeaveEmployee"><option value="">اختر الموظف</option></select></label></div><div><label>نوع الإجازة<select id="hrLeaveType"><option value="">اختر النوع</option></select></label></div>
 <div><label>من<input id="hrLeaveStart" type="date"></label></div><div><label>إلى<input id="hrLeaveEnd" type="date"></label></div></div><label>السبب<textarea id="hrLeaveReason" rows="2"></textarea></label>
-<button id="hrSaveLeave" class="btn">طلب إجازة</button><div id="hrLeaveMsg" class="status hidden"></div><div id="hrLeavesList"></div></div>
+<button id="hrSaveLeave" class="btn">طلب إجازة</button><div id="hrLeaveMsg" class="status hidden"></div><div id="hrV2LeavesList"></div></div>
 <div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">مسيرات الرواتب</h3><div class="grid">
-<div><label>كود الفترة<input id="hrPeriodCode" placeholder="مثال 2026-11"></label></div><div><label>من<input id="hrPeriodStart" type="date"></label></div><div><label>إلى<input id="hrPeriodEnd" type="date"></label></div></div>
+<div><label>كود الفترة<input id="hrV2PeriodCode" placeholder="مثال 2026-11"></label></div><div><label>من<input id="hrV2PeriodStart" type="date"></label></div><div><label>إلى<input id="hrV2PeriodEnd" type="date"></label></div></div>
 <button id="hrCreatePeriod" class="btn">إنشاء فترة</button><div id="hrPayrollMsg" class="status hidden"></div><div id="hrPayrollList"></div></div>
 <div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">الإضافي</h3><div class="grid">
 <div><label>الموظف<select id="hrOvertimeEmployee"><option value="">اختر الموظف</option></select></label></div><div><label>التاريخ<input id="hrOvertimeDate" type="date"></label></div>
 <div><label>الدقائق<input id="hrOvertimeMinutes" type="number" min="1" step="1"></label></div><div><label>سعر الساعة<input id="hrOvertimeRate" type="number" min="0" step="0.01" value="0"></label></div></div>
-<label>السبب<textarea id="hrOvertimeReason" rows="2"></textarea></label><button id="hrSaveOvertime" class="btn">تسجيل الإضافي</button><div id="hrOvertimeMsg" class="status hidden"></div><div id="hrOvertimeList"></div></div>
+<label>السبب<textarea id="hrOvertimeReason" rows="2"></textarea></label><button id="hrSaveOvertime" class="btn">تسجيل الإضافي</button><div id="hrOvertimeMsg" class="status hidden"></div><div id="hrV2OvertimeList"></div></div>
 <div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">السلف</h3><div class="grid">
 <div><label>الموظف<select id="hrAdvanceEmployee"><option value="">اختر الموظف</option></select></label></div><div><label>التاريخ<input id="hrAdvanceDate" type="date"></label></div>
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrPayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div><button type="button" class="btn secondary" onclick="window.closeSection()">رجوع إلى مركز البيانات</button></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v171</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v172</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -2896,7 +2897,7 @@ window.openSection = function(name) {
   let target = $(`section${name.charAt(0).toUpperCase() + name.slice(1)}`);
   if(target) {
       target.classList.remove("hidden");
-      target.querySelectorAll('.card.hidden').forEach(c => c.classList.remove('hidden'));
+      if(name!=="hr") target.querySelectorAll('.card.hidden').forEach(c => c.classList.remove('hidden'));
   }
   window.scrollTo(0, 0);
   initDateDisplayInputs();
@@ -11789,19 +11790,23 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
       const l=await db.from("hr_leave_types").select("leave_type_id,leave_code,leave_name,paid").eq("is_active",true).order("leave_name");
       if(l.error)throw l.error;hrLeaveTypesCache=l.data||[];
     }else hrLeaveTypesCache=[];
-    const ds=$("hrEmployeeDept"),jsel=$("hrEmployeeJob"),ls=$("hrLeaveType");
+    const ds=$("hrEmployeeDept"),jsel=$("hrV2EmployeeJob"),ls=$("hrLeaveType");
     if(ds)ds.innerHTML='<option value="">اختر القسم</option>'+hrDepartmentsCache.map(x=>'<option value="'+x.department_id+'">'+hrText(x.department_name)+'</option>').join("");
     if(jsel)jsel.innerHTML='<option value="">اختر الوظيفة</option>'+hrJobsCache.map(x=>'<option value="'+x.job_id+'">'+hrText(x.job_name)+'</option>').join("");
     if(ls)ls.innerHTML='<option value="">اختر النوع</option>'+hrLeaveTypesCache.map(x=>'<option value="'+x.leave_type_id+'">'+hrText(x.leave_name)+' — '+(x.paid?"مدفوعة":"غير مدفوعة")+'</option>').join("");
-    ["hrAttendanceEmployee","hrLeaveEmployee","hrOvertimeEmployee","hrAdvanceEmployee"].forEach(hrEmployeeOptions);
-    const list=$("hrEmployeesList");if(list)list.innerHTML=hrEmployeesCache.length?hrEmployeesCache.map(x=>'<div class="product"><div class="pname">'+hrText(x.full_name)+'</div><div class="details">الكود: '+hrText(x.employee_code)+' | الحالة: '+hrText(x.employment_status)+' | الأساسي: '+fmt(x.base_salary)+'</div></div>').join(""):'<div class="empty">لا يوجد موظفون.</div>';
-    if(canManageHRLeaves)await hrLoadLeaves();else if($("hrLeavesList"))$("hrLeavesList").innerHTML='<div class="empty">هذا الحساب لا يملك صلاحية إدارة الإجازات.</div>';
+    ["hrV2AttendanceEmployee","hrLeaveEmployee","hrOvertimeEmployee","hrAdvanceEmployee"].forEach(hrEmployeeOptions);
+    const list=$("hrV2EmployeesList");if(list)list.innerHTML=hrEmployeesCache.length?hrEmployeesCache.map(x=>'<div class="product"><div class="pname">'+hrText(x.full_name)+'</div><div class="details">الكود: '+hrText(x.employee_code)+' | الحالة: '+hrText(x.employment_status)+' | الأساسي: '+fmt(x.base_salary)+'</div></div>').join(""):'<div class="empty">لا يوجد موظفون.</div>';
+    if(canManageHRLeaves)await hrLoadLeaves();else if($("hrV2LeavesList"))$("hrV2LeavesList").innerHTML='<div class="empty">هذا الحساب لا يملك صلاحية إدارة الإجازات.</div>';
     if(canManageHRPayroll||canApproveHRPayroll||canPayHRPayroll){await hrLoadOvertime();await hrLoadAdvances();await hrLoadPayrollPeriods();}
     else{
-      if($("hrOvertimeList"))$("hrOvertimeList").innerHTML='<div class="empty">لا توجد صلاحية لعرض الإضافي.</div>';
+      if($("hrV2OvertimeList"))$("hrV2OvertimeList").innerHTML='<div class="empty">لا توجد صلاحية لعرض الإضافي.</div>';
       if($("hrAdvanceList"))$("hrAdvanceList").innerHTML='<div class="empty">لا توجد صلاحية لعرض السلف.</div>';
       if($("hrPayrollList"))$("hrPayrollList").innerHTML='<div class="empty">لا توجد صلاحية لعرض مسيرات الرواتب.</div>';
     }
+  }
+  async function hrGenerateCode(prefix){
+    const token=(window.crypto&&typeof window.crypto.randomUUID==="function")?window.crypto.randomUUID().replace(/-/g,"").slice(0,8).toUpperCase():(Date.now().toString(36)+Math.random().toString(36).slice(2,7)).toUpperCase();
+    return prefix+"-"+token;
   }
   async function hrInsert(table,data,msgId,refresh=true){
     const {error}=await db.from(table).insert(data);if(error)throw error;hrSetMsg(msgId,"تم الحفظ.","success");if(refresh)await hrLoadSetup();
@@ -11809,20 +11814,22 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
   async function hrSaveSetup(kind){
     try{
       if(!canManageHR)throw new Error("ليس لديك صلاحية إدارة بيانات الموظفين.");
-      if(kind==="dept"){const code=$("hrDeptCode").value.trim(),name=$("hrDeptName").value.trim();if(!code||!name)throw new Error("اكتب كود واسم القسم.");await hrInsert("hr_departments",{department_code:code,department_name:name},"hrSetupMsg");}
-      else if(kind==="job"){const code=$("hrJobCode").value.trim(),name=$("hrJobName").value.trim();if(!code||!name)throw new Error("اكتب كود واسم الوظيفة.");await hrInsert("hr_jobs",{job_code:code,job_name:name},"hrSetupMsg");}
-      else{const code=$("hrLeaveCode").value.trim(),name=$("hrLeaveName").value.trim();if(!code||!name)throw new Error("اكتب كود واسم الإجازة.");await hrInsert("hr_leave_types",{leave_code:code,leave_name:name,paid:$("hrLeavePaid").checked},"hrSetupMsg");}
+      if(kind==="dept"){const name=$("hrDeptName").value.trim();if(!name)throw new Error("اكتب اسم القسم.");await hrInsert("hr_departments",{department_code:await hrGenerateCode("DEP"),department_name:name},"hrSetupMsg");$("hrDeptName").value="";}
+      else if(kind==="job"){const name=$("hrJobName").value.trim();if(!name)throw new Error("اكتب اسم الوظيفة.");await hrInsert("hr_jobs",{job_code:await hrGenerateCode("JOB"),job_name:name},"hrSetupMsg");$("hrJobName").value="";}
+      else{const name=$("hrLeaveName").value.trim();if(!name)throw new Error("اكتب اسم الإجازة.");await hrInsert("hr_leave_types",{leave_code:await hrGenerateCode("LEV"),leave_name:name,paid:$("hrLeavePaid").checked},"hrSetupMsg");$("hrLeaveName").value="";}
     }catch(e){hrSetMsg("hrSetupMsg","تعذر الحفظ: "+err(e),"error");}
   }
   async function hrSaveEmployee(){
-    try{if(!canManageHR)throw new Error("ليس لديك صلاحية إدارة الموظفين.");const code=$("hrEmployeeCode").value.trim(),name=$("hrEmployeeName").value.trim();if(!code||!name)throw new Error("اكتب كود واسم الموظف.");
-      const {error}=await db.from("hr_employees").insert({employee_code:code,full_name:name,department_id:$("hrEmployeeDept").value?Number($("hrEmployeeDept").value):null,job_id:$("hrEmployeeJob").value?Number($("hrEmployeeJob").value):null,hire_date:$("hrHireDate").value||null,base_salary:Number($("hrBaseSalary").value||0),employment_status:"ACTIVE"});
-      if(error)throw error;hrSetMsg("hrEmployeeMsg","تم حفظ الموظف.","success");await hrLoadSetup();
-    }catch(e){hrSetMsg("hrEmployeeMsg","تعذر حفظ الموظف: "+err(e),"error");}
+    try{
+      if(!canManageHR)throw new Error("ليس لديك صلاحية إدارة الموظفين.");
+      const name=$("hrV2EmployeeName").value.trim();if(!name)throw new Error("اكتب اسم الموظف.");
+      const {error}=await db.from("hr_employees").insert({employee_code:await hrGenerateCode("EMP"),full_name:name,department_id:$("hrEmployeeDept").value?Number($("hrEmployeeDept").value):null,job_id:$("hrV2EmployeeJob").value?Number($("hrV2EmployeeJob").value):null,hire_date:$("hrHireDate").value||null,base_salary:Number($("hrBaseSalary").value||0),employment_status:"ACTIVE"});
+      if(error)throw error;$("hrV2EmployeeName").value="";hrSetMsg("hrV2EmployeeMsg","تم حفظ الموظف. أنشأ البرنامج كود الموظف تلقائيًا.","success");await hrLoadSetup();
+    }catch(e){hrSetMsg("hrV2EmployeeMsg","تعذر حفظ الموظف: "+err(e),"error");}
   }
   async function hrSaveAttendance(){
-    try{if(!canManageHRAttendance)throw new Error("ليس لديك صلاحية إدارة الحضور.");const id=$("hrAttendanceEmployee").value;if(!id)throw new Error("اختر الموظف.");
-      const {error}=await db.from("hr_attendance").upsert({employee_id:Number(id),attendance_date:$("hrAttendanceDate").value||hrDate(),absence_code:$("hrAttendanceCode").value,source:"MANUAL"},{onConflict:"employee_id,attendance_date"});if(error)throw error;hrSetMsg("hrAttendanceMsg","تم تسجيل الحضور.","success");
+    try{if(!canManageHRAttendance)throw new Error("ليس لديك صلاحية إدارة الحضور.");const id=$("hrV2AttendanceEmployee").value;if(!id)throw new Error("اختر الموظف.");
+      const {error}=await db.from("hr_attendance").upsert({employee_id:Number(id),attendance_date:$("hrV2AttendanceDate").value||hrDate(),absence_code:$("hrV2AttendanceCode").value,source:"MANUAL"},{onConflict:"employee_id,attendance_date"});if(error)throw error;hrSetMsg("hrAttendanceMsg","تم تسجيل الحضور.","success");
     }catch(e){hrSetMsg("hrAttendanceMsg","تعذر تسجيل الحضور: "+err(e),"error");}
   }
   async function hrSaveLeave(){
@@ -11831,7 +11838,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
     }catch(e){hrSetMsg("hrLeaveMsg","تعذر إنشاء الطلب: "+err(e),"error");}
   }
   async function hrLoadLeaves(){
-    const box=$("hrLeavesList");if(!box)return;const {data,error}=await db.from("hr_leave_requests").select("leave_request_id,employee_id,leave_type_id,start_date,end_date,requested_days,reason,status,created_at").order("created_at",{ascending:false}).limit(100);if(error){box.innerHTML='<div class="status error">تعذر تحميل الإجازات: '+hrText(err(error))+'</div>';return;}
+    const box=$("hrV2LeavesList");if(!box)return;const {data,error}=await db.from("hr_leave_requests").select("leave_request_id,employee_id,leave_type_id,start_date,end_date,requested_days,reason,status,created_at").order("created_at",{ascending:false}).limit(100);if(error){box.innerHTML='<div class="status error">تعذر تحميل الإجازات: '+hrText(err(error))+'</div>';return;}
     const names=Object.fromEntries(hrEmployeesCache.map(x=>[x.employee_id,x.full_name])),types=Object.fromEntries(hrLeaveTypesCache.map(x=>[x.leave_type_id,x.leave_name]));
     box.innerHTML=data?.length?data.map(r=>'<div class="product"><div class="pname">'+hrText(names[r.employee_id]||r.employee_id)+' — '+hrText(types[r.leave_type_id]||"")+'</div><div class="details">'+r.start_date+' إلى '+r.end_date+' | '+r.requested_days+' يوم | الحالة: '+hrText(r.status)+'</div><div class="actions">'+(r.status==="PENDING"&&canManageHRLeaves?'<button class="btn" type="button" data-hr-leave-ok="'+r.leave_request_id+'">اعتماد</button><button class="btn danger" type="button" data-hr-leave-no="'+r.leave_request_id+'">رفض</button>':"")+'</div></div>').join(""):'<div class="empty">لا توجد طلبات إجازة.</div>';
     box.querySelectorAll("[data-hr-leave-ok]").forEach(b=>b.onclick=async()=>{try{const {error}=await db.rpc("hr_approve_leave",{p_leave_request_id:Number(b.dataset.hrLeaveOk)});if(error)throw error;showToast("تم اعتماد الإجازة.","success");await hrLoadSetup();}catch(e){showToast("تعذر اعتماد الإجازة: "+err(e),"error",7000);}});
@@ -11843,7 +11850,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
     }catch(e){hrSetMsg("hrOvertimeMsg","تعذر تسجيل الإضافي: "+err(e),"error");}
   }
   async function hrLoadOvertime(){
-    const box=$("hrOvertimeList");if(!box)return;const {data,error}=await db.from("hr_overtime").select("overtime_id,employee_id,work_date,minutes,amount,reason,status").order("work_date",{ascending:false}).limit(100);if(error){box.innerHTML='<div class="status error">تعذر تحميل الإضافي: '+hrText(err(error))+'</div>';return;}
+    const box=$("hrV2OvertimeList");if(!box)return;const {data,error}=await db.from("hr_overtime").select("overtime_id,employee_id,work_date,minutes,amount,reason,status").order("work_date",{ascending:false}).limit(100);if(error){box.innerHTML='<div class="status error">تعذر تحميل الإضافي: '+hrText(err(error))+'</div>';return;}
     const names=Object.fromEntries(hrEmployeesCache.map(x=>[x.employee_id,x.full_name]));box.innerHTML=data?.length?data.map(r=>'<div class="product"><div class="pname">'+hrText(names[r.employee_id]||r.employee_id)+' — '+r.work_date+'</div><div class="details">'+r.minutes+' دقيقة | '+fmt(r.amount)+' | الحالة: '+hrText(r.status)+'</div><div class="actions">'+(r.status==="PENDING"&&canManageHRPayroll?'<button class="btn" type="button" data-hr-ot-ok="'+r.overtime_id+'">اعتماد</button><button class="btn danger" type="button" data-hr-ot-no="'+r.overtime_id+'">رفض</button>':"")+'</div></div>').join(""):'<div class="empty">لا يوجد إضافي.</div>';
     box.querySelectorAll("[data-hr-ot-ok]").forEach(b=>b.onclick=()=>hrChangeOvertime(Number(b.dataset.hrOtOk),true));box.querySelectorAll("[data-hr-ot-no]").forEach(b=>b.onclick=()=>hrChangeOvertime(Number(b.dataset.hrOtNo),false));
   }
@@ -11859,7 +11866,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
     box.querySelectorAll("[data-hr-adv-ok]").forEach(b=>b.onclick=()=>hrChangeAdvance(Number(b.dataset.hrAdvOk),true));box.querySelectorAll("[data-hr-adv-no]").forEach(b=>b.onclick=()=>hrChangeAdvance(Number(b.dataset.hrAdvNo),false));
   }
   async function hrChangeAdvance(id,approve){try{const {error}=await db.rpc("hr_approve_advance",{p_advance_id:id,p_approve:approve,p_reason:approve?null:"مرفوض من المراجعة"});if(error)throw error;showToast(approve?"تم اعتماد السلفة.":"تم رفض السلفة.",approve?"success":"info");await hrLoadAdvances();}catch(e){showToast("تعذر تحديث السلفة: "+err(e),"error",7000);}}
-  async function hrCreatePayroll(){try{if(!canManageHRPayroll)throw new Error("ليس لديك صلاحية إعداد الرواتب.");const code=$("hrPeriodCode").value.trim(),start=$("hrPeriodStart").value,end=$("hrPeriodEnd").value;if(!code||!start||!end)throw new Error("أكمل بيانات الفترة.");const {data,error}=await db.rpc("hr_create_payroll_period",{p_period_code:code,p_period_start:start,p_period_end:end});if(error)throw error;hrSetMsg("hrPayrollMsg","تم إنشاء الفترة رقم "+data+".","success");await hrLoadPayrollPeriods();}catch(e){hrSetMsg("hrPayrollMsg","تعذر إنشاء الفترة: "+err(e),"error");}}
+  async function hrCreatePayroll(){try{if(!canManageHRPayroll)throw new Error("ليس لديك صلاحية إعداد الرواتب.");const code=$("hrV2PeriodCode").value.trim(),start=$("hrV2PeriodStart").value,end=$("hrV2PeriodEnd").value;if(!code||!start||!end)throw new Error("أكمل بيانات الفترة.");const {data,error}=await db.rpc("hr_create_payroll_period",{p_period_code:code,p_period_start:start,p_period_end:end});if(error)throw error;hrSetMsg("hrPayrollMsg","تم إنشاء الفترة رقم "+data+".","success");await hrLoadPayrollPeriods();}catch(e){hrSetMsg("hrPayrollMsg","تعذر إنشاء الفترة: "+err(e),"error");}}
   async function hrLoadPayrollPeriods(){
     const box=$("hrPayrollList");if(!box)return;const {data,error}=await db.from("hr_payroll_periods").select("payroll_period_id,period_code,period_start,period_end,status,payment_reference").order("period_start",{ascending:false}).limit(60);if(error){box.innerHTML='<div class="status error">تعذر تحميل المسيرات: '+hrText(err(error))+'</div>';return;}
     const labels={OPEN:"مفتوح",CALCULATED:"تم الحساب",REVIEWED:"تمت المراجعة",APPROVED:"تم الاعتماد",PAID:"تم الصرف",CANCELLED:"ملغى"};
@@ -11869,7 +11876,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
   async function hrPayrollStep(fn,id){try{const {error}=await db.rpc(fn,{p_payroll_period_id:id});if(error)throw error;showToast("تم تنفيذ المرحلة.","success");await hrLoadPayrollPeriods();await hrLoadPayrollItems(id);}catch(e){showToast("تعذر تنفيذ المرحلة: "+err(e),"error",7000);}}
   async function hrPayPayroll(id){const ref=prompt("أدخل مرجع الصرف");if(ref===null||!ref.trim())return;try{const {error}=await db.rpc("hr_pay_payroll",{p_payroll_period_id:id,p_payment_reference:ref.trim()});if(error)throw error;showToast("تم صرف المسير.","success");await hrLoadPayrollPeriods();await hrLoadPayrollItems(id);}catch(e){showToast("تعذر صرف المسير: "+err(e),"error",7000);}}
   async function hrLoadPayrollItems(id){
-    const box=$("hrPayrollItems");if(!box)return;box.innerHTML='<div class="empty">جارٍ تحميل التفاصيل...</div>';const {data,error}=await db.from("hr_payroll_items").select("payroll_item_id,employee_id,base_salary,overtime_amount,penalty_amount,absence_deduction,advance_deduction,other_deduction,net_amount,status").eq("payroll_period_id",id).order("employee_id");if(error){box.innerHTML='<div class="status error">تعذر تحميل التفاصيل: '+hrText(err(error))+'</div>';return;}
+    const box=$("hrV2PayrollItems");if(!box)return;box.innerHTML='<div class="empty">جارٍ تحميل التفاصيل...</div>';const {data,error}=await db.from("hr_payroll_items").select("payroll_item_id,employee_id,base_salary,overtime_amount,penalty_amount,absence_deduction,advance_deduction,other_deduction,net_amount,status").eq("payroll_period_id",id).order("employee_id");if(error){box.innerHTML='<div class="status error">تعذر تحميل التفاصيل: '+hrText(err(error))+'</div>';return;}
     const names=Object.fromEntries(hrEmployeesCache.map(x=>[x.employee_id,x.full_name]));box.innerHTML=data?.length?'<div class="table-responsive"><table class="print-table"><thead><tr><th>الموظف</th><th>الأساسي</th><th>إضافي</th><th>خصومات</th><th>صافي</th><th>الحالة</th></tr></thead><tbody>'+data.map(r=>'<tr><td>'+hrText(names[r.employee_id]||r.employee_id)+'</td><td>'+fmt(r.base_salary)+'</td><td>'+fmt(r.overtime_amount)+'</td><td>'+fmt(Number(r.penalty_amount||0)+Number(r.absence_deduction||0)+Number(r.advance_deduction||0)+Number(r.other_deduction||0))+'</td><td><strong>'+fmt(r.net_amount)+'</strong></td><td>'+hrText(r.status)+'</td></tr>').join("")+'</tbody></table></div>':'<div class="empty">لا توجد بنود. احسب المسير أولًا.</div>';
   }
   function hrApplyVisibility(){[["hrSaveDept",canManageHR],["hrSaveJob",canManageHR],["hrSaveLeaveType",canManageHR],["hrSaveEmployee",canManageHR],["hrSaveAttendance",canManageHRAttendance],["hrSaveLeave",canManageHRLeaves],["hrSaveOvertime",canManageHRPayroll],["hrSaveAdvance",canManageHRPayroll],["hrCreatePeriod",canManageHRPayroll]].forEach(x=>{const e=$(x[0]);if(e)e.classList.toggle("hidden",!x[1]);});}
@@ -11878,8 +11885,10 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
     const panels=[...root.querySelectorAll(":scope > .card > .card")];
     const keys=["setup","employees","attendance","leaves","payroll","overtime","advances","payrollDetails"];
     panels.forEach((p,i)=>{p.classList.add("hr-work-panel","hidden");p.dataset.hrPanel=keys[i]||("extra"+i);});
+    const backToData=$("hrBackToData");
     window.hrOpenPanel=function(name){
       menu.classList.add("hidden");
+      if(backToData)backToData.classList.add("hidden");
       panels.forEach(p=>p.classList.toggle("hidden",p.dataset.hrPanel!==name));
       const active=panels.find(p=>p.dataset.hrPanel===name);
       if(active&&!active.querySelector(".hr-back-menu")){
@@ -11888,10 +11897,10 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
       }
       window.scrollTo(0,0);
     };
-    window.hrBackToMenu=function(){panels.forEach(p=>p.classList.add("hidden"));menu.classList.remove("hidden");window.scrollTo(0,0);};
+    window.hrBackToMenu=function(){panels.forEach(p=>p.classList.add("hidden"));menu.classList.remove("hidden");if(backToData)backToData.classList.remove("hidden");window.scrollTo(0,0);};
     menu.querySelectorAll('[role="button"]').forEach(b=>b.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();b.click();}}));
   }
-  function hrInit(){hrInitPanels();if($("hrAttendanceDate"))$("hrAttendanceDate").value=hrDate();if($("hrOvertimeDate"))$("hrOvertimeDate").value=hrDate();if($("hrAdvanceDate"))$("hrAdvanceDate").value=hrDate();if($("hrSaveDept"))$("hrSaveDept").onclick=()=>hrSaveSetup("dept");if($("hrSaveJob"))$("hrSaveJob").onclick=()=>hrSaveSetup("job");if($("hrSaveLeaveType"))$("hrSaveLeaveType").onclick=()=>hrSaveSetup("leave");if($("hrSaveEmployee"))$("hrSaveEmployee").onclick=hrSaveEmployee;if($("hrSaveAttendance"))$("hrSaveAttendance").onclick=hrSaveAttendance;if($("hrSaveLeave"))$("hrSaveLeave").onclick=hrSaveLeave;if($("hrSaveOvertime"))$("hrSaveOvertime").onclick=hrSaveOvertime;if($("hrSaveAdvance"))$("hrSaveAdvance").onclick=hrSaveAdvance;if($("hrCreatePeriod"))$("hrCreatePeriod").onclick=hrCreatePayroll;hrApplyVisibility();}
+  function hrInit(){hrInitPanels();if($("hrV2AttendanceDate"))$("hrV2AttendanceDate").value=hrDate();if($("hrOvertimeDate"))$("hrOvertimeDate").value=hrDate();if($("hrAdvanceDate"))$("hrAdvanceDate").value=hrDate();if($("hrSaveDept"))$("hrSaveDept").onclick=()=>hrSaveSetup("dept");if($("hrSaveJob"))$("hrSaveJob").onclick=()=>hrSaveSetup("job");if($("hrSaveLeaveType"))$("hrSaveLeaveType").onclick=()=>hrSaveSetup("leave");if($("hrSaveEmployee"))$("hrSaveEmployee").onclick=hrSaveEmployee;if($("hrSaveAttendance"))$("hrSaveAttendance").onclick=hrSaveAttendance;if($("hrSaveLeave"))$("hrSaveLeave").onclick=hrSaveLeave;if($("hrSaveOvertime"))$("hrSaveOvertime").onclick=hrSaveOvertime;if($("hrSaveAdvance"))$("hrSaveAdvance").onclick=hrSaveAdvance;if($("hrCreatePeriod"))$("hrCreatePeriod").onclick=hrCreatePayroll;hrApplyVisibility();}
   hrInit();
 
 
@@ -12330,7 +12339,7 @@ $("hrCreatePeriod")?.addEventListener("click",async()=>{try{const r=await db.rpc
 // ====== PWA ======
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=185', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
+    navigator.serviceWorker.register('./sw.js?v=186', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
   });
 }
 
