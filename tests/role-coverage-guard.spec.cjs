@@ -229,3 +229,16 @@ test('Only System Admin can link an active PARTNER account to an unused active p
   expect(manageUsersSource).toContain('.eq("partner_id", partnerId)');
   expect(manageUsersSource).toContain('.update({ partner_id: partnerId })');
 });
+
+
+const partnerPersonalSql = fs.readFileSync(path.resolve(__dirname, '..', 'supabase', 'migrations', '20261121101830_hide_sales_rep_private_fields_from_partners_20261121.sql'), 'utf8');
+test('Partner accounts cannot read sales representative phone, commission, or login-link fields', () => {
+  expect(partnerPersonalSql).toContain('DROP POLICY IF EXISTS partner_read_only_select ON public.sales_reps');
+  expect(partnerPersonalSql).toContain("public.get_current_user_role()) <> 'PARTNER'");
+  expect(partnerPersonalSql).toContain("public.has_permission('SALES_REPS_VIEW')");
+});
+
+test('Partner dashboard hides employee administration and factory reset screens', () => {
+  expect(appHtml).toContain('["menuUsers","menuSalesReps","menuSystemReset"].forEach');
+  expect(appHtml).toContain('["userManagementCard","salesRepsCard","systemResetCard"].forEach');
+});
