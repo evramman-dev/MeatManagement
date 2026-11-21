@@ -3207,12 +3207,19 @@ async function userInfo(user){
     if($("settleUnassignedRepCustodyBtn")) $("settleUnassignedRepCustodyBtn").classList.toggle("hidden", !(canManageTrips || canManageCollections));
 
     if(isSystemAdmin||isPartner){
-      // مدير النظام والشريك يشاهدان جميع الأقسام، وتظل عمليات الكتابة خاصة بالصلاحيات المصرح بها.
+      // مدير النظام والشريك يشاهدان بيانات النشاط، مع حصر إدارة الحسابات والمندوبين وضبط المصنع بمدير النظام.
       document.querySelectorAll("#dataDashboard .dash-item").forEach(el=>el.classList.remove("hidden"));
       document.querySelectorAll("#dataDashboard .dashboard-group").forEach(el=>el.classList.remove("hidden"));
-      ["menuUsers","menuSalesReps","menuAccounting","menuSettings"].forEach(id=>{ if($(id)) $(id).classList.remove("hidden"); });
-      ["userManagementCard","salesRepsCard","accountingCard","systemResetCard"].forEach(id=>{ if($(id)) $(id).classList.remove("hidden"); });
-      await loadUserManagementLookups();
+      if(isSystemAdmin){
+        ["menuUsers","menuSalesReps","menuAccounting","menuSettings","menuSystemReset"].forEach(id=>{ if($(id)) $(id).classList.remove("hidden"); });
+        ["userManagementCard","salesRepsCard","accountingCard","systemResetCard"].forEach(id=>{ if($(id)) $(id).classList.remove("hidden"); });
+        await loadUserManagementLookups();
+      }else{
+        ["menuUsers","menuSalesReps","menuSystemReset"].forEach(id=>{ if($(id)) $(id).classList.add("hidden"); });
+        ["userManagementCard","salesRepsCard","systemResetCard"].forEach(id=>{ if($(id)) $(id).classList.add("hidden"); });
+        ["menuAccounting","menuSettings"].forEach(id=>{ if($(id)) $(id).classList.remove("hidden"); });
+        if($("accountingCard")) $("accountingCard").classList.remove("hidden");
+      }
     } else {
       if($("menuUsers")) $("menuUsers").classList.add("hidden");
       if($("menuSystemReset")) $("menuSystemReset").classList.add("hidden");
@@ -3415,26 +3422,68 @@ async function loadUsersList() {
     const { data: users, error: uErr } = await db.from("app_users").select("*"); if(uErr) throw uErr;
     const { data: roles, error: rolesError } = await db.from("app_roles").select("role_id,role_name,role_code");
     if(rolesError) throw rolesError;
+    const { data: partnerRows, error: partnerError } = await db.from("partners").select("partner_id,partner_name,is_active").order("partner_id");
+    if(partnerError) throw partnerError;
     const roleMap = {}, roleCodeMap = {};
     if(roles) roles.forEach(r => { roleMap[r.role_id] = r.role_name; roleCodeMap[r.role_id] = r.role_code; });
     usersCache = users || [];
+    const assignedPartnerIds = new Set(usersCache.filter(u=>u.partner_id!==null&&u.partner_id!==undefined).map(u=>String(u.partner_id)));
     if(!users || users.length === 0) { box.innerHTML = "<div class='empty'>لا يوجد مستخدمون.</div>"; return; }
     let html = "";
     users.forEach(u => {
       const status = u.is_active ? "<span class='badge badge-paid'>نشط</span>" : "<span class='badge badge-cancel'>موقوف</span>";
       const safeName = String(u.display_name || '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
       const safeUsername = String(u.username || '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+      const partnerRecord = (partnerRows||[]).find(p=>String(p.partner_id)===String(u.partner_id));
+      const partnerLabel = partnerRecord ? salesRepText(partnerRecord.partner_name||("شريك "+partnerRecord.partner_id)) : "";
+      let partnerLinkControls = "";
+      if(isSystemAdmin && roleCodeMap[u.role_id]==="PARTNER"){
+        if(u.partner_id){
+          partnerLinkControls = '<div class="details">الشريك المرتبط: '+(partnerLabel||("شريك "+salesRepText(u.partner_id)))+'</div>';
+        }else{
+          const availablePartners=(partnerRows||[]).filter(p=>p.is_active!==false&&!assignedPartnerIds.has(String(p.partner_id)));
+          if(availablePartners.length){
+            const options=availablePartners.map(p=>'<option value="'+salesRepText(p.partner_id)+'">'+salesRepText(p.partner_name||("شريك "+p.partner_id))+'</option>').join("");
+            partnerLinkControls = '<div class="actions"><select id="partnerLink-'+u.user_id+'" aria-label="اختيار سجل الشريك"><option value="">اختر سجل الشريك لربط الحساب</option>'+options+'</select><button class="btn secondary" type="button" onclick="window.linkPartnerAccount(\''+u.user_id+'\')">ربط حساب الشريك</button></div>';
+          }else{
+            partnerLinkControls = '<div class="details">لا توجد سجلات شركاء متاحة للربط. أضف سجل الشريك أولًا.</div>';
+          }
+        }
+      }
       const resetButton = isSystemAdmin && String(u.username || '').toLowerCase() === 'rep-01' && u.is_active
         ? `<button class="btn secondary" type="button" onclick="window.openRepPasswordModal()">🔑 تغيير كلمة المرور</button>`
         : '';
       const deleteTesterButton = isSystemAdmin && roleCodeMap[u.role_id] === "SYSTEM_TESTER"
         ? `<button class="btn secondary" style="background:#a52b2b;color:#fff;" type="button" onclick="window.deleteTesterAccount('${u.user_id}')">حذف حساب المختبر</button>`
         : '';
-      html += `<div class="product"><div class="pname">${safeName} (${safeUsername})</div><div class="details">الدور: ${roleMap[u.role_id] || 'غير محدد'} ${status}</div><div class="actions"><button class="btn secondary" onclick="window.viewUserLogs('${u.user_id}','${safeName.replace(/'/g,'&#39;')}')">📋 سجل التتبع</button>${resetButton}${deleteTesterButton}</div></div>`;
+      html += `<div class="product"><div class="pname">${safeName} (${safeUsername})</div><div class="details">الدور: ${roleMap[u.role_id] || 'غير محدد'} ${status}</div>${partnerLinkControls}<div class="actions"><button class="btn secondary" onclick="window.viewUserLogs('${u.user_id}','${safeName.replace(/'/g,'&#39;')}')">📋 سجل التتبع</button>${resetButton}${deleteTesterButton}</div></div>`;
     });
     box.innerHTML = html;
   } catch(e) { box.innerHTML = `<div class='empty error'>خطأ: ${e.message}</div>`; }
 }
+
+// ربط حساب الشريك بسجل شريك واحد من شاشة مدير النظام.
+window.linkPartnerAccount = async function(userId){
+  if(!isSystemAdmin){ showToast("ربط حساب الشريك لمدير النظام فقط.","error"); return; }
+  const partnerId=Number($("partnerLink-"+userId)?.value);
+  if(!userId||!Number.isSafeInteger(partnerId)||partnerId<=0){ showToast("اختر سجل الشريك أولًا.","error"); return; }
+  if(!confirm("سيتم ربط حساب الشريك بسجل الشريك المحدد. لا يمكن ربط سجل الشريك بحساب آخر. هل تريد المتابعة؟")) return;
+  try{
+    const {data:sessionData,error:sessionError}=await db.auth.getSession();
+    if(sessionError) throw sessionError;
+    const session=sessionData?.session;
+    if(!session?.access_token) throw new Error("انتهت جلسة الدخول. سجّل الدخول مرة أخرى.");
+    const response=await fetch(MANAGE_USERS_URL,{
+      method:"POST",
+      headers:{"Content-Type":"application/json","apikey":KEY,"Authorization":"Bearer "+session.access_token},
+      body:JSON.stringify({action:"link_partner",target_user_id:userId,partner_id:partnerId})
+    });
+    let result={}; try{ result=await response.json(); }catch(_){}
+    if(!response.ok||result.success!==true) throw new Error(result.error||"تعذر ربط حساب الشريك.");
+    showToast("تم ربط حساب الشريك بنجاح.","success");
+    await loadUsersList();
+  }catch(error){ showToast("تعذر ربط حساب الشريك: "+err(error),"error",7000); }
+};
 
 // حذف حساب مختبر النظام من شاشة مدير النظام فقط.
 window.deleteTesterAccount = async function(userId){
