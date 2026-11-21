@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v174</title>
+<title>MeatManagement v175</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -502,6 +502,20 @@ input:focus,select:focus,textarea:focus{
   color:var(--g);
 }
 .home-dashboard{gap:11px}
+#homeDashboard{grid-template-columns:repeat(2,minmax(0,1fr))}
+#homeDashboard .home-card{min-height:112px}
+#homeDashboard .home-card-wide{grid-column:1/-1;min-height:82px}
+#homeDashboard .home-card[role="button"]{cursor:pointer}
+#homeDashboard .home-card[role="button"]:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.data-search-row{display:flex;gap:8px;align-items:center;margin:12px 0 18px}
+.data-search-row input{flex:1;min-width:0;margin:0}
+.data-search-row .btn{width:auto;white-space:nowrap;margin:0}
+.dashboard-group.mm-search-no-match{display:none}
+.tasks-filter-actions{display:grid;gap:9px;margin-top:10px}
+.tasks-filter-actions>.btn{margin:0;width:100%}
+.tasks-date-presets{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.tasks-date-presets .btn{margin:0;width:100%;padding:9px 6px}
+@media(max-width:360px){#homeDashboard{grid-template-columns:1fr}.tasks-date-presets{grid-template-columns:1fr 1fr}}
 .home-card{
   min-height:106px;
   border:1px solid rgba(255,255,255,.16);
@@ -685,7 +699,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v174]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v175]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -943,7 +957,15 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>من تاريخ</label><input type="date" id="tasksFromDate"></div>
 <div><label>إلى تاريخ</label><input type="date" id="tasksToDate"></div>
 </div>
-<button id="tasksFilterBtn" class="btn" style="margin-top:10px;">تحديث التحليلات</button>
+<div class="tasks-filter-actions">
+<button id="tasksFilterBtn" class="btn" type="button">تحديث التحليلات</button>
+<div class="tasks-date-presets" aria-label="فترات سريعة">
+<button type="button" class="btn secondary" data-task-range="today">اليوم</button>
+<button type="button" class="btn secondary" data-task-range="7days">آخر 7 أيام</button>
+<button type="button" class="btn secondary" data-task-range="month">هذا الشهر</button>
+<button type="button" class="btn secondary" data-task-range="previous">الشهر السابق</button>
+</div>
+</div>
 </div>
 <div class="home-dashboard" id="tasksDashboard"></div>
 <div class="home-dashboard" style="margin-top:14px;">
@@ -1001,7 +1023,8 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <section id="data" class="hidden">
 <div id="dataDashboard" class="card">
 <h2>🗂️ مركز البيانات</h2>
-<p class="desc">اختر القسم الذي تريد الدخول إليه.</p>
+<p class="desc">ابحث عن القسم الذي تريد فتحه، أو اختره من المجموعات.</p>
+<div class="data-search-row"><input id="dataSectionSearch" type="search" placeholder="ابحث عن قسم مثل المخزون أو العملاء..." autocomplete="off"><button id="clearDataSectionSearch" class="btn secondary" type="button">مسح</button></div>
 <div class="dashboard-group">
 <div class="dashboard-title">إدارة المنتجات</div>
 <div class="dashboard-grid">
@@ -2561,7 +2584,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v174</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v175</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -3934,16 +3957,29 @@ async function loadHomeDashboard() {
   box.innerHTML = "<div class='empty'>جارٍ التحميل...</div>";
   try {
     const today = todayISO();
-    const [salesRes, customersRes, lowStockRes, invRes, cashRes, tripsRes, supplierPayablesRes] = await Promise.all([
+    const yesterdayDate = new Date(today+"T00:00:00");
+    yesterdayDate.setDate(yesterdayDate.getDate()-1);
+    const yesterday = yesterdayDate.getFullYear()+"-"+String(yesterdayDate.getMonth()+1).padStart(2,"0")+"-"+String(yesterdayDate.getDate()).padStart(2,"0");
+    const [salesRes, yesterdaySalesRes, customersRes, lowStockRes, invRes, cashRes, tripsRes, supplierPayablesRes, todayCollectionsRes, todayExpensesRes] = await Promise.all([
       db.from("sales_invoices").select("net_total").eq("invoice_date", today).neq("status","CANCELLED"),
+      db.from("sales_invoices").select("net_total").eq("invoice_date", yesterday).neq("status","CANCELLED"),
       db.from("customers").select("customer_id", {count:"exact", head:true}).eq("is_active", true),
       db.from("stock_balances").select("product_id, quantity, products(minimum_stock)").limit(1000),
       db.from("sales_invoices").select("remaining_amount").in("status",["POSTED","PARTIAL"]).gt("remaining_amount", 0),
       db.from("treasuries").select("current_balance").eq("is_active", true),
       db.from("trips").select("trip_id", {count:"exact", head:true}).neq("status","COMPLETED"),
-      db.rpc("get_supplier_payable_balances")
+      db.rpc("get_supplier_payable_balances"),
+      db.from("customer_collections").select("amount").eq("collection_date",today).eq("status","POSTED"),
+      db.from("expenses").select("amount").eq("expense_date",today).eq("is_cancelled",false)
     ]);
     const todaySales = (salesRes.data||[]).reduce((s,i)=>s+Number(i.net_total||0),0);
+    const yesterdaySales = (yesterdaySalesRes.data||[]).reduce((s,i)=>s+Number(i.net_total||0),0);
+    const salesDifference = todaySales-yesterdaySales;
+    const salesDifferenceText = yesterdaySales>0
+      ? (salesDifference>=0?"+":"")+fmt(salesDifference)+" ("+(salesDifference>=0?"+":"")+((salesDifference/yesterdaySales)*100).toFixed(1)+"%) مقارنة بأمس"
+      : "مبيعات أمس: "+fmt(yesterdaySales);
+    const todayCollections = todayCollectionsRes.error ? null : (todayCollectionsRes.data||[]).reduce((sum,row)=>sum+Number(row.amount||0),0);
+    const todayExpenses = todayExpensesRes.error ? null : (todayExpensesRes.data||[]).reduce((sum,row)=>sum+Number(row.amount||0),0);
     const customersCount = customersRes.count || 0;
     const lowStockProducts = {};
     (lowStockRes.data||[]).forEach(sb => { if(sb.products){ const pid = sb.product_id; if(!lowStockProducts[pid]) lowStockProducts[pid] = {qty:0, min:Number(sb.products.minimum_stock||0)}; lowStockProducts[pid].qty += Number(sb.quantity||0); } });
@@ -3957,13 +3993,15 @@ async function loadHomeDashboard() {
       : null;
 
     box.innerHTML = `
-      <div class="home-card green"><div class="hc-label">💰 مبيعات اليوم</div><div class="hc-value">${fmt(todaySales)}</div></div>
-      <div class="home-card"><div class="hc-label">👥 العملاء</div><div class="hc-value">${customersCount}</div></div>
-      <div class="home-card red"><div class="hc-label">⚠️ نقص مخزون</div><div class="hc-value">${lowStockCount}</div></div>
-      <div class="home-card gold"><div class="hc-label">📄 فواتير آجلة</div><div class="hc-value">${unpaidCount}</div></div>
-      <div class="home-card"><div class="hc-label">💵 إجمالي النقدية</div><div class="hc-value">${fmt(totalCash)}</div></div>
-      <div class="home-card"><div class="hc-label">🚐 جولات نشطة</div><div class="hc-value">${activeTrips}</div></div>
-      <div class="home-card gold"><div class="hc-label">🏭 مستحقات الموردين</div><div class="hc-value">${totalSupplierPayables===null ? "غير متاح" : fmt(totalSupplierPayables)}</div></div>
+      <div class="home-card green" role="button" tabindex="0" onclick="window.openSection('sales')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openSection('sales')}"><div class="hc-label">💰 مبيعات اليوم</div><div class="hc-value">${fmt(todaySales)}</div><div class="details">${salesDifferenceText}</div></div>
+      <div class="home-card" role="button" tabindex="0" onclick="window.openSection('customers')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openSection('customers')}"><div class="hc-label">👥 العملاء</div><div class="hc-value">${customersCount}</div><div class="details">عدد العملاء النشطين</div></div>
+      <div class="home-card red" role="button" tabindex="0" onclick="window.openSection('stock')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openSection('stock')}"><div class="hc-label">⚠️ نقص مخزون</div><div class="hc-value">${lowStockCount}</div><div class="details">أصناف أقل من الحد الأدنى</div></div>
+      <div class="home-card gold" role="button" tabindex="0" onclick="window.openSection('sales')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openSection('sales')}"><div class="hc-label">📄 فواتير آجلة</div><div class="hc-value">${unpaidCount}</div><div class="details">فواتير عليها مبالغ متبقية</div></div>
+      <div class="home-card" role="button" tabindex="0" onclick="window.openSection('treasuries')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openSection('treasuries')}"><div class="hc-label">💵 إجمالي النقدية</div><div class="hc-value">${fmt(totalCash)}</div><div class="details">أرصدة الخزائن النشطة</div></div>
+      <div class="home-card" role="button" tabindex="0" onclick="window.openSection('trips')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openSection('trips')}"><div class="hc-label">🚐 جولات نشطة</div><div class="hc-value">${activeTrips}</div><div class="details">الجولات غير المكتملة</div></div>
+      <div class="home-card" role="button" tabindex="0" onclick="window.openSection('collections')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openSection('collections')}"><div class="hc-label">💸 تحصيلات اليوم</div><div class="hc-value">${todayCollections===null ? "غير متاح" : fmt(todayCollections)}</div></div>
+      <div class="home-card" role="button" tabindex="0" onclick="window.openSection('expenses')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openSection('expenses')}"><div class="hc-label">🧾 مصروفات اليوم</div><div class="hc-value">${todayExpenses===null ? "غير متاح" : fmt(todayExpenses)}</div></div>
+      <div class="home-card gold home-card-wide" role="button" tabindex="0" onclick="window.openSection('suppliers')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openSection('suppliers')}"><div class="hc-label">🏭 مستحقات الموردين</div><div class="hc-value">${totalSupplierPayables===null ? "غير متاح" : fmt(totalSupplierPayables)}</div><div class="details">إجمالي المبالغ المستحقة للموردين</div></div>
     `;
     if(lowStockCount > 0) showToast(`⚠️ يوجد ${lowStockCount} أصناف تحت الحد الأدنى`, "warn", 6000);
     await loadHomeGeoSummary();
@@ -4304,6 +4342,25 @@ async function loadTasks() {
   } catch (e) { box.innerHTML = `<div class="empty error">خطأ: ${err(e)}</div>`; }
 }
 if($("tasksFilterBtn")) $("tasksFilterBtn").addEventListener("click", loadTasks);
+document.querySelectorAll("[data-task-range]").forEach(button=>{
+  button.addEventListener("click",()=>{
+    const today=todayISO();
+    const asISO=date=>date.getFullYear()+"-"+String(date.getMonth()+1).padStart(2,"0")+"-"+String(date.getDate()).padStart(2,"0");
+    let from=today;
+    if(button.dataset.taskRange==="7days"){
+      const d=new Date(today+"T00:00:00");d.setDate(d.getDate()-6);from=asISO(d);
+    }else if(button.dataset.taskRange==="month"){
+      from=today.slice(0,7)+"-01";
+    }else if(button.dataset.taskRange==="previous"){
+      const d=new Date(today+"T00:00:00");d.setDate(0);
+      from=asISO(new Date(d.getFullYear(),d.getMonth(),1));
+      $("tasksToDate").value=asISO(d);
+    }
+    $("tasksFromDate").value=from;
+    if(button.dataset.taskRange!=="previous") $("tasksToDate").value=today;
+    loadTasks();
+  });
+});
 
 // ========== المواقع ==========
 async function loadLocations(){ 
@@ -12428,10 +12485,35 @@ $("hrSaveLeave")?.addEventListener("click",async()=>{try{if(!canManageHRLeaves)t
 $("hrCreatePeriod")?.addEventListener("click",async()=>{try{const r=await db.rpc("hr_create_payroll_period",{p_period_code:$("hrPeriodCode").value.trim(),p_period_start:$("hrPeriodStart").value,p_period_end:$("hrPeriodEnd").value});if(r.error)throw r.error;showToast("تم إنشاء فترة الرواتب","success");await loadHR();}catch(e){msg($("hrPayrollMsg"),err(e),"error");}});
 });
 
+// ====== مركز البيانات: البحث السريع داخل الأقسام المتاحة ======
+(function(){
+  const input=document.getElementById("dataSectionSearch");
+  const clear=document.getElementById("clearDataSectionSearch");
+  const root=document.getElementById("dataDashboard");
+  if(!input||!clear||!root)return;
+  function filter(){
+    const q=String(input.value||"").trim().toLocaleLowerCase("ar");
+    root.querySelectorAll(".dashboard-group").forEach(group=>{
+      let matches=0;
+      group.querySelectorAll(".dash-item").forEach(item=>{
+        const permitted=!item.classList.contains("hidden");
+        const title=String(item.textContent||"").toLocaleLowerCase("ar");
+        const show=permitted&&(!q||title.includes(q));
+        item.style.display=show?"":"none";
+        if(show)matches++;
+      });
+      group.classList.toggle("mm-search-no-match",matches===0);
+    });
+  }
+  input.addEventListener("input",filter);
+  clear.addEventListener("click",()=>{input.value="";filter();input.focus();});
+  filter();
+})();
+
 // ====== PWA ======
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=187', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
+    navigator.serviceWorker.register('./sw.js?v=188', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
   });
 }
 
