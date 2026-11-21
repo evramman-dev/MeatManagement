@@ -661,6 +661,46 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <input id="password" type="password" autocomplete="current-password" required>
 <button id="loginBtn" class="btn" type="submit">تسجيل الدخول</button>
 </form>
+<script>
+(function(){
+ const form=document.getElementById("loginForm");
+ if(!form||form.dataset.mmFallbackReady==="1")return;
+ form.dataset.mmFallbackReady="1";
+ form.addEventListener("submit",async function(e){
+  if(window.__MM_LOGIN_HANDLER_READY__===true)return;
+  e.preventDefault();
+  const button=document.getElementById("loginBtn"),msg=document.getElementById("loginMsg");
+  const login=document.getElementById("email")?.value.trim()||"",password=document.getElementById("password")?.value||"";
+  if(!login||!password)return;
+  if(button){button.disabled=true;button.textContent="جارٍ الدخول...";}
+  if(msg){msg.className="status";msg.textContent="جارٍ الاتصال بخدمة تسجيل الدخول...";}
+  try{
+   const url="https://mklbemoisdkoyrwcrmoj.supabase.co";
+   const key="sb_publishable_7ZjltiXgqnY4BJrZH4iZog_Jh-xfbau";
+   const client=window.mmAppearanceAuthClient||window.supabase.createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:"implicit"}});
+   let session=null;
+   if(login.includes("@")){
+    const result=await client.auth.signInWithPassword({email:login,password});
+    if(result.error)throw result.error;
+    session=result.data.session;
+   }else{
+    const response=await fetch(url+"/functions/v1/username-login",{method:"POST",headers:{"Content-Type":"application/json","apikey":key},body:JSON.stringify({username:login,password})});
+    const result=await response.json().catch(()=>({}));
+    if(!response.ok||result.success!==true||!result.session)throw new Error(result.error||"تعذر الدخول.");
+    const saved=await client.auth.setSession({access_token:result.session.access_token,refresh_token:result.session.refresh_token});
+    if(saved.error)throw saved.error;
+    session=saved.data.session;
+   }
+   if(!session)throw new Error("لم تُنشأ جلسة تسجيل الدخول.");
+   if(msg){msg.className="status success";msg.textContent="تم تسجيل الدخول. جارٍ فتح التطبيق...";}
+   setTimeout(()=>location.reload(),500);
+  }catch(error){
+   if(msg){msg.className="status error";msg.textContent="تعذر الدخول: "+(error?.message||String(error));}
+   if(button){button.disabled=false;button.textContent="تسجيل الدخول";}
+  }
+ },true);
+})();
+</script>
 <button id="forgotBtn" class="textbtn" type="button">نسيت كلمة المرور؟</button>
 <div id="loginMsg" class="status hidden"></div>
 </section>
@@ -11821,6 +11861,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
       busy($("loginBtn"),false,"","تسجيل الدخول"); 
     }
   });
+  window.__MM_LOGIN_HANDLER_READY__=true;
 
   if($("forgotBtn")) $("forgotBtn").addEventListener("click",()=>{ 
     hideSections(); 
@@ -12257,7 +12298,7 @@ $("hrCreatePeriod")?.addEventListener("click",async()=>{try{const r=await db.rpc
 // ====== PWA ======
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=182', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
+    navigator.serviceWorker.register('./sw.js?v=183', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
   });
 }
 
