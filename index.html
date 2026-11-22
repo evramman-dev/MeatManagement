@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v186</title>
+<title>MeatManagement v187</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -722,7 +722,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
   .header-exit-btn{left:9px;min-width:76px;padding-inline:8px}
 }
 
-/* v186 unified navigation, product type selectors and workspace panels */
+/* v187 unified navigation, product type selectors and workspace panels */
 .section-shortcuts{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 16px;padding:10px;background:#f4f7f4;border:1px solid var(--line);border-radius:12px}
 .section-shortcuts .btn{width:auto;flex:1 1 auto;min-width:110px;margin:0;padding:10px 12px;font-size:13px}
 .section-tabs{display:flex;flex-wrap:nowrap!important;overflow-x:auto;overflow-y:hidden;white-space:nowrap;padding:4px 2px 10px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
@@ -749,7 +749,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v186]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v187]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -2332,16 +2332,9 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div class="card">
 <h2>📈 التقارير المتقدمة</h2>
-<div class="row section-tabs" style="margin-bottom:15px;gap:7px;">
-<button class="tab-btn active" onclick="switchReportTab('repAged')">أعمار الديون</button>
-<button class="tab-btn" onclick="switchReportTab('repSlow')">المخزون الراكد</button>
-<button class="tab-btn" onclick="switchReportTab('repPL')">الأرباح والخسائر</button>
-<button class="tab-btn" onclick="switchReportTab('repGeo')">المبيعات حسب المحافظة</button>
-</div>
-<div class="section-shortcuts report-actions"><button class="btn secondary" type="button" onclick="switchReportTab('repAged')">أعمار الديون</button><button class="btn secondary" type="button" onclick="switchReportTab('repSlow')">المخزون الراكد</button><button class="btn secondary" type="button" onclick="switchReportTab('repPL')">الأرباح والخسائر</button><button class="btn secondary" type="button" onclick="switchReportTab('repGeo')">المبيعات الجغرافية</button></div>
-<div class="row" style="margin-bottom:15px; gap:5px;">
-<button class="tab-btn" id="btnExportExcel" style="flex: 1;">📊 تصدير إكسيل</button>
-</div>
+
+
+
 <div id="repAged" class="report-tab">
 <div class="table-responsive"><table class="print-table" id="agedTable"><thead><tr><th>العميل</th><th>الموبايل</th><th>الرصيد الصافي</th><th>الرصيد الافتتاحي</th><th>0-30</th><th>31-60</th><th>61-90</th><th>+90</th></tr></thead><tbody></tbody></table></div>
 <div class="row"><button class="btn secondary" type="button" id="mmExportAged">تصدير أعمار الديون</button></div>
@@ -2644,7 +2637,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v186</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v187</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
