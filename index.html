@@ -12391,10 +12391,32 @@ function mmInitAdvancedReportActions(){
   
 
   window.switchReportTab = function(tabId) {
-      document.querySelectorAll(".report-tab").forEach(el => el.classList.add("hidden"));
-      const btns = document.querySelectorAll('[onclick^="switchReportTab"]');
-      btns.forEach(b => b.classList.toggle("active",(b.getAttribute("onclick")||"").includes("'"+tabId+"'")));
-      if($(tabId)) $(tabId).classList.remove("hidden");
+      const menu=$("advancedReportGroups");
+      const card=menu?.parentElement;
+      const search=card?.querySelector('input[type="search"]');
+      const desc=search?.previousElementSibling;
+      if(menu)menu.classList.add("hidden");
+      if(search)search.classList.add("hidden");
+      if(desc&&desc.classList.contains("desc"))desc.classList.add("hidden");
+      document.querySelectorAll(".report-tab").forEach(el=>el.classList.add("hidden"));
+      const panel=$(tabId);
+      if(!panel)return;
+      let back=panel.querySelector("[data-report-back]");
+      if(!back){
+        back=document.createElement("button");back.type="button";back.dataset.reportBack="1";back.className="btn secondary";back.textContent="⬅ رجوع لقائمة التقارير";back.style.cssText="width:auto;margin:0 0 14px";
+        back.addEventListener("click",window.closeReportScreen);
+        panel.prepend(back);
+      }
+      panel.classList.remove("hidden");
+      window.scrollTo(0,0);
+  };
+  window.closeReportScreen=function(){
+      document.querySelectorAll(".report-tab").forEach(el=>el.classList.add("hidden"));
+      const menu=$("advancedReportGroups"),card=menu?.parentElement,search=card?.querySelector('input[type="search"]'),desc=search?.previousElementSibling;
+      if(menu)menu.classList.remove("hidden");
+      if(search)search.classList.remove("hidden");
+      if(desc&&desc.classList.contains("desc"))desc.classList.remove("hidden");
+      window.scrollTo(0,0);
   }
 
   // ========== واجهة الموارد البشرية ==========
