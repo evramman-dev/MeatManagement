@@ -3049,7 +3049,7 @@ function mmInitSalesRepWorkspace(){
  const card=$("salesRepsCard");if(!card||card.dataset.workspaceReady)return;
  const titleRow=card.firstElementChild,oldShortcuts=card.querySelector(".section-shortcuts");
  if(oldShortcuts)oldShortcuts.remove();
- const repActions=titleRow?.querySelector(".row");if(repActions){const areaBtn=document.createElement("button");areaBtn.type="button";areaBtn.className="btn secondary";areaBtn.textContent="📍 توزيع المناطق";areaBtn.style.width="auto";areaBtn.onclick=()=>{back();menu.classList.add("hidden");panels.areas.classList.remove("hidden");};const assignedBtn=document.createElement("button");assignedBtn.type="button";assignedBtn.className="btn secondary";assignedBtn.textContent="🗺️ عرض الإسنادات";assignedBtn.style.width="auto";assignedBtn.onclick=()=>{back();menu.classList.add("hidden");panels.assigned.classList.remove("hidden");};repActions.append(areaBtn,assignedBtn);}
+ const repActions=titleRow;if(repActions){const areaBtn=document.createElement("button");areaBtn.type="button";areaBtn.className="btn secondary";areaBtn.textContent="📍 توزيع المناطق";areaBtn.style.width="auto";areaBtn.onclick=()=>{back();menu.classList.add("hidden");panels.areas.classList.remove("hidden");};const assignedBtn=document.createElement("button");assignedBtn.type="button";assignedBtn.className="btn secondary";assignedBtn.textContent="🗺️ عرض الإسنادات";assignedBtn.style.width="auto";assignedBtn.onclick=()=>{back();menu.classList.add("hidden");panels.assigned.classList.remove("hidden");};repActions.append(areaBtn,assignedBtn);}
  const searchRow=$("salesRepSearch")?.parentElement,repMsg=$("salesRepsMsg"),repList=$("salesRepsList");
  const areaTitle=Array.from(card.querySelectorAll("h3")).find(x=>x.textContent.includes("توزيع المناطق"));
  const areaMsg=$("salesRepAreasMsg"),areaForm=$("salesRepAreaForm"),assigned=$("salesRepAreasList");
@@ -3069,7 +3069,7 @@ function mmInitSalesRepWorkspace(){
 function mmInitPartnersWorkspace(){
  const card=$("partnersCard");if(!card||card.dataset.workspaceReady)return;
  const titleRow=card.firstElementChild,oldShortcuts=card.querySelector(".section-shortcuts");if(oldShortcuts)oldShortcuts.remove();
- const actionHost=titleRow?.querySelector(".row");["addPartnerInventoryContributionBtn","addPartnerVehicleContributionBtn"].forEach(id=>{const b=$(id);if(b&&actionHost)actionHost.appendChild(b);});
+ const actionHost=titleRow?.querySelector("div")||titleRow;["addPartnerInventoryContributionBtn","addPartnerVehicleContributionBtn"].forEach(id=>{const b=$(id);if(b&&actionHost)actionHost.appendChild(b);});
  const searchRow=$("partnerSearch")?.parentElement,msgEl=$("partnersMsg"),list=$("partnersList");
  const tx=$("partnerTransactionsCard"),inv=$("partnerInventoryContributionsCard"),veh=$("partnerVehicleContributionsCard");
  const menu=document.createElement("div");menu.className="data-category-grid mm-work-menu";menu.id="partnersWorkspaceMenu";
