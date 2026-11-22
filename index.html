@@ -3133,6 +3133,10 @@ function mmInitAccountingAndReports(){
   const heading=acc.querySelector("h2");
   const oldChildren=Array.from(acc.children).filter(el=>el!==heading);
   const details=document.createElement("div");details.id="accountingDetailsPanel";details.className="mm-accounting-screen hidden";
+  const detailsHead=document.createElement("div");detailsHead.className="mm-screen-heading";
+  const detailsTitle=document.createElement("h3");detailsTitle.textContent="الدفاتر والإجراءات المحاسبية";
+  const detailsBack=document.createElement("button");detailsBack.type="button";detailsBack.className="btn secondary";detailsBack.textContent="⬅ رجوع للمحاسبة";detailsBack.addEventListener("click",()=>{nav.classList.remove("hidden");details.classList.add("hidden");window.scrollTo(0,0);});
+  detailsHead.append(detailsTitle,detailsBack);details.appendChild(detailsHead);
   oldChildren.forEach(el=>details.appendChild(el));
   const nav=document.createElement("div");nav.id="accountingWorkspaceMenu";nav.className="mm-accounting-menu";
   nav.innerHTML='<p class="desc">اختر التقرير الذي تريد مراجعته. كل شاشة تعرض ملخصًا مستقلًا، ويمكنك الرجوع للقائمة.</p><div class="data-category-grid"></div>';
@@ -3232,14 +3236,14 @@ async function mmLoadAccountingSummary(key){
    mmAccountingRender(key,["الخزنة","النوع","الرصيد","حالة الخزنة"],ts.map(x=>[x.treasury_name,x.treasury_type,fmt(x.current_balance),x.is_active===false?"متوقفة":"نشطة"]),[["عدد الخزائن",ts.length],["إجمالي الأرصدة",fmt(balance)],["إيداعات وتحويلات واردة بالفترة",fmt(inflow)],["مسحوبات وتحويلات صادرة بالفترة",fmt(outflow)]]);return;
   }
   if(key==="transfers"){
-   const {data,error}=await db.from("treasury_transactions").select("created_at,transaction_type,amount,notes,treasuries(treasury_name)").in("transaction_type",["TRANSFER_IN","TRANSFER_OUT"]).gte("created_at",from+"T00:00:00").lte("created_at",to+"T23:59:59").order("created_at",{ascending:false}).limit(1000);if(error)throw error;
-   const rows=data||[],total=rows.reduce((a,x)=>a+Number(x.amount||0),0);
-   mmAccountingRender(key,["التاريخ","الخزنة","نوع الحركة","القيمة","البيان"],rows.map(x=>[formatDate(x.created_at),x.treasuries?.treasury_name||"—",x.transaction_type,fmt(x.amount),x.notes||"—"]),[["عدد الحركات",rows.length],["إجمالي قيمة الحركات",fmt(total)]]);return;
+   const [txRes,tRes]=await Promise.all([db.from("treasury_transactions").select("created_at,transaction_type,amount,notes,treasury_id").in("transaction_type",["TRANSFER_IN","TRANSFER_OUT"]).gte("created_at",from+"T00:00:00").lte("created_at",to+"T23:59:59").order("created_at",{ascending:false}).limit(1000),db.from("treasuries").select("treasury_id,treasury_name")]);if(txRes.error)throw txRes.error;if(tRes.error)throw tRes.error;
+   const names=new Map((tRes.data||[]).map(x=>[String(x.treasury_id),x.treasury_name])),rows=txRes.data||[],total=rows.reduce((a,x)=>a+Number(x.amount||0),0);
+   mmAccountingRender(key,["التاريخ","الخزنة","نوع الحركة","القيمة","البيان"],rows.map(x=>[formatDate(x.created_at),names.get(String(x.treasury_id))||"—",x.transaction_type,fmt(x.amount),x.notes||"—"]),[["عدد الحركات",rows.length],["إجمالي قيمة الحركات",fmt(total)]]);return;
   }
   if(key==="customers"){
    const {data,error}=await db.rpc("get_aged_receivables_v2");if(error)throw error;const rows=data||[];
-   const total=rows.reduce((a,x)=>a+Number(x.net_balance??x.balance??x.remaining_amount??0),0);
-   mmAccountingRender(key,["العميل","الرصيد","0–30 يوم","31–60 يوم","61–90 يوم","أكثر من 90"],rows.map(x=>[x.customer_name||x.name||"—",fmt(x.net_balance??x.balance??x.remaining_amount),fmt(x.bucket_0_30??x.days_0_30),fmt(x.bucket_31_60??x.days_31_60),fmt(x.bucket_61_90??x.days_61_90),fmt(x.bucket_over_90??x.days_over_90)]),[["عدد العملاء",rows.length],["إجمالي الأرصدة حسب التقرير",fmt(total)]]);return;
+   const total=rows.reduce((a,x)=>a+Number(x.current_balance||0),0);
+   mmAccountingRender(key,["العميل","الهاتف","الرصيد الحالي","رصيد أول المدة","0–30 يوم","31–60 يوم","61–90 يوم","أكثر من 90"],rows.map(x=>[x.customer_name||"—",x.phone||"—",fmt(x.current_balance),fmt(x.opening_balance),fmt(x.days_0_30),fmt(x.days_31_60),fmt(x.days_61_90),fmt(x.days_over_90)]),[["عدد العملاء",rows.length],["إجمالي الأرصدة حسب التقرير",fmt(total)]]);return;
   }
   if(key==="suppliers"){
    const {data,error}=await db.rpc("get_supplier_payable_balances");if(error)throw error;const rows=data||[];
