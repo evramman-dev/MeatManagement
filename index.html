@@ -1175,6 +1175,12 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
   <button id="refreshPartnerSummary" class="btn" type="button">عرض التقرير</button>
   <div id="partnerManagementSummaryContent" style="margin-top:14px;"><div class="empty">اختر الفترة ثم اضغط عرض التقرير.</div></div>
 </div>
+<div id="homeMetricPanel" class="card hidden" style="margin-top:14px;">
+  <button class="btn secondary home-detail-back" type="button" style="width:auto;margin-bottom:12px;">رجوع للرئيسية</button>
+  <h2 id="homeMetricTitle" style="margin:0 0 12px;">ملخص المؤشر</h2>
+  <div id="mmAcc_homeMetricSummary" class="mm-accounting-summary"></div>
+  <div class="table-responsive" style="margin-top:12px;"><table id="mmAcc_homeMetricTable" class="print-table"><thead></thead><tbody><tr><td>جارٍ تحميل الملخص...</td></tr></tbody></table></div>
+</div>
 <button id="logoutBtn" class="btn secondary" type="button" style="margin-top:16px;">تسجيل الخروج</button>
 </div>
 </section>
@@ -4602,15 +4608,15 @@ async function loadHomeDashboard() {
       : null;
 
     box.innerHTML = `
-      <div class="home-card green" role="button" tabindex="0" onclick="window.openSection('sales')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openSection('sales')}"><div class="hc-label">💰 مبيعات اليوم</div><div class="hc-value">${fmt(todaySales)}</div><div class="details">${salesDifferenceText}</div></div>
-      <div class="home-card" role="button" tabindex="0" onclick="window.openSection('customers')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openSection('customers')}"><div class="hc-label">👥 العملاء</div><div class="hc-value">${customersCount}</div><div class="details">عدد العملاء النشطين</div></div>
-      <div class="home-card red" role="button" tabindex="0" onclick="window.openSection('stock')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openSection('stock')}"><div class="hc-label">⚠️ نقص مخزون</div><div class="hc-value">${lowStockCount}</div><div class="details">أصناف أقل من الحد الأدنى</div></div>
-      <div class="home-card gold" role="button" tabindex="0" onclick="window.openSection('sales')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openSection('sales')}"><div class="hc-label">📄 فواتير آجلة</div><div class="hc-value">${unpaidCount}</div><div class="details">فواتير عليها مبالغ متبقية</div></div>
-      <div class="home-card" role="button" tabindex="0" onclick="window.openSection('treasuries')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openSection('treasuries')}"><div class="hc-label">💵 إجمالي النقدية</div><div class="hc-value">${fmt(totalCash)}</div><div class="details">أرصدة الخزائن النشطة</div></div>
-      <div class="home-card" role="button" tabindex="0" onclick="window.openSection('trips')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openSection('trips')}"><div class="hc-label">🚐 جولات نشطة</div><div class="hc-value">${activeTrips}</div><div class="details">الجولات غير المكتملة</div></div>
-      <div class="home-card" role="button" tabindex="0" onclick="window.openSection('collections')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openSection('collections')}"><div class="hc-label">💸 تحصيلات اليوم</div><div class="hc-value">${todayCollections===null ? "غير متاح" : fmt(todayCollections)}</div></div>
-      <div class="home-card" role="button" tabindex="0" onclick="window.openSection('expenses')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openSection('expenses')}"><div class="hc-label">🧾 مصروفات اليوم</div><div class="hc-value">${todayExpenses===null ? "غير متاح" : fmt(todayExpenses)}</div></div>
-      <div class="home-card gold home-card-wide" role="button" tabindex="0" onclick="window.openSection('suppliers')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openSection('suppliers')}"><div class="hc-label">🏭 مستحقات الموردين</div><div class="hc-value">${totalSupplierPayables===null ? "غير متاح" : fmt(totalSupplierPayables)}</div><div class="details">إجمالي المبالغ المستحقة للموردين</div></div>
+      <div class="home-card green" role="button" tabindex="0" onclick="window.openHomeMetric('salesToday')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openHomeMetric('salesToday')}"><div class="hc-label">💰 مبيعات اليوم</div><div class="hc-value">${fmt(todaySales)}</div><div class="details">${salesDifferenceText}</div></div>
+      <div class="home-card" role="button" tabindex="0" onclick="window.openHomeMetric('customers')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openHomeMetric('customers')}"><div class="hc-label">👥 العملاء</div><div class="hc-value">${customersCount}</div><div class="details">عدد العملاء النشطين</div></div>
+      <div class="home-card red" role="button" tabindex="0" onclick="window.openHomeMetric('lowStock')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openHomeMetric('lowStock')}"><div class="hc-label">⚠️ نقص مخزون</div><div class="hc-value">${lowStockCount}</div><div class="details">أصناف أقل من الحد الأدنى</div></div>
+      <div class="home-card gold" role="button" tabindex="0" onclick="window.openHomeMetric('unpaid')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openHomeMetric('unpaid')}"><div class="hc-label">📄 فواتير آجلة</div><div class="hc-value">${unpaidCount}</div><div class="details">فواتير عليها مبالغ متبقية</div></div>
+      <div class="home-card" role="button" tabindex="0" onclick="window.openHomeMetric('cash')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openHomeMetric('cash')}"><div class="hc-label">💵 إجمالي النقدية</div><div class="hc-value">${fmt(totalCash)}</div><div class="details">أرصدة الخزائن النشطة</div></div>
+      <div class="home-card" role="button" tabindex="0" onclick="window.openHomeMetric('trips')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openHomeMetric('trips')}"><div class="hc-label">🚐 جولات نشطة</div><div class="hc-value">${activeTrips}</div><div class="details">الجولات غير المكتملة</div></div>
+      <div class="home-card" role="button" tabindex="0" onclick="window.openHomeMetric('collections')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openHomeMetric('collections')}"><div class="hc-label">💸 تحصيلات اليوم</div><div class="hc-value">${todayCollections===null ? "غير متاح" : fmt(todayCollections)}</div></div>
+      <div class="home-card" role="button" tabindex="0" onclick="window.openHomeMetric('expenses')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openHomeMetric('expenses')}"><div class="hc-label">🧾 مصروفات اليوم</div><div class="hc-value">${todayExpenses===null ? "غير متاح" : fmt(todayExpenses)}</div></div>
+      <div class="home-card gold home-card-wide" role="button" tabindex="0" onclick="window.openHomeMetric('suppliers')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openHomeMetric('suppliers')}"><div class="hc-label">🏭 مستحقات الموردين</div><div class="hc-value">${totalSupplierPayables===null ? "غير متاح" : fmt(totalSupplierPayables)}</div><div class="details">إجمالي المبالغ المستحقة للموردين</div></div>
     `;
     if(lowStockCount > 0) showToast(`⚠️ يوجد ${lowStockCount} أصناف تحت الحد الأدنى`, "warn", 6000);
     await loadHomeGeoSummary();
@@ -5766,13 +5772,57 @@ async function loadGeoSalesReport(){
   try{const [rows,items]=await Promise.all([buildGeoSalesSummary(from,to),buildGeoItemMovementSummary(from,to)]);body.innerHTML=rows.length?geoSalesRowsHtml(rows):'<tr><td colspan="8">لا توجد حركة خلال الفترة.</td></tr>';itemsBody.innerHTML=items.length?geoItemRowsHtml(items):'<tr><td colspan="8">لا توجد حركة أصناف خلال الفترة.</td></tr>';}
   catch(e){const message=esc(err(e));body.innerHTML=`<tr><td colspan="8" style="color:red;">تعذر تحميل التقرير: ${message}</td></tr>`;itemsBody.innerHTML=`<tr><td colspan="8" style="color:red;">تعذر تحميل حركة الأصناف: ${message}</td></tr>`;}
 }
+async function openHomeMetric(type){
+  const cfg={salesToday:"💰 ملخص مبيعات اليوم",customers:"👥 ملخص العملاء النشطين",lowStock:"⚠️ ملخص نقص المخزون",unpaid:"📄 ملخص الفواتير الآجلة",cash:"💵 ملخص النقدية والخزائن",trips:"🚐 ملخص الجولات النشطة",collections:"💸 ملخص تحصيلات اليوم",expenses:"🧾 ملخص مصروفات اليوم",suppliers:"🏭 ملخص مستحقات الموردين"};
+  if(!cfg[type])return;
+  $("homeOverview")?.classList.add("hidden");
+  ["homeNotificationPanel","homeGeoPanel","homeItemsPanel","homeCustomersPanel","homeSuppliersPanel","homePartnerSummaryPanel"].forEach(id=>$(id)?.classList.add("hidden"));
+  $("homeMetricPanel")?.classList.remove("hidden");
+  $("homeMetricTitle").textContent=cfg[type];
+  $("mmAcc_homeMetricSummary").replaceChildren();
+  $("mmAcc_homeMetricTable").querySelector("thead").innerHTML="";
+  $("mmAcc_homeMetricTable").querySelector("tbody").innerHTML="<tr><td>جارٍ تحميل الملخص...</td></tr>";
+  window.scrollTo(0,0);
+  try{
+    const today=todayISO();
+    if(type==="salesToday"){
+      const {data,error}=await db.from("sales_invoices").select("invoice_number,net_total,status,customers(customer_name)").eq("invoice_date",today).neq("status","CANCELLED").order("invoice_number",{ascending:false});if(error)throw error;
+      const rows=data||[];mmAccountingRender("homeMetric",["الفاتورة","العميل","الحالة","القيمة"],rows.map(x=>[x.invoice_number||"—",x.customers?.customer_name||"—",x.status||"—",fmt(x.net_total)]),[["عدد فواتير اليوم",rows.length],["إجمالي مبيعات اليوم",fmt(rows.reduce((a,x)=>a+Number(x.net_total||0),0))]]);
+    }else if(type==="customers"){
+      const {data,error}=await db.from("customers").select("customer_name,phone,is_active").eq("is_active",true).order("customer_name").limit(1000);if(error)throw error;const rows=data||[];
+      mmAccountingRender("homeMetric",["العميل","الهاتف","الحالة"],rows.map(x=>[x.customer_name||"—",x.phone||"—","نشط"]),[["عدد العملاء النشطين",rows.length]]);
+    }else if(type==="lowStock"){
+      const {data,error}=await db.from("stock_balances").select("product_id,quantity,products(product_name,minimum_stock)").limit(1000);if(error)throw error;
+      const g={};(data||[]).forEach(x=>{if(!x.products)return;const id=x.product_id;if(!g[id])g[id]={name:x.products.product_name||"—",qty:0,min:Number(x.products.minimum_stock||0)};g[id].qty+=Number(x.quantity||0);});
+      const rows=Object.values(g).filter(x=>x.qty<x.min);mmAccountingRender("homeMetric",["الصنف","الرصيد","الحد الأدنى","العجز"],rows.map(x=>[x.name,fmt(x.qty),fmt(x.min),fmt(Math.max(0,x.min-x.qty))]),[["عدد الأصناف الناقصة",rows.length],["إجمالي العجز",fmt(rows.reduce((a,x)=>a+Math.max(0,x.min-x.qty),0))]]);
+    }else if(type==="unpaid"){
+      const {data,error}=await db.from("sales_invoices").select("invoice_number,invoice_date,remaining_amount,status,customers(customer_name)").in("status",["POSTED","PARTIAL"]).gt("remaining_amount",0).order("invoice_date",{ascending:false}).limit(1000);if(error)throw error;const rows=data||[];
+      mmAccountingRender("homeMetric",["الفاتورة","التاريخ","العميل","المتبقي","الحالة"],rows.map(x=>[x.invoice_number||"—",formatDate(x.invoice_date),x.customers?.customer_name||"—",fmt(x.remaining_amount),x.status||"—"]),[["عدد الفواتير الآجلة",rows.length],["إجمالي المبالغ المتبقية",fmt(rows.reduce((a,x)=>a+Number(x.remaining_amount||0),0))]]);
+    }else if(type==="cash"){
+      const {data,error}=await db.from("treasuries").select("treasury_name,treasury_type,current_balance,is_active").eq("is_active",true).order("treasury_name");if(error)throw error;const rows=data||[];
+      mmAccountingRender("homeMetric",["الخزنة","النوع","الرصيد"],rows.map(x=>[x.treasury_name||"—",x.treasury_type||"—",fmt(x.current_balance)]),[["عدد الخزائن النشطة",rows.length],["إجمالي النقدية",fmt(rows.reduce((a,x)=>a+Number(x.current_balance||0),0))]]);
+    }else if(type==="trips"){
+      const {data,error}=await db.from("trips").select("trip_number,status,sales_reps(name)").neq("status","COMPLETED").order("trip_number",{ascending:false}).limit(1000);if(error)throw error;const rows=data||[];
+      mmAccountingRender("homeMetric",["الجولة","المندوب","الحالة"],rows.map(x=>[x.trip_number||"—",x.sales_reps?.name||"—",x.status||"—"]),[["عدد الجولات غير المكتملة",rows.length]]);
+    }else if(type==="collections"){
+      const {data,error}=await db.from("customer_collections").select("collection_date,amount,status,customers(customer_name)").eq("collection_date",today).eq("status","POSTED");if(error)throw error;const rows=data||[];
+      mmAccountingRender("homeMetric",["التاريخ","العميل","المبلغ","الحالة"],rows.map(x=>[formatDate(x.collection_date),x.customers?.customer_name||"—",fmt(x.amount),x.status]),[["عدد التحصيلات",rows.length],["إجمالي تحصيلات اليوم",fmt(rows.reduce((a,x)=>a+Number(x.amount||0),0))]]);
+    }else if(type==="expenses"){
+      const {data,error}=await db.from("expenses").select("expense_date,amount,expense_type,is_cancelled").eq("expense_date",today).eq("is_cancelled",false);if(error)throw error;const rows=data||[];
+      mmAccountingRender("homeMetric",["التاريخ","نوع المصروف","القيمة"],rows.map(x=>[formatDate(x.expense_date),x.expense_type||"—",fmt(x.amount)]),[["عدد المصروفات",rows.length],["إجمالي مصروفات اليوم",fmt(rows.reduce((a,x)=>a+Number(x.amount||0),0))]]);
+    }else if(type==="suppliers"){
+      const {data,error}=await db.rpc("get_supplier_payable_balances");if(error)throw error;const rows=data||[];const positive=rows.reduce((a,x)=>a+Math.max(0,Number(x.current_payable||0)),0),credit=rows.reduce((a,x)=>a+Math.max(0,-Number(x.current_payable||0)),0);
+      mmAccountingRender("homeMetric",["المورد","الرصيد","نوع الرصيد"],rows.map(x=>[x.supplier_name||"—",fmt(Math.abs(Number(x.current_payable||0))),Number(x.current_payable||0)<0?"دفعة مقدمة / رصيد لنا":"مستحق للمورد"]),[["إجمالي المستحقات",fmt(positive)],["أرصدة دائنة لنا",fmt(credit)],["عدد الموردين",rows.length]]);
+    }
+  }catch(e){mmAccountingRender("homeMetric",["الحالة"],[["تعذر تحميل البيانات"]],[["السبب",err(e)]]);}
+}
 function openHomeDetail(panelId){
   $("homeOverview")?.classList.add("hidden");
-  ["homeNotificationPanel","homeGeoPanel","homeItemsPanel","homeCustomersPanel","homeSuppliersPanel","homePartnerSummaryPanel"].forEach(id=>$(id)?.classList.toggle("hidden",id!==panelId));
+  ["homeNotificationPanel","homeGeoPanel","homeItemsPanel","homeCustomersPanel","homeSuppliersPanel","homePartnerSummaryPanel","homeMetricPanel"].forEach(id=>$(id)?.classList.toggle("hidden",id!==panelId));
   window.scrollTo(0,0);
 }
 function closeHomeDetail(){
-  ["homeNotificationPanel","homeGeoPanel","homeItemsPanel","homeCustomersPanel","homeSuppliersPanel","homePartnerSummaryPanel"].forEach(id=>$(id)?.classList.add("hidden"));
+  ["homeNotificationPanel","homeGeoPanel","homeItemsPanel","homeCustomersPanel","homeSuppliersPanel","homePartnerSummaryPanel","homeMetricPanel"].forEach(id=>$(id)?.classList.add("hidden"));
   $("homeOverview")?.classList.remove("hidden");
   window.scrollTo(0,0);
 }
