@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v202</title>
+<title>MeatManagement v203</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1138,7 +1138,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
   #homePartnerSummaryPanel .home-dashboard .home-card .hc-value{font-size:18px!important}
 }
 
-/* v202: match detailed reports and data center cards to advanced reports */
+/* v203: match detailed reports and data center cards to advanced reports */
 #partnerReportMenuContent .mm-partner-report-item,
 #dataCategoryHome .data-category-card{
   display:flex;
@@ -1188,7 +1188,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v202]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v203]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1270,6 +1270,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
   if(button){button.disabled=true;button.textContent="جارٍ الدخول...";}
   if(msg){msg.className="status";msg.textContent="جارٍ الاتصال بخدمة تسجيل الدخول...";}
   try{
+   window.mmLoginInProgress=true;
    const url="https://mklbemoisdkoyrwcrmoj.supabase.co";
    const key="sb_publishable_7ZjltiXgqnY4BJrZH4iZog_Jh-xfbau";
    const client=window.mmAppearanceAuthClient||window.supabase.createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:"implicit"}});
@@ -1303,6 +1304,8 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
   }catch(error){
    if(msg){msg.className="status error";msg.textContent="تعذر الدخول: "+(error?.message||String(error));}
    if(button){button.disabled=false;button.textContent="تسجيل الدخول";}
+  }finally{
+   window.mmLoginInProgress=false;
   }
  },true);
 })();
@@ -3143,7 +3146,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v202</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v203</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -8780,7 +8783,7 @@ async function viewInvoice(inv) {
           const totalRows=receiptTotals.map(row=>'<div class="total '+(row[2]||"")+'"><span>'+escapeReceipt(row[0])+'</span><strong>'+escapeReceipt(row[1])+'</strong></div>').join("");
           const receiptScriptOpen=String.fromCharCode(60)+"script>",receiptScriptClose=String.fromCharCode(60)+"/script>";
           const receipt='<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>فاتورة '+escapeReceipt(inv.invoice_number)+'</title><style>@page{margin:2mm}*{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff;color:#000;font-family:Tahoma,Arial,sans-serif;font-size:11px}body{width:'+(width-4)+'mm;padding:0}.receipt{width:100%;margin:0 auto}.center{text-align:center}.company{font-size:15px;font-weight:bold;margin:0 0 4px}.sub{font-size:10px;margin:2px 0}.rule{border:0;border-top:1px dashed #555;margin:7px 0}.meta{line-height:1.8}.meta div{display:flex;justify-content:space-between;gap:5px}.meta strong{font-weight:bold}table{width:100%;border-collapse:collapse;margin:7px 0}td{padding:5px 1px;border-bottom:1px dashed #aaa;vertical-align:top}.item-name{width:72%;font-weight:bold}.item-name small{display:block;font-size:9px;font-weight:normal;margin-top:3px}.amount{text-align:left;direction:ltr;white-space:nowrap;font-weight:bold}.total{display:flex;justify-content:space-between;gap:6px;padding:3px 0}.total strong{direction:ltr;white-space:nowrap}.grand{font-size:12px;font-weight:bold;border-top:1px solid #555;margin-top:4px;padding-top:5px}.thanks{margin-top:10px;text-align:center;font-size:10px;line-height:1.7}.no-print{display:none}@media print{body{width:'+(width-4)+'mm}}
-/* v202: جعل أزرار التقارير التفصيلية في عمودين مثل مركز البيانات */
+/* v203: جعل أزرار التقارير التفصيلية في عمودين مثل مركز البيانات */
 #partnerReportMenuContent.mm-partner-report-menu-list{
   grid-template-columns:repeat(2,minmax(0,1fr));
   gap:11px;
@@ -13535,11 +13538,13 @@ function mmInitAdvancedReportActions(){
         }
         await bootAppAfterLogin(data.session.user);
       } else { 
-        showLogin(); 
+        if(!window.mmLoginInProgress) showLogin();
       }
     }catch(e){ 
-      showLogin(); 
-      msg($("loginMsg"),"خطأ في الجلسة: "+err(e),"error"); 
+      if(!window.mmLoginInProgress){
+        showLogin(); 
+        msg($("loginMsg"),"خطأ في الجلسة: "+err(e),"error");
+      }
     }
   }
   init();
@@ -13778,7 +13783,7 @@ $("hrCreatePeriod")?.addEventListener("click",async()=>{try{const r=await db.rpc
 // ====== PWA ======
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=205', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
+    navigator.serviceWorker.register('./sw.js?v=206', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
   });
 }
 
