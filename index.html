@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v213</title>
+<title>MeatManagement v214</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1194,7 +1194,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v213]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v214]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -3151,7 +3151,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v213</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v214</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -3824,7 +3824,7 @@ async function mmLoadAccountingSummary(key){
    mmAccountingRender(key,["الخزنة","النوع","الرصيد","حالة الخزنة"],ts.map(x=>[x.treasury_name,x.treasury_type,fmt(x.current_balance),x.is_active===false?"متوقفة":"نشطة"]),[["عدد الخزائن",ts.length],["إجمالي الأرصدة",fmt(balance)],["إيداعات وتحويلات واردة بالفترة",fmt(inflow)],["مسحوبات وتحويلات صادرة بالفترة",fmt(outflow)]]);return;
   }
   if(key==="transfers"){
-   const [txRes,tRes]=await Promise.all([db.from("treasury_transactions").select("transaction_date,transaction_type,amount,notes,treasury_id").in("transaction_type",["TRANSFER_IN","TRANSFER_OUT"]).gte("transaction_date",from).lte("transaction_date",to).order("transaction_date",{ascending:false}).limit(1000),db.from("treasuries").select("treasury_id,treasury_name")]);if(txRes.error)throw txRes.error;if(tRes.error)throw tRes.error;
+   const [txRes,tRes]=await Promise.all([db.from("treasury_transactions").select("transaction_date,transaction_type,amount,notes,treasury_id").gte("transaction_date",from).lte("transaction_date",to).order("transaction_date",{ascending:false}).limit(1000),db.from("treasuries").select("treasury_id,treasury_name")]);if(txRes.error)throw txRes.error;if(tRes.error)throw tRes.error;
    const names=new Map((tRes.data||[]).map(x=>[String(x.treasury_id),x.treasury_name])),rows=txRes.data||[],total=rows.reduce((a,x)=>a+Number(x.amount||0),0);
    mmAccountingRender(key,["التاريخ","الخزنة","نوع الحركة","القيمة","البيان"],rows.map(x=>[formatDate(x.transaction_date),names.get(String(x.treasury_id))||"—",x.transaction_type,fmt(x.amount),x.notes||"—"]),[["عدد الحركات",rows.length],["إجمالي قيمة الحركات",fmt(total)]]);return;
   }
@@ -13785,7 +13785,7 @@ $("hrCreatePeriod")?.addEventListener("click",async()=>{try{const r=await db.rpc
 // ====== PWA ======
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=216', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
+    navigator.serviceWorker.register('./sw.js?v=217', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
   });
 }
 
