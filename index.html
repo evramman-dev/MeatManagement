@@ -735,7 +735,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v181]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v182]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -2323,7 +2323,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <button class="tab-btn" onclick="switchReportTab('repGeo')">المبيعات حسب المحافظة</button>
 </div>
 <div class="row" style="margin-bottom:15px; gap:5px;">
-<button class="tab-btn" id="btnExportExcel" style="flex: 1;">📊 تصدير إكسيل (CSV)</button>
+<button class="tab-btn" id="btnExportExcel" style="flex: 1;">📊 تصدير إكسيل</button>
 </div>
 <div id="repAged" class="report-tab">
 <div class="table-responsive"><table class="print-table" id="agedTable"><thead><tr><th>العميل</th><th>الموبايل</th><th>الرصيد الصافي</th><th>الرصيد الافتتاحي</th><th>0-30</th><th>31-60</th><th>61-90</th><th>+90</th></tr></thead><tbody></tbody></table></div>
@@ -2442,12 +2442,11 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div id="sectionProducts" class="sub-section hidden">
 <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div class="card product-hub">
-<div class="row" style="justify-content:space-between"><div><h2 style="margin:0">إدارة المنتجات</h2><div class="details">اختر نوع الأصناف لفتح شاشة الإدارة الخاصة به</div></div><button id="addBtn" class="btn hidden" type="button" onclick="window.openNewProductForm()">إضافة صنف</button></div>
+<div class="row" style="justify-content:space-between"><div><h2 style="margin:0">إدارة المنتجات</h2><div class="details">اختر نوع الأصناف لفتح شاشة الإدارة الخاصة به</div></div></div>
 <div id="productCategoryHub" class="product-category-grid">
 <button type="button" class="data-category-card" onclick="window.openProductCategory('raw')"><span class="data-category-icon">🥩</span><span class="data-category-title">خامات</span><span class="data-category-subtitle">المواد الخام قبل التصنيع</span></button>
 <button type="button" class="data-category-card" onclick="window.openProductCategory('finished')"><span class="data-category-icon">📦</span><span class="data-category-title">منتجات جاهزة للبيع</span><span class="data-category-subtitle">الأصناف التي تُباع للعميل</span></button>
 <button type="button" class="data-category-card" onclick="window.openProductCategory('components')"><span class="data-category-icon">⚙️</span><span class="data-category-title">مكونات ومستلزمات الإنتاج</span><span class="data-category-subtitle">مكونات الوصفات ومواد التشغيل</span></button>
-<button type="button" class="data-category-card" onclick="window.openProductCategory('reports')"><span class="data-category-icon">📊</span><span class="data-category-title">التقارير والجرد</span><span class="data-category-subtitle">متابعة الأرصدة وتنفيذ الجرد</span></button>
 </div></div>
 <div id="productCategoryPageRaw" class="product-category-page hidden"><button type="button" class="btn secondary product-category-back" onclick="window.closeProductCategory()">⬅ رجوع لإدارة المنتجات</button><div class="card"><h2>🥩 خامات</h2><p class="desc">اختر نوع الخامات التي تريد إدارتها.</p><div class="dashboard-grid">
 <button type="button" class="dash-item" onclick="window.openProductList('RAW_MEAT','اللحوم')"><span class="dash-icon">🥩</span><span class="dash-title">لحوم</span></button>
@@ -2595,7 +2594,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v181</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v182</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -11849,8 +11848,8 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
   // ========== تصدير تقرير شامل إلى Excel (CSV) ==========
   if($("refreshGeoSalesReport")) $("refreshGeoSalesReport").addEventListener("click",loadGeoSalesReport);
   if($("btnExportExcel")) $("btnExportExcel").addEventListener("click", async () => {
-      const btn = $("btnExportExcel"); 
-      busy(btn, true, "جارٍ التجهيز...", "📊 تصدير إكسيل (CSV)");
+      const btn = $("btnExportExcel");
+      busy(btn, true, "جارٍ التجهيز...", "📊 تصدير إكسيل");
       try {
           const [salesRes, purchRes, stockRes, custRes, suppRes, expRes] = await Promise.all([
               db.from("sales_invoices").select("*").neq("status","CANCELLED"),
@@ -11862,61 +11861,47 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
           ]);
 
           const num = (n) => Number(n || 0).toFixed(2);
-          let csv = "\uFEFF"; 
-          csv += "=== تقرير المبيعات ===\n";
-          csv += "رقم الفاتورة,التاريخ,العميل,الصافي,المدفوع,المتبقي,الحالة\n";
-          (salesRes.data || []).forEach(inv => {
-              csv += `"${inv.invoice_number}","${inv.invoice_date}","${customerName(inv.customer_id)}","${num(inv.net_total)}","${num(inv.paid_amount)}","${num(inv.remaining_amount)}","${inv.status}"\n`;
-          });
+          const xEsc = (v) => String(v ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+          const xTable = (title, headers, rows) => {
+              const th = headers.map(h => "<th>" + xEsc(h) + "</th>").join("");
+              const tr = rows.map(row => "<tr>" + row.map(v => "<td>" + xEsc(v) + "</td>").join("") + "</tr>").join("");
+              return "<table border=\"1\" cellspacing=\"0\" cellpadding=\"5\" style=\"border-collapse:collapse;margin-bottom:18px;min-width:700px\">"
+                  + "<tr><th colspan=\"" + headers.length + "\" style=\"background:#173c2c;color:#fff;font-weight:bold;text-align:center\">" + xEsc(title) + "</th></tr>"
+                  + "<tr style=\"background:#e9efe9;font-weight:bold\">" + th + "</tr>" + tr + "</table>";
+          };
 
-          csv += "\n=== تقرير المشتريات ===\n";
-          csv += "رقم الفاتورة,التاريخ,المورد,الصافي\n";
-          (purchRes.data || []).forEach(inv => {
-              csv += `"${inv.invoice_number}","${inv.invoice_date}","${supplierName(inv.supplier_id)}","${num(inv.net_total)}"\n`;
-          });
+          const salesRows = (salesRes.data || []).map(inv => [inv.invoice_number, inv.invoice_date, customerName(inv.customer_id), num(inv.net_total), num(inv.paid_amount), num(inv.remaining_amount), inv.status]);
+          const purchRows = (purchRes.data || []).map(inv => [inv.invoice_number, inv.invoice_date, supplierName(inv.supplier_id), num(inv.net_total)]);
+          const stockRows = (stockRes.data || []).map(st => [st.products?.product_name || "-", st.products?.product_code || "-", locationName(st.location_id), num(st.quantity)]);
+          const custRows = (custRes.data || []).map(c => [c.customer_code, c.customer_name, c.phone || "", customerTypeName(c.customer_type)]);
+          const suppRows = (suppRes.data || []).map(s => [s.supplier_code, s.supplier_name, s.phone || ""]);
+          const expRows = (expRes.data || []).map(e => [expenseTypeName(e.expense_type), expenseAccountCode(e.expense_type) || "", e.expense_date, num(e.amount)]);
 
-          csv += "\n=== تقرير المخزون ===\n";
-          csv += "المنتج,الكود,الموقع,الكمية\n";
-          (stockRes.data || []).forEach(st => {
-              const pName = st.products?.product_name || "-";
-              const pCode = st.products?.product_code || "-";
-              const loc = locationName(st.location_id);
-              csv += `"${pName}","${pCode}","${loc}","${num(st.quantity)}"\n`;
-          });
+          const html = "<!DOCTYPE html><html lang=\"ar\" dir=\"rtl\"><head><meta charset=\"UTF-8\"><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"><style>body{font-family:Arial,sans-serif;direction:rtl}table{width:auto}th,td{border:1px solid #777;padding:6px;white-space:nowrap}th{font-weight:bold}</style></head><body>"
+              + xTable("تقرير المبيعات", ["رقم الفاتورة","التاريخ","العميل","الصافي","المدفوع","المتبقي","الحالة"], salesRows)
+              + xTable("تقرير المشتريات", ["رقم الفاتورة","التاريخ","المورد","الصافي"], purchRows)
+              + xTable("تقرير المخزون", ["المنتج","الكود","الموقع","الكمية"], stockRows)
+              + xTable("تقرير العملاء", ["الكود","الاسم","الموبايل","النوع"], custRows)
+              + xTable("تقرير الموردين", ["الكود","الاسم","الموبايل"], suppRows)
+              + xTable("تقرير المصروفات", ["النوع","الحساب","التاريخ","المبلغ"], expRows)
+              + "</body></html>";
 
-          csv += "\n=== تقرير العملاء ===\n";
-          csv += "الكود,الاسم,الموبايل,النوع\n";
-          (custRes.data || []).forEach(c => {
-              csv += `"${c.customer_code}","${c.customer_name}","${c.phone || ""}","${customerTypeName(c.customer_type)}"\n`;
-          });
-
-          csv += "\n=== تقرير الموردين ===\n";
-          csv += "الكود,الاسم,الموبايل\n";
-          (suppRes.data || []).forEach(s => {
-              csv += `"${s.supplier_code}","${s.supplier_name}","${s.phone || ""}"\n`;
-          });
-
-          csv += "\n=== تقرير المصروفات ===\n";
-          csv += "النوع,الحساب,التاريخ,المبلغ\n";
-          (expRes.data || []).forEach(e => {
-              csv += `"${expenseTypeName(e.expense_type)}","${expenseAccountCode(e.expense_type)||""}","${e.expense_date}","${num(e.amount)}"\n`;
-          });
-
-          const fileName = `MeatManagement_Report_${todayISO()}.csv`;
-          const dataUri = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
+          const fileName = "MeatManagement_Report_" + todayISO() + ".xls";
+          const blob = new Blob(["\uFEFF", html], {type:"application/vnd.ms-excel;charset=utf-8"});
+          const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
-          a.href = dataUri;
+          a.href = url;
           a.download = fileName;
           a.style.display = "none";
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
-
-          showToast("✅ تم تصدير التقرير الشامل بنجاح", "success");
+          setTimeout(() => URL.revokeObjectURL(url), 1500);
+          showToast("تم تصدير ملف إكسيل بالجداول بنجاح", "success");
       } catch(e) {
           alert("خطأ في التصدير: " + err(e));
       } finally {
-          busy(btn, false, "", "📊 تصدير إكسيل (CSV)");
+          busy(btn, false, "", "📊 تصدير إكسيل");
       }
   });
 
