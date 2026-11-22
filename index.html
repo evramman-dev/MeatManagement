@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v189</title>
+<title>MeatManagement v190</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -748,7 +748,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 #accountingCard .mm-accounting-filters{border-radius:12px}
 @media(max-width:380px){#sectionReports .mm-report-groups,#accountingWorkspaceMenu .data-category-grid{gap:8px}#sectionReports .mm-report-groups .data-category-card,#accountingWorkspaceMenu .data-category-card{min-height:104px;padding:12px 7px}}
 
-/* v189: unified journal and accounting workspace presentation */
+/* v190: unified journal and accounting workspace presentation */
 #accountingDetailsPanel{margin:10px 0 0;padding:15px;background:linear-gradient(180deg,#fff,#fbfcfb);border:1px solid var(--line);border-radius:16px;box-shadow:0 3px 12px rgba(20,45,25,.06)}
 #accountingDetailsPanel>.mm-screen-heading{padding:0 0 12px;margin:0 0 14px;border-bottom:1px solid var(--line)}
 #accountingDetailsPanel>.mm-screen-heading h3{font-size:17px;line-height:1.5}
@@ -778,6 +778,52 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 #accountingDetailsPanel .print-table{min-width:520px}
 @media(max-width:420px){#accountingDetailsPanel{padding:11px}#accountingDetailsPanel>.mm-ledger-toolbar{padding:10px!important}#accountingDetailsPanel>.mm-ledger-toolbar>.grid{gap:7px}#accountingDetailsPanel>.mm-ledger-toolbar .btn{font-size:12px;padding:9px 5px}#accountingDetailsPanel>.mm-ledger-tabs .tab-btn{padding:9px 11px;font-size:12px}#accountingDetailsPanel>.acc-tab{padding:9px}}
 
+
+/* v190: صفحات مستقلة للدفاتر والتقارير وتحسين شريط الفلاتر على الهاتف */
+#accountingDetailsPanel>.mm-ledger-toolbar{width:100%;padding:15px!important;gap:13px!important}
+#accountingDetailsPanel>.mm-ledger-toolbar>.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px!important;width:100%;align-items:end}
+#accountingDetailsPanel>.mm-ledger-toolbar>.grid>div{min-width:0}
+#accountingDetailsPanel>.mm-ledger-toolbar label{display:block;min-width:0;margin:0!important;line-height:1.5}
+#accountingDetailsPanel>.mm-ledger-toolbar input[type=date]{width:100%;min-width:0;min-height:48px;margin-top:7px;padding:11px 9px;border:1px solid #cbd7cb;border-radius:11px;background:#fff}
+#accountingDetailsPanel>.mm-ledger-toolbar>.row{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px!important;width:100%;margin:0!important}
+#accountingDetailsPanel>.mm-ledger-toolbar .btn{min-height:46px;margin:0!important;white-space:normal;line-height:1.4}
+.mm-ledger-reports-menu{margin:8px 0 14px;padding:14px;background:#fff;border:1px solid var(--line);border-radius:15px;box-shadow:0 2px 9px rgba(23,60,44,.05)}
+.mm-ledger-reports-menu>.desc{margin:0 0 12px}
+.mm-ledger-reports-menu .data-category-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.mm-ledger-reports-menu .data-category-card{min-height:104px;border-radius:13px;background:linear-gradient(180deg,#fff,#f5f8f5);box-shadow:0 3px 9px rgba(23,60,44,.07)}
+.mm-ledger-report-page{margin:8px 0 16px;padding:14px;background:#fff;border:1px solid var(--line);border-radius:15px;box-shadow:0 3px 12px rgba(23,60,44,.06);min-width:0}
+.mm-ledger-report-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--line)}
+.mm-ledger-report-heading h3{margin:0;color:var(--g);font-size:17px;line-height:1.5}
+.mm-ledger-report-heading .btn{width:auto;margin:0;padding:9px 12px;white-space:nowrap}
+.mm-ledger-report-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:0 0 13px}
+.mm-ledger-report-actions .btn{width:100%;min-height:44px;margin:0;padding:10px 8px}
+.mm-ledger-report-actions .mm-ledger-whatsapp{background:#25D366;color:#fff;border:1px solid #25D366}
+.mm-ledger-report-content{min-width:0}
+.mm-ledger-report-content .table-responsive{max-width:100%;overflow-x:auto}
+.mm-ledger-report-content .print-table{min-width:520px}
+@media(max-width:420px){
+ #accountingDetailsPanel>.mm-ledger-toolbar{padding:12px!important}
+ #accountingDetailsPanel>.mm-ledger-toolbar>.grid{gap:10px!important}
+ #accountingDetailsPanel>.mm-ledger-toolbar input[type=date]{font-size:13px;padding:10px 6px}
+ #accountingDetailsPanel>.mm-ledger-toolbar .btn{font-size:12px;padding:9px 5px}
+ .mm-ledger-reports-menu{padding:11px}
+ .mm-ledger-reports-menu .data-category-grid{gap:8px}
+ .mm-ledger-reports-menu .data-category-card{min-height:96px;padding:10px 7px}
+ .mm-ledger-report-page{padding:11px}
+ .mm-ledger-report-heading{align-items:stretch}
+ .mm-ledger-report-heading .btn{width:100%}
+}
+@media print{
+ body[data-mm-accounting-print] *{visibility:hidden!important}
+ body[data-mm-accounting-print] .mm-ledger-report-page:not(.hidden){visibility:visible!important;position:fixed!important;display:block!important;inset:0!important;width:100%!important;max-width:none!important;margin:0!important;padding:12mm!important;border:0!important;box-shadow:none!important;background:#fff!important;overflow:visible!important}
+ body[data-mm-accounting-print] .mm-ledger-report-page:not(.hidden) *{visibility:visible!important}
+ body[data-mm-accounting-print] .mm-ledger-report-actions,
+ body[data-mm-accounting-print] .mm-ledger-report-heading .btn,
+ body[data-mm-accounting-print] .no-print{display:none!important}
+ body[data-mm-accounting-print] .mm-ledger-report-content .print-table{min-width:0!important;width:100%!important;font-size:9pt!important}
+ body[data-mm-accounting-print] .mm-ledger-report-content .table-responsive{overflow:visible!important}
+}
+
 </style>
 </head>
 <body>
@@ -792,7 +838,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v189]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v190]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -2680,7 +2726,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v189</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v190</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -3176,6 +3222,77 @@ function mmInitAccountingAndReports(){
   const detailsBack=document.createElement("button");detailsBack.type="button";detailsBack.className="btn secondary";detailsBack.textContent="⬅ رجوع للمحاسبة";detailsBack.addEventListener("click",()=>{nav.classList.remove("hidden");nav.style.display="block";details.classList.add("hidden");details.style.display="none";window.scrollTo(0,0);});
   detailsHead.append(detailsTitle,detailsBack);details.appendChild(detailsHead);
   oldChildren.forEach(el=>details.appendChild(el));
+  // v190: تحويل دفاتر المحاسبة إلى شاشات مستقلة بدل عرضها متتابعة.
+  const ledgerMenu=document.createElement("div");
+  ledgerMenu.id="mmLedgerReportsMenu";
+  ledgerMenu.className="mm-ledger-reports-menu";
+  ledgerMenu.innerHTML='<p class="desc">اختر الدفتر أو التقرير الذي تريد فتحه. ستظهر شاشة واحدة في كل مرة.</p><div class="data-category-grid"></div>';
+  const ledgerMenuGrid=ledgerMenu.querySelector(".data-category-grid");
+  const ledgerReportDefs=[
+   ["accSummary","الملخص","📊"],
+   ["accTrial","ميزان المراجعة","⚖️"],
+   ["accJournal","اليومية الأمريكية","📒"],
+   ["accLedger","دفتر الأستاذ","📚"],
+   ["accAccounts","دليل الحسابات","🗂️"],
+   ["accountingPeriodsPanel","الفترات المحاسبية","🗓️"]
+  ];
+  const ledgerReportPages={};
+  const ledgerReportContents={};
+  function showLedgerReportsMenu(){
+   ledgerMenu.classList.remove("hidden");ledgerMenu.style.display="block";
+   Object.entries(ledgerReportPages).forEach(([id,page])=>{page.classList.add("hidden");page.style.display="none";});
+   Object.values(ledgerReportContents).forEach(content=>content.classList.add("hidden"));
+   window.scrollTo(0,0);
+  }
+  function openLedgerReportScreen(id){
+   ledgerMenu.classList.add("hidden");ledgerMenu.style.display="none";
+   Object.entries(ledgerReportPages).forEach(([key,page])=>{const active=key===id;page.classList.toggle("hidden",!active);page.style.display=active?"block":"none";});
+   Object.entries(ledgerReportContents).forEach(([key,content])=>content.classList.toggle("hidden",key!==id));
+   window.scrollTo(0,0);
+  }
+  ledgerReportDefs.forEach(([id,title,icon])=>{
+   const content=details.querySelector("#"+id);
+   if(!content)return;
+   const page=document.createElement("section");
+   page.className="mm-ledger-report-page hidden";
+   page.style.display="none";
+   page.dataset.ledgerReport=id;
+   const pageHead=document.createElement("div");
+   pageHead.className="mm-ledger-report-heading";
+   const pageTitle=document.createElement("h3");pageTitle.textContent=icon+" "+title;
+   const back=document.createElement("button");back.type="button";back.className="btn secondary";back.textContent="⬅ رجوع للدفاتر";back.addEventListener("click",showLedgerReportsMenu);
+   pageHead.append(pageTitle,back);
+   const actions=document.createElement("div");actions.className="mm-ledger-report-actions no-print";
+   const printBtn=document.createElement("button");printBtn.type="button";printBtn.className="btn secondary";printBtn.textContent="🖨️ طباعة / PDF";
+   printBtn.addEventListener("click",()=>{
+    document.body.dataset.mmAccountingPrint=id;
+    const clear=()=>{delete document.body.dataset.mmAccountingPrint;window.removeEventListener("afterprint",clear);};
+    window.addEventListener("afterprint",clear);
+    window.print();
+    setTimeout(clear,1500);
+   });
+   const whatsappBtn=document.createElement("button");whatsappBtn.type="button";whatsappBtn.className="btn mm-ledger-whatsapp";whatsappBtn.textContent="💬 واتساب";
+   whatsappBtn.addEventListener("click",()=>{
+    const clone=content.cloneNode(true);
+    clone.querySelectorAll("button,form,.no-print").forEach(el=>el.remove());
+    const reportText=String(clone.innerText||clone.textContent||"").replace(/\n{3,}/g,"\n\n").trim();
+    const message=("MeatManagement\n"+title+"\n"+reportText).slice(0,6500);
+    window.open("https://wa.me/?text="+encodeURIComponent(message),"_blank");
+   });
+   actions.append(printBtn,whatsappBtn);
+   content.classList.add("mm-ledger-report-content","hidden");
+   ledgerReportContents[id]=content;
+   page.append(pageHead,actions,content);
+   details.appendChild(page);
+   ledgerReportPages[id]=page;
+   const menuButton=mmWorkspaceButton(title,icon,()=>openLedgerReportScreen(id));
+   const subtitle=menuButton.querySelector(".data-category-subtitle");if(subtitle)subtitle.textContent="فتح الشاشة";
+   ledgerMenuGrid.appendChild(menuButton);
+  });
+  if(ledgerTabs)ledgerTabs.remove();
+  details.appendChild(ledgerMenu);
+  showLedgerReportsMenu();
+  
   const ledgerToolbar=details.querySelector(":scope > .row");
   if(ledgerToolbar)ledgerToolbar.classList.add("mm-ledger-toolbar");
   const ledgerTabs=details.querySelector(":scope > .section-tabs");
