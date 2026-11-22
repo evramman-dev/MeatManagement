@@ -12188,7 +12188,7 @@ function mmReportSummary(id,items){
 function mmReportRender(type,headers,rows,summary){
  const table=$(type+"Table");if(!table)return;
  const body=table.querySelector("tbody");
- body.innerHTML=rows.length?rows.map(row=>"<tr>"+row.map(v=>"<td>"+mmReportEscape(v)+"</td>").join("")+"</tr>").join(""):"<tr><td colspan='"+headers.length+"' style='text-align:center'>لا توجد بيانات في الفترة المحددة.</td></tr>";
+ const colCount=table.querySelectorAll("thead th").length;body.innerHTML=rows.length?rows.map(row=>"<tr>"+row.map(v=>"<td>"+mmReportEscape(v)+"</td>").join("")+"</tr>").join(""):"<tr><td colspan='"+colCount+"' style='text-align:center'>لا توجد بيانات في الفترة المحددة.</td></tr>";
  mmAdvancedReportData[type]={headers,rows};
  mmReportSummary(type+"Summary",summary);
 }
@@ -12275,10 +12275,8 @@ function mmInitAdvancedReportActions(){
   window.switchReportTab = function(tabId) {
       document.querySelectorAll(".report-tab").forEach(el => el.classList.add("hidden"));
       const btns = document.querySelectorAll('[onclick^="switchReportTab"]');
-      btns.forEach(b => b.classList.remove("active"));
+      btns.forEach(b => b.classList.toggle("active",(b.getAttribute("onclick")||"").includes("'"+tabId+"'")));
       if($(tabId)) $(tabId).classList.remove("hidden");
-      const map = { repSales: 0, repPurchases: 1, repInventory: 2, repProduction: 3, repDistribution: 4, repPL: 5, repAged: 6, repSlow: 7, repGeo: 8 };
-      if(map[tabId] !== undefined && btns[map[tabId]]) btns[map[tabId]].classList.add("active");
   }
 
   // ========== واجهة الموارد البشرية ==========
