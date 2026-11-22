@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v208</title>
+<title>MeatManagement v209</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1194,7 +1194,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v208]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v209]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1674,6 +1674,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div id="hrTabAdvances" class="card hr-tab hidden"><h3>السلف</h3><div id="hrAdvancesList"><div class="empty">جارٍ التحميل...</div></div></div>
 <div id="hrTabPayroll" class="card hr-tab hidden"><div class="row" style="justify-content:space-between"><h3>مسيرات الرواتب</h3><button id="hrCreatePeriodBtn" class="btn hidden" type="button" style="width:auto;margin:0">＋ فترة رواتب</button></div><div class="info">مسير الرواتب يظل منفصلًا عن المحاسبة والخزائن حتى اعتماد تكامل مستقل.</div><div id="hrPayrollPeriodForm" class="hidden"><form id="hrPeriodForm" class="form-grid"><label>كود الفترة<input id="hrPeriodCode" required placeholder="2026-11"></label><label>من تاريخ<input id="hrPeriodStart" type="date" required></label><label>إلى تاريخ<input id="hrPeriodEnd" type="date" required></label><button class="btn" type="submit">إنشاء الفترة</button></form></div><label>الفترة</label><select id="hrPayrollPeriodSelect"><option value="">اختر الفترة</option></select><div class="row" style="margin-top:10px;gap:8px"><button id="hrCalculatePayrollBtn" class="btn" type="button">حساب المسير</button><button id="hrReviewPayrollBtn" class="btn secondary" type="button">مراجعة</button><button id="hrApprovePayrollBtn" class="btn secondary" type="button">اعتماد</button><button id="hrPayPayrollBtn" class="btn" type="button">صرف</button></div><div id="hrPayrollStatus" class="status hidden"></div><div id="hrPayrollItems"><div class="empty">اختر فترة لعرض المسير.</div></div></div></div>
 <div id="hrEmployeeModal" class="modal-form"><div class="modal-form-content"><div class="modal-header"><h3>إضافة موظف</h3><button class="close-btn" type="button" onclick="document.getElementById('hrEmployeeModal').classList.remove('active')">&times;</button></div><div class="modal-body"><form id="hrEmployeeForm" onsubmit="event.preventDefault();"><label>كود الموظف<input id="hrEmployeeCode" required maxlength="50"></label><label>اسم الموظف<input id="hrEmployeeName" required maxlength="200"></label><label>القسم<select id="hrEmployeeDepartment"></select></label><label>الوظيفة<select id="hrEmployeeJob"></select></label><label>تاريخ التعيين<input id="hrEmployeeHireDate" type="date" required></label><label>الراتب الأساسي<input id="hrEmployeeSalary" type="number" min="0" step="0.01" required></label><label>سعر ساعة الإضافي<input id="hrEmployeeOvertimeRate" type="number" min="0" step="0.01" value="0"></label><label>ساعات العمل اليومية<input id="hrEmployeeWorkHours" type="number" min="0.1" step="0.1" value="8"></label><label>يوم الإجازة الأسبوعية<select id="hrEmployeeOffDay"><option value="">بدون تحديد</option><option value="0">الأحد</option><option value="1">الاثنين</option><option value="2">الثلاثاء</option><option value="3">الأربعاء</option><option value="4">الخميس</option><option value="5">الجمعة</option><option value="6">السبت</option></select></label><label>ملاحظات<textarea id="hrEmployeeNotes" rows="2"></textarea></label><button id="hrSaveEmployeeBtn" class="btn" type="submit">حفظ الموظف</button><div id="hrEmployeeMsg" class="status hidden"></div></form></div></div></div>
+</div>
 <!-- شاشة المستخدمين -->
 <div id="sectionUsers" class="sub-section hidden">
 <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
@@ -3150,7 +3151,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v208</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v209</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -13788,7 +13789,7 @@ $("hrCreatePeriod")?.addEventListener("click",async()=>{try{const r=await db.rpc
 // ====== PWA ======
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=211', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
+    navigator.serviceWorker.register('./sw.js?v=212', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
   });
 }
 
