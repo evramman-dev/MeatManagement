@@ -2342,12 +2342,14 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 <div id="repAged" class="report-tab">
 <div class="table-responsive"><table class="print-table" id="agedTable"><thead><tr><th>العميل</th><th>الموبايل</th><th>الرصيد الصافي</th><th>الرصيد الافتتاحي</th><th>0-30</th><th>31-60</th><th>61-90</th><th>+90</th></tr></thead><tbody></tbody></table></div>
-</div><div class="row"><button class="btn secondary" type="button" id="mmExportAged">تصدير أعمار الديون</button></div>
+<div class="row"><button class="btn secondary" type="button" id="mmExportAged">تصدير أعمار الديون</button></div>
+</div>
 <div id="repSlow" class="report-tab hidden">
 <label>عدد أيام بدون حركة (مثال: 30)</label>
 <div class="row"><input type="number" id="slowDays" value="30" min="1"><button class="btn" onclick="loadSlowMovingStock()">بحث</button></div>
 <div class="table-responsive" style="margin-top:10px;"><table class="print-table" id="slowTable"><thead><tr><th>المنتج</th><th>الموقع</th><th>الكمية</th><th>آخر حركة</th></tr></thead><tbody></tbody></table></div>
-</div><div class="row"><button class="btn secondary" type="button" id="mmExportSlow">تصدير المخزون الراكد</button></div>
+<div class="row"><button class="btn secondary" type="button" id="mmExportSlow">تصدير المخزون الراكد</button></div>
+</div>
 <div id="repGeo" class="report-tab hidden">
 <div class="grid">
 <div><label for="geoSalesFromDate">من تاريخ</label><input type="date" id="geoSalesFromDate"></div>
@@ -2361,7 +2363,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div class="grid"><div><label>من تاريخ</label><input type="date" id="plFromDate"></div><div><label>إلى تاريخ</label><input type="date" id="plToDate"></div></div>
 <button class="btn" onclick="loadProfitLoss()" style="margin-top:10px;">عرض التقرير</button>
 <div id="plResult" class="total-box" style="margin-top:15px;"></div>
-</div><div class="row"><button class="btn secondary" type="button" id="mmExportProfit">تصدير الأرباح والخسائر</button></div>
+<div class="row"><button class="btn secondary" type="button" id="mmExportProfit">تصدير الأرباح والخسائر</button></div>
 </div>
 
 <div id="repSales" class="report-tab hidden">
