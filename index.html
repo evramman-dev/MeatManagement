@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v212</title>
+<title>MeatManagement v213</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1194,7 +1194,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v212]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v213]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -2876,31 +2876,31 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 
 <div id="repSales" class="report-tab hidden">
 <div class="grid"><div><label>من تاريخ</label><input type="date" id="mmSalesFrom"></div><div><label>إلى تاريخ</label><input type="date" id="mmSalesTo"></div></div>
-<div class="row"><button class="btn" id="mmSalesRun">عرض تقرير المبيعات</button><button class="btn secondary" id="mmSalesExport">تصدير Excel</button></div>
+<div class="row"><button type="button" class="btn" id="mmSalesRun">عرض تقرير المبيعات</button><button type="button" class="btn secondary" id="mmSalesExport">تصدير Excel</button></div>
 <div id="mmSalesSummary" class="mini-summary"></div>
 <div class="table-responsive"><table class="print-table" id="mmSalesTable"><thead><tr><th>رقم الفاتورة</th><th>التاريخ</th><th>العميل</th><th>المندوب</th><th>الإجمالي</th><th>الخصم</th><th>الصافي</th><th>المدفوع</th><th>المتبقي</th><th>الحالة</th></tr></thead><tbody><tr><td colspan="10">حدد الفترة ثم اعرض التقرير.</td></tr></tbody></table></div>
 </div>
 <div id="repPurchases" class="report-tab hidden">
 <div class="grid"><div><label>من تاريخ</label><input type="date" id="mmPurchasesFrom"></div><div><label>إلى تاريخ</label><input type="date" id="mmPurchasesTo"></div></div>
-<div class="row"><button class="btn" id="mmPurchasesRun">عرض تقرير المشتريات</button><button class="btn secondary" id="mmPurchasesExport">تصدير Excel</button></div>
+<div class="row"><button type="button" class="btn" id="mmPurchasesRun">عرض تقرير المشتريات</button><button type="button" class="btn secondary" id="mmPurchasesExport">تصدير Excel</button></div>
 <div id="mmPurchasesSummary" class="mini-summary"></div>
 <div class="table-responsive"><table class="print-table" id="mmPurchasesTable"><thead><tr><th>رقم الفاتورة</th><th>التاريخ</th><th>المورد</th><th>الإجمالي</th><th>الخصم</th><th>الصافي</th><th>الحالة</th></tr></thead><tbody><tr><td colspan="7">حدد الفترة ثم اعرض التقرير.</td></tr></tbody></table></div>
 </div>
 <div id="repInventory" class="report-tab hidden">
 <div class="grid"><div><label>من تاريخ الحركة</label><input type="date" id="mmInventoryFrom"></div><div><label>إلى تاريخ الحركة</label><input type="date" id="mmInventoryTo"></div></div>
-<div class="row"><button class="btn" id="mmInventoryRun">عرض حركة المخزون</button><button class="btn secondary" id="mmInventoryExport">تصدير Excel</button></div>
+<div class="row"><button type="button" class="btn" id="mmInventoryRun">عرض حركة المخزون</button><button type="button" class="btn secondary" id="mmInventoryExport">تصدير Excel</button></div>
 <div id="mmInventorySummary" class="mini-summary"></div>
 <div class="table-responsive"><table class="print-table" id="mmInventoryTable"><thead><tr><th>التاريخ</th><th>المنتج</th><th>الموقع</th><th>نوع الحركة</th><th>تغير الكمية</th><th>الرصيد بعدها</th><th>تكلفة الحركة</th></tr></thead><tbody><tr><td colspan="7">حدد الفترة ثم اعرض التقرير.</td></tr></tbody></table></div>
 </div>
 <div id="repProduction" class="report-tab hidden">
 <div class="grid"><div><label>من تاريخ الإنشاء</label><input type="date" id="mmProductionFrom"></div><div><label>إلى تاريخ الإنشاء</label><input type="date" id="mmProductionTo"></div></div>
-<div class="row"><button class="btn" id="mmProductionRun">عرض تقرير الإنتاج</button><button class="btn secondary" id="mmProductionExport">تصدير Excel</button></div>
+<div class="row"><button type="button" class="btn" id="mmProductionRun">عرض تقرير الإنتاج</button><button type="button" class="btn secondary" id="mmProductionExport">تصدير Excel</button></div>
 <div id="mmProductionSummary" class="mini-summary"></div>
 <div class="table-responsive"><table class="print-table" id="mmProductionTable"><thead><tr><th>أمر الإنتاج</th><th>التاريخ</th><th>المنتج الناتج</th><th>الموقع</th><th>الحالة</th><th>المطلوب</th><th>الناتج الفعلي</th><th>تكلفة المواد</th><th>تكلفة الإنتاج</th><th>تكلفة الوحدة</th></tr></thead><tbody><tr><td colspan="10">حدد الفترة ثم اعرض التقرير.</td></tr></tbody></table></div>
 </div>
 <div id="repDistribution" class="report-tab hidden">
 <div class="grid"><div><label>من تاريخ الجولة</label><input type="date" id="mmDistributionFrom"></div><div><label>إلى تاريخ الجولة</label><input type="date" id="mmDistributionTo"></div></div>
-<div class="row"><button class="btn" id="mmDistributionRun">عرض تقرير التوزيع</button><button class="btn secondary" id="mmDistributionExport">تصدير Excel</button></div>
+<div class="row"><button type="button" class="btn" id="mmDistributionRun">عرض تقرير التوزيع</button><button type="button" class="btn secondary" id="mmDistributionExport">تصدير Excel</button></div>
 <div id="mmDistributionSummary" class="mini-summary"></div>
 <div class="table-responsive"><table class="print-table" id="mmDistributionTable"><thead><tr><th>رقم الجولة</th><th>المندوب</th><th>السيارة</th><th>البداية</th><th>النهاية</th><th>الحالة</th><th>تحميل</th><th>مباع</th><th>مرتجع</th><th>مبيعات الفواتير</th></tr></thead><tbody><tr><td colspan="10">حدد الفترة ثم اعرض التقرير.</td></tr></tbody></table></div>
 </div>
@@ -3151,7 +3151,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v212</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v213</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -12831,7 +12831,7 @@ async function mmRunAdvancedReport(type){
  try{
   if(type==="sales"){
    const [invRes,retRes]=await Promise.all([
-    db.from("sales_invoices").select("invoice_number,invoice_date,status,subtotal,discount_amount,net_total,paid_amount,remaining_amount,customers(customer_name),sales_reps(rep_name)").gte("invoice_date",bounds.start).lt("invoice_date",bounds.end).neq("status","CANCELLED").order("invoice_date",{ascending:false}).limit(5000),
+    db.from("sales_invoices").select("invoice_number,invoice_date,status,subtotal,discount_amount,net_total,paid_amount,remaining_amount,customers(customer_name),sales_reps(rep_name)").gte("invoice_date",from).lte("invoice_date",to).neq("status","CANCELLED").order("invoice_date",{ascending:false}).limit(5000),
     db.from("sales_returns").select("total_returned_value,return_date,cancelled_at").gte("return_date",from).lte("return_date",to).is("cancelled_at",null).limit(5000)
    ]);
    if(invRes.error)throw invRes.error;if(retRes.error)throw retRes.error;
@@ -13251,11 +13251,11 @@ function mmInitAdvancedReportActions(){
     menu.querySelectorAll('[role="button"]').forEach(b=>b.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();b.click();}}));
   }
   function hrInit(){hrInitPanels();if($("hrV2AttendanceDate"))$("hrV2AttendanceDate").value=hrDate();if($("hrOvertimeDate"))$("hrOvertimeDate").value=hrDate();if($("hrAdvanceDate"))$("hrAdvanceDate").value=hrDate();if($("hrSaveDept"))$("hrSaveDept").onclick=()=>hrSaveSetup("dept");if($("hrSaveJob"))$("hrSaveJob").onclick=()=>hrSaveSetup("job");if($("hrSaveLeaveType"))$("hrSaveLeaveType").onclick=()=>hrSaveSetup("leave");if($("hrSaveEmployee"))$("hrSaveEmployee").onclick=hrSaveEmployee;if($("hrSaveAttendance"))$("hrSaveAttendance").onclick=hrSaveAttendance;if($("hrSaveLeave"))$("hrSaveLeave").onclick=hrSaveLeave;if($("hrSaveOvertime"))$("hrSaveOvertime").onclick=hrSaveOvertime;if($("hrSaveAdvance"))$("hrSaveAdvance").onclick=hrSaveAdvance;if($("hrCreatePeriod"))$("hrCreatePeriod").onclick=hrCreatePayroll;hrApplyVisibility();}
+  mmInitAdvancedReportActions();
   hrInit();
   mmInitSalesRepWorkspace();
   mmInitPartnersWorkspace();
   mmInitAccountingAndReports();
-  mmInitAdvancedReportActions();
 
 
   // تم نقل معالج الدخول إلى بداية التهيئة لتجنب تعطله بسبب أخطاء أجزاء لاحقة من الواجهة.
@@ -13785,7 +13785,7 @@ $("hrCreatePeriod")?.addEventListener("click",async()=>{try{const r=await db.rpc
 // ====== PWA ======
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=215', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
+    navigator.serviceWorker.register('./sw.js?v=216', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
   });
 }
 
