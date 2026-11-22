@@ -4,10 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v180</title>
+<title>MeatManagement v184</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
@@ -61,7 +62,7 @@ input[type=number],input[type=date]{direction:ltr;text-align:left}
 .product-group-heading h3{margin:0 0 4px;color:var(--g);font-size:16px}
 .product-group-heading .details{font-size:12px}
 .product-group .product{margin-top:9px}
-#productCategoryFilter,#productStatusFilter{flex:1;min-width:130px}
+#productStatusFilter{flex:1;min-width:130px}
 @media(max-width:420px){.product-filter{min-width:calc(50% - 7px)}.product-group-heading{align-items:flex-start}}
 
 .pname{font-weight:bold;font-size:16px;margin-bottom:7px}
@@ -735,7 +736,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v183]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v184]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -2474,9 +2475,9 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div class="modal-form-content">
 <div class="modal-header"><h3 id="productListTitle">إدارة الأصناف</h3><button class="close-btn" type="button" onclick="window.closeProductList()">×</button></div>
 <div class="modal-body">
-<div class="row" style="justify-content:flex-start;margin-bottom:10px"><button id="addProductInListBtn" class="btn" type="button" style="width:auto;margin:0">إضافة صنف</button></div>
+<div class="row" style="justify-content:flex-start;margin-bottom:10px;gap:8px"><button id="addProductInListBtn" class="btn" type="button" style="width:auto;margin:0">إضافة صنف</button><button id="changeProductCategoryBtn" class="btn secondary" type="button" style="width:auto;margin:0">⬅ تغيير التصنيف</button></div>
 <div class="row product-tools"><input id="search" type="search" placeholder="ابحث بالاسم أو الكود أو الباركود"><button id="refreshBtn" class="btn secondary" type="button">تحديث</button></div>
-<div class="row" style="margin-top:12px"><select id="productCategoryFilter" aria-label="فلترة حسب التصنيف"><option value="">كل التصنيفات</option></select><select id="productStatusFilter" aria-label="حالة الصنف"><option value="">كل الحالات</option><option value="active">نشط</option><option value="inactive">موقوف</option></select><span id="productCount" class="details">0 صنف</span></div>
+<div class="row" style="margin-top:12px"><select id="productStatusFilter" aria-label="حالة الصنف"><option value="">كل الحالات</option><option value="active">نشط</option><option value="inactive">موقوف</option></select><span id="productCount" class="details">0 صنف</span></div>
 <div id="listMsg" class="status hidden"></div>
 <div id="products"><div class="empty">جارٍ تحميل المنتجات...</div></div>
 </div></div></div>
@@ -2594,7 +2595,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v183</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v184</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -4784,7 +4785,6 @@ function refreshProductCategoryOptions(formSelected=null,includeForm=true){
     });
     el.value=[...el.options].some(o=>o.value===current)?current:"";
   };
-  fill($("productCategoryFilter"),"كل تصنيفات القسم",null);
   if(includeForm)fill($("category"),"اختر التصنيف",formSelected);
 }
 function isSpiceProduct(p){
@@ -4841,7 +4841,6 @@ window.openProductList=function(section,title){
   window.closeRawMaterialsMenu();
   window.closeFinishedProductsMenu();
   if($("search"))$("search").value="";
-  if($("productCategoryFilter"))$("productCategoryFilter").value="";
   if($("productStatusFilter"))$("productStatusFilter").value="";
   refreshProductCategoryOptions();
   renderProducts();
@@ -4857,6 +4856,11 @@ function setupProductFilters(){
       addInList.addEventListener("click",()=>window.openNewProductForm());
     }
   }
+  const changeCategory=$("changeProductCategoryBtn");
+  if(changeCategory&&changeCategory.dataset.bound!=="1"){
+    changeCategory.dataset.bound="1";
+    changeCategory.addEventListener("click",()=>window.closeProductList());
+  }
   document.querySelectorAll("[data-product-filter]").forEach(btn=>{
     if(btn.dataset.bound==="1")return;
     btn.dataset.bound="1";
@@ -4870,7 +4874,7 @@ function setupProductFilters(){
       renderProducts();
     });
   });
-  ["productCategoryFilter","productStatusFilter"].forEach(id=>{
+  ["productStatusFilter"].forEach(id=>{
     const el=$(id);if(el&&el.dataset.bound!=="1"){el.dataset.bound="1";el.addEventListener("change",renderProducts);}
   });
 }
@@ -4879,7 +4883,6 @@ function renderProducts(){
   setupProductFilters();
   box.replaceChildren();
   const q=($("search")?.value||"").trim().toLowerCase();
-  const cat=$("productCategoryFilter")?.value||"";
   const status=$("productStatusFilter")?.value||"";
   const matched=productsCache.filter(p=>{
     const textMatch=[p.product_name,p.product_code,p.barcode].some(v=>String(v||"").toLowerCase().includes(q));
@@ -4889,7 +4892,7 @@ function renderProducts(){
       : activeProductSection==="FINISHED_POULTRY"
         ? productSection==="FINISHED" && inventoryFinishedProductGroup(p)==="FINISHED_POULTRY"
         : productSection===activeProductSection;
-    const catMatch=!cat||String(p.category_id)===cat;
+    const catMatch=true;
     const statusMatch=!status||(status==="active"?p.is_active===true:p.is_active===false);
     return textMatch&&sectionMatch&&catMatch&&statusMatch;
   });
@@ -11845,12 +11848,16 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
       }
   }
   
-  // ========== تصدير تقرير شامل إلى Excel (CSV) ==========
+  // ========== تصدير تقرير شامل إلى Excel بصيغة XLSX ==========
   if($("refreshGeoSalesReport")) $("refreshGeoSalesReport").addEventListener("click",loadGeoSalesReport);
   if($("btnExportExcel")) $("btnExportExcel").addEventListener("click", async () => {
       const btn = $("btnExportExcel");
       busy(btn, true, "جارٍ التجهيز...", "📊 تصدير إكسيل");
       try {
+          if(typeof XLSX==="undefined" || !XLSX.utils || !XLSX.write) {
+              throw new Error("مكتبة تصدير Excel غير متاحة");
+          }
+
           const [salesRes, purchRes, stockRes, custRes, suppRes, expRes] = await Promise.all([
               db.from("sales_invoices").select("*").neq("status","CANCELLED"),
               db.from("purchase_invoices").select("*").neq("status","CANCELLED"),
@@ -11861,63 +11868,65 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
           ]);
 
           const num = (n) => Number(n || 0).toFixed(2);
-          const xEsc = (v) => String(v ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-          const xTable = (title, headers, rows) => {
-              const th = headers.map(h => "<th>" + xEsc(h) + "</th>").join("");
-              const tr = rows.map(row => "<tr>" + row.map(v => "<td>" + xEsc(v) + "</td>").join("") + "</tr>").join("");
-              return "<table border=\"1\" cellspacing=\"0\" cellpadding=\"5\" style=\"border-collapse:collapse;margin-bottom:18px;min-width:700px\">"
-                  + "<tr><th colspan=\"" + headers.length + "\" style=\"background:#173c2c;color:#fff;font-weight:bold;text-align:center\">" + xEsc(title) + "</th></tr>"
-                  + "<tr style=\"background:#e9efe9;font-weight:bold\">" + th + "</tr>" + tr + "</table>";
+          const wb = XLSX.utils.book_new();
+
+          const addSheet = (name, headers, rows) => {
+              const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+              ws["!cols"] = headers.map((h,i) => {
+                  const max = Math.max(String(h).length, ...rows.slice(0,300).map(r => String(r[i] ?? "").length));
+                  return {wch:Math.min(Math.max(max + 2, 12), 32)};
+              });
+              XLSX.utils.book_append_sheet(wb, ws, name);
           };
 
-          const salesRows = (salesRes.data || []).map(inv => [inv.invoice_number, inv.invoice_date, customerName(inv.customer_id), num(inv.net_total), num(inv.paid_amount), num(inv.remaining_amount), inv.status]);
-          const purchRows = (purchRes.data || []).map(inv => [inv.invoice_number, inv.invoice_date, supplierName(inv.supplier_id), num(inv.net_total)]);
-          const stockRows = (stockRes.data || []).map(st => [st.products?.product_name || "-", st.products?.product_code || "-", locationName(st.location_id), num(st.quantity)]);
-          const custRows = (custRes.data || []).map(c => [c.customer_code, c.customer_name, c.phone || "", customerTypeName(c.customer_type)]);
-          const suppRows = (suppRes.data || []).map(s => [s.supplier_code, s.supplier_name, s.phone || ""]);
-          const expRows = (expRes.data || []).map(e => [expenseTypeName(e.expense_type), expenseAccountCode(e.expense_type) || "", e.expense_date, num(e.amount)]);
+          addSheet("المبيعات",["رقم الفاتورة","التاريخ","العميل","الصافي","المدفوع","المتبقي","الحالة"],
+              (salesRes.data || []).map(inv => [inv.invoice_number,inv.invoice_date,customerName(inv.customer_id),num(inv.net_total),num(inv.paid_amount),num(inv.remaining_amount),inv.status]));
 
-          const html = "<!DOCTYPE html><html lang=\"ar\" dir=\"rtl\"><head><meta charset=\"UTF-8\"><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"><style>body{font-family:Arial,sans-serif;direction:rtl}table{width:auto}th,td{border:1px solid #777;padding:6px;white-space:nowrap}th{font-weight:bold}</style></head><body>"
-              + xTable("تقرير المبيعات", ["رقم الفاتورة","التاريخ","العميل","الصافي","المدفوع","المتبقي","الحالة"], salesRows)
-              + xTable("تقرير المشتريات", ["رقم الفاتورة","التاريخ","المورد","الصافي"], purchRows)
-              + xTable("تقرير المخزون", ["المنتج","الكود","الموقع","الكمية"], stockRows)
-              + xTable("تقرير العملاء", ["الكود","الاسم","الموبايل","النوع"], custRows)
-              + xTable("تقرير الموردين", ["الكود","الاسم","الموبايل"], suppRows)
-              + xTable("تقرير المصروفات", ["النوع","الحساب","التاريخ","المبلغ"], expRows)
-              + "</body></html>";
+          addSheet("المشتريات",["رقم الفاتورة","التاريخ","المورد","الصافي"],
+              (purchRes.data || []).map(inv => [inv.invoice_number,inv.invoice_date,supplierName(inv.supplier_id),num(inv.net_total)]));
 
-          const fileName = "MeatManagement_Report_" + todayISO() + ".xls";
-          const blob = new Blob(["\uFEFF", html], {type:"application/vnd.ms-excel;charset=utf-8"});
+          addSheet("المخزون",["المنتج","الكود","الموقع","الكمية"],
+              (stockRes.data || []).map(st => [st.products?.product_name || "-",st.products?.product_code || "-",locationName(st.location_id),num(st.quantity)]));
+
+          addSheet("العملاء",["الكود","الاسم","الموبايل","النوع"],
+              (custRes.data || []).map(c => [c.customer_code,c.customer_name,c.phone || "",customerTypeName(c.customer_type)]));
+
+          addSheet("الموردين",["الكود","الاسم","الموبايل"],
+              (suppRes.data || []).map(s => [s.supplier_code,s.supplier_name,s.phone || ""]));
+
+          addSheet("المصروفات",["النوع","الحساب","التاريخ","المبلغ"],
+              (expRes.data || []).map(e => [expenseTypeName(e.expense_type),expenseAccountCode(e.expense_type) || "",e.expense_date,num(e.amount)]));
+
+          const fileName = "MeatManagement_Report_" + todayISO() + ".xlsx";
+          const xlsxArray = XLSX.write(wb,{bookType:"xlsx",type:"array"});
+          const blob = new Blob([xlsxArray],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
           const downloadFile = (href) => {
-              const a = document.createElement("a");
-              a.href = href;
-              a.download = fileName;
-              a.style.display = "none";
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
+              const a=document.createElement("a");
+              a.href=href;a.download=fileName;a.style.display="none";
+              document.body.appendChild(a);a.click();document.body.removeChild(a);
           };
-          if (typeof URL !== "undefined" && typeof URL.createObjectURL === "function") {
-              const url = URL.createObjectURL(blob);
+
+          if(typeof URL!=="undefined" && typeof URL.createObjectURL==="function") {
+              const url=URL.createObjectURL(blob);
               downloadFile(url);
-              setTimeout(() => {
-                  if (typeof URL.revokeObjectURL === "function") URL.revokeObjectURL(url);
-              }, 1500);
-          } else if (typeof FileReader !== "undefined") {
-              await new Promise((resolve, reject) => {
-                  const reader = new FileReader();
-                  reader.onload = () => { downloadFile(reader.result); resolve(); };
-                  reader.onerror = () => reject(reader.error || new Error("تعذر تجهيز ملف الإكسيل"));
+              setTimeout(()=>{if(typeof URL.revokeObjectURL==="function")URL.revokeObjectURL(url);},2000);
+          } else if(typeof FileReader!=="undefined") {
+              await new Promise((resolve,reject)=>{
+                  const reader=new FileReader();
+                  reader.onload=()=>{downloadFile(reader.result);resolve();};
+                  reader.onerror=()=>reject(reader.error||new Error("تعذر تجهيز ملف الإكسيل"));
                   reader.readAsDataURL(blob);
               });
           } else {
-              throw new Error("بيئة المتصفح لا تدعم تنزيل ملف الإكسيل");
+              const base64=XLSX.write(wb,{bookType:"xlsx",type:"base64"});
+              downloadFile("data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,"+base64);
           }
-          showToast("تم تصدير ملف إكسيل بالجداول بنجاح", "success");
+
+          showToast("تم تصدير ملف Excel بصيغة XLSX بنجاح","success");
       } catch(e) {
-          alert("خطأ في التصدير: " + err(e));
+          alert("خطأ في التصدير: "+err(e));
       } finally {
-          busy(btn, false, "", "📊 تصدير إكسيل");
+          busy(btn,false,"","📊 تصدير إكسيل");
       }
   });
 
