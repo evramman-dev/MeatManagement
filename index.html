@@ -3222,6 +3222,12 @@ function mmInitAccountingAndReports(){
   const detailsBack=document.createElement("button");detailsBack.type="button";detailsBack.className="btn secondary";detailsBack.textContent="⬅ رجوع للمحاسبة";detailsBack.addEventListener("click",()=>{nav.classList.remove("hidden");nav.style.display="block";details.classList.add("hidden");details.style.display="none";window.scrollTo(0,0);});
   detailsHead.append(detailsTitle,detailsBack);details.appendChild(detailsHead);
   oldChildren.forEach(el=>details.appendChild(el));
+
+  
+  const ledgerToolbar=details.querySelector(":scope > .row");
+  if(ledgerToolbar)ledgerToolbar.classList.add("mm-ledger-toolbar");
+  const ledgerTabs=details.querySelector(":scope > .section-tabs");
+  if(ledgerTabs)ledgerTabs.classList.add("mm-ledger-tabs");
   // v190: تحويل دفاتر المحاسبة إلى شاشات مستقلة بدل عرضها متتابعة.
   const ledgerMenu=document.createElement("div");
   ledgerMenu.id="mmLedgerReportsMenu";
@@ -3292,11 +3298,6 @@ function mmInitAccountingAndReports(){
   if(ledgerTabs)ledgerTabs.remove();
   details.appendChild(ledgerMenu);
   showLedgerReportsMenu();
-  
-  const ledgerToolbar=details.querySelector(":scope > .row");
-  if(ledgerToolbar)ledgerToolbar.classList.add("mm-ledger-toolbar");
-  const ledgerTabs=details.querySelector(":scope > .section-tabs");
-  if(ledgerTabs)ledgerTabs.classList.add("mm-ledger-tabs");
   const nav=document.createElement("div");nav.id="accountingWorkspaceMenu";nav.className="mm-accounting-menu";
   nav.innerHTML='<p class="desc">اختر التقرير الذي تريد مراجعته. كل شاشة تعرض ملخصًا مستقلًا، ويمكنك الرجوع للقائمة.</p><div class="data-category-grid"></div>';
   const grid=nav.querySelector(".data-category-grid");
