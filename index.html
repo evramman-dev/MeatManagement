@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v184</title>
+<title>MeatManagement v185</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -722,6 +722,16 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
   .header-exit-btn{left:9px;min-width:76px;padding-inline:8px}
 }
 
+/* v185 responsive navigation and searchable product selectors */
+.section-shortcuts{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 16px;padding:10px;background:#f4f7f4;border:1px solid var(--line);border-radius:12px}
+.section-shortcuts .btn{width:auto;flex:1 1 auto;min-width:110px;margin:0;padding:10px 12px;font-size:13px}
+.section-tabs{display:flex;flex-wrap:nowrap!important;overflow-x:auto;overflow-y:hidden;white-space:nowrap;padding:4px 2px 10px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.section-tabs .tab-btn{flex:0 0 auto;min-width:max-content;border-radius:10px;padding:11px 14px;font-size:13px}
+.section-tabs .tab-btn.active{background:var(--g);color:#fff;border-color:var(--g)}
+.product-search-input{margin:8px 0 6px!important;width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;background:#fff}
+.product-search-input:focus{outline:2px solid rgba(23,60,44,.18);border-color:var(--g)}
+#sectionSalesReps #salesRepsList,#sectionSalesReps #salesRepAreaForm,#sectionSalesReps #salesRepAreasList,#sectionPartners #partnersList,#sectionPartners #partnerTransactionsCard,#sectionPartners #partnerProfitDistributionCard,#sectionPartners #partnerInventoryContributionsCard,#sectionPartners #partnerVehicleContributionsCard,#sectionAccounting .acc-tab,#sectionReports .report-tab{scroll-margin-top:18px}
+@media(max-width:520px){.section-shortcuts .btn{flex:1 1 calc(50% - 8px);min-width:0}.section-tabs .tab-btn{padding:10px 12px}}
 </style>
 </head>
 <body>
@@ -736,7 +746,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v184]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v185]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1103,7 +1113,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 <div id="dataGroupPagehr" class="data-group-page hidden" data-group-key="hr" data-group-title="👥 الموارد البشرية">
 <button type="button" class="btn secondary data-group-back" onclick="window.closeDataGroup()">⬅ العودة إلى مركز البيانات</button>
-<div class="card data-group-card"><h2>👥 الموارد البشرية</h2><p class="desc">اختر شاشة الموارد البشرية مباشرة</p><div class="dashboard-grid data-group-items"><div class="dash-item hidden" id="hrNavEmployees" onclick="window.openSection('hr');window.hrSwitchTab('employees')"><div class="dash-icon">👤</div><div class="dash-title">الموظفون</div></div><div class="dash-item hidden" id="hrNavAttendance" onclick="window.openSection('hr');window.hrSwitchTab('attendance')"><div class="dash-icon">🕘</div><div class="dash-title">الحضور</div></div><div class="dash-item hidden" id="hrNavLeaves" onclick="window.openSection('hr');window.hrSwitchTab('leaves')"><div class="dash-icon">🌴</div><div class="dash-title">الإجازات</div></div><div class="dash-item hidden" id="hrNavOvertime" onclick="window.openSection('hr');window.hrSwitchTab('overtime')"><div class="dash-icon">⏱️</div><div class="dash-title">الإضافي</div></div><div class="dash-item hidden" id="hrNavAdvances" onclick="window.openSection('hr');window.hrSwitchTab('advances')"><div class="dash-icon">💳</div><div class="dash-title">السلف</div></div><div class="dash-item hidden" id="hrNavPayroll" onclick="window.openSection('hr');window.hrSwitchTab('payroll')"><div class="dash-icon">💰</div><div class="dash-title">مسيرات الرواتب</div></div></div></div>
+<div class="card data-group-card"><h2>👥 الموارد البشرية</h2><p class="desc">اختر شاشة الموارد البشرية مباشرة</p><div class="dashboard-grid data-group-items"><div class="dash-item hidden" id="hrNavEmployees" onclick="window.openSection('hr');window.hrOpenPanel('employees')"><div class="dash-icon">👤</div><div class="dash-title">الموظفون</div></div><div class="dash-item hidden" id="hrNavAttendance" onclick="window.openSection('hr');window.hrOpenPanel('attendance')"><div class="dash-icon">🕘</div><div class="dash-title">الحضور</div></div><div class="dash-item hidden" id="hrNavLeaves" onclick="window.openSection('hr');window.hrOpenPanel('leaves')"><div class="dash-icon">🌴</div><div class="dash-title">الإجازات</div></div><div class="dash-item hidden" id="hrNavOvertime" onclick="window.openSection('hr');window.hrOpenPanel('overtime')"><div class="dash-icon">⏱️</div><div class="dash-title">الإضافي</div></div><div class="dash-item hidden" id="hrNavAdvances" onclick="window.openSection('hr');window.hrOpenPanel('advances')"><div class="dash-icon">💳</div><div class="dash-title">السلف</div></div><div class="dash-item hidden" id="hrNavPayroll" onclick="window.openSection('hr');window.hrOpenPanel('payroll')"><div class="dash-icon">💰</div><div class="dash-title">مسيرات الرواتب</div></div></div></div>
 </div>
 <div id="dataGroupPageprocurement" class="data-group-page hidden" data-group-key="procurement" data-group-title="🛒 المشتريات والموردين">
 <button type="button" class="btn secondary data-group-back" onclick="window.closeDataGroup()">⬅ العودة إلى مركز البيانات</button>
@@ -1174,6 +1184,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div id="salesRepsCard" class="card hidden">
 <div class="row" style="justify-content:space-between"><h2>🧑‍💼 إدارة المندوبين</h2><button id="addSalesRepBtn" class="btn" type="button" onclick="window.openSalesRepForm()" style="width:auto;margin:0;">＋ إضافة مندوب</button></div>
+<div class="section-shortcuts"><button type="button" class="btn secondary" onclick="window.jumpToPanel('salesRepsList')">المندوبون</button><button type="button" class="btn secondary" onclick="window.jumpToPanel('salesRepAreaForm')">توزيع المناطق</button><button type="button" class="btn secondary" onclick="window.jumpToPanel('salesRepAreasList')">الإسنادات الحالية</button></div>
 <div class="row"><input id="salesRepSearch" type="search" placeholder="ابحث باسم المندوب..."><button id="refreshSalesRepsBtn" class="btn secondary" type="button">تحديث</button></div>
 <div id="salesRepsMsg" class="status hidden"></div>
 <div id="salesRepsList"><div class="empty">جارٍ تحميل المندوبين...</div></div>
@@ -1445,6 +1456,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 </div>
 <div class="row"><input id="partnerSearch" type="search" placeholder="ابحث..."><button id="refreshPartnersBtn" class="btn secondary" type="button">تحديث</button></div>
+<div class="section-shortcuts"><button type="button" class="btn secondary" onclick="window.jumpToPanel('partnersList')">الشركاء</button><button type="button" class="btn secondary" onclick="window.jumpToPanel('partnerTransactionsCard')">الحركات</button><button type="button" class="btn secondary" onclick="window.jumpToPanel('partnerProfitDistributionCard')">توزيع الأرباح</button><button type="button" class="btn secondary" onclick="window.jumpToPanel('partnerInventoryContributionsCard')">مساهمات المخزون</button><button type="button" class="btn secondary" onclick="window.jumpToPanel('partnerVehicleContributionsCard')">مساهمات السيارات</button></div>
 <div id="partnersMsg" class="status hidden"></div>
 <div id="partnersList"><div class="empty">جارٍ تحميل الشركاء...</div></div>
 <div id="partnerTransactionsCard" class="card hidden" style="margin-top:20px;">
@@ -1556,7 +1568,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <button class="btn" id="btnBackup" style="flex:1; background:#24563e;">📥 نسخة احتياطية</button>
 </div>
 </div>
-<div class="row" style="margin-bottom:15px;gap:5px;">
+<div class="row section-tabs" style="margin-bottom:15px;gap:7px;">
 <button class="tab-btn active" onclick="switchAccTab('accSummary')">الملخص</button>
 <button class="tab-btn" onclick="switchAccTab('accTrial')">ميزان المراجعة</button>
 <button class="tab-btn" onclick="switchAccTab('accJournal')">اليومية الأمريكية</button>
@@ -2317,12 +2329,13 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
 <div class="card">
 <h2>📈 التقارير المتقدمة</h2>
-<div class="row" style="margin-bottom:15px;gap:5px;">
+<div class="row section-tabs" style="margin-bottom:15px;gap:7px;">
 <button class="tab-btn active" onclick="switchReportTab('repAged')">أعمار الديون</button>
 <button class="tab-btn" onclick="switchReportTab('repSlow')">المخزون الراكد</button>
 <button class="tab-btn" onclick="switchReportTab('repPL')">الأرباح والخسائر</button>
 <button class="tab-btn" onclick="switchReportTab('repGeo')">المبيعات حسب المحافظة</button>
 </div>
+<div class="section-shortcuts report-actions"><button class="btn secondary" type="button" onclick="switchReportTab('repAged')">أعمار الديون</button><button class="btn secondary" type="button" onclick="switchReportTab('repSlow')">المخزون الراكد</button><button class="btn secondary" type="button" onclick="switchReportTab('repPL')">الأرباح والخسائر</button><button class="btn secondary" type="button" onclick="switchReportTab('repGeo')">المبيعات الجغرافية</button></div>
 <div class="row" style="margin-bottom:15px; gap:5px;">
 <button class="tab-btn" id="btnExportExcel" style="flex: 1;">📊 تصدير إكسيل</button>
 </div>
@@ -2544,7 +2557,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 
 </section>
-<section id="sectionHr" class="sub-section hidden"><div class="card"><h2>👥 الموارد البشرية</h2><p class="desc">إدارة الموظفين والحضور والإجازات ومسيرات الرواتب.</p>
+<section id="sectionHr" class="sub-section hidden"><button id="hrBackToData" type="button" class="btn secondary" onclick="window.closeSection()" style="width:auto;margin:0 0 12px">⬅ رجوع إلى مركز البيانات</button><div class="card"><h2>👥 الموارد البشرية</h2><p class="desc">إدارة الموظفين والحضور والإجازات ومسيرات الرواتب.</p>
 <div id="hrMenuGrid" class="dashboard-grid" style="margin-top:16px">
 <div class="dash-item" role="button" tabindex="0" onclick="window.hrOpenPanel('setup')"><div class="dash-icon">⚙️</div><div class="dash-title">إعداد HR</div></div>
 <div class="dash-item" role="button" tabindex="0" onclick="window.hrOpenPanel('employees')"><div class="dash-icon">👥</div><div class="dash-title">الموظفون</div></div>
@@ -2554,7 +2567,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div class="dash-item" role="button" tabindex="0" onclick="window.hrOpenPanel('overtime')"><div class="dash-icon">⏱️</div><div class="dash-title">الإضافي</div></div>
 <div class="dash-item" role="button" tabindex="0" onclick="window.hrOpenPanel('advances')"><div class="dash-icon">💳</div><div class="dash-title">السلف</div></div>
 <div class="dash-item" role="button" tabindex="0" onclick="window.hrOpenPanel('payrollDetails')"><div class="dash-icon">📊</div><div class="dash-title">تفاصيل مسير الرواتب</div></div>
-</div><button id="hrBackToData" type="button" class="btn secondary" onclick="window.closeSection()" style="width:auto;margin:12px 0">⬅ رجوع إلى مركز البيانات</button>
+</div>
 
 <div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">إعداد HR</h3>
 <div class="grid">
@@ -2595,7 +2608,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v184</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v185</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -3019,6 +3032,7 @@ window.closeDataGroup = function(){
   window.scrollTo(0,0);
 };
 // ========== التنقل ==========
+window.jumpToPanel=function(id){const el=$(id);if(!el||el.classList.contains("hidden")){showToast("هذا القسم غير متاح حاليًا.","error");return;}el.scrollIntoView({behavior:"smooth",block:"start"});};
 function hideSections(){ ["login","recovery","newPass","home","tasks","tasksChartsScreen","data","nav"].forEach(id=>{ if($(id)) $(id).classList.add("hidden"); }); }
 function showLogin(){ hideSections(); if($("login")) $("login").classList.remove("hidden"); }
 function showApp(){ hideSections(); if($("nav")) $("nav").classList.remove("hidden"); page("home"); }
@@ -3346,6 +3360,26 @@ function treasuryTypeName(value){ return treasuryTypes[value]||value||"غير م
 const customerTypes={CASH:"نقدي",CREDIT:"آجل",WHOLESALE:"جملة",RETAIL:"تجزئة"};
 function customerTypeName(value){ return customerTypes[value]||value||"غير محدد"; }
 
+function enableProductSearch(select,placeholder){
+  if(!select)return;
+  let input=select.previousElementSibling;
+  if(!input||!input.classList.contains("product-search-input")){
+    input=document.createElement("input");input.type="search";input.className="product-search-input";
+    input.placeholder=placeholder||"اكتب اسم المنتج للبحث...";input.autocomplete="off";select.parentNode.insertBefore(input,select);
+  }else if(placeholder)input.placeholder=placeholder;
+  if(input.dataset.productSearchBound!=="1"){
+    const apply=()=>{const q=input.value.trim().toLocaleLowerCase();if(!q)select.value="";let matches=0;
+      Array.from(select.options).forEach((op,index)=>{if(index===0){op.hidden=false;return;}const match=!!q&&op.textContent.toLocaleLowerCase().includes(q);op.hidden=!match;if(match)matches++;});
+      if(q&&select.value){const chosen=select.options[select.selectedIndex];if(!chosen||chosen.hidden)select.value="";}
+      input.dataset.noProductMatches=q&&matches===0?"1":"0";
+    };
+    input.addEventListener("input",apply);
+    select.addEventListener("change",()=>{const op=select.options[select.selectedIndex];input.value=op&&op.value?op.textContent:"";apply();});
+    input.dataset.productSearchBound="1";
+  }
+  const chosen=select.options[select.selectedIndex];input.value=chosen&&chosen.value?chosen.textContent:"";const q=input.value.trim().toLocaleLowerCase();
+  Array.from(select.options).forEach((op,index)=>{if(index===0)op.hidden=false;else op.hidden=!q||!op.textContent.toLocaleLowerCase().includes(q);});
+}
 function fillSelect(el,items,idkey,namekey,placeholder){
   if(!el) return; el.replaceChildren();
   const first=document.createElement("option"); first.value=""; first.textContent=placeholder; el.appendChild(first);
@@ -4963,9 +4997,9 @@ window.openNewProductForm=function(){
 // ========== خيارات التعبئة ==========
 function packageOptionsForProduct(productId,unitId=null){return packagingOptionsCache.filter(x=>x.is_active&&String(x.product_id)===String(productId)&&(!unitId||String(x.unit_id)===String(unitId)));}
 async function loadPackagingOptions(){const box=$("packageOptionsList");if(!box)return;if(!navigator.onLine){box.innerHTML="<div class='empty'>أنت أوفلاين.</div>";return;}const {data,error}=await db.from("product_packaging_options").select("*,products(product_name,product_code),units(unit_name)").order("product_id").order("sort_order").order("package_option_id");if(error){msg($("packageOptionsMsg"),"تعذر تحميل خيارات التعبئة: "+err(error),"error");return;}packagingOptionsCache=data||[];const filter=$("packageProductFilter")?.value||"";const found=packagingOptionsCache.filter(x=>!filter||String(x.product_id)===String(filter));box.replaceChildren();if(!found.length){box.innerHTML="<div class='empty'>لا توجد خيارات تعبئة مسجلة.</div>";return;}found.forEach(x=>{const c=document.createElement("div");c.className="product";c.innerHTML=`<div class="pname">📦 ${x.products?.product_name||productName(x.product_id)}</div><div class="details">الخيار: ${x.option_name} | الوحدة: ${x.units?.unit_name||unitName(x.unit_id)} | الوزن: ${fmtQty(x.weight_kg)} كجم | الحالة: ${x.is_active?"نشط":"غير نشط"}</div>`;const a=document.createElement("div");a.className="actions";if(canManage){const e=document.createElement("button");e.className="btn secondary";e.textContent="تعديل";e.onclick=()=>openPackageOptionForm(x);a.appendChild(e);const t=document.createElement("button");t.className="btn";t.textContent=x.is_active?"تعطيل":"تفعيل";t.onclick=()=>togglePackageOption(x);a.appendChild(t);}c.appendChild(a);box.appendChild(c);});}
-function fillPackageProductSelects(){["packageProductFilter","packageOptionProduct"].forEach(id=>{const el=$(id);if(!el)return;const cur=el.value;el.replaceChildren();const f=document.createElement("option");f.value="";f.textContent=id==="packageProductFilter"?"كل المنتجات":"اختر المنتج";el.appendChild(f);productsCache.filter(p=>p.is_active).forEach(p=>{const o=document.createElement("option");o.value=String(p.product_id);o.textContent=p.product_name+" ("+p.product_code+")";el.appendChild(o);});el.value=cur;});}
+function fillPackageProductSelects(){["packageProductFilter","packageOptionProduct"].forEach(id=>{const el=$(id);if(!el)return;const cur=el.value;el.replaceChildren();const f=document.createElement("option");f.value="";f.textContent=id==="packageProductFilter"?"كل المنتجات":"اختر المنتج";el.appendChild(f);productsCache.filter(p=>p.is_active).forEach(p=>{const o=document.createElement("option");o.value=String(p.product_id);o.textContent=p.product_name+" ("+p.product_code+")";el.appendChild(o);});el.value=cur;enableProductSearch(el,id==="packageProductFilter"?"ابحث باسم المنتج لتصفية خيارات التعبئة...":"ابحث باسم المنتج...");});}
 function fillPackageUnitSelect(){const el=$("packageOptionUnit");if(!el)return;el.replaceChildren();const f=document.createElement("option");f.value="";f.textContent="اختر وحدة التعبئة";el.appendChild(f);units.filter(u=>u.is_active&&u.is_package_unit).forEach(u=>{const o=document.createElement("option");o.value=String(u.unit_id);o.textContent=u.unit_name;el.appendChild(o);});}
-function openPackageOptionForm(row=null){if(!canManage)return;$("packageOptionForm").reset();$("packageOptionEditId").value=row?row.package_option_id:"";$("packageOptionFormTitle").textContent=row?"تعديل خيار تعبئة":"إضافة خيار تعبئة";fillPackageProductSelects();fillPackageUnitSelect();if(row){$("packageOptionProduct").value=String(row.product_id);$("packageOptionUnit").value=String(row.unit_id);$("packageOptionName").value=row.option_name||"";$("packageOptionWeight").value=row.weight_kg||"";$("packageOptionSort").value=row.sort_order||0;$("packageOptionActive").checked=!!row.is_active;}clear($("packageOptionFormMsg"));$("packageOptionFormModal").classList.add("active");}
+function openPackageOptionForm(row=null){if(!canManage)return;$("packageOptionForm").reset();$("packageOptionEditId").value=row?row.package_option_id:"";$("packageOptionFormTitle").textContent=row?"تعديل خيار تعبئة":"إضافة خيار تعبئة";fillPackageProductSelects();fillPackageUnitSelect();if(row){$("packageOptionProduct").value=String(row.product_id);enableProductSearch($("packageOptionProduct"),"ابحث باسم المنتج...");$("packageOptionUnit").value=String(row.unit_id);$("packageOptionName").value=row.option_name||"";$("packageOptionWeight").value=row.weight_kg||"";$("packageOptionSort").value=row.sort_order||0;$("packageOptionActive").checked=!!row.is_active;}clear($("packageOptionFormMsg"));$("packageOptionFormModal").classList.add("active");}
 async function togglePackageOption(row){try{const {error}=await db.from("product_packaging_options").update({is_active:!row.is_active,updated_at:new Date().toISOString()}).eq("package_option_id",row.package_option_id);if(error)throw error;await loadPackagingOptions();}catch(e){showToast("تعذر تحديث خيار التعبئة: "+err(e),"error",7000);}}
 if($("addPackageOptionBtn"))$("addPackageOptionBtn").onclick=()=>openPackageOptionForm();if($("refreshPackageOptionsBtn"))$("refreshPackageOptionsBtn").onclick=loadPackagingOptions;if($("packageProductFilter"))$("packageProductFilter").onchange=loadPackagingOptions;
 if($("packageOptionForm"))$("packageOptionForm").addEventListener("submit",async e=>{e.preventDefault();if(!canManage)return;const btn=$("savePackageOptionBtn");busy(btn,true,"جارٍ...","حفظ");const id=$("packageOptionEditId").value;const payload={product_id:Number($("packageOptionProduct").value),unit_id:Number($("packageOptionUnit").value),option_name:$("packageOptionName").value.trim(),weight_kg:Number($("packageOptionWeight").value),sort_order:Number($("packageOptionSort").value||0),is_active:$("packageOptionActive").checked,updated_at:new Date().toISOString()};try{if(!payload.product_id||!payload.unit_id||!payload.option_name||!(payload.weight_kg>0))throw new Error("أكمل بيانات خيار التعبئة.");const user=(await db.auth.getUser()).data.user;const q=id?db.from("product_packaging_options").update(payload).eq("package_option_id",id):db.from("product_packaging_options").insert({...payload,created_by:user?.id||null});const {error}=await q;if(error)throw error;$("packageOptionFormModal").classList.remove("active");await loadPackagingOptions();}catch(e){msg($("packageOptionFormMsg"),"خطأ: "+err(e),"error");}finally{busy(btn,false,"","حفظ");}});
@@ -10165,6 +10199,7 @@ function fillRecipeOutputSelects(){
       el.appendChild(op); 
     }); 
     el.value=cur; 
+    enableProductSearch(el,"ابحث عن المنتج الناتج بالاسم...");
   } 
 }
 function addRecipeItemRow(item){ 
@@ -10198,7 +10233,8 @@ function addRecipeItemRow(item){
   const removeBtn=document.createElement("button"); removeBtn.type="button"; removeBtn.className="btn danger"; removeBtn.textContent="حذف"; 
   removeBtn.onclick=()=>{ wrap.remove(); if(!$("recipeItems").children.length) addRecipeItemRow(); }; 
   wrap.append(prodLabel,prodSel,unitLabel,unitSel,qtyLabel,qty,removeBtn); 
-  $("recipeItems").appendChild(wrap); 
+  $("recipeItems").appendChild(wrap);
+  enableProductSearch(prodSel,"ابحث عن مكوّن التصنيع بالاسم..."); 
 }
 window.addRecipeItemRow = addRecipeItemRow;
 if($("addRecipeItemBtn")) $("addRecipeItemBtn").addEventListener("click",()=>addRecipeItemRow());
@@ -10210,7 +10246,8 @@ async function editRecipe(r){
     $("recipeFormTitle").textContent = "تعديل الوصفة"; 
     $("recipeName").value = r.recipe_name||""; 
     fillRecipeOutputSelects(); 
-    $("recipeOutputProduct").value = String(r.product_id||""); 
+    $("recipeOutputProduct").value = String(r.product_id||"");
+    enableProductSearch($("recipeOutputProduct"),"ابحث عن المنتج الناتج بالاسم..."); 
     $("recipeOutputQty").value = r.output_quantity||""; 
     $("recipeOutputUnit").value = String(r.unit_id||""); 
     $("recipeNotes").value = r.notes||""; 
