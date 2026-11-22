@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v211</title>
+<title>MeatManagement v212</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -13766,7 +13766,9 @@ $("hrCreatePeriod")?.addEventListener("click",async()=>{try{const r=await db.rpc
       const key=group.dataset.groupKey;
       const items=key==="products"
         ? [...document.querySelectorAll("#sectionProducts #productCategoryHub > .data-category-card")]
-        : [...group.querySelectorAll(".data-group-items .dash-item")];
+        : key==="hr"
+          ? [...document.querySelectorAll("#sectionHr #hrMenuGrid > .dash-item")]
+          : [...group.querySelectorAll(".data-group-items .dash-item")];
       const available=items.filter(item=>!item.classList.contains("hidden"));
       const card=document.getElementById("dataCategoryCard"+key);
       if(card)card.classList.toggle("hidden",available.length===0);
@@ -13783,7 +13785,7 @@ $("hrCreatePeriod")?.addEventListener("click",async()=>{try{const r=await db.rpc
 // ====== PWA ======
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=214', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
+    navigator.serviceWorker.register('./sw.js?v=215', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
   });
 }
 
