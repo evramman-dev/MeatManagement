@@ -732,6 +732,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 .product-search-input:focus{outline:2px solid rgba(23,60,44,.18);border-color:var(--g)}
 #sectionSalesReps #salesRepsList,#sectionSalesReps #salesRepAreaForm,#sectionSalesReps #salesRepAreasList,#sectionPartners #partnersList,#sectionPartners #partnerTransactionsCard,#sectionPartners #partnerProfitDistributionCard,#sectionPartners #partnerInventoryContributionsCard,#sectionPartners #partnerVehicleContributionsCard,#sectionAccounting .acc-tab,#sectionReports .report-tab{scroll-margin-top:18px}
 @media(max-width:520px){.section-shortcuts .btn{flex:1 1 calc(50% - 8px);min-width:0}.section-tabs .tab-btn{padding:10px 12px}}
+.mm-work-menu{margin:14px 0 18px}.mm-work-panel{margin-top:12px}.mm-work-panel>.card{margin-top:10px}.mm-accounting-groups{margin:12px 0;padding:12px;border:1px solid var(--line);border-radius:12px;background:#f9fbf9}.mm-accounting-groups h3{margin:0 0 10px;color:var(--g)}.product-type-filter{width:100%;margin:8px 0 6px;border:1px solid var(--line);border-radius:10px;padding:11px 12px;background:#fff}.product-search-input{display:block}.mm-work-menu .data-category-card{min-height:104px}@media(max-width:520px){.mm-work-menu{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
 <body>
@@ -3033,6 +3034,86 @@ window.closeDataGroup = function(){
 };
 // ========== التنقل ==========
 window.jumpToPanel=function(id){const el=$(id);if(!el||el.classList.contains("hidden")){showToast("هذا القسم غير متاح حاليًا.","error");return;}el.scrollIntoView({behavior:"smooth",block:"start"});};
+
+function mmWorkspaceButton(label,icon,action){
+ const b=document.createElement("button");b.type="button";b.className="data-category-card";b.innerHTML='<span class="data-category-icon">'+icon+'</span><span class="data-category-title">'+label+'</span><span class="data-category-subtitle">فتح القسم</span>';b.addEventListener("click",action);return b;
+}
+function mmPanel(title,backAction){
+ const p=document.createElement("div");p.className="mm-work-panel hidden";
+ const h=document.createElement("div");h.className="row";h.style.cssText="justify-content:space-between;align-items:center;flex-wrap:wrap";
+ const t=document.createElement("h3");t.textContent=title;t.style.cssText="margin:8px 0;color:var(--g)";
+ const b=document.createElement("button");b.type="button";b.className="btn secondary";b.style.cssText="width:auto;margin:0";b.textContent="⬅ رجوع للقائمة";b.addEventListener("click",backAction);
+ h.append(t,b);p.appendChild(h);return p;
+}
+function mmInitSalesRepWorkspace(){
+ const card=$("salesRepsCard");if(!card||card.dataset.workspaceReady)return;
+ const titleRow=card.firstElementChild,oldShortcuts=card.querySelector(".section-shortcuts");
+ if(oldShortcuts)oldShortcuts.remove();
+ const searchRow=$("salesRepSearch")?.parentElement,repMsg=$("salesRepsMsg"),repList=$("salesRepsList");
+ const areaTitle=Array.from(card.querySelectorAll("h3")).find(x=>x.textContent.includes("توزيع المناطق"));
+ const areaMsg=$("salesRepAreasMsg"),areaForm=$("salesRepAreaForm"),assigned=$("salesRepAreasList");
+ const menu=document.createElement("div");menu.className="data-category-grid mm-work-menu";menu.id="salesRepWorkspaceMenu";
+ const panels={};
+ const back=()=>{Object.values(panels).forEach(p=>p.classList.add("hidden"));menu.classList.remove("hidden");};
+ panels.reps=mmPanel("المندوبون",back);panels.areas=mmPanel("توزيع المناطق",back);panels.assigned=mmPanel("المناطق المسندة",back);
+ [searchRow,repMsg,repList].forEach(x=>x&&panels.reps.appendChild(x));
+ [areaTitle,areaMsg,areaForm].forEach(x=>x&&panels.areas.appendChild(x));
+ if(assigned)panels.assigned.appendChild(assigned);
+ menu.append(mmWorkspaceButton("المندوبون","👥",()=>{back();menu.classList.add("hidden");panels.reps.classList.remove("hidden");}));
+ menu.append(mmWorkspaceButton("إسناد المناطق","📍",()=>{back();menu.classList.add("hidden");panels.areas.classList.remove("hidden");}));
+ menu.append(mmWorkspaceButton("المناطق المسندة","🗺️",()=>{back();menu.classList.add("hidden");panels.assigned.classList.remove("hidden");}));
+ card.append(menu,panels.reps,panels.areas,panels.assigned);
+ card.dataset.workspaceReady="1";
+}
+function mmInitPartnersWorkspace(){
+ const card=$("partnersCard");if(!card||card.dataset.workspaceReady)return;
+ const titleRow=card.firstElementChild,oldShortcuts=card.querySelector(".section-shortcuts");if(oldShortcuts)oldShortcuts.remove();
+ const searchRow=$("partnerSearch")?.parentElement,msgEl=$("partnersMsg"),list=$("partnersList");
+ const tx=$("partnerTransactionsCard"),inv=$("partnerInventoryContributionsCard"),veh=$("partnerVehicleContributionsCard");
+ const menu=document.createElement("div");menu.className="data-category-grid mm-work-menu";menu.id="partnersWorkspaceMenu";
+ const panels={main:mmPanel("الشركاء",()=>show("main")),tx:mmPanel("حركات الشركاء",()=>show("main")),profit:mmPanel("توزيع الأرباح",()=>show("main")),inv:mmPanel("مساهمات المخزون",()=>show("main")),veh:mmPanel("مساهمات السيارات",()=>show("main"))};
+ function show(key){
+  Object.values(panels).forEach(p=>p.classList.add("hidden"));menu.classList.toggle("hidden",key!=="menu");
+  const target=panels[key];if(target)target.classList.remove("hidden");
+  const profit=$("partnerProfitDistributionCard");if(profit&&profit.parentElement!==panels.profit)panels.profit.appendChild(profit);
+  [tx,inv,veh].forEach(x=>{if(x)x.classList.remove("hidden");});
+ }
+ [searchRow,msgEl,list].forEach(x=>x&&panels.main.appendChild(x));
+ if(tx)panels.tx.appendChild(tx);if(inv)panels.inv.appendChild(inv);if(veh)panels.veh.appendChild(veh);
+ const items=[["الشركاء","🤝","main"],["حركات الشركاء","💸","tx"],["توزيع الأرباح","📊","profit"],["مساهمات المخزون","📦","inv"],["مساهمات السيارات","🚚","veh"]];
+ items.forEach(([label,ico,key])=>menu.append(mmWorkspaceButton(label,ico,()=>show(key))));
+ card.append(menu,...Object.values(panels));show("menu");card.dataset.workspaceReady="1";
+}
+function mmInitAccountingAndReports(){
+ const acc=$("accountingCard");
+ if(acc&&!acc.dataset.workspaceReady){
+  const heading=acc.querySelector("h2");
+  const nav=document.createElement("div");nav.className="mm-accounting-groups";
+  nav.innerHTML='<h3>الوصول السريع</h3><div class="data-category-grid"></div>';
+  const grid=nav.querySelector(".data-category-grid");
+  const links=[["الخزائن والبنوك","🏦","treasuries"],["تحويلات الخزائن","🔄","treasuryTransfers"],["العملاء والموردون","👥","customers"],["المصروفات والمدفوعات","💳","expenses"],["التقارير المتقدمة","📈","reports"]];
+  links.forEach(([label,ico,section])=>grid.append(mmWorkspaceButton(label,ico,()=>window.openSection(section))));
+  if(heading)heading.insertAdjacentElement("afterend",nav);
+  const addJournal=document.createElement("button");addJournal.type="button";addJournal.className="btn";addJournal.textContent="＋ إضافة قيد تسوية";addJournal.style.cssText="width:auto;margin:0 0 12px";addJournal.addEventListener("click",()=>{if($("btnAdjustment"))$("btnAdjustment").click();});
+  nav.insertAdjacentElement("afterend",addJournal);
+  const search=document.createElement("input");search.type="search";search.className="product-search-input";search.placeholder="ابحث عن وظيفة محاسبية...";
+  const tabs=acc.querySelector(".section-tabs");if(tabs)tabs.insertAdjacentElement("beforebegin",search);
+  search.addEventListener("input",()=>{const q=search.value.trim().toLocaleLowerCase();Array.from(tabs?.querySelectorAll("button")||[]).forEach(b=>{b.hidden=!!q&&!b.textContent.toLocaleLowerCase().includes(q);});});
+  acc.dataset.workspaceReady="1";
+ }
+ const reports=$("sectionReports");
+ if(reports&&!reports.dataset.workspaceReady){
+  const card=reports.querySelector(".card");if(card){
+   const search=document.createElement("input");search.type="search";search.className="product-search-input";search.placeholder="ابحث باسم التقرير...";
+   const tabs=card.querySelector(".section-tabs");if(tabs)tabs.insertAdjacentElement("beforebegin",search);
+   search.addEventListener("input",()=>{const q=search.value.trim().toLocaleLowerCase();Array.from(tabs?.querySelectorAll("button")||[]).forEach(b=>{b.hidden=!!q&&!b.textContent.toLocaleLowerCase().includes(q);});});
+   const label=document.createElement("p");label.className="desc";label.textContent="اختر التقرير حسب نوعه. حدد الفترة أو الفلاتر داخل التقرير ثم اعرض النتائج أو صدّرها إلى Excel.";if(tabs)tabs.insertAdjacentElement("beforebegin",label);
+  }
+  reports.dataset.workspaceReady="1";
+ }
+}
+
+
 function hideSections(){ ["login","recovery","newPass","home","tasks","tasksChartsScreen","data","nav"].forEach(id=>{ if($(id)) $(id).classList.add("hidden"); }); }
 function showLogin(){ hideSections(); if($("login")) $("login").classList.remove("hidden"); }
 function showApp(){ hideSections(); if($("nav")) $("nav").classList.remove("hidden"); page("home"); }
@@ -12182,6 +12263,9 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
   }
   function hrInit(){hrInitPanels();if($("hrV2AttendanceDate"))$("hrV2AttendanceDate").value=hrDate();if($("hrOvertimeDate"))$("hrOvertimeDate").value=hrDate();if($("hrAdvanceDate"))$("hrAdvanceDate").value=hrDate();if($("hrSaveDept"))$("hrSaveDept").onclick=()=>hrSaveSetup("dept");if($("hrSaveJob"))$("hrSaveJob").onclick=()=>hrSaveSetup("job");if($("hrSaveLeaveType"))$("hrSaveLeaveType").onclick=()=>hrSaveSetup("leave");if($("hrSaveEmployee"))$("hrSaveEmployee").onclick=hrSaveEmployee;if($("hrSaveAttendance"))$("hrSaveAttendance").onclick=hrSaveAttendance;if($("hrSaveLeave"))$("hrSaveLeave").onclick=hrSaveLeave;if($("hrSaveOvertime"))$("hrSaveOvertime").onclick=hrSaveOvertime;if($("hrSaveAdvance"))$("hrSaveAdvance").onclick=hrSaveAdvance;if($("hrCreatePeriod"))$("hrCreatePeriod").onclick=hrCreatePayroll;hrApplyVisibility();}
   hrInit();
+  mmInitSalesRepWorkspace();
+  mmInitPartnersWorkspace();
+  mmInitAccountingAndReports();
 
 
   // تم نقل معالج الدخول إلى بداية التهيئة لتجنب تعطله بسبب أخطاء أجزاء لاحقة من الواجهة.
