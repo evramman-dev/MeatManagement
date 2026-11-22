@@ -722,7 +722,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
   .header-exit-btn{left:9px;min-width:76px;padding-inline:8px}
 }
 
-/* v185 responsive navigation and searchable product selectors */
+/* v186 unified navigation, product type selectors and workspace panels */
 .section-shortcuts{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 16px;padding:10px;background:#f4f7f4;border:1px solid var(--line);border-radius:12px}
 .section-shortcuts .btn{width:auto;flex:1 1 auto;min-width:110px;margin:0;padding:10px 12px;font-size:13px}
 .section-tabs{display:flex;flex-wrap:nowrap!important;overflow-x:auto;overflow-y:hidden;white-space:nowrap;padding:4px 2px 10px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
@@ -2609,7 +2609,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v185</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v186</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -3049,6 +3049,7 @@ function mmInitSalesRepWorkspace(){
  const card=$("salesRepsCard");if(!card||card.dataset.workspaceReady)return;
  const titleRow=card.firstElementChild,oldShortcuts=card.querySelector(".section-shortcuts");
  if(oldShortcuts)oldShortcuts.remove();
+ const divider=card.querySelector("hr");if(divider)divider.remove();
  const repActions=titleRow;if(repActions){const areaBtn=document.createElement("button");areaBtn.type="button";areaBtn.className="btn secondary";areaBtn.textContent="📍 توزيع المناطق";areaBtn.style.width="auto";areaBtn.onclick=()=>{back();menu.classList.add("hidden");panels.areas.classList.remove("hidden");};const assignedBtn=document.createElement("button");assignedBtn.type="button";assignedBtn.className="btn secondary";assignedBtn.textContent="🗺️ عرض الإسنادات";assignedBtn.style.width="auto";assignedBtn.onclick=()=>{back();menu.classList.add("hidden");panels.assigned.classList.remove("hidden");};repActions.append(areaBtn,assignedBtn);}
  const searchRow=$("salesRepSearch")?.parentElement,repMsg=$("salesRepsMsg"),repList=$("salesRepsList");
  const areaTitle=Array.from(card.querySelectorAll("h3")).find(x=>x.textContent.includes("توزيع المناطق"));
