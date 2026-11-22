@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v200</title>
+<title>MeatManagement v201</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1138,7 +1138,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
   #homePartnerSummaryPanel .home-dashboard .home-card .hc-value{font-size:18px!important}
 }
 
-/* v200: match detailed reports and data center cards to advanced reports */
+/* v201: match detailed reports and data center cards to advanced reports */
 #partnerReportMenuContent .mm-partner-report-item,
 #dataCategoryHome .data-category-card{
   display:flex;
@@ -1188,7 +1188,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v200]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v201]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1278,9 +1278,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
     const result=await client.auth.signInWithPassword({email:login,password});
     if(result.error)throw result.error;
     if(!result.data?.session)throw new Error("لم تُنشأ جلسة تسجيل الدخول.");
-    const saved=await client.auth.setSession({access_token:result.data.session.access_token,refresh_token:result.data.session.refresh_token});
-    if(saved.error)throw saved.error;
-    session=saved.data.session;
+    session=result.data.session;
    }else{
     const response=await fetch(url+"/functions/v1/username-login",{method:"POST",headers:{"Content-Type":"application/json","apikey":key},body:JSON.stringify({username:login,password})});
     const result=await response.json().catch(()=>({}));
@@ -1289,12 +1287,15 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
     if(saved.error)throw saved.error;
     session=saved.data.session;
    }
-   if(!session)throw new Error("لم تُنشأ جلسة تسجيل الدخول.");
-   const persisted=await client.auth.getSession();
-   if(persisted.error)throw persisted.error;
-   if(!persisted.data.session?.user?.id)throw new Error("لم يتم حفظ جلسة الدخول على الجهاز.");
+   if(!session?.user?.id)throw new Error("لم تُنشأ جلسة تسجيل الدخول.");
    if(msg){msg.className="status success";msg.textContent="تم تسجيل الدخول. جارٍ فتح التطبيق...";}
-   if(typeof window.mmBootAppAfterLogin==="function"){ await window.mmBootAppAfterLogin(persisted.data.session.user); } else { location.reload(); }
+   window.mmLoginInProgress=true;
+   try{
+    if(typeof window.mmBootAppAfterLogin!=="function")throw new Error("تعذر تشغيل التطبيق بعد تسجيل الدخول. أعد فتح الصفحة.");
+    await window.mmBootAppAfterLogin(session.user);
+   }finally{
+    window.mmLoginInProgress=false;
+   }
   }catch(error){
    if(msg){msg.className="status error";msg.textContent="تعذر الدخول: "+(error?.message||String(error));}
    if(button){button.disabled=false;button.textContent="تسجيل الدخول";}
@@ -3138,7 +3139,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v200</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v201</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -3360,6 +3361,7 @@ try {
   let loginInProgress=false;
   let appBootPromise=null;
   let bootedUserId=null;
+  window.mmLoginInProgress=false;
   let taxWarningShownForUserId=null;
   function installPasswordVisibilityToggles(){
     document.querySelectorAll('input[type="password"]').forEach(input=>{
@@ -8774,7 +8776,7 @@ async function viewInvoice(inv) {
           const totalRows=receiptTotals.map(row=>'<div class="total '+(row[2]||"")+'"><span>'+escapeReceipt(row[0])+'</span><strong>'+escapeReceipt(row[1])+'</strong></div>').join("");
           const receiptScriptOpen=String.fromCharCode(60)+"script>",receiptScriptClose=String.fromCharCode(60)+"/script>";
           const receipt='<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>فاتورة '+escapeReceipt(inv.invoice_number)+'</title><style>@page{margin:2mm}*{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff;color:#000;font-family:Tahoma,Arial,sans-serif;font-size:11px}body{width:'+(width-4)+'mm;padding:0}.receipt{width:100%;margin:0 auto}.center{text-align:center}.company{font-size:15px;font-weight:bold;margin:0 0 4px}.sub{font-size:10px;margin:2px 0}.rule{border:0;border-top:1px dashed #555;margin:7px 0}.meta{line-height:1.8}.meta div{display:flex;justify-content:space-between;gap:5px}.meta strong{font-weight:bold}table{width:100%;border-collapse:collapse;margin:7px 0}td{padding:5px 1px;border-bottom:1px dashed #aaa;vertical-align:top}.item-name{width:72%;font-weight:bold}.item-name small{display:block;font-size:9px;font-weight:normal;margin-top:3px}.amount{text-align:left;direction:ltr;white-space:nowrap;font-weight:bold}.total{display:flex;justify-content:space-between;gap:6px;padding:3px 0}.total strong{direction:ltr;white-space:nowrap}.grand{font-size:12px;font-weight:bold;border-top:1px solid #555;margin-top:4px;padding-top:5px}.thanks{margin-top:10px;text-align:center;font-size:10px;line-height:1.7}.no-print{display:none}@media print{body{width:'+(width-4)+'mm}}
-/* v200: جعل أزرار التقارير التفصيلية في عمودين مثل مركز البيانات */
+/* v201: جعل أزرار التقارير التفصيلية في عمودين مثل مركز البيانات */
 #partnerReportMenuContent.mm-partner-report-menu-list{
   grid-template-columns:repeat(2,minmax(0,1fr));
   gap:11px;
@@ -13478,6 +13480,27 @@ function mmInitAdvancedReportActions(){
 
   window.mmBootAppAfterLogin=bootAppAfterLogin;
 
+  // v201: منع إعادة شاشة الدخول أثناء انتقال الجلسة من تسجيل الدخول إلى تشغيل التطبيق.
+  db.auth.onAuthStateChange((event,session)=>{
+    if(event==="SIGNED_IN" && session?.user?.id){
+      window.setTimeout(()=>{
+        if(window.mmLoginInProgress)return;
+        if(bootedUserId===session.user.id)return;
+        bootAppAfterLogin(session.user).catch(e=>{
+          console.error("[AUTH SIGNED_IN BOOT]",e);
+          if(!window.mmLoginInProgress){
+            showLogin();
+            msg($("loginMsg"),"تعذر فتح التطبيق بعد تسجيل الدخول: "+err(e),"error");
+          }
+        });
+      },0);
+    }else if(event==="SIGNED_OUT" && !window.mmLoginInProgress){
+      bootedUserId=null;
+      appBootPromise=null;
+      showLogin();
+    }
+  });
+
   // ========== بدء التشغيل ==========
   let initStarted=false;
   async function init(){
@@ -13751,7 +13774,7 @@ $("hrCreatePeriod")?.addEventListener("click",async()=>{try{const r=await db.rpc
 // ====== PWA ======
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=203', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
+    navigator.serviceWorker.register('./sw.js?v=204', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
   });
 }
 
