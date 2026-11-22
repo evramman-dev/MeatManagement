@@ -3074,7 +3074,7 @@ function mmInitPartnersWorkspace(){
  const searchRow=$("partnerSearch")?.parentElement,msgEl=$("partnersMsg"),list=$("partnersList");
  const tx=$("partnerTransactionsCard"),inv=$("partnerInventoryContributionsCard"),veh=$("partnerVehicleContributionsCard");
  const menu=document.createElement("div");menu.className="data-category-grid mm-work-menu";menu.id="partnersWorkspaceMenu";
- const panels={main:mmPanel("الشركاء",()=>show("main")),tx:mmPanel("حركات الشركاء",()=>show("main")),profit:mmPanel("توزيع الأرباح",()=>show("main")),inv:mmPanel("مساهمات المخزون",()=>show("main")),veh:mmPanel("مساهمات السيارات",()=>show("main"))};
+ const panels={main:mmPanel("الشركاء",()=>show("menu")),tx:mmPanel("حركات الشركاء",()=>show("menu")),profit:mmPanel("توزيع الأرباح",()=>show("menu")),inv:mmPanel("مساهمات المخزون",()=>show("menu")),veh:mmPanel("مساهمات السيارات",()=>show("menu"))};
  function show(key){
   Object.values(panels).forEach(p=>p.classList.add("hidden"));menu.classList.toggle("hidden",key!=="menu");
   const target=panels[key];if(target)target.classList.remove("hidden");
@@ -3108,7 +3108,7 @@ function mmInitAccountingAndReports(){
   nav.insertAdjacentElement("afterend",addJournal);
   const search=document.createElement("input");search.type="search";search.className="product-search-input";search.placeholder="ابحث عن وظيفة محاسبية...";
   const tabs=acc.querySelector(".section-tabs");if(tabs)tabs.insertAdjacentElement("beforebegin",search);
-  search.addEventListener("input",()=>{const q=search.value.trim().toLocaleLowerCase();Array.from(tabs?.querySelectorAll("button")||[]).forEach(b=>{b.hidden=!!q&&!b.textContent.toLocaleLowerCase().includes(q);});});
+  search.addEventListener("input",()=>{const q=search.value.trim().toLocaleLowerCase();Array.from(tabs?.querySelectorAll("button")||[]).forEach(b=>{b.hidden=!!q&&!b.textContent.toLocaleLowerCase().includes(q);});Array.from(grid.querySelectorAll("button")).forEach(b=>{b.hidden=!!q&&!b.textContent.toLocaleLowerCase().includes(q);});});
   acc.dataset.workspaceReady="1";
  }
  const reports=$("sectionReports");
