@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v209</title>
+<title>MeatManagement v210</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1194,7 +1194,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v209]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v210]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1587,7 +1587,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div id="dataCategoryHome">
 <h2>🗂️ مركز البيانات</h2>
 <p class="desc">اختر القسم الرئيسي للوصول إلى الصفحات التابعة له.</p>
-<div class="data-search-row"><input id="dataSectionSearch" type="search" placeholder="ابحث عن قسم مثل المخزون أو العملاء..." autocomplete="off"><button id="clearDataSectionSearch" class="btn secondary" type="button">مسح</button></div>
+
 <div class="data-category-grid"><button type="button" class="data-category-card" id="dataCategoryCardproducts" onclick="window.openSection('products')"><span class="data-category-icon">📦</span><span class="data-category-title">إدارة المنتجات</span><span class="data-category-subtitle" id="dataCategoryCountproducts">1 أقسام</span></button>
 <button type="button" class="data-category-card" id="dataCategoryCardinventory" onclick="window.openDataGroup('inventory')"><span class="data-category-icon">🏭</span><span class="data-category-title">المخزون</span><span class="data-category-subtitle" id="dataCategoryCountinventory">6 أقسام</span></button>
 <button type="button" class="data-category-card" id="dataCategoryCardproduction" onclick="window.openDataGroup('production')"><span class="data-category-icon">📝</span><span class="data-category-title">الإنتاج</span><span class="data-category-subtitle" id="dataCategoryCountproduction">4 أقسام</span></button>
@@ -1597,7 +1597,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <button type="button" class="data-category-card" id="dataCategoryCardsales" onclick="window.openDataGroup('sales')"><span class="data-category-icon">💰</span><span class="data-category-title">المبيعات والتوزيع</span><span class="data-category-subtitle" id="dataCategoryCountsales">7 أقسام</span></button>
 <button type="button" class="data-category-card" id="dataCategoryCardfinance" onclick="window.openDataGroup('finance')"><span class="data-category-icon">🧮</span><span class="data-category-title">الحسابات والإدارة</span><span class="data-category-subtitle" id="dataCategoryCountfinance">8 أقسام</span></button>
 </div>
-<div id="dataSearchEmpty" class="empty hidden">لا توجد أقسام مطابقة لبحثك.</div>
+
 </div>
 <div id="dataGroupPageproducts" class="data-group-page hidden" data-group-key="products" data-group-title="إدارة المنتجات">
 <button type="button" class="btn secondary data-group-back" onclick="window.closeDataGroup()">⬅ العودة إلى مركز البيانات</button>
@@ -3151,7 +3151,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v209</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v210</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -13750,36 +13750,28 @@ $("hrSaveLeave")?.addEventListener("click",async()=>{try{if(!canManageHRLeaves)t
 $("hrCreatePeriod")?.addEventListener("click",async()=>{try{const r=await db.rpc("hr_create_payroll_period",{p_period_code:$("hrPeriodCode").value.trim(),p_period_start:$("hrPeriodStart").value,p_period_end:$("hrPeriodEnd").value});if(r.error)throw r.error;showToast("تم إنشاء فترة الرواتب","success");await loadHR();}catch(e){msg($("hrPayrollMsg"),err(e),"error");}});
 });
 
-// ====== مركز البيانات: البحث داخل الأقسام الرئيسية والفرعية ======
+// ====== مركز البيانات: تحديث أعداد الأقسام المتاحة ======
 (function(){
-  const input=document.getElementById("dataSectionSearch");
-  const clear=document.getElementById("clearDataSectionSearch");
   const root=document.getElementById("dataDashboard");
-  if(!input||!clear||!root)return;
+  if(!root)return;
   const groups=[...root.querySelectorAll(".data-group-page")];
+  function formatCount(n){
+    if(n===1)return "قسم واحد متاح";
+    if(n===2)return "قسمان متاحان";
+    if(n>=3&&n<=10)return n+" أقسام متاحة";
+    return n+" قسمًا متاحًا";
+  }
   function refresh(){
-    const q=String(input.value||"").trim().toLocaleLowerCase("ar");
-    let visible=0;
     groups.forEach(group=>{
       const key=group.dataset.groupKey;
       const items=[...group.querySelectorAll(".data-group-items .dash-item")];
       const available=items.filter(item=>!item.classList.contains("hidden"));
-      const title=String(group.dataset.groupTitle||"").toLocaleLowerCase("ar");
-      const match=available.some(item=>String(item.textContent||"").toLocaleLowerCase("ar").includes(q));
-      const show=available.length>0&&(!q||title.includes(q)||match);
       const card=document.getElementById("dataCategoryCard"+key);
-      if(card){
-        card.classList.toggle("hidden",!show);
-        const count=document.getElementById("dataCategoryCount"+key);
-        if(count)count.textContent=available.length+" أقسام متاحة";
-      }
-      if(show)visible++;
+      if(card)card.classList.toggle("hidden",available.length===0);
+      const count=document.getElementById("dataCategoryCount"+key);
+      if(count)count.textContent=formatCount(available.length);
     });
-    const empty=document.getElementById("dataSearchEmpty");
-    if(empty)empty.classList.toggle("hidden",visible>0);
   }
-  input.addEventListener("input",refresh);
-  clear.addEventListener("click",()=>{input.value="";refresh();input.focus();});
   const observer=new MutationObserver(refresh);
   observer.observe(root,{subtree:true,attributes:true,attributeFilter:["class"]});
   refresh();
@@ -13789,7 +13781,7 @@ $("hrCreatePeriod")?.addEventListener("click",async()=>{try{const r=await db.rpc
 // ====== PWA ======
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=212', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
+    navigator.serviceWorker.register('./sw.js?v=213', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
   });
 }
 
