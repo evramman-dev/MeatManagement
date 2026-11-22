@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v203</title>
+<title>MeatManagement v204</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1188,7 +1188,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v203]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v204]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1270,6 +1270,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
   if(button){button.disabled=true;button.textContent="جارٍ الدخول...";}
   if(msg){msg.className="status";msg.textContent="جارٍ الاتصال بخدمة تسجيل الدخول...";}
   try{
+   window.mmAuthFlowVersion=(Number(window.mmAuthFlowVersion)||0)+1;
    window.mmLoginInProgress=true;
    const url="https://mklbemoisdkoyrwcrmoj.supabase.co";
    const key="sb_publishable_7ZjltiXgqnY4BJrZH4iZog_Jh-xfbau";
@@ -3146,7 +3147,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v203</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v204</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -13513,6 +13514,8 @@ function mmInitAdvancedReportActions(){
   async function init(){
     if(initStarted)return;
     initStarted=true;
+    const initAuthFlowVersion=Number(window.mmAuthFlowVersion)||0;
+    const initStartedDuringLogin=!!window.mmLoginInProgress;
     updateOfflineBanner();
     try{
       const {data,error}=await db.auth.getSession(); 
@@ -13538,10 +13541,12 @@ function mmInitAdvancedReportActions(){
         }
         await bootAppAfterLogin(data.session.user);
       } else { 
-        if(!window.mmLoginInProgress) showLogin();
+        const authFlowChanged=initAuthFlowVersion!==(Number(window.mmAuthFlowVersion)||0);
+        if(!initStartedDuringLogin&&!authFlowChanged&&!window.mmLoginInProgress) showLogin();
       }
     }catch(e){ 
-      if(!window.mmLoginInProgress){
+      const authFlowChanged=initAuthFlowVersion!==(Number(window.mmAuthFlowVersion)||0);
+      if(!initStartedDuringLogin&&!authFlowChanged&&!window.mmLoginInProgress){
         showLogin(); 
         msg($("loginMsg"),"خطأ في الجلسة: "+err(e),"error");
       }
@@ -13783,7 +13788,7 @@ $("hrCreatePeriod")?.addEventListener("click",async()=>{try{const r=await db.rpc
 // ====== PWA ======
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=206', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
+    navigator.serviceWorker.register('./sw.js?v=207', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
   });
 }
 
