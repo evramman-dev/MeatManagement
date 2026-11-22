@@ -3120,6 +3120,7 @@ function mmInitAccountingAndReports(){
    const reportCards=document.createElement("div");reportCards.className="data-category-grid mm-report-groups";reportCards.id="advancedReportGroups";
    [["أعمار الديون","💳","repAged"],["المخزون الراكد","📦","repSlow"],["الأرباح والخسائر","📈","repPL"],["المبيعات حسب المحافظة","🗺️","repGeo"]].forEach(([name,ico,id])=>reportCards.append(mmWorkspaceButton(name,ico,()=>window.switchReportTab(id))));
    if(tabs)tabs.insertAdjacentElement("beforebegin",reportCards);
+   search.addEventListener("input",()=>{const q=search.value.trim().toLocaleLowerCase();Array.from(reportCards.querySelectorAll("button")).forEach(b=>{b.hidden=!!q&&!b.textContent.toLocaleLowerCase().includes(q);});});
   }
   reports.dataset.workspaceReady="1";
  }
