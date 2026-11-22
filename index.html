@@ -3225,15 +3225,15 @@ async function mmLoadAccountingSummary(key){
    mmAccountingRender(key,["المؤشر","القيمة"],[["الإيرادات",fmt(d.rev)],["المشتريات",fmt(d.purch)],["مرتجعات المشتريات",fmt(d.purch_returns)],["صافي المشتريات",fmt(d.net_purch??(Number(d.purch||0)-Number(d.purch_returns||0)))],["المصروفات",fmt(d.exp)],["التحصيلات",fmt(d.coll)],["صافي الربح",fmt(d.profit)]],[["صافي الربح",fmt(d.profit)],["النقدية الحالية",fmt(d.cash)],["مديونية العملاء",fmt(d.ar)],["مستحقات الموردين",fmt(d.ap)]]);return;
   }
   if(key==="treasuries"){
-   const [tRes,txRes]=await Promise.all([db.from("treasuries").select("treasury_id,treasury_name,treasury_type,current_balance,is_active").order("treasury_id"),db.from("treasury_transactions").select("treasury_id,amount,transaction_type,created_at").gte("created_at",from+"T00:00:00").lte("created_at",to+"T23:59:59").limit(5000)]);
+   const [tRes,txRes]=await Promise.all([db.from("treasuries").select("treasury_id,treasury_name,treasury_type,current_balance,is_active").order("treasury_id"),db.from("treasury_transactions").select("treasury_id,amount,transaction_type,transaction_date").gte("transaction_date",from+"T00:00:00").lte("transaction_date",to+"T23:59:59").limit(5000)]);
    if(tRes.error)throw tRes.error;if(txRes.error)throw txRes.error;
    const ts=tRes.data||[],tx=txRes.data||[],balance=ts.filter(x=>x.is_active!==false).reduce((a,x)=>a+Number(x.current_balance||0),0),inflow=tx.filter(x=>["DEPOSIT","TRANSFER_IN"].includes(x.transaction_type)).reduce((a,x)=>a+Number(x.amount||0),0),outflow=tx.filter(x=>["WITHDRAW","TRANSFER_OUT"].includes(x.transaction_type)).reduce((a,x)=>a+Number(x.amount||0),0);
    mmAccountingRender(key,["الخزنة","النوع","الرصيد","حالة الخزنة"],ts.map(x=>[x.treasury_name,x.treasury_type,fmt(x.current_balance),x.is_active===false?"متوقفة":"نشطة"]),[["عدد الخزائن",ts.length],["إجمالي الأرصدة",fmt(balance)],["إيداعات وتحويلات واردة بالفترة",fmt(inflow)],["مسحوبات وتحويلات صادرة بالفترة",fmt(outflow)]]);return;
   }
   if(key==="transfers"){
-   const [txRes,tRes]=await Promise.all([db.from("treasury_transactions").select("created_at,transaction_type,amount,notes,treasury_id").in("transaction_type",["TRANSFER_IN","TRANSFER_OUT"]).gte("created_at",from+"T00:00:00").lte("created_at",to+"T23:59:59").order("created_at",{ascending:false}).limit(1000),db.from("treasuries").select("treasury_id,treasury_name")]);if(txRes.error)throw txRes.error;if(tRes.error)throw tRes.error;
+   const [txRes,tRes]=await Promise.all([db.from("treasury_transactions").select("transaction_date,transaction_type,amount,notes,treasury_id").in("transaction_type",["TRANSFER_IN","TRANSFER_OUT"]).gte("transaction_date",from).lte("transaction_date",to).order("transaction_date",{ascending:false}).limit(1000),db.from("treasuries").select("treasury_id,treasury_name")]);if(txRes.error)throw txRes.error;if(tRes.error)throw tRes.error;
    const names=new Map((tRes.data||[]).map(x=>[String(x.treasury_id),x.treasury_name])),rows=txRes.data||[],total=rows.reduce((a,x)=>a+Number(x.amount||0),0);
-   mmAccountingRender(key,["التاريخ","الخزنة","نوع الحركة","القيمة","البيان"],rows.map(x=>[formatDate(x.created_at),names.get(String(x.treasury_id))||"—",x.transaction_type,fmt(x.amount),x.notes||"—"]),[["عدد الحركات",rows.length],["إجمالي قيمة الحركات",fmt(total)]]);return;
+   mmAccountingRender(key,["التاريخ","الخزنة","نوع الحركة","القيمة","البيان"],rows.map(x=>[formatDate(x.transaction_date),names.get(String(x.treasury_id))||"—",x.transaction_type,fmt(x.amount),x.notes||"—"]),[["عدد الحركات",rows.length],["إجمالي قيمة الحركات",fmt(total)]]);return;
   }
   if(key==="customers"){
    const {data,error}=await db.rpc("get_aged_receivables_v2");if(error)throw error;const rows=data||[];
