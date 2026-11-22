@@ -3068,6 +3068,7 @@ function mmInitSalesRepWorkspace(){
 function mmInitPartnersWorkspace(){
  const card=$("partnersCard");if(!card||card.dataset.workspaceReady)return;
  const titleRow=card.firstElementChild,oldShortcuts=card.querySelector(".section-shortcuts");if(oldShortcuts)oldShortcuts.remove();
+ const actionHost=titleRow?.querySelector(".row");["addPartnerInventoryContributionBtn","addPartnerVehicleContributionBtn"].forEach(id=>{const b=$(id);if(b&&actionHost)actionHost.appendChild(b);});
  const searchRow=$("partnerSearch")?.parentElement,msgEl=$("partnersMsg"),list=$("partnersList");
  const tx=$("partnerTransactionsCard"),inv=$("partnerInventoryContributionsCard"),veh=$("partnerVehicleContributionsCard");
  const menu=document.createElement("div");menu.className="data-category-grid mm-work-menu";menu.id="partnersWorkspaceMenu";
@@ -3078,11 +3079,18 @@ function mmInitPartnersWorkspace(){
   const profit=$("partnerProfitDistributionCard");if(profit&&profit.parentElement!==panels.profit)panels.profit.appendChild(profit);
   [tx,inv,veh].forEach(x=>{if(x)x.classList.remove("hidden");});
  }
+ const summary=document.createElement("div");summary.id="partnerWorkspaceSummary";summary.className="grid";summary.style.margin="12px 0";panels.main.appendChild(summary);
  [searchRow,msgEl,list].forEach(x=>x&&panels.main.appendChild(x));
  if(tx)panels.tx.appendChild(tx);if(inv)panels.inv.appendChild(inv);if(veh)panels.veh.appendChild(veh);
  const items=[["الشركاء","🤝","main"],["حركات الشركاء","💸","tx"],["توزيع الأرباح","📊","profit"],["مساهمات المخزون","📦","inv"],["مساهمات السيارات","🚚","veh"]];
  items.forEach(([label,ico,key])=>menu.append(mmWorkspaceButton(label,ico,()=>show(key))));
  card.append(menu,...Object.values(panels));show("menu");card.dataset.workspaceReady="1";
+}
+function mmRenderPartnerSummary(){
+ const box=$("partnerWorkspaceSummary");if(!box)return;
+ const count=partnersCache.length;
+ const total=partnersCache.reduce((sum,p)=>sum+Number(p.current_balance||0),0);
+ box.innerHTML='<div class="card" style="margin:0;padding:12px;text-align:center"><div class="details">عدد الشركاء</div><strong>'+count+'</strong></div><div class="card" style="margin:0;padding:12px;text-align:center"><div class="details">إجمالي أرصدة الشركاء</div><strong>'+fmt(total)+' جنيه</strong></div>';
 }
 function mmInitAccountingAndReports(){
  const acc=$("accountingCard");
@@ -11301,6 +11309,7 @@ async function loadPartners(){
   const {data,error}=await db.from("partners").select("*").order("partner_id"); 
   if(error) throw error;
   partnersCache=data||[]; 
+  mmRenderPartnerSummary();
   const box=$("partnersList"); if(!box) return; 
   box.replaceChildren(); 
   if(!partnersCache.length){ box.innerHTML="<div class='empty'>لا يوجد شركاء مسجلون.</div>"; } 
