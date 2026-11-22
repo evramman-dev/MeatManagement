@@ -12009,11 +12009,11 @@ function mmReportSummary(id,items){
  const box=$(id);if(!box)return;
  box.innerHTML='<h4>ملخص التقرير</h4>'+items.map(x=>'<div class="line"><span>'+mmReportEscape(x[0])+'</span><strong>'+mmReportEscape(x[1])+'</strong></div>').join("");
 }
-function mmReportRender(type,headers,rows,summary){
+function mmReportRender(type,headers,rows,summary,rawRows){
  const table=$(type+"Table");if(!table)return;
  const body=table.querySelector("tbody");
  const colCount=table.querySelectorAll("thead th").length;body.innerHTML=rows.length?rows.map(row=>"<tr>"+row.map(v=>"<td>"+mmReportEscape(v)+"</td>").join("")+"</tr>").join(""):"<tr><td colspan='"+colCount+"' style='text-align:center'>لا توجد بيانات في الفترة المحددة.</td></tr>";
- mmAdvancedReportData[type]={headers,rows};
+ mmAdvancedReportData[type]={headers,rows,rawRows:rawRows||rows};
  mmReportSummary(type+"Summary",summary);
 }
 function mmReportMoney(v){return fmt(Number(v||0));}
@@ -12035,7 +12035,7 @@ async function mmRunAdvancedReport(type){
    if(invRes.error)throw invRes.error;if(retRes.error)throw retRes.error;
    const data=invRes.data||[],returns=retRes.data||[];
    const total=data.reduce((a,x)=>a+Number(x.net_total||0),0),paid=data.reduce((a,x)=>a+Number(x.paid_amount||0),0),remaining=data.reduce((a,x)=>a+Number(x.remaining_amount||0),0),ret=returns.reduce((a,x)=>a+Number(x.total_returned_value||0),0);
-   mmReportRender(type,[],data.map(x=>[x.invoice_number,formatDate(x.invoice_date),x.customers?.customer_name||"—",x.sales_reps?.rep_name||"—",mmReportMoney(x.subtotal),mmReportMoney(x.discount_amount),mmReportMoney(x.net_total),mmReportMoney(x.paid_amount),mmReportMoney(x.remaining_amount),x.status]),[["عدد الفواتير",data.length],["صافي الفواتير",mmReportMoney(total)],["التحصيل المسجل على الفواتير",mmReportMoney(paid)],["المتبقي",mmReportMoney(remaining)],["قيمة المرتجعات غير الملغاة",mmReportMoney(ret)],["صافي المبيعات بعد المرتجعات",mmReportMoney(total-ret)]]);
+   mmReportRender(type,[],data.map(x=>[x.invoice_number,formatDate(x.invoice_date),x.customers?.customer_name||"—",x.sales_reps?.rep_name||"—",mmReportMoney(x.subtotal),mmReportMoney(x.discount_amount),mmReportMoney(x.net_total),mmReportMoney(x.paid_amount),mmReportMoney(x.remaining_amount),x.status]),[["عدد الفواتير",data.length],["صافي الفواتير",mmReportMoney(total)],["التحصيل المسجل على الفواتير",mmReportMoney(paid)],["المتبقي",mmReportMoney(remaining)],["قيمة المرتجعات غير الملغاة",mmReportMoney(ret)],["صافي المبيعات بعد المرتجعات",mmReportMoney(total-ret)]],data.map(x=>[x.invoice_number,x.invoice_date,x.customers?.customer_name||"",x.sales_reps?.rep_name||"",Number(x.subtotal||0),Number(x.discount_amount||0),Number(x.net_total||0),Number(x.paid_amount||0),Number(x.remaining_amount||0),x.status]));
   }else if(type==="purchases"){
    const [invRes,retRes]=await Promise.all([
     db.from("purchase_invoices").select("invoice_number,invoice_date,status,subtotal,discount,net_total,suppliers(supplier_name)").gte("invoice_date",from).lte("invoice_date",to).neq("status","CANCELLED").order("invoice_date",{ascending:false}).limit(5000),
@@ -12043,7 +12043,7 @@ async function mmRunAdvancedReport(type){
    ]);
    if(invRes.error)throw invRes.error;if(retRes.error)throw retRes.error;
    const data=invRes.data||[],returns=retRes.data||[],total=data.reduce((a,x)=>a+Number(x.net_total||0),0),ret=returns.reduce((a,x)=>a+Number(x.total_return_amount||0),0);
-   mmReportRender(type,[],data.map(x=>[x.invoice_number,formatDate(x.invoice_date),x.suppliers?.supplier_name||"—",mmReportMoney(x.subtotal),mmReportMoney(x.discount),mmReportMoney(x.net_total),x.status]),[["عدد فواتير الشراء",data.length],["صافي المشتريات",mmReportMoney(total)],["مرتجعات المشتريات",mmReportMoney(ret)],["صافي المشتريات بعد المرتجعات",mmReportMoney(total-ret)]]);
+   mmReportRender(type,[],data.map(x=>[x.invoice_number,formatDate(x.invoice_date),x.suppliers?.supplier_name||"—",mmReportMoney(x.subtotal),mmReportMoney(x.discount),mmReportMoney(x.net_total),x.status]),[["عدد فواتير الشراء",data.length],["صافي المشتريات",mmReportMoney(total)],["مرتجعات المشتريات",mmReportMoney(ret)],["صافي المشتريات بعد المرتجعات",mmReportMoney(total-ret)]],data.map(x=>[x.invoice_number,x.invoice_date,x.suppliers?.supplier_name||"",Number(x.subtotal||0),Number(x.discount||0),Number(x.net_total||0),x.status]));
   }else if(type==="inventory"){
    const [movRes,balRes]=await Promise.all([
     db.from("stock_movements").select("created_at,movement_type,quantity_change,quantity_after,total_cost,products(product_name),locations(location_name)").gte("created_at",bounds.start).lt("created_at",bounds.end).order("created_at",{ascending:false}).limit(5000),
@@ -12051,12 +12051,12 @@ async function mmRunAdvancedReport(type){
    ]);
    if(movRes.error)throw movRes.error;if(balRes.error)throw balRes.error;
    const data=movRes.data||[],balances=balRes.data||[],incoming=data.filter(x=>Number(x.quantity_change)>0).reduce((a,x)=>a+Number(x.quantity_change),0),outgoing=data.filter(x=>Number(x.quantity_change)<0).reduce((a,x)=>a+Math.abs(Number(x.quantity_change)),0),value=balances.reduce((a,x)=>a+Number(x.inventory_value||0),0),qty=balances.reduce((a,x)=>a+Number(x.quantity||0),0);
-   mmReportRender(type,[],data.map(x=>[formatDate(x.created_at),x.products?.product_name||"—",x.locations?.location_name||"—",x.movement_type,mmReportQty(x.quantity_change),mmReportQty(x.quantity_after),mmReportMoney(x.total_cost)]),[["عدد حركات المخزون",data.length],["إجمالي الكميات الداخلة",mmReportQty(incoming)],["إجمالي الكميات الخارجة",mmReportQty(outgoing)],["صافي تغير الكميات",mmReportQty(incoming-outgoing)],["إجمالي الكمية الحالية بالمواقع",mmReportQty(qty)],["قيمة المخزون الحالية",mmReportMoney(value)]]);
+   mmReportRender(type,[],data.map(x=>[formatDate(x.created_at),x.products?.product_name||"—",x.locations?.location_name||"—",x.movement_type,mmReportQty(x.quantity_change),mmReportQty(x.quantity_after),mmReportMoney(x.total_cost)]),[["عدد حركات المخزون",data.length],["إجمالي الكميات الداخلة",mmReportQty(incoming)],["إجمالي الكميات الخارجة",mmReportQty(outgoing)],["صافي تغير الكميات",mmReportQty(incoming-outgoing)],["إجمالي الكمية الحالية بالمواقع",mmReportQty(qty)],["قيمة المخزون الحالية",mmReportMoney(value)]],data.map(x=>[x.created_at,x.products?.product_name||"",x.locations?.location_name||"",x.movement_type,Number(x.quantity_change||0),Number(x.quantity_after||0),Number(x.total_cost||0)]));
   }else if(type==="production"){
    const {data,error}=await db.from("production_orders").select("order_number,created_at,status,target_quantity,actual_output_quantity,total_material_cost,total_production_cost,output_unit_cost,products(product_name),locations(location_name)").gte("created_at",bounds.start).lt("created_at",bounds.end).order("created_at",{ascending:false}).limit(5000);
    if(error)throw error;
    const rows=data||[],output=rows.reduce((a,x)=>a+Number(x.actual_output_quantity||0),0),cost=rows.reduce((a,x)=>a+Number(x.total_production_cost??x.total_material_cost??0),0);
-   mmReportRender(type,[],rows.map(x=>[x.order_number,formatDate(x.created_at),x.products?.product_name||"—",x.locations?.location_name||"—",x.status,mmReportQty(x.target_quantity),mmReportQty(x.actual_output_quantity),mmReportMoney(x.total_material_cost),mmReportMoney(x.total_production_cost),mmReportMoney(x.output_unit_cost)]),[["عدد أوامر الإنتاج",rows.length],["إجمالي الكمية المستهدفة",mmReportQty(rows.reduce((a,x)=>a+Number(x.target_quantity||0),0))],["إجمالي الناتج الفعلي",mmReportQty(output)],["إجمالي تكلفة المواد",mmReportMoney(rows.reduce((a,x)=>a+Number(x.total_material_cost||0),0))],["إجمالي تكلفة الإنتاج",mmReportMoney(cost)]]);
+   mmReportRender(type,[],rows.map(x=>[x.order_number,formatDate(x.created_at),x.products?.product_name||"—",x.locations?.location_name||"—",x.status,mmReportQty(x.target_quantity),mmReportQty(x.actual_output_quantity),mmReportMoney(x.total_material_cost),mmReportMoney(x.total_production_cost),mmReportMoney(x.output_unit_cost)]),[["عدد أوامر الإنتاج",rows.length],["إجمالي الكمية المستهدفة",mmReportQty(rows.reduce((a,x)=>a+Number(x.target_quantity||0),0))],["إجمالي الناتج الفعلي",mmReportQty(output)],["إجمالي تكلفة المواد",mmReportMoney(rows.reduce((a,x)=>a+Number(x.total_material_cost||0),0))],["إجمالي تكلفة الإنتاج",mmReportMoney(cost)]],rows.map(x=>[x.order_number,x.created_at,x.products?.product_name||"",x.locations?.location_name||"",x.status,Number(x.target_quantity||0),Number(x.actual_output_quantity||0),Number(x.total_material_cost||0),Number(x.total_production_cost||0),Number(x.output_unit_cost||0)]));
   }else if(type==="distribution"){
    const {data:trips,error}=await db.from("trips").select("trip_id,trip_number,start_date,end_date,status,initial_cash,sales_reps(rep_name),vehicle:locations!trips_vehicle_location_id_fkey(location_name)").gte("start_date",from).lte("start_date",to).order("start_date",{ascending:false}).limit(2000);
    if(error)throw error;
@@ -12070,7 +12070,7 @@ async function mmRunAdvancedReport(type){
     if(loadRes.error)throw loadRes.error;if(invRes.error)throw invRes.error;loads=loadRes.data||[];invoices=invRes.data||[];
    }
    const rows=(trips||[]).map(t=>{const ls=loads.filter(x=>String(x.trip_id)===String(t.trip_id)),is=invoices.filter(x=>String(x.trip_id)===String(t.trip_id));const loaded=ls.reduce((a,x)=>a+Number(x.quantity_loaded||0),0),sold=ls.reduce((a,x)=>a+Number(x.quantity_sold||0),0),returned=ls.reduce((a,x)=>a+Number(x.quantity_returned||0),0),sales=is.reduce((a,x)=>a+Number(x.net_total||0),0);return [t.trip_number,t.sales_reps?.rep_name||"—",t.vehicle?.location_name||"—",formatDate(t.start_date),t.end_date?formatDate(t.end_date):"—",t.status,mmReportQty(loaded),mmReportQty(sold),mmReportQty(returned),mmReportMoney(sales)];});
-   mmReportRender(type,[],rows,[["عدد الجولات",rows.length],["إجمالي الكمية المحملة",mmReportQty(loads.reduce((a,x)=>a+Number(x.quantity_loaded||0),0))],["إجمالي الكمية المباعة",mmReportQty(loads.reduce((a,x)=>a+Number(x.quantity_sold||0),0))],["إجمالي الكمية المرتجعة",mmReportQty(loads.reduce((a,x)=>a+Number(x.quantity_returned||0),0))],["إجمالي قيمة فواتير الجولات",mmReportMoney(invoices.reduce((a,x)=>a+Number(x.net_total||0),0))]]);
+   mmReportRender(type,[],rows,[["عدد الجولات",rows.length],["إجمالي الكمية المحملة",mmReportQty(loads.reduce((a,x)=>a+Number(x.quantity_loaded||0),0))],["إجمالي الكمية المباعة",mmReportQty(loads.reduce((a,x)=>a+Number(x.quantity_sold||0),0))],["إجمالي الكمية المرتجعة",mmReportQty(loads.reduce((a,x)=>a+Number(x.quantity_returned||0),0))],["إجمالي قيمة فواتير الجولات",mmReportMoney(invoices.reduce((a,x)=>a+Number(x.net_total||0),0))]],rows.map(row=>row.map((v,i)=>[6,7,8].includes(i)?Number(String(v).replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/٬/g,"").replace(/٫/g,".")):v)));
   }
  }catch(e){if(body)body.innerHTML="<tr><td colspan='10' style='color:#a52b2b'>تعذر تحميل التقرير: "+mmReportEscape(err(e))+"</td></tr>";showToast("تعذر تحميل التقرير: "+err(e),"error",7000);}
 }
@@ -12078,9 +12078,11 @@ function mmExportReport(type,tableId){
  if(typeof XLSX==="undefined"||!XLSX.utils){showToast("مكتبة Excel غير متاحة.","error");return;}
  const table=$(tableId);if(!table)return;
  const headers=Array.from(table.querySelectorAll("thead th")).map(x=>x.textContent.trim());
- const rows=Array.from(table.querySelectorAll("tbody tr")).filter(tr=>tr.querySelectorAll("td").length===headers.length).map(tr=>Array.from(tr.querySelectorAll("td")).map(td=>td.textContent.trim()));
+ const stored=mmAdvancedReportData[type];
+ const rows=stored?.rawRows||Array.from(table.querySelectorAll("tbody tr")).filter(tr=>tr.querySelectorAll("td").length===headers.length).map(tr=>Array.from(tr.querySelectorAll("td")).map(td=>td.textContent.trim()));
  if(!rows.length){showToast("لا توجد نتائج لتصديرها.","warn");return;}
- const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet([headers,...rows]);ws["!cols"]=headers.map((h,i)=>({wch:Math.min(32,Math.max(12,h.length+4,...rows.slice(0,300).map(r=>String(r[i]||"").length+2)))}));XLSX.utils.book_append_sheet(wb,ws,"التقرير");
+ const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet([headers,...rows]);ws["!cols"]=headers.map((h,i)=>({wch:Math.min(32,Math.max(12,h.length+4,...rows.slice(0,300).map(r=>String(r[i]??"").length+2)))}));ws["!autofilter"]={ref:ws["!ref"]};ws["!freeze"]={xSplit:0,ySplit:1,topLeftCell:"A2",activePane:"bottomLeft",state:"frozen"};XLSX.utils.book_append_sheet(wb,ws,"التقرير");
+ const summaryBox=$(type+"Summary");if(summaryBox){const summaryRows=Array.from(summaryBox.querySelectorAll(".line")).map(line=>[line.children[0]?.textContent?.trim()||"",line.children[1]?.textContent?.trim()||""]);if(summaryRows.length){const summarySheet=XLSX.utils.aoa_to_sheet([["البيان","القيمة"],...summaryRows]);XLSX.utils.book_append_sheet(wb,summarySheet,"الملخص");}}
  XLSX.writeFile(wb,"MeatManagement_"+type+"_"+todayISO()+".xlsx");
 }
 function mmExportGeoReport(){
