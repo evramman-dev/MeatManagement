@@ -11991,6 +11991,124 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
       }
   });
 
+const mmAdvancedReportData={};
+function mmReportEscape(value){return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
+function mmReportBounds(from,to){
+ const start=new Date(from+"T00:00:00"),end=new Date(to+"T00:00:00");
+ if(!Number.isFinite(start.getTime())||!Number.isFinite(end.getTime())||start>end)throw new Error("راجع تاريخ بداية ونهاية التقرير.");
+ end.setDate(end.getDate()+1);
+ return {start:start.toISOString(),end:end.toISOString()};
+}
+function mmReportDateInputs(){
+ const today=todayISO(),month=monthStartISO();
+ ["mmSales","mmPurchases","mmInventory","mmProduction","mmDistribution"].forEach(prefix=>{
+  const a=$(prefix+"From"),b=$(prefix+"To");if(a&&!a.value)a.value=month;if(b&&!b.value)b.value=today;
+ });
+}
+function mmReportSummary(id,items){
+ const box=$(id);if(!box)return;
+ box.innerHTML='<h4>ملخص التقرير</h4>'+items.map(x=>'<div class="line"><span>'+mmReportEscape(x[0])+'</span><strong>'+mmReportEscape(x[1])+'</strong></div>').join("");
+}
+function mmReportRender(type,headers,rows,summary){
+ const table=$(type+"Table");if(!table)return;
+ const body=table.querySelector("tbody");
+ const colCount=table.querySelectorAll("thead th").length;body.innerHTML=rows.length?rows.map(row=>"<tr>"+row.map(v=>"<td>"+mmReportEscape(v)+"</td>").join("")+"</tr>").join(""):"<tr><td colspan='"+colCount+"' style='text-align:center'>لا توجد بيانات في الفترة المحددة.</td></tr>";
+ mmAdvancedReportData[type]={headers,rows};
+ mmReportSummary(type+"Summary",summary);
+}
+function mmReportMoney(v){return fmt(Number(v||0));}
+function mmReportQty(v){return fmtQty(Number(v||0));}
+async function mmRunAdvancedReport(type){
+ if(!navigator.onLine){showToast("يحتاج التقرير إلى اتصال بالإنترنت.","warn");return;}
+ const map={sales:"mmSales",purchases:"mmPurchases",inventory:"mmInventory",production:"mmProduction",distribution:"mmDistribution"};
+ const prefix=map[type];if(!prefix)return;
+ const from=$(prefix+"From")?.value,to=$(prefix+"To")?.value;
+ if(!from||!to){showToast("حدد تاريخ البداية والنهاية.","warn");return;}
+ let bounds;try{bounds=mmReportBounds(from,to);}catch(e){showToast(e.message,"error");return;}
+ const body=$(type+"Table")?.querySelector("tbody");if(body)body.innerHTML="<tr><td colspan='10'>جارٍ تحميل البيانات...</td></tr>";
+ try{
+  if(type==="sales"){
+   const [invRes,retRes]=await Promise.all([
+    db.from("sales_invoices").select("invoice_number,invoice_date,status,subtotal,discount_amount,net_total,paid_amount,remaining_amount,customers(customer_name),sales_reps(rep_name)").gte("invoice_date",bounds.start).lt("invoice_date",bounds.end).neq("status","CANCELLED").order("invoice_date",{ascending:false}).limit(5000),
+    db.from("sales_returns").select("total_returned_value,return_date,cancelled_at").gte("return_date",from).lte("return_date",to).is("cancelled_at",null).limit(5000)
+   ]);
+   if(invRes.error)throw invRes.error;if(retRes.error)throw retRes.error;
+   const data=invRes.data||[],returns=retRes.data||[];
+   const total=data.reduce((a,x)=>a+Number(x.net_total||0),0),paid=data.reduce((a,x)=>a+Number(x.paid_amount||0),0),remaining=data.reduce((a,x)=>a+Number(x.remaining_amount||0),0),ret=returns.reduce((a,x)=>a+Number(x.total_returned_value||0),0);
+   mmReportRender(type,[],data.map(x=>[x.invoice_number,formatDate(x.invoice_date),x.customers?.customer_name||"—",x.sales_reps?.rep_name||"—",mmReportMoney(x.subtotal),mmReportMoney(x.discount_amount),mmReportMoney(x.net_total),mmReportMoney(x.paid_amount),mmReportMoney(x.remaining_amount),x.status]),[["عدد الفواتير",data.length],["صافي الفواتير",mmReportMoney(total)],["التحصيل المسجل على الفواتير",mmReportMoney(paid)],["المتبقي",mmReportMoney(remaining)],["قيمة المرتجعات غير الملغاة",mmReportMoney(ret)],["صافي المبيعات بعد المرتجعات",mmReportMoney(total-ret)]]);
+  }else if(type==="purchases"){
+   const [invRes,retRes]=await Promise.all([
+    db.from("purchase_invoices").select("invoice_number,invoice_date,status,subtotal,discount,net_total,suppliers(supplier_name)").gte("invoice_date",from).lte("invoice_date",to).neq("status","CANCELLED").order("invoice_date",{ascending:false}).limit(5000),
+    db.from("purchase_returns").select("total_return_amount,return_date,is_cancelled").gte("return_date",from).lte("return_date",to).eq("is_cancelled",false).limit(5000)
+   ]);
+   if(invRes.error)throw invRes.error;if(retRes.error)throw retRes.error;
+   const data=invRes.data||[],returns=retRes.data||[],total=data.reduce((a,x)=>a+Number(x.net_total||0),0),ret=returns.reduce((a,x)=>a+Number(x.total_return_amount||0),0);
+   mmReportRender(type,[],data.map(x=>[x.invoice_number,formatDate(x.invoice_date),x.suppliers?.supplier_name||"—",mmReportMoney(x.subtotal),mmReportMoney(x.discount),mmReportMoney(x.net_total),x.status]),[["عدد فواتير الشراء",data.length],["صافي المشتريات",mmReportMoney(total)],["مرتجعات المشتريات",mmReportMoney(ret)],["صافي المشتريات بعد المرتجعات",mmReportMoney(total-ret)]]);
+  }else if(type==="inventory"){
+   const [movRes,balRes]=await Promise.all([
+    db.from("stock_movements").select("created_at,movement_type,quantity_change,quantity_after,total_cost,products(product_name),locations(location_name)").gte("created_at",bounds.start).lt("created_at",bounds.end).order("created_at",{ascending:false}).limit(5000),
+    db.from("stock_balances").select("quantity,inventory_value").gt("quantity",0).limit(5000)
+   ]);
+   if(movRes.error)throw movRes.error;if(balRes.error)throw balRes.error;
+   const data=movRes.data||[],balances=balRes.data||[],incoming=data.filter(x=>Number(x.quantity_change)>0).reduce((a,x)=>a+Number(x.quantity_change),0),outgoing=data.filter(x=>Number(x.quantity_change)<0).reduce((a,x)=>a+Math.abs(Number(x.quantity_change)),0),value=balances.reduce((a,x)=>a+Number(x.inventory_value||0),0),qty=balances.reduce((a,x)=>a+Number(x.quantity||0),0);
+   mmReportRender(type,[],data.map(x=>[formatDate(x.created_at),x.products?.product_name||"—",x.locations?.location_name||"—",x.movement_type,mmReportQty(x.quantity_change),mmReportQty(x.quantity_after),mmReportMoney(x.total_cost)]),[["عدد حركات المخزون",data.length],["إجمالي الكميات الداخلة",mmReportQty(incoming)],["إجمالي الكميات الخارجة",mmReportQty(outgoing)],["صافي تغير الكميات",mmReportQty(incoming-outgoing)],["إجمالي الكمية الحالية بالمواقع",mmReportQty(qty)],["قيمة المخزون الحالية",mmReportMoney(value)]]);
+  }else if(type==="production"){
+   const {data,error}=await db.from("production_orders").select("order_number,created_at,status,target_quantity,actual_output_quantity,total_material_cost,total_production_cost,output_unit_cost,products(product_name),locations(location_name)").gte("created_at",bounds.start).lt("created_at",bounds.end).order("created_at",{ascending:false}).limit(5000);
+   if(error)throw error;
+   const rows=data||[],output=rows.reduce((a,x)=>a+Number(x.actual_output_quantity||0),0),cost=rows.reduce((a,x)=>a+Number(x.total_production_cost??x.total_material_cost??0),0);
+   mmReportRender(type,[],rows.map(x=>[x.order_number,formatDate(x.created_at),x.products?.product_name||"—",x.locations?.location_name||"—",x.status,mmReportQty(x.target_quantity),mmReportQty(x.actual_output_quantity),mmReportMoney(x.total_material_cost),mmReportMoney(x.total_production_cost),mmReportMoney(x.output_unit_cost)]),[["عدد أوامر الإنتاج",rows.length],["إجمالي الكمية المستهدفة",mmReportQty(rows.reduce((a,x)=>a+Number(x.target_quantity||0),0))],["إجمالي الناتج الفعلي",mmReportQty(output)],["إجمالي تكلفة المواد",mmReportMoney(rows.reduce((a,x)=>a+Number(x.total_material_cost||0),0))],["إجمالي تكلفة الإنتاج",mmReportMoney(cost)]]);
+  }else if(type==="distribution"){
+   const {data:trips,error}=await db.from("trips").select("trip_id,trip_number,start_date,end_date,status,initial_cash,sales_reps(rep_name),vehicle:locations!trips_vehicle_location_id_fkey(location_name)").gte("start_date",from).lte("start_date",to).order("start_date",{ascending:false}).limit(2000);
+   if(error)throw error;
+   const ids=(trips||[]).map(x=>x.trip_id);
+   let loads=[],invoices=[];
+   if(ids.length){
+    const [loadRes,invRes]=await Promise.all([
+     db.from("trip_loads").select("trip_id,quantity_loaded,quantity_sold,quantity_returned,products(product_name)").in("trip_id",ids).limit(10000),
+     db.from("sales_invoices").select("trip_id,net_total,status").in("trip_id",ids).neq("status","CANCELLED").limit(10000)
+    ]);
+    if(loadRes.error)throw loadRes.error;if(invRes.error)throw invRes.error;loads=loadRes.data||[];invoices=invRes.data||[];
+   }
+   const rows=(trips||[]).map(t=>{const ls=loads.filter(x=>String(x.trip_id)===String(t.trip_id)),is=invoices.filter(x=>String(x.trip_id)===String(t.trip_id));const loaded=ls.reduce((a,x)=>a+Number(x.quantity_loaded||0),0),sold=ls.reduce((a,x)=>a+Number(x.quantity_sold||0),0),returned=ls.reduce((a,x)=>a+Number(x.quantity_returned||0),0),sales=is.reduce((a,x)=>a+Number(x.net_total||0),0);return [t.trip_number,t.sales_reps?.rep_name||"—",t.vehicle?.location_name||"—",formatDate(t.start_date),t.end_date?formatDate(t.end_date):"—",t.status,mmReportQty(loaded),mmReportQty(sold),mmReportQty(returned),mmReportMoney(sales)];});
+   mmReportRender(type,[],rows,[["عدد الجولات",rows.length],["إجمالي الكمية المحملة",mmReportQty(loads.reduce((a,x)=>a+Number(x.quantity_loaded||0),0))],["إجمالي الكمية المباعة",mmReportQty(loads.reduce((a,x)=>a+Number(x.quantity_sold||0),0))],["إجمالي الكمية المرتجعة",mmReportQty(loads.reduce((a,x)=>a+Number(x.quantity_returned||0),0))],["إجمالي قيمة فواتير الجولات",mmReportMoney(invoices.reduce((a,x)=>a+Number(x.net_total||0),0))]]);
+  }
+ }catch(e){if(body)body.innerHTML="<tr><td colspan='10' style='color:#a52b2b'>تعذر تحميل التقرير: "+mmReportEscape(err(e))+"</td></tr>";showToast("تعذر تحميل التقرير: "+err(e),"error",7000);}
+}
+function mmExportReport(type,tableId){
+ if(typeof XLSX==="undefined"||!XLSX.utils){showToast("مكتبة Excel غير متاحة.","error");return;}
+ const table=$(tableId);if(!table)return;
+ const headers=Array.from(table.querySelectorAll("thead th")).map(x=>x.textContent.trim());
+ const rows=Array.from(table.querySelectorAll("tbody tr")).filter(tr=>tr.querySelectorAll("td").length===headers.length).map(tr=>Array.from(tr.querySelectorAll("td")).map(td=>td.textContent.trim()));
+ if(!rows.length){showToast("لا توجد نتائج لتصديرها.","warn");return;}
+ const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet([headers,...rows]);ws["!cols"]=headers.map((h,i)=>({wch:Math.min(32,Math.max(12,h.length+4,...rows.slice(0,300).map(r=>String(r[i]||"").length+2)))}));XLSX.utils.book_append_sheet(wb,ws,"التقرير");
+ XLSX.writeFile(wb,"MeatManagement_"+type+"_"+todayISO()+".xlsx");
+}
+function mmExportGeoReport(){
+ if(typeof XLSX==="undefined"||!XLSX.utils){showToast("مكتبة Excel غير متاحة.","error");return;}
+ const wb=XLSX.utils.book_new();
+ [["geoSalesTable","المحافظات"],["geoItemsTable","حركة الأصناف"]].forEach(([id,name])=>{
+  const table=$(id);if(!table)return;
+  const headers=Array.from(table.querySelectorAll("thead th")).map(x=>x.textContent.trim());
+  const rows=Array.from(table.querySelectorAll("tbody tr")).filter(tr=>tr.querySelectorAll("td").length===headers.length).map(tr=>Array.from(tr.querySelectorAll("td")).map(td=>td.textContent.trim()));
+  const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);XLSX.utils.book_append_sheet(wb,ws,name);
+ });
+ if(!wb.SheetNames.length){showToast("لا توجد نتائج لتصديرها.","warn");return;}
+ XLSX.writeFile(wb,"MeatManagement_geo_"+todayISO()+".xlsx");
+}
+function mmExportProfitReport(){
+ const lines=Array.from($("plResult")?.querySelectorAll(".line")||[]).map(x=>[x.children[0]?.textContent||"",x.children[1]?.textContent||""]);
+ if(!lines.length){showToast("اعرض تقرير الأرباح والخسائر أولًا.","warn");return;}
+ const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet([["البند","القيمة"],...lines]);XLSX.utils.book_append_sheet(wb,ws,"الأرباح والخسائر");XLSX.writeFile(wb,"MeatManagement_ProfitLoss_"+todayISO()+".xlsx");
+}
+function mmInitAdvancedReportActions(){
+ mmReportDateInputs();
+ const binds=[["mmSalesRun","sales"],["mmPurchasesRun","purchases"],["mmInventoryRun","inventory"],["mmProductionRun","production"],["mmDistributionRun","distribution"]];
+ binds.forEach(([id,type])=>{const b=$(id);if(b)b.addEventListener("click",()=>mmRunAdvancedReport(type));});
+ [["mmSalesExport","sales","mmSalesTable"],["mmPurchasesExport","purchases","mmPurchasesTable"],["mmInventoryExport","inventory","mmInventoryTable"],["mmProductionExport","production","mmProductionTable"],["mmDistributionExport","distribution","mmDistributionTable"],["mmExportAged","aged","agedTable"],["mmExportSlow","slow","slowTable"]].forEach(([id,type,table])=>{const b=$(id);if(b)b.addEventListener("click",()=>mmExportReport(type,table));});
+ const geo=$("mmExportGeo");if(geo)geo.addEventListener("click",mmExportGeoReport);
+ const pl=$("mmExportProfit");if(pl)pl.addEventListener("click",mmExportProfitReport);
+}
+
   // ========== التقارير ==========
   async function loadReports() { 
       if(!navigator.onLine) { 
@@ -12166,111 +12284,6 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
       }
   };
   
-
-const mmAdvancedReportData={};
-function mmReportEscape(value){return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
-function mmReportBounds(from,to){
- const start=new Date(from+"T00:00:00"),end=new Date(to+"T00:00:00");
- if(!Number.isFinite(start.getTime())||!Number.isFinite(end.getTime())||start>end)throw new Error("راجع تاريخ بداية ونهاية التقرير.");
- end.setDate(end.getDate()+1);
- return {start:start.toISOString(),end:end.toISOString()};
-}
-function mmReportDateInputs(){
- const today=todayISO(),month=monthStartISO();
- ["mmSales","mmPurchases","mmInventory","mmProduction","mmDistribution"].forEach(prefix=>{
-  const a=$(prefix+"From"),b=$(prefix+"To");if(a&&!a.value)a.value=month;if(b&&!b.value)b.value=today;
- });
-}
-function mmReportSummary(id,items){
- const box=$(id);if(!box)return;
- box.innerHTML='<h4>ملخص التقرير</h4>'+items.map(x=>'<div class="line"><span>'+mmReportEscape(x[0])+'</span><strong>'+mmReportEscape(x[1])+'</strong></div>').join("");
-}
-function mmReportRender(type,headers,rows,summary){
- const table=$(type+"Table");if(!table)return;
- const body=table.querySelector("tbody");
- const colCount=table.querySelectorAll("thead th").length;body.innerHTML=rows.length?rows.map(row=>"<tr>"+row.map(v=>"<td>"+mmReportEscape(v)+"</td>").join("")+"</tr>").join(""):"<tr><td colspan='"+colCount+"' style='text-align:center'>لا توجد بيانات في الفترة المحددة.</td></tr>";
- mmAdvancedReportData[type]={headers,rows};
- mmReportSummary(type+"Summary",summary);
-}
-function mmReportMoney(v){return fmt(Number(v||0));}
-function mmReportQty(v){return fmtQty(Number(v||0));}
-async function mmRunAdvancedReport(type){
- if(!navigator.onLine){showToast("يحتاج التقرير إلى اتصال بالإنترنت.","warn");return;}
- const map={sales:"mmSales",purchases:"mmPurchases",inventory:"mmInventory",production:"mmProduction",distribution:"mmDistribution"};
- const prefix=map[type];if(!prefix)return;
- const from=$(prefix+"From")?.value,to=$(prefix+"To")?.value;
- if(!from||!to){showToast("حدد تاريخ البداية والنهاية.","warn");return;}
- let bounds;try{bounds=mmReportBounds(from,to);}catch(e){showToast(e.message,"error");return;}
- const body=$(type+"Table")?.querySelector("tbody");if(body)body.innerHTML="<tr><td colspan='10'>جارٍ تحميل البيانات...</td></tr>";
- try{
-  if(type==="sales"){
-   const [invRes,retRes]=await Promise.all([
-    db.from("sales_invoices").select("invoice_number,invoice_date,status,subtotal,discount_amount,net_total,paid_amount,remaining_amount,customers(customer_name),sales_reps(rep_name)").gte("invoice_date",bounds.start).lt("invoice_date",bounds.end).neq("status","CANCELLED").order("invoice_date",{ascending:false}).limit(5000),
-    db.from("sales_returns").select("total_returned_value,return_date,cancelled_at").gte("return_date",from).lte("return_date",to).is("cancelled_at",null).limit(5000)
-   ]);
-   if(invRes.error)throw invRes.error;if(retRes.error)throw retRes.error;
-   const data=invRes.data||[],returns=retRes.data||[];
-   const total=data.reduce((a,x)=>a+Number(x.net_total||0),0),paid=data.reduce((a,x)=>a+Number(x.paid_amount||0),0),remaining=data.reduce((a,x)=>a+Number(x.remaining_amount||0),0),ret=returns.reduce((a,x)=>a+Number(x.total_returned_value||0),0);
-   mmReportRender(type,[],data.map(x=>[x.invoice_number,formatDate(x.invoice_date),x.customers?.customer_name||"—",x.sales_reps?.rep_name||"—",mmReportMoney(x.subtotal),mmReportMoney(x.discount_amount),mmReportMoney(x.net_total),mmReportMoney(x.paid_amount),mmReportMoney(x.remaining_amount),x.status]),[["عدد الفواتير",data.length],["صافي الفواتير",mmReportMoney(total)],["التحصيل المسجل على الفواتير",mmReportMoney(paid)],["المتبقي",mmReportMoney(remaining)],["قيمة المرتجعات غير الملغاة",mmReportMoney(ret)],["صافي المبيعات بعد المرتجعات",mmReportMoney(total-ret)]]);
-  }else if(type==="purchases"){
-   const [invRes,retRes]=await Promise.all([
-    db.from("purchase_invoices").select("invoice_number,invoice_date,status,subtotal,discount,net_total,suppliers(supplier_name)").gte("invoice_date",from).lte("invoice_date",to).neq("status","CANCELLED").order("invoice_date",{ascending:false}).limit(5000),
-    db.from("purchase_returns").select("total_return_amount,return_date,is_cancelled").gte("return_date",from).lte("return_date",to).eq("is_cancelled",false).limit(5000)
-   ]);
-   if(invRes.error)throw invRes.error;if(retRes.error)throw retRes.error;
-   const data=invRes.data||[],returns=retRes.data||[],total=data.reduce((a,x)=>a+Number(x.net_total||0),0),ret=returns.reduce((a,x)=>a+Number(x.total_return_amount||0),0);
-   mmReportRender(type,[],data.map(x=>[x.invoice_number,formatDate(x.invoice_date),x.suppliers?.supplier_name||"—",mmReportMoney(x.subtotal),mmReportMoney(x.discount),mmReportMoney(x.net_total),x.status]),[["عدد فواتير الشراء",data.length],["صافي المشتريات",mmReportMoney(total)],["مرتجعات المشتريات",mmReportMoney(ret)],["صافي المشتريات بعد المرتجعات",mmReportMoney(total-ret)]]);
-  }else if(type==="inventory"){
-   const [movRes,balRes]=await Promise.all([
-    db.from("stock_movements").select("created_at,movement_type,quantity_change,quantity_after,total_cost,products(product_name),locations(location_name)").gte("created_at",bounds.start).lt("created_at",bounds.end).order("created_at",{ascending:false}).limit(5000),
-    db.from("stock_balances").select("quantity,inventory_value").gt("quantity",0).limit(5000)
-   ]);
-   if(movRes.error)throw movRes.error;if(balRes.error)throw balRes.error;
-   const data=movRes.data||[],balances=balRes.data||[],incoming=data.filter(x=>Number(x.quantity_change)>0).reduce((a,x)=>a+Number(x.quantity_change),0),outgoing=data.filter(x=>Number(x.quantity_change)<0).reduce((a,x)=>a+Math.abs(Number(x.quantity_change)),0),value=balances.reduce((a,x)=>a+Number(x.inventory_value||0),0),qty=balances.reduce((a,x)=>a+Number(x.quantity||0),0);
-   mmReportRender(type,[],data.map(x=>[formatDate(x.created_at),x.products?.product_name||"—",x.locations?.location_name||"—",x.movement_type,mmReportQty(x.quantity_change),mmReportQty(x.quantity_after),mmReportMoney(x.total_cost)]),[["عدد حركات المخزون",data.length],["إجمالي الكميات الداخلة",mmReportQty(incoming)],["إجمالي الكميات الخارجة",mmReportQty(outgoing)],["صافي تغير الكميات",mmReportQty(incoming-outgoing)],["إجمالي الكمية الحالية بالمواقع",mmReportQty(qty)],["قيمة المخزون الحالية",mmReportMoney(value)]]);
-  }else if(type==="production"){
-   const {data,error}=await db.from("production_orders").select("order_number,created_at,status,target_quantity,actual_output_quantity,total_material_cost,total_production_cost,output_unit_cost,products(product_name),locations(location_name)").gte("created_at",bounds.start).lt("created_at",bounds.end).order("created_at",{ascending:false}).limit(5000);
-   if(error)throw error;
-   const rows=data||[],output=rows.reduce((a,x)=>a+Number(x.actual_output_quantity||0),0),cost=rows.reduce((a,x)=>a+Number(x.total_production_cost??x.total_material_cost??0),0);
-   mmReportRender(type,[],rows.map(x=>[x.order_number,formatDate(x.created_at),x.products?.product_name||"—",x.locations?.location_name||"—",x.status,mmReportQty(x.target_quantity),mmReportQty(x.actual_output_quantity),mmReportMoney(x.total_material_cost),mmReportMoney(x.total_production_cost),mmReportMoney(x.output_unit_cost)]),[["عدد أوامر الإنتاج",rows.length],["إجمالي الكمية المستهدفة",mmReportQty(rows.reduce((a,x)=>a+Number(x.target_quantity||0),0))],["إجمالي الناتج الفعلي",mmReportQty(output)],["إجمالي تكلفة المواد",mmReportMoney(rows.reduce((a,x)=>a+Number(x.total_material_cost||0),0))],["إجمالي تكلفة الإنتاج",mmReportMoney(cost)]]);
-  }else if(type==="distribution"){
-   const {data:trips,error}=await db.from("trips").select("trip_id,trip_number,start_date,end_date,status,initial_cash,sales_reps(rep_name),vehicle:locations!trips_vehicle_location_id_fkey(location_name)").gte("start_date",from).lte("start_date",to).order("start_date",{ascending:false}).limit(2000);
-   if(error)throw error;
-   const ids=(trips||[]).map(x=>x.trip_id);
-   let loads=[],invoices=[];
-   if(ids.length){
-    const [loadRes,invRes]=await Promise.all([
-     db.from("trip_loads").select("trip_id,quantity_loaded,quantity_sold,quantity_returned,products(product_name)").in("trip_id",ids).limit(10000),
-     db.from("sales_invoices").select("trip_id,net_total,status").in("trip_id",ids).neq("status","CANCELLED").limit(10000)
-    ]);
-    if(loadRes.error)throw loadRes.error;if(invRes.error)throw invRes.error;loads=loadRes.data||[];invoices=invRes.data||[];
-   }
-   const rows=(trips||[]).map(t=>{const ls=loads.filter(x=>String(x.trip_id)===String(t.trip_id)),is=invoices.filter(x=>String(x.trip_id)===String(t.trip_id));const loaded=ls.reduce((a,x)=>a+Number(x.quantity_loaded||0),0),sold=ls.reduce((a,x)=>a+Number(x.quantity_sold||0),0),returned=ls.reduce((a,x)=>a+Number(x.quantity_returned||0),0),sales=is.reduce((a,x)=>a+Number(x.net_total||0),0);return [t.trip_number,t.sales_reps?.rep_name||"—",t.vehicle?.location_name||"—",formatDate(t.start_date),t.end_date?formatDate(t.end_date):"—",t.status,mmReportQty(loaded),mmReportQty(sold),mmReportQty(returned),mmReportMoney(sales)];});
-   mmReportRender(type,[],rows,[["عدد الجولات",rows.length],["إجمالي الكمية المحملة",mmReportQty(loads.reduce((a,x)=>a+Number(x.quantity_loaded||0),0))],["إجمالي الكمية المباعة",mmReportQty(loads.reduce((a,x)=>a+Number(x.quantity_sold||0),0))],["إجمالي الكمية المرتجعة",mmReportQty(loads.reduce((a,x)=>a+Number(x.quantity_returned||0),0))],["إجمالي قيمة فواتير الجولات",mmReportMoney(invoices.reduce((a,x)=>a+Number(x.net_total||0),0))]]);
-  }
- }catch(e){if(body)body.innerHTML="<tr><td colspan='10' style='color:#a52b2b'>تعذر تحميل التقرير: "+mmReportEscape(err(e))+"</td></tr>";showToast("تعذر تحميل التقرير: "+err(e),"error",7000);}
-}
-function mmExportReport(type,tableId){
- if(typeof XLSX==="undefined"||!XLSX.utils){showToast("مكتبة Excel غير متاحة.","error");return;}
- const table=$(tableId);if(!table)return;
- const headers=Array.from(table.querySelectorAll("thead th")).map(x=>x.textContent.trim());
- const rows=Array.from(table.querySelectorAll("tbody tr")).filter(tr=>tr.querySelectorAll("td").length===headers.length).map(tr=>Array.from(tr.querySelectorAll("td")).map(td=>td.textContent.trim()));
- if(!rows.length){showToast("لا توجد نتائج لتصديرها.","warn");return;}
- const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet([headers,...rows]);ws["!cols"]=headers.map((h,i)=>({wch:Math.min(32,Math.max(12,h.length+4,...rows.slice(0,300).map(r=>String(r[i]||"").length+2)))}));XLSX.utils.book_append_sheet(wb,ws,"التقرير");
- XLSX.writeFile(wb,"MeatManagement_"+type+"_"+todayISO()+".xlsx");
-}
-function mmExportProfitReport(){
- const lines=Array.from($("plResult")?.querySelectorAll(".line")||[]).map(x=>[x.children[0]?.textContent||"",x.children[1]?.textContent||""]);
- if(!lines.length){showToast("اعرض تقرير الأرباح والخسائر أولًا.","warn");return;}
- const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet([["البند","القيمة"],...lines]);XLSX.utils.book_append_sheet(wb,ws,"الأرباح والخسائر");XLSX.writeFile(wb,"MeatManagement_ProfitLoss_"+todayISO()+".xlsx");
-}
-function mmInitAdvancedReportActions(){
- mmReportDateInputs();
- const binds=[["mmSalesRun","sales"],["mmPurchasesRun","purchases"],["mmInventoryRun","inventory"],["mmProductionRun","production"],["mmDistributionRun","distribution"]];
- binds.forEach(([id,type])=>{const b=$(id);if(b)b.addEventListener("click",()=>mmRunAdvancedReport(type));});
- [["mmSalesExport","sales","mmSalesTable"],["mmPurchasesExport","purchases","mmPurchasesTable"],["mmInventoryExport","inventory","mmInventoryTable"],["mmProductionExport","production","mmProductionTable"],["mmDistributionExport","distribution","mmDistributionTable"],["mmExportAged","aged","agedTable"],["mmExportSlow","slow","slowTable"],["mmExportGeo","geo","geoSalesTable"]].forEach(([id,type,table])=>{const b=$(id);if(b)b.addEventListener("click",()=>mmExportReport(type,table));});
- const pl=$("mmExportProfit");if(pl)pl.addEventListener("click",mmExportProfitReport);
-}
 
   window.switchReportTab = function(tabId) {
       document.querySelectorAll(".report-tab").forEach(el => el.classList.add("hidden"));
