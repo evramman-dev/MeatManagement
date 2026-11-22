@@ -735,7 +735,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v182]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v183]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1062,7 +1062,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <h2>🗂️ مركز البيانات</h2>
 <p class="desc">اختر القسم الرئيسي للوصول إلى الصفحات التابعة له.</p>
 <div class="data-search-row"><input id="dataSectionSearch" type="search" placeholder="ابحث عن قسم مثل المخزون أو العملاء..." autocomplete="off"><button id="clearDataSectionSearch" class="btn secondary" type="button">مسح</button></div>
-<div class="data-category-grid"><button type="button" class="data-category-card" id="dataCategoryCardproducts" onclick="window.openDataGroup('products')"><span class="data-category-icon">📦</span><span class="data-category-title">إدارة المنتجات</span><span class="data-category-subtitle" id="dataCategoryCountproducts">1 أقسام</span></button>
+<div class="data-category-grid"><button type="button" class="data-category-card" id="dataCategoryCardproducts" onclick="window.openSection('products')"><span class="data-category-icon">📦</span><span class="data-category-title">إدارة المنتجات</span><span class="data-category-subtitle" id="dataCategoryCountproducts">1 أقسام</span></button>
 <button type="button" class="data-category-card" id="dataCategoryCardinventory" onclick="window.openDataGroup('inventory')"><span class="data-category-icon">🏭</span><span class="data-category-title">المخزون</span><span class="data-category-subtitle" id="dataCategoryCountinventory">6 أقسام</span></button>
 <button type="button" class="data-category-card" id="dataCategoryCardproduction" onclick="window.openDataGroup('production')"><span class="data-category-icon">📝</span><span class="data-category-title">الإنتاج</span><span class="data-category-subtitle" id="dataCategoryCountproduction">4 أقسام</span></button>
 <button type="button" class="data-category-card" id="dataCategoryCardreportsInventory" onclick="window.openDataGroup('reportsInventory')"><span class="data-category-icon">📊</span><span class="data-category-title">التقارير والجرد</span><span class="data-category-subtitle" id="dataCategoryCountreportsInventory">2 أقسام</span></button>
@@ -2594,7 +2594,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v182</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v183</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -11888,15 +11888,31 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
 
           const fileName = "MeatManagement_Report_" + todayISO() + ".xls";
           const blob = new Blob(["\uFEFF", html], {type:"application/vnd.ms-excel;charset=utf-8"});
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = fileName;
-          a.style.display = "none";
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          setTimeout(() => URL.revokeObjectURL(url), 1500);
+          const downloadFile = (href) => {
+              const a = document.createElement("a");
+              a.href = href;
+              a.download = fileName;
+              a.style.display = "none";
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+          };
+          if (typeof URL !== "undefined" && typeof URL.createObjectURL === "function") {
+              const url = URL.createObjectURL(blob);
+              downloadFile(url);
+              setTimeout(() => {
+                  if (typeof URL.revokeObjectURL === "function") URL.revokeObjectURL(url);
+              }, 1500);
+          } else if (typeof FileReader !== "undefined") {
+              await new Promise((resolve, reject) => {
+                  const reader = new FileReader();
+                  reader.onload = () => { downloadFile(reader.result); resolve(); };
+                  reader.onerror = () => reject(reader.error || new Error("تعذر تجهيز ملف الإكسيل"));
+                  reader.readAsDataURL(blob);
+              });
+          } else {
+              throw new Error("بيئة المتصفح لا تدعم تنزيل ملف الإكسيل");
+          }
           showToast("تم تصدير ملف إكسيل بالجداول بنجاح", "success");
       } catch(e) {
           alert("خطأ في التصدير: " + err(e));
