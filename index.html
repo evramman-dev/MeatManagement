@@ -2342,17 +2342,17 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 <div id="repAged" class="report-tab">
 <div class="table-responsive"><table class="print-table" id="agedTable"><thead><tr><th>العميل</th><th>الموبايل</th><th>الرصيد الصافي</th><th>الرصيد الافتتاحي</th><th>0-30</th><th>31-60</th><th>61-90</th><th>+90</th></tr></thead><tbody></tbody></table></div>
-</div>
+</div><div class="row"><button class="btn secondary" type="button" id="mmExportAged">تصدير أعمار الديون</button></div>
 <div id="repSlow" class="report-tab hidden">
 <label>عدد أيام بدون حركة (مثال: 30)</label>
 <div class="row"><input type="number" id="slowDays" value="30" min="1"><button class="btn" onclick="loadSlowMovingStock()">بحث</button></div>
 <div class="table-responsive" style="margin-top:10px;"><table class="print-table" id="slowTable"><thead><tr><th>المنتج</th><th>الموقع</th><th>الكمية</th><th>آخر حركة</th></tr></thead><tbody></tbody></table></div>
-</div>
+</div><div class="row"><button class="btn secondary" type="button" id="mmExportSlow">تصدير المخزون الراكد</button></div>
 <div id="repGeo" class="report-tab hidden">
 <div class="grid">
 <div><label for="geoSalesFromDate">من تاريخ</label><input type="date" id="geoSalesFromDate"></div>
 <div><label for="geoSalesToDate">إلى تاريخ</label><input type="date" id="geoSalesToDate"></div>
-</div>
+</div><div class="row"><button class="btn secondary" type="button" id="mmExportGeo">تصدير المبيعات الجغرافية</button></div>
 <button class="btn" id="refreshGeoSalesReport" type="button" style="margin-top:10px;">عرض التقرير</button>
 <div class="info" style="margin-top:10px;">رصيد أول المدة هو صافي رصيد العملاء قبل بداية الفترة. الرصيد الحالي = رصيد أول المدة + المبيعات - التحصيلات - المرتجعات المخصومة من المديونية + فروق الاستبدال المؤثرة على المديونية. الرقم الموجب يعني أن على العملاء رصيدًا للشركة، والرقم السالب يعني أن للعملاء رصيدًا لدى الشركة. عمود المرتجعات يعرض إجمالي المرتجعات خلال الفترة، بما فيها المبالغ التي رُدت نقدًا. حركة الأصناف بوحدتها الأساسية، والرصيد الحالي يشمل جميع المواقع.</div>
 <div class="table-responsive" style="margin-top:12px;"><table class="print-table" id="geoSalesTable"><thead><tr><th>المحافظة</th><th>رصيد أول المدة</th><th>إجمالي المبيعات</th><th>إجمالي التحصيلات</th><th>إجمالي المرتجعات</th><th>مرتجعات مخصومة من المديونية</th><th>فروق الاستبدال</th><th>رصيد العملاء</th></tr></thead><tbody><tr><td colspan="8">حدد الفترة ثم اضغط عرض التقرير.</td></tr></tbody></table></div><h3 style="margin-top:20px;">ملخص حركة الأصناف</h3><div class="table-responsive"><table class="print-table" id="geoItemsTable"><thead><tr><th>الصنف</th><th>الوحدة</th><th>إجمالي مشتريات</th><th>إجمالي مبيعات</th><th>إجمالي الاستبدالات</th><th>إجمالي مرتجعات</th><th>رصيد حالي</th><th>ما يعادله بوحدة البيع</th></tr></thead><tbody><tr><td colspan="8">حدد الفترة ثم اضغط عرض التقرير.</td></tr></tbody></table></div>
@@ -2361,7 +2361,38 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div class="grid"><div><label>من تاريخ</label><input type="date" id="plFromDate"></div><div><label>إلى تاريخ</label><input type="date" id="plToDate"></div></div>
 <button class="btn" onclick="loadProfitLoss()" style="margin-top:10px;">عرض التقرير</button>
 <div id="plResult" class="total-box" style="margin-top:15px;"></div>
+</div><div class="row"><button class="btn secondary" type="button" id="mmExportProfit">تصدير الأرباح والخسائر</button></div>
 </div>
+
+<div id="repSales" class="report-tab hidden">
+<div class="grid"><div><label>من تاريخ</label><input type="date" id="mmSalesFrom"></div><div><label>إلى تاريخ</label><input type="date" id="mmSalesTo"></div></div>
+<div class="row"><button class="btn" id="mmSalesRun">عرض تقرير المبيعات</button><button class="btn secondary" id="mmSalesExport">تصدير Excel</button></div>
+<div id="mmSalesSummary" class="mini-summary"></div>
+<div class="table-responsive"><table class="print-table" id="mmSalesTable"><thead><tr><th>رقم الفاتورة</th><th>التاريخ</th><th>العميل</th><th>المندوب</th><th>الإجمالي</th><th>الخصم</th><th>الصافي</th><th>المدفوع</th><th>المتبقي</th><th>الحالة</th></tr></thead><tbody><tr><td colspan="10">حدد الفترة ثم اعرض التقرير.</td></tr></tbody></table></div>
+</div>
+<div id="repPurchases" class="report-tab hidden">
+<div class="grid"><div><label>من تاريخ</label><input type="date" id="mmPurchasesFrom"></div><div><label>إلى تاريخ</label><input type="date" id="mmPurchasesTo"></div></div>
+<div class="row"><button class="btn" id="mmPurchasesRun">عرض تقرير المشتريات</button><button class="btn secondary" id="mmPurchasesExport">تصدير Excel</button></div>
+<div id="mmPurchasesSummary" class="mini-summary"></div>
+<div class="table-responsive"><table class="print-table" id="mmPurchasesTable"><thead><tr><th>رقم الفاتورة</th><th>التاريخ</th><th>المورد</th><th>الإجمالي</th><th>الخصم</th><th>الصافي</th><th>الحالة</th></tr></thead><tbody><tr><td colspan="7">حدد الفترة ثم اعرض التقرير.</td></tr></tbody></table></div>
+</div>
+<div id="repInventory" class="report-tab hidden">
+<div class="grid"><div><label>من تاريخ الحركة</label><input type="date" id="mmInventoryFrom"></div><div><label>إلى تاريخ الحركة</label><input type="date" id="mmInventoryTo"></div></div>
+<div class="row"><button class="btn" id="mmInventoryRun">عرض حركة المخزون</button><button class="btn secondary" id="mmInventoryExport">تصدير Excel</button></div>
+<div id="mmInventorySummary" class="mini-summary"></div>
+<div class="table-responsive"><table class="print-table" id="mmInventoryTable"><thead><tr><th>التاريخ</th><th>المنتج</th><th>الموقع</th><th>نوع الحركة</th><th>تغير الكمية</th><th>الرصيد بعدها</th><th>تكلفة الحركة</th></tr></thead><tbody><tr><td colspan="7">حدد الفترة ثم اعرض التقرير.</td></tr></tbody></table></div>
+</div>
+<div id="repProduction" class="report-tab hidden">
+<div class="grid"><div><label>من تاريخ الإنشاء</label><input type="date" id="mmProductionFrom"></div><div><label>إلى تاريخ الإنشاء</label><input type="date" id="mmProductionTo"></div></div>
+<div class="row"><button class="btn" id="mmProductionRun">عرض تقرير الإنتاج</button><button class="btn secondary" id="mmProductionExport">تصدير Excel</button></div>
+<div id="mmProductionSummary" class="mini-summary"></div>
+<div class="table-responsive"><table class="print-table" id="mmProductionTable"><thead><tr><th>أمر الإنتاج</th><th>التاريخ</th><th>المنتج الناتج</th><th>الموقع</th><th>الحالة</th><th>المطلوب</th><th>الناتج الفعلي</th><th>تكلفة المواد</th><th>تكلفة الإنتاج</th><th>تكلفة الوحدة</th></tr></thead><tbody><tr><td colspan="10">حدد الفترة ثم اعرض التقرير.</td></tr></tbody></table></div>
+</div>
+<div id="repDistribution" class="report-tab hidden">
+<div class="grid"><div><label>من تاريخ الجولة</label><input type="date" id="mmDistributionFrom"></div><div><label>إلى تاريخ الجولة</label><input type="date" id="mmDistributionTo"></div></div>
+<div class="row"><button class="btn" id="mmDistributionRun">عرض تقرير التوزيع</button><button class="btn secondary" id="mmDistributionExport">تصدير Excel</button></div>
+<div id="mmDistributionSummary" class="mini-summary"></div>
+<div class="table-responsive"><table class="print-table" id="mmDistributionTable"><thead><tr><th>رقم الجولة</th><th>المندوب</th><th>السيارة</th><th>البداية</th><th>النهاية</th><th>الحالة</th><th>تحميل</th><th>مباع</th><th>مرتجع</th><th>مبيعات الفواتير</th></tr></thead><tbody><tr><td colspan="10">حدد الفترة ثم اعرض التقرير.</td></tr></tbody></table></div>
 </div>
 </div>
 
@@ -3117,9 +3148,9 @@ function mmInitAccountingAndReports(){
    const search=document.createElement("input");search.type="search";search.className="product-search-input";search.placeholder="ابحث باسم التقرير...";
    const tabs=card.querySelector(".section-tabs");if(tabs)tabs.insertAdjacentElement("beforebegin",search);
    search.addEventListener("input",()=>{const q=search.value.trim().toLocaleLowerCase();Array.from(tabs?.querySelectorAll("button")||[]).forEach(b=>{b.hidden=!!q&&!b.textContent.toLocaleLowerCase().includes(q);});});
-   const label=document.createElement("p");label.className="desc";label.textContent="اختر التقرير حسب نوعه. حدد الفترة أو الفلاتر داخل التقرير ثم اعرض النتائج أو صدّرها إلى Excel.";if(tabs)tabs.insertAdjacentElement("beforebegin",label);
+   const label=document.createElement("p");label.className="desc";label.textContent="اختر التقرير حسب نوعه. حدد الفترة ثم اعرض النتائج. لكل تقرير زر مستقل لتصدير Excel.";if(tabs)tabs.insertAdjacentElement("beforebegin",label);
    const reportCards=document.createElement("div");reportCards.className="data-category-grid mm-report-groups";reportCards.id="advancedReportGroups";
-   [["أعمار الديون","💳","repAged"],["المخزون الراكد","📦","repSlow"],["الأرباح والخسائر","📈","repPL"],["المبيعات حسب المحافظة","🗺️","repGeo"]].forEach(([name,ico,id])=>reportCards.append(mmWorkspaceButton(name,ico,()=>window.switchReportTab(id))));
+   [["المبيعات","💰","repSales"],["المشتريات","🛒","repPurchases"],["حركة المخزون","📦","repInventory"],["الإنتاج","🏭","repProduction"],["التوزيع","🚚","repDistribution"],["الأرباح والخسائر","📈","repPL"],["أعمار الديون","💳","repAged"],["المخزون الراكد","📦","repSlow"],["المبيعات حسب المحافظة","🗺️","repGeo"]].forEach(([name,ico,id])=>reportCards.append(mmWorkspaceButton(name,ico,()=>window.switchReportTab(id))));
    if(tabs)tabs.insertAdjacentElement("beforebegin",reportCards);
    search.addEventListener("input",()=>{const q=search.value.trim().toLocaleLowerCase();Array.from(reportCards.querySelectorAll("button")).forEach(b=>{b.hidden=!!q&&!b.textContent.toLocaleLowerCase().includes(q);});});
   }
@@ -12135,12 +12166,118 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
       }
   };
   
+
+const mmAdvancedReportData={};
+function mmReportEscape(value){return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
+function mmReportBounds(from,to){
+ const start=new Date(from+"T00:00:00"),end=new Date(to+"T00:00:00");
+ if(!Number.isFinite(start.getTime())||!Number.isFinite(end.getTime())||start>end)throw new Error("راجع تاريخ بداية ونهاية التقرير.");
+ end.setDate(end.getDate()+1);
+ return {start:start.toISOString(),end:end.toISOString()};
+}
+function mmReportDateInputs(){
+ const today=todayISO(),month=monthStartISO();
+ ["mmSales","mmPurchases","mmInventory","mmProduction","mmDistribution"].forEach(prefix=>{
+  const a=$(prefix+"From"),b=$(prefix+"To");if(a&&!a.value)a.value=month;if(b&&!b.value)b.value=today;
+ });
+}
+function mmReportSummary(id,items){
+ const box=$(id);if(!box)return;
+ box.innerHTML='<h4>ملخص التقرير</h4>'+items.map(x=>'<div class="line"><span>'+mmReportEscape(x[0])+'</span><strong>'+mmReportEscape(x[1])+'</strong></div>').join("");
+}
+function mmReportRender(type,headers,rows,summary){
+ const table=$(type+"Table");if(!table)return;
+ const body=table.querySelector("tbody");
+ body.innerHTML=rows.length?rows.map(row=>"<tr>"+row.map(v=>"<td>"+mmReportEscape(v)+"</td>").join("")+"</tr>").join(""):"<tr><td colspan='"+headers.length+"' style='text-align:center'>لا توجد بيانات في الفترة المحددة.</td></tr>";
+ mmAdvancedReportData[type]={headers,rows};
+ mmReportSummary(type+"Summary",summary);
+}
+function mmReportMoney(v){return fmt(Number(v||0));}
+function mmReportQty(v){return fmtQty(Number(v||0));}
+async function mmRunAdvancedReport(type){
+ if(!navigator.onLine){showToast("يحتاج التقرير إلى اتصال بالإنترنت.","warn");return;}
+ const map={sales:"mmSales",purchases:"mmPurchases",inventory:"mmInventory",production:"mmProduction",distribution:"mmDistribution"};
+ const prefix=map[type];if(!prefix)return;
+ const from=$(prefix+"From")?.value,to=$(prefix+"To")?.value;
+ if(!from||!to){showToast("حدد تاريخ البداية والنهاية.","warn");return;}
+ let bounds;try{bounds=mmReportBounds(from,to);}catch(e){showToast(e.message,"error");return;}
+ const body=$(type+"Table")?.querySelector("tbody");if(body)body.innerHTML="<tr><td colspan='10'>جارٍ تحميل البيانات...</td></tr>";
+ try{
+  if(type==="sales"){
+   const [invRes,retRes]=await Promise.all([
+    db.from("sales_invoices").select("invoice_number,invoice_date,status,subtotal,discount_amount,net_total,paid_amount,remaining_amount,customers(customer_name),sales_reps(rep_name)").gte("invoice_date",bounds.start).lt("invoice_date",bounds.end).neq("status","CANCELLED").order("invoice_date",{ascending:false}).limit(5000),
+    db.from("sales_returns").select("total_returned_value,return_date,cancelled_at").gte("return_date",from).lte("return_date",to).is("cancelled_at",null).limit(5000)
+   ]);
+   if(invRes.error)throw invRes.error;if(retRes.error)throw retRes.error;
+   const data=invRes.data||[],returns=retRes.data||[];
+   const total=data.reduce((a,x)=>a+Number(x.net_total||0),0),paid=data.reduce((a,x)=>a+Number(x.paid_amount||0),0),remaining=data.reduce((a,x)=>a+Number(x.remaining_amount||0),0),ret=returns.reduce((a,x)=>a+Number(x.total_returned_value||0),0);
+   mmReportRender(type,[],data.map(x=>[x.invoice_number,formatDate(x.invoice_date),x.customers?.customer_name||"—",x.sales_reps?.rep_name||"—",mmReportMoney(x.subtotal),mmReportMoney(x.discount_amount),mmReportMoney(x.net_total),mmReportMoney(x.paid_amount),mmReportMoney(x.remaining_amount),x.status]),[["عدد الفواتير",data.length],["صافي الفواتير",mmReportMoney(total)],["التحصيل المسجل على الفواتير",mmReportMoney(paid)],["المتبقي",mmReportMoney(remaining)],["قيمة المرتجعات غير الملغاة",mmReportMoney(ret)],["صافي المبيعات بعد المرتجعات",mmReportMoney(total-ret)]]);
+  }else if(type==="purchases"){
+   const [invRes,retRes]=await Promise.all([
+    db.from("purchase_invoices").select("invoice_number,invoice_date,status,subtotal,discount,net_total,suppliers(supplier_name)").gte("invoice_date",from).lte("invoice_date",to).neq("status","CANCELLED").order("invoice_date",{ascending:false}).limit(5000),
+    db.from("purchase_returns").select("total_return_amount,return_date,is_cancelled").gte("return_date",from).lte("return_date",to).eq("is_cancelled",false).limit(5000)
+   ]);
+   if(invRes.error)throw invRes.error;if(retRes.error)throw retRes.error;
+   const data=invRes.data||[],returns=retRes.data||[],total=data.reduce((a,x)=>a+Number(x.net_total||0),0),ret=returns.reduce((a,x)=>a+Number(x.total_return_amount||0),0);
+   mmReportRender(type,[],data.map(x=>[x.invoice_number,formatDate(x.invoice_date),x.suppliers?.supplier_name||"—",mmReportMoney(x.subtotal),mmReportMoney(x.discount),mmReportMoney(x.net_total),x.status]),[["عدد فواتير الشراء",data.length],["صافي المشتريات",mmReportMoney(total)],["مرتجعات المشتريات",mmReportMoney(ret)],["صافي المشتريات بعد المرتجعات",mmReportMoney(total-ret)]]);
+  }else if(type==="inventory"){
+   const [movRes,balRes]=await Promise.all([
+    db.from("stock_movements").select("created_at,movement_type,quantity_change,quantity_after,total_cost,products(product_name),locations(location_name)").gte("created_at",bounds.start).lt("created_at",bounds.end).order("created_at",{ascending:false}).limit(5000),
+    db.from("stock_balances").select("quantity,inventory_value").gt("quantity",0).limit(5000)
+   ]);
+   if(movRes.error)throw movRes.error;if(balRes.error)throw balRes.error;
+   const data=movRes.data||[],balances=balRes.data||[],incoming=data.filter(x=>Number(x.quantity_change)>0).reduce((a,x)=>a+Number(x.quantity_change),0),outgoing=data.filter(x=>Number(x.quantity_change)<0).reduce((a,x)=>a+Math.abs(Number(x.quantity_change)),0),value=balances.reduce((a,x)=>a+Number(x.inventory_value||0),0),qty=balances.reduce((a,x)=>a+Number(x.quantity||0),0);
+   mmReportRender(type,[],data.map(x=>[formatDate(x.created_at),x.products?.product_name||"—",x.locations?.location_name||"—",x.movement_type,mmReportQty(x.quantity_change),mmReportQty(x.quantity_after),mmReportMoney(x.total_cost)]),[["عدد حركات المخزون",data.length],["إجمالي الكميات الداخلة",mmReportQty(incoming)],["إجمالي الكميات الخارجة",mmReportQty(outgoing)],["صافي تغير الكميات",mmReportQty(incoming-outgoing)],["إجمالي الكمية الحالية بالمواقع",mmReportQty(qty)],["قيمة المخزون الحالية",mmReportMoney(value)]]);
+  }else if(type==="production"){
+   const {data,error}=await db.from("production_orders").select("order_number,created_at,status,target_quantity,actual_output_quantity,total_material_cost,total_production_cost,output_unit_cost,products(product_name),locations(location_name)").gte("created_at",bounds.start).lt("created_at",bounds.end).order("created_at",{ascending:false}).limit(5000);
+   if(error)throw error;
+   const rows=data||[],output=rows.reduce((a,x)=>a+Number(x.actual_output_quantity||0),0),cost=rows.reduce((a,x)=>a+Number(x.total_production_cost??x.total_material_cost??0),0);
+   mmReportRender(type,[],rows.map(x=>[x.order_number,formatDate(x.created_at),x.products?.product_name||"—",x.locations?.location_name||"—",x.status,mmReportQty(x.target_quantity),mmReportQty(x.actual_output_quantity),mmReportMoney(x.total_material_cost),mmReportMoney(x.total_production_cost),mmReportMoney(x.output_unit_cost)]),[["عدد أوامر الإنتاج",rows.length],["إجمالي الكمية المستهدفة",mmReportQty(rows.reduce((a,x)=>a+Number(x.target_quantity||0),0))],["إجمالي الناتج الفعلي",mmReportQty(output)],["إجمالي تكلفة المواد",mmReportMoney(rows.reduce((a,x)=>a+Number(x.total_material_cost||0),0))],["إجمالي تكلفة الإنتاج",mmReportMoney(cost)]]);
+  }else if(type==="distribution"){
+   const {data:trips,error}=await db.from("trips").select("trip_id,trip_number,start_date,end_date,status,initial_cash,sales_reps(rep_name),vehicle:locations!trips_vehicle_location_id_fkey(location_name)").gte("start_date",from).lte("start_date",to).order("start_date",{ascending:false}).limit(2000);
+   if(error)throw error;
+   const ids=(trips||[]).map(x=>x.trip_id);
+   let loads=[],invoices=[];
+   if(ids.length){
+    const [loadRes,invRes]=await Promise.all([
+     db.from("trip_loads").select("trip_id,quantity_loaded,quantity_sold,quantity_returned,products(product_name)").in("trip_id",ids).limit(10000),
+     db.from("sales_invoices").select("trip_id,net_total,status").in("trip_id",ids).neq("status","CANCELLED").limit(10000)
+    ]);
+    if(loadRes.error)throw loadRes.error;if(invRes.error)throw invRes.error;loads=loadRes.data||[];invoices=invRes.data||[];
+   }
+   const rows=(trips||[]).map(t=>{const ls=loads.filter(x=>String(x.trip_id)===String(t.trip_id)),is=invoices.filter(x=>String(x.trip_id)===String(t.trip_id));const loaded=ls.reduce((a,x)=>a+Number(x.quantity_loaded||0),0),sold=ls.reduce((a,x)=>a+Number(x.quantity_sold||0),0),returned=ls.reduce((a,x)=>a+Number(x.quantity_returned||0),0),sales=is.reduce((a,x)=>a+Number(x.net_total||0),0);return [t.trip_number,t.sales_reps?.rep_name||"—",t.vehicle?.location_name||"—",formatDate(t.start_date),t.end_date?formatDate(t.end_date):"—",t.status,mmReportQty(loaded),mmReportQty(sold),mmReportQty(returned),mmReportMoney(sales)];});
+   mmReportRender(type,[],rows,[["عدد الجولات",rows.length],["إجمالي الكمية المحملة",mmReportQty(loads.reduce((a,x)=>a+Number(x.quantity_loaded||0),0))],["إجمالي الكمية المباعة",mmReportQty(loads.reduce((a,x)=>a+Number(x.quantity_sold||0),0))],["إجمالي الكمية المرتجعة",mmReportQty(loads.reduce((a,x)=>a+Number(x.quantity_returned||0),0))],["إجمالي قيمة فواتير الجولات",mmReportMoney(invoices.reduce((a,x)=>a+Number(x.net_total||0),0))]]);
+  }
+ }catch(e){if(body)body.innerHTML="<tr><td colspan='10' style='color:#a52b2b'>تعذر تحميل التقرير: "+mmReportEscape(err(e))+"</td></tr>";showToast("تعذر تحميل التقرير: "+err(e),"error",7000);}
+}
+function mmExportReport(type,tableId){
+ if(typeof XLSX==="undefined"||!XLSX.utils){showToast("مكتبة Excel غير متاحة.","error");return;}
+ const table=$(tableId);if(!table)return;
+ const headers=Array.from(table.querySelectorAll("thead th")).map(x=>x.textContent.trim());
+ const rows=Array.from(table.querySelectorAll("tbody tr")).filter(tr=>tr.querySelectorAll("td").length===headers.length).map(tr=>Array.from(tr.querySelectorAll("td")).map(td=>td.textContent.trim()));
+ if(!rows.length){showToast("لا توجد نتائج لتصديرها.","warn");return;}
+ const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet([headers,...rows]);ws["!cols"]=headers.map((h,i)=>({wch:Math.min(32,Math.max(12,h.length+4,...rows.slice(0,300).map(r=>String(r[i]||"").length+2)))}));XLSX.utils.book_append_sheet(wb,ws,"التقرير");
+ XLSX.writeFile(wb,"MeatManagement_"+type+"_"+todayISO()+".xlsx");
+}
+function mmExportProfitReport(){
+ const lines=Array.from($("plResult")?.querySelectorAll(".line")||[]).map(x=>[x.children[0]?.textContent||"",x.children[1]?.textContent||""]);
+ if(!lines.length){showToast("اعرض تقرير الأرباح والخسائر أولًا.","warn");return;}
+ const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet([["البند","القيمة"],...lines]);XLSX.utils.book_append_sheet(wb,ws,"الأرباح والخسائر");XLSX.writeFile(wb,"MeatManagement_ProfitLoss_"+todayISO()+".xlsx");
+}
+function mmInitAdvancedReportActions(){
+ mmReportDateInputs();
+ const binds=[["mmSalesRun","sales"],["mmPurchasesRun","purchases"],["mmInventoryRun","inventory"],["mmProductionRun","production"],["mmDistributionRun","distribution"]];
+ binds.forEach(([id,type])=>{const b=$(id);if(b)b.addEventListener("click",()=>mmRunAdvancedReport(type));});
+ [["mmSalesExport","sales","mmSalesTable"],["mmPurchasesExport","purchases","mmPurchasesTable"],["mmInventoryExport","inventory","mmInventoryTable"],["mmProductionExport","production","mmProductionTable"],["mmDistributionExport","distribution","mmDistributionTable"],["mmExportAged","aged","agedTable"],["mmExportSlow","slow","slowTable"],["mmExportGeo","geo","geoSalesTable"]].forEach(([id,type,table])=>{const b=$(id);if(b)b.addEventListener("click",()=>mmExportReport(type,table));});
+ const pl=$("mmExportProfit");if(pl)pl.addEventListener("click",mmExportProfitReport);
+}
+
   window.switchReportTab = function(tabId) {
       document.querySelectorAll(".report-tab").forEach(el => el.classList.add("hidden"));
       const btns = document.querySelectorAll('[onclick^="switchReportTab"]');
       btns.forEach(b => b.classList.remove("active"));
       if($(tabId)) $(tabId).classList.remove("hidden");
-      const map = { repAged: 0, repSlow: 1, repPL: 2, repGeo: 3 };
+      const map = { repSales: 0, repPurchases: 1, repInventory: 2, repProduction: 3, repDistribution: 4, repPL: 5, repAged: 6, repSlow: 7, repGeo: 8 };
       if(map[tabId] !== undefined && btns[map[tabId]]) btns[map[tabId]].classList.add("active");
   }
 
@@ -12281,6 +12418,7 @@ if($("partnerTransactionForm")) $("partnerTransactionForm").addEventListener("su
   mmInitSalesRepWorkspace();
   mmInitPartnersWorkspace();
   mmInitAccountingAndReports();
+  mmInitAdvancedReportActions();
 
 
   // تم نقل معالج الدخول إلى بداية التهيئة لتجنب تعطله بسبب أخطاء أجزاء لاحقة من الواجهة.
