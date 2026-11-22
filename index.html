@@ -3275,14 +3275,16 @@ function mmInitAccountingAndReports(){
     const clear=()=>{delete document.body.dataset.mmAccountingPrint;window.removeEventListener("afterprint",clear);};
     window.addEventListener("afterprint",clear);
     window.print();
-    setTimeout(clear,1500);
    });
    const whatsappBtn=document.createElement("button");whatsappBtn.type="button";whatsappBtn.className="btn mm-ledger-whatsapp";whatsappBtn.textContent="💬 واتساب";
    whatsappBtn.addEventListener("click",()=>{
     const clone=content.cloneNode(true);
     clone.querySelectorAll("button,form,.no-print").forEach(el=>el.remove());
     const reportText=String(clone.innerText||clone.textContent||"").replace(/\n{3,}/g,"\n\n").trim();
-    const message=("MeatManagement\n"+title+"\n"+reportText).slice(0,6500);
+    const fromDate=document.getElementById("accFromDate")?.value||"";
+    const toDate=document.getElementById("accToDate")?.value||"";
+    const range=fromDate||toDate?"\nالفترة: "+fromDate+" إلى "+toDate:"";
+    const message=("MeatManagement\n"+title+range+"\n"+reportText).slice(0,6500);
     window.open("https://wa.me/?text="+encodeURIComponent(message),"_blank");
    });
    actions.append(printBtn,whatsappBtn);
