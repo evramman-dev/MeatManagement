@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v194</title>
+<title>MeatManagement v196</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -358,6 +358,38 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 .mm-standalone-heading h2{margin:0;flex:1}
 .mm-standalone-back{width:auto;margin:0}
 .mm-partner-report-menu{margin-top:14px}
+.mm-partner-report-entry{
+  grid-column:1/-1;
+  width:100%;
+  min-height:88px;
+  margin:0;
+  border:2px solid var(--gold)!important;
+  background:linear-gradient(135deg,var(--g),var(--g2))!important;
+  color:#fff!important;
+}
+.mm-partner-report-entry .hc-label,
+.mm-partner-report-entry .hc-value{color:#fff!important}
+.mm-partner-report-entry .hc-label{font-size:16px}
+.mm-partner-report-entry .hc-value{font-size:12px;margin-top:5px}
+.mm-partner-report-menu-list{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:10px;
+  margin-top:12px;
+}
+.mm-partner-report-item{
+  width:100%;
+  min-height:62px;
+  margin:0;
+  padding:14px 16px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  text-align:right;
+}
+.mm-partner-report-item .hc-label{font-size:14px;margin:0}
+.mm-partner-report-menu-screen{margin-bottom:14px}
+
 .mm-partner-report-menu .home-card{min-height:100px}
 #partnerReportDetailContent .table-responsive{margin-top:12px}
 #partnerReportDetailContent .total-box{margin-top:12px}
@@ -1051,7 +1083,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v195]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v196]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1290,6 +1322,15 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
   <div id="mmAcc_homeMetricSummary" class="mm-accounting-summary"></div>
   <div class="table-responsive" style="margin-top:12px;"><table id="mmAcc_homeMetricTable" class="print-table"><thead></thead><tbody><tr><td>جارٍ تحميل الملخص...</td></tr></tbody></table></div>
 </div>
+<section id="partnerReportMenuScreen" class="hidden">
+  <div class="card mm-standalone-screen mm-partner-report-menu-screen">
+    <div class="mm-standalone-heading">
+      <button type="button" class="btn secondary mm-standalone-back" id="partnerReportMenuBack">رجوع</button>
+      <h2>التقارير التفصيلية</h2>
+    </div>
+    <div id="partnerReportMenuContent" class="mm-partner-report-menu-list"></div>
+  </div>
+</section>
 <section id="partnerReportDetailScreen" class="hidden">
   <div class="card mm-standalone-screen">
     <div class="mm-standalone-heading">
@@ -2992,7 +3033,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v195</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v196</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -3821,7 +3862,7 @@ window.closeSection = function() {
 
 function page(name){
   if(name!=="data")currentDataGroup=null;
-  ["tasksImportantScreen","taskDirectedNotificationsScreen","taskNotificationSendScreen","partnerReportDetailScreen"].forEach(id=>$(id)?.classList.add("hidden"));
+  ["tasksImportantScreen","taskDirectedNotificationsScreen","taskNotificationSendScreen","partnerReportMenuScreen","partnerReportDetailScreen"].forEach(id=>$(id)?.classList.add("hidden"));
   if($("home")) $("home").classList.toggle("hidden",name!=="home");
   if($("tasks")) $("tasks").classList.toggle("hidden",name!=="tasks");
   if($("data")) $("data").classList.toggle("hidden",name!=="data");
@@ -5965,12 +6006,14 @@ async function openHomeMetric(type){
   }catch(e){mmAccountingRender("homeMetric",["الحالة"],[["تعذر تحميل البيانات"]],[["السبب",err(e)]]);}
 }
 function openHomeDetail(panelId){
+  $("partnerReportMenuScreen")?.classList.add("hidden");
   $("partnerReportDetailScreen")?.classList.add("hidden");
   $("homeOverview")?.classList.add("hidden");
   ["homeNotificationPanel","homeGeoPanel","homeItemsPanel","homeCustomersPanel","homeSuppliersPanel","homePartnerSummaryPanel","homeMetricPanel"].forEach(id=>$(id)?.classList.toggle("hidden",id!==panelId));
   window.scrollTo(0,0);
 }
 function closeHomeDetail(){
+  $("partnerReportMenuScreen")?.classList.add("hidden");
   $("partnerReportDetailScreen")?.classList.add("hidden");
   ["homeNotificationPanel","homeGeoPanel","homeItemsPanel","homeCustomersPanel","homeSuppliersPanel","homePartnerSummaryPanel","homeMetricPanel"].forEach(id=>$(id)?.classList.add("hidden"));
   $("homeOverview")?.classList.remove("hidden");
@@ -6094,34 +6137,55 @@ function collapsePartnerSummarySections(box){
     const node=nodes[i];
     if(node.nodeType===1 && node.tagName==="H3"){
       const title=node.textContent.trim();
-      const content=[];
+      const sectionNodes=[];
       let j=i+1;
       while(j<nodes.length){
         const next=nodes[j];
         if(next.nodeType===1 && next.tagName==="H3")break;
-        if(!(next.nodeType===3 && !next.textContent.trim()))content.push(next);
+        if(!(next.nodeType===3 && !next.textContent.trim()))sectionNodes.push(next);
         j++;
       }
-      const index=mmPartnerReportSections.length;
-      mmPartnerReportSections.push({title,nodes:content});
-      const button=document.createElement("button");
-      button.type="button";
-      button.className="home-card mm-menu-card "+(index%3===1?"gold":index%3===2?"green":"");
-      button.innerHTML='<span class="hc-label">'+esc(title)+'</span><span class="hc-value">عرض التفاصيل</span>';
-      button.addEventListener("click",()=>openPartnerReportDetail(index));
-      menu.appendChild(button);
+      mmPartnerReportSections.push({title,nodes:sectionNodes});
       i=j;
       continue;
     }
     if(!(node.nodeType===3 && !node.textContent.trim()))lead.appendChild(node.cloneNode(true));
     i++;
   }
+  const entry=document.createElement("button");
+  entry.type="button";
+  entry.className="home-card mm-menu-card mm-partner-report-entry";
+  entry.innerHTML='<span class="hc-label">التقارير التفصيلية</span><span class="hc-value">عرض '+mmPartnerReportSections.length+' تقارير مالية وتشغيلية</span>';
+  entry.addEventListener("click",openPartnerReportMenu);
+  menu.appendChild(entry);
   box.replaceChildren(lead,menu);
+}
+function openPartnerReportMenu(){
+  const screen=$("partnerReportMenuScreen"),content=$("partnerReportMenuContent");
+  if(!screen||!content)return;
+  $("homePartnerSummaryPanel")?.classList.add("hidden");
+  $("partnerReportDetailScreen")?.classList.add("hidden");
+  content.replaceChildren();
+  mmPartnerReportSections.forEach((item,index)=>{
+    const button=document.createElement("button");
+    button.type="button";
+    button.className="home-card mm-menu-card mm-partner-report-item";
+    button.innerHTML='<span class="hc-label">'+esc(item.title)+'</span>';
+    button.addEventListener("click",()=>openPartnerReportDetail(index));
+    content.appendChild(button);
+  });
+  screen.classList.remove("hidden");
+  window.scrollTo(0,0);
+}
+function closePartnerReportMenu(){
+  $("partnerReportMenuScreen")?.classList.add("hidden");
+  $("homePartnerSummaryPanel")?.classList.remove("hidden");
+  window.scrollTo(0,0);
 }
 function openPartnerReportDetail(index){
   const item=mmPartnerReportSections[index],screen=$("partnerReportDetailScreen"),content=$("partnerReportDetailContent");
   if(!item||!screen||!content)return;
-  $("homePartnerSummaryPanel")?.classList.add("hidden");
+  $("partnerReportMenuScreen")?.classList.add("hidden");
   content.replaceChildren();
   item.nodes.forEach(node=>content.appendChild(node.cloneNode(true)));
   $("partnerReportDetailTitle").textContent=item.title;
@@ -6130,7 +6194,7 @@ function openPartnerReportDetail(index){
 }
 function closePartnerReportDetail(){
   $("partnerReportDetailScreen")?.classList.add("hidden");
-  $("homePartnerSummaryPanel")?.classList.remove("hidden");
+  $("partnerReportMenuScreen")?.classList.remove("hidden");
   window.scrollTo(0,0);
 }
 
@@ -13223,6 +13287,7 @@ function mmInitAdvancedReportActions(){
   if($("openHomeSuppliersSummary"))$("openHomeSuppliersSummary").addEventListener("click",()=>openHomeDetail("homeSuppliersPanel"));
   if($("openPartnerManagementSummary"))$("openPartnerManagementSummary").addEventListener("click",()=>{openHomeDetail("homePartnerSummaryPanel");loadPartnerManagementSummary();});
   if($("refreshPartnerSummary"))$("refreshPartnerSummary").addEventListener("click",loadPartnerManagementSummary);
+  if($("partnerReportMenuBack"))$("partnerReportMenuBack").addEventListener("click",closePartnerReportMenu);
   if($("partnerReportDetailBack"))$("partnerReportDetailBack").addEventListener("click",closePartnerReportDetail);
   document.querySelectorAll(".home-detail-back").forEach(btn=>btn.addEventListener("click",closeHomeDetail));
   document.querySelectorAll("[data-home-print]").forEach(btn=>btn.addEventListener("click",()=>openHomeQuickPrint(btn.dataset.homePrint)));
@@ -13572,7 +13637,7 @@ $("hrCreatePeriod")?.addEventListener("click",async()=>{try{const r=await db.rpc
 // ====== PWA ======
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=198', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
+    navigator.serviceWorker.register('./sw.js?v=199', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
   });
 }
 
