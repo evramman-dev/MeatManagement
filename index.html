@@ -733,6 +733,8 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 #sectionSalesReps #salesRepsList,#sectionSalesReps #salesRepAreaForm,#sectionSalesReps #salesRepAreasList,#sectionPartners #partnersList,#sectionPartners #partnerTransactionsCard,#sectionPartners #partnerProfitDistributionCard,#sectionPartners #partnerInventoryContributionsCard,#sectionPartners #partnerVehicleContributionsCard,#sectionAccounting .acc-tab,#sectionReports .report-tab{scroll-margin-top:18px}
 @media(max-width:520px){.section-shortcuts .btn{flex:1 1 calc(50% - 8px);min-width:0}.section-tabs .tab-btn{padding:10px 12px}}
 .mm-work-menu{margin:14px 0 18px}.mm-work-panel{margin-top:12px}.mm-work-panel>.card{margin-top:10px}.mm-accounting-groups{margin:12px 0;padding:12px;border:1px solid var(--line);border-radius:12px;background:#f9fbf9}.mm-accounting-groups h3{margin:0 0 10px;color:var(--g)}.product-type-filter{width:100%;margin:8px 0 6px;border:1px solid var(--line);border-radius:10px;padding:11px 12px;background:#fff}.product-search-input{display:block}.mm-work-menu .data-category-card{min-height:104px}@media(max-width:520px){.mm-work-menu{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.mm-accounting-menu{margin:12px 0}.mm-accounting-screen{margin-top:12px}.mm-screen-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:8px 0 14px}.mm-screen-heading h3{margin:0;color:var(--g)}.mm-accounting-filters{padding:12px;margin:10px 0 14px;border:1px solid var(--line);border-radius:12px;background:#f9fbf9}.mm-accounting-filters .grid{gap:10px}.mm-accounting-filters label{display:flex;flex-direction:column;gap:6px}.mm-accounting-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:9px;margin:12px 0}.mm-report-groups{margin:14px 0}.mm-report-groups .data-category-card{min-height:112px;border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:0 2px 7px #173c2c10;transition:transform .15s,box-shadow .15s}.mm-report-groups .data-category-card:active{transform:scale(.98)}.mm-report-groups .data-category-subtitle{color:var(--g);font-weight:700}.mm-accounting-menu .data-category-card{min-height:110px;border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:0 2px 7px #173c2c10}
 </style>
 </head>
 <body>
@@ -3131,35 +3133,140 @@ function mmInitAccountingAndReports(){
  const acc=$("accountingCard");
  if(acc&&!acc.dataset.workspaceReady){
   const heading=acc.querySelector("h2");
-  const nav=document.createElement("div");nav.className="mm-accounting-groups";
-  nav.innerHTML='<h3>الوصول السريع</h3><div class="data-category-grid"></div>';
+  const oldChildren=Array.from(acc.children).filter(el=>el!==heading);
+  const details=document.createElement("div");details.id="accountingDetailsPanel";details.className="mm-accounting-screen hidden";
+  const detailsHead=document.createElement("div");detailsHead.className="mm-screen-heading";
+  const detailsTitle=document.createElement("h3");detailsTitle.textContent="الدفاتر والإجراءات المحاسبية";
+  const detailsBack=document.createElement("button");detailsBack.type="button";detailsBack.className="btn secondary";detailsBack.textContent="⬅ رجوع للمحاسبة";detailsBack.addEventListener("click",()=>{nav.classList.remove("hidden");details.classList.add("hidden");window.scrollTo(0,0);});
+  detailsHead.append(detailsTitle,detailsBack);details.appendChild(detailsHead);
+  oldChildren.forEach(el=>details.appendChild(el));
+  const nav=document.createElement("div");nav.id="accountingWorkspaceMenu";nav.className="mm-accounting-menu";
+  nav.innerHTML='<p class="desc">اختر التقرير الذي تريد مراجعته. كل شاشة تعرض ملخصًا مستقلًا، ويمكنك الرجوع للقائمة.</p><div class="data-category-grid"></div>';
   const grid=nav.querySelector(".data-category-grid");
-  const links=[["الخزائن والبنوك","🏦","treasuries"],["حركة خزينة","🔄","treasuryTransfers"],["العملاء","👥","customers"],["الموردون","🚚","suppliers"],["المصروفات","💳","expenses"],["مدفوعات الموردين","💸","supplierPayments"],["التحصيلات","🧾","collections"],["التقارير المتقدمة","📈","reports"]];
-  links.forEach(([label,ico,section])=>grid.append(mmWorkspaceButton(label,ico,()=>window.openSection(section))));
-  if(heading)heading.insertAdjacentElement("afterend",nav);
-  const addJournal=document.createElement("button");addJournal.type="button";addJournal.className="btn";addJournal.textContent="＋ إضافة قيد تسوية";addJournal.style.cssText="width:auto;margin:0 0 12px";addJournal.addEventListener("click",()=>{if($("btnAdjustment"))$("btnAdjustment").click();});
-  nav.insertAdjacentElement("afterend",addJournal);
-  const search=document.createElement("input");search.type="search";search.className="product-search-input";search.placeholder="ابحث عن وظيفة محاسبية...";
-  const tabs=acc.querySelector(".section-tabs");if(tabs)tabs.insertAdjacentElement("beforebegin",search);
-  search.addEventListener("input",()=>{const q=search.value.trim().toLocaleLowerCase();Array.from(tabs?.querySelectorAll("button")||[]).forEach(b=>{b.hidden=!!q&&!b.textContent.toLocaleLowerCase().includes(q);});Array.from(grid.querySelectorAll("button")).forEach(b=>{b.hidden=!!q&&!b.textContent.toLocaleLowerCase().includes(q);});});
+  const panels={};
+  const items=[
+   ["ملخص الفترة المحاسبية","📊","period"],["الخزائن والأرصدة","🏦","treasuries"],["حركة الخزائن","🔄","transfers"],
+   ["أرصدة العملاء","👥","customers"],["مستحقات الموردين","🚚","suppliers"],["المصروفات","💳","expenses"],
+   ["مدفوعات الموردين","💸","payments"],["تحصيلات العملاء","🧾","collections"],["دفتر الأستاذ والتقارير","📚","details"]
+  ];
+  function makeScreen(key,title){
+   const p=document.createElement("section");p.className="mm-accounting-screen hidden";p.dataset.accountingScreen=key;
+   const head=document.createElement("div");head.className="mm-screen-heading";
+   const h=document.createElement("h3");h.textContent=title;
+   const back=document.createElement("button");back.type="button";back.className="btn secondary";back.textContent="⬅ رجوع للمحاسبة";back.addEventListener("click",showMenu);
+   head.append(h,back);p.appendChild(head);
+   const filters=document.createElement("div");filters.className="mm-accounting-filters";
+   const from=document.createElement("input");from.type="date";from.id="mmAcc_"+key+"From";from.value=monthStartISO();
+   const to=document.createElement("input");to.type="date";to.id="mmAcc_"+key+"To";to.value=todayISO();
+   const run=document.createElement("button");run.type="button";run.className="btn";run.textContent="عرض الملخص";
+   const dates=document.createElement("div");dates.className="grid";dates.innerHTML='<label>من تاريخ</label><label>إلى تاريخ</label>';
+   const fromWrap=document.createElement("label");fromWrap.textContent="من تاريخ";fromWrap.appendChild(from);
+   const toWrap=document.createElement("label");toWrap.textContent="إلى تاريخ";toWrap.appendChild(to);
+   dates.replaceChildren(fromWrap,toWrap);filters.append(dates,run);p.appendChild(filters);
+   const summary=document.createElement("div");summary.className="mm-accounting-summary";summary.id="mmAcc_"+key+"Summary";
+   const tableWrap=document.createElement("div");tableWrap.className="table-responsive";
+   const table=document.createElement("table");table.className="print-table";table.id="mmAcc_"+key+"Table";
+   table.innerHTML="<thead></thead><tbody><tr><td>حدد الفترة ثم اعرض الملخص.</td></tr></tbody>";
+   tableWrap.appendChild(table);p.append(summary,tableWrap);
+   run.addEventListener("click",()=>mmLoadAccountingSummary(key));
+   panels[key]=p;return p;
+  }
+  function showMenu(){
+   nav.classList.remove("hidden");details.classList.add("hidden");
+   Object.values(panels).forEach(p=>p.classList.add("hidden"));
+   window.scrollTo(0,0);
+  }
+  window.mmOpenAccountingScreen=function(key){
+   nav.classList.add("hidden");details.classList.add("hidden");
+   Object.values(panels).forEach(p=>p.classList.toggle("hidden",p.dataset.accountingScreen!==key));
+   if(key==="period")mmLoadAccountingSummary("period");
+   window.scrollTo(0,0);
+  };
+  items.forEach(([label,ico,key])=>{
+   const b=mmWorkspaceButton(label,ico,()=>key==="details"?(nav.classList.add("hidden"),details.classList.remove("hidden"),window.scrollTo(0,0)):window.mmOpenAccountingScreen(key));
+   b.querySelector(".data-category-subtitle").textContent=key==="details"?"فتح الدفاتر المحاسبية":"عرض الملخص";
+   grid.appendChild(b);
+   if(key!=="details")acc.appendChild(makeScreen(key,label));
+  });
+  if(heading)heading.textContent="🧮 المحاسبة والتقارير";
+  acc.append(nav,details);
   acc.dataset.workspaceReady="1";
  }
  const reports=$("sectionReports");
  if(reports&&!reports.dataset.workspaceReady){
   const card=reports.querySelector(".card");if(card){
+   const tabs=card.querySelector(".section-tabs");
+   const oldShortcuts=card.querySelector(".section-shortcuts");
+   if(tabs)tabs.remove();if(oldShortcuts)oldShortcuts.remove();
+   const exportRow=$("btnExportExcel")?.parentElement;if(exportRow)exportRow.remove();
    const search=document.createElement("input");search.type="search";search.className="product-search-input";search.placeholder="ابحث باسم التقرير...";
-   const tabs=card.querySelector(".section-tabs");if(tabs)tabs.insertAdjacentElement("beforebegin",search);
-   search.addEventListener("input",()=>{const q=search.value.trim().toLocaleLowerCase();Array.from(tabs?.querySelectorAll("button")||[]).forEach(b=>{b.hidden=!!q&&!b.textContent.toLocaleLowerCase().includes(q);});});
-   const label=document.createElement("p");label.className="desc";label.textContent="اختر التقرير حسب نوعه. حدد الفترة ثم اعرض النتائج. لكل تقرير زر مستقل لتصدير Excel.";if(tabs)tabs.insertAdjacentElement("beforebegin",label);
+   const label=document.createElement("p");label.className="desc";label.textContent="اختر التقرير. ستظهر شاشة واحدة في كل مرة، وبداخلها زر للرجوع إلى قائمة التقارير.";
    const reportCards=document.createElement("div");reportCards.className="data-category-grid mm-report-groups";reportCards.id="advancedReportGroups";
-   [["المبيعات","💰","repSales"],["المشتريات","🛒","repPurchases"],["حركة المخزون","📦","repInventory"],["الإنتاج","🏭","repProduction"],["التوزيع","🚚","repDistribution"],["الأرباح والخسائر","📈","repPL"],["أعمار الديون","💳","repAged"],["المخزون الراكد","📦","repSlow"],["المبيعات حسب المحافظة","🗺️","repGeo"]].forEach(([name,ico,id])=>reportCards.append(mmWorkspaceButton(name,ico,()=>window.switchReportTab(id))));
-   if(tabs)tabs.insertAdjacentElement("beforebegin",reportCards);
+   [["المبيعات","💰","repSales"],["المشتريات","🛒","repPurchases"],["حركة المخزون","📦","repInventory"],["الإنتاج","🏭","repProduction"],["التوزيع","🚚","repDistribution"],["الأرباح والخسائر","📈","repPL"],["أعمار الديون","💳","repAged"],["المخزون الراكد","📦","repSlow"],["المبيعات حسب المحافظة","🗺️","repGeo"]].forEach(([name,ico,id])=>{
+    const b=mmWorkspaceButton(name,ico,()=>window.switchReportTab(id));b.querySelector(".data-category-subtitle").textContent="عرض التقرير";reportCards.appendChild(b);
+   });
+   const title=card.querySelector("h2");
+   if(title){title.insertAdjacentElement("afterend",label);label.insertAdjacentElement("afterend",search);search.insertAdjacentElement("afterend",reportCards);}
+   else card.prepend(label,search,reportCards);
    search.addEventListener("input",()=>{const q=search.value.trim().toLocaleLowerCase();Array.from(reportCards.querySelectorAll("button")).forEach(b=>{b.hidden=!!q&&!b.textContent.toLocaleLowerCase().includes(q);});});
+   card.querySelectorAll(".report-tab").forEach(el=>el.classList.add("hidden"));
   }
   reports.dataset.workspaceReady="1";
  }
 }
-
+function mmAccountingRender(key,headers,rows,summary){
+ const sum=$("mmAcc_"+key+"Summary"),table=$("mmAcc_"+key+"Table");if(!sum||!table)return;
+ sum.replaceChildren();
+ summary.forEach(([label,value])=>{const item=document.createElement("div");item.className="card";item.style.cssText="margin:0;padding:12px;text-align:center";const l=document.createElement("div");l.className="details";l.textContent=label;const v=document.createElement("strong");v.textContent=value;item.append(l,v);sum.appendChild(item);});
+ table.querySelector("thead").innerHTML="<tr>"+headers.map(x=>"<th>"+mmReportEscape(x)+"</th>").join("")+"</tr>";
+ const body=table.querySelector("tbody");body.innerHTML=rows.length?rows.map(row=>"<tr>"+row.map(x=>"<td>"+mmReportEscape(x??"—")+"</td>").join("")+"</tr>").join(""):"<tr><td colspan='"+headers.length+"'>لا توجد بيانات في الفترة المحددة.</td></tr>";
+}
+async function mmLoadAccountingSummary(key){
+ if(!navigator.onLine){showToast("يحتاج الملخص إلى اتصال بالإنترنت.","warn");return;}
+ const from=$("mmAcc_"+key+"From")?.value||monthStartISO(),to=$("mmAcc_"+key+"To")?.value||todayISO();
+ if(from>to){showToast("راجع تاريخ البداية والنهاية.","error");return;}
+ try{
+  if(key==="period"){
+   const {data,error}=await db.rpc("get_period_summary",{p_from:from,p_to:to});if(error)throw error;
+   const d=data||{};
+   mmAccountingRender(key,["المؤشر","القيمة"],[["الإيرادات",fmt(d.rev)],["المشتريات",fmt(d.purch)],["مرتجعات المشتريات",fmt(d.purch_returns)],["صافي المشتريات",fmt(d.net_purch??(Number(d.purch||0)-Number(d.purch_returns||0)))],["المصروفات",fmt(d.exp)],["التحصيلات",fmt(d.coll)],["صافي الربح",fmt(d.profit)]],[["صافي الربح",fmt(d.profit)],["النقدية الحالية",fmt(d.cash)],["مديونية العملاء",fmt(d.ar)],["مستحقات الموردين",fmt(d.ap)]]);return;
+  }
+  if(key==="treasuries"){
+   const [tRes,txRes]=await Promise.all([db.from("treasuries").select("treasury_id,treasury_name,treasury_type,current_balance,is_active").order("treasury_id"),db.from("treasury_transactions").select("treasury_id,amount,transaction_type,created_at").gte("created_at",from+"T00:00:00").lte("created_at",to+"T23:59:59").limit(5000)]);
+   if(tRes.error)throw tRes.error;if(txRes.error)throw txRes.error;
+   const ts=tRes.data||[],tx=txRes.data||[],balance=ts.filter(x=>x.is_active!==false).reduce((a,x)=>a+Number(x.current_balance||0),0),inflow=tx.filter(x=>["DEPOSIT","TRANSFER_IN"].includes(x.transaction_type)).reduce((a,x)=>a+Number(x.amount||0),0),outflow=tx.filter(x=>["WITHDRAW","TRANSFER_OUT"].includes(x.transaction_type)).reduce((a,x)=>a+Number(x.amount||0),0);
+   mmAccountingRender(key,["الخزنة","النوع","الرصيد","حالة الخزنة"],ts.map(x=>[x.treasury_name,x.treasury_type,fmt(x.current_balance),x.is_active===false?"متوقفة":"نشطة"]),[["عدد الخزائن",ts.length],["إجمالي الأرصدة",fmt(balance)],["إيداعات وتحويلات واردة بالفترة",fmt(inflow)],["مسحوبات وتحويلات صادرة بالفترة",fmt(outflow)]]);return;
+  }
+  if(key==="transfers"){
+   const [txRes,tRes]=await Promise.all([db.from("treasury_transactions").select("created_at,transaction_type,amount,notes,treasury_id").in("transaction_type",["TRANSFER_IN","TRANSFER_OUT"]).gte("created_at",from+"T00:00:00").lte("created_at",to+"T23:59:59").order("created_at",{ascending:false}).limit(1000),db.from("treasuries").select("treasury_id,treasury_name")]);if(txRes.error)throw txRes.error;if(tRes.error)throw tRes.error;
+   const names=new Map((tRes.data||[]).map(x=>[String(x.treasury_id),x.treasury_name])),rows=txRes.data||[],total=rows.reduce((a,x)=>a+Number(x.amount||0),0);
+   mmAccountingRender(key,["التاريخ","الخزنة","نوع الحركة","القيمة","البيان"],rows.map(x=>[formatDate(x.created_at),names.get(String(x.treasury_id))||"—",x.transaction_type,fmt(x.amount),x.notes||"—"]),[["عدد الحركات",rows.length],["إجمالي قيمة الحركات",fmt(total)]]);return;
+  }
+  if(key==="customers"){
+   const {data,error}=await db.rpc("get_aged_receivables_v2");if(error)throw error;const rows=data||[];
+   const total=rows.reduce((a,x)=>a+Number(x.current_balance||0),0);
+   mmAccountingRender(key,["العميل","الهاتف","الرصيد الحالي","رصيد أول المدة","0–30 يوم","31–60 يوم","61–90 يوم","أكثر من 90"],rows.map(x=>[x.customer_name||"—",x.phone||"—",fmt(x.current_balance),fmt(x.opening_balance),fmt(x.days_0_30),fmt(x.days_31_60),fmt(x.days_61_90),fmt(x.days_over_90)]),[["عدد العملاء",rows.length],["إجمالي الأرصدة حسب التقرير",fmt(total)]]);return;
+  }
+  if(key==="suppliers"){
+   const {data,error}=await db.rpc("get_supplier_payable_balances");if(error)throw error;const rows=data||[];
+   const positive=rows.reduce((a,x)=>a+Math.max(0,Number(x.current_payable||0)),0),credit=rows.reduce((a,x)=>a+Math.max(0,-Number(x.current_payable||0)),0);
+   mmAccountingRender(key,["المورد","المستحق","نوع الرصيد"],rows.map(x=>[x.supplier_name||"—",fmt(Math.abs(Number(x.current_payable||0))),Number(x.current_payable||0)<0?"دفعة مقدمة / رصيد لنا":"مستحق للمورد"]),[["إجمالي المستحقات",fmt(positive)],["أرصدة دائنة لنا",fmt(credit)],["عدد الموردين",rows.length]]);return;
+  }
+  if(key==="expenses"){
+   const {data,error}=await db.from("expenses").select("expense_date,amount,expense_type,is_cancelled").gte("expense_date",from).lte("expense_date",to).eq("is_cancelled",false).order("expense_date",{ascending:false}).limit(3000);if(error)throw error;
+   const rows=data||[],total=rows.reduce((a,x)=>a+Number(x.amount||0),0),groups={};rows.forEach(x=>groups[x.expense_type||"غير محدد"]=(groups[x.expense_type||"غير محدد"]||0)+Number(x.amount||0));
+   mmAccountingRender(key,["التاريخ","نوع المصروف","القيمة"],rows.map(x=>[formatDate(x.expense_date),x.expense_type||"—",fmt(x.amount)]),[["عدد المصروفات",rows.length],["إجمالي المصروفات",fmt(total)],...Object.entries(groups).slice(0,6).map(([k,v])=>[k,fmt(v)])]);return;
+  }
+  if(key==="payments"){
+   const {data,error}=await db.from("supplier_payments").select("payment_date,amount,is_cancelled,suppliers(supplier_name)").gte("payment_date",from).lte("payment_date",to).eq("is_cancelled",false).order("payment_date",{ascending:false}).limit(3000);if(error)throw error;
+   const rows=data||[];mmAccountingRender(key,["التاريخ","المورد","المبلغ"],rows.map(x=>[formatDate(x.payment_date),x.suppliers?.supplier_name||"—",fmt(x.amount)]),[["عدد المدفوعات",rows.length],["إجمالي مدفوعات الموردين",fmt(rows.reduce((a,x)=>a+Number(x.amount||0),0))]]);return;
+  }
+  if(key==="collections"){
+   const {data,error}=await db.from("customer_collections").select("collection_date,amount,status,customers(customer_name)").gte("collection_date",from).lte("collection_date",to).order("collection_date",{ascending:false}).limit(3000);if(error)throw error;
+   const rows=(data||[]).filter(x=>x.status==="POSTED");mmAccountingRender(key,["التاريخ","العميل","المبلغ","الحالة"],rows.map(x=>[formatDate(x.collection_date),x.customers?.customer_name||"—",fmt(x.amount),x.status]),[["عدد التحصيلات المرحلة",rows.length],["إجمالي التحصيلات",fmt(rows.reduce((a,x)=>a+Number(x.amount||0),0))]]);return;
+  }
+ }catch(e){showToast("تعذر تحميل الملخص: "+err(e),"error",7000);mmAccountingRender(key,["الحالة"],[["تعذر تحميل البيانات"]],[["السبب",err(e)]]);}
+}
 
 function hideSections(){ ["login","recovery","newPass","home","tasks","tasksChartsScreen","data","nav"].forEach(id=>{ if($(id)) $(id).classList.add("hidden"); }); }
 function showLogin(){ hideSections(); if($("login")) $("login").classList.remove("hidden"); }
@@ -12290,10 +12397,32 @@ function mmInitAdvancedReportActions(){
   
 
   window.switchReportTab = function(tabId) {
-      document.querySelectorAll(".report-tab").forEach(el => el.classList.add("hidden"));
-      const btns = document.querySelectorAll('[onclick^="switchReportTab"]');
-      btns.forEach(b => b.classList.toggle("active",(b.getAttribute("onclick")||"").includes("'"+tabId+"'")));
-      if($(tabId)) $(tabId).classList.remove("hidden");
+      const menu=$("advancedReportGroups");
+      const card=menu?.parentElement;
+      const search=card?.querySelector('input[type="search"]');
+      const desc=search?.previousElementSibling;
+      if(menu)menu.classList.add("hidden");
+      if(search)search.classList.add("hidden");
+      if(desc&&desc.classList.contains("desc"))desc.classList.add("hidden");
+      document.querySelectorAll(".report-tab").forEach(el=>el.classList.add("hidden"));
+      const panel=$(tabId);
+      if(!panel)return;
+      let back=panel.querySelector("[data-report-back]");
+      if(!back){
+        back=document.createElement("button");back.type="button";back.dataset.reportBack="1";back.className="btn secondary";back.textContent="⬅ رجوع لقائمة التقارير";back.style.cssText="width:auto;margin:0 0 14px";
+        back.addEventListener("click",window.closeReportScreen);
+        panel.prepend(back);
+      }
+      panel.classList.remove("hidden");
+      window.scrollTo(0,0);
+  };
+  window.closeReportScreen=function(){
+      document.querySelectorAll(".report-tab").forEach(el=>el.classList.add("hidden"));
+      const menu=$("advancedReportGroups"),card=menu?.parentElement,search=card?.querySelector('input[type="search"]'),desc=search?.previousElementSibling;
+      if(menu)menu.classList.remove("hidden");
+      if(search)search.classList.remove("hidden");
+      if(desc&&desc.classList.contains("desc"))desc.classList.remove("hidden");
+      window.scrollTo(0,0);
   }
 
   // ========== واجهة الموارد البشرية ==========
