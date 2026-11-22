@@ -1051,7 +1051,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v194]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v195]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1351,19 +1351,19 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
   <div class="mm-section-heading"><span>🔔 التنبيهات والمهام</span></div>
   <div class="mm-task-menu-grid">
     <div class="mm-task-menu-section">
-      <button type="button" class="home-card green mm-task-menu-toggle" id="openTasksImportantScreen">
+      <button type="button" class="home-card green mm-menu-card mm-task-menu-toggle" id="openTasksImportantScreen">
         <span class="hc-label">🔔 التنبيهات المهمة</span>
         <span class="hc-value">عرض التنبيهات</span>
       </button>
     </div>
     <div class="mm-task-menu-section">
-      <button type="button" class="home-card gold mm-task-menu-toggle" id="openTaskDirectedNotificationsScreen">
+      <button type="button" class="home-card gold mm-menu-card mm-task-menu-toggle" id="openTaskDirectedNotificationsScreen">
         <span class="hc-label">🔔 تنبيهات المهام الموجهة إليك</span>
         <span class="hc-value" id="taskNotificationsUnreadButton">0 غير مقروء</span>
       </button>
     </div>
     <div class="mm-task-menu-section" id="taskNotificationSendMenuSection">
-      <button type="button" class="home-card red mm-task-menu-toggle" id="openTaskNotificationSendScreen">
+      <button type="button" class="home-card red mm-menu-card mm-task-menu-toggle" id="openTaskNotificationSendScreen">
         <span class="hc-label">🔔 إرسال تنبيه مهمة</span>
         <span class="hc-value">فتح نموذج الإرسال</span>
       </button>
@@ -1378,7 +1378,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
       <button type="button" class="btn secondary mm-standalone-back" id="tasksImportantBack">رجوع</button>
       <h2>🔔 التنبيهات المهمة</h2>
     </div>
-    <div id="tasksImportantScreenContent"></div>
+    <div id="tasksImportantScreenContent"><div id="tasksList" class="mm-task-list-box"></div></div>
   </div>
 </section>
 
@@ -1388,7 +1388,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
       <button type="button" class="btn secondary mm-standalone-back" id="taskDirectedNotificationsBack">رجوع</button>
       <h2>🔔 تنبيهات المهام الموجهة إليك</h2>
     </div>
-    <div id="taskDirectedNotificationsScreenContent"></div>
+    <div id="taskDirectedNotificationsScreenContent"><div id="taskNotificationsList" class="mm-task-list-box"></div></div>
   </div>
 </section>
 
@@ -1398,7 +1398,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
       <button type="button" class="btn secondary mm-standalone-back" id="taskNotificationSendBack">رجوع</button>
       <h2>🔔 إرسال تنبيه مهمة</h2>
     </div>
-    <div id="taskNotificationSendScreenContent"></div>
+    <div id="taskNotificationSendScreenContent"><div id="taskNotificationSendPanel" class="notification-send mm-task-send hidden"><h3>إرسال تنبيه مهمة إلى مستخدمين محددين</h3><label for="taskNotificationTitle">عنوان التنبيه</label><input id="taskNotificationTitle" maxlength="180" placeholder="اكتب عنوان التنبيه"><label for="taskNotificationBody">نص التنبيه</label><textarea id="taskNotificationBody" rows="4" maxlength="3000" placeholder="اكتب تفاصيل التنبيه"></textarea><label for="taskNotificationUsers">المستلمون</label><select id="taskNotificationUsers" multiple></select><div class="desc">اختر مستخدمًا واحدًا أو أكثر لإرسال تنبيه المهمة إليهم.</div><button id="sendTaskNotificationBtn" class="btn" type="button">إرسال تنبيه المهمة</button><div id="taskNotificationSendMsg" class="status hidden"></div></div></div>
   </div>
 </section>
 
@@ -2992,7 +2992,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v194</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v195</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -3694,7 +3694,7 @@ async function mmLoadAccountingSummary(key){
  }catch(e){showToast("تعذر تحميل الملخص: "+err(e),"error",7000);mmAccountingRender(key,["الحالة"],[["تعذر تحميل البيانات"]],[["السبب",err(e)]]);}
 }
 
-function hideSections(){ ["login","recovery","newPass","home","tasks","tasksChartsScreen","data","nav"].forEach(id=>{ if($(id)) $(id).classList.add("hidden"); }); }
+function hideSections(){ ["login","recovery","newPass","home","tasks","tasksChartsScreen","tasksImportantScreen","taskDirectedNotificationsScreen","taskNotificationSendScreen","data","nav"].forEach(id=>{ if($(id)) $(id).classList.add("hidden"); }); }
 function showLogin(){ hideSections(); if($("login")) $("login").classList.remove("hidden"); }
 function showApp(){ hideSections(); if($("nav")) $("nav").classList.remove("hidden"); page("home"); }
 
@@ -6099,14 +6099,14 @@ function collapsePartnerSummarySections(box){
       while(j<nodes.length){
         const next=nodes[j];
         if(next.nodeType===1 && next.tagName==="H3")break;
-        if(!(next.nodeType===3 && !next.textContent.trim()))content.push(next.cloneNode(true));
+        if(!(next.nodeType===3 && !next.textContent.trim()))content.push(next);
         j++;
       }
       const index=mmPartnerReportSections.length;
       mmPartnerReportSections.push({title,nodes:content});
       const button=document.createElement("button");
       button.type="button";
-      button.className="home-card "+(index%3===1?"gold":index%3===2?"green":"");
+      button.className="home-card mm-menu-card "+(index%3===1?"gold":index%3===2?"green":"");
       button.innerHTML='<span class="hc-label">'+esc(title)+'</span><span class="hc-value">عرض التفاصيل</span>';
       button.addEventListener("click",()=>openPartnerReportDetail(index));
       menu.appendChild(button);
@@ -13223,6 +13223,7 @@ function mmInitAdvancedReportActions(){
   if($("openHomeSuppliersSummary"))$("openHomeSuppliersSummary").addEventListener("click",()=>openHomeDetail("homeSuppliersPanel"));
   if($("openPartnerManagementSummary"))$("openPartnerManagementSummary").addEventListener("click",()=>{openHomeDetail("homePartnerSummaryPanel");loadPartnerManagementSummary();});
   if($("refreshPartnerSummary"))$("refreshPartnerSummary").addEventListener("click",loadPartnerManagementSummary);
+  if($("partnerReportDetailBack"))$("partnerReportDetailBack").addEventListener("click",closePartnerReportDetail);
   document.querySelectorAll(".home-detail-back").forEach(btn=>btn.addEventListener("click",closeHomeDetail));
   document.querySelectorAll("[data-home-print]").forEach(btn=>btn.addEventListener("click",()=>openHomeQuickPrint(btn.dataset.homePrint)));
   document.querySelectorAll("[data-home-share]").forEach(btn=>btn.addEventListener("click",()=>shareHomeQuickReport(btn.dataset.homeShare)));
@@ -13234,39 +13235,33 @@ function mmInitAdvancedReportActions(){
   if($("markAllNotificationsReadBtn"))$("markAllNotificationsReadBtn").addEventListener("click",markAllNotificationsRead);
   if($("sendNotificationBtn"))$("sendNotificationBtn").addEventListener("click",sendManualNotification);
   if($("sendTaskNotificationBtn"))$("sendTaskNotificationBtn").addEventListener("click",sendTaskNotification);
-  const mmTaskPanelOrigins={};
-  function openTaskStandalone(panelId,screenId,hostId){
-    const panel=$(panelId),screen=$(screenId),host=$(hostId);
-    if(!panel||!screen||!host)return;
-    if(!mmTaskPanelOrigins[panelId])mmTaskPanelOrigins[panelId]={parent:panel.parentNode,next:panel.nextSibling};
-    host.replaceChildren(panel);
-    panel.classList.remove("hidden");
-    if(panelId==="taskNotificationSendContent")$("taskNotificationSendPanel")?.classList.remove("hidden");
-    $("tasks")?.classList.add("hidden");
+  function openTaskStandalone(screenId){
+    const screen=$(screenId);
+    if(!screen||!$("tasks"))return;
+    ["tasksImportantScreen","taskDirectedNotificationsScreen","taskNotificationSendScreen"].forEach(id=>$(id)?.classList.add("hidden"));
+    $("tasks").classList.add("hidden");
+    if(screenId==="taskNotificationSendScreen")$("taskNotificationSendPanel")?.classList.remove("hidden");
     screen.classList.remove("hidden");
     document.querySelectorAll(".navbtn").forEach(b=>b.classList.toggle("active",b.dataset.page==="tasks"));
     window.scrollTo(0,0);
   }
-  function closeTaskStandalone(panelId,screenId,hostId){
-    const screen=$(screenId),host=$(hostId),origin=mmTaskPanelOrigins[panelId];
-    if(!screen||!host||!origin)return;
-    if(panelId==="taskNotificationSendContent")$("taskNotificationSendPanel")?.classList.add("hidden");
-    const panel=$(panelId);
-    if(panel)origin.parent.appendChild(panel);
-    panel?.classList.add("hidden");
+  function closeTaskStandalone(screenId){
+    const screen=$(screenId);
+    if(!screen)return;
     screen.classList.add("hidden");
+    if(screenId==="taskNotificationSendScreen")$("taskNotificationSendPanel")?.classList.add("hidden");
     $("tasks")?.classList.remove("hidden");
     window.scrollTo(0,0);
   }
-  $("openTasksImportantScreen")?.addEventListener("click",()=>openTaskStandalone("tasksImportantPanel","tasksImportantScreen","tasksImportantScreenContent"));
-  $("openTaskDirectedNotificationsScreen")?.addEventListener("click",()=>openTaskStandalone("taskDirectedNotificationsPanel","taskDirectedNotificationsScreen","taskDirectedNotificationsScreenContent"));
+  $("openTasksImportantScreen")?.addEventListener("click",()=>openTaskStandalone("tasksImportantScreen"));
+  $("openTaskDirectedNotificationsScreen")?.addEventListener("click",()=>openTaskStandalone("taskDirectedNotificationsScreen"));
   $("openTaskNotificationSendScreen")?.addEventListener("click",()=>{
     if(!isSystemAdmin)return;
-    openTaskStandalone("taskNotificationSendContent","taskNotificationSendScreen","taskNotificationSendScreenContent");
+    openTaskStandalone("taskNotificationSendScreen");
   });
-  $("tasksImportantBack")?.addEventListener("click",()=>closeTaskStandalone("tasksImportantPanel","tasksImportantScreen","tasksImportantScreenContent"));
-  $("taskDirectedNotificationsBack")?.addEventListener("click",()=>closeTaskStandalone("taskDirectedNotificationsPanel","taskDirectedNotificationsScreen","taskDirectedNotificationsScreenContent"));
-  $("taskNotificationSendBack")?.addEventListener("click",()=>closeTaskStandalone("taskNotificationSendContent","taskNotificationSendScreen","taskNotificationSendScreenContent"));
+  $("tasksImportantBack")?.addEventListener("click",()=>closeTaskStandalone("tasksImportantScreen"));
+  $("taskDirectedNotificationsBack")?.addEventListener("click",()=>closeTaskStandalone("taskDirectedNotificationsScreen"));
+  $("taskNotificationSendBack")?.addEventListener("click",()=>closeTaskStandalone("taskNotificationSendScreen"));
 
   // ========== تهيئة التطبيق ==========
   async function bootAppAfterLogin(user){
@@ -13577,7 +13572,7 @@ $("hrCreatePeriod")?.addEventListener("click",async()=>{try{const r=await db.rpc
 // ====== PWA ======
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=197', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
+    navigator.serviceWorker.register('./sw.js?v=198', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
   });
 }
 
