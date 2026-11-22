@@ -13489,7 +13489,7 @@ function mmInitAdvancedReportActions(){
     if(event==="SIGNED_IN" && session?.user?.id){
       if(window.mmLoginReloadPending)return;
       window.setTimeout(()=>{
-        if(window.mmLoginInProgress)return;
+        if(window.mmLoginReloadPending||window.mmLoginInProgress)return;
         if(bootedUserId===session.user.id)return;
         bootAppAfterLogin(session.user).catch(e=>{
           console.error("[AUTH SIGNED_IN BOOT]",e);
