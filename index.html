@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v188</title>
+<title>MeatManagement v189</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -747,6 +747,37 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 #accountingCard .mm-accounting-screen .mm-accounting-summary .card{border:1px solid var(--line);border-radius:12px;background:#f8faf8}
 #accountingCard .mm-accounting-filters{border-radius:12px}
 @media(max-width:380px){#sectionReports .mm-report-groups,#accountingWorkspaceMenu .data-category-grid{gap:8px}#sectionReports .mm-report-groups .data-category-card,#accountingWorkspaceMenu .data-category-card{min-height:104px;padding:12px 7px}}
+
+/* v189: unified journal and accounting workspace presentation */
+#accountingDetailsPanel{margin:10px 0 0;padding:15px;background:linear-gradient(180deg,#fff,#fbfcfb);border:1px solid var(--line);border-radius:16px;box-shadow:0 3px 12px rgba(20,45,25,.06)}
+#accountingDetailsPanel>.mm-screen-heading{padding:0 0 12px;margin:0 0 14px;border-bottom:1px solid var(--line)}
+#accountingDetailsPanel>.mm-screen-heading h3{font-size:17px;line-height:1.5}
+#accountingDetailsPanel>.mm-ledger-toolbar{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:10px!important;margin:0 0 14px!important;padding:12px!important;background:#f8faf8!important;border:1px solid var(--line)!important;border-radius:14px!important}
+#accountingDetailsPanel>.mm-ledger-toolbar>.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:100%}
+#accountingDetailsPanel>.mm-ledger-toolbar label{min-width:0;margin:0;color:var(--g);font-size:13px}
+#accountingDetailsPanel>.mm-ledger-toolbar input{margin-top:6px;min-height:43px}
+#accountingDetailsPanel>.mm-ledger-toolbar>.row{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;width:100%}
+#accountingDetailsPanel>.mm-ledger-toolbar .btn{width:100%;min-width:0;min-height:44px;margin:0!important;padding:10px 8px;border:1px solid #dce5dc;border-radius:11px;background:linear-gradient(180deg,#fff,#f1f6f1)!important;color:var(--g)!important;box-shadow:0 2px 7px rgba(23,60,44,.08);font-size:13px}
+#accountingDetailsPanel>.mm-ledger-toolbar #btnPostEntries{background:linear-gradient(180deg,#f8f0db,#f2e5c3)!important;color:#725414!important;border-color:#e7d6a8}
+#accountingDetailsPanel>.mm-ledger-toolbar #btnAdjustment{background:linear-gradient(180deg,#fff,#f7f1e4)!important;color:#725414!important}
+#accountingDetailsPanel>.mm-ledger-toolbar #btnBackup{background:linear-gradient(180deg,#fff,#f1f6f1)!important}
+#accountingDetailsPanel>.mm-ledger-tabs{display:flex;gap:8px;flex-wrap:nowrap!important;overflow-x:auto;overflow-y:hidden;padding:4px 2px 12px;margin:0 0 14px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+#accountingDetailsPanel>.mm-ledger-tabs .tab-btn{flex:0 0 auto;min-height:42px;padding:10px 14px;margin:0;border:1px solid var(--line);border-radius:11px;background:linear-gradient(180deg,#fff,#f5f8f5);color:var(--g);font-size:13px;font-weight:700;box-shadow:0 2px 7px rgba(23,60,44,.06)}
+#accountingDetailsPanel>.mm-ledger-tabs .tab-btn.active{background:linear-gradient(180deg,var(--g2),var(--g));color:#fff;border-color:var(--g);box-shadow:0 3px 9px rgba(23,60,44,.18)}
+#accountingDetailsPanel>#accountingPeriodsPanel{margin:0 0 14px!important;padding:14px!important;border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:0 2px 8px rgba(23,60,44,.05)}
+#accountingDetailsPanel>#accountingPeriodsPanel>h3{margin:0 0 12px;color:var(--g);font-size:16px}
+#accountingDetailsPanel>#accountingPeriodsPanel .form-grid{gap:8px}
+#accountingDetailsPanel>#accountingPeriodsPanel .form-grid .btn{min-height:44px;margin-top:4px}
+#accountingDetailsPanel>.acc-tab{margin:0;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:0 2px 8px rgba(23,60,44,.05);min-width:0}
+#accountingDetailsPanel>.acc-tab .card{border-radius:12px}
+#accountingDetailsPanel>.acc-tab .table-responsive{margin:0;border-radius:11px}
+#accountingDetailsPanel>#accSummary .total-box{border-radius:13px;padding:14px;margin:0 0 12px!important;box-shadow:0 3px 10px rgba(23,60,44,.12)}
+#accountingDetailsPanel>#accSummary>.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+#accountingDetailsPanel>#accSummary>.grid>.card{grid-column:auto!important;min-width:0;border:1px solid var(--line);border-radius:12px;background:#f8faf8!important;padding:12px!important}
+#accountingDetailsPanel>#accSummary>.grid>.card:last-child{grid-column:1/-1!important}
+#accountingDetailsPanel .print-table{min-width:520px}
+@media(max-width:420px){#accountingDetailsPanel{padding:11px}#accountingDetailsPanel>.mm-ledger-toolbar{padding:10px!important}#accountingDetailsPanel>.mm-ledger-toolbar>.grid{gap:7px}#accountingDetailsPanel>.mm-ledger-toolbar .btn{font-size:12px;padding:9px 5px}#accountingDetailsPanel>.mm-ledger-tabs .tab-btn{padding:9px 11px;font-size:12px}#accountingDetailsPanel>.acc-tab{padding:9px}}
+
 </style>
 </head>
 <body>
@@ -761,7 +792,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v188]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v189]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -2649,7 +2680,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v188</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v189</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -3145,6 +3176,10 @@ function mmInitAccountingAndReports(){
   const detailsBack=document.createElement("button");detailsBack.type="button";detailsBack.className="btn secondary";detailsBack.textContent="⬅ رجوع للمحاسبة";detailsBack.addEventListener("click",()=>{nav.classList.remove("hidden");nav.style.display="block";details.classList.add("hidden");details.style.display="none";window.scrollTo(0,0);});
   detailsHead.append(detailsTitle,detailsBack);details.appendChild(detailsHead);
   oldChildren.forEach(el=>details.appendChild(el));
+  const ledgerToolbar=details.querySelector(":scope > .row");
+  if(ledgerToolbar)ledgerToolbar.classList.add("mm-ledger-toolbar");
+  const ledgerTabs=details.querySelector(":scope > .section-tabs");
+  if(ledgerTabs)ledgerTabs.classList.add("mm-ledger-tabs");
   const nav=document.createElement("div");nav.id="accountingWorkspaceMenu";nav.className="mm-accounting-menu";
   nav.innerHTML='<p class="desc">اختر التقرير الذي تريد مراجعته. كل شاشة تعرض ملخصًا مستقلًا، ويمكنك الرجوع للقائمة.</p><div class="data-category-grid"></div>';
   const grid=nav.querySelector(".data-category-grid");
