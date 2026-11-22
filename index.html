@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v190</title>
+<title>MeatManagement v191</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -289,21 +289,54 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 #barcodeScanner .scanner-footer{padding:12px;background:var(--g);color:white;text-align:center;font-size:13px}
 #barcodeScanner .close-scan{background:none;border:0;color:white;font-size:22px}
 @media print{
-  .invoice-lots-print-hide{display:none!important;visibility:hidden!important}
-  .inventory-report-section{break-inside:avoid}
   @page{margin:8mm;size:A4 portrait}
-  body{background:#fff!important}
+  body{background:#fff!important;margin:0!important}
   body *{visibility:hidden}
-  .modal:not(.hidden){visibility:visible;position:absolute;left:0;top:0;width:100%;background:#fff!important;display:block!important;padding:0!important}
-  .modal:not(.hidden) .modal-content{visibility:visible;box-shadow:none!important;border:none!important;max-height:none!important;overflow:visible!important}
-  .modal:not(.hidden) .invoice-print-area,.modal:not(.hidden) .invoice-print-area *,
-  .modal:not(.hidden) .statement-print-area,.modal:not(.hidden) .statement-print-area *{visibility:visible}
-  .modal:not(.hidden) .invoice-print-area,.modal:not(.hidden) .statement-print-area{position:absolute;left:0;top:0;width:100%;padding:0!important}
-  .no-print,.modal-header{display:none!important}
-  .modal-body{padding:0!important}
-  .table-responsive{overflow:visible!important}
-  .print-table th,.print-table td{white-space:normal!important}
+  .modal:not(.hidden),
+  .modal:not(.hidden) *{visibility:visible}
+  .modal:not(.hidden){
+    position:static!important;
+    inset:auto!important;
+    display:block!important;
+    width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    overflow:visible!important;
+    background:#fff!important;
+    padding:0!important;
+  }
+  .modal:not(.hidden) .modal-content{
+    position:static!important;
+    width:100%!important;
+    max-width:none!important;
+    height:auto!important;
+    max-height:none!important;
+    overflow:visible!important;
+    box-shadow:none!important;
+    border:0!important;
+    border-radius:0!important;
+  }
+  .modal:not(.hidden) .modal-body{padding:0!important;overflow:visible!important}
+  .modal:not(.hidden) .invoice-print-area,
+  .modal:not(.hidden) .statement-print-area{
+    position:static!important;
+    width:100%!important;
+    height:auto!important;
+    max-height:none!important;
+    overflow:visible!important;
+    padding:0!important;
+  }
+  .no-print,.modal-header{display:none!important;visibility:hidden!important}
+  .table-responsive{overflow:visible!important;width:100%!important}
+  .print-table{width:100%!important;table-layout:auto!important;page-break-inside:auto!important}
+  .print-table thead{display:table-header-group}
+  .print-table tfoot{display:table-footer-group}
+  .print-table tr{break-inside:avoid!important;page-break-inside:avoid!important}
+  .print-table th,.print-table td{white-space:normal!important;overflow-wrap:anywhere!important;word-break:normal!important}
   .print-header,.print-footer{display:block!important;visibility:visible!important}
+  .invoice-lots-print-hide{display:none!important;visibility:hidden!important}
+  .inventory-report-section{break-inside:avoid;page-break-inside:avoid}
 }
 @media(max-width:480px){.grid,.grid3{grid-template-columns:1fr}.card{padding:14px}.actions{flex-direction:column}}
     /* ====== تنسيقات فاتورة الطباعة A4 الاحترافية ====== */
@@ -824,6 +857,77 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
  body[data-mm-accounting-print] .mm-ledger-report-content .table-responsive{overflow:visible!important}
 }
 
+/* v191: unified menu cards, compact tasks screen, and multi-page print */
+.mm-page-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.mm-page-heading>div{display:flex;align-items:center;gap:10px}
+.mm-page-heading h2{margin:0;color:var(--g)}
+.mm-page-heading .desc{margin:3px 0 0}
+.mm-page-icon{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:#edf3ed;border:1px solid var(--line);font-size:22px}
+.mm-section-label{font-size:13px;font-weight:700;color:var(--g);margin-bottom:7px}
+.mm-section-heading{display:flex;align-items:center;gap:9px;margin:18px 2px 10px;color:var(--g);font-size:15px;font-weight:700}
+.mm-section-heading:after{content:"";height:1px;flex:1;background:var(--line)}
+.mm-menu-card,
+#homeDashboard .home-card[role="button"],
+#homeQuickReports .home-card{
+  background:linear-gradient(180deg,#fff,#f7faf7)!important;
+  color:var(--g)!important;
+  border:1px solid var(--line)!important;
+  box-shadow:0 2px 8px rgba(23,60,44,.08)!important;
+  border-radius:14px!important;
+}
+.mm-menu-card .hc-label,
+.mm-menu-card .hc-value,
+#homeDashboard .home-card[role="button"] .hc-label,
+#homeDashboard .home-card[role="button"] .hc-value,
+#homeQuickReports .home-card .hc-label,
+#homeQuickReports .home-card .hc-value{color:var(--g)!important}
+.mm-menu-card:active,
+#homeDashboard .home-card[role="button"]:active,
+#homeQuickReports .home-card:active{transform:scale(.98)}
+#homeQuickReports .home-card{min-height:104px}
+#homeQuickReports{margin-top:10px}
+#homeQuickReports .home-card .hc-value{font-size:14px}
+#homeDashboard .home-card[role="button"]{cursor:pointer}
+#homeDashboard .home-card[role="button"] .hc-label{font-size:14px}
+#homeDashboard .home-card[role="button"] .hc-value{font-size:12px;margin-top:4px}
+#dataCategoryHome .data-category-card,
+#dataDashboard .data-category-card,
+#dataDashboard .dash-item{
+  transition:transform .12s,box-shadow .12s,border-color .12s;
+}
+#dataDashboard .data-category-card:hover,
+#dataDashboard .dash-item:hover{box-shadow:0 7px 16px rgba(23,60,44,.10);border-color:#c8d6ca}
+#tasks .mm-tasks-shell{padding:15px}
+.mm-tasks-filter{margin-bottom:0}
+.mm-tasks-dashboard{margin-top:0}
+.mm-tasks-dashboard .tasks-financial-card{grid-column:auto!important;min-height:92px!important;padding:13px 10px!important;border-radius:14px!important}
+.mm-tasks-dashboard .tasks-financial-card .hc-value{font-size:19px!important}
+.mm-tasks-dashboard .tasks-financial-card .details{font-size:11px!important;margin-top:4px!important}
+.mm-tasks-dashboard .home-card{min-height:92px}
+.mm-tasks-dashboard .home-card .hc-label{font-size:12px}
+.mm-tasks-dashboard .home-card .hc-value{font-size:19px}
+#tasksChartsToggle{margin-top:11px;min-height:86px}
+.mm-task-list-box{margin-top:11px;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:0 2px 8px rgba(20,45,25,.05)}
+.mm-task-list-box #tasksList,
+.mm-task-list-box #taskNotificationsList{max-height:330px;overflow:auto;padding-inline-end:2px}
+.mm-task-box-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:8px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.mm-task-box-heading h3,.mm-task-box-heading .dashboard-title{margin:0}
+.mm-task-send{margin-top:11px;padding:13px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,#fff,#f7faf7)}
+.mm-task-send h3{margin:0}
+.mm-task-send select[multiple]{min-height:150px}
+#tasks .notification-count{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 7px;border-radius:20px;background:#edf3ed;color:var(--g);font-weight:700}
+@media(max-width:480px){
+  #homeQuickReports .home-card{min-height:92px;padding:12px 8px}
+  #homeDashboard .home-card[role="button"]{min-height:94px;padding:12px 8px}
+  .mm-tasks-dashboard{gap:8px}
+  .mm-tasks-dashboard .home-card{min-height:86px}
+  .mm-tasks-dashboard .tasks-financial-card{min-height:86px!important}
+  .mm-task-list-box #tasksList,.mm-task-list-box #taskNotificationsList{max-height:280px}
+}
+@media(max-width:360px){
+  #homeQuickReports .home-card{min-height:88px}
+  .mm-tasks-dashboard .home-card,.mm-tasks-dashboard .tasks-financial-card{min-height:82px!important}
+}
 </style>
 </head>
 <body>
@@ -1089,50 +1193,61 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
   </div>
 </div>
 <section id="tasks" class="hidden">
-<div class="card">
-<h2>📋 مهامي والتنبيهات</h2>
-<div class="filter-box">
-<div class="grid">
-<div><label>من تاريخ</label><input type="date" id="tasksFromDate"></div>
-<div><label>إلى تاريخ</label><input type="date" id="tasksToDate"></div>
-</div>
-<div class="tasks-filter-actions">
-<button id="tasksFilterBtn" class="btn" type="button">تحديث التحليلات</button>
-<div class="tasks-date-presets" aria-label="فترات سريعة">
-<button type="button" class="btn secondary" data-task-range="today">اليوم</button>
-<button type="button" class="btn secondary" data-task-range="7days">آخر 7 أيام</button>
-<button type="button" class="btn secondary" data-task-range="month">هذا الشهر</button>
-<button type="button" class="btn secondary" data-task-range="previous">الشهر السابق</button>
-</div>
-</div>
-</div>
-<div class="home-dashboard" id="tasksDashboard"></div>
-<div class="home-dashboard" style="margin-top:14px;">
-  <button type="button" class="home-card gold tasks-charts-button" id="tasksChartsToggle">
+<div class="card mm-tasks-shell">
+  <div class="mm-page-heading">
+    <div><span class="mm-page-icon">📋</span><div><h2>مهامي والتنبيهات</h2><p class="desc">متابعة المؤشرات والمهام والتنبيهات الخاصة بك.</p></div></div>
+  </div>
+
+  <div class="filter-box mm-tasks-filter">
+    <div class="mm-section-label">الفترة</div>
+    <div class="grid">
+      <div><label>من تاريخ</label><input type="date" id="tasksFromDate"></div>
+      <div><label>إلى تاريخ</label><input type="date" id="tasksToDate"></div>
+    </div>
+    <div class="tasks-filter-actions">
+      <button id="tasksFilterBtn" class="btn" type="button">تحديث التحليلات</button>
+      <div class="tasks-date-presets" aria-label="فترات سريعة">
+        <button type="button" class="btn secondary" data-task-range="today">اليوم</button>
+        <button type="button" class="btn secondary" data-task-range="7days">آخر 7 أيام</button>
+        <button type="button" class="btn secondary" data-task-range="month">هذا الشهر</button>
+        <button type="button" class="btn secondary" data-task-range="previous">الشهر السابق</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="mm-section-heading"><span>📊 المؤشرات</span></div>
+  <div class="home-dashboard mm-tasks-dashboard" id="tasksDashboard"></div>
+
+  <button type="button" class="home-card gold tasks-charts-button mm-menu-card" id="tasksChartsToggle">
     <span class="hc-label">📊 التحليلات البيانية</span>
     <span class="hc-value" style="font-size:14px;">فتح التحليلات</span>
   </button>
-</div>
-<div style="margin-top:20px;">
-<div class="dashboard-title">🔔 التنبيهات المهمة</div>
-<div id="tasksList"><div class="empty">جارٍ تحميل مهامك...</div></div>
-<div class="task-box" style="margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:10px;background:#fff;">
-  <div class="dashboard-title">تنبيهات المهام الموجهة إليك <span id="taskNotificationsUnread" class="notification-count">0</span></div>
-  <div id="taskNotificationsList"><div class="empty">جارٍ تحميل تنبيهات المهام...</div></div>
-</div>
-<div id="taskNotificationSendPanel" class="notification-send hidden">
-  <h3>إرسال تنبيه مهمة</h3>
-  <label for="taskNotificationTitle">عنوان التنبيه</label>
-  <input id="taskNotificationTitle" maxlength="180" placeholder="اكتب عنوان التنبيه">
-  <label for="taskNotificationBody">تفاصيل التنبيه</label>
-  <textarea id="taskNotificationBody" rows="3" maxlength="3000" placeholder="اكتب تفاصيل المهمة أو المطلوب متابعته"></textarea>
-  <label for="taskNotificationUsers">المستخدمون المستلمون</label>
-  <select id="taskNotificationUsers" multiple></select>
-  <div class="desc">يصل هذا التنبيه إلى المستخدمين الذين تختارهم فقط، ويظهر في صفحة مهامي.</div>
-  <button id="sendTaskNotificationBtn" class="btn" type="button">إرسال تنبيه المهمة</button>
-  <div id="taskNotificationSendMsg" class="status hidden"></div>
-</div>
-</div>
+
+  <div class="mm-section-heading"><span>🔔 التنبيهات المهمة</span></div>
+  <div class="task-box mm-task-list-box">
+    <div id="tasksList"><div class="empty">جارٍ تحميل مهامك...</div></div>
+  </div>
+
+  <div class="task-box mm-task-list-box">
+    <div class="mm-task-box-heading">
+      <div class="dashboard-title">تنبيهات المهام الموجهة إليك</div>
+      <span id="taskNotificationsUnread" class="notification-count">0</span>
+    </div>
+    <div id="taskNotificationsList"><div class="empty">جارٍ تحميل تنبيهات المهام...</div></div>
+  </div>
+
+  <div id="taskNotificationSendPanel" class="notification-send mm-task-send hidden">
+    <div class="mm-task-box-heading"><h3>🔔 إرسال تنبيه مهمة</h3></div>
+    <label for="taskNotificationTitle">عنوان التنبيه</label>
+    <input id="taskNotificationTitle" maxlength="180" placeholder="اكتب عنوان التنبيه">
+    <label for="taskNotificationBody">تفاصيل التنبيه</label>
+    <textarea id="taskNotificationBody" rows="3" maxlength="3000" placeholder="اكتب تفاصيل المهمة أو المطلوب متابعته"></textarea>
+    <label for="taskNotificationUsers">المستخدمون المستلمون</label>
+    <select id="taskNotificationUsers" multiple></select>
+    <div class="desc">يصل هذا التنبيه إلى المستخدمين الذين تختارهم فقط، ويظهر في صفحة مهامي.</div>
+    <button id="sendTaskNotificationBtn" class="btn" type="button">إرسال تنبيه المهمة</button>
+    <div id="taskNotificationSendMsg" class="status hidden"></div>
+  </div>
 </div>
 </section>
 
@@ -2726,7 +2841,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v190</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v191</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -13196,7 +13311,7 @@ $("hrCreatePeriod")?.addEventListener("click",async()=>{try{const r=await db.rpc
 // ====== PWA ======
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=193', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
+    navigator.serviceWorker.register('./sw.js?v=194', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
   });
 }
 
