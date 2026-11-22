@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v197</title>
+<title>MeatManagement v198</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1137,6 +1137,43 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
   #tasksDashboard .home-card .hc-value,
   #homePartnerSummaryPanel .home-dashboard .home-card .hc-value{font-size:18px!important}
 }
+
+/* v198: match detailed reports and data center cards to advanced reports */
+#partnerReportMenuContent .mm-partner-report-item,
+#dataCategoryHome .data-category-card{
+  display:flex;
+  min-height:116px;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:15px 10px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:linear-gradient(180deg,#fff,#f7faf7);
+  box-shadow:0 2px 8px rgba(23,60,44,.08);
+  color:var(--g);
+  text-align:center;
+  white-space:normal;
+  transition:transform .15s,box-shadow .15s,border-color .15s;
+}
+#partnerReportMenuContent .mm-partner-report-item:active,
+#dataCategoryHome .data-category-card:active{transform:scale(.98)}
+#partnerReportMenuContent .mm-partner-report-item:focus-visible,
+#dataCategoryHome .data-category-card:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+#partnerReportMenuContent .mm-partner-report-item .data-category-icon,
+#dataCategoryHome .data-category-card .data-category-icon{font-size:25px;line-height:1.2}
+#partnerReportMenuContent .mm-partner-report-item .data-category-title,
+#dataCategoryHome .data-category-card .data-category-title{font-size:14px;font-weight:700;color:var(--g);line-height:1.4}
+#partnerReportMenuContent .mm-partner-report-item .data-category-subtitle,
+#dataCategoryHome .data-category-card .data-category-subtitle{font-size:12px;color:var(--muted)}
+#dataCategoryHome .data-category-card:hover{box-shadow:0 7px 16px rgba(23,60,44,.10);border-color:#c8d6ca}
+@media(max-width:380px){
+  #dataCategoryHome .data-category-grid{gap:8px}
+  #partnerReportMenuContent .mm-partner-report-item,
+  #dataCategoryHome .data-category-card{min-height:104px;padding:12px 7px}
+}
+
 </style>
 </head>
 <body>
@@ -1151,7 +1188,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v197]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v198]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -3101,7 +3138,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v197</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v198</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -13706,7 +13743,7 @@ $("hrCreatePeriod")?.addEventListener("click",async()=>{try{const r=await db.rpc
 // ====== PWA ======
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=200', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
+    navigator.serviceWorker.register('./sw.js?v=201', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
   });
 }
 
