@@ -735,6 +735,18 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 .mm-work-menu{margin:14px 0 18px}.mm-work-panel{margin-top:12px}.mm-work-panel>.card{margin-top:10px}.mm-accounting-groups{margin:12px 0;padding:12px;border:1px solid var(--line);border-radius:12px;background:#f9fbf9}.mm-accounting-groups h3{margin:0 0 10px;color:var(--g)}.product-type-filter{width:100%;margin:8px 0 6px;border:1px solid var(--line);border-radius:10px;padding:11px 12px;background:#fff}.product-search-input{display:block}.mm-work-menu .data-category-card{min-height:104px}@media(max-width:520px){.mm-work-menu{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 .mm-accounting-menu{margin:12px 0}.mm-accounting-screen{margin-top:12px}.mm-screen-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:8px 0 14px}.mm-screen-heading h3{margin:0;color:var(--g)}.mm-accounting-filters{padding:12px;margin:10px 0 14px;border:1px solid var(--line);border-radius:12px;background:#f9fbf9}.mm-accounting-filters .grid{gap:10px}.mm-accounting-filters label{display:flex;flex-direction:column;gap:6px}.mm-accounting-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:9px;margin:12px 0}.mm-report-groups{margin:14px 0}.mm-report-groups .data-category-card{min-height:112px;border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:0 2px 7px #173c2c10;transition:transform .15s,box-shadow .15s}.mm-report-groups .data-category-card:active{transform:scale(.98)}.mm-report-groups .data-category-subtitle{color:var(--g);font-weight:700}.mm-accounting-menu .data-category-card{min-height:110px;border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:0 2px 7px #173c2c10}
+
+/* v187.1: isolated report/accounting screens and consistent mobile navigation */
+#sectionReports .mm-report-groups,#accountingWorkspaceMenu .data-category-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:14px 0}
+#sectionReports .mm-report-groups .data-category-card,#accountingWorkspaceMenu .data-category-card{display:flex;min-height:116px;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:15px 10px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,#fff,#f7faf7);box-shadow:0 2px 8px rgba(23,60,44,.08);text-align:center;white-space:normal}
+#sectionReports .mm-report-groups .data-category-icon,#accountingWorkspaceMenu .data-category-icon{font-size:25px;line-height:1.2}
+#sectionReports .mm-report-groups .data-category-title,#accountingWorkspaceMenu .data-category-title{font-size:14px;font-weight:700;color:var(--g);line-height:1.4}
+#sectionReports .mm-report-groups .data-category-subtitle,#accountingWorkspaceMenu .data-category-subtitle{font-size:12px;color:var(--muted)}
+#sectionReports .report-tab,#accountingCard .mm-accounting-screen{width:100%;min-width:0}
+#sectionReports .report-tab [data-report-back],#accountingCard .mm-screen-heading .btn{min-height:42px;border-radius:10px;padding:10px 14px}
+#accountingCard .mm-accounting-screen .mm-accounting-summary .card{border:1px solid var(--line);border-radius:12px;background:#f8faf8}
+#accountingCard .mm-accounting-filters{border-radius:12px}
+@media(max-width:380px){#sectionReports .mm-report-groups,#accountingWorkspaceMenu .data-category-grid{gap:8px}#sectionReports .mm-report-groups .data-category-card,#accountingWorkspaceMenu .data-category-card{min-height:104px;padding:12px 7px}}
 </style>
 </head>
 <body>
@@ -3127,10 +3139,10 @@ function mmInitAccountingAndReports(){
  if(acc&&!acc.dataset.workspaceReady){
   const heading=acc.querySelector("h2");
   const oldChildren=Array.from(acc.children).filter(el=>el!==heading);
-  const details=document.createElement("div");details.id="accountingDetailsPanel";details.className="mm-accounting-screen hidden";
+  const details=document.createElement("div");details.id="accountingDetailsPanel";details.className="mm-accounting-screen hidden";details.style.display="none";
   const detailsHead=document.createElement("div");detailsHead.className="mm-screen-heading";
   const detailsTitle=document.createElement("h3");detailsTitle.textContent="الدفاتر والإجراءات المحاسبية";
-  const detailsBack=document.createElement("button");detailsBack.type="button";detailsBack.className="btn secondary";detailsBack.textContent="⬅ رجوع للمحاسبة";detailsBack.addEventListener("click",()=>{nav.classList.remove("hidden");details.classList.add("hidden");window.scrollTo(0,0);});
+  const detailsBack=document.createElement("button");detailsBack.type="button";detailsBack.className="btn secondary";detailsBack.textContent="⬅ رجوع للمحاسبة";detailsBack.addEventListener("click",()=>{nav.classList.remove("hidden");nav.style.display="block";details.classList.add("hidden");details.style.display="none";window.scrollTo(0,0);});
   detailsHead.append(detailsTitle,detailsBack);details.appendChild(detailsHead);
   oldChildren.forEach(el=>details.appendChild(el));
   const nav=document.createElement("div");nav.id="accountingWorkspaceMenu";nav.className="mm-accounting-menu";
@@ -3143,7 +3155,7 @@ function mmInitAccountingAndReports(){
    ["مدفوعات الموردين","💸","payments"],["تحصيلات العملاء","🧾","collections"],["دفتر الأستاذ والتقارير","📚","details"]
   ];
   function makeScreen(key,title){
-   const p=document.createElement("section");p.className="mm-accounting-screen hidden";p.dataset.accountingScreen=key;
+   const p=document.createElement("section");p.className="mm-accounting-screen hidden";p.style.display="none";p.dataset.accountingScreen=key;
    const head=document.createElement("div");head.className="mm-screen-heading";
    const h=document.createElement("h3");h.textContent=title;
    const back=document.createElement("button");back.type="button";back.className="btn secondary";back.textContent="⬅ رجوع للمحاسبة";back.addEventListener("click",showMenu);
@@ -3165,19 +3177,19 @@ function mmInitAccountingAndReports(){
    panels[key]=p;return p;
   }
   function showMenu(){
-   nav.classList.remove("hidden");details.classList.add("hidden");
-   Object.values(panels).forEach(p=>p.classList.add("hidden"));
+   nav.classList.remove("hidden");nav.style.display="block";details.classList.add("hidden");details.style.display="none";
+   Object.values(panels).forEach(p=>{p.classList.add("hidden");p.style.display="none";});
    window.scrollTo(0,0);
   }
   window.mmOpenAccountingScreen=function(key){
-   nav.classList.add("hidden");details.classList.add("hidden");
-   Object.values(panels).forEach(p=>p.classList.toggle("hidden",p.dataset.accountingScreen!==key));
-   if(key==="period")mmLoadAccountingSummary("period");
+   nav.classList.add("hidden");nav.style.display="none";details.classList.add("hidden");details.style.display="none";
+   Object.values(panels).forEach(p=>{const active=p.dataset.accountingScreen===key;p.classList.toggle("hidden",!active);p.style.display=active?"block":"none";});
+   mmLoadAccountingSummary(key);
    window.scrollTo(0,0);
   };
   items.forEach(([label,ico,key])=>{
-   const b=mmWorkspaceButton(label,ico,()=>key==="details"?(nav.classList.add("hidden"),details.classList.remove("hidden"),window.scrollTo(0,0)):window.mmOpenAccountingScreen(key));
-   b.querySelector(".data-category-subtitle").textContent=key==="details"?"فتح الدفاتر المحاسبية":"عرض الملخص";
+   const b=mmWorkspaceButton(label,ico,()=>{if(key==="details"){nav.classList.add("hidden");nav.style.display="none";details.classList.remove("hidden");details.style.display="block";window.scrollTo(0,0);}else window.mmOpenAccountingScreen(key);});
+   b.querySelector(".data-category-subtitle").textContent=key==="details"?"عرض الدفاتر المحاسبية":"عرض الملخص";
    grid.appendChild(b);
    if(key!=="details")acc.appendChild(makeScreen(key,label));
   });
@@ -3202,7 +3214,7 @@ function mmInitAccountingAndReports(){
    if(title){title.insertAdjacentElement("afterend",label);label.insertAdjacentElement("afterend",search);search.insertAdjacentElement("afterend",reportCards);}
    else card.prepend(label,search,reportCards);
    search.addEventListener("input",()=>{const q=search.value.trim().toLocaleLowerCase();Array.from(reportCards.querySelectorAll("button")).forEach(b=>{b.hidden=!!q&&!b.textContent.toLocaleLowerCase().includes(q);});});
-   card.querySelectorAll(".report-tab").forEach(el=>el.classList.add("hidden"));
+   card.querySelectorAll(".report-tab").forEach(el=>{el.classList.add("hidden");el.style.display="none";});
   }
   reports.dataset.workspaceReady="1";
  }
@@ -12394,10 +12406,10 @@ function mmInitAdvancedReportActions(){
       const card=menu?.parentElement;
       const search=card?.querySelector('input[type="search"]');
       const desc=search?.previousElementSibling;
-      if(menu)menu.classList.add("hidden");
-      if(search)search.classList.add("hidden");
+      if(menu){menu.classList.add("hidden");menu.style.display="none";}
+      if(search){search.classList.add("hidden");search.style.display="none";}
       if(desc&&desc.classList.contains("desc"))desc.classList.add("hidden");
-      document.querySelectorAll(".report-tab").forEach(el=>el.classList.add("hidden"));
+      document.querySelectorAll(".report-tab").forEach(el=>{el.classList.add("hidden");el.style.display="none";});
       const panel=$(tabId);
       if(!panel)return;
       let back=panel.querySelector("[data-report-back]");
@@ -12406,14 +12418,14 @@ function mmInitAdvancedReportActions(){
         back.addEventListener("click",window.closeReportScreen);
         panel.prepend(back);
       }
-      panel.classList.remove("hidden");
+      panel.classList.remove("hidden");panel.style.display="block";
       window.scrollTo(0,0);
   };
   window.closeReportScreen=function(){
-      document.querySelectorAll(".report-tab").forEach(el=>el.classList.add("hidden"));
+      document.querySelectorAll(".report-tab").forEach(el=>{el.classList.add("hidden");el.style.display="none";});
       const menu=$("advancedReportGroups"),card=menu?.parentElement,search=card?.querySelector('input[type="search"]'),desc=search?.previousElementSibling;
-      if(menu)menu.classList.remove("hidden");
-      if(search)search.classList.remove("hidden");
+      if(menu){menu.classList.remove("hidden");menu.style.display="grid";}
+      if(search){search.classList.remove("hidden");search.style.display="block";}
       if(desc&&desc.classList.contains("desc"))desc.classList.remove("hidden");
       window.scrollTo(0,0);
   }
