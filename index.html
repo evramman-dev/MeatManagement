@@ -735,7 +735,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v179]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v181]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1062,9 +1062,10 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <h2>🗂️ مركز البيانات</h2>
 <p class="desc">اختر القسم الرئيسي للوصول إلى الصفحات التابعة له.</p>
 <div class="data-search-row"><input id="dataSectionSearch" type="search" placeholder="ابحث عن قسم مثل المخزون أو العملاء..." autocomplete="off"><button id="clearDataSectionSearch" class="btn secondary" type="button">مسح</button></div>
-<div class="data-category-grid"><button type="button" class="data-category-card" id="dataCategoryCardproducts" onclick="window.openDataGroup('products')"><span class="data-category-icon">📦</span><span class="data-category-title">إدارة المنتجات</span><span class="data-category-subtitle" id="dataCategoryCountproducts">3 أقسام</span></button>
-<button type="button" class="data-category-card" id="dataCategoryCardinventory" onclick="window.openDataGroup('inventory')"><span class="data-category-icon">🏭</span><span class="data-category-title">المخزون</span><span class="data-category-subtitle" id="dataCategoryCountinventory">5 أقسام</span></button>
-<button type="button" class="data-category-card" id="dataCategoryCardproduction" onclick="window.openDataGroup('production')"><span class="data-category-icon">📝</span><span class="data-category-title">الإنتاج</span><span class="data-category-subtitle" id="dataCategoryCountproduction">3 أقسام</span></button>
+<div class="data-category-grid"><button type="button" class="data-category-card" id="dataCategoryCardproducts" onclick="window.openDataGroup('products')"><span class="data-category-icon">📦</span><span class="data-category-title">إدارة المنتجات</span><span class="data-category-subtitle" id="dataCategoryCountproducts">1 أقسام</span></button>
+<button type="button" class="data-category-card" id="dataCategoryCardinventory" onclick="window.openDataGroup('inventory')"><span class="data-category-icon">🏭</span><span class="data-category-title">المخزون</span><span class="data-category-subtitle" id="dataCategoryCountinventory">6 أقسام</span></button>
+<button type="button" class="data-category-card" id="dataCategoryCardproduction" onclick="window.openDataGroup('production')"><span class="data-category-icon">📝</span><span class="data-category-title">الإنتاج</span><span class="data-category-subtitle" id="dataCategoryCountproduction">4 أقسام</span></button>
+<button type="button" class="data-category-card" id="dataCategoryCardreportsInventory" onclick="window.openDataGroup('reportsInventory')"><span class="data-category-icon">📊</span><span class="data-category-title">التقارير والجرد</span><span class="data-category-subtitle" id="dataCategoryCountreportsInventory">2 أقسام</span></button>
 <button type="button" class="data-category-card" id="dataCategoryCardhr" onclick="window.openDataGroup('hr')"><span class="data-category-icon">👥</span><span class="data-category-title">الموارد البشرية</span><span class="data-category-subtitle" id="dataCategoryCounthr">1 أقسام</span></button>
 <button type="button" class="data-category-card" id="dataCategoryCardprocurement" onclick="window.openDataGroup('procurement')"><span class="data-category-icon">🛒</span><span class="data-category-title">المشتريات والموردين</span><span class="data-category-subtitle" id="dataCategoryCountprocurement">7 أقسام</span></button>
 <button type="button" class="data-category-card" id="dataCategoryCardsales" onclick="window.openDataGroup('sales')"><span class="data-category-icon">💰</span><span class="data-category-title">المبيعات والتوزيع</span><span class="data-category-subtitle" id="dataCategoryCountsales">7 أقسام</span></button>
@@ -1074,23 +1075,30 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 <div id="dataGroupPageproducts" class="data-group-page hidden" data-group-key="products" data-group-title="إدارة المنتجات">
 <button type="button" class="btn secondary data-group-back" onclick="window.closeDataGroup()">⬅ العودة إلى مركز البيانات</button>
-<div class="card data-group-card"><h2>📦 إدارة المنتجات</h2><p class="desc">الأصناف والأرصدة والتقارير</p><div class="dashboard-grid data-group-items"><div class="dash-item hidden" id="menuProducts" onclick="window.openSection('products')"><div class="dash-icon">📦</div><div class="dash-title">إدارة المنتجات</div></div>
-<div class="dash-item hidden" id="menuStockSummary" onclick="window.openSection('stockSummary')"><div class="dash-icon">📋</div><div class="dash-title">ملخص أرصدة الأصناف</div></div>
-<div class="dash-item hidden" id="menuProductionDailySummary" onclick="window.openSection('productionDailySummary')"><div class="dash-icon">📅</div><div class="dash-title">ملخص الإنتاج اليومي</div></div></div></div>
+<div class="card data-group-card"><h2>📦 إدارة المنتجات</h2><p class="desc">إدارة أصناف النظام</p><div class="dashboard-grid data-group-items"><div class="dash-item hidden" id="menuProducts" onclick="window.openSection('products')"><div class="dash-icon">📦</div><div class="dash-title">إدارة المنتجات</div></div></div></div>
 </div>
 <div id="dataGroupPageinventory" class="data-group-page hidden" data-group-key="inventory" data-group-title="المخزون">
 <button type="button" class="btn secondary data-group-back" onclick="window.closeDataGroup()">⬅ العودة إلى مركز البيانات</button>
-<div class="card data-group-card"><h2>🏭 المخزون</h2><p class="desc">المخازن والحركات والحجوزات</p><div class="dashboard-grid data-group-items"><div class="dash-item hidden" id="menuLocations" onclick="window.openSection('locations')"><div class="dash-icon">🏭</div><div class="dash-title">المواقع والمخازن</div></div>
+<div class="card data-group-card"><h2>🏭 المخزون</h2><p class="desc">المخازن والحركات والحجوزات والأرصدة</p><div class="dashboard-grid data-group-items"><div class="dash-item hidden" id="menuLocations" onclick="window.openSection('locations')"><div class="dash-icon">🏭</div><div class="dash-title">المواقع والمخازن</div></div>
 <div class="dash-item hidden" id="menuStock" onclick="window.openSection('stock')"><div class="dash-icon">📊</div><div class="dash-title">أرصدة المخزون</div></div>
+<div class="dash-item hidden" id="menuStockSummary" onclick="window.openSection('stockSummary')"><div class="dash-icon">📋</div><div class="dash-title">ملخص أرصدة الأصناف</div></div>
 <div class="dash-item hidden" id="menuStockTransfers" onclick="window.openSection('stockTransfers')"><div class="dash-icon">🔄</div><div class="dash-title">تحويل المخازن</div></div>
 <div class="dash-item hidden" id="menuPackaging" onclick="window.openSection('packaging')"><div class="dash-icon">📦</div><div class="dash-title">خيارات التعبئة</div></div>
 <div class="dash-item hidden" id="menuReservations" onclick="window.openSection('reservations')"><div class="dash-icon">🔒</div><div class="dash-title">الحجوزات</div></div></div></div>
 </div>
 <div id="dataGroupPageproduction" class="data-group-page hidden" data-group-key="production" data-group-title="الإنتاج">
 <button type="button" class="btn secondary data-group-back" onclick="window.closeDataGroup()">⬅ العودة إلى مركز البيانات</button>
-<div class="card data-group-card"><h2>📝 الإنتاج</h2><p class="desc">الوصفات وأوامر التشغيل</p><div class="dashboard-grid data-group-items"><div class="dash-item hidden" id="menuRecipes" onclick="window.openSection('recipes')"><div class="dash-icon">📝</div><div class="dash-title">الوصفات</div></div>
+<div class="card data-group-card"><h2>📝 الإنتاج</h2><p class="desc">الوصفات وأوامر التشغيل وتقارير الإنتاج</p><div class="dashboard-grid data-group-items"><div class="dash-item hidden" id="menuRecipes" onclick="window.openSection('recipes')"><div class="dash-icon">📝</div><div class="dash-title">الوصفات</div></div>
 <div class="dash-item hidden" id="menuProduction" onclick="window.openSection('production')"><div class="dash-icon">🏭</div><div class="dash-title">أوامر التشغيل</div></div>
+<div class="dash-item hidden" id="menuProductionDailySummary" onclick="window.openSection('productionDailySummary')"><div class="dash-icon">📅</div><div class="dash-title">ملخص الإنتاج اليومي</div></div>
 <div class="dash-item hidden" id="menuStockLots" onclick="window.openSection('stockLots')"><div class="dash-icon">🏷️</div><div class="dash-title">تتبع التشغيلات</div></div></div></div>
+</div>
+<div id="dataGroupPagereportsInventory" class="data-group-page hidden" data-group-key="reportsInventory" data-group-title="التقارير والجرد">
+<button type="button" class="btn secondary data-group-back" onclick="window.closeDataGroup()">⬅ العودة إلى مركز البيانات</button>
+<div class="card data-group-card"><h2>📊 التقارير والجرد</h2><p class="desc">متابعة الأرصدة وتنفيذ الجرد</p><div class="dashboard-grid data-group-items">
+<div class="dash-item hidden" id="menuInventorySummaryReport" onclick="window.openInventorySummaryReport()"><div class="dash-icon">📊</div><div class="dash-title">تقرير أرصدة وحركة المخزون</div></div>
+<div class="dash-item hidden" id="menuInventoryCount" onclick="window.openInventoryCount()"><div class="dash-icon">📋</div><div class="dash-title">إدارة الجرد</div></div>
+</div></div>
 </div>
 <div id="dataGroupPagehr" class="data-group-page hidden" data-group-key="hr" data-group-title="👥 الموارد البشرية">
 <button type="button" class="btn secondary data-group-back" onclick="window.closeDataGroup()">⬅ العودة إلى مركز البيانات</button>
@@ -2462,10 +2470,6 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <button type="button" class="dash-item" onclick="window.openProductList('PACKAGING','خامات التشغيل')"><span class="dash-icon">🏷️</span><span class="dash-title">خامات التشغيل</span></button>
 <button type="button" class="dash-item" onclick="window.openProductList('SEMI_FINISHED','منتجات نصف مصنعة')"><span class="dash-icon">⚙️</span><span class="dash-title">منتجات نصف مصنعة</span></button>
 </div></div></div>
-<div id="productCategoryPageReports" class="product-category-page hidden"><button type="button" class="btn secondary product-category-back" onclick="window.closeProductCategory()">⬅ رجوع لإدارة المنتجات</button><div class="card"><h2>📊 التقارير والجرد</h2><p class="desc">اختر التقرير أو إجراء الجرد.</p><div class="dashboard-grid">
-<button type="button" class="dash-item" onclick="window.openInventorySummaryReport()"><span class="dash-icon">📊</span><span class="dash-title">تقرير أرصدة وحركة المخزون</span></button>
-<button type="button" class="dash-item" onclick="window.openInventoryCount()"><span class="dash-icon">📋</span><span class="dash-title">إدارة الجرد</span></button>
-</div></div></div>
 </div>
 <div id="productListModal" class="modal-form" style="z-index:910" onclick="if(event.target===this)window.closeProductList()">
 <div class="modal-form-content">
@@ -2591,7 +2595,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v179</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v181</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -3493,7 +3497,7 @@ async function userInfo(user){
     try{ canViewLocations=await permission("LOCATIONS_VIEW") || isSystemAdmin; canManageLocations=await permission("LOCATIONS_MANAGE") || isSystemAdmin; if($("menuLocations")) $("menuLocations").classList.toggle("hidden",!canViewLocations); if($("locationsCard")) $("locationsCard").classList.toggle("hidden",!canViewLocations); if($("addLocationBtn")) $("addLocationBtn").classList.toggle("hidden",!canManageLocations); }catch(e){}
     try{ canViewTreasuries=await permission("TREASURIES_VIEW") || isSystemAdmin; canManageTreasuries=await permission("TREASURIES_MANAGE") || isSystemAdmin; if($("menuTreasuries")) $("menuTreasuries").classList.toggle("hidden",!canViewTreasuries); if($("treasuriesCard")) $("treasuriesCard").classList.toggle("hidden",!canViewTreasuries); if($("addTreasuryBtn")) $("addTreasuryBtn").classList.toggle("hidden",!canManageTreasuries); }catch(e){}
     try{ canViewTreasuryTransfers=await permission("TREASURIES_MANAGE") || await permission("ACCOUNTING_MANAGE") || isSystemAdmin || isPartner; if($("menuTreasuryTransfers")) $("menuTreasuryTransfers").classList.toggle("hidden",!canViewTreasuryTransfers); }catch(e){}
-    try{ canViewStock=await permission("STOCK_VIEW") || await permission("INVENTORY_VIEW") || isSystemAdmin; canManageStock=await permission("STOCK_MANAGE") || isSystemAdmin; if($("menuStock")) $("menuStock").classList.toggle("hidden",!canViewStock); if($("menuStockSummary")) $("menuStockSummary").classList.toggle("hidden",!canViewStock); if($("menuStockLots")) $("menuStockLots").classList.toggle("hidden",!canViewStock); if($("stockCard")) $("stockCard").classList.toggle("hidden",!canViewStock); if($("adjustStockBtn")) $("adjustStockBtn").classList.toggle("hidden",!canManageStock); }catch(e){}
+    try{ canViewStock=await permission("STOCK_VIEW") || await permission("INVENTORY_VIEW") || isSystemAdmin; canManageStock=await permission("STOCK_MANAGE") || isSystemAdmin; if($("menuStock")) $("menuStock").classList.toggle("hidden",!canViewStock); if($("menuStockSummary")) $("menuStockSummary").classList.toggle("hidden",!canViewStock); if($("menuInventorySummaryReport")) $("menuInventorySummaryReport").classList.toggle("hidden",!canViewStock); if($("menuInventoryCount")) $("menuInventoryCount").classList.toggle("hidden",!(canViewStock||canManageStock||isSystemAdmin)); if($("menuStockLots")) $("menuStockLots").classList.toggle("hidden",!canViewStock); if($("stockCard")) $("stockCard").classList.toggle("hidden",!canViewStock); if($("adjustStockBtn")) $("adjustStockBtn").classList.toggle("hidden",!canManageStock); }catch(e){}
     try{ canViewStockTransfers=await permission("INVENTORY_TRANSFER") || isSystemAdmin || isPartner; if($("menuStockTransfers")) $("menuStockTransfers").classList.toggle("hidden",!canViewStockTransfers); }catch(e){}
     try{ canViewSales=await permission("SALES_VIEW") || await permission("INVOICES_VIEW") || isSystemAdmin; canManageSales=await permission("SALES_MANAGE") || isSystemAdmin; canViewSalesReturns=canViewSales || await permission("RETURNS_VIEW") || isSystemAdmin; if($("menuSales")) $("menuSales").classList.toggle("hidden",!canViewSales); if($("salesCard")) $("salesCard").classList.toggle("hidden",!canViewSales); if($("menuSalesReturns")) $("menuSalesReturns").classList.toggle("hidden",!canViewSalesReturns); if($("addInvoiceBtn")) $("addInvoiceBtn").classList.toggle("hidden",!(await permission("INVOICES_CREATE") || canManageSales)); }catch(e){}
     try{ canCreateReturns=await permission("RETURNS_CREATE") || await permission("RETURNS_MANAGE") || isSystemAdmin; canApproveReturns=await permission("RETURNS_APPROVE") || await permission("RETURNS_MANAGE") || isSystemAdmin; canManageReturns=await permission("RETURNS_MANAGE") || isSystemAdmin; canInspectReturnsWarehouse=await permission("INVENTORY_ADJUST") || isSystemAdmin; canInspectReturnsProduction=await permission("PRODUCTION_MANAGE") || isSystemAdmin; if($("menuSalesReturns"))$("menuSalesReturns").classList.toggle("hidden",!(canViewSalesReturns||canInspectReturnsWarehouse||canInspectReturnsProduction)); if($("addReturnBtn")) $("addReturnBtn").classList.toggle("hidden",!canCreateReturns); if($("addSalesReturnStandaloneBtn")) $("addSalesReturnStandaloneBtn").classList.toggle("hidden",!canCreateReturns); }catch(e){}
@@ -4811,7 +4815,7 @@ function productSectionOf(p){
   return p.product_type||"OTHER";
 }
 window.openProductCategory=function(key){
-  const names={raw:"Raw",finished:"Finished",components:"Components",reports:"Reports"};
+  const names={raw:"Raw",finished:"Finished",components:"Components"};
   const page=$("productCategoryPage"+(names[key]||""));
   if(!page)return;
   const hub=$("productCategoryHub");if(hub)hub.classList.add("hidden");
