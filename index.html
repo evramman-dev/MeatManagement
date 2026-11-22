@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v203</title>
+<title>MeatManagement v204</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1174,6 +1174,12 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
   #dataCategoryHome .data-category-card{min-height:104px;padding:12px 7px}
 }
 
+
+/* v204: وضع توزيع أزرار التقارير داخل تنسيق الصفحة الرئيسي */
+#partnerReportMenuContent.mm-partner-report-menu-list{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:11px;
+}
 </style>
 </head>
 <body>
@@ -1188,7 +1194,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v203]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v204]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1270,6 +1276,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
   if(button){button.disabled=true;button.textContent="جارٍ الدخول...";}
   if(msg){msg.className="status";msg.textContent="جارٍ الاتصال بخدمة تسجيل الدخول...";}
   try{
+   window.mmAuthFlowVersion=(Number(window.mmAuthFlowVersion)||0)+1;
    window.mmLoginInProgress=true;
    const url="https://mklbemoisdkoyrwcrmoj.supabase.co";
    const key="sb_publishable_7ZjltiXgqnY4BJrZH4iZog_Jh-xfbau";
@@ -3146,7 +3153,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v203</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v204</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -8782,13 +8789,7 @@ async function viewInvoice(inv) {
           ];
           const totalRows=receiptTotals.map(row=>'<div class="total '+(row[2]||"")+'"><span>'+escapeReceipt(row[0])+'</span><strong>'+escapeReceipt(row[1])+'</strong></div>').join("");
           const receiptScriptOpen=String.fromCharCode(60)+"script>",receiptScriptClose=String.fromCharCode(60)+"/script>";
-          const receipt='<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>فاتورة '+escapeReceipt(inv.invoice_number)+'</title><style>@page{margin:2mm}*{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff;color:#000;font-family:Tahoma,Arial,sans-serif;font-size:11px}body{width:'+(width-4)+'mm;padding:0}.receipt{width:100%;margin:0 auto}.center{text-align:center}.company{font-size:15px;font-weight:bold;margin:0 0 4px}.sub{font-size:10px;margin:2px 0}.rule{border:0;border-top:1px dashed #555;margin:7px 0}.meta{line-height:1.8}.meta div{display:flex;justify-content:space-between;gap:5px}.meta strong{font-weight:bold}table{width:100%;border-collapse:collapse;margin:7px 0}td{padding:5px 1px;border-bottom:1px dashed #aaa;vertical-align:top}.item-name{width:72%;font-weight:bold}.item-name small{display:block;font-size:9px;font-weight:normal;margin-top:3px}.amount{text-align:left;direction:ltr;white-space:nowrap;font-weight:bold}.total{display:flex;justify-content:space-between;gap:6px;padding:3px 0}.total strong{direction:ltr;white-space:nowrap}.grand{font-size:12px;font-weight:bold;border-top:1px solid #555;margin-top:4px;padding-top:5px}.thanks{margin-top:10px;text-align:center;font-size:10px;line-height:1.7}.no-print{display:none}@media print{body{width:'+(width-4)+'mm}}
-/* v203: جعل أزرار التقارير التفصيلية في عمودين مثل مركز البيانات */
-#partnerReportMenuContent.mm-partner-report-menu-list{
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:11px;
-}
-</style></head><body><main class="receipt"><header class="center"><p class="company">'+escapeReceipt(companyName)+'</p>'+(companyPhone?'<p class="sub">هاتف: '+escapeReceipt(companyPhone)+'</p>':'')+'<p class="sub">فاتورة بيع</p></header><hr class="rule"><section class="meta"><div><span>رقم الفاتورة</span><strong>'+escapeReceipt(inv.invoice_number)+'</strong></div><div><span>التاريخ</span><strong>'+escapeReceipt(invoiceTime)+'</strong></div><div><span>العميل</span><strong>'+escapeReceipt(customerName(inv.customer_id))+'</strong></div></section><hr class="rule"><table><tbody>'+rows+'</tbody></table><hr class="rule"><section>'+totalRows+'</section><hr class="rule"><footer class="thanks">شكراً لتعاملكم معنا<br>'+escapeReceipt(companyName)+'</footer></main>'+receiptScriptOpen+'window.onload=function(){setTimeout(function(){window.focus();window.print();},350)};'+receiptScriptClose+'</body></html>';
+          const receipt='<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>فاتورة '+escapeReceipt(inv.invoice_number)+'</title><style>@page{margin:2mm}*{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff;color:#000;font-family:Tahoma,Arial,sans-serif;font-size:11px}body{width:'+(width-4)+'mm;padding:0}.receipt{width:100%;margin:0 auto}.center{text-align:center}.company{font-size:15px;font-weight:bold;margin:0 0 4px}.sub{font-size:10px;margin:2px 0}.rule{border:0;border-top:1px dashed #555;margin:7px 0}.meta{line-height:1.8}.meta div{display:flex;justify-content:space-between;gap:5px}.meta strong{font-weight:bold}table{width:100%;border-collapse:collapse;margin:7px 0}td{padding:5px 1px;border-bottom:1px dashed #aaa;vertical-align:top}.item-name{width:72%;font-weight:bold}.item-name small{display:block;font-size:9px;font-weight:normal;margin-top:3px}.amount{text-align:left;direction:ltr;white-space:nowrap;font-weight:bold}.total{display:flex;justify-content:space-between;gap:6px;padding:3px 0}.total strong{direction:ltr;white-space:nowrap}.grand{font-size:12px;font-weight:bold;border-top:1px solid #555;margin-top:4px;padding-top:5px}.thanks{margin-top:10px;text-align:center;font-size:10px;line-height:1.7}.no-print{display:none}@media print{body{width:'+(width-4)+'mm}}</style></head><body><main class="receipt"><header class="center"><p class="company">'+escapeReceipt(companyName)+'</p>'+(companyPhone?'<p class="sub">هاتف: '+escapeReceipt(companyPhone)+'</p>':'')+'<p class="sub">فاتورة بيع</p></header><hr class="rule"><section class="meta"><div><span>رقم الفاتورة</span><strong>'+escapeReceipt(inv.invoice_number)+'</strong></div><div><span>التاريخ</span><strong>'+escapeReceipt(invoiceTime)+'</strong></div><div><span>العميل</span><strong>'+escapeReceipt(customerName(inv.customer_id))+'</strong></div></section><hr class="rule"><table><tbody>'+rows+'</tbody></table><hr class="rule"><section>'+totalRows+'</section><hr class="rule"><footer class="thanks">شكراً لتعاملكم معنا<br>'+escapeReceipt(companyName)+'</footer></main>'+receiptScriptOpen+'window.onload=function(){setTimeout(function(){window.focus();window.print();},350)};'+receiptScriptClose+'</body></html>';
           printWindow.document.open();printWindow.document.write(receipt);printWindow.document.close();
         };
     } catch(e) { alert(err(e)); }
@@ -13513,6 +13514,8 @@ function mmInitAdvancedReportActions(){
   async function init(){
     if(initStarted)return;
     initStarted=true;
+    const initAuthFlowVersion=Number(window.mmAuthFlowVersion)||0;
+    const initStartedDuringLogin=!!window.mmLoginInProgress;
     updateOfflineBanner();
     try{
       const {data,error}=await db.auth.getSession(); 
@@ -13538,10 +13541,12 @@ function mmInitAdvancedReportActions(){
         }
         await bootAppAfterLogin(data.session.user);
       } else { 
-        if(!window.mmLoginInProgress) showLogin();
+        const authFlowChanged=initAuthFlowVersion!==(Number(window.mmAuthFlowVersion)||0);
+        if(!initStartedDuringLogin&&!authFlowChanged&&!window.mmLoginInProgress) showLogin();
       }
     }catch(e){ 
-      if(!window.mmLoginInProgress){
+      const authFlowChanged=initAuthFlowVersion!==(Number(window.mmAuthFlowVersion)||0);
+      if(!initStartedDuringLogin&&!authFlowChanged&&!window.mmLoginInProgress){
         showLogin(); 
         msg($("loginMsg"),"خطأ في الجلسة: "+err(e),"error");
       }
@@ -13783,7 +13788,7 @@ $("hrCreatePeriod")?.addEventListener("click",async()=>{try{const r=await db.rpc
 // ====== PWA ======
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=206', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
+    navigator.serviceWorker.register('./sw.js?v=207', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
   });
 }
 
