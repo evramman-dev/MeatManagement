@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v185</title>
+<title>MeatManagement v186</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -746,7 +746,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v185]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v186]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1077,7 +1077,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <button type="button" class="data-category-card" id="dataCategoryCardinventory" onclick="window.openDataGroup('inventory')"><span class="data-category-icon">🏭</span><span class="data-category-title">المخزون</span><span class="data-category-subtitle" id="dataCategoryCountinventory">6 أقسام</span></button>
 <button type="button" class="data-category-card" id="dataCategoryCardproduction" onclick="window.openDataGroup('production')"><span class="data-category-icon">📝</span><span class="data-category-title">الإنتاج</span><span class="data-category-subtitle" id="dataCategoryCountproduction">4 أقسام</span></button>
 <button type="button" class="data-category-card" id="dataCategoryCardreportsInventory" onclick="window.openDataGroup('reportsInventory')"><span class="data-category-icon">📊</span><span class="data-category-title">التقارير والجرد</span><span class="data-category-subtitle" id="dataCategoryCountreportsInventory">2 أقسام</span></button>
-<button type="button" class="data-category-card" id="dataCategoryCardhr" onclick="window.openDataGroup('hr')"><span class="data-category-icon">👥</span><span class="data-category-title">الموارد البشرية</span><span class="data-category-subtitle" id="dataCategoryCounthr">1 أقسام</span></button>
+<button type="button" class="data-category-card" id="dataCategoryCardhr" onclick="window.openSection('hr')"><span class="data-category-icon">👥</span><span class="data-category-title">الموارد البشرية</span><span class="data-category-subtitle" id="dataCategoryCounthr">1 أقسام</span></button>
 <button type="button" class="data-category-card" id="dataCategoryCardprocurement" onclick="window.openDataGroup('procurement')"><span class="data-category-icon">🛒</span><span class="data-category-title">المشتريات والموردين</span><span class="data-category-subtitle" id="dataCategoryCountprocurement">7 أقسام</span></button>
 <button type="button" class="data-category-card" id="dataCategoryCardsales" onclick="window.openDataGroup('sales')"><span class="data-category-icon">💰</span><span class="data-category-title">المبيعات والتوزيع</span><span class="data-category-subtitle" id="dataCategoryCountsales">7 أقسام</span></button>
 <button type="button" class="data-category-card" id="dataCategoryCardfinance" onclick="window.openDataGroup('finance')"><span class="data-category-icon">🧮</span><span class="data-category-title">الحسابات والإدارة</span><span class="data-category-subtitle" id="dataCategoryCountfinance">8 أقسام</span></button>
@@ -2557,7 +2557,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 
 </section>
-<section id="sectionHr" class="sub-section hidden"><button id="hrBackToData" type="button" class="btn secondary" onclick="window.closeSection()" style="width:auto;margin:0 0 12px">⬅ رجوع إلى مركز البيانات</button><div class="card"><h2>👥 الموارد البشرية</h2><p class="desc">إدارة الموظفين والحضور والإجازات ومسيرات الرواتب.</p>
+<section id="sectionHr" class="sub-section hidden"><div class="card"><h2>👥 الموارد البشرية</h2><p class="desc">إدارة الموظفين والحضور والإجازات ومسيرات الرواتب.</p><button id="hrBackToData" type="button" class="btn secondary" onclick="window.closeSection()" style="width:auto;margin:0 0 12px">⬅ رجوع إلى مركز البيانات</button>
 <div id="hrMenuGrid" class="dashboard-grid" style="margin-top:16px">
 <div class="dash-item" role="button" tabindex="0" onclick="window.hrOpenPanel('setup')"><div class="dash-icon">⚙️</div><div class="dash-title">إعداد HR</div></div>
 <div class="dash-item" role="button" tabindex="0" onclick="window.hrOpenPanel('employees')"><div class="dash-icon">👥</div><div class="dash-title">الموظفون</div></div>
@@ -3379,6 +3379,31 @@ function enableProductSearch(select,placeholder){
   }
   const chosen=select.options[select.selectedIndex];input.value=chosen&&chosen.value?chosen.textContent:"";const q=input.value.trim().toLocaleLowerCase();
   Array.from(select.options).forEach((op,index)=>{if(index===0)op.hidden=false;else op.hidden=!q||!op.textContent.toLocaleLowerCase().includes(q);});
+}
+function enableProductTypeFilter(select,allowedProducts){
+  if(!select)return;
+  const searchInput=select.previousElementSibling&&select.previousElementSibling.classList.contains("product-search-input")?select.previousElementSibling:null;
+  let typeSelect=select.parentNode.querySelector(':scope > .product-type-filter[data-for="'+select.id+'"]');
+  if(!typeSelect){
+    typeSelect=document.createElement("select");typeSelect.className="product-type-filter";typeSelect.dataset.for=select.id;
+    typeSelect.innerHTML='<option value="">اختر نوع المنتج</option><option value="RAW">خامات</option><option value="FINISHED">منتج تام</option><option value="SEMI_FINISHED">نصف مصنع</option>';
+    select.parentNode.insertBefore(typeSelect,searchInput||select);
+    typeSelect.addEventListener("change",()=>{
+      const wanted=typeSelect.value,previous=select.value;
+      const list=allowedProducts().filter(p=>!wanted||p.product_type===wanted);
+      const first=document.createElement("option");first.value="";first.textContent="اختر المنتج";
+      select.replaceChildren(first);
+      list.forEach(p=>{const o=document.createElement("option");o.value=String(p.product_id);o.textContent=p.product_name+(p.product_code?" ("+p.product_code+")":"");select.appendChild(o);});
+      select.value=list.some(p=>String(p.product_id)===previous)?previous:"";
+      const input=select.previousElementSibling;
+      if(input&&input.classList.contains("product-search-input"))input.value="";
+      Array.from(select.options).forEach(o=>o.hidden=false);
+    });
+  }
+  const chosen=productsCache.find(p=>String(p.product_id)===String(select.value));
+  if(chosen&&chosen.product_type)typeSelect.value=chosen.product_type;
+  else if(!typeSelect.dataset.initialized)typeSelect.value="";
+  typeSelect.dataset.initialized="1";
 }
 function fillSelect(el,items,idkey,namekey,placeholder){
   if(!el) return; el.replaceChildren();
@@ -4997,7 +5022,7 @@ window.openNewProductForm=function(){
 // ========== خيارات التعبئة ==========
 function packageOptionsForProduct(productId,unitId=null){return packagingOptionsCache.filter(x=>x.is_active&&String(x.product_id)===String(productId)&&(!unitId||String(x.unit_id)===String(unitId)));}
 async function loadPackagingOptions(){const box=$("packageOptionsList");if(!box)return;if(!navigator.onLine){box.innerHTML="<div class='empty'>أنت أوفلاين.</div>";return;}const {data,error}=await db.from("product_packaging_options").select("*,products(product_name,product_code),units(unit_name)").order("product_id").order("sort_order").order("package_option_id");if(error){msg($("packageOptionsMsg"),"تعذر تحميل خيارات التعبئة: "+err(error),"error");return;}packagingOptionsCache=data||[];const filter=$("packageProductFilter")?.value||"";const found=packagingOptionsCache.filter(x=>!filter||String(x.product_id)===String(filter));box.replaceChildren();if(!found.length){box.innerHTML="<div class='empty'>لا توجد خيارات تعبئة مسجلة.</div>";return;}found.forEach(x=>{const c=document.createElement("div");c.className="product";c.innerHTML=`<div class="pname">📦 ${x.products?.product_name||productName(x.product_id)}</div><div class="details">الخيار: ${x.option_name} | الوحدة: ${x.units?.unit_name||unitName(x.unit_id)} | الوزن: ${fmtQty(x.weight_kg)} كجم | الحالة: ${x.is_active?"نشط":"غير نشط"}</div>`;const a=document.createElement("div");a.className="actions";if(canManage){const e=document.createElement("button");e.className="btn secondary";e.textContent="تعديل";e.onclick=()=>openPackageOptionForm(x);a.appendChild(e);const t=document.createElement("button");t.className="btn";t.textContent=x.is_active?"تعطيل":"تفعيل";t.onclick=()=>togglePackageOption(x);a.appendChild(t);}c.appendChild(a);box.appendChild(c);});}
-function fillPackageProductSelects(){["packageProductFilter","packageOptionProduct"].forEach(id=>{const el=$(id);if(!el)return;const cur=el.value;el.replaceChildren();const f=document.createElement("option");f.value="";f.textContent=id==="packageProductFilter"?"كل المنتجات":"اختر المنتج";el.appendChild(f);productsCache.filter(p=>p.is_active).forEach(p=>{const o=document.createElement("option");o.value=String(p.product_id);o.textContent=p.product_name+" ("+p.product_code+")";el.appendChild(o);});el.value=cur;enableProductSearch(el,id==="packageProductFilter"?"ابحث باسم المنتج لتصفية خيارات التعبئة...":"ابحث باسم المنتج...");});}
+function fillPackageProductSelects(){["packageProductFilter","packageOptionProduct"].forEach(id=>{const el=$(id);if(!el)return;const cur=el.value;el.replaceChildren();const f=document.createElement("option");f.value="";f.textContent=id==="packageProductFilter"?"كل المنتجات":"اختر المنتج";el.appendChild(f);productsCache.filter(p=>p.is_active).forEach(p=>{const o=document.createElement("option");o.value=String(p.product_id);o.textContent=p.product_name+" ("+p.product_code+")";el.appendChild(o);});el.value=cur;enableProductSearch(el,id==="packageProductFilter"?"ابحث باسم المنتج لتصفية خيارات التعبئة...":"ابحث باسم المنتج...");if(id==="packageOptionProduct")enableProductTypeFilter(el,()=>productsCache.filter(p=>p.is_active));});}
 function fillPackageUnitSelect(){const el=$("packageOptionUnit");if(!el)return;el.replaceChildren();const f=document.createElement("option");f.value="";f.textContent="اختر وحدة التعبئة";el.appendChild(f);units.filter(u=>u.is_active&&u.is_package_unit).forEach(u=>{const o=document.createElement("option");o.value=String(u.unit_id);o.textContent=u.unit_name;el.appendChild(o);});}
 function openPackageOptionForm(row=null){if(!canManage)return;$("packageOptionForm").reset();$("packageOptionEditId").value=row?row.package_option_id:"";$("packageOptionFormTitle").textContent=row?"تعديل خيار تعبئة":"إضافة خيار تعبئة";fillPackageProductSelects();fillPackageUnitSelect();if(row){$("packageOptionProduct").value=String(row.product_id);enableProductSearch($("packageOptionProduct"),"ابحث باسم المنتج...");$("packageOptionUnit").value=String(row.unit_id);$("packageOptionName").value=row.option_name||"";$("packageOptionWeight").value=row.weight_kg||"";$("packageOptionSort").value=row.sort_order||0;$("packageOptionActive").checked=!!row.is_active;}clear($("packageOptionFormMsg"));$("packageOptionFormModal").classList.add("active");}
 async function togglePackageOption(row){try{const {error}=await db.from("product_packaging_options").update({is_active:!row.is_active,updated_at:new Date().toISOString()}).eq("package_option_id",row.package_option_id);if(error)throw error;await loadPackagingOptions();}catch(e){showToast("تعذر تحديث خيار التعبئة: "+err(e),"error",7000);}}
@@ -10200,6 +10225,7 @@ function fillRecipeOutputSelects(){
     }); 
     el.value=cur; 
     enableProductSearch(el,"ابحث عن المنتج الناتج بالاسم...");
+    enableProductTypeFilter(el,()=>productsCache.filter(p=>p.is_active&&p.can_be_produced));
   } 
 }
 function addRecipeItemRow(item){ 
@@ -10234,7 +10260,8 @@ function addRecipeItemRow(item){
   removeBtn.onclick=()=>{ wrap.remove(); if(!$("recipeItems").children.length) addRecipeItemRow(); }; 
   wrap.append(prodLabel,prodSel,unitLabel,unitSel,qtyLabel,qty,removeBtn); 
   $("recipeItems").appendChild(wrap);
-  enableProductSearch(prodSel,"ابحث عن مكوّن التصنيع بالاسم..."); 
+  enableProductSearch(prodSel,"ابحث عن مكوّن التصنيع بالاسم...");
+  enableProductTypeFilter(prodSel,()=>productsCache.filter(p=>p.is_active&&(["RAW","SEMI_FINISHED"].includes(p.product_type)||p.can_be_recipe_ingredient===true))); 
 }
 window.addRecipeItemRow = addRecipeItemRow;
 if($("addRecipeItemBtn")) $("addRecipeItemBtn").addEventListener("click",()=>addRecipeItemRow());
