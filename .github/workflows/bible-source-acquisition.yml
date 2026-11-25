@@ -30,6 +30,7 @@ jobs:
         run: python scripts/fetch_bible_sources.py
 
       - name: Upload source bundle for review only
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: bible-source-batch-01
