@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v223</title>
+<title>MeatManagement v224</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -494,6 +494,14 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
   .mm-book-table th,.mm-book-table td{padding:6px 5px}
   .mm-book-view .mm-book-section-actions{display:grid;grid-template-columns:1fr}
   .mm-book-view .mm-book-section-actions .btn{width:100%}
+  .mm-book-treasury .mm-book-table-wrap{overflow:visible}
+  .mm-book-treasury .mm-book-table-wrap .mm-book-table{min-width:0;width:100%;table-layout:fixed}
+  .mm-book-treasury .mm-book-table th,.mm-book-treasury .mm-book-table td{white-space:normal;overflow-wrap:anywhere;word-break:break-word}
+  .mm-book-treasury .mm-book-table th:nth-child(1),.mm-book-treasury .mm-book-table td:nth-child(1){width:18%}
+  .mm-book-treasury .mm-book-table th:nth-child(2),.mm-book-treasury .mm-book-table td:nth-child(2){width:34%}
+  .mm-book-treasury .mm-book-table th:nth-child(3),.mm-book-treasury .mm-book-table td:nth-child(3),
+  .mm-book-treasury .mm-book-table th:nth-child(4),.mm-book-treasury .mm-book-table td:nth-child(4){width:14%}
+  .mm-book-treasury .mm-book-table th:nth-child(5),.mm-book-treasury .mm-book-table td:nth-child(5){width:20%}
 }
 .mm-book-controls{background:#f8faf8;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:14px}
 .mm-book-page{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px;margin:14px 0;break-after:page;page-break-after:always}
@@ -536,7 +544,11 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
   body.mm-printing .mm-book-page h3{font-size:16px;margin-bottom:5px}
   body.mm-printing .mm-book-table{font-size:8px}
   body.mm-printing .mm-book-table th,.mm-book-table td{padding:3px 2px}
-  body.mm-printing .mm-book-treasuries{grid-template-columns:1fr;gap:10px}.mm-book-subsection{break-inside:avoid;page-break-inside:avoid}
+  body.mm-printing .mm-book-treasuries{grid-template-columns:1fr;gap:10px}
+  body.mm-printing .mm-book-treasury .mm-book-table-wrap{overflow:visible}
+  body.mm-printing .mm-book-treasury .mm-book-table-wrap .mm-book-table{min-width:0;width:100%;table-layout:fixed}
+  body.mm-printing .mm-book-treasury .mm-book-table th,body.mm-printing .mm-book-treasury .mm-book-table td{white-space:normal;overflow-wrap:anywhere;word-break:break-word}
+  .mm-book-subsection{break-inside:avoid;page-break-inside:avoid}
 }
 
     /* ====== تنسيقات فاتورة الطباعة A4 الاحترافية ====== */
