@@ -10,6 +10,10 @@ on:
       - "scripts/fetch_bible_sources.py"
       - "scripts/convert_bible_sources.py"
       - "scripts/tests/test_convert_bible_sources.py"
+      - "scripts/audit_bible_corpus.py"
+      - "scripts/tests/test_audit_bible_corpus.py"
+      - "bible/SOURCE_BATCH_01_BOOK_AUDIT.md"
+      - "bible/COPTIC_OT_SOURCE_RESEARCH.md"
       - ".github/workflows/bible-source-acquisition.yml"
   push:
     branches: [main]
@@ -41,6 +45,8 @@ jobs:
         run: python scripts/fetch_bible_sources.py
       - name: Convert editions to separate staged JSONL files
         run: python scripts/convert_bible_sources.py --input build/bible-source-batch-01 --output build/bible-corpus-stage-batch-01
+      - name: Audit each edition by book and chapter
+        run: python scripts/audit_bible_corpus.py --input build/bible-corpus-stage-batch-01 --catalog bible/data/coptic-canon-catalog.draft.json --manifest build/bible-corpus-stage-batch-01/conversion-manifest.json --output-json build/bible-corpus-stage-batch-01/audit/book-audit.json --output-md build/bible-corpus-stage-batch-01/audit/book-audit.md
       - name: Upload source bundle for review only
         if: always()
         uses: actions/upload-artifact@v4
