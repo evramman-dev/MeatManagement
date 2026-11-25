@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v227</title>
+<title>MeatManagement v228</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1176,7 +1176,8 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 .mm-section-heading:after{content:"";height:1px;flex:1;background:var(--line)}
 .mm-menu-card,
 #homeDashboard .home-card[role="button"],
-#homeQuickReports .home-card{
+#homeQuickReports .home-card,
+#homeDailyExtras .home-card{
   background:linear-gradient(180deg,#fff,#f7faf7)!important;
   color:var(--g)!important;
   border:1px solid var(--line)!important;
@@ -1188,13 +1189,21 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 #homeDashboard .home-card[role="button"] .hc-label,
 #homeDashboard .home-card[role="button"] .hc-value,
 #homeQuickReports .home-card .hc-label,
-#homeQuickReports .home-card .hc-value{color:var(--g)!important}
+#homeQuickReports .home-card .hc-value,
+#homeDailyExtras .home-card .hc-label,
+#homeDailyExtras .home-card .hc-value,
+#homeDailyExtras .home-card .details{color:var(--g)!important}
 .mm-menu-card:active,
 #homeDashboard .home-card[role="button"]:active,
-#homeQuickReports .home-card:active{transform:scale(.98)}
-#homeQuickReports .home-card{min-height:104px}
+#homeQuickReports .home-card:active,
+#homeDailyExtras .home-card:active{transform:scale(.98)}
+#homeQuickReports .home-card,
+#homeDailyExtras .home-card{min-height:104px;padding:14px 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px}
 #homeQuickReports{margin-top:10px}
-#homeQuickReports .home-card .hc-value{font-size:14px}
+#homeQuickReports .home-card .hc-value,
+#homeDailyExtras .home-card .hc-value{font-size:14px}
+#homeDailyExtras .home-card .hc-label{font-size:14px;line-height:1.45}
+#homeDailyExtras .home-card .details{font-size:11px;line-height:1.4;margin-top:2px}
 #homeDashboard .home-card[role="button"]{cursor:pointer}
 #homeDashboard .home-card[role="button"] .hc-label{font-size:14px}
 #homeDashboard .home-card[role="button"] .hc-value{font-size:12px;margin-top:4px}
@@ -1225,7 +1234,8 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 .mm-task-send select[multiple]{min-height:150px}
 #tasks .notification-count{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 7px;border-radius:20px;background:#edf3ed;color:var(--g);font-weight:700}
 @media(max-width:480px){
-  #homeQuickReports .home-card{min-height:92px;padding:12px 8px}
+  #homeQuickReports .home-card,
+  #homeDailyExtras .home-card{min-height:92px;padding:12px 8px}
   #homeDashboard .home-card[role="button"]{min-height:94px;padding:12px 8px}
   .mm-tasks-dashboard{gap:8px}
   .mm-tasks-dashboard .home-card{min-height:86px}
@@ -1233,7 +1243,8 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
   .mm-task-list-box #tasksList,.mm-task-list-box #taskNotificationsList{max-height:280px}
 }
 @media(max-width:360px){
-  #homeQuickReports .home-card{min-height:88px}
+  #homeQuickReports .home-card,
+  #homeDailyExtras .home-card{min-height:88px}
   .mm-tasks-dashboard .home-card,.mm-tasks-dashboard .tasks-financial-card{min-height:82px!important}
 }
 
@@ -1361,7 +1372,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v226]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v228]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -3348,7 +3359,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v226</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v228</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -6284,7 +6295,7 @@ async function openHomeMetric(type){
   const cfg={salesToday:"💰 ملخص مبيعات اليوم",customers:"👥 ملخص العملاء النشطين",lowStock:"⚠️ ملخص نقص المخزون",unpaid:"📄 ملخص الفواتير الآجلة",cash:"💵 ملخص النقدية والخزائن",trips:"🚐 ملخص الجولات النشطة",collections:"💸 ملخص تحصيلات اليوم",expenses:"🧾 ملخص مصروفات اليوم",suppliers:"🏭 ملخص مستحقات الموردين"};
   if(!cfg[type])return;
   $("homeOverview")?.classList.add("hidden");
-  ["homeNotificationPanel","homeGeoPanel","homeItemsPanel","homeCustomersPanel","homeSuppliersPanel","homePartnerSummaryPanel"].forEach(id=>$(id)?.classList.add("hidden"));
+  ["homeNotificationPanel","homeGeoPanel","homeItemsPanel","homeCustomersPanel","homeSuppliersPanel","homeActionPanel","homeClosingPanel","homePartnerSummaryPanel"].forEach(id=>$(id)?.classList.add("hidden"));
   $("homeMetricPanel")?.classList.remove("hidden");
   $("homeMetricTitle").textContent=cfg[type];
   $("mmAcc_homeMetricSummary").replaceChildren();
@@ -6334,7 +6345,7 @@ function openHomeDetail(panelId){
 function closeHomeDetail(){
   $("partnerReportMenuScreen")?.classList.add("hidden");
   $("partnerReportDetailScreen")?.classList.add("hidden");
-  ["homeNotificationPanel","homeGeoPanel","homeItemsPanel","homeCustomersPanel","homeSuppliersPanel","homePartnerSummaryPanel","homeMetricPanel"].forEach(id=>$(id)?.classList.add("hidden"));
+  ["homeNotificationPanel","homeGeoPanel","homeItemsPanel","homeCustomersPanel","homeSuppliersPanel","homeActionPanel","homeClosingPanel","homePartnerSummaryPanel","homeMetricPanel"].forEach(id=>$(id)?.classList.add("hidden"));
   $("homeOverview")?.classList.remove("hidden");
   window.scrollTo(0,0);
 }
@@ -14138,7 +14149,7 @@ $("hrCreatePeriod")?.addEventListener("click",async()=>{try{const r=await db.rpc
 // ====== PWA ======
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=227', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
+    navigator.serviceWorker.register('./sw.js?v=228', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
   });
 }
 
