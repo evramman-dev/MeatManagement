@@ -25,9 +25,9 @@ p{line-height:1.8}.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .search{display:flex;gap:8px}.search input{flex:1;border:1px solid var(--line);background:#fff;border-radius:15px;padding:13px;outline:none}
 .result{padding:13px 0;border-bottom:1px solid var(--line)}.result:last-child{border-bottom:0}.journey-progress{height:9px;background:#e4e9e4;border-radius:20px;overflow:hidden;margin:12px 0}.journey-progress span{display:block;height:100%;background:var(--gold);width:0;transition:width .2s}.journey-meta{display:grid;grid-template-columns:1fr 1fr;gap:9px}.journey-meta div{background:#f5f3ed;border-radius:14px;padding:11px}.journey-meta strong{display:block;font-size:13px}.journey-meta small{color:var(--muted)}.day-block{padding:13px 0;border-bottom:1px solid var(--line)}.day-block:last-child{border-bottom:0}
 .nav{position:fixed;bottom:0;right:0;left:0;background:#fffdf9;border-top:1px solid var(--line);z-index:5}
-.nav-inner{max-width:620px;margin:auto;display:grid;grid-template-columns:repeat(4,1fr)}
+.nav-inner{max-width:620px;margin:auto;display:grid;grid-template-columns:repeat(5,1fr)}
 .nav button{background:transparent;padding:11px 4px;color:var(--muted);font-size:12px}.nav button.active{color:var(--accent);font-weight:700}
-textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:15px;padding:12px;background:#fff;resize:vertical}
+textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:15px;padding:12px;background:#fff;resize:vertical}input[type=text]{width:100%;border:1px solid var(--line);border-radius:15px;padding:13px;background:#fff;outline:none}.verse-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-top:12px}.verse-actions button{font-size:12px;padding:10px 6px}.verse-card{padding:14px 0;border-bottom:1px solid var(--line)}.verse-card:last-child{border-bottom:0}.verse-text{white-space:pre-wrap;line-height:1.9}.filter-active{background:var(--accent);color:#fff}
 .note{font-size:12px;color:var(--muted)}.pill{display:inline-block;background:var(--soft);color:var(--accent);padding:5px 9px;border-radius:20px;font-size:12px;margin:3px}
 .hidden{display:none!important}
 </style>
@@ -36,7 +36,7 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 <div class="app">
 <header>
   <button id="backToMeat" class="secondary" type="button" style="margin-bottom:12px">العودة إلى MeatManagement</button>
-  <div class="brand">رِحلة</div><div class="version">الإصدار v9 · برنامج 30 يومًا</div>
+  <div class="brand">رِحلة</div><div class="version">الإصدار v10 · الآيات المحفوظة</div>
   <h1 id="title">أنت داخل التطبيق النهارده ليه؟</h1>
   <p id="subtitle">ابدأ من حالتك، ثم اترك للكلمة مساحة.</p>
 </header>
@@ -98,6 +98,35 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
   </div>
 </section>
 
+<section id="verses" class="view">
+  <div class="card">
+    <div class="eyebrow">ذاكرتي مع الكلمة</div>
+    <h2>أضف آية أو مرجعًا</h2>
+    <p class="note">اكتب المرجع، وأضف نص الآية الذي تختاره بنفسك. لا يحتوي التطبيق على نص كتابي منقول.</p>
+    <label for="verseReference">مرجع الآية</label>
+    <input id="verseReference" type="text" placeholder="مثال: مزمور 23:1" required>
+    <label for="verseText" style="display:block;margin-top:12px">نص الآية</label>
+    <textarea id="verseText" placeholder="اكتب نص الآية هنا..."></textarea>
+    <button id="saveVerseButton" class="primary" type="button">حفظ الآية</button>
+    <p id="verseSaveStatus" class="note"></p>
+  </div>
+  <div class="card">
+    <h2>مراجعة الآيات</h2>
+    <div class="journey-meta"><div><strong id="savedVerseCount">0</strong><small>آيات محفوظة</small></div><div><strong id="dueVerseCount">0</strong><small>مستحقة للمراجعة</small></div></div>
+    <div class="search" style="margin-top:12px">
+      <button id="filterDueVerses" class="secondary filter-active" type="button">المستحق اليوم</button>
+      <button id="filterAllVerses" class="secondary" type="button">كل الآيات</button>
+    </div>
+    <div id="savedVersesList" style="margin-top:12px"></div>
+  </div>
+  <div class="card">
+    <div class="eyebrow">كيف تعمل المراجعة؟</div>
+    <p>بعد قراءة الآية، اختر مستوى تذكرك لها. سيحدد التطبيق موعد المراجعة التالية تلقائيًا.</p>
+    <p class="note">صعبة: غدًا · جيدة: بعد 3 أيام · سهلة: بعد 7 أيام · متقنة: بعد 14 يومًا.</p>
+    <p class="note">الآيات وتقدم المراجعة محفوظان على هذا الجهاز فقط.</p>
+  </div>
+</section>
+
 <section id="me" class="view">
   <div class="card">
     <div class="eyebrow">مذكراتي</div>
@@ -121,6 +150,7 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 <button data-view="home" class="active" onclick="showView('home',this)">اليوم</button>
 <button data-view="read" onclick="showView('read',this)">الكتاب</button>
 <button data-view="journeys" onclick="showView('journeys',this)">الرحلات</button>
+<button data-view="verses" onclick="showView('verses',this)">آياتي</button>
 <button data-view="me" onclick="showView('me',this)">مذكراتي</button>
 </div></nav>
 </div>
@@ -146,7 +176,7 @@ const references={
 };
 const choiceBox=document.getElementById("moodChoices");
 moods.forEach(m=>{const b=document.createElement("button");b.className="choice";b.innerHTML="<strong>"+m.title+"</strong><small>"+m.sub+"</small>";b.onclick=()=>chooseMood(m);choiceBox.appendChild(b)});
-function showView(id,btn){document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));document.getElementById(id).classList.add("active");document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));if(btn)btn.classList.add("active");const headings={home:["أنت داخل التطبيق النهارده ليه؟","ابدأ من حالتك، ثم اترك للكلمة مساحة."],read:["الكتاب المقدس","اقرأ وابحث وتابع مراجع القراءة في مكان واحد."],journeys:["الرحلات","اختر مسارًا يساعدك على القراءة والتأمل يومًا بيوم."],myJourney:["رحلتي","تابع يومك الحالي وتأملاتك وتقدمك في برنامج الثلاثين يومًا."],me:["مذكراتي","احتفظ بأفكارك وصلواتك وما تريد الرجوع إليه."]};const heading=headings[id]||headings.home;document.getElementById("title").textContent=heading[0];document.getElementById("subtitle").textContent=heading[1];if(id==="me")renderNotes();if(id==="journeys"||id==="myJourney")renderJourney();scrollTo({top:0,behavior:"smooth"})}
+function showView(id,btn){document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));document.getElementById(id).classList.add("active");document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));if(btn)btn.classList.add("active");const headings={home:["أنت داخل التطبيق النهارده ليه؟","ابدأ من حالتك، ثم اترك للكلمة مساحة."],read:["الكتاب المقدس","اقرأ وابحث وتابع مراجع القراءة في مكان واحد."],journeys:["الرحلات","اختر مسارًا يساعدك على القراءة والتأمل يومًا بيوم."],myJourney:["رحلتي","تابع يومك الحالي وتأملاتك وتقدمك في برنامج الثلاثين يومًا."],verses:["آياتي المحفوظة","احفظ المراجع التي تهمك، وراجعها في مواعيد تساعدك على تذكرها."],me:["مذكراتي","احتفظ بأفكارك وصلواتك وما تريد الرجوع إليه."]};const heading=headings[id]||headings.home;document.getElementById("title").textContent=heading[0];document.getElementById("subtitle").textContent=heading[1];if(id==="me")renderNotes();if(id==="verses")renderVerses();if(id==="journeys"||id==="myJourney")renderJourney();scrollTo({top:0,behavior:"smooth"})}
 function chooseMood(m){const refs=references[m.id]||[];const card=document.getElementById("journeyCard");card.classList.remove("hidden");card.innerHTML="<div class='eyebrow'>رحلتك المقترحة</div><h2>"+m.title+"</h2><p>سنبدأ بثلاث محطات قصيرة. كل محطة لها قراءة وتأمل وسؤال وصلاة.</p><div>"+refs.map(r=>"<span class='pill'>"+r+"</span>").join("")+"</div><button id='startSelectedJourney' class='primary' type='button'>احفظ اختياري وابدأ</button>";document.getElementById("startSelectedJourney").addEventListener("click",()=>saveMood(m.id));localStorage.setItem("rh_last_mood",m.id)}
 const journeyDays=[
 {title:"ابدأ من مكانك",refs:["مزمور 139","مرقس 1"],question:"ما الأمر الذي يشغل قلبك اليوم؟",prayer:"قل لله ببساطة ما بداخلك دون ترتيب أو تجميل.",step:"خصص خمس دقائق هادئة للقراءة."},
@@ -193,6 +223,15 @@ function saveNote(v){const notes=getNotes();notes.unshift({text:v,date:new Date(
 function saveJournal(){const v=document.getElementById("journal").value.trim();if(!v){document.getElementById("saveStatus").textContent="اكتب جملة أولًا.";return}saveNote(v);document.getElementById("journal").value="";document.getElementById("saveStatus").textContent="تم الحفظ على جهازك."}
 function renderNotes(){const el=document.getElementById("notesList"),notes=getNotes();el.innerHTML=notes.length?notes.map(n=>"<div class='result'><p>"+escapeHtml(n.text)+"</p><span class='note'>"+escapeHtml(n.date||'')+"</span></div>").join(""):"<p class='note'>لا توجد مذكرات بعد.</p>";renderHomeSummary()}
 function renderHomeSummary(){const notes=getNotes();const n=document.getElementById('homeNotesCount');if(n)n.textContent=notes.length?notes.length+' مذكرات محفوظة':'لا توجد مذكرات محفوظة';const s=document.getElementById('homeJourneyStatus');if(s)s.textContent=localStorage.getItem('rh_journey_id')?'رحلتك بدأت · اليوم '+(localStorage.getItem('rh_journey_day')||'1')+' من 30':'لم تبدأ بعد';}
+let verseFilter="due";
+function getSavedVerses(){try{const value=JSON.parse(localStorage.getItem("rh_saved_verses")||"[]");return Array.isArray(value)?value:[]}catch(e){return []}}
+function localDateKey(date){const d=date||new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function verseDateAfter(days){const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()+days);return localDateKey(d)}
+function formatVerseDate(key){if(!key)return "غير محدد";const d=new Date(key+"T12:00:00");return d.toLocaleDateString("ar-EG",{day:"numeric",month:"long",year:"numeric"})}
+function saveNewVerse(){const ref=document.getElementById("verseReference").value.trim();const textValue=document.getElementById("verseText").value.trim();const status=document.getElementById("verseSaveStatus");if(!ref){status.textContent="اكتب مرجع الآية أولًا.";return}const verses=getSavedVerses();verses.unshift({id:String(Date.now())+"-"+Math.random().toString(36).slice(2,7),reference:ref,text:textValue,level:"جديدة",createdAt:localDateKey(),lastReviewed:null,nextReview:localDateKey(),reviewCount:0});localStorage.setItem("rh_saved_verses",JSON.stringify(verses));document.getElementById("verseReference").value="";document.getElementById("verseText").value="";status.textContent="تم حفظ الآية على هذا الجهاز. ستظهر ضمن مراجعة اليوم.";verseFilter="due";renderVerses()}
+function updateVerseReview(id,grade){const intervals={hard:1,good:3,easy:7,mastered:14};const labels={hard:"صعبة",good:"جيدة",easy:"سهلة",mastered:"متقنة"};const verses=getSavedVerses();const item=verses.find(v=>v.id===id);if(!item)return;item.level=labels[grade];item.lastReviewed=localDateKey();item.nextReview=verseDateAfter(intervals[grade]);item.reviewCount=(Number(item.reviewCount)||0)+1;localStorage.setItem("rh_saved_verses",JSON.stringify(verses));renderVerses()}
+function deleteSavedVerse(id){const verses=getSavedVerses().filter(v=>v.id!==id);localStorage.setItem("rh_saved_verses",JSON.stringify(verses));renderVerses()}
+function renderVerses(){const verses=getSavedVerses();const today=localDateKey();const due=verses.filter(v=>!v.nextReview||v.nextReview<=today);const visible=verseFilter==="due"?due:verses;document.getElementById("savedVerseCount").textContent=String(verses.length);document.getElementById("dueVerseCount").textContent=String(due.length);document.getElementById("filterDueVerses").classList.toggle("filter-active",verseFilter==="due");document.getElementById("filterAllVerses").classList.toggle("filter-active",verseFilter==="all");const list=document.getElementById("savedVersesList");if(!visible.length){list.innerHTML=verseFilter==="due"?"<p class='note'>لا توجد آيات مستحقة اليوم. يمكنك عرض كل الآيات أو إضافة آية جديدة.</p>":"<p class='note'>لم تحفظ آيات بعد. أضف أول مرجع لتبدأ.</p>";return}list.innerHTML=visible.map(v=>{const isDue=!v.nextReview||v.nextReview<=today;return "<div class='verse-card'><div class='row' style='display:flex;justify-content:space-between;gap:8px;align-items:center'><strong>"+escapeHtml(v.reference)+"</strong><span class='pill'>"+(isDue?"مستحقة اليوم":"المراجعة "+formatVerseDate(v.nextReview))+"</span></div><p class='verse-text'>"+(v.text?escapeHtml(v.text):"<span class='note'>لم تضف نص الآية. يمكنك الاحتفاظ بالمرجع فقط.</span>")+"</p><p class='note'>المستوى: "+escapeHtml(v.level||"جديدة")+" · مرات المراجعة: "+(Number(v.reviewCount)||0)+"</p><div class='verse-actions'><button class='secondary' data-verse-grade='hard' data-verse-id='"+escapeHtml(v.id)+"' type='button'>صعبة · غدًا</button><button class='secondary' data-verse-grade='good' data-verse-id='"+escapeHtml(v.id)+"' type='button'>جيدة · 3 أيام</button><button class='secondary' data-verse-grade='easy' data-verse-id='"+escapeHtml(v.id)+"' type='button'>سهلة · 7 أيام</button><button class='secondary' data-verse-grade='mastered' data-verse-id='"+escapeHtml(v.id)+"' type='button'>متقنة · 14 يومًا</button></div><button class='secondary' data-verse-delete='"+escapeHtml(v.id)+"' type='button' style='margin-top:9px;width:100%'>حذف من آياتي</button></div>"}).join("");list.querySelectorAll("[data-verse-grade]").forEach(button=>button.addEventListener("click",()=>updateVerseReview(button.dataset.verseId,button.dataset.verseGrade)));list.querySelectorAll("[data-verse-delete]").forEach(button=>button.addEventListener("click",()=>{if(confirm("هل تريد حذف هذه الآية من قائمتك؟"))deleteSavedVerse(button.dataset.verseDelete)}))}
 function escapeHtml(s){return String(s).replace(/[&<>"\']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]})}
 const demoIndex=[
  {ref:"مزمور 46",words:["الله","خوف","قلق","ملجأ","قوة"]},
@@ -224,10 +263,14 @@ document.getElementById("saveJournalButton").addEventListener("click",saveJourna
 document.getElementById("notesSaveButton").addEventListener("click",()=>{const el=document.getElementById("notesJournal");const v=el.value.trim();if(!v){document.getElementById("notesSaveStatus").textContent="اكتب شيئًا أولًا.";return}saveNote(v);el.value="";document.getElementById("notesSaveStatus").textContent="تم الحفظ على جهازك.";});
 document.getElementById('homeStartJourney').addEventListener('click',startJourney);
 document.getElementById("searchButton").addEventListener("click",searchBible);
+document.getElementById("saveVerseButton").addEventListener("click",saveNewVerse);
+document.getElementById("filterDueVerses").addEventListener("click",()=>{verseFilter="due";renderVerses()});
+document.getElementById("filterAllVerses").addEventListener("click",()=>{verseFilter="all";renderVerses()});
 document.getElementById("searchInput").addEventListener("keydown",e=>{if(e.key==="Enter")searchBible();});
 window.addEventListener("error",e=>{const el=document.getElementById("saveStatus");if(el)el.textContent="حدث خطأ في تشغيل الصفحة. أعد فتح رحلة.";});
 renderNotes();
 renderJourney();
+renderVerses();
 renderHomeSummary();
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}
 </script>
