@@ -5065,7 +5065,7 @@ async function loadHomeDashboard() {
   const box = $("homeDashboard"); if(!box) return;
   if(!navigator.onLine) { box.innerHTML = "<div class='empty'>أنت أوفلاين.</div>"; return; }
   if(!isSystemAdmin && !isPartner){
-    if($("homeGeoSummary")) $("homeGeoSummary").classList.add("hidden");
+    if($("homeGeoSummary")) $("homeGeoSummary").classList.add("hidden"); if($("homeDailyExtras")) $("homeDailyExtras").classList.add("hidden"); if($("openHomeActionSummary")) $("openHomeActionSummary").classList.add("hidden"); if($("openHomeClosingSummary")) $("openHomeClosingSummary").classList.add("hidden");
     const quickLinks = getRoleQuickLinks(currentRoleCode);
     if(!quickLinks.length){
       box.innerHTML = "<div class='empty'>لا توجد أقسام مخصصة لهذا الدور حتى الآن. راجع مدير النظام.</div>";
@@ -5092,7 +5092,7 @@ async function loadHomeDashboard() {
       db.from("trips").select("trip_id", {count:"exact", head:true}).neq("status","COMPLETED"),
       db.rpc("get_supplier_payable_balances"),
       db.from("customer_collections").select("amount").eq("collection_date",today).eq("status","POSTED"),
-      db.from("expenses").select("amount").eq("expense_date",today).eq("is_cancelled",false),db.from("treasury_transactions").select("amount,transaction_type,transaction_date").gte("transaction_date",today+"T00:00:00").lte("transaction_date",today+"T23:59:59"),db.from("trip_loads").select("load_id").in("load_status",["REQUESTED","APPROVED"]),db.from("supplier_payments").select("amount").eq("payment_date",today).eq("is_cancelled",false)
+      db.from("expenses").select("amount").eq("expense_date",today).eq("is_cancelled",false),db.from("treasury_transactions").select("amount,transaction_type,transaction_date").eq("transaction_date",today),db.from("trip_loads").select("load_id").in("load_status",["REQUESTED","APPROVED"]),db.from("supplier_payments").select("amount").eq("payment_date",today).eq("is_cancelled",false)
     ]);
     const todaySales = (salesRes.data||[]).reduce((s,i)=>s+Number(i.net_total||0),0);
     const yesterdaySales = (yesterdaySalesRes.data||[]).reduce((s,i)=>s+Number(i.net_total||0),0);
