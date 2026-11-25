@@ -19,6 +19,8 @@ SOURCES = [
     ("nt_grc_sblgnt_source", "https://github.com/Faithlife/SBLGNT/archive/refs/heads/master.zip", "zip", "SBLGNT official source repository archive"),
     ("nt_cop_sahidic_usfm", "https://ebible.org/Scriptures/copcnt_usfm.zip", "zip", "Coptic NT candidate, Sahidic"),
     ("nt_cop_bohairic_usfm", "https://ebible.org/Scriptures/copbhc_usfm.zip", "zip", "Coptic NT, Bohairic"),
+    ("ot_cop_sahidic_scriptorium_tt", "https://raw.githubusercontent.com/CopticScriptorium/corpora/master/sahidic.ot/sahidic.ot_TT.zip", "zip", "Coptic SCRIPTORIUM Sahidic OT annotated corpus; CC BY-SA 4.0; manuscript-text research corpus, not a complete uniform Bible"),
+    ("ot_cop_bohairic_scriptorium_tt", "https://raw.githubusercontent.com/CopticScriptorium/corpora/master/bohairic.ot/bohairic.ot_TT.zip", "zip", "Coptic SCRIPTORIUM Bohairic OT annotated corpus; CC BY-SA 4.0; incomplete manuscript-text corpus"),
     ("en_webbe_usfm", "https://ebible.org/Scriptures/eng-webbe_usfm.zip", "zip", "World English Bible British Edition with Deuterocanon"),
     ("en_webbe_csv", "https://openscriptorium.org/downloads/csv/webbe.csv", "csv", "WEBBE export, Open Scriptorium"),
 ]
