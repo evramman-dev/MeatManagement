@@ -2,6 +2,15 @@ name: Bible source acquisition and corpus staging batch 01
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "bible/data/multilingual-edition-registry.draft.json"
+      - "bible/CORPUS_IMPORT_BATCH_01.md"
+      - "scripts/fetch_bible_sources.py"
+      - "scripts/convert_bible_sources.py"
+      - "scripts/tests/test_convert_bible_sources.py"
+      - ".github/workflows/bible-source-acquisition.yml"
   push:
     branches: [main]
     paths:
