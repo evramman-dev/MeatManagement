@@ -101,11 +101,11 @@ def sbl_records(zip_path,edition='sblgnt_v1_2'):
     with zipfile.ZipFile(zip_path) as z:
         for name in z.namelist():
             if not name.endswith('.xml') or '/xml/' not in name: continue
-            root=ET.fromstring(z.read(name).decode('utf-8-sig')); nodes=list(root.iter())
+            root=ET.fromstring(z.read(name).decode('utf-8-sig')); nodes=list(root.iter()); node_index={id(node):i for i,node in enumerate(nodes)}
             for el in root.iter('verse-number'):
                 m=re.match(r'(.+?)\s+(\d+):(\d+)([a-z]?)$',el.attrib.get('id',''))
                 if not m: continue
-                bookname,chapter,verse,suffix=m.groups(); parts=[]; idx=nodes.index(el)
+                bookname,chapter,verse,suffix=m.groups(); parts=[]; idx=node_index[id(el)]
                 if el.tail: parts.append(el.tail)
                 for node in nodes[idx+1:]:
                     if node.tag=='verse-number': break
