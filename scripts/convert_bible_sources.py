@@ -142,9 +142,9 @@ def main():
     src=pathlib.Path(args.input); out=pathlib.Path(args.output); out.mkdir(parents=True,exist_ok=True)
     manifest={'schema_version':1,'stage':'candidate_corpus_not_approved_for_app_or_publication','sources':{},
       'edition_metadata':{
-        'wlc_hebrew_ot':{'language':'hbo','testament':'OT','edition':'Westminster Leningrad Codex','license':'Public Domain per eBible source listing','status':'candidate'},
-        'wlc_hebrew_ot_csv':{'language':'hbo','testament':'OT','edition':'WLC OpenScriptorium CSV','license':'Public Domain per source listing','status':'comparison_export_only'},
-        'rahlfs_lxx_greek':{'language':'grc','testament':'OT','edition':'Rahlfs Septuagint 1935','license':'Public Domain per source listing','status':'candidate_with_unresolved_duplicate_readings'},
+        'wlc_hebrew_ot':{'language':'hbo','testament':'OT','edition':'Westminster Leningrad Codex','license':'Public Domain per eBible source listing','status':'candidate','canon_scope':'Hebrew 39-book collection; not the complete Coptic Orthodox Old Testament'},
+        'wlc_hebrew_ot_csv':{'language':'hbo','testament':'OT','edition':'WLC OpenScriptorium CSV','license':'Public Domain per source listing','status':'comparison_export_only','canon_scope':'Hebrew 39-book collection; not the complete Coptic Orthodox Old Testament'},
+        'rahlfs_lxx_greek':{'language':'grc','testament':'OT','edition':'Rahlfs Septuagint 1935','license':'Public Domain per source listing','status':'candidate_with_unresolved_duplicate_readings','book_mapping_status':'unresolved_aliases_and_recensions; do not auto-map 1ES/2ES or duplicate readings'},
         'patriarchal_greek_nt_1904':{'language':'grc','testament':'NT','edition':'Patriarchal Greek New Testament 1904','license':'Public Domain per source listing','status':'candidate'},
         'sblgnt_v1_2':{'language':'grc','testament':'NT','edition':'SBL Greek New Testament v1.2','license':'CC BY 4.0','status':'candidate; no Greek-English diglot without separate SBL permission'},
         'coptic_sahidic_nt_candidate':{'language':'cop-sah','testament':'NT','edition':'Coptic New Testament Sahidic candidate','license':'Public Domain per eBible listing','status':'lineage_and_textual_review_required'},
