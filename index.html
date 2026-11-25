@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v218</title>
+<title>MeatManagement v219</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -435,7 +435,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
   body{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   body>header,body>nav,body>.offline-banner,body>.modal-form,body>.modal-form-content{display:none!important}
 
-  /* v218: اطبع المسار المختار فقط، وليس باقي شاشة التطبيق */
+  /* v219: اطبع المسار المختار فقط، وليس باقي شاشة التطبيق */
   body.mm-printing .mm-print-hide{display:none!important}
   body.mm-printing main{width:100%!important;max-width:none!important;margin:0!important;padding:0!important}
   body.mm-printing .mm-print-target{width:100%!important;max-width:none!important;min-width:0!important;margin:0!important;box-shadow:none!important}
@@ -471,6 +471,50 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
   body.mm-printing .mm-accounting-screen{overflow:visible!important;max-height:none!important}
 }
 @media(max-width:480px){.grid,.grid3{grid-template-columns:1fr}.card{padding:14px}.actions{flex-direction:column}}
+/* v219: دفتر الحركة والتجميع */
+.mm-movement-book{margin-top:12px}
+.mm-movement-book-head{padding:14px;border:1px solid var(--line);border-radius:15px;background:#f9fbf9;margin-bottom:12px}
+.mm-movement-book-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:10px}
+.mm-movement-book-actions .btn{margin:0;min-height:44px}
+.mm-book-page{margin:0 0 16px;padding:14px;background:#fff;border:1px solid var(--line);border-radius:15px;box-shadow:0 3px 12px rgba(20,45,25,.06)}
+.mm-book-page:last-child{margin-bottom:0}
+.mm-book-page-title{text-align:center;color:var(--g);font-size:18px;font-weight:800;margin:0 0 5px}
+.mm-book-page-subtitle{text-align:center;color:var(--muted);font-size:12px;margin:0 0 12px}
+.mm-book-table{width:100%;border-collapse:collapse;font-size:10px}
+.mm-book-table th,.mm-book-table td{border:1px solid #cfd8cf;padding:4px 5px;text-align:right;white-space:nowrap}
+.mm-book-table th{background:#edf2ed;color:var(--g);font-weight:800}
+.mm-book-table tfoot td{background:#e9efe9;font-weight:800}
+.mm-book-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 12px}
+.mm-book-summary .card{margin:0;padding:9px;text-align:center}
+.mm-book-summary .details{font-size:11px}
+.mm-book-summary strong{font-size:14px}
+.mm-treasury-book-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mm-treasury-book-card{border:1px solid var(--line);border-radius:12px;padding:9px;background:#fff;break-inside:avoid;page-break-inside:avoid}
+.mm-treasury-book-card h4{margin:0 0 7px;color:var(--g);font-size:14px;text-align:center}
+.mm-treasury-book-meta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-bottom:8px}
+.mm-treasury-book-meta div{background:#f6f8f6;border:1px solid var(--line);border-radius:7px;padding:5px;text-align:center;font-size:10px}
+.mm-stock-product-title{margin:12px 0 7px;padding:7px 9px;background:#edf2ed;border-right:4px solid var(--g);font-weight:800;color:var(--g)}
+@media print{
+  @page mmMovementBookPage{size:A4 landscape;margin:2mm}
+  body.mm-printing #mmMovementBookScreen{page:mmMovementBookPage}
+  body.mm-printing #mmMovementBookScreen .mm-book-page{
+    box-shadow:none!important;border:0!important;border-radius:0!important;padding:0!important;margin:0!important;
+    break-after:page!important;page-break-after:always!important;
+  }
+  body.mm-printing #mmMovementBookScreen .mm-book-page:last-child{break-after:auto!important;page-break-after:auto!important}
+  body.mm-printing #mmMovementBookScreen .mm-book-table{font-size:8px}
+  body.mm-printing #mmMovementBookScreen .mm-book-table th,
+  body.mm-printing #mmMovementBookScreen .mm-book-table td{padding:3px 4px}
+  body.mm-printing #mmMovementBookScreen .mm-book-page-title{font-size:16px;margin-bottom:3px}
+  body.mm-printing #mmMovementBookScreen .mm-book-page-subtitle{margin-bottom:7px}
+  body.mm-printing #mmMovementBookScreen .mm-book-summary{gap:5px;margin-bottom:7px}
+  body.mm-printing #mmMovementBookScreen .mm-book-summary .card{padding:6px}
+  body.mm-printing #mmMovementBookScreen .mm-treasury-book-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  body.mm-printing #mmMovementBookScreen .mm-treasury-book-card{padding:5px}
+  body.mm-printing #mmMovementBookScreen .mm-treasury-book-meta{gap:3px;margin-bottom:5px}
+  body.mm-printing #mmMovementBookScreen .mm-treasury-book-meta div{padding:3px;font-size:8px}
+}
+
     /* ====== تنسيقات فاتورة الطباعة A4 الاحترافية ====== */
 .invoice-print-area {
     background: #fff;
@@ -1281,7 +1325,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v218]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v219]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -3238,7 +3282,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v218</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v219</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -3820,8 +3864,170 @@ function mmInitAccountingAndReports(){
   const items=[
    ["ملخص الفترة المحاسبية","📊","period"],["الخزائن والأرصدة","🏦","treasuries"],["حركة الخزائن","🔄","transfers"],
    ["أرصدة العملاء","👥","customers"],["مستحقات الموردين","🚚","suppliers"],["المصروفات","💳","expenses"],
-   ["مدفوعات الموردين","💸","payments"],["تحصيلات العملاء","🧾","collections"],["دفتر الأستاذ والتقارير","📚","details"]
+   ["مدفوعات الموردين","💸","payments"],["تحصيلات العملاء","🧾","collections"],["دفتر الحركة والتجميع","📘","movementBook"],["دفتر الأستاذ والتقارير","📚","details"]
   ];
+  async function mmLoadMovementBook(){
+   const screen=$("mmMovementBookScreen"),status=$("mmMovementBookStatus"),fromEl=$("mmMovementBookFrom"),toEl=$("mmMovementBookTo"),body=$("mmMovementBookBody");
+   if(!screen||!status||!fromEl||!toEl||!body)return;
+   const from=fromEl.value||monthStartISO(),to=toEl.value||todayISO();
+   if(from>to){status.className="status error";status.textContent="راجع تاريخ البداية والنهاية.";return;}
+   status.className="status";status.textContent="جارٍ تجميع دفتر الحركة...";
+   body.innerHTML='<div class="empty">جارٍ تحميل البيانات...</div>';
+   try{
+    async function fetchAll(table,select,apply){
+      const all=[];let offset=0;
+      while(true){
+       let q=db.from(table).select(select).range(offset,offset+999);
+       q=apply(q);
+       const r=await q;if(r.error)throw r.error;
+       const rows=r.data||[];all.push(...rows);
+       if(rows.length<1000)break;
+       offset+=1000;
+      }
+      return all;
+    }
+    const [sales,purchases,expenses,salesReturns,purchaseReturns,treasuries,treasuryTx,stock,products,customers,suppliers,locations]=await Promise.all([
+      fetchAll("sales_invoices","sales_invoice_id,invoice_number,invoice_date,customer_id,net_total,status,notes",q=>q.gte("invoice_date",from+"T00:00:00").lte("invoice_date",to+"T23:59:59").order("invoice_date",{ascending:true})),
+      fetchAll("purchase_invoices","purchase_invoice_id,invoice_number,invoice_date,supplier_id,net_total,status,notes",q=>q.gte("invoice_date",from).lte("invoice_date",to).order("invoice_date",{ascending:true})),
+      fetchAll("expenses","expense_id,expense_type,amount,expense_date,notes,is_cancelled",q=>q.gte("expense_date",from).lte("expense_date",to).eq("is_cancelled",false).order("expense_date",{ascending:true})),
+      fetchAll("sales_returns","sales_return_id,return_number,customer_id,return_date,total_returned_value,status,notes",q=>q.gte("return_date",from).lte("return_date",to).order("return_date",{ascending:true})),
+      fetchAll("purchase_returns","return_id,return_number,supplier_id,return_date,total_return_amount,is_cancelled,notes",q=>q.gte("return_date",from).lte("return_date",to).eq("is_cancelled",false).order("return_date",{ascending:true})),
+      fetchAll("treasuries","treasury_id,treasury_name,opening_balance,current_balance,is_active",q=>q.order("treasury_id",{ascending:true})),
+      fetchAll("treasury_transactions","transaction_id,treasury_id,transaction_type,amount,reference_type,reference_id,notes,transaction_date",q=>q.lte("transaction_date",to).order("transaction_date",{ascending:true})),
+      fetchAll("stock_movements","movement_id,location_id,product_id,movement_type,quantity_change,quantity_after,notes,created_at",q=>q.gte("created_at",from+"T00:00:00").lte("created_at",to+"T23:59:59").order("created_at",{ascending:true})),
+      fetchAll("products","product_id,product_name,is_active",q=>q.order("product_name",{ascending:true})),
+      fetchAll("customers","customer_id,customer_name",q=>q.order("customer_id")),
+      fetchAll("suppliers","supplier_id,supplier_name",q=>q.order("supplier_id")),
+      fetchAll("locations","location_id,location_name",q=>q.order("location_id"))
+    ]);
+
+    const ids=a=>a.length?a.map(x=>x.sales_invoice_id||x.purchase_invoice_id||x.sales_return_id||x.return_id):[];
+    const salesIds=sales.map(x=>x.sales_invoice_id),purchaseIds=purchases.map(x=>x.purchase_invoice_id),salesReturnIds=salesReturns.map(x=>x.sales_return_id),purchaseReturnIds=purchaseReturns.map(x=>x.return_id);
+    async function fetchIn(table,select,col,vals){
+      if(!vals.length)return [];
+      const out=[];for(let i=0;i<vals.length;i+=80){
+       const r=await db.from(table).select(select).in(col,vals.slice(i,i+80));if(r.error)throw r.error;out.push(...(r.data||[]));
+      }return out;
+    }
+    const [saleItems,purchaseItems,saleReturnItems,purchaseReturnItems]=await Promise.all([
+      fetchIn("sales_invoice_items","sales_invoice_item_id,sales_invoice_id,product_id,line_total,quantity,base_quantity","sales_invoice_id",salesIds),
+      fetchIn("purchase_invoice_items","item_id,purchase_invoice_id,product_id,line_total,quantity,base_quantity","purchase_invoice_id",purchaseIds),
+      fetchIn("sales_return_items","return_item_id,sales_return_id,product_id,line_total,quantity,base_quantity","sales_return_id",salesReturnIds),
+      fetchIn("purchase_return_items","item_id,return_id,product_id,line_total,quantity,base_quantity","return_id",purchaseReturnIds)
+    ]);
+    const pMap=new Map(products.map(x=>[Number(x.product_id),x.product_name||"بدون اسم"]));
+    const cMap=new Map(customers.map(x=>[Number(x.customer_id),x.customer_name||"عميل"]));
+    const sMap=new Map(suppliers.map(x=>[Number(x.supplier_id),x.supplier_name||"مورد"]));
+    const lMap=new Map(locations.map(x=>[Number(x.location_id),x.location_name||"موقع"]));
+
+    const salesCols=[...new Set(saleItems.map(x=>pMap.get(Number(x.product_id))).filter(Boolean))];
+    const purchaseCols=[...new Set(purchaseItems.map(x=>pMap.get(Number(x.product_id))).filter(Boolean))];
+
+    const groupItems=(items,idKey)=>{
+      const m=new Map();
+      items.forEach(x=>{const id=Number(x[idKey]),name=pMap.get(Number(x.product_id))||"غير محدد";if(!m.has(id))m.set(id,{total:0,products:{}});const g=m.get(id);g.total+=Number(x.line_total||0);g.products[name]=(g.products[name]||0)+Number(x.line_total||0);});
+      return m;
+    };
+    const saleItemMap=groupItems(saleItems,"sales_invoice_id"),purchaseItemMap=groupItems(purchaseItems,"purchase_invoice_id");
+    const saleReturnMap=groupItems(saleReturnItems,"sales_return_id"),purchaseReturnMap=groupItems(purchaseReturnItems,"return_id");
+
+    const salesRows=sales.filter(x=>String(x.status||"").toUpperCase()!=="CANCELLED").map(x=>{
+      const g=saleItemMap.get(Number(x.sales_invoice_id))||{products:{}};
+      return {date:formatDate(x.invoice_date),ref:x.invoice_number||x.sales_invoice_id,desc:cMap.get(Number(x.customer_id))||x.notes||"بيع",amount:Number(x.net_total||0),products:g.products,total:Number(x.net_total||0)};
+    });
+    salesReturns.filter(x=>String(x.status||"").toUpperCase()!=="CANCELLED").forEach(x=>{
+      const g=saleReturnMap.get(Number(x.sales_return_id))||{products:{}};
+      salesRows.push({date:formatDate(x.return_date),ref:x.return_number||x.sales_return_id,desc:"مرتجع مبيعات - "+(cMap.get(Number(x.customer_id))||x.notes||"عميل"),amount:-Number(x.total_returned_value||0),products:Object.fromEntries(Object.entries(g.products).map(([k,v])=>[k,-Number(v||0)])),total:-Number(x.total_returned_value||0)});
+    });
+    salesRows.sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+
+    const purchaseRows=purchases.filter(x=>String(x.status||"").toUpperCase()!=="CANCELLED").map(x=>{
+      const g=purchaseItemMap.get(Number(x.purchase_invoice_id))||{products:{}};
+      return {date:formatDate(x.invoice_date),ref:x.invoice_number||x.purchase_invoice_id,desc:sMap.get(Number(x.supplier_id))||x.notes||"شراء",amount:Number(x.net_total||0),products:g.products,total:Number(x.net_total||0)};
+    });
+    purchaseReturns.filter(x=>String(x.is_cancelled||false)!=="true").forEach(x=>{
+      const g=purchaseReturnMap.get(Number(x.return_id))||{products:{}};
+      purchaseRows.push({date:formatDate(x.return_date),ref:x.return_number||x.return_id,desc:"مرتجع مشتريات - "+(sMap.get(Number(x.supplier_id))||x.notes||"مورد"),amount:-Number(x.total_return_amount||0),products:Object.fromEntries(Object.entries(g.products).map(([k,v])=>[k,-Number(v||0)])),total:-Number(x.total_return_amount||0)});
+    });
+    expenses.forEach(x=>purchaseRows.push({date:formatDate(x.expense_date),ref:"مصروف",desc:x.expense_type||x.notes||"مصروف",amount:Number(x.amount||0),products:{},total:Number(x.amount||0)}));
+    purchaseRows.sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+
+    function tableHtml(headers,rows,footer){
+      const h="<thead><tr>"+headers.map(x=>"<th>"+esc(String(x))+"</th>").join("")+"</tr></thead>";
+      const b=rows.length?"<tbody>"+rows.map(r=>"<tr>"+r.map(x=>"<td>"+esc(String(x??""))+"</td>").join("")+"</tr>").join("")+"</tbody>":"<tbody><tr><td colspan='"+headers.length+"'>لا توجد حركة في الفترة المحددة.</td></tr></tbody>";
+      const f=footer?"<tfoot><tr>"+footer.map(x=>"<td>"+esc(String(x??""))+"</td>").join("")+"</tr></tfoot>":"";
+      return "<table class='mm-book-table'>"+h+b+f+"</table>";
+    }
+    function money(v){return fmt(Number(v||0));}
+    function bookPage(title,subtitle,inner,extra){return "<section class='mm-book-page "+(extra||"")+"'><h3 class='mm-book-page-title'>"+esc(title)+"</h3><p class='mm-book-page-subtitle'>"+esc(subtitle)+"</p>"+inner+"</section>";}
+
+    const salesHeaders=["التاريخ","رقم المستند","البيان","المبلغ",...salesCols,"الإجمالي"];
+    const salesData=salesRows.map(r=>[r.date,r.ref,r.desc,money(r.amount),...salesCols.map(n=>money(r.products[n]||0)),money(r.total)]);
+    const salesTotals=["إجمالي", "", "", money(salesRows.reduce((a,r)=>a+r.amount,0)),...salesCols.map(n=>money(salesRows.reduce((a,r)=>a+Number(r.products[n]||0),0))),money(salesRows.reduce((a,r)=>a+r.total,0))];
+    const salesPage=bookPage("الإيرادات والمبيعات","من "+from+" إلى "+to,tableHtml(salesHeaders,salesData,salesTotals));
+
+    const purchaseHeaders=["التاريخ","رقم المستند","البيان","المبلغ",...purchaseCols,"الإجمالي"];
+    const purchaseData=purchaseRows.map(r=>[r.date,r.ref,r.desc,money(r.amount),...purchaseCols.map(n=>money(r.products[n]||0)),money(r.total)]);
+    const purchaseTotals=["إجمالي","","",money(purchaseRows.reduce((a,r)=>a+r.amount,0)),...purchaseCols.map(n=>money(purchaseRows.reduce((a,r)=>a+Number(r.products[n]||0),0))),money(purchaseRows.reduce((a,r)=>a+r.total,0))];
+    const purchasePage=bookPage("المشتريات والمصروفات","من "+from+" إلى "+to,tableHtml(purchaseHeaders,purchaseData,purchaseTotals));
+
+    const productNames=[...new Set([...salesCols,...purchaseCols])];
+    const revBy=new Map(productNames.map(n=>[n,0])),outBy=new Map(productNames.map(n=>[n,0]));
+    salesRows.forEach(r=>Object.entries(r.products).forEach(([n,v])=>revBy.set(n,(revBy.get(n)||0)+Number(v||0))));
+    purchaseRows.forEach(r=>Object.entries(r.products).forEach(([n,v])=>outBy.set(n,(outBy.get(n)||0)+Number(v||0))));
+    const expenseTotal=expenses.reduce((a,x)=>a+Number(x.amount||0),0);
+    const revTotal=salesRows.reduce((a,r)=>a+r.amount,0),outTotal=purchaseRows.reduce((a,r)=>a+r.amount,0);
+    const summaryRows=productNames.map(n=>[n,money(revBy.get(n)||0),money(outBy.get(n)||0),money((revBy.get(n)||0)-(outBy.get(n)||0))]);
+    summaryRows.push(["المصروفات العامة","0",money(expenseTotal),money(-expenseTotal)]);
+    summaryRows.push(["الإجمالي",money(revTotal),money(outTotal),money(revTotal-outTotal)]);
+    const summaryPage=bookPage("ملخص الإيرادات والمشتريات والمصروفات","تجميع بنود الفترة",tableHtml(["البند","إجمالي إيرادات","إجمالي مشتريات ومصروفات","الرصيد"],summaryRows));
+
+    const txByTreasury=new Map();
+    treasuryTx.forEach(x=>{const id=Number(x.treasury_id);if(!txByTreasury.has(id))txByTreasury.set(id,[]);txByTreasury.get(id).push(x);});
+    const treasuryCards=treasuries.filter(t=>t.is_active!==false).map(t=>{
+      const tx=txByTreasury.get(Number(t.treasury_id))||[];
+      const before=tx.filter(x=>x.transaction_date<from).reduce((a,x)=>a+((["DEPOSIT","TRANSFER_IN"].includes(String(x.transaction_type).toUpperCase())?1:-1)*Number(x.amount||0)),0);
+      let balance=Number(t.opening_balance||0)+before;
+      const period=tx.filter(x=>x.transaction_date>=from&&x.transaction_date<=to).sort((a,b)=>String(a.transaction_date).localeCompare(String(b.transaction_date)));
+      const rows=period.map(x=>{const type=String(x.transaction_type||"").toUpperCase();const incoming=["DEPOSIT","TRANSFER_IN"].includes(type);const out=incoming?0:Number(x.amount||0);const inn=incoming?Number(x.amount||0):0;balance+=inn-out;return [formatDate(x.transaction_date),x.notes||x.reference_type||"حركة",money(inn),money(out),money(balance)];});
+      const opening=Number(t.opening_balance||0)+before,totalIn=period.reduce((a,x)=>a+(["DEPOSIT","TRANSFER_IN"].includes(String(x.transaction_type).toUpperCase())?Number(x.amount||0):0),0),totalOut=period.reduce((a,x)=>a+(!["DEPOSIT","TRANSFER_IN"].includes(String(x.transaction_type).toUpperCase())?Number(x.amount||0):0),0);
+      return "<div class='mm-treasury-book-card'><h4>"+esc(t.treasury_name)+"</h4><div class='mm-treasury-book-meta'><div>أول المدة<br><strong>"+money(opening)+"</strong></div><div>وارد<br><strong>"+money(totalIn)+"</strong></div><div>صادر<br><strong>"+money(totalOut)+"</strong></div><div>آخر المدة<br><strong>"+money(balance)+"</strong></div></div>"+tableHtml(["التاريخ","البيان","وارد","صادر","الرصيد"],rows,["","","",money(totalOut),money(balance)])+"</div>";
+    }).join("");
+    const treasuryPage=bookPage("حركة الخزائن","كل خزنة في جدول مستقل مع الرصيد التراكمي","<div class='mm-treasury-book-grid'>"+(treasuryCards||"<div class='empty'>لا توجد خزائن نشطة.</div>")+"</div>");
+
+    const stockGroups=new Map();
+    stock.forEach(x=>{const p=pMap.get(Number(x.product_id))||"صنف غير محدد";if(!stockGroups.has(p))stockGroups.set(p,[]);stockGroups.get(p).push(x);});
+    const stockHtml=[...stockGroups.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([name,rows])=>{
+      const sorted=rows.slice().sort((a,b)=>String(a.created_at).localeCompare(String(b.created_at)));
+      const rr=sorted.map(x=>{const q=Number(x.quantity_change||0);return [formatDate(x.created_at),lMap.get(Number(x.location_id))||"—",x.movement_type||"حركة",q>0?money(q):"0",q<0?money(Math.abs(q)):"0",money(x.quantity_after),x.notes||""];});
+      return "<div class='mm-stock-product-title'>"+esc(name)+"</div>"+tableHtml(["التاريخ","الموقع","الحركة","إضافة","صرف","الرصيد بعد الحركة","البيان"],rr);
+    }).join("");
+    const stockPage=bookPage("حركة المخزون","الإضافات والصرف والرصيد بعد الحركة",stockHtml||"<div class='empty'>لا توجد حركة مخزون في الفترة المحددة.</div>");
+
+    body.innerHTML=salesPage+purchasePage+summaryPage+treasuryPage+stockPage;
+    status.className="status success";status.textContent="تم تجميع دفتر الحركة. يمكنك الآن مراجعته أو طباعته.";
+   }catch(e){
+    console.error("[MOVEMENT_BOOK]",e);
+    status.className="status error";status.textContent="تعذر تجميع دفتر الحركة: "+err(e);
+    body.innerHTML='<div class="empty">تعذر تحميل بيانات الدفتر.</div>';
+   }
+  }
+  function makeMovementBookScreen(back){
+   const p=document.createElement("section");p.className="mm-accounting-screen hidden";p.style.display="none";p.id="mmMovementBookScreen";
+   const head=document.createElement("div");head.className="mm-screen-heading";
+   const h=document.createElement("h3");h.textContent="📘 دفتر الحركة والتجميع";
+   const b=document.createElement("button");b.type="button";b.className="btn secondary no-print";b.textContent="⬅ رجوع للمحاسبة";b.addEventListener("click",back);
+   head.append(h,b);p.appendChild(head);
+   const controls=document.createElement("div");controls.className="mm-movement-book-head no-print";
+   controls.innerHTML='<div class="grid"><label>من تاريخ<input type="date" id="mmMovementBookFrom"></label><label>إلى تاريخ<input type="date" id="mmMovementBookTo"></label></div><div class="mm-movement-book-actions"><button type="button" class="btn" id="mmMovementBookLoad">عرض وتجميع الدفتر</button><button type="button" class="btn secondary" id="mmMovementBookPrint">🖨️ طباعة / PDF</button></div><div id="mmMovementBookStatus" class="status hidden"></div>';
+   p.appendChild(controls);
+   const body=document.createElement("div");body.id="mmMovementBookBody";p.appendChild(body);
+   p.querySelector("#mmMovementBookFrom").value=monthStartISO();p.querySelector("#mmMovementBookTo").value=todayISO();
+   p.querySelector("#mmMovementBookLoad").addEventListener("click",mmLoadMovementBook);
+   p.querySelector("#mmMovementBookPrint").addEventListener("click",()=>window.print());
+   return p;
+  }
+
   function makeScreen(key,title){
    const p=document.createElement("section");p.className="mm-accounting-screen hidden";p.style.display="none";p.dataset.accountingScreen=key;
    const head=document.createElement("div");head.className="mm-screen-heading";
@@ -3859,7 +4065,7 @@ function mmInitAccountingAndReports(){
    const b=mmWorkspaceButton(label,ico,()=>{if(key==="details"){nav.classList.add("hidden");nav.style.display="none";details.classList.remove("hidden");details.style.display="block";window.scrollTo(0,0);}else window.mmOpenAccountingScreen(key);});
    b.querySelector(".data-category-subtitle").textContent=key==="details"?"عرض الدفاتر المحاسبية":"عرض الملخص";
    grid.appendChild(b);
-   if(key!=="details")acc.appendChild(makeScreen(key,label));
+   if(key!=="details"){const panel=key==="movementBook"?makeMovementBookScreen(showMenu):makeScreen(key,label);panels[key]=panel;acc.appendChild(panel);}
   });
   if(heading)heading.textContent="🧮 المحاسبة والتقارير";
   acc.append(nav,details);
@@ -13872,7 +14078,7 @@ $("hrCreatePeriod")?.addEventListener("click",async()=>{try{const r=await db.rpc
 // ====== PWA ======
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=221', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
+    navigator.serviceWorker.register('./sw.js?v=222', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
   });
 }
 
@@ -13890,7 +14096,7 @@ const s=document.getElementById("fixedAssetsList");if(s)new MutationObserver(enh
 const sec=document.getElementById("sectionFixedAssets");if(sec)new MutationObserver(enhance).observe(sec,{attributes:true,attributeFilter:["class"]});
 })();
 
-/* ===== v218: محرك طباعة موحد لكل التقارير ===== */
+/* ===== v219: محرك طباعة موحد لكل التقارير ===== */
 (function(){
   let printState=null;
   function visible(el){
