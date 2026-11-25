@@ -254,3 +254,16 @@
 - ARBJES الرقمي يحمل حقوق نشر 2018. سجل نسخة 1875 في NYU/Princeton Public Domain لكن هويته اليسوعية غير مؤكدة.
 - التفاصيل في bible/SOURCE_BATCH_01_BOOK_AUDIT.md وbible/COPTIC_OT_SOURCE_RESEARCH.md.
 - لا تعديل على الواجهة أو Service Worker أو Supabase أو البيانات المحلية.
+
+
+### إغلاق تدقيق corpus ومصادر Coptic OT — 2026-11-26
+- تم دمج PR #308 إلى main.
+- merge commit: 1237fb49fc336846011b1ab0d5022dec9d8f1edc.
+- تمت إضافة scripts/audit_bible_corpus.py وخمسة اختبارات آلية.
+- تقرير التدقيق لكل سفر وإصحاح أصبح داخل artifact المرحلي.
+- workflow run: 45713097061 انتهى success، بعد نجاح الاختبارات والتنزيل والتحويل والتدقيق.
+- artifact ID: 15068731921، الاسم bible-corpus-stage-batch-01، الحجم 18,829,921 bytes، الصلاحية حتى 2026-12-02.
+- تم تنزيل الحزمة والتحقق من سلامة ZIP ووجود 12 ملفًا، ومنها audit/book-audit.json وaudit/book-audit.md.
+- workflow browser smoke رقم 45713097135 فشل في اختبار قديم يطلب عدم وجود purchase_invoices في مصدر تقرير محاسبي. نفس الفشل موجود في تشغيل main السابق 45712113689 قبل هذا PR، لذا ليس ناتجًا عن ملفات corpus الجديدة. الاختبار الكامل تخطاه workflow لعدم وجود موافقة منفصلة.
+- blob SHAs: audit script 2ecd6e6ffcb5979e6c5f451651d92c9d2a5577e8، tests be9960e027acdd11d155665b864c625c0960d447، report cc92925e67da5277dc1fc590bfd091f96cefd8bd، Coptic research 00daadb0d282d970cddf3e88cac1a9eda3aec90a.
+- لم يتم تعديل الواجهة أو Service Worker أو Supabase أو بيانات المستخدم.
