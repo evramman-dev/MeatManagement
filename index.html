@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v220</title>
+<title>MeatManagement v221</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -435,7 +435,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
   body{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   body>header,body>nav,body>.offline-banner,body>.modal-form,body>.modal-form-content{display:none!important}
 
-  /* v220: اطبع المسار المختار فقط، وليس باقي شاشة التطبيق */
+  /* v221: اطبع المسار المختار فقط، وليس باقي شاشة التطبيق */
   body.mm-printing .mm-print-hide{display:none!important}
   body.mm-printing main{width:100%!important;max-width:none!important;margin:0!important;padding:0!important}
   body.mm-printing .mm-print-target{width:100%!important;max-width:none!important;min-width:0!important;margin:0!important;box-shadow:none!important}
@@ -471,7 +471,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
   body.mm-printing .mm-accounting-screen{overflow:visible!important;max-height:none!important}
 }
 @media(max-width:480px){.grid,.grid3{grid-template-columns:1fr}.card{padding:14px}.actions{flex-direction:column}}
-/* v220: دفتر الحركة والتجميع */
+/* v221: إصلاح دفتر الحركة والتجميع والتنقل */
 @page mmMovementBook{size:A4 landscape;margin:2mm}
 .mm-book-report{background:#fff;color:#111;font-family:Tahoma,Arial,sans-serif}
 .mm-book-controls{background:#f8faf8;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:14px}
@@ -1318,7 +1318,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v220]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v221]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -2966,7 +2966,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 </div>
 
 <div id="sectionReports" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
+<button class="btn secondary" onclick="window.openSection('accounting')" style="margin-bottom:15px;width:auto;">⬅ رجوع للمحاسبة</button>
 <div class="card">
 <h2>📈 التقارير المتقدمة</h2>
 
@@ -3027,6 +3027,8 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div class="row"><button type="button" class="btn" id="mmDistributionRun">عرض تقرير التوزيع</button><button type="button" class="btn secondary" id="mmDistributionExport">تصدير Excel</button></div>
 <div id="mmDistributionSummary" class="mini-summary"></div>
 <div class="table-responsive"><table class="print-table" id="mmDistributionTable"><thead><tr><th>رقم الجولة</th><th>المندوب</th><th>السيارة</th><th>البداية</th><th>النهاية</th><th>الحالة</th><th>تحميل</th><th>مباع</th><th>مرتجع</th><th>مبيعات الفواتير</th></tr></thead><tbody><tr><td colspan="10">حدد الفترة ثم اعرض التقرير.</td></tr></tbody></table></div>
+
+</div>
 
 <div id="repMovementBook" class="report-tab hidden">
 <div class="mm-book-report">
@@ -3297,7 +3299,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v220</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v221</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -14072,7 +14074,7 @@ const s=document.getElementById("fixedAssetsList");if(s)new MutationObserver(enh
 const sec=document.getElementById("sectionFixedAssets");if(sec)new MutationObserver(enhance).observe(sec,{attributes:true,attributeFilter:["class"]});
 })();
 
-/* ===== v220: محرك طباعة موحد لكل التقارير ===== */
+/* ===== v221: محرك طباعة موحد لكل التقارير ===== */
 (function(){
   let printState=null;
   function visible(el){
