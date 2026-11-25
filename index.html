@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v222</title>
+<title>MeatManagement v223</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -507,7 +507,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 .mm-book-total td{font-weight:bold;background:#f3f6f3}
 .mm-book-grand{display:flex;gap:10px;justify-content:flex-start;flex-wrap:wrap;margin-top:8px}
 .mm-book-grand .box{border:1px solid #b9c6b9;background:#f8faf8;padding:6px 10px;border-radius:7px;font-size:11px;font-weight:bold}
-.mm-book-treasuries{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mm-book-subsection{margin-top:16px;padding-top:12px;border-top:2px solid var(--line)}.mm-book-subsection:first-of-type{margin-top:0;padding-top:0;border-top:0}.mm-book-subsection h4{margin:0 0 8px;color:var(--g);font-size:14px}.mm-book-treasuries{display:grid;grid-template-columns:1fr;gap:12px}
 .mm-book-treasury{border:1px solid #aeb9ae;border-radius:8px;padding:7px;break-inside:avoid;page-break-inside:avoid}
 .mm-book-treasury h4{margin:0 0 5px;color:var(--g);font-size:13px}
 .mm-book-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-bottom:6px}
@@ -536,7 +536,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
   body.mm-printing .mm-book-page h3{font-size:16px;margin-bottom:5px}
   body.mm-printing .mm-book-table{font-size:8px}
   body.mm-printing .mm-book-table th,.mm-book-table td{padding:3px 2px}
-  body.mm-printing .mm-book-treasuries{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  body.mm-printing .mm-book-treasuries{grid-template-columns:1fr;gap:10px}.mm-book-subsection{break-inside:avoid;page-break-inside:avoid}
 }
 
     /* ====== تنسيقات فاتورة الطباعة A4 الاحترافية ====== */
@@ -13347,9 +13347,9 @@ async function mmLoadMovementBook(){
     purchaseRows.sort((a,b)=>String(a[0]).localeCompare(String(b[0])));
     const purchaseHeaders=["التاريخ","رقم المستند","البيان","المبلغ",...purchaseProducts.map(p=>p.product_name),"الإجمالي"];
     const purchaseTotalRow=["","", "إجمالي صافي المشتريات",money(netPurchases),...purchaseProductIds.map(pid=>money(purchaseItems.filter(x=>String(x.product_id)===pid).reduce((a,x)=>a+Number(x.line_total||0),0)-purchaseReturnItems.filter(x=>String(x.product_id)===pid).reduce((a,x)=>a+Number(x.line_total||0),0))),money(netPurchases)];
-    const expenseRows=expenses.map(x=>[dateOnly(x.expense_date),String(x.expense_id),"مصروف: "+(expTypeMap.get(String(x.expense_type))||x.expense_type||"غير مصنف"),money(x.amount),...purchaseProductIds.map(()=>""),money(x.amount)]);
+    const expenseRows=expenses.map(x=>[dateOnly(x.expense_date),String(x.expense_id),"مصروف: "+(expTypeMap.get(String(x.expense_type))||x.expense_type||"غير مصنف"),money(x.amount)]);
     const expenseTypesUsed=[...new Set(expenses.map(x=>expTypeMap.get(String(x.expense_type))||x.expense_type||"غير مصنف"))];
-    const expenseTotalRow=["","", "إجمالي المصروفات","",...purchaseProductIds.map(()=>""),money(expensesTotal)];
+    const expenseTotalRow=["","", "إجمالي المصروفات",money(expensesTotal)];
 
     const renderTable=(headers,rows,totalCells)=>{
       const th=headers.map((h,i)=>"<th class='"+(i>=3?"mm-num":"")+"'>"+esc(h)+"</th>").join("");
@@ -13387,7 +13387,7 @@ async function mmLoadMovementBook(){
     stockTables.sort((a,b)=>a.name.localeCompare(b.name,"ar"));
 
     const page1="<div class='mm-book-page'><h3>الإيرادات والمبيعات</h3><div class='mm-book-meta'>من "+esc(from)+" إلى "+esc(to)+"</div>"+renderTable(salesHeaders,salesRows,salesTotalRow)+"</div>";
-    const page2="<div class='mm-book-page'><h3>المشتريات والمصروفات</h3><div class='mm-book-meta'>من "+esc(from)+" إلى "+esc(to)+"</div>"+renderTable(purchaseHeaders,purchaseRows,purchaseTotalRow)+renderTable(["التاريخ","رقم المستند","البيان","المبلغ",...purchaseProducts.map(p=>p.product_name),"الإجمالي"],expenseRows,expenseTotalRow)+"</div>";
+    const page2="<div class='mm-book-page'><h3>المشتريات والمصروفات</h3><div class='mm-book-meta'>من "+esc(from)+" إلى "+esc(to)+"</div><div class='mm-book-subsection'><h4>المشتريات</h4>"+renderTable(purchaseHeaders,purchaseRows,purchaseTotalRow)+"</div><div class='mm-book-subsection'><h4>المصروفات</h4>"+renderTable(["التاريخ","رقم المستند","البيان","المبلغ"],expenseRows,expenseTotalRow)+"</div></div>";
     const page3="<div class='mm-book-page'><h3>ملخص الإيرادات والمشتريات والمصروفات</h3><div class='mm-book-meta'>من "+esc(from)+" إلى "+esc(to)+"</div>"+renderTable(["البند","إجمالي الإيرادات","إجمالي المشتريات والمصروفات","الرصيد"],summaryRows,summaryTotal)+"<div class='mm-book-grand'><div class='box'>إجمالي الإيرادات: "+money(netSales)+"</div><div class='box'>إجمالي المشتريات والمصروفات: "+money(netPurchases+expensesTotal)+"</div><div class='box'>الرصيد: "+money(net)+"</div></div></div>";
     const page4="<div class='mm-book-page'><h3>حركة الخزائن</h3><div class='mm-book-meta'>من "+esc(from)+" إلى "+esc(to)+"</div><div class='mm-book-treasuries'>"+treasuryHtml.map(t=>"<div class='mm-book-treasury'><h4>"+esc(t.name)+"</h4><div class='mm-book-summary'><div>رصيد أول المدة<strong>"+money(t.opening)+"</strong></div><div>وارد<strong>"+money(t.incoming)+"</strong></div><div>صادر<strong>"+money(t.outgoing)+"</strong></div><div>رصيد آخر المدة<strong>"+money(t.closing)+"</strong></div></div>"+renderTable(["التاريخ","البيان","وارد","صادر","الرصيد بعد الحركة"],t.rows,null)+"</div>").join("")+"</div></div>";
     const page5="<div class='mm-book-page'><h3>حركة إضافة وصرف أرصدة الأصناف</h3><div class='mm-book-meta'>الرصيد الافتتاحي محسوب من الرصيد الحالي مطروحًا منه صافي حركة الفترة</div>"+(stockTables.length?stockTables.map(t=>"<div class='mm-book-stock-summary'><h4 style='margin:7px 0 4px;color:var(--g)'>"+esc(t.name)+"</h4><div class='mm-book-summary'><div>رصيد أول المدة<strong>"+money(t.opening)+"</strong></div><div>إضافة<strong>"+money(t.in)+"</strong></div><div>صرف<strong>"+money(t.out)+"</strong></div><div>الرصيد الحالي<strong>"+money(t.closing)+"</strong></div></div>"+renderTable(["التاريخ","الصنف","الحركة","إضافة","صرف","الرصيد","البيان"],t.rows,null)+"</div>").join(""):"<div class='empty'>لا توجد حركات مخزون في الفترة.</div>")+"</div>";
@@ -14144,7 +14144,7 @@ const s=document.getElementById("fixedAssetsList");if(s)new MutationObserver(enh
 const sec=document.getElementById("sectionFixedAssets");if(sec)new MutationObserver(enhance).observe(sec,{attributes:true,attributeFilter:["class"]});
 })();
 
-/* ===== v222: محرك طباعة موحد لكل التقارير ===== */
+/* ===== v223: محرك طباعة موحد لكل التقارير ===== */
 (function(){
   let printState=null;
   function visible(el){
