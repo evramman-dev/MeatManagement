@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v215</title>
+<title>MeatManagement v216</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -430,15 +430,13 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
 #barcodeScanner .scanner-footer{padding:12px;background:var(--g);color:white;text-align:center;font-size:13px}
 #barcodeScanner .close-scan{background:none;border:0;color:white;font-size:22px}
 @media print{
-  @page{margin:8mm;size:A4 portrait}
-  body{background:#fff!important;margin:0!important}
-  body *{visibility:hidden}
-  .modal:not(.hidden),
-  .modal:not(.hidden) *{visibility:visible}
-  .modal:not(.hidden){
+  @page{margin:3mm;size:A4 portrait}
+  html,body{background:#fff!important;margin:0!important;padding:0!important;width:100%!important;min-height:0!important;overflow:visible!important}
+  body>header,body>nav,body>.offline-banner,body>.modal-form,body>.modal-form-content{display:none!important}
+  body>.modal:not(.hidden){
+    display:block!important;
     position:static!important;
     inset:auto!important;
-    display:block!important;
     width:100%!important;
     height:auto!important;
     min-height:0!important;
@@ -446,37 +444,44 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
     overflow:visible!important;
     background:#fff!important;
     padding:0!important;
+    margin:0!important;
   }
-  .modal:not(.hidden) .modal-content{
+  body>.modal:not(.hidden) .modal-content{
+    display:block!important;
     position:static!important;
     width:100%!important;
     max-width:none!important;
     height:auto!important;
+    min-height:0!important;
     max-height:none!important;
     overflow:visible!important;
     box-shadow:none!important;
     border:0!important;
     border-radius:0!important;
+    margin:0!important;
+    padding:0!important;
   }
-  .modal:not(.hidden) .modal-body{padding:0!important;overflow:visible!important}
-  .modal:not(.hidden) .invoice-print-area,
-  .modal:not(.hidden) .statement-print-area{
+  body>.modal:not(.hidden) .modal-body{padding:0!important;margin:0!important;overflow:visible!important}
+  body>.modal:not(.hidden) .invoice-print-area,
+  body>.modal:not(.hidden) .statement-print-area{
     position:static!important;
     width:100%!important;
     height:auto!important;
+    min-height:0!important;
     max-height:none!important;
     overflow:visible!important;
     padding:0!important;
+    margin:0!important;
   }
-  .no-print,.modal-header{display:none!important;visibility:hidden!important}
-  .table-responsive{overflow:visible!important;width:100%!important}
-  .print-table{width:100%!important;table-layout:auto!important;page-break-inside:auto!important}
-  .print-table thead{display:table-header-group}
-  .print-table tfoot{display:table-footer-group}
+  .no-print,.modal-header{display:none!important}
+  .table-responsive{overflow:visible!important;width:100%!important;max-width:none!important}
+  .print-table{width:100%!important;min-width:0!important;table-layout:auto!important;page-break-inside:auto!important;break-inside:auto!important}
+  .print-table thead{display:table-header-group!important}
+  .print-table tfoot{display:table-footer-group!important}
   .print-table tr{break-inside:avoid!important;page-break-inside:avoid!important}
   .print-table th,.print-table td{white-space:normal!important;overflow-wrap:anywhere!important;word-break:normal!important}
-  .print-header,.print-footer{display:block!important;visibility:visible!important}
-  .invoice-lots-print-hide{display:none!important;visibility:hidden!important}
+  .print-header,.print-footer{display:block!important}
+  .invoice-lots-print-hide{display:none!important}
   .inventory-report-section{break-inside:avoid;page-break-inside:avoid}
 }
 @media(max-width:480px){.grid,.grid3{grid-template-columns:1fr}.card{padding:14px}.actions{flex-direction:column}}
@@ -988,62 +993,107 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
  .mm-ledger-report-heading .btn{width:100%}
 }
 @media print{
- body[data-mm-accounting-print] *{visibility:hidden!important}
- html,body{height:auto!important;min-height:0!important;overflow:visible!important}
- body[data-mm-accounting-print] .mm-ledger-report-page:not(.hidden){
-   visibility:visible!important;
-   position:static!important;
+ body[data-mm-accounting-print]{
+   background:#fff!important;
+   margin:0!important;
+   padding:0!important;
+   width:100%!important;
+   min-height:0!important;
+   overflow:visible!important;
+ }
+ body[data-mm-accounting-print]>header,
+ body[data-mm-accounting-print]>nav,
+ body[data-mm-accounting-print]>.offline-banner,
+ body[data-mm-accounting-print]>.modal,
+ body[data-mm-accounting-print]>.modal-form{display:none!important}
+ body[data-mm-accounting-print]>main{
    display:block!important;
+   width:100%!important;
+   max-width:none!important;
+   margin:0!important;
+   padding:0!important;
+   background:#fff!important;
+ }
+ body[data-mm-accounting-print] #sectionAccounting{
+   display:block!important;
+   width:100%!important;
+   max-width:none!important;
+   margin:0!important;
+   padding:0!important;
+   background:#fff!important;
+ }
+ body[data-mm-accounting-print] #accountingCard{
+   display:block!important;
+   width:100%!important;
+   max-width:none!important;
+   margin:0!important;
+   padding:0!important;
+   border:0!important;
+   border-radius:0!important;
+   box-shadow:none!important;
+   background:#fff!important;
+ }
+ body[data-mm-accounting-print] #accountingCard>*{display:none!important}
+ body[data-mm-accounting-print] #accountingCard>#accountingDetailsPanel{
+   display:block!important;
+   width:100%!important;
+   margin:0!important;
+   padding:0!important;
+   background:#fff!important;
+ }
+ body[data-mm-accounting-print] #accountingDetailsPanel>*{display:none!important}
+ body[data-mm-accounting-print] .mm-ledger-report-page:not(.hidden){
+   display:block!important;
+   position:static!important;
    width:100%!important;
    max-width:none!important;
    min-height:0!important;
    height:auto!important;
    margin:0!important;
-   padding:12mm!important;
+   padding:2mm!important;
    border:0!important;
+   border-radius:0!important;
    box-shadow:none!important;
    background:#fff!important;
    overflow:visible!important;
    break-inside:auto!important;
    page-break-inside:auto!important;
  }
- body[data-mm-accounting-print] .mm-ledger-report-page:not(.hidden) *{visibility:visible!important}
  body[data-mm-accounting-print] .mm-ledger-report-actions,
- body[data-mm-accounting-print] .mm-ledger-report-heading .btn,
- body[data-mm-accounting-print] .no-print{display:none!important}
+ body[data-mm-accounting-print] .mm-ledger-report-heading,
+ body[data-mm-accounting-print] .mm-ledger-report-page .no-print{display:none!important}
  body[data-mm-accounting-print] .mm-ledger-report-content{
+   display:block!important;
    min-width:0!important;
    width:100%!important;
    height:auto!important;
    max-height:none!important;
+   margin:0!important;
+   padding:0!important;
    overflow:visible!important;
  }
  body[data-mm-accounting-print] .mm-ledger-report-content .print-table{
    min-width:0!important;
    width:100%!important;
    height:auto!important;
+   margin:0!important;
    font-size:9pt!important;
    border-collapse:collapse!important;
    page-break-inside:auto!important;
    break-inside:auto!important;
  }
- body[data-mm-accounting-print] .mm-ledger-report-content .print-table thead{
-   display:table-header-group!important;
- }
- body[data-mm-accounting-print] .mm-ledger-report-content .print-table tbody{
-   display:table-row-group!important;
- }
- body[data-mm-accounting-print] .mm-ledger-report-content .print-table tr{
-   break-inside:avoid!important;
-   page-break-inside:avoid!important;
- }
+ body[data-mm-accounting-print] .mm-ledger-report-content .print-table thead{display:table-header-group!important}
+ body[data-mm-accounting-print] .mm-ledger-report-content .print-table tbody{display:table-row-group!important}
+ body[data-mm-accounting-print] .mm-ledger-report-content .print-table tr{break-inside:avoid!important;page-break-inside:avoid!important}
  body[data-mm-accounting-print] .mm-ledger-report-content .table-responsive{
+   display:block!important;
    width:100%!important;
    max-width:none!important;
    height:auto!important;
    max-height:none!important;
+   margin:0!important;
+   padding:0!important;
    overflow:visible!important;
-   display:block!important;
  }
 }
 
@@ -1243,7 +1293,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v215]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v216]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -3200,7 +3250,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v215</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v216</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -13834,7 +13884,7 @@ $("hrCreatePeriod")?.addEventListener("click",async()=>{try{const r=await db.rpc
 // ====== PWA ======
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=218', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
+    navigator.serviceWorker.register('./sw.js?v=219', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
   });
 }
 
