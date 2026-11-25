@@ -13246,11 +13246,9 @@ async function mmLoadMovementBook(){
   try{
     const nextDate=(()=>{const [y,m,d]=to.split("-").map(Number);return new Date(Date.UTC(y,m-1,d+1)).toISOString().slice(0,10)})();
     const fromTs=from+"T00:00:00",toTs=nextDate+"T00:00:00";
-    const [sales,purchases,saleItems,purchaseItems,expenses,treasuries,treasuryTx,stockMoves,stockBalances,products,expenseTypes]=await Promise.all([
+    const [sales,purchases,expenses,treasuries,treasuryTx,stockMoves,stockBalances,products,expenseTypes]=await Promise.all([
       fetchAllRows(db.from("sales_invoices").select("sales_invoice_id,invoice_number,invoice_date,net_total,status,notes").gte("invoice_date",fromTs).lt("invoice_date",toTs).neq("status","CANCELLED").order("invoice_date")),
       fetchAllRows(db.from("purchase_invoices").select("purchase_invoice_id,invoice_number,invoice_date,net_total,status,notes").gte("invoice_date",from).lte("invoice_date",to).neq("status","CANCELLED").order("invoice_date")),
-      fetchAllRows(db.from("sales_invoice_items").select("sales_invoice_id,product_id,line_total").in("sales_invoice_id",(await fetchAllRows(db.from("sales_invoices").select("sales_invoice_id").gte("invoice_date",fromTs).lt("invoice_date",toTs).neq("status","CANCELLED"))).map(x=>x.sales_invoice_id)).limit(10000)),
-      fetchAllRows(db.from("purchase_invoice_items").select("purchase_invoice_id,product_id,line_total").in("purchase_invoice_id",(await fetchAllRows(db.from("purchase_invoices").select("purchase_invoice_id").gte("invoice_date",from).lte("invoice_date",to).neq("status","CANCELLED"))).map(x=>x.purchase_invoice_id)).limit(10000)),
       fetchAllRows(db.from("expenses").select("expense_id,expense_type,amount,expense_date,notes,is_cancelled").gte("expense_date",from).lte("expense_date",to).eq("is_cancelled",false).order("expense_date")),
       fetchAllRows(db.from("treasuries").select("treasury_id,treasury_name,opening_balance,current_balance,is_active").order("treasury_id")),
       fetchAllRows(db.from("treasury_transactions").select("transaction_id,treasury_id,transaction_type,amount,transaction_date,notes,reference_type,reference_id").lte("transaction_date",to).order("transaction_date",{ascending:true}).order("transaction_id",{ascending:true})),
@@ -13259,15 +13257,16 @@ async function mmLoadMovementBook(){
       fetchAllRows(db.from("products").select("product_id,product_name,base_unit_id,is_active").order("product_id")),
       fetchAllRows(db.from("expense_types").select("expense_type_id,expense_type,is_active").order("expense_type_id"))
     ]);
+    const saleIds=sales.map(x=>x.sales_invoice_id),purchaseIds=purchases.map(x=>x.purchase_invoice_id);
+    const [saleItems,purchaseItems]=await Promise.all([
+      saleIds.length?fetchAllRows(db.from("sales_invoice_items").select("sales_invoice_id,product_id,line_total").in("sales_invoice_id",saleIds).limit(10000)):[],
+      purchaseIds.length?fetchAllRows(db.from("purchase_invoice_items").select("purchase_invoice_id,product_id,line_total").in("purchase_invoice_id",purchaseIds).limit(10000)):[]
+    ]);
     const productMap=new Map(products.map(p=>[String(p.product_id),p]));
     const expTypeMap=new Map(expenseTypes.map(x=>[String(x.expense_type_id),x.expense_type]));
     const esc=mmReportEscape;
     const money=n=>fmt(Number(n||0));
     const dateOnly=v=>String(v||"").slice(0,10);
-
-    const saleMap=new Map(),purchaseMap=new Map();
-    sales.forEach(x=>saleMap.set(String(x.sales_invoice_id),x));
-    purchases.forEach(x=>purchaseMap.set(String(x.purchase_invoice_id),x));
 
     const saleProducts=[...new Set(saleItems.map(x=>String(x.product_id)))].map(id=>productMap.get(id)).filter(Boolean);
     const purchaseProducts=[...new Set(purchaseItems.map(x=>String(x.product_id)))].map(id=>productMap.get(id)).filter(Boolean);
@@ -13346,9 +13345,9 @@ async function mmLoadMovementBook(){
 
     const page1="<div class='mm-book-page'><h3>صفحة 1 — الإيرادات والمبيعات</h3><div class='mm-book-meta'>من "+esc(from)+" إلى "+esc(to)+"</div>"+renderTable(salesHeaders,salesRows,salesTotalRow)+"</div>";
     const page2="<div class='mm-book-page'><h3>صفحة 2 — المشتريات والمصروفات</h3><div class='mm-book-meta'>من "+esc(from)+" إلى "+esc(to)+"</div>"+renderTable(purchaseHeaders,purchaseRows,purchaseTotalRow)+renderTable(["التاريخ","رقم المستند","البيان","المبلغ",...purchaseProducts.map(p=>p.product_name),"الإجمالي"],expenseRows,expenseTotalRow)+"</div>";
-    const page3="<div class='mm-book-page'><h3>صفحة 3 — ملخص الإيرادات والمشتريات والمصروفات</h3><div class='mm-book-meta'>من "+esc(from)+" إلى "+esc(to)+"</div>"+renderTable(["البند","إجمالي الإيرادات","إجمالي المشتريات والمصروفات","الرصيد"],summaryRows,["","إجمالي الإيرادات",money(salesTotal),money(purchasesTotal+expensesTotal),money(net)])+"<div class='mm-book-grand'><div class='box'>إجمالي الإيرادات: "+money(salesTotal)+"</div><div class='box'>إجمالي المشتريات والمصروفات: "+money(purchasesTotal+expensesTotal)+"</div><div class='box'>الرصيد: "+money(net)+"</div></div></div>";
+    const page3="<div class='mm-book-page'><h3>صفحة 3 — ملخص الإيرادات والمشتريات والمصروفات</h3><div class='mm-book-meta'>من "+esc(from)+" إلى "+esc(to)+"</div>"+renderTable(["البند","إجمالي الإيرادات","إجمالي المشتريات والمصروفات","الرصيد"],summaryRows,["","إجمالي الإيرادات",money(purchasesTotal+expensesTotal),money(net)])+"<div class='mm-book-grand'><div class='box'>إجمالي الإيرادات: "+money(salesTotal)+"</div><div class='box'>إجمالي المشتريات والمصروفات: "+money(purchasesTotal+expensesTotal)+"</div><div class='box'>الرصيد: "+money(net)+"</div></div></div>";
     const page4="<div class='mm-book-page'><h3>صفحة 4 — حركة الخزائن</h3><div class='mm-book-meta'>من "+esc(from)+" إلى "+esc(to)+"</div><div class='mm-book-treasuries'>"+treasuryHtml.map(t=>"<div class='mm-book-treasury'><h4>"+esc(t.name)+"</h4><div class='mm-book-summary'><div>رصيد أول المدة<strong>"+money(t.opening)+"</strong></div><div>وارد<strong>"+money(t.incoming)+"</strong></div><div>صادر<strong>"+money(t.outgoing)+"</strong></div><div>رصيد آخر المدة<strong>"+money(t.closing)+"</strong></div></div>"+renderTable(["التاريخ","البيان","وارد","صادر","الرصيد بعد الحركة"],t.rows,null)+"</div>").join("")+"</div></div>";
-    const page5="<div class='mm-book-page'><h3>صفحة 5 — حركة إضافة وصرف أرصدة الأصناف</h3><div class='mm-book-meta'>الرصيد الافتتاحي محسوب من الرصيد الحالي مطروحًا منه صافي حركة الفترة</div>"+stockTables.map(t=>"<div class='mm-book-stock-summary'><h4 style='margin:7px 0 4px;color:var(--g)'>"+esc(t.name)+"</h4><div class='mm-book-summary'><div>رصيد أول المدة<strong>"+money(t.opening)+"</strong></div><div>إضافة<strong>"+money(t.in)+"</strong></div><div>صرف<strong>"+money(t.out)+"</strong></div><div>الرصيد الحالي<strong>"+money(t.closing)+"</strong></div></div>"+renderTable(["التاريخ","الصنف","الحركة","إضافة","صرف","الرصيد","البيان"],t.rows,null)+"</div>").join("")||"<div class='empty'>لا توجد حركات مخزون في الفترة.</div>"+"</div>";
+    const page5="<div class='mm-book-page'><h3>صفحة 5 — حركة إضافة وصرف أرصدة الأصناف</h3><div class='mm-book-meta'>الرصيد الافتتاحي محسوب من الرصيد الحالي مطروحًا منه صافي حركة الفترة</div>"+(stockTables.length?stockTables.map(t=>"<div class='mm-book-stock-summary'><h4 style='margin:7px 0 4px;color:var(--g)'>"+esc(t.name)+"</h4><div class='mm-book-summary'><div>رصيد أول المدة<strong>"+money(t.opening)+"</strong></div><div>إضافة<strong>"+money(t.in)+"</strong></div><div>صرف<strong>"+money(t.out)+"</strong></div><div>الرصيد الحالي<strong>"+money(t.closing)+"</strong></div></div>"+renderTable(["التاريخ","الصنف","الحركة","إضافة","صرف","الرصيد","البيان"],t.rows,null)+"</div>").join(""):"<div class='empty'>لا توجد حركات مخزون في الفترة.</div>")+"</div>";
     pages.innerHTML=page1+page2+page3+page4+page5;
     if(msg){msg.textContent="تم تجهيز دفتر الحركة.";msg.className="status success";msg.classList.remove("hidden");}
   }catch(e){
