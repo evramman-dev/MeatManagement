@@ -133,6 +133,7 @@ function renderNotes(){const el=document.getElementById("notesList"),notes=JSON.
 function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",""":"&quot;","'":"&#039;"}[c]))}
 function searchBible(){const q=document.getElementById("searchInput").value.trim();const el=document.getElementById("searchResults");if(!q){el.innerHTML="<p class='note'>اكتب كلمة أو مرجعًا للبحث.</p>";return}const all=[...new Set(Object.values(references).flat())];const hits=all.filter(x=>x.includes(q)||q.includes(x.split(" ")[0]));el.innerHTML=(hits.length?hits.map(x=>"<div class='result'><strong>"+x+"</strong><p class='note'>مرجع تجريبي. سيصبح البحث داخل النص الكامل عند إضافة حزمة ترجمة مرخصة.</p></div>").join(""):"<p class='note'>لا توجد نتيجة في البيانات التجريبية.</p>")}
 renderNotes();
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}
 </script>
 </body>
 </html>
