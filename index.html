@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v228</title>
+<title>MeatManagement v229</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1372,7 +1372,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v228]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v229]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -1555,8 +1555,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
   <button id="openHomeNotifications" class="home-card red" type="button"><span class="hc-label">🔔 مركز التنبيهات</span><span class="hc-value" id="homeNotificationButtonCount">0</span></button>
   <button id="openHomeGeoSummary" class="home-card gold" type="button"><span class="hc-label">🗺️ ملخص تعاملات المحافظة</span><span class="hc-value" id="homeGeoButtonBalance">0</span></button>
   <button id="openHomeItemsSummary" class="home-card green" type="button"><span class="hc-label">📦 ملخص حركة الأصناف</span><span class="hc-value">عرض</span></button>
-  <button id="openHomeCustomersSummary" class="home-card" type="button"><span class="hc-label">👥 ملخص العملاء</span><span class="hc-value">عرض</span></button>
-  <button id="openHomeSuppliersSummary" class="home-card gold" type="button"><span class="hc-label">🏭 ملخص الموردين</span><span class="hc-value">عرض</span></button>
+  <button id="openHomePartiesSummary" class="home-card" type="button"><span class="hc-label">👥 كشوف العملاء والموردين</span><span class="hc-value">عرض</span></button>
   <button id="openHomeActionSummary" class="home-card red" type="button"><span class="hc-label">⚠️ يحتاج تصرف</span><span class="hc-value" id="homeActionCount">0</span><span class="details" id="homeActionDetails">جارٍ التحديث</span></button><button id="openHomeClosingSummary" class="home-card green" type="button"><span class="hc-label">📋 مراجعة إغلاق اليوم</span><span class="hc-value">عرض</span></button><button id="openPartnerManagementSummary" class="home-card green hidden" type="button"><span class="hc-label">الموقف العام</span><span class="hc-value">تقرير شهري</span></button>
 </div>
 </div>
@@ -1586,15 +1585,14 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
   <div class="notification-actions"><button class="btn secondary" type="button" data-home-print="items">طباعة / PDF</button><button class="btn" type="button" data-home-share="items" style="background:#25D366;">واتساب</button></div>
   <div id="homeGeoItemsSummary" style="margin-top:12px;"><h3>ملخص حركة الأصناف</h3><div class="info">جارٍ تحميل حركة الأصناف...</div></div>
 </div>
-<div id="homeCustomersPanel" class="card hidden" style="margin-top:14px;">
+<div id="homePartiesPanel" class="card hidden" style="margin-top:14px;">
   <button class="btn secondary home-detail-back" type="button" style="width:auto;margin-bottom:12px;">رجوع للرئيسية</button>
-  <div class="notification-actions"><button class="btn secondary" type="button" data-home-print="customers">طباعة / PDF</button><button class="btn" type="button" data-home-share="customers" style="background:#25D366;">واتساب</button></div>
-  <div id="homeCustomersSummary" style="margin-top:12px;"><h3>ملخص العملاء</h3><div class="info">جارٍ تحميل ملخص العملاء...</div></div>
-</div>
-<div id="homeSuppliersPanel" class="card hidden" style="margin-top:14px;">
-  <button class="btn secondary home-detail-back" type="button" style="width:auto;margin-bottom:12px;">رجوع للرئيسية</button>
-  <div class="notification-actions"><button class="btn secondary" type="button" data-home-print="suppliers">طباعة / PDF</button><button class="btn" type="button" data-home-share="suppliers" style="background:#25D366;">واتساب</button></div>
-  <div id="homeSuppliersSummary" style="margin-top:12px;"><h3>ملخص الموردين</h3><div class="info">جارٍ تحميل ملخص الموردين...</div></div>
+  <div class="notification-actions"><button class="btn secondary" type="button" data-home-print="parties">طباعة / PDF</button><button class="btn" type="button" data-home-share="parties" style="background:#25D366;">واتساب</button></div>
+  <div id="homePartiesSummary" style="margin-top:12px;">
+    <h3>كشوف العملاء والموردين</h3>
+    <div class="card" style="margin-top:12px;"><div id="homeCustomersSummary"><h3>ملخص العملاء</h3><div class="info">جارٍ تحميل ملخص العملاء...</div></div></div>
+    <div class="card" style="margin-top:12px;"><div id="homeSuppliersSummary"><h3>ملخص الموردين</h3><div class="info">جارٍ تحميل ملخص الموردين...</div></div></div>
+  </div>
 </div>
 <div id="homePartnerSummaryPanel" class="card hidden" style="margin-top:14px;">
   <button class="btn secondary home-detail-back" type="button" style="width:auto;margin-bottom:12px;">رجوع للرئيسية</button>
@@ -1803,10 +1801,6 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div class="dash-item hidden" id="menuInventoryCount" onclick="window.openInventoryCount()"><div class="dash-icon">📋</div><div class="dash-title">إدارة الجرد</div></div>
 </div></div>
 </div>
-<div id="dataGroupPagehr" class="data-group-page hidden" data-group-key="hr" data-group-title="👥 الموارد البشرية">
-<button type="button" class="btn secondary data-group-back" onclick="window.closeDataGroup()">⬅ العودة إلى مركز البيانات</button>
-<div class="card data-group-card"><h2>👥 الموارد البشرية</h2><p class="desc">اختر شاشة الموارد البشرية مباشرة</p><div class="dashboard-grid data-group-items"><div class="dash-item hidden" id="hrNavEmployees" onclick="window.openSection('hr');window.hrOpenPanel('employees')"><div class="dash-icon">👤</div><div class="dash-title">الموظفون</div></div><div class="dash-item hidden" id="hrNavAttendance" onclick="window.openSection('hr');window.hrOpenPanel('attendance')"><div class="dash-icon">🕘</div><div class="dash-title">الحضور</div></div><div class="dash-item hidden" id="hrNavLeaves" onclick="window.openSection('hr');window.hrOpenPanel('leaves')"><div class="dash-icon">🌴</div><div class="dash-title">الإجازات</div></div><div class="dash-item hidden" id="hrNavOvertime" onclick="window.openSection('hr');window.hrOpenPanel('overtime')"><div class="dash-icon">⏱️</div><div class="dash-title">الإضافي</div></div><div class="dash-item hidden" id="hrNavAdvances" onclick="window.openSection('hr');window.hrOpenPanel('advances')"><div class="dash-icon">💳</div><div class="dash-title">السلف</div></div><div class="dash-item hidden" id="hrNavPayroll" onclick="window.openSection('hr');window.hrOpenPanel('payroll')"><div class="dash-icon">💰</div><div class="dash-title">مسيرات الرواتب</div></div></div></div>
-</div>
 <div id="dataGroupPageprocurement" class="data-group-page hidden" data-group-key="procurement" data-group-title="🛒 المشتريات والموردين">
 <button type="button" class="btn secondary data-group-back" onclick="window.closeDataGroup()">⬅ العودة إلى مركز البيانات</button>
 <div class="card data-group-card"><h2>🛒 المشتريات والموردين</h2><p class="desc">الموردون والمشتريات والمصروفات</p><div class="dashboard-grid data-group-items"><div class="dash-item hidden" id="menuSuppliers" onclick="window.openSection('suppliers')"><div class="dash-icon">🚚</div><div class="dash-title">الموردين</div></div>
@@ -1841,17 +1835,6 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 
 </div>
 <!-- شاشة الموارد البشرية -->
-<div id="sectionHR" class="sub-section hidden">
-<button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
-<div class="card"><div class="row" style="justify-content:space-between;align-items:center"><h2>👥 الموارد البشرية</h2><button id="refreshHRBtn" class="btn secondary" type="button" style="width:auto;margin:0">تحديث</button></div><div id="hrMsg" class="status hidden"></div><div class="dashboard-grid" style="margin-top:12px"><div class="dash-item" onclick="window.hrSwitchTab('employees')"><div class="dash-icon">👤</div><div class="dash-title">الموظفون</div></div><div class="dash-item" onclick="window.hrSwitchTab('attendance')"><div class="dash-icon">🕘</div><div class="dash-title">الحضور</div></div><div class="dash-item" onclick="window.hrSwitchTab('leaves')"><div class="dash-icon">🌴</div><div class="dash-title">الإجازات</div></div><div class="dash-item" onclick="window.hrSwitchTab('overtime')"><div class="dash-icon">⏱️</div><div class="dash-title">الإضافي</div></div><div class="dash-item" onclick="window.hrSwitchTab('advances')"><div class="dash-icon">💳</div><div class="dash-title">السلف</div></div><div class="dash-item" onclick="window.hrSwitchTab('payroll')"><div class="dash-icon">💰</div><div class="dash-title">الرواتب</div></div></div></div>
-<div id="hrTabEmployees" class="card hr-tab"><div class="row" style="justify-content:space-between"><h3>الموظفون</h3><button id="hrAddEmployeeBtn" class="btn hidden" type="button" style="width:auto;margin:0">＋ موظف جديد</button></div><div id="hrEmployeesList"><div class="empty">جارٍ التحميل...</div></div></div>
-<div id="hrTabAttendance" class="card hr-tab hidden"><h3>الحضور والانصراف</h3><form id="hrAttendanceForm" class="form-grid"><label>الموظف<select id="hrAttendanceEmployee" required></select></label><label>التاريخ<input id="hrAttendanceDate" type="date" required></label><label>الحالة<select id="hrAttendanceCode"><option value="PRESENT">حاضر</option><option value="ABSENT">غائب</option><option value="EXCUSED">مستأذن</option><option value="MISSION">مأمورية</option><option value="LEAVE">إجازة</option><option value="HOLIDAY">عطلة</option></select></label><label>دخول<input id="hrAttendanceIn" type="time"></label><label>خروج<input id="hrAttendanceOut" type="time"></label><label>ملاحظات<textarea id="hrAttendanceNotes" rows="2"></textarea></label><button id="hrSaveAttendanceBtn" class="btn" type="submit">حفظ الحضور</button></form><div id="hrAttendanceList"><div class="empty">جارٍ التحميل...</div></div></div>
-<div id="hrTabLeaves" class="card hr-tab hidden"><h3>طلبات الإجازات</h3><div id="hrLeavesList"><div class="empty">جارٍ التحميل...</div></div></div>
-<div id="hrTabOvertime" class="card hr-tab hidden"><h3>الإضافي</h3><div id="hrOvertimeList"><div class="empty">جارٍ التحميل...</div></div></div>
-<div id="hrTabAdvances" class="card hr-tab hidden"><h3>السلف</h3><div id="hrAdvancesList"><div class="empty">جارٍ التحميل...</div></div></div>
-<div id="hrTabPayroll" class="card hr-tab hidden"><div class="row" style="justify-content:space-between"><h3>مسيرات الرواتب</h3><button id="hrCreatePeriodBtn" class="btn hidden" type="button" style="width:auto;margin:0">＋ فترة رواتب</button></div><div class="info">مسير الرواتب يظل منفصلًا عن المحاسبة والخزائن حتى اعتماد تكامل مستقل.</div><div id="hrPayrollPeriodForm" class="hidden"><form id="hrPeriodForm" class="form-grid"><label>كود الفترة<input id="hrPeriodCode" required placeholder="2026-11"></label><label>من تاريخ<input id="hrPeriodStart" type="date" required></label><label>إلى تاريخ<input id="hrPeriodEnd" type="date" required></label><button class="btn" type="submit">إنشاء الفترة</button></form></div><label>الفترة</label><select id="hrPayrollPeriodSelect"><option value="">اختر الفترة</option></select><div class="row" style="margin-top:10px;gap:8px"><button id="hrCalculatePayrollBtn" class="btn" type="button">حساب المسير</button><button id="hrReviewPayrollBtn" class="btn secondary" type="button">مراجعة</button><button id="hrApprovePayrollBtn" class="btn secondary" type="button">اعتماد</button><button id="hrPayPayrollBtn" class="btn" type="button">صرف</button></div><div id="hrPayrollStatus" class="status hidden"></div><div id="hrPayrollItems"><div class="empty">اختر فترة لعرض المسير.</div></div></div></div>
-<div id="hrEmployeeModal" class="modal-form"><div class="modal-form-content"><div class="modal-header"><h3>إضافة موظف</h3><button class="close-btn" type="button" onclick="document.getElementById('hrEmployeeModal').classList.remove('active')">&times;</button></div><div class="modal-body"><form id="hrEmployeeForm" onsubmit="event.preventDefault();"><label>كود الموظف<input id="hrEmployeeCode" required maxlength="50"></label><label>اسم الموظف<input id="hrEmployeeName" required maxlength="200"></label><label>القسم<select id="hrEmployeeDepartment"></select></label><label>الوظيفة<select id="hrEmployeeJob"></select></label><label>تاريخ التعيين<input id="hrEmployeeHireDate" type="date" required></label><label>الراتب الأساسي<input id="hrEmployeeSalary" type="number" min="0" step="0.01" required></label><label>سعر ساعة الإضافي<input id="hrEmployeeOvertimeRate" type="number" min="0" step="0.01" value="0"></label><label>ساعات العمل اليومية<input id="hrEmployeeWorkHours" type="number" min="0.1" step="0.1" value="8"></label><label>يوم الإجازة الأسبوعية<select id="hrEmployeeOffDay"><option value="">بدون تحديد</option><option value="0">الأحد</option><option value="1">الاثنين</option><option value="2">الثلاثاء</option><option value="3">الأربعاء</option><option value="4">الخميس</option><option value="5">الجمعة</option><option value="6">السبت</option></select></label><label>ملاحظات<textarea id="hrEmployeeNotes" rows="2"></textarea></label><button id="hrSaveEmployeeBtn" class="btn" type="submit">حفظ الموظف</button><div id="hrEmployeeMsg" class="status hidden"></div></form></div></div></div>
-</div>
 <!-- شاشة المستخدمين -->
 <div id="sectionUsers" class="sub-section hidden">
 <button class="btn secondary" onclick="window.closeSection()" style="margin-bottom:15px;width:auto;">⬅ رجوع للقسم الرئيسي</button>
@@ -3359,7 +3342,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v228</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v229</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -5069,7 +5052,80 @@ if($("saveSettingsBtn")) $("saveSettingsBtn").addEventListener("click", async ()
   finally { busy(btn, false, "", "حفظ الإعدادات"); }
 });
 
-function renderHomeDailyExtras(){const m=window.mmDailyMetrics;if(!m)return;const box=$("homeDailyExtras");if(!box)return;box.innerHTML="";const cards=[["💰 مبيعات نقدية اليوم",fmt(m.todayCashSales),"فواتير طريقة الدفع نقدي"],["📄 مبيعات آجلة اليوم",fmt(m.todayCreditSales),"فواتير طريقة الدفع آجل"],["💸 تحصيلات اليوم",m.todayCollections===null?"غير متاح":fmt(m.todayCollections),"التحصيلات المسجلة"],["💸 مدفوعات الموردين اليوم",m.todaySupplierPayments===null?"غير متاح":fmt(m.todaySupplierPayments),"المدفوعات المسجلة"],["🧾 مصروفات اليوم",m.todayExpenses===null?"غير متاح":fmt(m.todayExpenses),"المصروفات المسجلة"],["💵 صافي حركة النقدية اليوم",m.todayNetCashMovement===null?"غير متاح":fmt(m.todayNetCashMovement),"الإيداعات ناقص السحوبات"],["🚚 طلبات تحميل تحتاج إجراء",m.pendingLoadCount===null?"غير متاح":m.pendingLoadCount,"طلبات REQUESTED أو APPROVED"]];cards.forEach(function(c){const d=document.createElement("div");d.className="home-card";d.innerHTML="<div class=\"hc-label\">"+c[0]+"</div><div class=\"hc-value\">"+c[1]+"</div><div class=\"details\">"+c[2]+"</div>";box.appendChild(d);});const actionCount=(m.unpaidCount||0)+(m.lowStockCount||0)+(m.activeTrips||0)+(m.pendingLoadCount||0);if($("homeActionCount"))$("homeActionCount").textContent=String(actionCount);if($("homeActionDetails"))$("homeActionDetails").textContent="آجل "+(m.unpaidCount||0)+" • نقص "+(m.lowStockCount||0)+" • جولات "+(m.activeTrips||0)+" • تحميل "+(m.pendingLoadCount===null?"غير متاح":m.pendingLoadCount);const a=$("homeActionSummary");if(a){a.innerHTML="";const items=[["فواتير آجلة",m.unpaidCount,"unpaid"],["أصناف تحت الحد الأدنى",m.lowStockCount,"lowStock"],["جولات غير مكتملة",m.activeTrips,"trips"],["طلبات تحميل تحتاج إجراء",m.pendingLoadCount===null?"غير متاح":m.pendingLoadCount,"trips"]];items.forEach(function(x){const d=document.createElement("div");d.className="item-row";d.innerHTML="<strong>"+x[0]+"</strong><div class=\"details\">العدد: <strong>"+x[1]+"</strong></div>";d.onclick=function(){window.openHomeMetric(x[2]);};a.appendChild(d);});}const c=$("homeClosingSummary");if(c){const rows=m.cashRows.map(function(t){return "<tr><td>"+esc(t.treasury_name||"")+"</td><td>"+esc(t.treasury_type||"")+"</td><td>"+fmt(t.current_balance||0)+"</td></tr>";}).join("")||"<tr><td colspan=\"3\">لا توجد خزائن نشطة.</td></tr>";c.innerHTML="<div class=\"info\">مراجعة تشغيلية لليوم "+formatDate(m.today)+". لا يتم تسجيل عملية إغلاق في قاعدة البيانات من هذا التقرير.</div><div class=\"home-dashboard\"><div class=\"home-card green\"><div class=\"hc-label\">المبيعات</div><div class=\"hc-value\">"+fmt(m.todaySales)+"</div></div><div class=\"home-card\"><div class=\"hc-label\">التحصيلات</div><div class=\"hc-value\">"+(m.todayCollections===null?"غير متاح":fmt(m.todayCollections))+"</div></div><div class=\"home-card gold\"><div class=\"hc-label\">مدفوعات الموردين</div><div class=\"hc-value\">"+(m.todaySupplierPayments===null?"غير متاح":fmt(m.todaySupplierPayments))+"</div></div><div class=\"home-card\"><div class=\"hc-label\">المصروفات</div><div class=\"hc-value\">"+(m.todayExpenses===null?"غير متاح":fmt(m.todayExpenses))+"</div></div><div class=\"home-card green\"><div class=\"hc-label\">صافي حركة النقدية</div><div class=\"hc-value\">"+(m.todayNetCashMovement===null?"غير متاح":fmt(m.todayNetCashMovement))+"</div></div><div class=\"home-card\"><div class=\"hc-label\">النقدية الحالية</div><div class=\"hc-value\">"+fmt(m.totalCash)+"</div></div></div><h3>الموقف النقدي</h3><div class=\"total-box\"><div class=\"line\"><span>النقدية المتاحة دون الشيكات</span><strong>"+fmt(m.cashRows.filter(function(t){return t.treasury_type!=="CHEQUE";}).reduce(function(a,t){return a+Number(t.current_balance||0);},0))+"</strong></div><div class=\"line\"><span>إجمالي الشيكات</span><strong>"+fmt(m.cashRows.filter(function(t){return t.treasury_type==="CHEQUE";}).reduce(function(a,t){return a+Number(t.current_balance||0);},0))+"</strong></div></div><div class=\"table-responsive\"><table class=\"print-table\"><thead><tr><th>الخزنة</th><th>النوع</th><th>الرصيد</th></tr></thead><tbody>"+rows+"</tbody></table></div><h3>الموقف التشغيلي</h3><div class=\"total-box\"><div class=\"line\"><span>فواتير آجلة</span><strong>"+m.unpaidCount+"</strong></div><div class=\"line\"><span>أصناف تحت الحد الأدنى</span><strong>"+m.lowStockCount+"</strong></div><div class=\"line\"><span>جولات غير مكتملة</span><strong>"+m.activeTrips+"</strong></div><div class=\"line\"><span>طلبات تحميل تحتاج إجراء</span><strong>"+(m.pendingLoadCount===null?"غير متاح":m.pendingLoadCount)+"</strong></div><div class=\"line\"><span>مستحقات الموردين</span><strong>"+(m.totalSupplierPayables===null?"غير متاح":fmt(m.totalSupplierPayables))+"</strong></div></div>";}}
+function renderHomeDailyExtras(){
+  const m=window.mmDailyMetrics;if(!m)return;
+  const box=$("homeDailyExtras");if(!box)return;
+  box.innerHTML="";
+  const cards=[
+    ["💰 مبيعات نقدية اليوم",fmt(m.todayCashSales),"فواتير طريقة الدفع نقدي"],
+    ["📄 مبيعات آجلة اليوم",fmt(m.todayCreditSales),"فواتير طريقة الدفع آجل"],
+    ["💸 مدفوعات الموردين اليوم",m.todaySupplierPayments===null?"غير متاح":fmt(m.todaySupplierPayments),"المدفوعات المسجلة"],
+    ["💵 صافي حركة النقدية اليوم",m.todayNetCashMovement===null?"غير متاح":fmt(m.todayNetCashMovement),"الإيداعات ناقص السحوبات"],
+    ["🚚 طلبات تحميل تحتاج إجراء",m.pendingLoadCount===null?"غير متاح":m.pendingLoadCount,"REQUESTED أو APPROVED"]
+  ];
+  cards.forEach(function(c){
+    const d=document.createElement("div");
+    d.className="home-card";
+    d.innerHTML="<div class=\"hc-label\">"+c[0]+"</div><div class=\"hc-value\">"+c[1]+"</div><div class=\"details\">"+c[2]+"</div>";
+    box.appendChild(d);
+  });
+
+  const actionCount=(m.unpaidCount||0)+(m.lowStockCount||0)+(m.activeTrips||0)+(m.pendingLoadCount||0);
+  if($("homeActionCount"))$("homeActionCount").textContent=String(actionCount);
+  if($("homeActionDetails"))$("homeActionDetails").textContent="آجل "+(m.unpaidCount||0)+" • نقص "+(m.lowStockCount||0)+" • جولات "+(m.activeTrips||0)+" • تحميل "+(m.pendingLoadCount===null?"غير متاح":m.pendingLoadCount);
+
+  const a=$("homeActionSummary");
+  if(a){
+    a.innerHTML="";
+    const items=[
+      ["فواتير آجلة",m.unpaidCount,"unpaid"],
+      ["أصناف تحت الحد الأدنى",m.lowStockCount,"lowStock"],
+      ["جولات غير مكتملة",m.activeTrips,"trips"],
+      ["طلبات تحميل تحتاج إجراء",m.pendingLoadCount===null?"غير متاح":m.pendingLoadCount,"pendingLoads"]
+    ];
+    items.forEach(function(x){
+      const d=document.createElement("div");
+      d.className="item-row";
+      d.innerHTML="<strong>"+x[0]+"</strong><div class=\"details\">العدد: <strong>"+x[1]+"</strong></div>";
+      d.onclick=function(){
+        if(x[2]==="pendingLoads")window.openHomeTripLoads();
+        else window.openHomeMetric(x[2]);
+      };
+      a.appendChild(d);
+    });
+  }
+
+  const c=$("homeClosingSummary");
+  if(c){
+    const cashRows=m.cashRows||[];
+    const nonChequeCash=cashRows.filter(function(t){return t.treasury_type!=="CHEQUE";}).reduce(function(a,t){return a+Number(t.current_balance||0);},0);
+    const chequeCash=cashRows.filter(function(t){return t.treasury_type==="CHEQUE";}).reduce(function(a,t){return a+Number(t.current_balance||0);},0);
+    const checks=[
+      ["المبيعات",true,"بيانات اليوم متاحة بقيمة "+fmt(m.todaySales)],
+      ["التحصيلات",m.todayCollections!==null,m.todayCollections===null?"تعذر قراءة تحصيلات اليوم":"تمت قراءة تحصيلات اليوم بقيمة "+fmt(m.todayCollections)],
+      ["المصروفات",m.todayExpenses!==null,m.todayExpenses===null?"تعذر قراءة مصروفات اليوم":"تمت قراءة مصروفات اليوم بقيمة "+fmt(m.todayExpenses)],
+      ["الجولات",true,"الجولات غير المكتملة: "+String(m.activeTrips||0)],
+      ["أرصدة الخزائن",cashRows.length>0,"عدد الخزائن النشطة: "+cashRows.length],
+      ["مديونيات العملاء",true,"فواتير آجلة تحتاج متابعة: "+String(m.unpaidCount||0)],
+      ["التزامات الموردين",m.totalSupplierPayables!==null,m.totalSupplierPayables===null?"تعذر قراءة مستحقات الموردين":"إجمالي المستحقات: "+fmt(m.totalSupplierPayables)],
+      ["طلبات التحميل",m.pendingLoadCount!==null,m.pendingLoadCount===null?"تعذر قراءة طلبات التحميل":"طلبات تحتاج إجراء: "+String(m.pendingLoadCount)]
+    ];
+    const checklist=checks.map(function(x){
+      const state=x[1]?"تمت المراجعة":"تحتاج مراجعة";
+      const cls=x[1]?"badge badge-paid":"badge badge-cancel";
+      return "<div class=\"item-row\"><div style=\"display:flex;justify-content:space-between;gap:8px;align-items:center\"><strong>"+x[0]+"</strong><span class=\""+cls+"\">"+state+"</span></div><div class=\"details\">"+x[2]+"</div></div>";
+    }).join("");
+    const pendingCount=checks.filter(function(x){return !x[1];}).length;
+    const operationalOpen=(m.unpaidCount||0)+(m.lowStockCount||0)+(m.activeTrips||0)+(m.pendingLoadCount||0);
+    c.innerHTML="<div class=\"info\">مراجعة إغلاق اليوم "+formatDate(m.today)+"</div>"+
+      "<div class=\"item-list\" style=\"margin-top:12px\">"+checklist+"</div>"+
+      "<div class=\"status "+(pendingCount?"error":"success")+"\" style=\"margin-top:12px\">"+(pendingCount?"يوجد "+pendingCount+" بنود تحتاج مراجعة قبل الإغلاق.":"تمت مراجعة البيانات الأساسية لإغلاق اليوم.")+"</div>"+
+      "<h3>الموقف النقدي</h3>"+
+      "<div class=\"total-box\"><div class=\"line\"><span>النقدية المتاحة دون الشيكات</span><strong>"+fmt(nonChequeCash)+"</strong></div><div class=\"line\"><span>إجمالي الشيكات</span><strong>"+fmt(chequeCash)+"</strong></div><div class=\"line\"><span>النقدية الحالية</span><strong>"+fmt(m.totalCash)+"</strong></div></div>"+
+      "<h3>بنود تحتاج تصرف</h3>"+
+      "<div class=\"total-box\"><div class=\"line\"><span>إجمالي البنود</span><strong>"+operationalOpen+"</strong></div><div class=\"line\"><span>فواتير آجلة</span><strong>"+(m.unpaidCount||0)+"</strong></div><div class=\"line\"><span>أصناف تحت الحد الأدنى</span><strong>"+(m.lowStockCount||0)+"</strong></div><div class=\"line\"><span>جولات غير مكتملة</span><strong>"+(m.activeTrips||0)+"</strong></div><div class=\"line\"><span>طلبات تحميل</span><strong>"+(m.pendingLoadCount===null?"غير متاح":m.pendingLoadCount)+"</strong></div></div>";
+  }
+}
 // ========== لوحة التحكم الرئيسية (v27 - مُصلَّحة) ==========
 async function loadHomeDashboard() {
   const box = $("homeDashboard"); if(!box) return;
@@ -6291,7 +6347,18 @@ async function loadGeoSalesReport(){
   try{const [rows,items]=await Promise.all([buildGeoSalesSummary(from,to),buildGeoItemMovementSummary(from,to)]);body.innerHTML=rows.length?geoSalesRowsHtml(rows):'<tr><td colspan="8">لا توجد حركة خلال الفترة.</td></tr>';itemsBody.innerHTML=items.length?geoItemRowsHtml(items):'<tr><td colspan="8">لا توجد حركة أصناف خلال الفترة.</td></tr>';}
   catch(e){const message=esc(err(e));body.innerHTML=`<tr><td colspan="8" style="color:red;">تعذر تحميل التقرير: ${message}</td></tr>`;itemsBody.innerHTML=`<tr><td colspan="8" style="color:red;">تعذر تحميل حركة الأصناف: ${message}</td></tr>`;}
 }
-async function openHomeMetric(type){
+async function openHomeTripLoads(){
+  try{
+    window.openSection("trips");
+    setTimeout(function(){
+      const card=$("tripLoadApprovals");
+      if(card)card.scrollIntoView({behavior:"smooth",block:"start"});
+    },500);
+  }catch(e){
+    showToast("تعذر فتح طلبات التحميل: "+err(e),"error");
+  }
+}
+function openHomeMetric(type){
   const cfg={salesToday:"💰 ملخص مبيعات اليوم",customers:"👥 ملخص العملاء النشطين",lowStock:"⚠️ ملخص نقص المخزون",unpaid:"📄 ملخص الفواتير الآجلة",cash:"💵 ملخص النقدية والخزائن",trips:"🚐 ملخص الجولات النشطة",collections:"💸 ملخص تحصيلات اليوم",expenses:"🧾 ملخص مصروفات اليوم",suppliers:"🏭 ملخص مستحقات الموردين"};
   if(!cfg[type])return;
   $("homeOverview")?.classList.add("hidden");
@@ -6339,7 +6406,7 @@ function openHomeDetail(panelId){
   $("partnerReportMenuScreen")?.classList.add("hidden");
   $("partnerReportDetailScreen")?.classList.add("hidden");
   $("homeOverview")?.classList.add("hidden");
-  ["homeNotificationPanel","homeGeoPanel","homeItemsPanel","homeCustomersPanel","homeSuppliersPanel","homeActionPanel","homeClosingPanel","homePartnerSummaryPanel","homeMetricPanel"].forEach(id=>$(id)?.classList.toggle("hidden",id!==panelId));
+  ["homeNotificationPanel","homeGeoPanel","homeItemsPanel","homePartiesPanel","homeActionPanel","homeClosingPanel","homePartnerSummaryPanel","homeMetricPanel"].forEach(id=>$(id)?.classList.toggle("hidden",id!==panelId));
   window.scrollTo(0,0);
 }
 function closeHomeDetail(){
@@ -6351,7 +6418,7 @@ function closeHomeDetail(){
 }
 let homeQuickPrintShareText="";
 function homeQuickReportData(type){
-  const configs={notifications:{title:"مركز التنبيهات",source:"notificationsList"},geo:{title:"ملخص تعاملات المحافظة",source:"homeGeoSummary"},items:{title:"ملخص حركة الأصناف",source:"homeGeoItemsSummary"},customers:{title:"ملخص العملاء",source:"homeCustomersSummary"},suppliers:{title:"ملخص الموردين",source:"homeSuppliersSummary"},partners:{title:"الموقف العام",source:"partnerManagementSummaryContent"},actions:{title:"يحتاج تصرف",source:"homeActionSummary"},closing:{title:"مراجعة إغلاق اليوم",source:"homeClosingSummary"}};
+  const configs={notifications:{title:"مركز التنبيهات",source:"notificationsList"},geo:{title:"ملخص تعاملات المحافظة",source:"homeGeoSummary"},items:{title:"ملخص حركة الأصناف",source:"homeGeoItemsSummary"},customers:{title:"ملخص العملاء",source:"homeCustomersSummary"},suppliers:{title:"ملخص الموردين",source:"homeSuppliersSummary"},parties:{title:"كشوف العملاء والموردين",source:"homePartiesSummary"},partners:{title:"الموقف العام",source:"partnerManagementSummaryContent"},actions:{title:"يحتاج تصرف",source:"homeActionSummary"},closing:{title:"مراجعة إغلاق اليوم",source:"homeClosingSummary"}};
   const config=configs[type];if(!config)throw new Error("نوع التقرير غير معروف");
   const source=$(config.source);if(!source)throw new Error("محتوى التقرير غير متاح");
   const clone=source.cloneNode(true);clone.removeAttribute("id");
@@ -6720,8 +6787,8 @@ async function loadPartnerManagementSummary(){
 
 async function loadHomeGeoSummary(){
   const box=$("homeGeoSummary"),itemsBox=$("homeGeoItemsSummary"),customersBox=$("homeCustomersSummary"),suppliersBox=$("homeSuppliersSummary");
-  if(!box||(!isSystemAdmin&&!isPartner)){["openHomeGeoSummary","openHomeItemsSummary","openHomeCustomersSummary","openHomeSuppliersSummary","openPartnerManagementSummary"].forEach(id=>$(id)?.classList.add("hidden"));return;}
-  ["openHomeGeoSummary","openHomeItemsSummary","openHomeCustomersSummary","openHomeSuppliersSummary","openPartnerManagementSummary"].forEach(id=>$(id)?.classList.remove("hidden"));
+  if(!box||(!isSystemAdmin&&!isPartner)){["openHomeGeoSummary","openHomeItemsSummary","openHomePartiesSummary","openPartnerManagementSummary"].forEach(id=>$(id)?.classList.add("hidden"));return;}
+  ["openHomeGeoSummary","openHomeItemsSummary","openHomePartiesSummary","openPartnerManagementSummary"].forEach(id=>$(id)?.classList.remove("hidden"));
   const from=monthStartISO(),to=todayISO();
   box.innerHTML='<h3>ملخص المبيعات والتحصيلات حسب المحافظة</h3><div class="info">جارٍ تحميل الملخص...</div>';
   if(itemsBox)itemsBox.innerHTML='<h3>ملخص حركة الأصناف</h3><div class="info">جارٍ تحميل حركة الأصناف...</div>';
@@ -13768,8 +13835,7 @@ document.addEventListener("DOMContentLoaded",()=>{const run=$("mmBookRun");if(ru
   if($("openHomeActionSummary"))$("openHomeActionSummary").addEventListener("click",()=>openHomeDetail("homeActionPanel")); if($("openHomeClosingSummary"))$("openHomeClosingSummary").addEventListener("click",()=>openHomeDetail("homeClosingPanel")); if($("openHomeNotifications"))$("openHomeNotifications").addEventListener("click",()=>openHomeDetail("homeNotificationPanel"));
   if($("openHomeGeoSummary"))$("openHomeGeoSummary").addEventListener("click",()=>openHomeDetail("homeGeoPanel"));
   if($("openHomeItemsSummary"))$("openHomeItemsSummary").addEventListener("click",()=>openHomeDetail("homeItemsPanel"));
-  if($("openHomeCustomersSummary"))$("openHomeCustomersSummary").addEventListener("click",()=>openHomeDetail("homeCustomersPanel"));
-  if($("openHomeSuppliersSummary"))$("openHomeSuppliersSummary").addEventListener("click",()=>openHomeDetail("homeSuppliersPanel"));
+  if($("openHomePartiesSummary"))$("openHomePartiesSummary").addEventListener("click",()=>openHomeDetail("homePartiesPanel"));
   if($("openPartnerManagementSummary"))$("openPartnerManagementSummary").addEventListener("click",()=>{openHomeDetail("homePartnerSummaryPanel");loadPartnerManagementSummary();});
   if($("refreshPartnerSummary"))$("refreshPartnerSummary").addEventListener("click",loadPartnerManagementSummary);
   if($("partnerReportMenuBack"))$("partnerReportMenuBack").addEventListener("click",closePartnerReportMenu);
