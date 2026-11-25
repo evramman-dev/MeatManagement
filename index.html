@@ -3078,14 +3078,14 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <h3>📒 دفتر الحركة والتجميع</h3>
 <div class="mm-book-meta">حدد الفترة ثم اعرض الدفتر. بعد ذلك اختر القسم الذي تريد عرضه.</div>
 <div class="mm-book-home-actions">
-<button type="button" class="btn" onclick="window.mmOpenBookSection('sales')">💰 الإيرادات والمبيعات</button>
-<button type="button" class="btn" onclick="window.mmOpenBookSection('purchases')">🛒 المشتريات والمصروفات</button>
-<button type="button" class="btn" onclick="window.mmOpenBookSection('summary')">📊 ملخص الإيرادات والمشتريات</button>
-<button type="button" class="btn" onclick="window.mmOpenBookSection('treasuries')">💵 حركة الخزائن</button>
-<button type="button" class="btn" onclick="window.mmOpenBookSection('stock')">📦 حركة الأصناف</button>
+<button type="button" class="btn" onclick=\"window.mmOpenBookSection(\'sales\')\">💰 الإيرادات والمبيعات</button>
+<button type="button" class="btn" onclick=\"window.mmOpenBookSection(\'purchases\')\">🛒 المشتريات والمصروفات</button>
+<button type="button" class="btn" onclick=\"window.mmOpenBookSection(\'summary\')\">📊 ملخص الإيرادات والمشتريات</button>
+<button type="button" class="btn" onclick=\"window.mmOpenBookSection(\'treasuries\')\">💵 حركة الخزائن</button>
+<button type="button" class="btn" onclick=\"window.mmOpenBookSection(\'stock\')\">📦 حركة الأصناف</button>
 </div>
 <div class="mm-book-home-print">
-<button type="button" class="btn secondary" onclick="window.mmPrintMovementBook('full')">🖨️ طباعة الدفتر كاملًا</button>
+<button type="button" class="btn secondary" onclick=\"window.mmPrintMovementBook(\'full\')\">🖨️ طباعة الدفتر كاملًا</button>
 </div>
 </div>
 </div>
@@ -13392,14 +13392,14 @@ async function mmLoadMovementBook(){
     const page4="<div class='mm-book-page'><h3>حركة الخزائن</h3><div class='mm-book-meta'>من "+esc(from)+" إلى "+esc(to)+"</div><div class='mm-book-treasuries'>"+treasuryHtml.map(t=>"<div class='mm-book-treasury'><h4>"+esc(t.name)+"</h4><div class='mm-book-summary'><div>رصيد أول المدة<strong>"+money(t.opening)+"</strong></div><div>وارد<strong>"+money(t.incoming)+"</strong></div><div>صادر<strong>"+money(t.outgoing)+"</strong></div><div>رصيد آخر المدة<strong>"+money(t.closing)+"</strong></div></div>"+renderTable(["التاريخ","البيان","وارد","صادر","الرصيد بعد الحركة"],t.rows,null)+"</div>").join("")+"</div></div>";
     const page5="<div class='mm-book-page'><h3>حركة إضافة وصرف أرصدة الأصناف</h3><div class='mm-book-meta'>الرصيد الافتتاحي محسوب من الرصيد الحالي مطروحًا منه صافي حركة الفترة</div>"+(stockTables.length?stockTables.map(t=>"<div class='mm-book-stock-summary'><h4 style='margin:7px 0 4px;color:var(--g)'>"+esc(t.name)+"</h4><div class='mm-book-summary'><div>رصيد أول المدة<strong>"+money(t.opening)+"</strong></div><div>إضافة<strong>"+money(t.in)+"</strong></div><div>صرف<strong>"+money(t.out)+"</strong></div><div>الرصيد الحالي<strong>"+money(t.closing)+"</strong></div></div>"+renderTable(["التاريخ","الصنف","الحركة","إضافة","صرف","الرصيد","البيان"],t.rows,null)+"</div>").join(""):"<div class='empty'>لا توجد حركات مخزون في الفترة.</div>")+"</div>";
 
-    const sectionView=(id,body)=>"<div id='"+id+"' class='mm-book-view hidden' data-mm-book-view='1'><div class='mm-book-section-actions'><button type='button' class='btn secondary' onclick="window.mmBackToBookHome()">⬅ رجوع لدفتر الحركة</button><button type='button' class='btn secondary' onclick="window.mmPrintMovementBook('current')">🖨️ طباعة الصفحة الحالية</button></div>"+body+"</div>";
+    const sectionView=(id,body)=>"<div id='"+id+"' class='mm-book-view hidden' data-mm-book-view='1'><div class='mm-book-section-actions'><button type='button' class='btn secondary' onclick=\"window.mmBackToBookHome()\">⬅ رجوع لدفتر الحركة</button><button type='button' class='btn secondary' onclick=\"window.mmPrintMovementBook(\'current\')\">🖨️ طباعة الصفحة الحالية</button></div>"+body+"</div>";
     pages.innerHTML="<div id='mmBookMenu' class='mm-book-home hidden'><h3>📒 أقسام دفتر الحركة والتجميع</h3><div class='mm-book-meta'>اختر القسم الذي تريد عرضه.</div><div class='mm-book-home-actions'>"+
-      "<button type='button' class='btn' onclick="window.mmOpenBookSection('sales')">💰 الإيرادات والمبيعات</button>"+
-      "<button type='button' class='btn' onclick="window.mmOpenBookSection('purchases')">🛒 المشتريات والمصروفات</button>"+
-      "<button type='button' class='btn' onclick="window.mmOpenBookSection('summary')">📊 ملخص الإيرادات والمشتريات</button>"+
-      "<button type='button' class='btn' onclick="window.mmOpenBookSection('treasuries')">💵 حركة الخزائن</button>"+
-      "<button type='button' class='btn' onclick="window.mmOpenBookSection('stock')">📦 حركة الأصناف</button>"+
-      "</div><div class='mm-book-home-print'><button type='button' class='btn secondary' onclick="window.mmPrintMovementBook('full')">🖨️ طباعة الدفتر كاملًا</button></div></div>"+
+      "<button type='button' class='btn' onclick=\"window.mmOpenBookSection(\'sales\')\">💰 الإيرادات والمبيعات</button>"+
+      "<button type='button' class='btn' onclick=\"window.mmOpenBookSection(\'purchases\')\">🛒 المشتريات والمصروفات</button>"+
+      "<button type='button' class='btn' onclick=\"window.mmOpenBookSection(\'summary\')\">📊 ملخص الإيرادات والمشتريات</button>"+
+      "<button type='button' class='btn' onclick=\"window.mmOpenBookSection(\'treasuries\')\">💵 حركة الخزائن</button>"+
+      "<button type='button' class='btn' onclick=\"window.mmOpenBookSection(\'stock\')\">📦 حركة الأصناف</button>"+
+      "</div><div class='mm-book-home-print'><button type='button' class='btn secondary' onclick=\"window.mmPrintMovementBook(\'full\')\">🖨️ طباعة الدفتر كاملًا</button></div></div>"+
       sectionView('mmBookViewSales',page1)+sectionView('mmBookViewPurchases',page2)+sectionView('mmBookViewSummary',page3)+sectionView('mmBookViewTreasuries',page4)+sectionView('mmBookViewStock',page5);
 
     window.mmBookCurrentSection="sales";
