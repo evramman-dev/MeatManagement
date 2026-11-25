@@ -1199,6 +1199,12 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 #homeDailyExtras .home-card:active{transform:scale(.98)}
 #homeQuickReports .home-card,
 #homeDailyExtras .home-card{min-height:104px;padding:14px 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px}
+#homeApps{margin-top:10px}
+#homeApps .bible-app-card{background:linear-gradient(135deg,#263b35,#31584b)!important;color:#fff!important;border:1px solid #a47b3b!important;min-height:116px}
+#homeApps .bible-app-card .hc-label,#homeApps .bible-app-card .hc-value,#homeApps .bible-app-card .details{color:#fff!important}
+#homeApps .bible-app-card .hc-label{font-size:16px}
+#homeApps .bible-app-card .hc-value{font-size:14px}
+#homeApps .bible-app-card .details{font-size:11px;opacity:.88}
 #homeQuickReports{margin-top:10px}
 #homeQuickReports .home-card .hc-value,
 #homeDailyExtras .home-card .hc-value{font-size:14px}
@@ -1558,6 +1564,10 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
   <button id="openHomeCustomersSummary" class="home-card" type="button"><span class="hc-label">👥 ملخص العملاء</span><span class="hc-value">عرض</span></button>
   <button id="openHomeSuppliersSummary" class="home-card gold" type="button"><span class="hc-label">🏭 ملخص الموردين</span><span class="hc-value">عرض</span></button>
   <button id="openHomeActionSummary" class="home-card red" type="button"><span class="hc-label">⚠️ يحتاج تصرف</span><span class="hc-value" id="homeActionCount">0</span><span class="details" id="homeActionDetails">جارٍ التحديث</span></button><button id="openHomeClosingSummary" class="home-card green" type="button"><span class="hc-label">📋 مراجعة إغلاق اليوم</span><span class="hc-value">عرض</span></button><button id="openPartnerManagementSummary" class="home-card green hidden" type="button"><span class="hc-label">الموقف العام</span><span class="hc-value">تقرير شهري</span></button>
+</div>
+<div class="home-actions-divider"><span>تطبيقات</span></div>
+<div class="home-dashboard" id="homeApps">
+  <button id="openBibleJourneyApp" class="home-card bible-app-card" type="button"><span class="hc-label">رِحلة | الكتاب المقدس</span><span class="hc-value">ادخل إلى رحلتك</span><span class="details">قراءة وتأمل ومذكرات</span></button>
 </div>
 </div>
 <div id="homeActionPanel" class="card hidden" style="margin-top:14px;"><button class="btn secondary home-detail-back" type="button" style="width:auto;margin-bottom:12px;">رجوع للرئيسية</button><div class="notification-actions"><button class="btn secondary" type="button" data-home-print="actions">طباعة / PDF</button><button class="btn" type="button" data-home-share="actions" style="background:#25D366;">واتساب</button></div><h3>⚠️ يحتاج تصرف</h3><div id="homeActionSummary" style="margin-top:12px;"><div class="info">جارٍ تحميل البنود...</div></div></div><div id="homeClosingPanel" class="card hidden" style="margin-top:14px;"><button class="btn secondary home-detail-back" type="button" style="width:auto;margin-bottom:12px;">رجوع للرئيسية</button><div class="notification-actions"><button class="btn secondary" type="button" data-home-print="closing">طباعة / PDF</button><button class="btn" type="button" data-home-share="closing" style="background:#25D366;">واتساب</button></div><h3>📋 مراجعة إغلاق اليوم</h3><div id="homeClosingSummary" style="margin-top:12px;"><div class="info">جارٍ تحميل ملخص الإغلاق...</div></div></div><div id="homeNotificationPanel" class="card hidden" style="margin-top:14px;">
@@ -13770,7 +13780,7 @@ document.addEventListener("DOMContentLoaded",()=>{const run=$("mmBookRun");if(ru
   if($("openHomeItemsSummary"))$("openHomeItemsSummary").addEventListener("click",()=>openHomeDetail("homeItemsPanel"));
   if($("openHomeCustomersSummary"))$("openHomeCustomersSummary").addEventListener("click",()=>openHomeDetail("homeCustomersPanel"));
   if($("openHomeSuppliersSummary"))$("openHomeSuppliersSummary").addEventListener("click",()=>openHomeDetail("homeSuppliersPanel"));
-  if($("openPartnerManagementSummary"))$("openPartnerManagementSummary").addEventListener("click",()=>{openHomeDetail("homePartnerSummaryPanel");loadPartnerManagementSummary();});
+  if($("openPartnerManagementSummary"))$("openPartnerManagementSummary").addEventListener("click",()=>{openHomeDetail("homePartnerSummaryPanel");loadPartnerManagementSummary();}); if($("openBibleJourneyApp"))$("openBibleJourneyApp").addEventListener("click",()=>{window.location.href="./bible/";});
   if($("refreshPartnerSummary"))$("refreshPartnerSummary").addEventListener("click",loadPartnerManagementSummary);
   if($("partnerReportMenuBack"))$("partnerReportMenuBack").addEventListener("click",closePartnerReportMenu);
   if($("partnerReportDetailBack"))$("partnerReportDetailBack").addEventListener("click",closePartnerReportDetail);
