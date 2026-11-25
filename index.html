@@ -6295,7 +6295,7 @@ async function openHomeMetric(type){
   const cfg={salesToday:"💰 ملخص مبيعات اليوم",customers:"👥 ملخص العملاء النشطين",lowStock:"⚠️ ملخص نقص المخزون",unpaid:"📄 ملخص الفواتير الآجلة",cash:"💵 ملخص النقدية والخزائن",trips:"🚐 ملخص الجولات النشطة",collections:"💸 ملخص تحصيلات اليوم",expenses:"🧾 ملخص مصروفات اليوم",suppliers:"🏭 ملخص مستحقات الموردين"};
   if(!cfg[type])return;
   $("homeOverview")?.classList.add("hidden");
-  ["homeNotificationPanel","homeGeoPanel","homeItemsPanel","homeCustomersPanel","homeSuppliersPanel","homePartnerSummaryPanel"].forEach(id=>$(id)?.classList.add("hidden"));
+  ["homeNotificationPanel","homeGeoPanel","homeItemsPanel","homeCustomersPanel","homeSuppliersPanel","homeActionPanel","homeClosingPanel","homePartnerSummaryPanel"].forEach(id=>$(id)?.classList.add("hidden"));
   $("homeMetricPanel")?.classList.remove("hidden");
   $("homeMetricTitle").textContent=cfg[type];
   $("mmAcc_homeMetricSummary").replaceChildren();
