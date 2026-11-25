@@ -82,7 +82,7 @@ def parse_archive(path,edition_id):
                     "display_candidate_text":extract_norm_text(verse),
                     "original_text":extract_original_text(verse,edition_id.split("_")[1]),
                     "english_alignment_candidate":english,"source_license":meta.get("license"),
-                    "source_version":meta.get("version_n),"source_version_date":meta.get("version_date),
+                    "source_version":meta.get("version_n"),"source_version_date":meta.get("version_date"),
                     "xml_recovery_error_count":len(parser.error_log)})
     return records,documents,issues
 
