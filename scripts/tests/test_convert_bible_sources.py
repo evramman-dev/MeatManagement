@@ -13,6 +13,8 @@ class ConverterTests(unittest.TestCase):
         raw='\\id GEN\n\\c 1\n\\p\n\\v 1 In the beginning.\n\\v 2a Second part.\n\\c 2\n\\v 1 New chapter.'
         rows=c.usfm_records(raw.encode(),'test','fixture','fixture.usfm')
         self.assertEqual([(r['book_id'],r['chapter'],r['verse_label']) for r in rows],[('gen',1,'1'),('gen',1,'2a'),('gen',2,'1')])
+        self.assertNotIn('_parts',rows[0])
+        self.assertNotIn('_raw',rows[0])
     def test_csv_uses_label_not_malformed_chapter_columns(self):
         with tempfile.TemporaryDirectory() as d:
             p=pathlib.Path(d)/'sample.csv'; p.write_text('book,chapter,verse,label,body\ngenesis,{,1,1:1,Text\n',encoding='utf8')
