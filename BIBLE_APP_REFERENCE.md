@@ -267,3 +267,7 @@
 - workflow browser smoke رقم 45713097135 فشل في اختبار قديم يطلب عدم وجود purchase_invoices في مصدر تقرير محاسبي. نفس الفشل موجود في تشغيل main السابق 45712113689 قبل هذا PR، لذا ليس ناتجًا عن ملفات corpus الجديدة. الاختبار الكامل تخطاه workflow لعدم وجود موافقة منفصلة.
 - blob SHAs: audit script 2ecd6e6ffcb5979e6c5f451651d92c9d2a5577e8، tests be9960e027acdd11d155665b864c625c0960d447، report cc92925e67da5277dc1fc590bfd091f96cefd8bd، Coptic research 00daadb0d282d970cddf3e88cac1a9eda3aec90a.
 - لم يتم تعديل الواجهة أو Service Worker أو Supabase أو بيانات المستخدم.
+
+
+- إعادة تشغيل بعد الدمج على main: workflow run 45713304509 انتهى success على commit 1237fb49fc336846011b1ab0d5022dec9d8f1edc.
+- artifact الرسمي من main: ID 15067509443، bible-corpus-stage-batch-01، 18,829,921 bytes، ينتهي 2026-12-02. يحتوي audit/book-audit.json وaudit/book-audit.md. تم تنزيله وفحص سلامة ZIP ووجود 12 ملفًا.
