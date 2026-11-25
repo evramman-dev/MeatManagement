@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173c2c">
-<title>MeatManagement v219</title>
+<title>MeatManagement v220</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -435,7 +435,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
   body{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   body>header,body>nav,body>.offline-banner,body>.modal-form,body>.modal-form-content{display:none!important}
 
-  /* v219: اطبع المسار المختار فقط، وليس باقي شاشة التطبيق */
+  /* v220: اطبع المسار المختار فقط، وليس باقي شاشة التطبيق */
   body.mm-printing .mm-print-hide{display:none!important}
   body.mm-printing main{width:100%!important;max-width:none!important;margin:0!important;padding:0!important}
   body.mm-printing .mm-print-target{width:100%!important;max-width:none!important;min-width:0!important;margin:0!important;box-shadow:none!important}
@@ -471,7 +471,7 @@ nav{position:fixed;bottom:0;right:0;left:0;display:flex;gap:5px;padding:10px 8px
   body.mm-printing .mm-accounting-screen{overflow:visible!important;max-height:none!important}
 }
 @media(max-width:480px){.grid,.grid3{grid-template-columns:1fr}.card{padding:14px}.actions{flex-direction:column}}
-/* v219: دفتر الحركة والتجميع */
+/* v220: دفتر الحركة والتجميع */
 @page mmMovementBook{size:A4 landscape;margin:2mm}
 .mm-book-report{background:#fff;color:#111;font-family:Tahoma,Arial,sans-serif}
 .mm-book-controls{background:#f8faf8;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:14px}
@@ -1318,7 +1318,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <header>
 <button id="mmMenuToggle" class="header-menu-btn" type="button" aria-label="فتح القائمة" aria-expanded="false">☰</button>
 <button id="exitAppBtn" class="header-exit-btn" type="button">خروج</button>
-<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v219]</span></h1>
+<h1><span class="header-brand">🥩 MeatManagement</span><span class="header-version">[v220]</span></h1>
 <p>نظام إدارة المبيعات والمخزون والإنتاج والتوزيع</p>
 <div id="headerClock" aria-live="off">
   <span id="headerDayDate">Loading date...</span>
@@ -3297,7 +3297,7 @@ body :is(p,span,label,button,input,select,textarea,td,th,li,.desc,.details,.stat
 <div><label>قيمة السلفة<input id="hrAdvanceAmount" type="number" min="0.01" step="0.01"></label></div><div><label>قيمة القسط<input id="hrAdvanceInstallment" type="number" min="0.01" step="0.01"></label></div>
 <div><label>عدد الأقساط<input id="hrAdvanceCount" type="number" min="1" step="1" value="1"></label></div></div><label>ملاحظات<textarea id="hrAdvanceNotes" rows="2"></textarea></label>
 <button id="hrSaveAdvance" class="btn">طلب سلفة</button><div id="hrAdvanceMsg" class="status hidden"></div><div id="hrAdvanceList"></div></div>
-<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v219</p>
+<div class="card" style="margin-top:12px"><h3 style="margin-top:0;color:var(--g)">تفاصيل مسير الرواتب</h3><div id="hrV2PayrollItems"><div class="empty">اختر مسيرًا لعرض التفاصيل.</div></div></div></div></section><p class="foot">تُفرض الصلاحيات من قاعدة البيانات أيضًا. النسخة v220</p>
 </main>
 <nav id="nav" class="hidden">
 <button class="navbtn active" data-page="home" type="button">🏠 الرئيسية</button>
@@ -13246,59 +13246,70 @@ async function mmLoadMovementBook(){
   try{
     const nextDate=(()=>{const [y,m,d]=to.split("-").map(Number);return new Date(Date.UTC(y,m-1,d+1)).toISOString().slice(0,10)})();
     const fromTs=from+"T00:00:00",toTs=nextDate+"T00:00:00";
-    const [sales,purchases,expenses,treasuries,treasuryTx,stockMoves,stockBalances,products,expenseTypes]=await Promise.all([
-      fetchAllRows(db.from("sales_invoices").select("sales_invoice_id,invoice_number,invoice_date,net_total,status,notes").gte("invoice_date",fromTs).lt("invoice_date",toTs).neq("status","CANCELLED").order("invoice_date")),
-      fetchAllRows(db.from("purchase_invoices").select("purchase_invoice_id,invoice_number,invoice_date,net_total,status,notes").gte("invoice_date",from).lte("invoice_date",to).neq("status","CANCELLED").order("invoice_date")),
+    const [sales,purchases,expenses,treasuries,treasuryTx,stockMoves,stockBalances,products,expenseTypes,customers,suppliers,salesReturns,purchaseReturns]=await Promise.all([
+      fetchAllRows(db.from("sales_invoices").select("sales_invoice_id,invoice_number,invoice_date,customer_id,net_total,status,notes").gte("invoice_date",fromTs).lt("invoice_date",toTs).neq("status","CANCELLED").order("invoice_date")),
+      fetchAllRows(db.from("purchase_invoices").select("purchase_invoice_id,invoice_number,invoice_date,supplier_id,net_total,status,notes").gte("invoice_date",from).lte("invoice_date",to).neq("status","CANCELLED").order("invoice_date")),
       fetchAllRows(db.from("expenses").select("expense_id,expense_type,amount,expense_date,notes,is_cancelled").gte("expense_date",from).lte("expense_date",to).eq("is_cancelled",false).order("expense_date")),
       fetchAllRows(db.from("treasuries").select("treasury_id,treasury_name,opening_balance,current_balance,is_active").order("treasury_id")),
       fetchAllRows(db.from("treasury_transactions").select("transaction_id,treasury_id,transaction_type,amount,transaction_date,notes,reference_type,reference_id").lte("transaction_date",to).order("transaction_date",{ascending:true}).order("transaction_id",{ascending:true})),
       fetchAllRows(db.from("stock_movements").select("movement_id,product_id,movement_type,quantity_change,quantity_after,created_at,notes,location_id").gte("created_at",fromTs).lt("created_at",toTs).order("created_at",{ascending:true}).order("movement_id",{ascending:true})),
       fetchAllRows(db.from("stock_balances").select("product_id,quantity")),
       fetchAllRows(db.from("products").select("product_id,product_name,base_unit_id,is_active").order("product_id")),
-      fetchAllRows(db.from("expense_types").select("expense_type_id,expense_type,is_active").order("expense_type_id"))
+      fetchAllRows(db.from("expense_types").select("expense_type_id,expense_type,is_active").order("expense_type_id")),
+      fetchAllRows(db.from("customers").select("customer_id,customer_name").order("customer_id")),
+      fetchAllRows(db.from("suppliers").select("supplier_id,supplier_name").order("supplier_id")),
+      fetchAllRows(db.from("sales_returns").select("sales_return_id,return_number,customer_id,return_date,total_returned_value,status,notes").gte("return_date",from).lte("return_date",to).neq("status","CANCELLED").order("return_date")),
+      fetchAllRows(db.from("purchase_returns").select("return_id,return_number,supplier_id,return_date,total_return_amount,is_cancelled,notes").gte("return_date",from).lte("return_date",to).eq("is_cancelled",false).order("return_date"))
     ]);
     const saleIds=sales.map(x=>x.sales_invoice_id),purchaseIds=purchases.map(x=>x.purchase_invoice_id);
-    const [saleItems,purchaseItems]=await Promise.all([
+    const saleReturnIds=salesReturns.map(x=>x.sales_return_id),purchaseReturnIds=purchaseReturns.map(x=>x.return_id);
+    const [saleItems,purchaseItems,saleReturnItems,purchaseReturnItems]=await Promise.all([
       saleIds.length?fetchAllRows(db.from("sales_invoice_items").select("sales_invoice_id,product_id,line_total").in("sales_invoice_id",saleIds).limit(10000)):[],
-      purchaseIds.length?fetchAllRows(db.from("purchase_invoice_items").select("purchase_invoice_id,product_id,line_total").in("purchase_invoice_id",purchaseIds).limit(10000)):[]
+      purchaseIds.length?fetchAllRows(db.from("purchase_invoice_items").select("purchase_invoice_id,product_id,line_total").in("purchase_invoice_id",purchaseIds).limit(10000)):[],
+      saleReturnIds.length?fetchAllRows(db.from("sales_return_items").select("sales_return_id,product_id,line_total").in("sales_return_id",saleReturnIds).limit(10000)):[],
+      purchaseReturnIds.length?fetchAllRows(db.from("purchase_return_items").select("return_id,product_id,line_total").in("return_id",purchaseReturnIds).limit(10000)):[]
     ]);
     const productMap=new Map(products.map(p=>[String(p.product_id),p]));
     const expTypeMap=new Map(expenseTypes.map(x=>[String(x.expense_type_id),x.expense_type]));
-    const esc=mmReportEscape;
-    const money=n=>fmt(Number(n||0));
-    const dateOnly=v=>String(v||"").slice(0,10);
+    const customerMap=new Map(customers.map(x=>[String(x.customer_id),x.customer_name]));
+    const supplierMap=new Map(suppliers.map(x=>[String(x.supplier_id),x.supplier_name]));
+    const esc=mmReportEscape,money=n=>fmt(Number(n||0)),dateOnly=v=>String(v||"").slice(0,10);
 
-    const saleProducts=[...new Set(saleItems.map(x=>String(x.product_id)))].map(id=>productMap.get(id)).filter(Boolean);
-    const purchaseProducts=[...new Set(purchaseItems.map(x=>String(x.product_id)))].map(id=>productMap.get(id)).filter(Boolean);
-    const saleProductIds=[...new Set(saleItems.map(x=>String(x.product_id)))];
-    const purchaseProductIds=[...new Set(purchaseItems.map(x=>String(x.product_id)))];
+    const saleProductIds=[...new Set([...saleItems,...saleReturnItems].map(x=>String(x.product_id)))];
+    const purchaseProductIds=[...new Set([...purchaseItems,...purchaseReturnItems].map(x=>String(x.product_id)))];
+    const saleProducts=saleProductIds.map(id=>productMap.get(id)).filter(Boolean);
+    const purchaseProducts=purchaseProductIds.map(id=>productMap.get(id)).filter(Boolean);
 
-    const salesByInvoice=new Map();
-    saleItems.forEach(x=>{const k=String(x.sales_invoice_id);if(!salesByInvoice.has(k))salesByInvoice.set(k,{});salesByInvoice.get(k)[String(x.product_id)]=(salesByInvoice.get(k)[String(x.product_id)]||0)+Number(x.line_total||0);});
-    const purchasesByInvoice=new Map();
-    purchaseItems.forEach(x=>{const k=String(x.purchase_invoice_id);if(!purchasesByInvoice.has(k))purchasesByInvoice.set(k,{});purchasesByInvoice.get(k)[String(x.product_id)]=(purchasesByInvoice.get(k)[String(x.product_id)]||0)+Number(x.line_total||0);});
+    function groupItems(items,idField){
+      const map=new Map();
+      items.forEach(x=>{const key=String(x[idField]);if(!map.has(key))map.set(key,{});const row=map.get(key),pid=String(x.product_id);row[pid]=(row[pid]||0)+Number(x.line_total||0);});
+      return map;
+    }
+    const salesByInvoice=groupItems(saleItems,"sales_invoice_id"),purchasesByInvoice=groupItems(purchaseItems,"purchase_invoice_id");
+    const salesByReturn=groupItems(saleReturnItems,"sales_return_id"),purchasesByReturn=groupItems(purchaseReturnItems,"return_id");
 
     const salesTotal=sales.reduce((a,x)=>a+Number(x.net_total||0),0);
+    const salesReturnsTotal=salesReturns.reduce((a,x)=>a+Number(x.total_returned_value||0),0);
     const purchasesTotal=purchases.reduce((a,x)=>a+Number(x.net_total||0),0);
+    const purchaseReturnsTotal=purchaseReturns.reduce((a,x)=>a+Number(x.total_return_amount||0),0);
     const expensesTotal=expenses.reduce((a,x)=>a+Number(x.amount||0),0);
-    const expenseByType={};expenses.forEach(x=>{const k=String(x.expense_type||"غير مصنف");expenseByType[k]=(expenseByType[k]||0)+Number(x.amount||0);});
+    const netSales=salesTotal-salesReturnsTotal,netPurchases=purchasesTotal-purchaseReturnsTotal,net=netSales-netPurchases-expensesTotal;
+    const expenseByType={};expenses.forEach(x=>{const k=expTypeMap.get(String(x.expense_type))||x.expense_type||"غير مصنف";expenseByType[k]=(expenseByType[k]||0)+Number(x.amount||0);});
 
-    const salesRows=sales.map(inv=>{
-      const cells=saleProductIds.map(pid=>money(salesByInvoice.get(String(inv.sales_invoice_id))?.[pid]||0));
-      return [dateOnly(inv.invoice_date),inv.invoice_number||("فاتورة "+inv.sales_invoice_id),inv.notes||"مبيعات",money(inv.net_total),...cells];
-    });
+    const salesRows=sales.map(inv=>[dateOnly(inv.invoice_date),inv.invoice_number||("فاتورة "+inv.sales_invoice_id),customerMap.get(String(inv.customer_id))||inv.notes||"مبيعات",money(inv.net_total),...saleProductIds.map(pid=>money(salesByInvoice.get(String(inv.sales_invoice_id))?.[pid]||0)),money(inv.net_total)]);
+    salesReturns.forEach(ret=>salesRows.push([dateOnly(ret.return_date),ret.return_number||("مرتجع "+ret.sales_return_id),"مرتجع مبيعات - "+(customerMap.get(String(ret.customer_id))||ret.notes||"عميل"),money(-Number(ret.total_returned_value||0)),...saleProductIds.map(pid=>money(-Number(salesByReturn.get(String(ret.sales_return_id))?.[pid]||0))),money(-Number(ret.total_returned_value||0))]));
+    salesRows.sort((a,b)=>String(a[0]).localeCompare(String(b[0])));
     const salesHeaders=["التاريخ","رقم المستند","البيان","المبلغ",...saleProducts.map(p=>p.product_name),"الإجمالي"];
-    salesRows.forEach((r,i)=>r.push(money(Number(sales[i].net_total||0))));
-    const salesFooter=saleProductIds.map(pid=>saleItems.filter(x=>String(x.product_id)===pid).reduce((a,x)=>a+Number(x.line_total||0),0));
-    
-    const purchaseRows=purchases.map(inv=>{
-      const cells=purchaseProductIds.map(pid=>money(purchasesByInvoice.get(String(inv.purchase_invoice_id))?.[pid]||0));
-      return [dateOnly(inv.invoice_date),inv.invoice_number||("فاتورة "+inv.purchase_invoice_id),inv.notes||"مشتريات",money(inv.net_total),...cells,money(inv.net_total)];
-    });
+    const salesTotalRow=["","", "إجمالي صافي الإيرادات",money(netSales),...saleProductIds.map(pid=>money(saleItems.filter(x=>String(x.product_id)===pid).reduce((a,x)=>a+Number(x.line_total||0),0)-saleReturnItems.filter(x=>String(x.product_id)===pid).reduce((a,x)=>a+Number(x.line_total||0),0))),money(netSales)];
+
+    const purchaseRows=purchases.map(inv=>[dateOnly(inv.invoice_date),inv.invoice_number||("فاتورة "+inv.purchase_invoice_id),supplierMap.get(String(inv.supplier_id))||inv.notes||"مشتريات",money(inv.net_total),...purchaseProductIds.map(pid=>money(purchasesByInvoice.get(String(inv.purchase_invoice_id))?.[pid]||0)),money(inv.net_total)]);
+    purchaseReturns.forEach(ret=>purchaseRows.push([dateOnly(ret.return_date),ret.return_number||("مرتجع "+ret.return_id),"مرتجع مشتريات - "+(supplierMap.get(String(ret.supplier_id))||ret.notes||"مورد"),money(-Number(ret.total_return_amount||0)),...purchaseProductIds.map(pid=>money(-Number(purchasesByReturn.get(String(ret.return_id))?.[pid]||0))),money(-Number(ret.total_return_amount||0))]));
+    purchaseRows.sort((a,b)=>String(a[0]).localeCompare(String(b[0])));
     const purchaseHeaders=["التاريخ","رقم المستند","البيان","المبلغ",...purchaseProducts.map(p=>p.product_name),"الإجمالي"];
-    const purchaseTotalsByProduct=purchaseProductIds.map(pid=>purchaseItems.filter(x=>String(x.product_id)===pid).reduce((a,x)=>a+Number(x.line_total||0),0));
+    const purchaseTotalRow=["","", "إجمالي صافي المشتريات",money(netPurchases),...purchaseProductIds.map(pid=>money(purchaseItems.filter(x=>String(x.product_id)===pid).reduce((a,x)=>a+Number(x.line_total||0),0)-purchaseReturnItems.filter(x=>String(x.product_id)===pid).reduce((a,x)=>a+Number(x.line_total||0),0))),money(netPurchases)];
     const expenseRows=expenses.map(x=>[dateOnly(x.expense_date),String(x.expense_id),"مصروف: "+(expTypeMap.get(String(x.expense_type))||x.expense_type||"غير مصنف"),money(x.amount),...purchaseProductIds.map(()=>""),money(x.amount)]);
     const expenseTypesUsed=[...new Set(expenses.map(x=>expTypeMap.get(String(x.expense_type))||x.expense_type||"غير مصنف"))];
+    const expenseTotalRow=["","", "إجمالي المصروفات","",...purchaseProductIds.map(()=>""),money(expensesTotal)];
 
     const renderTable=(headers,rows,totalCells)=>{
       const th=headers.map((h,i)=>"<th class='"+(i>=3?"mm-num":"")+"'>"+esc(h)+"</th>").join("");
@@ -13307,45 +13318,37 @@ async function mmLoadMovementBook(){
       return "<table class='mm-book-table'><thead><tr>"+th+"</tr></thead><tbody>"+body+"</tbody><tfoot>"+total+"</tfoot></table>";
     };
 
-    const salesTotalRow=["","", "إجمالي الإيرادات",money(salesTotal),...salesFooter.map(money),money(salesTotal)];
-    const purchaseTotalRow=["","", "إجمالي المشتريات",money(purchasesTotal),...purchaseTotalsByProduct.map(money),money(purchasesTotal)];
-    const expenseTotalRow=["","", "إجمالي المصروفات",money(expensesTotal),...purchaseProductIds.map(()=>""),money(expensesTotal)];
-
     const combinedByProduct=new Map();
     saleProducts.forEach(p=>combinedByProduct.set(String(p.product_id),{name:p.product_name,rev:0,out:0}));
     purchaseProducts.forEach(p=>{const k=String(p.product_id);if(!combinedByProduct.has(k))combinedByProduct.set(k,{name:p.product_name,rev:0,out:0});});
     saleItems.forEach(x=>{const r=combinedByProduct.get(String(x.product_id));if(r)r.rev+=Number(x.line_total||0);});
+    saleReturnItems.forEach(x=>{const r=combinedByProduct.get(String(x.product_id));if(r)r.rev-=Number(x.line_total||0);});
     purchaseItems.forEach(x=>{const r=combinedByProduct.get(String(x.product_id));if(r)r.out+=Number(x.line_total||0);});
+    purchaseReturnItems.forEach(x=>{const r=combinedByProduct.get(String(x.product_id));if(r)r.out-=Number(x.line_total||0);});
     const summaryRows=[...combinedByProduct.values()].map(r=>[r.name,money(r.rev),money(r.out),money(r.rev-r.out)]);
     expenseTypesUsed.forEach(name=>summaryRows.push(["مصروف: "+name,"",money(expenseByType[name]),money(-expenseByType[name])]));
-    const net=salesTotal-purchasesTotal-expensesTotal;
+    const summaryTotal=["","إجمالي الإيرادات",money(netPurchases+expensesTotal),money(net)];
 
-    const signedTx=tx=>tx.transaction_type==="DEPOSIT"?Number(tx.amount||0):-Number(tx.amount||0);
+    const incomingTypes=new Set(["DEPOSIT","TRANSFER_IN"]),outgoingTypes=new Set(["WITHDRAW","TRANSFER_OUT"]);
+    const signedTx=tx=>{const type=String(tx.transaction_type||"").toUpperCase();if(incomingTypes.has(type))return Number(tx.amount||0);if(outgoingTypes.has(type))return -Number(tx.amount||0);return 0;};
     const treasuryHtml=[];
     treasuries.filter(t=>t.is_active!==false||treasuryTx.some(x=>String(x.treasury_id)===String(t.treasury_id))).forEach(t=>{
       const txBefore=treasuryTx.filter(x=>String(x.treasury_id)===String(t.treasury_id)&&x.transaction_date<from);
-      let opening=Number(t.opening_balance||0)+txBefore.reduce((a,x)=>a+signedTx(x),0);
-      let running=opening;
+      let opening=Number(t.opening_balance||0)+txBefore.reduce((a,x)=>a+signedTx(x),0),running=opening,incoming=0,outgoing=0;
       const periodTx=treasuryTx.filter(x=>String(x.treasury_id)===String(t.treasury_id)&&x.transaction_date>=from&&x.transaction_date<=to);
-      let incoming=0,outgoing=0;
-      const rows=periodTx.map(x=>{const amount=Number(x.amount||0);if(x.transaction_type==="DEPOSIT")incoming+=amount;else outgoing+=amount;running+=signedTx(x);const kind=x.transaction_type==="DEPOSIT"?"وارد":"صادر";return [dateOnly(x.transaction_date),x.notes||x.reference_type||"حركة خزينة",kind==="وارد"?money(amount):"",kind==="صادر"?money(amount):"",money(running)];});
+      const rows=periodTx.map(x=>{const amount=Number(x.amount||0),type=String(x.transaction_type||"").toUpperCase(),incomingRow=incomingTypes.has(type),outgoingRow=outgoingTypes.has(type);if(incomingRow)incoming+=amount;if(outgoingRow)outgoing+=amount;running+=signedTx(x);return [dateOnly(x.transaction_date),x.notes||x.reference_type||"حركة خزينة",incomingRow?money(amount):"",outgoingRow?money(amount):"",money(running)];});
       treasuryHtml.push({name:t.treasury_name,opening,incoming,outgoing,closing:running,rows});
     });
 
     const stockMap=new Map();
-    stockMoves.forEach(m=>{const k=String(m.product_id);if(!stockMap.has(k))stockMap.set(k,{product:productMap.get(k)?.product_name||("صنف "+k),moves:[],net:0,in:0,out:0});const r=stockMap.get(k);const q=Number(m.quantity_change||0);r.net+=q;if(q>0)r.in+=q;else r.out+=Math.abs(q);r.moves.push(m);});
+    stockMoves.forEach(m=>{const k=String(m.product_id);if(!stockMap.has(k))stockMap.set(k,{product:productMap.get(k)?.product_name||("صنف "+k),moves:[],net:0,in:0,out:0});const r=stockMap.get(k),q=Number(m.quantity_change||0);r.net+=q;if(q>0)r.in+=q;else r.out+=Math.abs(q);r.moves.push(m);});
     const currentByProduct=new Map();stockBalances.forEach(x=>currentByProduct.set(String(x.product_id),(currentByProduct.get(String(x.product_id))||0)+Number(x.quantity||0)));
-    const stockTables=[];
-    stockMap.forEach((r,k)=>{
-      const current=Number(currentByProduct.get(k)||0),opening=current-r.net;let running=opening;
-      const rows=r.moves.map(m=>{const q=Number(m.quantity_change||0);running+=q;const type=q>0?"إضافة":q<0?"صرف":"تسوية";return [dateOnly(m.created_at),r.product,type,q>0?money(q):"",q<0?money(Math.abs(q)):"",money(running),m.notes||""];});
-      stockTables.push({name:r.product,opening,in:r.in,out:r.out,closing:current,rows});
-    });
+    const stockTables=[];stockMap.forEach((r,k)=>{const current=Number(currentByProduct.get(k)||0),opening=current-r.net;let running=opening;const rows=r.moves.map(m=>{const q=Number(m.quantity_change||0);running+=q;const type=q>0?"إضافة":q<0?"صرف":"تسوية";return [dateOnly(m.created_at),r.product,type,q>0?money(q):"",q<0?money(Math.abs(q)):"",money(running),m.notes||""];});stockTables.push({name:r.product,opening,in:r.in,out:r.out,closing:current,rows});});
     stockTables.sort((a,b)=>a.name.localeCompare(b.name,"ar"));
 
     const page1="<div class='mm-book-page'><h3>صفحة 1 — الإيرادات والمبيعات</h3><div class='mm-book-meta'>من "+esc(from)+" إلى "+esc(to)+"</div>"+renderTable(salesHeaders,salesRows,salesTotalRow)+"</div>";
     const page2="<div class='mm-book-page'><h3>صفحة 2 — المشتريات والمصروفات</h3><div class='mm-book-meta'>من "+esc(from)+" إلى "+esc(to)+"</div>"+renderTable(purchaseHeaders,purchaseRows,purchaseTotalRow)+renderTable(["التاريخ","رقم المستند","البيان","المبلغ",...purchaseProducts.map(p=>p.product_name),"الإجمالي"],expenseRows,expenseTotalRow)+"</div>";
-    const page3="<div class='mm-book-page'><h3>صفحة 3 — ملخص الإيرادات والمشتريات والمصروفات</h3><div class='mm-book-meta'>من "+esc(from)+" إلى "+esc(to)+"</div>"+renderTable(["البند","إجمالي الإيرادات","إجمالي المشتريات والمصروفات","الرصيد"],summaryRows,["","إجمالي الإيرادات",money(purchasesTotal+expensesTotal),money(net)])+"<div class='mm-book-grand'><div class='box'>إجمالي الإيرادات: "+money(salesTotal)+"</div><div class='box'>إجمالي المشتريات والمصروفات: "+money(purchasesTotal+expensesTotal)+"</div><div class='box'>الرصيد: "+money(net)+"</div></div></div>";
+    const page3="<div class='mm-book-page'><h3>صفحة 3 — ملخص الإيرادات والمشتريات والمصروفات</h3><div class='mm-book-meta'>من "+esc(from)+" إلى "+esc(to)+"</div>"+renderTable(["البند","إجمالي الإيرادات","إجمالي المشتريات والمصروفات","الرصيد"],summaryRows,summaryTotal)+"<div class='mm-book-grand'><div class='box'>إجمالي الإيرادات: "+money(netSales)+"</div><div class='box'>إجمالي المشتريات والمصروفات: "+money(netPurchases+expensesTotal)+"</div><div class='box'>الرصيد: "+money(net)+"</div></div></div>";
     const page4="<div class='mm-book-page'><h3>صفحة 4 — حركة الخزائن</h3><div class='mm-book-meta'>من "+esc(from)+" إلى "+esc(to)+"</div><div class='mm-book-treasuries'>"+treasuryHtml.map(t=>"<div class='mm-book-treasury'><h4>"+esc(t.name)+"</h4><div class='mm-book-summary'><div>رصيد أول المدة<strong>"+money(t.opening)+"</strong></div><div>وارد<strong>"+money(t.incoming)+"</strong></div><div>صادر<strong>"+money(t.outgoing)+"</strong></div><div>رصيد آخر المدة<strong>"+money(t.closing)+"</strong></div></div>"+renderTable(["التاريخ","البيان","وارد","صادر","الرصيد بعد الحركة"],t.rows,null)+"</div>").join("")+"</div></div>";
     const page5="<div class='mm-book-page'><h3>صفحة 5 — حركة إضافة وصرف أرصدة الأصناف</h3><div class='mm-book-meta'>الرصيد الافتتاحي محسوب من الرصيد الحالي مطروحًا منه صافي حركة الفترة</div>"+(stockTables.length?stockTables.map(t=>"<div class='mm-book-stock-summary'><h4 style='margin:7px 0 4px;color:var(--g)'>"+esc(t.name)+"</h4><div class='mm-book-summary'><div>رصيد أول المدة<strong>"+money(t.opening)+"</strong></div><div>إضافة<strong>"+money(t.in)+"</strong></div><div>صرف<strong>"+money(t.out)+"</strong></div><div>الرصيد الحالي<strong>"+money(t.closing)+"</strong></div></div>"+renderTable(["التاريخ","الصنف","الحركة","إضافة","صرف","الرصيد","البيان"],t.rows,null)+"</div>").join(""):"<div class='empty'>لا توجد حركات مخزون في الفترة.</div>")+"</div>";
     pages.innerHTML=page1+page2+page3+page4+page5;
@@ -14051,7 +14054,7 @@ $("hrCreatePeriod")?.addEventListener("click",async()=>{try{const r=await db.rpc
 // ====== PWA ======
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=222', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
+    navigator.serviceWorker.register('./sw.js?v=223', { updateViaCache: 'none' }).then(reg => console.log('[PWA] registered', reg.scope)).catch(err => console.error('[PWA] failed', err));
   });
 }
 
@@ -14069,7 +14072,7 @@ const s=document.getElementById("fixedAssetsList");if(s)new MutationObserver(enh
 const sec=document.getElementById("sectionFixedAssets");if(sec)new MutationObserver(enhance).observe(sec,{attributes:true,attributeFilter:["class"]});
 })();
 
-/* ===== v219: محرك طباعة موحد لكل التقارير ===== */
+/* ===== v220: محرك طباعة موحد لكل التقارير ===== */
 (function(){
   let printState=null;
   function visible(el){
