@@ -52,8 +52,9 @@ def usfm_records(blob,edition,source_id,filename):
         if current:
             try: start,suffix,end,end_suffix=parse_verse_label(current['verse_label'])
             except ValueError: start=suffix=end=end_suffix=None
-            records.append({**current,'verse_start':start,'verse_suffix':suffix,'verse_end':end,'verse_end_suffix':end_suffix,
-              'text':clean_usfm_inline(' '.join(current.pop('_parts'))),'raw_inline':current.pop('_raw')})
+            base={k:v for k,v in current.items() if not k.startswith('_')}
+            records.append({**base,'verse_start':start,'verse_suffix':suffix,'verse_end':end,'verse_end_suffix':end_suffix,
+              'text':clean_usfm_inline(' '.join(current['_parts'])),'raw_inline':current['_raw']})
     for line in raw.splitlines():
         mid=re.match(r'^\\id\s+([^\s]+)',line)
         if mid: book_code=mid.group(1).upper(); continue
