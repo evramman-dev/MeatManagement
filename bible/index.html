@@ -7,13 +7,13 @@
 <title>رحلة | الكتاب المقدس</title>
 <link rel="manifest" href="manifest.json">
 <style>
-:root{--bg:#f5f1e8;--card:#fffdf8;--ink:#24332e;--muted:#718078;--line:#ded8cc;--accent:#31584b;--soft:#e6eee9;--gold:#a47b3b}
+:root{--bg:#f4f0e7;--card:#fffdf8;--ink:#24332e;--muted:#718078;--line:#ded8cc;--accent:#31584b;--soft:#e6eee9;--gold:#a47b3b;--shadow:0 12px 30px #263b3512}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
 button,input,textarea{font:inherit}button{border:0;cursor:pointer}
 .app{max-width:620px;margin:auto;min-height:100vh;padding-bottom:82px}
 header{padding:28px 18px 12px}.brand{font-size:14px;color:var(--gold)}h1{margin:7px 0 4px;font-size:29px}header p{margin:0;color:var(--muted)}
 .view{display:none;padding:10px 16px}.view.active{display:block}
-.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;margin-bottom:14px;box-shadow:0 4px 18px #00000008}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow)}.version{display:inline-flex;background:#e7eee8;color:var(--accent);border:1px solid #cfddd3;border-radius:30px;padding:5px 10px;font-size:11px;font-weight:700;margin-top:10px}.home-intro{background:linear-gradient(135deg,#31584b,#203d33);color:#fff;border:0;padding:22px}.home-intro p{color:#e0e9e3;margin:8px 0}.home-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.mini-card{background:#fffdf8;border:1px solid var(--line);border-radius:18px;padding:14px}.mini-card strong{display:block;margin-bottom:5px}.mini-card span{font-size:12px;color:var(--muted)}.progress-track{height:7px;background:#dfe7e1;border-radius:20px;overflow:hidden;margin:12px 0}.progress-track i{display:block;width:3.33%;height:100%;background:var(--gold)}
 .hero{background:var(--accent);color:#fff;border:0}.hero p{color:#dbe7e1}.hero button{background:#fff;color:var(--accent)}
 .eyebrow{font-size:12px;color:var(--muted);margin-bottom:7px}.hero .eyebrow{color:#c8d9d2}
 h2{font-size:20px;margin:5px 0 9px}h3{font-size:16px;margin:5px 0}
@@ -36,12 +36,14 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 <div class="app">
 <header>
   <button id="backToMeat" class="secondary" type="button" style="margin-bottom:12px">العودة إلى MeatManagement</button>
-  <div class="brand">رِحلة</div>
+  <div class="brand">رِحلة</div><div class="version">الإصدار v7 · تحديث ظاهر</div>
   <h1 id="title">أنت داخل التطبيق النهارده ليه؟</h1>
   <p id="subtitle">ابدأ من حالتك، ثم اترك للكلمة مساحة.</p>
 </header>
 
 <section id="home" class="view active">
+  <div class="card home-intro"><div class="eyebrow" style="color:#d5e3da">مساحتك مع كلمة الله</div><h2>ابدأ من هنا، وخذ خطوة واحدة اليوم</h2><p>اختَر ما يشغلك، اقرأ، اكتب، وتابع رحلتك يومًا بيوم.</p><button id="homeStartJourney" class="primary" type="button" style="background:#fff;color:var(--accent)">افتح رحلتي</button></div>
+  <div class="home-grid"><div class="mini-card"><strong>رحلة 30 يومًا</strong><span id="homeJourneyStatus">لم تبدأ بعد</span><div class="progress-track"><i></i></div></div><div class="mini-card"><strong>مذكراتي</strong><span id="homeNotesCount">لا توجد مذكرات محفوظة</span></div></div>
   <div class="card hero">
     <div class="eyebrow">أنا اليوم</div>
     <h2>اختر ما يشغلك الآن</h2>
@@ -136,13 +138,16 @@ const choiceBox=document.getElementById("moodChoices");
 moods.forEach(m=>{const b=document.createElement("button");b.className="choice";b.innerHTML="<strong>"+m.title+"</strong><small>"+m.sub+"</small>";b.onclick=()=>chooseMood(m);choiceBox.appendChild(b)});
 function showView(id,btn){document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));document.getElementById(id).classList.add("active");document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));if(btn)btn.classList.add("active");if(id==="me")renderNotes();scrollTo({top:0,behavior:"smooth"})}
 function chooseMood(m){const refs=references[m.id]||[];const card=document.getElementById("journeyCard");card.classList.remove("hidden");card.innerHTML="<div class='eyebrow'>رحلتك المقترحة</div><h2>"+m.title+"</h2><p>سنبدأ بثلاث محطات قصيرة. كل محطة لها قراءة وتأمل وسؤال وصلاة.</p><div>"+refs.map(r=>"<span class='pill'>"+r+"</span>").join("")+"</div><button id='startSelectedJourney' class='primary' type='button'>احفظ اختياري وابدأ</button>";document.getElementById("startSelectedJourney").addEventListener("click",()=>saveMood(m.id));localStorage.setItem("rh_last_mood",m.id)}
-function setJourneyState(id){localStorage.setItem("rh_journey_id",id);localStorage.setItem("rh_journey_started",new Date().toISOString());}
-function saveMood(id){setJourneyState(id);showView("journeys",document.querySelector('[data-view="journeys"]'));renderJourney();}
+function setJourneyState(id){localStorage.setItem("rh_journey_id",id);if(!localStorage.getItem("rh_journey_started"))localStorage.setItem("rh_journey_started",new Date().toISOString());localStorage.setItem("rh_journey_day","1");}
+function saveMood(id){localStorage.setItem("rh_last_mood",id);setJourneyState(id);openJourneyView();}
 function openJourneyView(){const btn=document.querySelector('[data-view="journeys"]');document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));document.getElementById("journeys").classList.add("active");document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b===btn));scrollTo({top:0,behavior:"smooth"});renderJourney();}
-function startJourney(){setJourneyState(localStorage.getItem("rh_last_mood")||"start");openJourneyView();}
-function renderJourney(){const id=localStorage.getItem("rh_journey_id");const refs=references[id]||references.start;const day=document.getElementById("journeyDay");const progress=document.getElementById("journeyProgress");if(!id){progress.textContent="لم تبدأ رحلة بعد.";day.classList.add("hidden");return}progress.textContent="اليوم 1 من 30";day.classList.remove("hidden");day.innerHTML="<div class='card' style='margin:0'><div class='eyebrow'>اليوم الأول</div><h3>اقرأ بهدوء</h3><p>ابدأ بالمرجع الأول، ثم اكتب جملة واحدة عن الشيء الذي لفتك.</p><div>"+refs.map(r=>"<span class='pill'>"+escapeHtml(r)+"</span>").join("")+"</div><p class='note'>النص الكامل سيظهر هنا بعد إضافة ترجمة مرخصة.</p></div>";}
-function saveJournal(){const v=document.getElementById("journal").value.trim();if(!v){document.getElementById("saveStatus").textContent="اكتب جملة أولًا.";return}const notes=JSON.parse(localStorage.getItem("rh_notes")||"[]");notes.unshift({text:v,date:new Date().toLocaleString("ar-EG")});localStorage.setItem("rh_notes",JSON.stringify(notes.slice(0,100)));document.getElementById("journal").value="";document.getElementById("saveStatus").textContent="تم الحفظ على جهازك.";renderNotes()}
-function renderNotes(){const el=document.getElementById("notesList"),notes=JSON.parse(localStorage.getItem("rh_notes")||"[]");el.innerHTML=notes.length?notes.map(n=>"<div class='result'><p>"+escapeHtml(n.text)+"</p><span class='note'>"+n.date+"</span></div>").join(""):"<p class='note'>لا توجد مذكرات بعد.</p>"}
+function startJourney(){const id=localStorage.getItem("rh_journey_id")||localStorage.getItem("rh_last_mood")||"start";setJourneyState(id);openJourneyView();}
+function renderJourney(){const id=localStorage.getItem("rh_journey_id");const refs=references[id]||references.start;const day=document.getElementById("journeyDay");const progress=document.getElementById("journeyProgress");if(!id){progress.textContent="لم تبدأ رحلة بعد.";day.classList.add("hidden");return}const n=Math.max(1,Number(localStorage.getItem("rh_journey_day")||1));progress.textContent="اليوم "+n+" من 30 · رحلتك محفوظة على هذا الجهاز";day.classList.remove("hidden");day.innerHTML="<div class='card' style='margin:0'><div class='eyebrow'>محطتك الحالية · اليوم "+n+"</div><h3>اقرأ بهدوء</h3><p>ابدأ بالمراجع التالية. اختر واحدًا واقرأه من الكتاب المقدس، ثم اكتب جملة واحدة عما فهمته.</p><div>"+refs.map(r=>"<span class='pill'>"+escapeHtml(r)+"</span>").join("")+"</div><p class='note'>النص الكامل غير مضاف بعد. هذه مراجع للقراءة وليست نصوصًا كتابية.</p><textarea id='journeyReflection' placeholder='ما الذي لفت انتباهك اليوم؟'></textarea><button id='saveJourneyReflection' class='primary' type='button'>احفظ تأمل اليوم</button><p id='journeyReflectionStatus' class='note'></p></div>";document.getElementById('saveJourneyReflection').addEventListener('click',()=>{const v=document.getElementById('journeyReflection').value.trim();if(!v){document.getElementById('journeyReflectionStatus').textContent='اكتب تأملك أولًا.';return}saveNote(v);document.getElementById('journeyReflectionStatus').textContent='تم حفظ تأملك في مذكراتك.';document.getElementById('journeyReflection').value='';});}
+function getNotes(){try{const x=JSON.parse(localStorage.getItem('rh_notes')||'[]');return Array.isArray(x)?x:[]}catch(e){return []}}
+function saveNote(v){const notes=getNotes();notes.unshift({text:v,date:new Date().toLocaleString('ar-EG')});localStorage.setItem('rh_notes',JSON.stringify(notes.slice(0,100)));renderNotes();renderHomeSummary();}
+function saveJournal(){const v=document.getElementById("journal").value.trim();if(!v){document.getElementById("saveStatus").textContent="اكتب جملة أولًا.";return}saveNote(v);document.getElementById("journal").value="";document.getElementById("saveStatus").textContent="تم الحفظ على جهازك."}
+function renderNotes(){const el=document.getElementById("notesList"),notes=getNotes();el.innerHTML=notes.length?notes.map(n=>"<div class='result'><p>"+escapeHtml(n.text)+"</p><span class='note'>"+escapeHtml(n.date||'')+"</span></div>").join(""):"<p class='note'>لا توجد مذكرات بعد.</p>";renderHomeSummary()}
+function renderHomeSummary(){const notes=getNotes();const n=document.getElementById('homeNotesCount');if(n)n.textContent=notes.length?notes.length+' مذكرات محفوظة':'لا توجد مذكرات محفوظة';const s=document.getElementById('homeJourneyStatus');if(s)s.textContent=localStorage.getItem('rh_journey_id')?'رحلتك بدأت · اليوم '+(localStorage.getItem('rh_journey_day')||'1')+' من 30':'لم تبدأ بعد';}
 function escapeHtml(s){return String(s).replace(/[&<>"\']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]})}
 const demoIndex=[
  {ref:"مزمور 46",words:["الله","خوف","قلق","ملجأ","قوة"]},
@@ -166,16 +171,20 @@ const demoIndex=[
  {ref:"يوحنا 1",words:["يسوع","المسيح","كلمة","بداية"]},
  {ref:"لوقا 5",words:["بداية","دعوة","يسوع"]}
 ];
-function searchBible(){const q=document.getElementById("searchInput").value.trim();const el=document.getElementById("searchResults");if(!q){el.innerHTML="<p class='note'>اكتب كلمة أو مرجعًا للبحث.</p>";return}const normalized=q.toLowerCase();const hits=demoIndex.filter(x=>x.ref.includes(q)||x.words.some(w=>w.includes(q)||normalized.includes(w.toLowerCase())));el.innerHTML=hits.length?hits.map(x=>"<div class='result'><strong>"+x.ref+"</strong><p class='note'>مطابقة تجريبية في فهرس رحلة. النص الكامل سيظهر بعد إضافة ترجمة مرخصة.</p><div>"+x.words.map(w=>"<span class='pill'>"+escapeHtml(w)+"</span>").join("")+"</div></div>").join(""):"<p class='note'>لا توجد نتيجة في الفهرس التجريبي الحالي. البحث الكامل سيعمل بعد إضافة نص ترجمة مرخصة.</p>")}
+function searchBible(){const q=document.getElementById("searchInput").value.trim();const el=document.getElementById("searchResults");if(!q){el.innerHTML="<p class='note'>اكتب كلمة أو مرجعًا للبحث.</p>";return}const normalize=s=>String(s).toLowerCase().replace(/[ًٌٍَُِّْـٰ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/[\u200e\u200f\u202a-\u202e]/g,'').trim();const nq=normalize(q);const hits=demoIndex.filter(x=>normalize(x.ref).includes(nq)||x.words.some(w=>normalize(w).includes(nq)||nq.includes(normalize(w))));el.innerHTML=hits.length?hits.map(x=>"<div class='result'><strong>"+x.ref+"</strong><p class='note'>كلمة مرتبطة بهذا المرجع في فهرس رحلة التجريبي. هذا ليس بحثًا في نص الآيات.</p><div>"+x.words.map(w=>"<span class='pill'>"+escapeHtml(w)+"</span>").join("")+"</div></div>").join(""):"<p class='note'>لا توجد نتيجة لهذه الكلمة في الفهرس التجريبي الحالي.</p>")}
 document.getElementById("backToMeat").addEventListener("click",()=>{window.location.href="../";});
 document.getElementById("startJourneyButton").addEventListener("click",startJourney);
 document.getElementById("saveJournalButton").addEventListener("click",saveJournal);
-document.getElementById("notesSaveButton").addEventListener("click",()=>{const el=document.getElementById("notesJournal");const v=el.value.trim();if(!v){document.getElementById("notesSaveStatus").textContent="اكتب شيئًا أولًا.";return}const notes=JSON.parse(localStorage.getItem("rh_notes")||"[]");notes.unshift({text:v,date:new Date().toLocaleString("ar-EG")});localStorage.setItem("rh_notes",JSON.stringify(notes.slice(0,100)));el.value="";document.getElementById("notesSaveStatus").textContent="تم الحفظ على جهازك.";renderNotes();});
+document.getElementById("notesSaveButton").addEventListener("click",()=>{const el=document.getElementById("notesJournal");const v=el.value.trim();if(!v){document.getElementById("notesSaveStatus").textContent="اكتب شيئًا أولًا.";return}saveNote(v);el.value="";document.getElementById("notesSaveStatus").textContent="تم الحفظ على جهازك.";});
+document.getElementById('homeStartJourney').addEventListener('click',startJourney);
+document.getElementById('homeStartJourney').addEventListener('click',startJourney);
 document.getElementById("searchButton").addEventListener("click",searchBible);
 document.getElementById("searchInput").addEventListener("keydown",e=>{if(e.key==="Enter")searchBible();});
 window.addEventListener("error",e=>{const el=document.getElementById("saveStatus");if(el)el.textContent="حدث خطأ في تشغيل الصفحة. أعد فتح رحلة.";});
 renderNotes();
 renderJourney();
+renderHomeSummary();
+renderHomeSummary();
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}
 </script>
 </body>
