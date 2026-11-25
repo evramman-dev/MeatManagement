@@ -1,4 +1,4 @@
-name: Bible source acquisition batch 01
+name: Bible source acquisition and corpus staging batch 01
 
 on:
   workflow_dispatch:
@@ -8,32 +8,43 @@ on:
       - "bible/data/multilingual-edition-registry.draft.json"
       - "bible/CORPUS_IMPORT_BATCH_01.md"
       - "scripts/fetch_bible_sources.py"
+      - "scripts/convert_bible_sources.py"
+      - "scripts/tests/test_convert_bible_sources.py"
       - ".github/workflows/bible-source-acquisition.yml"
 
 permissions:
   contents: read
 
 jobs:
-  acquire-and-audit:
+  acquire-convert-and-audit:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
+      - name: Run converter unit tests
+        run: python -m unittest discover -s scripts/tests -v
       - name: Download candidate editions and validate archives
         run: python scripts/fetch_bible_sources.py
-
+      - name: Convert editions to separate staged JSONL files
+        run: python scripts/convert_bible_sources.py --input build/bible-source-batch-01 --output build/bible-corpus-stage-batch-01
       - name: Upload source bundle for review only
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: bible-source-batch-01
           path: build/bible-source-batch-01/
+          if-no-files-found: error
+          retention-days: 7
+      - name: Upload converted corpus staging bundle
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bible-corpus-stage-batch-01
+          path: build/bible-corpus-stage-batch-01/
           if-no-files-found: error
           retention-days: 7
