@@ -1,0 +1,38 @@
+name: Bible source acquisition batch 01
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "bible/data/multilingual-edition-registry.draft.json"
+      - "bible/CORPUS_IMPORT_BATCH_01.md"
+      - "scripts/fetch_bible_sources.py"
+      - ".github/workflows/bible-source-acquisition.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-and-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Download candidate editions and validate archives
+        run: python scripts/fetch_bible_sources.py
+
+      - name: Upload source bundle for review only
+        uses: actions/upload-artifact@v4
+        with:
+          name: bible-source-batch-01
+          path: build/bible-source-batch-01/
+          if-no-files-found: error
+          retention-days: 7
