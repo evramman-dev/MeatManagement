@@ -45,3 +45,13 @@
 - يمكن دراسة واستيراد شواهد Coptic SCRIPTORIUM مستقبلًا كمواد مخطوطية مستقلة، مع إظهار لهجتها ومصدرها وترخيص CC BY-SA 4.0.
 - لا نستخدم التفريغ اليسوعي الرقمي لعام 2018 دون إذن مكتوب.
 - لا نعتبر سجل NYU/Princeton نسخة يسوعية قبل فحص صفحة العنوان والفهرس والمجلدات.
+
+
+## إتاحة ملفات Coptic OT الخام للفحص — 2026-11-26
+- أُضيف تنزيل أرشيف TreeTagger للنص الصعيدي وأرشيف TreeTagger للنص البحيري من Coptic SCRIPTORIUM.
+- تم تثبيت المصدر على commit 6fb51458e7156dd5387c2b2dca207aac1692e4d0 بدل الاعتماد على branch متحرك.
+- الروابط:
+  - https://raw.githubusercontent.com/CopticScriptorium/corpora/6fb51458e7156dd5387c2b2dca207aac1692e4d0/sahidic.ot/sahidic.ot_TT.zip
+  - https://raw.githubusercontent.com/CopticScriptorium/corpora/6fb51458e7156dd5387c2b2dca207aac1692e4d0/bohairic.ot/bohairic.ot_TT.zip
+- التنزيل إلى artifact مؤقت فقط، لا إلى مجلد التطبيق أو Pages.
+- المرحلة التالية تفحص بنية الملفات، معرفات الكتب والإصحاحات، بيانات الشواهد، وتكرار النصوص. لن تُحوّل إلى نص قراءة قبل مطابقة كل وثيقة مع مصدرها وترقيمها.
