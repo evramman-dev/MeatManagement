@@ -171,19 +171,17 @@ const demoIndex=[
  {ref:"يوحنا 1",words:["يسوع","المسيح","كلمة","بداية"]},
  {ref:"لوقا 5",words:["بداية","دعوة","يسوع"]}
 ];
-function searchBible(){const q=document.getElementById("searchInput").value.trim();const el=document.getElementById("searchResults");if(!q){el.innerHTML="<p class='note'>اكتب كلمة أو مرجعًا للبحث.</p>";return}const normalize=s=>String(s).toLowerCase().replace(/[ًٌٍَُِّْـٰ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/[\u200e\u200f\u202a-\u202e]/g,'').trim();const nq=normalize(q);const hits=demoIndex.filter(x=>normalize(x.ref).includes(nq)||x.words.some(w=>normalize(w).includes(nq)||nq.includes(normalize(w))));el.innerHTML=hits.length?hits.map(x=>"<div class='result'><strong>"+x.ref+"</strong><p class='note'>كلمة مرتبطة بهذا المرجع في فهرس رحلة التجريبي. هذا ليس بحثًا في نص الآيات.</p><div>"+x.words.map(w=>"<span class='pill'>"+escapeHtml(w)+"</span>").join("")+"</div></div>").join(""):"<p class='note'>لا توجد نتيجة لهذه الكلمة في الفهرس التجريبي الحالي.</p>")}
+function searchBible(){const q=document.getElementById("searchInput").value.trim();const el=document.getElementById("searchResults");if(!q){el.innerHTML="<p class='note'>اكتب كلمة أو مرجعًا للبحث.</p>";return}const normalize=s=>String(s).toLowerCase().replace(/[ًٌٍَُِّْـٰ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/[\u200e\u200f\u202a-\u202e]/g,'').trim();const nq=normalize(q);const hits=demoIndex.filter(x=>normalize(x.ref).includes(nq)||x.words.some(w=>normalize(w).includes(nq)||nq.includes(normalize(w))));el.innerHTML=hits.length?hits.map(x=>"<div class='result'><strong>"+x.ref+"</strong><p class='note'>كلمة مرتبطة بهذا المرجع في فهرس رحلة التجريبي. هذا ليس بحثًا في نص الآيات.</p><div>"+x.words.map(w=>"<span class='pill'>"+escapeHtml(w)+"</span>").join("")+"</div></div>").join(""):"<p class='note'>لا توجد نتيجة لهذه الكلمة في الفهرس التجريبي الحالي.</p>"}
 document.getElementById("backToMeat").addEventListener("click",()=>{window.location.href="../";});
 document.getElementById("startJourneyButton").addEventListener("click",startJourney);
 document.getElementById("saveJournalButton").addEventListener("click",saveJournal);
 document.getElementById("notesSaveButton").addEventListener("click",()=>{const el=document.getElementById("notesJournal");const v=el.value.trim();if(!v){document.getElementById("notesSaveStatus").textContent="اكتب شيئًا أولًا.";return}saveNote(v);el.value="";document.getElementById("notesSaveStatus").textContent="تم الحفظ على جهازك.";});
-document.getElementById('homeStartJourney').addEventListener('click',startJourney);
 document.getElementById('homeStartJourney').addEventListener('click',startJourney);
 document.getElementById("searchButton").addEventListener("click",searchBible);
 document.getElementById("searchInput").addEventListener("keydown",e=>{if(e.key==="Enter")searchBible();});
 window.addEventListener("error",e=>{const el=document.getElementById("saveStatus");if(el)el.textContent="حدث خطأ في تشغيل الصفحة. أعد فتح رحلة.";});
 renderNotes();
 renderJourney();
-renderHomeSummary();
 renderHomeSummary();
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}
 </script>
