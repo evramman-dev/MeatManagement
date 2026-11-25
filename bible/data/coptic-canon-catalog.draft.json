@@ -1,0 +1,643 @@
+{
+  "schema_version": 1,
+  "corpus_id": "coptic_orthodox_arabic_full_draft",
+  "language": "ar",
+  "canon_profile": "Coptic Orthodox",
+  "declared_book_count": 73,
+  "declared_old_testament_books": 46,
+  "declared_new_testament_books": 27,
+  "declared_old_testament_chapters": 1075,
+  "declared_new_testament_chapters": 270,
+  "status": "catalog_draft_only_not_textual_corpus",
+  "important_notice": "This is a draft navigation catalog, not an approved final canonical ordering and not Bible text. Chapter counts and versification remain unverified against the selected edition. Do not use it to validate verse references.",
+  "sources": [
+    {
+      "source_id": "coptic_official_old_testament",
+      "url": "https://copticorthodox.church/en/testament/old-testament/",
+      "supports": "Official count of 46 Old Testament books and 1075 chapters; canonical group descriptions."
+    },
+    {
+      "source_id": "coptic_official_new_testament",
+      "url": "https://copticorthodox.church/en/testament/new-testament/",
+      "supports": "Official count of 27 New Testament books."
+    },
+    {
+      "source_id": "st_takla_arabic_catalog",
+      "url": "https://st-takla.org/Bibles/Download-Arabic-Bible-Doc.html",
+      "supports": "Arabic book labels and placement of deuterocanonical books and textual additions; discovery aid only, not final canonical authority."
+    }
+  ],
+  "books": [
+    {
+      "book_id": "gen",
+      "canonical_order": 1,
+      "testament": "OT",
+      "name_ar": "التكوين",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "exo",
+      "canonical_order": 2,
+      "testament": "OT",
+      "name_ar": "الخروج",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "lev",
+      "canonical_order": 3,
+      "testament": "OT",
+      "name_ar": "اللاويين",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "num",
+      "canonical_order": 4,
+      "testament": "OT",
+      "name_ar": "العدد",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "deu",
+      "canonical_order": 5,
+      "testament": "OT",
+      "name_ar": "التثنية",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "jos",
+      "canonical_order": 6,
+      "testament": "OT",
+      "name_ar": "يشوع",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "jdg",
+      "canonical_order": 7,
+      "testament": "OT",
+      "name_ar": "القضاة",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "rut",
+      "canonical_order": 8,
+      "testament": "OT",
+      "name_ar": "راعوث",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "1sa",
+      "canonical_order": 9,
+      "testament": "OT",
+      "name_ar": "صموئيل الأول",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "2sa",
+      "canonical_order": 10,
+      "testament": "OT",
+      "name_ar": "صموئيل الثاني",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "1ki",
+      "canonical_order": 11,
+      "testament": "OT",
+      "name_ar": "الملوك الأول",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "2ki",
+      "canonical_order": 12,
+      "testament": "OT",
+      "name_ar": "الملوك الثاني",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "1ch",
+      "canonical_order": 13,
+      "testament": "OT",
+      "name_ar": "أخبار الأيام الأول",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "2ch",
+      "canonical_order": 14,
+      "testament": "OT",
+      "name_ar": "أخبار الأيام الثاني",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "ezr",
+      "canonical_order": 15,
+      "testament": "OT",
+      "name_ar": "عزرا",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "neh",
+      "canonical_order": 16,
+      "testament": "OT",
+      "name_ar": "نحميا",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "tob",
+      "canonical_order": 17,
+      "testament": "OT",
+      "name_ar": "طوبيا",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "jdt",
+      "canonical_order": 18,
+      "testament": "OT",
+      "name_ar": "يهوديت",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "est",
+      "canonical_order": 19,
+      "testament": "OT",
+      "name_ar": "أستير",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "job",
+      "canonical_order": 20,
+      "testament": "OT",
+      "name_ar": "أيوب",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "psa",
+      "canonical_order": 21,
+      "testament": "OT",
+      "name_ar": "المزامير",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "pro",
+      "canonical_order": 22,
+      "testament": "OT",
+      "name_ar": "الأمثال",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "ecc",
+      "canonical_order": 23,
+      "testament": "OT",
+      "name_ar": "الجامعة",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "sng",
+      "canonical_order": 24,
+      "testament": "OT",
+      "name_ar": "نشيد الأنشاد",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "wis",
+      "canonical_order": 25,
+      "testament": "OT",
+      "name_ar": "الحكمة",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "sir",
+      "canonical_order": 26,
+      "testament": "OT",
+      "name_ar": "يشوع بن سيراخ",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "isa",
+      "canonical_order": 27,
+      "testament": "OT",
+      "name_ar": "إشعياء",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "jer",
+      "canonical_order": 28,
+      "testament": "OT",
+      "name_ar": "إرميا",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "lam",
+      "canonical_order": 29,
+      "testament": "OT",
+      "name_ar": "مراثي إرميا",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "bar",
+      "canonical_order": 30,
+      "testament": "OT",
+      "name_ar": "باروخ",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "ezk",
+      "canonical_order": 31,
+      "testament": "OT",
+      "name_ar": "حزقيال",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "dan",
+      "canonical_order": 32,
+      "testament": "OT",
+      "name_ar": "دانيال",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "hos",
+      "canonical_order": 33,
+      "testament": "OT",
+      "name_ar": "هوشع",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "jol",
+      "canonical_order": 34,
+      "testament": "OT",
+      "name_ar": "يوئيل",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "amo",
+      "canonical_order": 35,
+      "testament": "OT",
+      "name_ar": "عاموس",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "oba",
+      "canonical_order": 36,
+      "testament": "OT",
+      "name_ar": "عوبديا",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "jon",
+      "canonical_order": 37,
+      "testament": "OT",
+      "name_ar": "يونان",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "mic",
+      "canonical_order": 38,
+      "testament": "OT",
+      "name_ar": "ميخا",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "nam",
+      "canonical_order": 39,
+      "testament": "OT",
+      "name_ar": "ناحوم",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "hab",
+      "canonical_order": 40,
+      "testament": "OT",
+      "name_ar": "حبقوق",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "zep",
+      "canonical_order": 41,
+      "testament": "OT",
+      "name_ar": "صفنيا",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "hag",
+      "canonical_order": 42,
+      "testament": "OT",
+      "name_ar": "حجي",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "zec",
+      "canonical_order": 43,
+      "testament": "OT",
+      "name_ar": "زكريا",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "mal",
+      "canonical_order": 44,
+      "testament": "OT",
+      "name_ar": "ملاخي",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "1ma",
+      "canonical_order": 45,
+      "testament": "OT",
+      "name_ar": "المكابيين الأول",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "2ma",
+      "canonical_order": 46,
+      "testament": "OT",
+      "name_ar": "المكابيين الثاني",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "mat",
+      "canonical_order": 1,
+      "testament": "NT",
+      "name_ar": "متى",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "mrk",
+      "canonical_order": 2,
+      "testament": "NT",
+      "name_ar": "مرقس",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "luk",
+      "canonical_order": 3,
+      "testament": "NT",
+      "name_ar": "لوقا",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "jhn",
+      "canonical_order": 4,
+      "testament": "NT",
+      "name_ar": "يوحنا",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "act",
+      "canonical_order": 5,
+      "testament": "NT",
+      "name_ar": "أعمال الرسل",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "rom",
+      "canonical_order": 6,
+      "testament": "NT",
+      "name_ar": "رومية",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "1co",
+      "canonical_order": 7,
+      "testament": "NT",
+      "name_ar": "كورنثوس الأولى",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "2co",
+      "canonical_order": 8,
+      "testament": "NT",
+      "name_ar": "كورنثوس الثانية",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "gal",
+      "canonical_order": 9,
+      "testament": "NT",
+      "name_ar": "غلاطية",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "eph",
+      "canonical_order": 10,
+      "testament": "NT",
+      "name_ar": "أفسس",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "php",
+      "canonical_order": 11,
+      "testament": "NT",
+      "name_ar": "فيلبي",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "col",
+      "canonical_order": 12,
+      "testament": "NT",
+      "name_ar": "كولوسي",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "1th",
+      "canonical_order": 13,
+      "testament": "NT",
+      "name_ar": "تسالونيكي الأولى",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "2th",
+      "canonical_order": 14,
+      "testament": "NT",
+      "name_ar": "تسالونيكي الثانية",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "1ti",
+      "canonical_order": 15,
+      "testament": "NT",
+      "name_ar": "تيموثاوس الأولى",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "2ti",
+      "canonical_order": 16,
+      "testament": "NT",
+      "name_ar": "تيموثاوس الثانية",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "tit",
+      "canonical_order": 17,
+      "testament": "NT",
+      "name_ar": "تيطس",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "phm",
+      "canonical_order": 18,
+      "testament": "NT",
+      "name_ar": "فليمون",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "heb",
+      "canonical_order": 19,
+      "testament": "NT",
+      "name_ar": "العبرانيين",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "jas",
+      "canonical_order": 20,
+      "testament": "NT",
+      "name_ar": "يعقوب",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "1pe",
+      "canonical_order": 21,
+      "testament": "NT",
+      "name_ar": "بطرس الأولى",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "2pe",
+      "canonical_order": 22,
+      "testament": "NT",
+      "name_ar": "بطرس الثانية",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "1jn",
+      "canonical_order": 23,
+      "testament": "NT",
+      "name_ar": "يوحنا الأولى",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "2jn",
+      "canonical_order": 24,
+      "testament": "NT",
+      "name_ar": "يوحنا الثانية",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "3jn",
+      "canonical_order": 25,
+      "testament": "NT",
+      "name_ar": "يوحنا الثالثة",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "jud",
+      "canonical_order": 26,
+      "testament": "NT",
+      "name_ar": "يهوذا",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    },
+    {
+      "book_id": "rev",
+      "canonical_order": 27,
+      "testament": "NT",
+      "name_ar": "رؤيا يوحنا اللاهوتي",
+      "chapter_count": null,
+      "chapter_count_status": "needs_source_verification"
+    }
+  ],
+  "embedded_textual_units": [
+    {
+      "unit_id": "esther_greek_additions",
+      "parent_book_id": "est",
+      "name_ar": "تتمة أستير",
+      "status": "separate_textual_unit_chapter_mapping_pending"
+    },
+    {
+      "unit_id": "daniel_greek_additions",
+      "parent_book_id": "dan",
+      "name_ar": "تتمة دانيال",
+      "status": "separate_textual_unit_chapter_mapping_pending"
+    },
+    {
+      "unit_id": "psalm_151",
+      "parent_book_id": "psa",
+      "name_ar": "مزمور 151",
+      "status": "separate_textual_unit_chapter_mapping_pending"
+    }
+  ],
+  "translation_policy": {
+    "primary_text_translation": null,
+    "deuterocanonical_translation": null,
+    "source_permission_status": "not_cleared_for_app_redistribution",
+    "require_per_book_translation_metadata": true,
+    "prohibit_silent_translation_mixing": true
+  }
+}
