@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#263b35">
+<title>رحلة | الكتاب المقدس</title>
+<link rel="manifest" href="manifest.json">
+<style>
+:root{--bg:#f5f1e8;--card:#fffdf8;--ink:#24332e;--muted:#718078;--line:#ded8cc;--accent:#31584b;--soft:#e6eee9;--gold:#a47b3b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input,textarea{font:inherit}button{border:0;cursor:pointer}
+.app{max-width:620px;margin:auto;min-height:100vh;padding-bottom:82px}
+header{padding:28px 18px 12px}.brand{font-size:14px;color:var(--gold)}h1{margin:7px 0 4px;font-size:29px}header p{margin:0;color:var(--muted)}
+.view{display:none;padding:10px 16px}.view.active{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;margin-bottom:14px;box-shadow:0 4px 18px #00000008}
+.hero{background:var(--accent);color:#fff;border:0}.hero p{color:#dbe7e1}.hero button{background:#fff;color:var(--accent)}
+.eyebrow{font-size:12px;color:var(--muted);margin-bottom:7px}.hero .eyebrow{color:#c8d9d2}
+h2{font-size:20px;margin:5px 0 9px}h3{font-size:16px;margin:5px 0}
+p{line-height:1.8}.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.choice{padding:14px;background:var(--soft);border:1px solid #d5e1da;border-radius:16px;text-align:right;color:var(--ink)}
+.choice small{display:block;color:var(--muted);margin-top:4px}
+.primary{background:var(--accent);color:#fff;padding:13px 18px;border-radius:15px;width:100%;margin-top:10px}
+.secondary{background:transparent;color:var(--accent);border:1px solid #b8c8c0;padding:11px 15px;border-radius:14px}
+.search{display:flex;gap:8px}.search input{flex:1;border:1px solid var(--line);background:#fff;border-radius:15px;padding:13px;outline:none}
+.result{padding:13px 0;border-bottom:1px solid var(--line)}.result:last-child{border-bottom:0}
+.nav{position:fixed;bottom:0;right:0;left:0;background:#fffdf9;border-top:1px solid var(--line);z-index:5}
+.nav-inner{max-width:620px;margin:auto;display:grid;grid-template-columns:repeat(4,1fr)}
+.nav button{background:transparent;padding:11px 4px;color:var(--muted);font-size:12px}.nav button.active{color:var(--accent);font-weight:700}
+textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:15px;padding:12px;background:#fff;resize:vertical}
+.note{font-size:12px;color:var(--muted)}.pill{display:inline-block;background:var(--soft);color:var(--accent);padding:5px 9px;border-radius:20px;font-size:12px;margin:3px}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="brand">رِحلة</div>
+  <h1 id="title">أنت داخل التطبيق النهارده ليه؟</h1>
+  <p id="subtitle">ابدأ من حالتك، ثم اترك للكلمة مساحة.</p>
+</header>
+
+<section id="home" class="view active">
+  <div class="card hero">
+    <div class="eyebrow">أنا اليوم</div>
+    <h2>اختر ما يشغلك الآن</h2>
+    <p>هذه النسخة تبني تجربة قصيرة حول اختيارك. النصوص الكاملة ستضاف بعد حسم حقوق الترجمة المستخدمة.</p>
+    <div id="moodChoices" class="choices"></div>
+  </div>
+  <div id="journeyCard" class="card hidden"></div>
+  <div class="card">
+    <div class="eyebrow">مساحتي</div>
+    <h2>ما الذي تريد أن تحفظه من اليوم؟</h2>
+    <p>اكتب جملة واحدة. ستبقى على جهازك في هذه النسخة التجريبية.</p>
+    <textarea id="journal" placeholder="اكتب ما تريد الاحتفاظ به..."></textarea>
+    <button class="primary" onclick="saveJournal()">حفظ في مذكراتي</button>
+    <p id="saveStatus" class="note"></p>
+  </div>
+</section>
+
+<section id="read" class="view">
+  <div class="card">
+    <div class="eyebrow">الكتاب</div>
+    <h2>قراءة وبحث</h2>
+    <div class="search"><input id="searchInput" placeholder="ابحث عن سفر أو إصحاح أو كلمة"><button class="secondary" onclick="searchBible()">بحث</button></div>
+    <div id="searchResults" class="result"></div>
+  </div>
+  <div class="card">
+    <div class="eyebrow">قراءة اليوم</div>
+    <h2>مرجع للقراءة</h2>
+    <p>سيظهر هنا نص الترجمة بعد اختيار ترجمة مرخصة وإضافتها إلى حزمة القراءة دون إنترنت.</p>
+    <span class="pill">مرقس 1</span><span class="pill">تجريبي</span>
+  </div>
+</section>
+
+<section id="journeys" class="view">
+  <div class="card hero">
+    <div class="eyebrow">رحلة شخصية</div>
+    <h2>30 يومًا مع الكلمة</h2>
+    <p>كل يوم قراءة وتأمل وسؤال وصلاة وخطوة عملية. بدون نقاط وبدون منافسة.</p>
+    <button class="primary" style="background:#fff;color:var(--accent)" onclick="startJourney()">ابدأ الرحلة</button>
+  </div>
+  <div class="card"><h2>رحلات مقترحة</h2><p>القلق · الصلاة · الغفران · الشكر · فهم المسيح · العودة بعد انقطاع</p></div>
+</section>
+
+<section id="me" class="view">
+  <div class="card">
+    <div class="eyebrow">مذكراتي</div>
+    <h2>ما كتبته</h2>
+    <div id="notesList"></div>
+  </div>
+  <div class="card">
+    <div class="eyebrow">الخصوصية</div>
+    <p>المذكرات في هذه النسخة تحفظ محليًا على الجهاز ولا تحتاج حسابًا.</p>
+  </div>
+</section>
+
+<nav class="nav"><div class="nav-inner">
+<button data-view="home" class="active" onclick="showView('home',this)">اليوم</button>
+<button data-view="read" onclick="showView('read',this)">الكتاب</button>
+<button data-view="journeys" onclick="showView('journeys',this)">الرحلات</button>
+<button data-view="me" onclick="showView('me',this)">مذكراتي</button>
+</div></nav>
+</div>
+
+<script>
+const moods=[
+ {id:"anxious",title:"أنا متوتر",sub:"أحتاج هدوءًا ومساحة للتفكير"},
+ {id:"sad",title:"أنا حزين",sub:"أحتاج أن أعبّر وأقرأ"},
+ {id:"decision",title:"عندي قرار",sub:"أريد أن أقرأ قبل أن أقرر"},
+ {id:"encouragement",title:"أحتاج تشجيعًا",sub:"أريد أن أستعيد رجائي"},
+ {id:"guilt",title:"أشعر بالذنب",sub:"أريد أن أواجه ما بداخلي"},
+ {id:"gratitude",title:"أريد أن أشكر",sub:"أريد أن أتوقف وألاحظ النعمة"},
+ {id:"start",title:"أريد أن أبدأ",sub:"أريد بداية بسيطة للقراءة"}
+];
+const references={
+ anxious:["مزمور 46","فيلبي 4","متى 6"],
+ sad:["مزمور 34","يوحنا 14","رومية 8"],
+ decision:["أمثال 3","يعقوب 1","مزمور 25"],
+ encouragement:["رومية 15","إشعياء 41","مزمور 27"],
+ guilt:["مزمور 51","لوقا 15","رومية 8"],
+ gratitude:["مزمور 103","لوقا 17","1 تسالونيكي 5"],
+ start:["مرقس 1","يوحنا 1","لوقا 5"]
+};
+const choiceBox=document.getElementById("moodChoices");
+moods.forEach(m=>{const b=document.createElement("button");b.className="choice";b.innerHTML="<strong>"+m.title+"</strong><small>"+m.sub+"</small>";b.onclick=()=>chooseMood(m);choiceBox.appendChild(b)});
+function showView(id,btn){document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));document.getElementById(id).classList.add("active");document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));if(btn)btn.classList.add("active");if(id==="me")renderNotes();scrollTo({top:0,behavior:"smooth"})}
+function chooseMood(m){const refs=references[m.id]||[];const card=document.getElementById("journeyCard");card.classList.remove("hidden");card.innerHTML="<div class='eyebrow'>رحلتك المقترحة</div><h2>"+m.title+"</h2><p>سنبدأ بثلاث محطات قصيرة. كل محطة لها قراءة وتأمل وسؤال وصلاة.</p><div>"+refs.map(r=>"<span class='pill'>"+r+"</span>").join("")+"</div><button class='primary' onclick='saveMood(""+m.id+"")'>احفظ اختياري وابدأ</button>";localStorage.setItem("rh_last_mood",m.id)}
+function saveMood(id){localStorage.setItem("rh_journey_started",new Date().toISOString());alert("تم حفظ بداية الرحلة على جهازك.");}
+function startJourney(){localStorage.setItem("rh_journey_started",new Date().toISOString());showView("home",document.querySelector('[data-view="home"]'))}
+function saveJournal(){const v=document.getElementById("journal").value.trim();if(!v)return;const notes=JSON.parse(localStorage.getItem("rh_notes")||"[]");notes.unshift({text:v,date:new Date().toLocaleString("ar-EG")});localStorage.setItem("rh_notes",JSON.stringify(notes.slice(0,100)));document.getElementById("journal").value="";document.getElementById("saveStatus").textContent="تم الحفظ على جهازك.";renderNotes()}
+function renderNotes(){const el=document.getElementById("notesList"),notes=JSON.parse(localStorage.getItem("rh_notes")||"[]");el.innerHTML=notes.length?notes.map(n=>"<div class='result'><p>"+escapeHtml(n.text)+"</p><span class='note'>"+n.date+"</span></div>").join(""):"<p class='note'>لا توجد مذكرات بعد.</p>"}
+function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",""":"&quot;","'":"&#039;"}[c]))}
+function searchBible(){const q=document.getElementById("searchInput").value.trim();const el=document.getElementById("searchResults");if(!q){el.innerHTML="<p class='note'>اكتب كلمة أو مرجعًا للبحث.</p>";return}const all=[...new Set(Object.values(references).flat())];const hits=all.filter(x=>x.includes(q)||q.includes(x.split(" ")[0]));el.innerHTML=(hits.length?hits.map(x=>"<div class='result'><strong>"+x+"</strong><p class='note'>مرجع تجريبي. سيصبح البحث داخل النص الكامل عند إضافة حزمة ترجمة مرخصة.</p></div>").join(""):"<p class='note'>لا توجد نتيجة في البيانات التجريبية.</p>")}
+renderNotes();
+</script>
+</body>
+</html>
