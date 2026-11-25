@@ -128,3 +128,15 @@ bible/data/
 - أضيفت دراسة مصادر Coptic SCRIPTORIUM الصعيدية والبحيرية، وتبين أن corpus البحيري لا يغطي كل أسفار العهد القديم.
 - لم يتم إدخال Coptic OT أو النص العربي إلى التطبيق؛ لا يوجد حتى الآن corpus عربي كامل موثق الحقوق للـ73 سفرًا.
 - GitHub Actions أصبح ينشئ تقرير JSON/Markdown لكل سفر وإصحاح ويرفعه ضمن artifact.
+
+
+## 2026-11-26 — إتاحة ملفات Coptic OT البحثية
+أضيف إلى عملية تنزيل المصادر أرشيف TreeTagger لـ Sahidic OT وBohairic OT من Coptic SCRIPTORIUM، مثبتين على commit 6fb51458e7156dd5387c2b2dca207aac1692e4d0. الغرض فحص بنية الشواهد ومراجع الأسفار والإصحاحات فقط. لم يتم تحويلها أو دمجها في corpus التطبيق.
+
+
+## 2026-11-26 — تحويل ملفات Coptic OT البحثية
+- تم تنزيل أرشيفي Sahidic وBohairic TreeTagger من commit ثابت.
+- أُضيف محول يحفظ normalized/original text وبيانات الوثيقة وURN والـ license والنسخة.
+- Sahidic: 911 وثيقة، 20,052 علامة عدد، تغطية 42/46، ويفتقد 1ma وezr وmal وneh.
+- Bohairic: 637 وثيقة، 14,994 علامة عدد، تغطية 24/46.
+- لم يتم دمج أي من اللهجتين في التطبيق. التقرير الكامل في bible/COPTIC_OT_CORPUS_QA.md.
