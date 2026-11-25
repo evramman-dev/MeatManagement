@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fetch candidate Bible source files for private QA; never commits or publishes text."""
+"""Fetch candidate Bible source files for a short-lived Actions QA artifact; never commits them into the app."""
 from __future__ import annotations
 
 import csv
