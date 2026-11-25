@@ -147,7 +147,7 @@ def render_report(audit):
         "- أعداد الإصحاحات والأعداد تصف ملفات المصدر فقط، ولا تثبت اكتمال السفر أو الترقيم القانوني.",
         "- استعادة XML حافظت على أعداد علامات verse_n وnorm وorig في هذه الدفعة، لكنها لا تعني إعادة بناء كل علاقات التحليل والوسوم المتداخلة.",
         "- لا يتم دمج الصعيدي والبحيري، ولا دمج الإضافات داخل نص السفر الأم."]
-    return "\\n".join(lines)+"\\n"
+    return "\n".join(lines)+"\n"
 
 def main():
     p=argparse.ArgumentParser()
@@ -164,16 +164,16 @@ def main():
         records,documents,issues=parse_archive(path,edition)
         (out/edition).mkdir(parents=True,exist_ok=True)
         with (out/edition/"verses.jsonl").open("w",encoding="utf-8") as f:
-            for row in records: f.write(json.dumps(row,ensure_ascii=False,separators=(",",":"))+"\\n")
-        (out/edition/"documents.jsonl").write_text("".join(json.dumps(row,ensure_ascii=False,separators=(",",":"))+"\\n" for row in documents),encoding="utf-8")
-        (out/edition/"parse-issues.json").write_text(json.dumps(issues,ensure_ascii=False,indent=2)+"\\n",encoding="utf-8")
+            for row in records: f.write(json.dumps(row,ensure_ascii=False,separators=(",",":"))+"\n")
+        (out/edition/"documents.jsonl").write_text("".join(json.dumps(row,ensure_ascii=False,separators=(",",":"))+"\n" for row in documents),encoding="utf-8")
+        (out/edition/"parse-issues.json").write_text(json.dumps(issues,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
         summaries[edition]=summarize(records,documents,expected)
     result={"schema_version":1,"status":"research_only_not_canonical_complete_bible_or_app_text",
         "source_repository":"CopticScriptorium/corpora","source_commit":"6fb51458e7156dd5387c2b2dca207aac1692e4d0",
         "license":"CC BY-SA 4.0; verify each document attribution and license metadata",
         "policy":"Keep dialects, manuscript witnesses, source chapter labels and versification separate. Do not publish as a complete Coptic Bible.",
         "editions":summaries}
-    (out/"coptic-ot-research-audit.json").write_text(json.dumps(result,ensure_ascii=False,indent=2)+"\\n",encoding="utf-8")
+    (out/"coptic-ot-research-audit.json").write_text(json.dumps(result,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
     (out/"coptic-ot-research-audit.md").write_text(render_report(result),encoding="utf-8")
     print(json.dumps({k:{"documents":v["document_count"],"chapters":v["chapter_document_count"],
         "verses":v["verse_record_count"],"books":v["book_id_count"],
