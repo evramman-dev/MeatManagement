@@ -10,37 +10,54 @@
       "language_id": "he",
       "language_name_ar": "العبرية الكتابية",
       "scope": "OT",
-      "edition_ids": ["ot_he_wlc"]
+      "edition_ids": [
+        "ot_he_wlc"
+      ]
     },
     {
       "language_id": "grc",
       "language_name_ar": "اليونانية القديمة",
       "scope": "OT",
-      "edition_ids": ["ot_grc_lxx_rahlfs", "ot_grc_lxx_brenton"]
+      "edition_ids": [
+        "ot_grc_lxx_rahlfs",
+        "ot_grc_lxx_brenton"
+      ]
     },
     {
       "language_id": "cop",
       "language_name_ar": "القبطية",
       "scope": "OT_NT",
-      "edition_ids": ["ot_cop_sahidic", "nt_cop_sahidic", "nt_cop_bohairic"]
+      "edition_ids": [
+        "ot_cop_sahidic",
+        "nt_cop_sahidic",
+        "nt_cop_bohairic"
+      ]
     },
     {
       "language_id": "grc",
       "language_name_ar": "اليونانية الكوينية",
       "scope": "NT",
-      "edition_ids": ["nt_grc_sbl", "nt_grc_patriarchal_1904"]
+      "edition_ids": [
+        "nt_grc_sbl",
+        "nt_grc_patriarchal_1904"
+      ]
     },
     {
       "language_id": "en",
       "language_name_ar": "الإنجليزية",
       "scope": "OT_NT",
-      "edition_ids": ["en_webbe_deuterocanon"]
+      "edition_ids": [
+        "en_webbe_deuterocanon"
+      ]
     },
     {
       "language_id": "ar",
       "language_name_ar": "العربية",
       "scope": "OT_NT",
-      "edition_ids": ["ar_vandyke", "ar_jesuit_deuterocanon"]
+      "edition_ids": [
+        "ar_vandyke",
+        "ar_jesuit_deuterocanon"
+      ]
     }
   ],
   "editions": [
@@ -51,12 +68,12 @@
       "language_id": "he",
       "scope": "OT",
       "textual_tradition": "Masoretic",
-      "source_url": "https://ebible.org/find/show.php?id=hboWLC",
+      "source_url": "https://ebible.org/find/details.php?id=hboWLC",
       "license": "Public Domain",
-      "license_status": "declared_by_source",
+      "license_status": "verified_text_public_domain_morphology_separate_license",
       "coverage_status": "candidate_full_39_book_hebrew_canon_only",
       "corpus_status": "not_imported",
-      "notes": "يمثل التقليد الماسوري كما وصل في مخطوطة لينينغراد، وليس كل الشواهد العبرية القديمة ولا الأسفار القانونية الثانية. يجب توثيق اختلاف ترقيم الأعداد."
+      "notes": "eBible details page identifies Biblical/Ancient Hebrew, WLC, downloadable USFM and says the WLC text is Public Domain. OSHB lemma/morphology data is separately CC BY-SA 3.0 and must not be treated as part of the PD text."
     },
     {
       "edition_id": "ot_grc_lxx_rahlfs",
@@ -65,12 +82,12 @@
       "language_id": "grc",
       "scope": "OT",
       "textual_tradition": "Septuagint",
-      "source_url": "https://github.com/eliranwong/LXX-Rahlfs-1935",
-      "license": "CC BY-SA 4.0",
-      "license_status": "candidate_license_requires_source_file_verification",
+      "source_url": "https://openscriptorium.org/works",
+      "license": "Public Domain",
+      "license_status": "listed_public_domain_by_openscriptorium_source_catalog_exact_artifact_still_to_verify",
       "coverage_status": "candidate_lxx_book_set_requires_coptic_canon_mapping",
       "corpus_status": "not_imported",
-      "notes": "مرشح علمي أساسي للسبعينية. يجب الاحتفاظ ببيانات الطبعة والفروق والترقيم، وتطبيق شروط النسبة والمشاركة بالمثل على أي قاعدة مشتقة."
+      "notes": "Open Scriptorium lists Rahlfs Septuagint 1935 as Public Domain and offers an import task. Verify the exact source artifact, edition metadata, and book coverage before import."
     },
     {
       "edition_id": "ot_grc_lxx_brenton",
@@ -109,10 +126,10 @@
       "scope": "NT",
       "source_url": "https://ebible.org/find/details.php?id=copcnt",
       "license": "Public Domain as listed by source catalog; verify edition notice",
-      "license_status": "candidate_requires_download_and_notice_verification",
-      "coverage_status": "candidate_full_nt_requires_book_and_verse_audit",
+      "license_status": "source_claims_public_domain_but_transcription_provenance_requires_scholarly_review",
+      "coverage_status": "new_testament_downloads_available_source_lineage_uncertain",
       "corpus_status": "not_imported",
-      "notes": "لا تدمج تلقائيًا مع نصوص Sahidic SCRIPTORIUM؛ فلكل مجموعة مصدر وحقوق وبنية مخطوطية مختلفة."
+      "notes": "eBible labels the text Public Domain and provides USFM/USFX downloads. Its own description says the text was imported from internet-forum resources citing Deir Anba Bishoi. Treat as a candidate for comparison, not a critical edition or an authoritative church text, until provenance and completeness are checked."
     },
     {
       "edition_id": "nt_cop_bohairic",
@@ -123,10 +140,10 @@
       "scope": "NT",
       "source_url": "https://ebible.org/find/details.php?id=copbhc",
       "license": "Public Domain as listed by source catalog; verify edition notice",
-      "license_status": "candidate_requires_download_and_notice_verification",
-      "coverage_status": "candidate_full_nt_requires_book_and_verse_audit",
+      "license_status": "source_claims_public_domain_horner_wells_edition",
+      "coverage_status": "new_testament_available_bohairic_edition_ongoing",
       "corpus_status": "not_imported",
-      "notes": "لهجة مستقلة عن الصعيدية. يجب أن يستطيع القارئ اختيار اللهجة بوضوح."
+      "notes": "eBible labels it Public Domain. It is based on Horner and standardized by J. Warren Wells; the source explicitly calls the work ongoing. Audit against Horner's edition and record the standardization before app use."
     },
     {
       "edition_id": "nt_grc_sbl",
@@ -137,10 +154,10 @@
       "textual_tradition": "Modern critical Greek text",
       "source_url": "https://github.com/LogosBible/SBLGNT",
       "license": "CC BY 4.0",
-      "license_status": "declared_by_source",
+      "license_status": "CC_BY_4_0_with_SBL_specific_distribution_conditions",
       "coverage_status": "candidate_27_book_nt_requires_verse_audit",
       "corpus_status": "not_imported",
-      "notes": "يلزم إظهار النسبة إلى المحرر والجهات صاحبة الحقوق، ورابط الترخيص، وعدم تغيير النص دون توضيح."
+      "notes": "SBLGNT is CC BY 4.0, but the SBL end-user license adds conditions: attribution; annual reporting when distributing for use with a commercial product or more than 500 verses; and no Greek-English diglot without a license. Keep Greek and English as separate reader selections unless written permission is obtained for a side-by-side Greek-English edition."
     },
     {
       "edition_id": "nt_grc_patriarchal_1904",
@@ -162,12 +179,12 @@
       "display_name_ar": "الكتاب المقدس بالإنجليزية — WEB البريطانية مع الأسفار القانونية الثانية",
       "language_id": "en",
       "scope": "OT_NT",
-      "source_url": "https://ebible.org/find/show.php?id=eng-webbe",
+      "source_url": "https://ebible.org/find/details.php?id=eng-webbe",
       "license": "Public Domain",
-      "license_status": "declared_by_source",
+      "license_status": "verified_public_domain_by_source",
       "coverage_status": "candidate_broad_ecumenical_set_coptic_orthodox_book_mapping_required",
       "corpus_status": "not_imported",
-      "notes": "اختيار أولي للنسخة الإنجليزية لأنها تشمل الأسفار القانونية الثانية. يجب مطابقة قائمة الكتب وترتيبها وتتمات أستير ودانيال مع ملف القانون القبطي قبل وصفها بأنها مطابقة له."
+      "notes": "eBible identifies the edition as Public Domain, provides USFM/USFX downloads, and explicitly says it includes Apocrypha/Deuterocanon. Preserve its actual book set and naming; do not claim its canon exactly matches Coptic Orthodox until compared book-by-book."
     },
     {
       "edition_id": "ar_vandyke",
@@ -210,8 +227,19 @@
       "alignment_type",
       "review_status"
     ],
-    "alignment_types": ["exact", "one_to_many", "many_to_one", "approximate", "unmatched"],
-    "review_status_values": ["unreviewed", "machine_mapped", "human_verified", "disputed"],
+    "alignment_types": [
+      "exact",
+      "one_to_many",
+      "many_to_one",
+      "approximate",
+      "unmatched"
+    ],
+    "review_status_values": [
+      "unreviewed",
+      "machine_mapped",
+      "human_verified",
+      "disputed"
+    ],
     "rule": "Keep original source numbering and add a separate cross-edition alignment layer. Never silently renumber, merge, or fabricate missing verses."
   },
   "acceptance_gates": [
