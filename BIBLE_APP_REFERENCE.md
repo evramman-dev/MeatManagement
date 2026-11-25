@@ -244,3 +244,13 @@
 - blob SHA للاختبارات: 7c2f9757b6481f29436616280fa1de24d75ccdf9.
 - blob SHA لتقرير التحويل: ceb97bc1f54b00133eaccbf9b7cd4b3f5a7a9a3f.
 - لا تغيير في واجهة التطبيق أو Service Worker أو Supabase أو البيانات المحلية.
+
+
+### تدقيق corpus ومصادر Coptic OT — 2026-11-26
+- أُضيفت أداة تدقيق بنية لكل طبعة وسفر وإصحاح، وخمسة اختبارات، وتقرير تغطية ومقارنة.
+- سير GitHub Actions ينفذ التدقيق بعد التحويل ويحفظ التقرير التفصيلي داخل artifact.
+- WLC يغطي 39 سفرًا عبريًا، ولا يمثل العهد القديم القبطي كاملًا.
+- Sahidic OT وBohairic OT من Coptic SCRIPTORIUM مصادر بحثية مرخصة CC BY-SA 4.0، لكنهما مجموعات شواهد وليسا طبعة كاملة موحدة؛ البحيري خصوصًا ناقص في تغطية عدد من الأسفار.
+- ARBJES الرقمي يحمل حقوق نشر 2018. سجل نسخة 1875 في NYU/Princeton Public Domain لكن هويته اليسوعية غير مؤكدة.
+- التفاصيل في bible/SOURCE_BATCH_01_BOOK_AUDIT.md وbible/COPTIC_OT_SOURCE_RESEARCH.md.
+- لا تعديل على الواجهة أو Service Worker أو Supabase أو البيانات المحلية.
