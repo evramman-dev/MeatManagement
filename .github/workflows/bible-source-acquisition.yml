@@ -16,6 +16,7 @@ on:
       - "scripts/tests/test_convert_coptic_scriptorium_ot.py"
       - "bible/SOURCE_BATCH_01_BOOK_AUDIT.md"
       - "bible/COPTIC_OT_SOURCE_RESEARCH.md"
+      - "bible/COPTIC_OT_CORPUS_QA.md"
       - ".github/workflows/bible-source-acquisition.yml"
   push:
     branches: [main]
