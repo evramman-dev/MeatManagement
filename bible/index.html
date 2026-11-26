@@ -281,47 +281,24 @@ function toggleTranslation(id){
  else if(selectedTranslations.length<4)selectedTranslations.push(id);
  renderParallel();
 }
-function renderParallel(){
+async function renderParallel(){
  const el=document.getElementById("parallelTranslations"); if(!el)return;
  const ref=document.getElementById("parallelReference").textContent;
  el.innerHTML=selectedTranslations.map(id=>{
    const t=translationCatalog.find(x=>x.id===id);
    const missing=!translationHasBook(id,"JHN");
-   return "<div class='card' style='margin:0 0 10px'><div class='eyebrow'>"+escapeHtml(t.name)+" · "+escapeHtml(t.year)+"</div>"+(missing?"<p class='note'>هذا السفر غير متوفر في هذه الترجمة</p><button class='secondary' type='button' onclick='showView("translations",document.querySelector("[data-view=translations]"))'>عرض ترجمة أخرى</button>":"<p class='verse-text'>"+escapeHtml(sampleTexts[id]||"النص سيظهر بعد اعتماد حزمة هذه الترجمة.")+"</p>")+"<p class='note'>"+escapeHtml(ref)+"</p></div>";
+   return "<div class='card' style='margin:0 0 10px' id='parallel-"+escapeHtml(id)+"'><div class='eyebrow'>"+escapeHtml(t.name)+" · "+escapeHtml(t.year)+"</div>"+(missing?"<p class='note'>هذا السفر غير متوفر في هذه الترجمة</p><button class='secondary' type='button' onclick='showView(\"translations\",document.querySelector(\"[data-view=translations]\"))'>عرض ترجمة أخرى</button>":"<p class='verse-text'>"+escapeHtml(sampleTexts[id]||"جاري تحميل النص الفعلي...")+"</p>")+"<p class='note'>"+escapeHtml(ref)+"</p></div>";
  }).join("");
-}
-const SVD_API_BASE="https://api.getbible.net/v3/arabicsv";
-const SVD_BOOKS={
- "تكوين":1,"تثنية":5,"يشوع":6,"قضاة":7,"راعوث":8,"صموئيل الأول":9,"صموئيل الثاني":10,"ملوك الأول":11,"ملوك الثاني":12,"أخبار الأيام الأول":13,"أخبار الأيام الثاني":14,"عزرا":15,"نحميا":16,"أستير":17,"أيوب":18,"مزامير":19,"مزمور":19,"أمثال":20,"جامعة":21,"نشيد الأنشاد":22,"إشعياء":23,"إرميا":24,"مراثي إرميا":25,"حزقيال":26,"دانيال":27,"هوشع":28,"يوئيل":29,"عاموس":30,"عوبديا":31,"يونان":32,"ميخا":33,"ناحوم":34,"حبقوق":35,"صفنيا":36,"حجي":37,"زكريا":38,"ملاخي":39,
- "متى":40,"مرقس":41,"لوقا":42,"يوحنا":43,"أعمال الرسل":44,"رومية":45,"كورنثوس الأولى":46,"كورنثوس الثانية":47,"غلاطية":48,"أفسس":49,"فيلبي":50,"كولوسي":51,"تسالونيكي الأولى":52,"تسالونيكي الثانية":53,"تيموثاوس الأولى":54,"تيموثاوس الثانية":55,"تيطس":56,"فليمون":57,"عبرانيين":58,"يعقوب":59,"بطرس الأولى":60,"بطرس الثانية":61,"يوحنا الأولى":62,"يوحنا الثانية":63,"يوحنا الثالثة":64,"يهوذا":65,"رؤيا يوحنا":66
-};
-function parseChapterReference(value){
- const raw=String(value||"").trim().replace(/\s+/g," ");
- let m=raw.match(/^(.+?)\s+(\d+)$/);
- if(!m)return null;
- let book=m[1].trim();
- const aliases={"يوحنا 1":"يوحنا الأولى","يوحنا 2":"يوحنا الثانية","يوحنا 3":"يوحنا الثالثة","رؤيا":"رؤيا يوحنا","اعمال":"أعمال الرسل","أعمال":"أعمال الرسل","مزمور":"مزامير"};
- if(aliases[book])book=aliases[book];
- const number=SVD_BOOKS[book];
- return number?{book,bookNumber:number,chapter:Number(m[2])}:null;
-}
-async function loadSvdChapter(){
- const input=document.getElementById("chapterReference");
- const status=document.getElementById("chapterStatus");
- const content=document.getElementById("chapterContent");
- const parsed=parseChapterReference(input.value);
- if(!parsed){status.textContent="اكتب اسم السفر ورقم الإصحاح مثل: يوحنا 1";content.innerHTML="";return}
- status.textContent="جاري تحميل النص...";content.innerHTML="";
- try{
-   const res=await fetch(SVD_API_BASE+"/"+parsed.bookNumber+"/"+parsed.chapter+".json");
-   if(!res.ok)throw new Error("HTTP "+res.status);
-   const data=await res.json();
-   const verses=Array.isArray(data.verses)?data.verses:[];
-   if(!verses.length)throw new Error("empty");
-   content.innerHTML="<div class='verse-card'><div class='eyebrow'>فان دايك 1865 · "+escapeHtml(parsed.book)+" "+parsed.chapter+"</div>"+verses.map(v=>"<div class='verse-card'><strong>"+escapeHtml(v.verse||"")+"</strong><p class='verse-text'>"+escapeHtml(v.text||"")+"</p></div>").join("")+"</div>";
-   status.textContent="تم تحميل النص من المصدر. يمكنك الآن قراءة الإصحاح داخل التطبيق.";
- }catch(e){
-   status.textContent="تعذر تحميل الإصحاح الآن. تحقق من الاتصال ثم حاول مرة أخرى.";
+ if(selectedTranslations.includes("AR-SVD-1865")){
+   try{
+     const res=await fetch(SVD_API_BASE+"/43/1.json");
+     if(res.ok){
+       const data=await res.json();
+       const verses=Array.isArray(data.verses)?data.verses:[];
+       const box=document.getElementById("parallel-AR-SVD-1865");
+       if(box&&verses.length)box.querySelector(".verse-text").outerHTML="<div class='verse-text'>"+verses.map(v=>"<div class='verse-card'><strong>"+escapeHtml(v.verse||"")+"</strong><p class='verse-text'>"+escapeHtml(v.text||"")+"</p></div>").join("")+"</div>";
+     }
+   }catch(e){}
  }
 }
 const demoIndex=[
