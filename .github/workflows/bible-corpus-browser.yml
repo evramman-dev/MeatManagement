@@ -3,7 +3,7 @@ name: Rehla Bible corpus browser QA
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, feature/rehla-koine-nt-rp-2018]
     paths:
       - "bible/**"
       - "tests/bible-corpus.spec.cjs"
