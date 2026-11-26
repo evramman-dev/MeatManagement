@@ -1,0 +1,62 @@
+name: Rehla Bible corpus browser QA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "bible/**"
+      - "tests/bible-corpus.spec.cjs"
+      - ".github/workflows/bible-corpus-browser.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rehla-bible-corpus-browser
+  cancel-in-progress: false
+
+jobs:
+  bible-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Install Playwright and Chromium
+        run: |
+          npm install --no-save @playwright/test
+          npx playwright install --with-deps chromium
+
+      - name: Serve repository locally
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory . >/tmp/rehla-bible-http.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173/bible/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/rehla-bible-http.log
+          exit 1
+
+      - name: Test Arabic Bible editions
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: npx playwright test tests/bible-corpus.spec.cjs --trace retain-on-failure --reporter=list
+
+      - name: Upload Bible browser test report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: rehla-bible-browser-qa
+          path: test-results/
+          if-no-files-found: warn
+          retention-days: 14
