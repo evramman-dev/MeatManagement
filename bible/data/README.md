@@ -43,3 +43,17 @@ The edition's source book set is retained independently, including its Deuteroca
 
 
 The Brenton corpus import and full source comparison passed in workflow run 45810436651. The corpus is now committed to the public repository. Reader browser QA passed, including Greek LTR rendering and Deuterocanonical book checks. GitHub Pages build and deployment also passed.
+
+
+## GRC-KOINE-RP-2018 — Robinson–Pierpont 2018 Greek New Testament
+
+Official source repository: https://github.com/byztxt/byzantine-majority-text  
+Pinned commit: `3b2b0806cc8af4144313ea70ec9cf654141e5996`  
+Source files: `csv-unicode/ccat/no-variants` (27 canonical NT books).  
+License: Public Domain / Unlicense, as declared by the source repository.  
+Corpus: `grc-koine-rp-2018.jsonl.gz`.  
+Audit: `grc-koine-rp-2018_audit.json`.
+
+The imported Unicode main text preserves polytonic accents, breathings, punctuation, capitalization, source verse labels and paragraph markers. The reader renders the paragraph marker as a line break. The source's separate alternatives `PA.csv` (John 7:53–8:11) and `ACT24.csv` (Acts 24:6–8) remain separate and are not merged into the main text.
+
+QA passed: 7,953 verse records, 27 books, 260 chapters, zero missing/extra/source-mismatched records. Verse keys match the previous corpus exactly, and normalized Greek word sequences match with zero differences after excluding legacy Strong's/morphology annotations from comparison only. See `GREEK_NT_TEXT_DISPLAY_AUDIT.md`.

@@ -326,7 +326,7 @@ async function renderParallel(){
        body.insertAdjacentHTML("beforeend","<p class='note'>Biblica Open New Arabic Version 2012 · CC BY-SA 4.0 · <a href='https://ebible.org/arbnav/' target='_blank' rel='noopener'>المصدر والترخيص</a></p>");
      }else if(id==="HE-WLC-2017"){
        body.insertAdjacentHTML("beforeend","<p class='note'>Westminster Leningrad Codex · Public Domain · <a href='https://ebible.org/find/details.php?id=hboWLC' target='_blank' rel='noopener'>المصدر والترخيص</a></p>");
-     }else if(id==="GRC-LXX-BRENTON-1851"){body.insertAdjacentHTML("beforeend","<p class='note'>Brenton Greek Septuagint 1851 · Public Domain · <a href='https://ebible.org/find/details.php?id=grcbrent' target='_blank' rel='noopener'>المصدر والترخيص</a></p>");}else if(id==="GRC-KOINE-RP-2018"){body.insertAdjacentHTML("beforeend","<p class='note'>Robinson-Pierpont 2018 · Byzantine / Majority Text · Public Domain · <a href='https://ebible.org/bible/details.php?id=grcmt' target='_blank' rel='noopener'>المصدر والترخيص</a></p>");}
+     }else if(id==="GRC-LXX-BRENTON-1851"){body.insertAdjacentHTML("beforeend","<p class='note'>Brenton Greek Septuagint 1851 · Public Domain · <a href='https://ebible.org/find/details.php?id=grcbrent' target='_blank' rel='noopener'>المصدر والترخيص</a></p>");}else if(id==="GRC-KOINE-RP-2018"){body.insertAdjacentHTML("beforeend","<p class='note'>Robinson-Pierpont 2018 · Byzantine / Majority Text · Polytonic Greek · <a href='https://github.com/byztxt/byzantine-majority-text/tree/3b2b0806cc8af4144313ea70ec9cf654141e5996/csv-unicode/ccat/no-variants' target='_blank' rel='noopener'>المصدر الرسمي</a></p>");}
    }catch(e){
      body.innerHTML="<p class='note'>تعذر تحميل النص الآن. تحقق من الاتصال ثم حاول مرة أخرى.</p>";
    }
@@ -384,7 +384,7 @@ async function loadTranslationChapter(id,bookId,chapter){
 function renderVerseMarkup(verses,language){
  const lang=language==="he"?"he":language==="grc"?"grc":"ar";
  const dir=language==="grc"?"ltr":"rtl";
- return verses.map(v=>"<div class='verse-card'><strong>"+escapeHtml(v.verse)+"</strong><p class='verse-text' lang='"+lang+"' dir='"+dir+"'>"+escapeHtml(v.text)+"</p></div>").join("");
+ return verses.map(v=>"<div class='verse-card'><strong>"+escapeHtml(v.verse)+"</strong><p class='verse-text' lang='"+lang+"' dir='"+dir+"'>"+escapeHtml(v.text).replace(/¶/g,"<br>")+"</p></div>").join("");
 }
 async function loadSvdChapter(){
  const input=document.getElementById("chapterReference");
