@@ -369,3 +369,14 @@ https://alta3b.com/wp-content/uploads/2019/03/%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%
 - Rehla Bible corpus browser QA على commit d0c80240faf8dfa13636a77d6d0bc917477d495b: نجاح، run 45804097497.
 - GitHub Pages deployment على commit نفسه: نجاح، run 45804098182.
 - اختبار MeatManagement cloud browser مستقل عن تطبيق رِحلة ولا يدخل في نتيجة QA الخاصة به.
+
+
+## تدقيق إضافي لمصدر القبطية البحيرية — 2026-11-26
+
+تصحيح وتوسيع لخطة المرحلة القبطية: يعرض Coptic SCRIPTORIUM corpus مستقلًا باسم Bohairic Old Testament، مع روابط TEI وملفات corpus. وتسجل صفحة مصادر Coptic Reader مجموعات Bohairic OT وBohairic NT تحت CC BY-SA 4.0. هذا مرشح أوسع من نسخة eBible copbhc التي تحتوي العهد الجديد فقط. لا يعني ذلك أن كل أسفار العهد القديم أو كل الأسفار القانونية الثانية موجودة في النص البحيري؛ فالدراسات المتخصصة تشير إلى أن الشواهد البحيرية الباقية لا تغطي كامل العهد القديم، وأن بعض الأسفار لا توجد لها شواهد بحيرية معروفة. قبل الاستيراد نراجع الملفات الفعلية وقائمة النصوص والترخيص، ونحافظ على السفر أو المقطع غير الموجود بوصفه غير متاح.
+
+المصادر:
+- https://data.copticscriptorium.org/texts/bohairicot/
+- https://www.smh101.com/coptic-reader/sources.html
+- https://ccdl.claremont.edu/digital/api/collection/cce/id/2188/download
+- https://ebible.org/copbhc/copyright.htm
