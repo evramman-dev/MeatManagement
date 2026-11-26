@@ -88,7 +88,8 @@ def main():
         "verse_record_count":v["verses"],"chapters":sorted(v["chapters"])} for k,v in sorted(coverage.items())},
       "books_missing_from_source":[],"extra_books_beyond_73_book_coptic_navigation_catalog":
         ["1es","3ma","4ma","man","lje","sus","bel"],
-      "coptic_catalog_books_without_brenton_source":sorted({"gen","exo","lev","num","deu","jos","jdg","rut","1sa","2sa","1ki","2ki","1ch","2ch","ezr","neh","tob","jdt","est","job","psa","pro","ecc","sng","wis","sir","isa","jer","lam","bar","ezk","dan","hos","jol","amo","oba","jon","mic","nam","hab","zep","hag","zec","mal","1ma","2ma"}-set(coverage)),
+      "coptic_catalog_books_without_independent_source_book_code":sorted({"gen","exo","lev","num","deu","jos","jdg","rut","1sa","2sa","1ki","2ki","1ch","2ch","ezr","neh","tob","jdt","est","job","psa","pro","ecc","sng","wis","sir","isa","jer","lam","bar","ezk","dan","hos","jol","amo","oba","jon","mic","nam","hab","zep","hag","zec","mal","1ma","2ma"}-set(coverage)),
+      "coptic_catalog_coverage_notes":["The source book EZR is the combined Ezra-Nehemiah (2 Esdras) witness and has 23 chapters. NEH has no separate source-book code in this edition. Keep the combined source book intact and do not split it into canonical books without a reviewed alignment."] ,
       "output_file":output.name,"status":"PREPARED_NOT_YET_QA_APPROVED",
       "text_processing":"USFM markers and footnotes/cross-references removed; Greek text and source verse labels retained. Source book codes are preserved in book_coverage."}
     (args.output_dir/"grc-lxx-brenton-1851_audit.json").write_text(json.dumps(report,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
