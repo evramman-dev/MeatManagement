@@ -62,6 +62,18 @@ def chapter_number(line):
     for key,value in WORD_NUMBERS.items():
         if norm(key)==nv: return value
     return None
+def split_chapter_line(line):
+    norm=lambda s:s.replace("أ","ا").replace("إ","ا").replace("آ","ا")
+    n=norm(line.strip())
+    for key,value in sorted(WORD_NUMBERS.items(),key=lambda x:-len(norm(x[0]))):
+        for heading in ("الاصحاح","الأصحاح","الإصحاح"):
+            prefix=norm(heading+" "+key)
+            if n==prefix:
+                return value,""
+            if n.startswith(prefix+" "):
+                return value,line.strip()[len(heading+" "+key):].strip()
+    return None,line
+
 def parse_page(path, book_id, expected_chapters):
     raw=path.read_bytes()
     candidates=[]
@@ -87,8 +99,11 @@ def parse_page(path, book_id, expected_chapters):
     lines=merged
     records=[]; current=None
     for line in lines:
-        ch=chapter_number(line)
-        if ch is not None: current=ch; continue
+        ch,remainder=split_chapter_line(line)
+        if ch is not None:
+            current=ch
+            line=remainder
+            if not line: continue
         if current is None: continue
         m=re.match(r"^([^\d]{0,20}?)(\d+)\s*:\s*(\d+)\s+(.+)$",line)
         if m:
