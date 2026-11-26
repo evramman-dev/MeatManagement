@@ -1,0 +1,92 @@
+name: Publish prepared Arabic Bible corpora
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/publish-arabic-bible-corpus.yml
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Download the successful preparation artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/arabic-bible-corpus
+          gh run download 45794242665 --repo "$GITHUB_REPOSITORY" --name arabic-bible-corpus-all --dir /tmp/arabic-bible-corpus
+
+      - name: Validate corpus files and create compressed assets
+        run: |
+          python - <<'PY'
+          import gzip
+          import json
+          from pathlib import Path
+
+          source = Path("/tmp/arabic-bible-corpus")
+          target = Path("bible/data")
+          target.mkdir(parents=True, exist_ok=True)
+
+          for stem in ("ar-svd-1865", "ar-keh-2012"):
+              jsonl = source / f"{stem}.jsonl"
+              audit = json.loads((source / f"{stem}_audit.json").read_text(encoding="utf-8"))
+              rows = [json.loads(line) for line in jsonl.read_text(encoding="utf-8").splitlines()]
+              keys = [(r["translation_id"], r["book_id"], r["chapter"], r["verse"]) for r in rows]
+              assert len(rows) == audit["record_count"], stem + ": record count mismatch"
+              assert len(rows) == len(set(keys)), stem + ": duplicate verse key"
+              assert len({r["book_id"] for r in rows}) == 66, stem + ": expected 66 source books"
+              assert all(str(r["text"]).strip() for r in rows), stem + ": empty verse text"
+              assert all(r["chapter"] > 0 and str(r["verse"]).strip() for r in rows), stem + ": invalid reference"
+              with jsonl.open("rb") as src, (target / f"{stem}.jsonl.gz").open("wb") as raw:
+                  with gzip.GzipFile(fileobj=raw, mode="wb", compresslevel=9, mtime=0) as dst:
+                      dst.write(src.read())
+              (target / f"{stem}_audit.json").write_text(
+                  json.dumps(audit, ensure_ascii=False, indent=2) + "\n",
+                  encoding="utf-8"
+              )
+              print(stem, "validated", len(rows), "records")
+          PY
+
+      - name: Add source and license attribution
+        run: |
+          cat > bible/data/README.md <<'EOF'
+          # Arabic Bible text assets
+
+          Each translation is stored as an independent gzip-compressed JSONL file. Records retain translation_id, edition, book_id, chapter, verse, and text.
+
+          ## AR-SVD-1865 — Smith-Van Dyck 1865
+          Source: https://ebible.org/arb-vd/
+          License status: Public Domain.
+
+          ## AR-KEH-2012 — Biblica Open New Arabic Version 2012
+          Source: https://ebible.org/arbnav/
+          Copyright: Biblica.
+          License: Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0): https://creativecommons.org/licenses/by-sa/4.0/
+
+          The source USFM was converted to JSONL and gzip. USFM formatting markers, footnotes, and cross-reference notes were omitted. No intentional wording edits were made. The converted data remains under the applicable source license.
+
+          Both source editions contain 66 books only. They do not include the Deuterocanonical books and must not be presented as the complete Coptic Orthodox canon. The application must display its unavailable-translation message for books absent from an edition.
+          EOF
+
+      - name: Commit compressed corpus assets
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add bible/data/
+          if git diff --cached --quiet; then
+            echo "No corpus changes to publish."
+            exit 0
+          fi
+          git commit -m "Bible: publish prepared Arabic translation corpora"
+          git push origin HEAD:main
