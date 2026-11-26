@@ -14,7 +14,7 @@ permissions:
 
 concurrency:
   group: rehla-bible-corpus-browser
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   bible-browser:
@@ -33,7 +33,7 @@ jobs:
       - name: Install Playwright and Chromium
         run: |
           npm install --no-save @playwright/test
-          npx playwright install --with-deps chromium
+          npx playwright install chromium
 
       - name: Serve repository locally
         run: |
