@@ -141,6 +141,36 @@ def parse_full_page_chapters(html, book_id, wanted):
                          "text":m.group(1).strip(),"source":"St-Takla.org"})
     return rows
 
+def parse_showchapter_url(book_id, chapter):
+    book_num={"esther_additions":20,"daniel_additions":32}.get(book_id)
+    if not book_num: return None
+    return f"https://st-takla.org/Bibles/BibleSearch/showChapter.php?book={book_num}&chapter={chapter}"
+
+def parse_showchapter_page(path, book_id, chapter):
+    lines=strip_html(read_html(path))
+    rows=[]
+    for line in lines:
+        m=re.match(r"^(\d+)\\s+(.+)$",line)
+        if m and len(m.group(2).strip())>1:
+            rows.append({"book_id":book_id,"chapter":chapter,"verse":int(m.group(1)),
+                         "text":m.group(2).strip(),"source":"St-Takla.org"})
+    return rows
+
+    if book_id in ("esther_additions","daniel_additions"):
+        expected=list(range(1,expected_chapters+1)) if isinstance(expected_chapters,int) else list(expected_chapters)
+        records=[]; qa=[]
+        for ch in expected:
+            url=parse_showchapter_url(book_id,ch)
+            if not url:
+                continue
+            cp=OUT/f"{book_id}-chapter-{ch}.html"; curl(url,cp)
+            rows=parse_showchapter_page(cp,book_id,ch)
+            for r in rows: r["source_url"]=url
+            records.extend(rows)
+            nums=[r["verse"] for r in rows]
+            qa.append({"chapter":ch,"verses":len(nums),"first_verse":min(nums) if nums else None,
+                       "last_verse":max(nums) if nums else None,"duplicates":sorted({n for n in nums if nums.count(n)>1})})
+        return records,qa,None
 def parse_page(path, book_id, expected_chapters):
     raw=path.read_bytes()
     candidates=[]
