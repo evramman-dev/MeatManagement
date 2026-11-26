@@ -275,7 +275,7 @@
     }
   },
   "output_file": "ar-keh-2012.jsonl",
-  "status": "STRUCTURAL_QA_PASSED_TEXTUAL_SPOT_CHECK_PENDING",
+  "status": "TEXTUAL_SAMPLE_QA_PASSED_FULL_REVIEW_PENDING",
   "structural_qa": {
     "checked_on": "2026-11-26",
     "workflow_run_id": 45794242665,
@@ -284,6 +284,17 @@
     "all_verse_text_nonempty": true,
     "all_66_source_books_present": true,
     "source_zip_sha256_verified": true,
-    "textual_spot_check": "pending"
+    "textual_spot_check": "passed",
+    "textual_spot_check_date": "2026-11-26",
+    "textual_spot_check_method": "automated exact comparison against the same source USFM archive SHA256",
+    "textual_sample_refs": [
+      "GEN 1:1",
+      "PSA 23:1",
+      "MAT 6:33",
+      "JHN 3:16",
+      "ROM 8:28"
+    ],
+    "textual_samples_passed": 5,
+    "full_book_textual_review": "pending"
   }
 }
