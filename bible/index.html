@@ -64,7 +64,7 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 <div class="app">
 <header>
   <button id="backToMeat" class="secondary" type="button" style="margin-bottom:12px">العودة إلى MeatManagement</button>
-  <div class="brand">رِحلة</div><div class="version">الإصدار v12 · قراءات اليوم</div>
+  <div class="brand">رِحلة</div><div class="version">الإصدار v13 · قراءات اليوم</div>
   <h1 id="title">أنت داخل التطبيق النهارده ليه؟</h1>
   <p id="subtitle">ابدأ من حالتك، ثم اترك للكلمة مساحة.</p>
 </header>
@@ -72,7 +72,7 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 <section id="home" class="view active">
   <div class="card home-intro"><div class="eyebrow" style="color:#d5e3da">مساحتك مع كلمة الله</div><h2>ابدأ من هنا، وخذ خطوة واحدة اليوم</h2><p>اختَر ما يشغلك، اقرأ، اكتب، وتابع رحلتك يومًا بيوم.</p><button id="homeStartJourney" class="primary" type="button" style="background:#fff;color:var(--accent)">افتح رحلتي</button></div>
   <div class="home-grid"><div class="mini-card"><strong>رحلة 30 يومًا</strong><span id="homeJourneyStatus">لم تبدأ بعد</span><div class="progress-track"><i></i></div></div><div class="mini-card"><strong>مذكراتي</strong><span id="homeNotesCount">لا توجد مذكرات محفوظة</span></div></div>
-  <div class="card" id="homeReadingsCard"><div class="eyebrow">الكنيسة القبطية الأرثوذكسية</div><h2>قراءات اليوم</h2><div id="homeReadingDate" class="reading-date-compact">جاري تحميل تاريخ اليوم...</div><div id="homeReadingsSummary" class="reading-summary">جاري تحميل مراجع اليوم...</div><button id="openReadingsButton" class="primary" type="button">فتح القراءات</button><p id="homeReadingsStatus" class="note"></p></div><div class="card hero"><div class="eyebrow">أنا اليوم</div>
+  <div class="card" id="homeReadingsCard"><div class="eyebrow">الكنيسة القبطية الأرثوذكسية</div><h2 id="homeReadingsTitle">قراءات اليوم</h2><div id="homeReadingDate" class="reading-date-compact">جاري تحميل تاريخ اليوم...</div><div id="homeReadingsSummary" class="reading-summary">جاري تحميل مراجع اليوم...</div><button id="openReadingsButton" class="primary" type="button">فتح القراءات</button><p id="homeReadingsStatus" class="note"></p></div><div class="card hero"><div class="eyebrow">أنا اليوم</div>
     <h2>اختر ما يشغلك الآن</h2>
     <p>هذه النسخة تبني تجربة قصيرة حول اختيارك. النصوص الكاملة ستضاف بعد حسم حقوق الترجمة المستخدمة.</p>
     <div id="moodChoices" class="choices"></div>
@@ -103,7 +103,7 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
   </div>
 </section>
 
-<section id="copticReadings" class="view"><div class="card"><button id="backToTodayFromReadings" class="secondary" type="button">العودة إلى اليوم</button><div class="reading-top"><div class="reading-date-icon">✦</div><div><div class="eyebrow">الكنيسة القبطية الأرثوذكسية</div><h2>قراءات اليوم</h2><div id="copticGregorianDate" class="reading-date-main">جاري تحميل التاريخ...</div><div id="copticDateText" class="reading-date-sub"></div></div></div><div id="copticSeason" class="reading-season hidden"></div><div class="eyebrow reading-heading">قراءات اليوم</div><div id="copticReadingRows"></div><div class="reading-source"><strong id="copticReadingsStatus">جاري تحميل مراجع اليوم...</strong><span>المراجع تأتي من Coptic.IO. التطبيق يستخدم المرجع لتحديد النص، ثم يفتح النص من Corpus المحلي المتاح.</span></div></div></section>
+<section id="copticReadings" class="view"><div class="card"><button id="backToTodayFromReadings" class="secondary" type="button">العودة إلى اليوم</button><div class="reading-top"><div class="reading-date-icon">✦</div><div><div class="eyebrow">الكنيسة القبطية الأرثوذكسية</div><h2 id="copticReadingsTitle">قراءات اليوم</h2><div id="copticGregorianDate" class="reading-date-main">جاري تحميل التاريخ...</div><div id="copticDateText" class="reading-date-sub"></div></div></div><div id="copticSeason" class="reading-season hidden"></div><div class="eyebrow reading-heading" id="copticReadingHeading">قراءات اليوم</div><div id="copticReadingDayNotice" class="reading-meta hidden"></div><div id="copticReadingRows"></div><div class="reading-source"><strong id="copticReadingsStatus">جاري تحميل مراجع اليوم...</strong><span>المراجع تأتي من Coptic.IO. التطبيق يستخدم المرجع لتحديد النص، ثم يفتح النص من Corpus المحلي المتاح.</span></div></div></section>
 
 <section id="read" class="view">
   <div class="card">
@@ -323,8 +323,10 @@ const copticMonths=["توت","بابه","هاتور","كيهك","طوبة","أم
 const COPTIC_READINGS_API="https://api.coptic.io/api/readings";
 const COPTIC_CALENDAR_API="https://api.coptic.io/api/calendar";
 const COPTIC_CACHE_PREFIX="rehla.copticReadings.";
-const arabicReadingBooks={"1 Thessalonians":"تسالونيكي الأولى","2 Thessalonians":"تسالونيكي الثانية","1 Corinthians":"كورنثوس الأولى","2 Corinthians":"كورنثوس الثانية","1 Timothy":"تيموثاوس الأولى","2 Timothy":"تيموثاوس الثانية","1 Peter":"بطرس الأولى","2 Peter":"بطرس الثانية","1 John":"يوحنا الأولى","2 John":"يوحنا الثانية","3 John":"يوحنا الثالثة","1 Samuel":"صموئيل الأول","2 Samuel":"صموئيل الثاني","1 Kings":"الملوك الأول","2 Kings":"الملوك الثاني","1 Chronicles":"أخبار الأيام الأول","2 Chronicles":"أخبار الأيام الثاني","Psalms":"المزامير","Proverbs":"الأمثال","Ecclesiastes":"الجامعة","Song of Solomon":"نشيد الأنشاد","Matthew":"متى","Mark":"مرقس","Luke":"لوقا","John":"يوحنا","Acts":"أعمال الرسل","Romans":"رومية","Galatians":"غلاطية","Ephesians":"أفسس","Philippians":"فيلبي","Colossians":"كولوسي","Hebrews":"العبرانيين","James":"يعقوب","Jude":"يهوذا","Isaiah":"إشعياء","Jeremiah":"إرميا","Ezekiel":"حزقيال","Daniel":"دانيال","Genesis":"التكوين","Exodus":"الخروج","Leviticus":"اللاويين","Numbers":"العدد","Deuteronomy":"التثنية","Joshua":"يشوع","Judges":"القضاة","Ruth":"راعوث","Ezra":"عزرا","Nehemiah":"نحميا","Esther":"أستير","Job":"أيوب"};
-function formatReadingReference(reference){let value=String(reference||"").replace(/;/g,"؛");Object.entries(arabicReadingBooks).forEach(([en,ar])=>{value=value.split(en).join(ar)});return value}
+const arabicReadingBooks={"1 Thessalonians":"تسالونيكي الأولى","2 Thessalonians":"تسالونيكي الثانية","1 Corinthians":"كورنثوس الأولى","2 Corinthians":"كورنثوس الثانية","1 Timothy":"تيموثاوس الأولى","2 Timothy":"تيموثاوس الثانية","1 Peter":"بطرس الأولى","2 Peter":"بطرس الثانية","1 John":"يوحنا الأولى","2 John":"يوحنا الثانية","3 John":"يوحنا الثالثة","1 Samuel":"صموئيل الأول","2 Samuel":"صموئيل الثاني","1 Kings":"الملوك الأول","2 Kings":"الملوك الثاني","1 Chronicles":"أخبار الأيام الأول","2 Chronicles":"أخبار الأيام الثاني","Psalms":"مزمور","Proverbs":"الأمثال","Ecclesiastes":"الجامعة","Song of Solomon":"نشيد الأنشاد","Matthew":"متى","Mark":"مرقس","Luke":"لوقا","John":"يوحنا","Acts":"أعمال الرسل","Romans":"رومية","Galatians":"غلاطية","Ephesians":"أفسس","Philippians":"فيلبي","Colossians":"كولوسي","Hebrews":"العبرانيين","James":"يعقوب","Jude":"يهوذا","Isaiah":"إشعياء","Jeremiah":"إرميا","Ezekiel":"حزقيال","Daniel":"دانيال","Genesis":"التكوين","Exodus":"الخروج","Leviticus":"اللاويين","Numbers":"العدد","Deuteronomy":"التثنية","Joshua":"يشوع","Judges":"القضاة","Ruth":"راعوث","Ezra":"عزرا","Nehemiah":"نحميا","Esther":"أستير","Job":"أيوب"};
+function readingReferenceParts(reference){return String(reference||"").split(/\s*(?:[;&]|\s+&\s+)\s*/).map(raw=>{const m=raw.trim().replace(/[–—]/g,"-").match(/^(.+?)\s+(\d+)(?:\s*[:.]\s*(\d+)(?:\s*-\s*(\d+))?)?$/);if(!m)return null;const sourceBook=m[1].trim();return {sourceBook,book:arabicReadingBooks[sourceBook]||sourceBook,chapter:Number(m[2]),start:m[3]?Number(m[3]):null,end:m[4]?Number(m[4]):null}}).filter(Boolean)}
+function formatReadingReference(reference){const parts=readingReferenceParts(reference);if(!parts.length)return String(reference||"").replace(/;/g,"؛");let last=null;return parts.map((p,i)=>{const range=p.start==null?String(p.chapter):p.chapter+": "+p.start+(p.end!=null?"-"+p.end:"");let value;if(i&&last&&last.book===p.book)value=p.chapter===last.chapter?(p.start==null?String(p.chapter):p.start+(p.end!=null?"-"+p.end:"")):range;else value=p.book+" "+range;last=p;return value}).join("؛ ")}
+function readingBookForParser(book){return book==="مزمور"?"مزامير":book}
 const readingGroups=[
  {title:"عشية",keys:[["VPsalm","مزمور"],["VGospel","إنجيل"]],icon:"ع"},
  {title:"باكر",keys:[["MPsalm","مزمور"],["MGospel","إنجيل"]],icon:"ب"},
@@ -348,13 +350,11 @@ function readingRowsHtml(readings){
 }
 function splitReadingReferences(raw){return String(raw||"").split(/\s*(?:[;&]|\s+&\s+)\s*/).map(x=>x.trim()).filter(Boolean)}
 function parseReadingReferencePart(raw){
- const s=String(raw||"").trim().replace(/[–—]/g,"-");
- const m=s.match(/^(.+?)\s+(\d+)(?:[:.](\d+)(?:-(\d+))?)?$/);
- if(!m)return null;
- const english=m[1].trim(),arabic=arabicReadingBooks[english]||english;
- const p=parseChapterReference(arabic+" "+m[2]);
+ const part=readingReferenceParts(raw)[0];
+ if(!part)return null;
+ const p=parseChapterReference(readingBookForParser(part.book)+" "+part.chapter);
  if(!p)return null;
- return {book:arabic,bookCode:p.bookCode,chapter:Number(m[2]),startVerse:m[3]?Number(m[3]):null,endVerse:m[4]?Number(m[4]):null,display:formatReadingReference(s)};
+ return {book:part.book,bookCode:p.bookCode,chapter:part.chapter,startVerse:part.start,endVerse:part.end,display:formatReadingReference(raw)};
 }
 async function openReadingReference(raw,label){
  const modal=document.getElementById("readingTextModal"),content=document.getElementById("readingTextContent");
@@ -381,7 +381,44 @@ async function openReadingReference(raw,label){
 }
 function formatCopticSeason(season){const names={"Nativity Fast":"صوم الميلاد","Great Lent":"الصوم الكبير","Jonah's Fast":"صوم يونان","Apostles' Fast":"صوم الرسل","St. Mary Fast":"صوم السيدة العذراء","No Fast":"لا يوجد صوم","Advent Fast":"صوم الميلاد"};return names[season]||season}
 function copticDateFallback(date){const y=date.getUTCFullYear(),m=date.getUTCMonth(),day=date.getUTCDate();let cy=m>8||(m===8&&day>=11)?y-283:y-284;let sy=cy+283,sd=(cy-1)%4===3?12:11,start=Date.UTC(sy,8,sd);if(Date.UTC(y,m,day)<start){cy--;sy=cy+283;sd=(cy-1)%4===3?12:11;start=Date.UTC(sy,8,sd)}const doy=Math.floor((Date.UTC(y,m,day)-start)/86400000);return {year:cy,month:copticMonths[Math.floor(doy/30)]||"النسيء",day:doy%30+1}}
-async function loadCopticReadings(){const today=new Date(),dateKey=localDateKey(today),readingCacheKey=COPTIC_CACHE_PREFIX+dateKey,calendarCacheKey=COPTIC_CACHE_PREFIX+"calendar."+dateKey,dateText=new Intl.DateTimeFormat("ar-EG",{weekday:"long",day:"numeric",month:"long"}).format(today);document.getElementById("homeReadingDate").textContent=dateText;const cachedReadings=localStorage.getItem(readingCacheKey),cachedCalendar=localStorage.getItem(calendarCacheKey);let readings=null,calendar=null;try{if(cachedReadings)readings=JSON.parse(cachedReadings)}catch(e){}try{if(cachedCalendar)calendar=JSON.parse(cachedCalendar)}catch(e){}const paint=()=>{document.getElementById("homeReadingsCard").classList.remove("hidden");const c=calendar&&calendar.coptic?calendar.coptic:copticDateFallback(today);document.getElementById("copticGregorianDate").textContent=dateText;document.getElementById("copticDateText").textContent=(c.month||"")+" "+(c.day||"")+" · السنة القبطية "+(c.year||"");const season=readings&&readings.season?readings.season:"",seasonEl=document.getElementById("copticSeason");if(season){seasonEl.textContent="الموسم: "+formatCopticSeason(season);seasonEl.classList.remove("hidden")}else seasonEl.classList.add("hidden");document.getElementById("copticReadingRows").innerHTML=readingRowsHtml(readings);document.getElementById("homeReadingsSummary").textContent=readings?getReadingReferences(readings).slice(0,2).map(x=>x.label+": "+x.text).join(" · "):"تعذر تحميل المراجع الآن";document.querySelectorAll("[data-reading-ref]").forEach(b=>b.addEventListener("click",()=>openReadingReference(b.dataset.readingRef,b.querySelector(".reading-item-title")?.textContent||"القراءة")))};if(readings){paint();document.getElementById("copticReadingsStatus").textContent="المراجع محفوظة على هذا الجهاز."}try{const rr=await fetch(COPTIC_READINGS_API+"/"+dateKey,{headers:{Accept:"application/json"}});if(!rr.ok)throw new Error("readings_"+rr.status);readings=await rr.json();try{const cr=await fetch(COPTIC_CALENDAR_API+"/"+dateKey,{headers:{Accept:"application/json"}});if(cr.ok)calendar=await cr.json()}catch(e){}localStorage.setItem(readingCacheKey,JSON.stringify(readings));if(calendar)localStorage.setItem(calendarCacheKey,JSON.stringify(calendar));paint();document.getElementById("copticReadingsStatus").textContent="تم تحديث مراجع اليوم.";document.getElementById("homeReadingsStatus").textContent="تم تحديث مراجع اليوم من Coptic.IO."}catch(e){document.getElementById("copticReadingsStatus").textContent=readings?"المراجع محفوظة على هذا الجهاز.":"تعذر تحميل قراءات اليوم الآن.";document.getElementById("homeReadingsStatus").textContent=readings?"المراجع محفوظة على هذا الجهاز.":"تعذر تحميل قراءات اليوم الآن.";document.getElementById("homeReadingsCard").classList.remove("hidden");}}
+async function loadCopticReadings(){
+ const now=new Date(),isNextLiturgicalDay=now.getHours()>=17,targetDate=new Date(now.getFullYear(),now.getMonth(),now.getDate()+(isNextLiturgicalDay?1:0),12,0,0),dateKey=localDateKey(targetDate),readingCacheKey=COPTIC_CACHE_PREFIX+dateKey,calendarCacheKey=COPTIC_CACHE_PREFIX+"calendar."+dateKey,dateText=new Intl.DateTimeFormat("ar-EG",{weekday:"long",day:"numeric",month:"long"}).format(targetDate);
+ const dayTitle=isNextLiturgicalDay?"قراءات الغد":"قراءات اليوم";
+ const dayNotice=isNextLiturgicalDay?"بعد الساعة الخامسة مساءً يبدأ عرض قراءات اليوم الكنسي التالي، وترتيبها: عشية ثم باكر ثم القداس الإلهي.":"ترتيب قراءات اليوم الكنسي: عشية ثم باكر ثم القداس الإلهي.";
+ document.getElementById("homeReadingDate").textContent=dateText;
+ document.getElementById("homeReadingsTitle").textContent=dayTitle;
+ document.getElementById("copticReadingsTitle").textContent=dayTitle;
+ document.getElementById("copticReadingHeading").textContent=dayTitle;
+ const notice=document.getElementById("copticReadingDayNotice");notice.textContent=dayNotice;notice.classList.remove("hidden");
+ const cachedReadings=localStorage.getItem(readingCacheKey),cachedCalendar=localStorage.getItem(calendarCacheKey);let readings=null,calendar=null;
+ try{if(cachedReadings)readings=JSON.parse(cachedReadings)}catch(e){}
+ try{if(cachedCalendar)calendar=JSON.parse(cachedCalendar)}catch(e){}
+ const paint=()=>{
+  document.getElementById("homeReadingsCard").classList.remove("hidden");
+  const c=calendar&&calendar.coptic?calendar.coptic:copticDateFallback(targetDate);
+  document.getElementById("copticGregorianDate").textContent=dateText;
+  document.getElementById("copticDateText").textContent=(c.month||"")+" "+(c.day||"")+" · السنة القبطية "+(c.year||"");
+  const season=readings&&readings.season?readings.season:"",seasonEl=document.getElementById("copticSeason");
+  if(season){seasonEl.textContent="الموسم: "+formatCopticSeason(season);seasonEl.classList.remove("hidden")}else seasonEl.classList.add("hidden");
+  document.getElementById("copticReadingRows").innerHTML=readingRowsHtml(readings);
+  document.getElementById("homeReadingsSummary").textContent=readings?getReadingReferences(readings).slice(0,2).map(x=>x.label+": "+x.text).join(" · "):"تعذر تحميل المراجع الآن";
+  document.querySelectorAll("[data-reading-ref]").forEach(b=>b.addEventListener("click",()=>openReadingReference(b.dataset.readingRef,b.querySelector(".reading-item-title")?.textContent||"القراءة")));
+ };
+ if(readings){paint();document.getElementById("copticReadingsStatus").textContent="المراجع محفوظة على هذا الجهاز."}
+ try{
+  const rr=await fetch(COPTIC_READINGS_API+"/"+dateKey,{headers:{Accept:"application/json"}});
+  if(!rr.ok)throw new Error("readings_"+rr.status);
+  readings=await rr.json();
+  try{const cr=await fetch(COPTIC_CALENDAR_API+"/"+dateKey,{headers:{Accept:"application/json"}});if(cr.ok)calendar=await cr.json()}catch(e){}
+  localStorage.setItem(readingCacheKey,JSON.stringify(readings));if(calendar)localStorage.setItem(calendarCacheKey,JSON.stringify(calendar));
+  paint();document.getElementById("copticReadingsStatus").textContent="تم تحديث مراجع "+(isNextLiturgicalDay?"الغد":"اليوم")+".";
+  document.getElementById("homeReadingsStatus").textContent="تم تحديث المراجع من Coptic.IO.";
+ }catch(e){
+  document.getElementById("copticReadingsStatus").textContent=readings?"المراجع محفوظة على هذا الجهاز.":"تعذر تحميل القراءات الآن. حاول مرة أخرى عند توفر الاتصال.";
+  document.getElementById("homeReadingsStatus").textContent=readings?"المراجع محفوظة على هذا الجهاز.":"تعذر تحميل القراءات الآن.";
+  document.getElementById("homeReadingsCard").classList.remove("hidden");
+ }
+}
 const readerStateKey="rehla.readerSelection.v12";
 const readerSelectionDefaults={translation:"AR-SVD-1865",covenant:"OT",section:"الشريعة",book:"GEN",chapter:1,verse:"all",mode:"verses",font:"naskh"};
 let readerSelection=loadReaderSelection();
