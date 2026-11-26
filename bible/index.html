@@ -76,7 +76,7 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 .reader-font-ruqaa,.reader-font-ruqaa .verse-text,.reader-font-ruqaa .reader-verse-text,.reader-font-ruqaa .reader-paragraph{font-family:"Aref Ruqaa","Amiri",serif;font-weight:400}
 .reader-font-thuluth,.reader-font-thuluth .verse-text,.reader-font-thuluth .reader-verse-text,.reader-font-thuluth .reader-paragraph{font-family:"Katibeh","Amiri",serif;font-weight:400}
 .reader-font-ruqaa .reader-verse-text{font-size:1.04em}.reader-font-thuluth .reader-verse-text{font-size:1.08em;letter-spacing:.01em}
- .liturgical-reading-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.reading-back-button{margin:0;padding:7px 10px;font-size:11px;white-space:nowrap}</style>
+ .liturgical-reading-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.reading-back-button{margin:0;padding:7px 10px;font-size:11px;white-space:nowrap}.reading-preamble{margin:18px 0 8px;padding:14px;background:#f7f8f4;border:1px solid var(--line);border-radius:16px}.reading-preamble h3{margin:0 0 8px;color:var(--accent);font-size:16px}.reading-preamble p{margin:0;line-height:2;text-align:justify}</style>
 </head>
 <body>
 <div class="app">
@@ -425,6 +425,9 @@ function copticReadingIntro(key,part){
  if(key==="Acts")return "الإبركسيس فصل من أعمال آبائنا الرسل الأطهار المشمولين بنعمة الروح القدس. بركتهم المقدسة فلتكن معنا. آمين.";
  return "";
 }
+function copticGospelTextIntro(){
+ return "مبارك الآتي باسم الرب إله القوات، ربنا وإلهنا ومخلصنا وملكنا كلنا يسوع المسيح ابن الله الحي، الذي له المجد الدائم إلى الأبد. آمين.";
+}
 function copticReadingEnding(key){
  if(key.endsWith("Psalm"))return "هللويا.";
  if(key.endsWith("Gospel"))return "وَالْمَجْدُ لِلَّهِ دَائِمًا.";
@@ -451,27 +454,38 @@ async function renderCopticReadingText(readings){
  const edition=readerSelection.translation,editionInfo=translationCatalog.find(t=>t.id===edition);
  try{await ensureReaderCorpus()}catch(e){host.innerHTML="<p class='note'>تعذر تحميل Corpus المحلي. تحقق من الاتصال ثم أعد فتح القراءات.</p>";return}
  const sections=[];
- for(const item of ordered){
-  const parts=splitReadingReferences(item.raw).map(parseReadingReferencePart).filter(Boolean);
-  const title=copticReadingHeading(item.group,item.key,item.label);
-  let verseHtml="";
-  for(const part of parts){
-   if(!translationHasBook(edition,part.bookCode)){verseHtml+="<p class='note'>السفر "+escapeHtml(part.book)+" غير متوفر في "+escapeHtml(editionInfo?editionInfo.name:edition)+".</p>";continue}
-   const sourceBookId=edition==="HE-WLC-2017"?(HEBREW_SOURCE_CODE_TO_ID[part.bookCode]||part.bookCode):edition==="GRC-LXX-BRENTON-1851"?(LXX_BOOK_ID_MAP[part.bookCode]||part.bookCode.toLowerCase()):edition==="GRC-KOINE-RP-2018"?part.bookCode.toLowerCase():part.bookCode;
-   try{
-    let verses=await loadTranslationChapter(edition,sourceBookId,part.chapter);
-    if(part.startVerse!=null)verses=verses.filter(v=>Number(v.verse)>=part.startVerse&&(part.endVerse==null||Number(v.verse)<=part.endVerse));
-    verseHtml+=verses.map(v=>"<p class='reading-verse' lang='ar' dir='rtl'><span class='reading-verse-number'>"+escapeHtml(v.verse)+"</span>"+escapeHtml(v.text).replace(/¶/g," ")+"</p>").join("");
-   }catch(e){verseHtml+="<p class='note'>تعذر تحميل هذا الجزء من القراءة.</p>"}
+ for(const group of readingGroups){
+  const groupItems=ordered.filter(x=>x.group===group.title);
+  if(!groupItems.length)continue;
+  const gospelItem=groupItems.find(x=>x.key.endsWith("Gospel"));
+  const psalmItem=groupItems.find(x=>x.key.endsWith("Psalm"));
+  if(gospelItem){
+   const gospelPart=splitReadingReferences(gospelItem.raw).map(parseReadingReferencePart).filter(Boolean)[0];
+   sections.push("<div class='reading-preamble'><h3>مقدمة إنجيل "+escapeHtml(group.title)+"</h3><p>"+escapeHtml(copticReadingIntro(gospelItem.key,gospelPart))+"</p></div>");
   }
-  const firstPart=parts[0];
-  sections.push("<article class='liturgical-reading' id='lit-"+escapeHtml(item.key)+"'><div class='liturgical-reading-head'><h3>"+escapeHtml(title)+"</h3><button class='secondary reading-back-button' type='button' data-reading-back='copticReadingRows'>العودة إلى كارت القراءات</button></div><div class='reading-ref-line'>"+escapeHtml(item.text)+"</div><div class='reading-rubric'>"+escapeHtml(copticReadingIntro(item.key,firstPart))+"</div>"+(verseHtml||"<p class='note'>لا يوجد نص متاح لهذا الشاهد.</p>")+"<div class='reading-ending'>"+escapeHtml(copticReadingEnding(item.key))+"</div></article>");
+  for(const item of groupItems){
+   const parts=splitReadingReferences(item.raw).map(parseReadingReferencePart).filter(Boolean);
+   const title=copticReadingHeading(item.group,item.key,item.label);
+   let verseHtml="";
+   for(const part of parts){
+    if(!translationHasBook(edition,part.bookCode)){verseHtml+="<p class='note'>السفر "+escapeHtml(part.book)+" غير متوفر في "+escapeHtml(editionInfo?editionInfo.name:edition)+".</p>";continue}
+    const sourceBookId=edition==="HE-WLC-2017"?(HEBREW_SOURCE_CODE_TO_ID[part.bookCode]||part.bookCode):edition==="GRC-LXX-BRENTON-1851"?(LXX_BOOK_ID_MAP[part.bookCode]||part.bookCode.toLowerCase()):edition==="GRC-KOINE-RP-2018"?part.bookCode.toLowerCase():part.bookCode;
+    try{
+     let verses=await loadTranslationChapter(edition,sourceBookId,part.chapter);
+     if(part.startVerse!=null)verses=verses.filter(v=>Number(v.verse)>=part.startVerse&&(part.endVerse==null||Number(v.verse)<=part.endVerse));
+     verseHtml+=verses.map(v=>"<p class='reading-verse' lang='ar' dir='rtl'><span class='reading-verse-number'>"+escapeHtml(v.verse)+"</span>"+escapeHtml(v.text).replace(/¶/g," ")+"</p>").join("");
+    }catch(e){verseHtml+="<p class='note'>تعذر تحميل هذا الجزء من القراءة.</p>"}
+   }
+   const firstPart=parts[0];
+   const intro=item.key.endsWith("Gospel")?copticGospelTextIntro():copticReadingIntro(item.key,firstPart);
+   sections.push("<article class='liturgical-reading' id='lit-"+escapeHtml(item.key)+"'><div class='liturgical-reading-head'><h3>"+escapeHtml(title)+"</h3><button class='secondary reading-back-button' type='button' data-reading-back='copticReadingRows'>العودة إلى كارت القراءات</button></div><div class='reading-ref-line'>"+escapeHtml(item.text)+"</div><div class='reading-rubric'>"+escapeHtml(intro)+"</div>"+(verseHtml||"<p class='note'>لا يوجد نص متاح لهذا الشاهد.</p>")+"<div class='reading-ending'>"+escapeHtml(copticReadingEnding(item.key))+"</div></article>");
+  }
  }
  host.innerHTML=sections.join("");
  host.querySelectorAll(".liturgical-reading").forEach(el=>el.classList.add("reader-font-"+readerSelection.font));
- document.querySelectorAll("[data-reading-target]").forEach(button=>button.onclick=()=>document.getElementById(button.dataset.readingTarget)?.scrollIntoView({behavior:"smooth",block:"start"}));document.querySelectorAll("[data-reading-back]").forEach(button=>button.onclick=()=>document.getElementById(button.dataset.readingBack)?.scrollIntoView({behavior:"smooth",block:"start"}));
-}
-async function loadCopticReadings(){
+ document.querySelectorAll("[data-reading-target]").forEach(button=>button.onclick=()=>document.getElementById(button.dataset.readingTarget)?.scrollIntoView({behavior:"smooth",block:"start"}));
+ document.querySelectorAll("[data-reading-back]").forEach(button=>button.onclick=()=>document.getElementById(button.dataset.readingBack)?.scrollIntoView({behavior:"smooth",block:"start"}));
+}async function loadCopticReadings(){
  const now=new Date(),isNextLiturgicalDay=now.getHours()>=17,targetDate=new Date(now.getFullYear(),now.getMonth(),now.getDate()+(isNextLiturgicalDay?1:0),12,0,0),dateKey=localDateKey(targetDate),readingCacheKey=COPTIC_CACHE_PREFIX+dateKey,calendarCacheKey=COPTIC_CACHE_PREFIX+"calendar."+dateKey,dateText=new Intl.DateTimeFormat("ar-EG",{weekday:"long",day:"numeric",month:"long"}).format(targetDate);
  const dayTitle=isNextLiturgicalDay?"قراءات الغد":"قراءات اليوم";
  const dayNotice=isNextLiturgicalDay?"بعد الساعة الخامسة مساءً يبدأ عرض قراءات اليوم الكنسي التالي، وترتيبها: عشية ثم باكر ثم القداس الإلهي.":"ترتيب قراءات اليوم الكنسي: عشية ثم باكر ثم القداس الإلهي.";
