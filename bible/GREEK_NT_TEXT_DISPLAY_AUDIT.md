@@ -100,3 +100,26 @@ https://byzantinetext.com/study/editions/robinson-pierpont/
 ## ما لم يُنفذ بعد
 
 لم يتم بعد تنزيل ملف CCAT أو فك ترميزه أو تحويله إلى JSONL أو مقارنة جميع آياته مع الملف الحالي. لذلك لم تتغير بيانات `grc-koine-rp-2018.jsonl.gz`، ولا يزال التطبيق يعرض الملف الحالي كما هو.
+
+
+## المصدر الرسمي للطبعة وملفاتها — تحقق إضافي
+
+تم فحص مستودع ByzTxt الرسمي:
+https://github.com/byztxt/byzantine-majority-text
+
+ملف README في المستودع يحدد أن البيانات تمثل Robinson–Pierpont 2018، ويذكر أن:
+
+- ملفات `source/CCAT` هي ملفات المصدر التي أنشأها وحافظ عليها Maurice A. Robinson، وهي المرجع الأعلى عند اختلاف الملفات المشتقة.
+- ملفات CCAT تتضمن علامات النبر والقراءات البديلة.
+- ملفات Unicode CSV مشتقة من ملفات CCAT وBP5 لتسهيل الاستخدام، ويظل ملف المصدر الرسمي هو المرجع الأعلى.
+- ملفات Strong's غير المنبورة ليست الملف المناسب لعرض القراءة.
+- إصدار RP2018 هو الموصى به بدل RP2005، لأن RP2005 احتوى أخطاء في النبر والتنفس والترقيم صُححت في RP2018.
+
+المراجع:
+- https://github.com/byztxt/byzantine-majority-text/blob/master/README.md
+- https://github.com/byztxt/byzantine-majority-text/blob/master/source/README.md
+- https://github.com/byztxt/byzantine-majority-text/blob/master/csv-unicode/README.md
+
+إذن أصبح لدينا مصدر مباشر أفضل من نسخة eBible الحالية: مستودع ByzTxt الرسمي، مع ملفات RP2018 المصدرية ونسخ Unicode المشتقة. يجب استخدام نسخة Unicode التي تحتفظ بعلامات النص، أو فك CCAT وفق قواعد التحويل الرسمية، ثم إزالة بيانات Strong's والجهاز النقدي من المتن المعروض مع الاحتفاظ بها في طبقة منفصلة عند الحاجة.
+
+لم يتم بعد تنزيل الملفات أو استيرادها. تظل بيانات التطبيق دون تغيير.
