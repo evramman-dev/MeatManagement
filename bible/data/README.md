@@ -35,3 +35,8 @@ License: Public Domain, as declared by eBible.
 Corpus: `grc-lxx-brenton-1851.jsonl.gz`.
 Audit: `grc-lxx-brenton-1851_audit.json`.
 The edition's source book set is retained independently, including its Deuterocanonical and additional books. It is not asserted to be identical to the Coptic Orthodox 73-book navigation catalog. Greek text is displayed left-to-right. Source chapter and verse labels are retained; no silent renumbering or Arabic supplementation is performed.
+
+
+### Import and QA result
+
+28,597 verse records across all 52 source books/texts. Full exact-key and text comparison against the downloaded source archive passed: zero missing, extra, or mismatched records. Source archive SHA256: `9de434f4922f85a475276e4754f6d114dee0f3bf5323d90dcd559a1f8286e9a4`. See `grc-lxx-brenton-1851_audit.json` for book-by-book coverage.
