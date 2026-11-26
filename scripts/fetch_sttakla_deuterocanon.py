@@ -19,6 +19,18 @@ BOOKS = [
     ("2_maccabees", "سفر المكابيين الثاني", 15),
     ("psalm_151", "المزمور 151", 1),
 ]
+BOOK_URLS = {
+    "tobit": "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya__1-Tobit_.html",
+    "judith": "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya__2-Judith_.html",
+    "esther_additions": "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya__3-Esther_.html",
+    "wisdom": "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya__4-Wisdon-of-Solomon_.html",
+    "sirach": "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya__5-Wisdon-of-Joshua-Son-of-Sirach_.html",
+    "baruch": "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya__6-Baruch_.html",
+    "daniel_additions": "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya__7-Daniel_.html",
+    "1_maccabees": "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya__8-First-of-Maccabees_.html",
+    "2_maccabees": "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya__9-Second-of-Maccabees_.html",
+    "psalm_151": "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya_10-Psalm151-El-Mazmoor-151_.html",
+}
 WORD_NUMBERS = {
     "الأول":1,"الثاني":2,"الثالث":3,"الرابع":4,"الخامس":5,"السادس":6,
     "السابع":7,"الثامن":8,"التاسع":9,"العاشر":10,"الحادي عشر":11,
