@@ -382,3 +382,20 @@ https://kutuphane.osmanlica.com/en/kitap/5359898
 https://aco.dlib.nyu.edu/browse?page=1645
 
 لم يتم نسخ أي نص كتابي أو تعديل واجهة التطبيق أو Service Worker أو Supabase.
+
+
+## 2026-11-26 — متابعة البحث عن نسخة مصورة للطبعة اليسوعية الأصلية
+
+تم توسيع البحث خارج فهارس المصادر السابقة. أكدت مراجع ببليوغرافية مستقلة أن اليسوعية العربية ظهرت في بيروت في ثلاثة مجلدات خلال 1876–1880، وأن المجلد الأول سنة 1876 والمجلد الثاني سنة 1880 والمجلد الثالث للعهد الجديد سنة 1878. كما يؤكد سجل British Museum وجود نسخة مفهرسة من الطبعة اليسوعية في بيروت ضمن ثلاثة مجلدات، مع ملاحظة أن المجلد الثالث في السجل من طبعة ثانية.
+
+نتيجة البحث الحالية: لم يظهر بعد رابط مباشر موثوق لصور كاملة للطبعة الأصلية المطلوبة 1876–1880 يمكن تنزيلها أو إعادة استخدامها بثقة. بعض النتائج تقود إلى إعادة طبعات لاحقة أو سجلات فهرسة فقط. لذلك لم نبدأ OCR ولم ندخل أي نص.
+
+هذا يؤكد أن الخطوة الصحيحة ليست أخذ PDF عشوائي من الإنترنت. نحتاج نسخة يمكن تحديد مجلدها وسنة طباعتها ومؤسستها المالكة أو المستضيفة، ثم نتحقق من حالة حقوق الصور قبل استخراج النص.
+
+مصادر إضافية تمت مراجعتها:
+- Jewish Virtual Library، تاريخ الترجمات العربية: https://jewishvirtuallibrary.org/jsource/judaica/ejud_0002_0003_0_02930.html
+- British Museum Arabic catalogue: https://upload.wikimedia.org/wikipedia/commons/c/cc/Catalogue_of_Arabic_books_in_the_British_Museum_%28IA_catalogueofarabi01brit%29.pdf
+- Hurqalya / Darlow-Moule bibliography: https://hurqalya.ucmerced.edu/node/184/
+- John A. Thompson، The Jesuit Version: https://translation.bible/wp-content/uploads/2024/05/thompson-1955-the-origin-and-nature-of-the-chief-printed-arabic-bibles-3.pdf
+
+لا تعديل على index.html أو sw.js أو Supabase.
