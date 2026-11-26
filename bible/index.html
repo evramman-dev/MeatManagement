@@ -61,6 +61,20 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
   </div>
 </section>
 
+<section id="translations" class="view">
+  <div class="card">
+    <div class="eyebrow">الترجمات</div>
+    <h2>اختر ترجمة للقراءة</h2>
+    <p class="note">كل ترجمة تعرض النصوص المتاحة فيها فقط. غياب سفر من ترجمة لا يعني أن الترجمة ناقصة.</p>
+    <div id="translationChoices" class="choices"></div>
+  </div>
+  <div class="card">
+    <div class="eyebrow">قراءة متوازية</div>
+    <h2 id="parallelReference">يوحنا 1:1</h2>
+    <div id="parallelTranslations"></div>
+  </div>
+</section>
+
 <section id="read" class="view">
   <div class="card">
     <div class="eyebrow">الكتاب</div>
@@ -149,6 +163,7 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 <nav class="nav"><div class="nav-inner">
 <button data-view="home" class="active" onclick="showView('home',this)">اليوم</button>
 <button data-view="read" onclick="showView('read',this)">الكتاب</button>
+<button data-view="translations" onclick="showView('translations',this)">الترجمات</button>
 <button data-view="journeys" onclick="showView('journeys',this)">الرحلات</button>
 <button data-view="verses" onclick="showView('verses',this)">آياتي</button>
 <button data-view="me" onclick="showView('me',this)">مذكراتي</button>
@@ -176,7 +191,7 @@ const references={
 };
 const choiceBox=document.getElementById("moodChoices");
 moods.forEach(m=>{const b=document.createElement("button");b.className="choice";b.innerHTML="<strong>"+m.title+"</strong><small>"+m.sub+"</small>";b.onclick=()=>chooseMood(m);choiceBox.appendChild(b)});
-function showView(id,btn){document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));document.getElementById(id).classList.add("active");document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));if(btn)btn.classList.add("active");const headings={home:["أنت داخل التطبيق النهارده ليه؟","ابدأ من حالتك، ثم اترك للكلمة مساحة."],read:["الكتاب المقدس","اقرأ وابحث وتابع مراجع القراءة في مكان واحد."],journeys:["الرحلات","اختر مسارًا يساعدك على القراءة والتأمل يومًا بيوم."],myJourney:["رحلتي","تابع يومك الحالي وتأملاتك وتقدمك في برنامج الثلاثين يومًا."],verses:["آياتي المحفوظة","احفظ المراجع التي تهمك، وراجعها في مواعيد تساعدك على تذكرها."],me:["مذكراتي","احتفظ بأفكارك وصلواتك وما تريد الرجوع إليه."]};const heading=headings[id]||headings.home;document.getElementById("title").textContent=heading[0];document.getElementById("subtitle").textContent=heading[1];if(id==="me")renderNotes();if(id==="verses")renderVerses();if(id==="journeys"||id==="myJourney")renderJourney();scrollTo({top:0,behavior:"smooth"})}
+function showView(id,btn){document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));document.getElementById(id).classList.add("active");document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));if(btn)btn.classList.add("active");const headings={home:["أنت داخل التطبيق النهارده ليه؟","ابدأ من حالتك، ثم اترك للكلمة مساحة."],read:["الكتاب المقدس","اقرأ وابحث وتابع مراجع القراءة في مكان واحد."],translations:["الترجمات","اختر ترجمة أو اعرض أكثر من ترجمة في القراءة المتوازية."],journeys:["الرحلات","اختر مسارًا يساعدك على القراءة والتأمل يومًا بيوم."],myJourney:["رحلتي","تابع يومك الحالي وتأملاتك وتقدمك في برنامج الثلاثين يومًا."],verses:["آياتي المحفوظة","احفظ المراجع التي تهمك، وراجعها في مواعيد تساعدك على تذكرها."],me:["مذكراتي","احتفظ بأفكارك وصلواتك وما تريد الرجوع إليه."]};const heading=headings[id]||headings.home;document.getElementById("title").textContent=heading[0];document.getElementById("subtitle").textContent=heading[1];if(id==="me")renderNotes();if(id==="verses")renderVerses();if(id==="journeys"||id==="myJourney")renderJourney();scrollTo({top:0,behavior:"smooth"})}
 function chooseMood(m){const refs=references[m.id]||[];const card=document.getElementById("journeyCard");card.classList.remove("hidden");card.innerHTML="<div class='eyebrow'>رحلتك المقترحة</div><h2>"+m.title+"</h2><p>سنبدأ بثلاث محطات قصيرة. كل محطة لها قراءة وتأمل وسؤال وصلاة.</p><div>"+refs.map(r=>"<span class='pill'>"+r+"</span>").join("")+"</div><button id='startSelectedJourney' class='primary' type='button'>احفظ اختياري وابدأ</button>";document.getElementById("startSelectedJourney").addEventListener("click",()=>saveMood(m.id));localStorage.setItem("rh_last_mood",m.id)}
 const journeyDays=[
 {title:"ابدأ من مكانك",refs:["مزمور 139","مرقس 1"],question:"ما الأمر الذي يشغل قلبك اليوم؟",prayer:"قل لله ببساطة ما بداخلك دون ترتيب أو تجميل.",step:"خصص خمس دقائق هادئة للقراءة."},
@@ -233,6 +248,46 @@ function updateVerseReview(id,grade){const intervals={hard:1,good:3,easy:7,maste
 function deleteSavedVerse(id){const verses=getSavedVerses().filter(v=>v.id!==id);localStorage.setItem("rh_saved_verses",JSON.stringify(verses));renderVerses()}
 function renderVerses(){const verses=getSavedVerses();const today=localDateKey();const due=verses.filter(v=>!v.nextReview||v.nextReview<=today);const visible=verseFilter==="due"?due:verses;document.getElementById("savedVerseCount").textContent=String(verses.length);document.getElementById("dueVerseCount").textContent=String(due.length);document.getElementById("filterDueVerses").classList.toggle("filter-active",verseFilter==="due");document.getElementById("filterAllVerses").classList.toggle("filter-active",verseFilter==="all");const list=document.getElementById("savedVersesList");if(!visible.length){list.innerHTML=verseFilter==="due"?"<p class='note'>لا توجد آيات مستحقة اليوم. يمكنك عرض كل الآيات أو إضافة آية جديدة.</p>":"<p class='note'>لم تحفظ آيات بعد. أضف أول مرجع لتبدأ.</p>";return}list.innerHTML=visible.map(v=>{const isDue=!v.nextReview||v.nextReview<=today;return "<div class='verse-card'><div class='row' style='display:flex;justify-content:space-between;gap:8px;align-items:center'><strong>"+escapeHtml(v.reference)+"</strong><span class='pill'>"+(isDue?"مستحقة اليوم":"المراجعة "+formatVerseDate(v.nextReview))+"</span></div><p class='verse-text'>"+(v.text?escapeHtml(v.text):"<span class='note'>لم تضف نص الآية. يمكنك الاحتفاظ بالمرجع فقط.</span>")+"</p><p class='note'>المستوى: "+escapeHtml(v.level||"جديدة")+" · مرات المراجعة: "+(Number(v.reviewCount)||0)+"</p><div class='verse-actions'><button class='secondary' data-verse-grade='hard' data-verse-id='"+escapeHtml(v.id)+"' type='button'>صعبة · غدًا</button><button class='secondary' data-verse-grade='good' data-verse-id='"+escapeHtml(v.id)+"' type='button'>جيدة · 3 أيام</button><button class='secondary' data-verse-grade='easy' data-verse-id='"+escapeHtml(v.id)+"' type='button'>سهلة · 7 أيام</button><button class='secondary' data-verse-grade='mastered' data-verse-id='"+escapeHtml(v.id)+"' type='button'>متقنة · 14 يومًا</button></div><button class='secondary' data-verse-delete='"+escapeHtml(v.id)+"' type='button' style='margin-top:9px;width:100%'>حذف من آياتي</button></div>"}).join("");list.querySelectorAll("[data-verse-grade]").forEach(button=>button.addEventListener("click",()=>updateVerseReview(button.dataset.verseId,button.dataset.verseGrade)));list.querySelectorAll("[data-verse-delete]").forEach(button=>button.addEventListener("click",()=>{if(confirm("هل تريد حذف هذه الآية من قائمتك؟"))deleteSavedVerse(button.dataset.verseDelete)}))}
 function escapeHtml(s){return String(s).replace(/[&<>"\']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]})}
+const translationCatalog=[
+ {id:"AR-JESUIT-OLD",name:"الترجمة العربية اليسوعية القديمة",tradition:"كاثوليكية تاريخية",year:"1876–1880",canon:"full-with-deuterocanon",books:"all"},
+ {id:"AR-SVD-1865",name:"فان دايك 1865",tradition:"بروتستانتية تاريخية",year:"1865",canon:"protestant",books:"66"},
+ {id:"AR-GNA-1993-DC",name:"الترجمة العربية المشتركة 1993",tradition:"مشتركة",year:"1993",canon:"full-with-deuterocanon",books:"all"},
+ {id:"AR-GNA-2025",name:"الترجمة العربية المشتركة 2025",tradition:"مشتركة",year:"2025",canon:"edition-dependent",books:"edition"},
+ {id:"AR-KEH-2012",name:"كتاب الحياة 2012",tradition:"إنجيلية",year:"2012",canon:"protestant",books:"66"},
+ {id:"AR-ERV",name:"العربية المبسطة",tradition:"حديثة",year:"edition-dependent",canon:"edition-dependent",books:"edition"}
+];
+const demoBookAvailability={
+ "AR-JESUIT-OLD":"all","AR-SVD-1865":"protestant","AR-GNA-1993-DC":"all","AR-GNA-2025":"edition","AR-KEH-2012":"protestant","AR-ERV":"edition"
+};
+const selectedTranslations=["AR-JESUIT-OLD","AR-SVD-1865"];
+const sampleTexts={
+ "AR-JESUIT-OLD":"النص سيُعرض هنا بعد اعتماد مصدر النص العربي ومطابقته آية بآية.",
+ "AR-SVD-1865":"النص سيُعرض هنا بعد اعتماد مصدر النص العربي ومطابقته آية بآية."
+};
+function translationHasBook(id,bookId){
+ const mode=demoBookAvailability[id];
+ if(bookId==="TOBIT"||bookId==="JDT"||bookId==="WIS"||bookId==="SIR"||bookId==="BAR"||bookId==="1MAC"||bookId==="2MAC") return mode==="all";
+ return true;
+}
+function renderTranslationChoices(){
+ const el=document.getElementById("translationChoices"); if(!el)return;
+ el.innerHTML=translationCatalog.map(t=>"<button class='choice' type='button' onclick='toggleTranslation(""+t.id+"")'><strong>"+escapeHtml(t.name)+"</strong><small>"+escapeHtml(t.tradition)+" · "+escapeHtml(t.year)+"</small></button>").join("");
+}
+function toggleTranslation(id){
+ const i=selectedTranslations.indexOf(id);
+ if(i>=0){if(selectedTranslations.length>1)selectedTranslations.splice(i,1);}
+ else if(selectedTranslations.length<4)selectedTranslations.push(id);
+ renderParallel();
+}
+function renderParallel(){
+ const el=document.getElementById("parallelTranslations"); if(!el)return;
+ const ref=document.getElementById("parallelReference").textContent;
+ el.innerHTML=selectedTranslations.map(id=>{
+   const t=translationCatalog.find(x=>x.id===id);
+   const missing=!translationHasBook(id,"JHN");
+   return "<div class='card' style='margin:0 0 10px'><div class='eyebrow'>"+escapeHtml(t.name)+" · "+escapeHtml(t.year)+"</div>"+(missing?"<p class='note'>هذا السفر غير متوفر في هذه الترجمة</p><button class='secondary' type='button' onclick='showView("translations",document.querySelector("[data-view=translations]"))'>عرض ترجمة أخرى</button>":"<p class='verse-text'>"+escapeHtml(sampleTexts[id]||"النص سيظهر بعد اعتماد حزمة هذه الترجمة.")+"</p>")+"<p class='note'>"+escapeHtml(ref)+"</p></div>";
+ }).join("");
+}
 const demoIndex=[
  {ref:"مزمور 46",words:["الله","خوف","قلق","ملجأ","قوة"]},
  {ref:"فيلبي 4",words:["الله","سلام","صلاة","قلق","فرح"]},
