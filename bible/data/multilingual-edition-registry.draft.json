@@ -38,7 +38,8 @@
       "scope": "NT",
       "edition_ids": [
         "nt_grc_sbl",
-        "nt_grc_patriarchal_1904"
+        "nt_grc_patriarchal_1904",
+        "nt_grc_rp_2018"
       ]
     },
     {
@@ -153,6 +154,21 @@
       "coverage_status": "candidate_full_nt_requires_verse_audit",
       "corpus_status": "not_imported",
       "notes": "إضافة اختيارية للمقارنة النصية، ولا يحل محل النص النقدي SBLGNT."
+    },
+    {
+      "edition_id": "nt_grc_rp_2018",
+      "name": "Greek New Testament — Robinson-Pierpont 2018",
+      "display_name_ar": "العهد الجديد اليوناني الكويني — Robinson-Pierpont 2018",
+      "language_id": "grc",
+      "dialect": "Koine",
+      "scope": "NT",
+      "textual_tradition": "Byzantine / Majority Text",
+      "source_url": "https://ebible.org/bible/details.php?id=grcmt",
+      "license": "Public Domain",
+      "license_status": "verified_public_domain_by_ebible_source_catalog",
+      "coverage_status": "27_book_nt_source_archive_awaiting_full_verse_qa",
+      "corpus_status": "preparation_and_full_source_qa_pending",
+      "notes": "eBible identifies this edition as Greek Koine, the Byzantine text form, Robinson-Pierpont 2018, edited by Maurice A. Robinson and William G. Pierpont, and Public Domain. The source USFM package will be audited book-by-book and verse-by-verse. This is a distinct Majority Text witness, not SBLGNT or Brenton LXX."
     },
     {
       "edition_id": "en_webbe_deuterocanon",
