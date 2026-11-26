@@ -474,3 +474,16 @@ https://alta3b.com/wp-content/uploads/2019/03/%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%
 - الأسفار القانونية الثانية غير موجودة في هذا الشاهد العبري الماسوري.
 
 لا نغيّر ترقيم WLC ولا نضيف نصوصًا من السبعينية إليه. عند طلب إصحاح أو إضافة غير موجودة، يعرض القارئ أنها غير متوفرة في هذه الطبعة.
+
+
+## Brenton Greek Septuagint 1851 — GRCBRE — 2026-11-26
+
+المصدر: https://ebible.org/find/details.php?id=grcbrent
+ملف USFM: https://ebible.org/Scriptures/grcbrent_usfm.zip
+الترخيص المعلن من eBible: Public Domain.
+
+يعرض فهرس ملفات الطبعة 52 سفرًا/نصًا. تحتفظ قاعدة البيانات بكل هذه السجلات، حتى عندما لا يكون للسفر مقابل في قائمة التنقل القبطية الحالية أو لا توجد له ترجمة عربية. لا يعني ذلك تغيير قائمة القانون القبطي ذات 73 سفرًا. إنها تغطية مستقلة لهذه الطبعة.
+
+المحتويات الإضافية التي تبقى منفصلة: 1 Esdras، 3 و4 Maccabees، Prayer of Manasseh، Letter of Jeremiah، Susanna، Bel and the Dragon. يُربط ESG بأستير وDAG بدانيال، مع الاحتفاظ بأرقام الفصول والآيات كما جاءت في برنتون. لا تدمج إضافات دانيال أو أستير من ملفات أخرى دون تحقق نصي.
+
+المعرّف: GRC-LXX-BRENTON-1851. ملف corpus: `bible/data/grc-lxx-brenton-1851.jsonl.gz`. تقرير QA: `bible/data/grc-lxx-brenton-1851_audit.json`.

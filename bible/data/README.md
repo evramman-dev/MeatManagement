@@ -25,3 +25,13 @@ License: Public Domain for the WLC biblical text. The separate OSHB lemma/morpho
 Attribution/source repository: https://github.com/openscriptures/morphhb
 Coverage: 39 Masoretic Old Testament books; no Deuterocanonical books.
 QA: Full exact-key and verse-text comparison passed, 23,213 records, zero missing, extra, or mismatched records. See `he-wlc-2017_audit.json`.
+
+
+## GRC-LXX-BRENTON-1851 — Brenton Greek Septuagint 1851
+
+Source: https://ebible.org/find/details.php?id=grcbrent
+USFM download: https://ebible.org/Scriptures/grcbrent_usfm.zip
+License: Public Domain, as declared by eBible.
+Corpus: `grc-lxx-brenton-1851.jsonl.gz`.
+Audit: `grc-lxx-brenton-1851_audit.json`.
+The edition's source book set is retained independently, including its Deuterocanonical and additional books. It is not asserted to be identical to the Coptic Orthodox 73-book navigation catalog. Greek text is displayed left-to-right. Source chapter and verse labels are retained; no silent renumbering or Arabic supplementation is performed.
