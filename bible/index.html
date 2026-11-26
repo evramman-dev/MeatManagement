@@ -752,7 +752,8 @@ async function loadSvdChapter(){
  status.textContent="جاري تحميل النص...";
  const sourceBookId=edition==="HE-WLC-2017"?(HEBREW_SOURCE_CODE_TO_ID[p.bookCode]||p.bookCode):edition==="GRC-LXX-BRENTON-1851"?(LXX_BOOK_ID_MAP[p.bookCode]||p.bookCode.toLowerCase()):edition==="GRC-KOINE-RP-2018"?p.bookCode.toLowerCase():p.bookCode;
  try{
-   const verses=await loadTranslationChapter(edition,sourceBookId,p.chapter);\n   currentReaderSectionHeadings=readerSelection.mode==="paragraphs"?normalizeReaderSectionHeadings(await loadReaderSectionHeadings(p.bookCode,p.chapter)):[];
+   const verses=await loadTranslationChapter(edition,sourceBookId,p.chapter);
+   currentReaderSectionHeadings=readerSelection.mode==="paragraphs"?normalizeReaderSectionHeadings(await loadReaderSectionHeadings(p.bookCode,p.chapter)):[];
    if(!verses.length){status.textContent="هذا الإصحاح غير متوفر في هذه الطبعة أو يختلف ترقيمه عن الفهرس القبطي.";content.innerHTML="<p class='note'>لا توجد بيانات لهذا الإصحاح في هذه الطبعة. لن نستبدل النص من طبعة أخرى.</p>";return;}
    const editionName=editionInfo?editionInfo.name:edition;
    let attribution="";
@@ -833,26 +834,4 @@ loadCopticReadings();
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}
 </script>
 </body>
-</htmlasync function loadReaderSectionHeadings(bookCode,chapter){
- if(readerSelection.translation!=="AR-SVD-1865")return [];
- const st=STTAKLA_BOOK_MAP[bookCode];if(!st)return [];
- try{
-  const res=await fetch("https://st-takla.org/Bibles/BibleSearch/showChapter.php?book="+st+"&chapter="+chapter);
-  if(!res.ok)return [];
-  const html=await res.text();
-  const doc=new DOMParser().parseFromString(html,"text/html");
-  const result=[];
-  Array.from(doc.querySelectorAll("h2")).forEach(h=>{
-   const title=(h.textContent||"").replace(/\s+/g," ").trim();
-   if(!title||/Gospel of|إنجيل|رسالة|سفر/.test(title))return;
-   let el=h.nextElementSibling,verse=null;
-   for(let i=0;el&&i<40;i++,el=el.nextElementSibling){
-    const n=(el.textContent||"").trim().match(/^([0-9]{1,3})$/);
-    if(n){verse=Number(n[1]);break}
-   }
-   if(verse!=null)result.push({verse,title});
-  });
-  return result;
- }catch(e){return []}
-}
->
+</html>
