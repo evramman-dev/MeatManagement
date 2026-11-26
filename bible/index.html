@@ -441,7 +441,7 @@ function copticReadingHeading(group,key,label){
  if(key.endsWith("Gospel"))return "إنجيل "+group;
  return label;
 }
-async async function renderCopticReadingText(readings){
+async function renderCopticReadingText(readings){
  const host=document.getElementById("copticReadingTextSections");
  const refs=getReadingReferences(readings);
  const ordered=[];
