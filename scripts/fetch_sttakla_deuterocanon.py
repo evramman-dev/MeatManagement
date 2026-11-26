@@ -71,6 +71,15 @@ def parse_page(path, book_id, expected_chapters):
         raise UnicodeDecodeError("unknown","",0,1,"no supported encoding")
     _,html,encoding=max(candidates,key=lambda x:x[0])
     lines=strip_html(html)
+    merged=[]; i=0
+    while i < len(lines):
+        if re.fullmatch(r"\d+\.", lines[i]) and i+1 < len(lines):
+            merged.append(lines[i] + " " + lines[i+1]); i += 2
+        elif re.fullmatch(r"\d+", lines[i]) and i+1 < len(lines) and len(lines[i+1]) > 1:
+            merged.append(lines[i] + ". " + lines[i+1]); i += 2
+        else:
+            merged.append(lines[i]); i += 1
+    lines=merged
     records=[]; current=None
     for line in lines:
         ch=chapter_number(line)
