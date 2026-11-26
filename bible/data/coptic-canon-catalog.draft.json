@@ -2,14 +2,14 @@
   "schema_version": 1,
   "corpus_id": "coptic_orthodox_arabic_full_draft",
   "language": "ar",
-  "canon_profile": "Coptic Orthodox",
+  "canon_profile": "Coptic Orthodox Church — current official 73-book reference",
   "declared_book_count": 73,
   "declared_old_testament_books": 46,
   "declared_new_testament_books": 27,
   "declared_old_testament_chapters": 1075,
   "declared_new_testament_chapters": 270,
   "status": "catalog_draft_only_not_textual_corpus",
-  "important_notice": "This is a draft navigation catalog, not an approved final canonical ordering and not Bible text. Chapter counts and versification remain unverified against the selected edition. Do not use it to validate verse references.",
+  "important_notice": "This is a draft navigation catalog for the current official Coptic Orthodox 73-book reference (46 Old Testament and 27 New Testament books). It is not an approved final canonical ordering and not Bible text. Chapter counts and versification remain unverified against the selected edition. Historical/appendix writings are tracked separately and are not silently inserted into the 73-book list.",
   "sources": [
     {
       "source_id": "coptic_official_old_testament",
@@ -25,6 +25,16 @@
       "source_id": "st_takla_arabic_catalog",
       "url": "https://st-takla.org/Bibles/Download-Arabic-Bible-Doc.html",
       "supports": "Arabic book labels and placement of deuterocanonical books and textual additions; discovery aid only, not final canonical authority."
+    },
+    {
+      "source_id": "coptic_official_current_73_book_count",
+      "url": "https://copticorthodox.church/en/holy-bible/",
+      "supports": "Official Coptic Orthodox Church page states 46 Old Testament books and 27 New Testament books, 73 total."
+    },
+    {
+      "source_id": "coptic_historical_canon_research",
+      "url": "https://ccdl.claremont.edu/digital/collection/cce/id/165/",
+      "supports": "Historical scholarly note about older Coptic biblical witnesses and texts removed by Cyril V; use as historical context, not as the current official book count."
     }
   ],
   "books": [
@@ -639,5 +649,41 @@
     "source_permission_status": "not_cleared_for_app_redistribution",
     "require_per_book_translation_metadata": true,
     "prohibit_silent_translation_mixing": true
-  }
+  },
+  "canon_basis": {
+    "reference_count": 73,
+    "old_testament_books": 46,
+    "new_testament_books": 27,
+    "authority_source": "https://copticorthodox.church/en/holy-bible/",
+    "old_testament_source": "https://copticorthodox.church/en/testament/old-testament/",
+    "status": "official_current_count_recorded_book_order_and_chapter_versification_still_require_final_source_audit",
+    "note": "The official Coptic Orthodox Church website states 46 Old Testament books and 27 New Testament books. This catalog contains those 73 navigation entries. Historical Coptic witnesses may mention additional texts or portions such as 3 Maccabees, Prayer of Manasseh, Psalm 151, and additions to Esther or Daniel. Keep those in a separate historical/appendix registry unless the current official Coptic canon source explicitly confirms their inclusion in the 73-book navigation set."
+  },
+  "historical_or_appendix_texts": [
+    {
+      "id": "3mac",
+      "name_ar": "المكابيين الثالث",
+      "status": "historical_coptic_canon_witness_requires_separate_authority_review"
+    },
+    {
+      "id": "ps151",
+      "name_ar": "المزمور 151",
+      "status": "historical_or_liturgical_appendix_requires_separate_authority_review"
+    },
+    {
+      "id": "prman",
+      "name_ar": "صلاة منسى",
+      "status": "historical_or_liturgical_appendix_requires_separate_authority_review"
+    },
+    {
+      "id": "esth_add",
+      "name_ar": "إضافات أستير اليونانية",
+      "status": "textual_additions_require_edition_specific_mapping"
+    },
+    {
+      "id": "dan_add",
+      "name_ar": "إضافات دانيال اليونانية",
+      "status": "textual_additions_require_edition_specific_mapping"
+    }
+  ]
 }
