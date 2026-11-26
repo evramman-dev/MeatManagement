@@ -28,6 +28,9 @@ jobs:
         with:
           python-version: "3.x"
 
+      - name: Test USFM parser
+        run: python -m unittest discover -s bible/tools -p "test_*.py"
+
       - name: Download and prepare source corpora
         run: |
           python bible/tools/prepare_ebible_usfm.py \
