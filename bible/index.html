@@ -364,27 +364,29 @@ function readingReferenceParts(reference){
  const chunks=raw.split(/\s*(?:&|\band\b)\s*/i).map(x=>x.trim()).filter(Boolean);
  const out=[];
  chunks.forEach(chunk=>{
-  const m=chunk.match(/^(.+?)\s+(\d+)\s*[:.]\s*(.+)$/);
-  if(m){
-   const sourceBook=m[1].trim(),chapter=Number(m[2]),tail=m[3].trim();
-   const tokens=tail.split(/\s*;\s*/).filter(Boolean);
-   tokens.forEach((token,index)=>{
-    const repeated=token.match(/^(.+?)\s+(\d+)\s*[:.]\s*(\d+(?:\s*-\s*\d+)?)$/);
-    if(repeated){
-     const repeatedBook=repeated[1].trim(),repeatedChapter=Number(repeated[2]),vm=repeated[3].match(/^(\d+)(?:\s*-\s*(\d+))?$/);
-     if(vm)out.push({sourceBook:repeatedBook,book:arabicReadingBooks[repeatedBook]||repeatedBook,chapter:repeatedChapter,start:Number(vm[1]),end:vm[2]?Number(vm[2]):null,continuation:index>0});
-     return;
-    }
-    const vm=token.match(/^(\d+)(?:\s*-\s*(\d+))?$/);
-    if(vm)out.push({sourceBook,book:arabicReadingBooks[sourceBook]||sourceBook,chapter,start:Number(vm[1]),end:vm[2]?Number(vm[2]):null,continuation:index>0});
-   });
-   return;
-  }
-  const chapterOnly=chunk.match(/^(.+?)\s+(\d+)$/);
-  if(chapterOnly){
-   const sourceBook=chapterOnly[1].trim(),chapter=Number(chapterOnly[2]);
-   out.push({sourceBook,book:arabicReadingBooks[sourceBook]||sourceBook,chapter,start:null,end:null});
-  }
+  let currentBook="",currentChapter=null;
+  const tokens=chunk.split(/\s*;\s*/).map(x=>x.trim()).filter(Boolean);
+  tokens.forEach(token=>{
+   let m=token.match(/^(.+?)\s+(\d+)\s*[:.]\s*(\d+(?:\s*-\s*\d+)?)$/);
+   if(m){
+    currentBook=m[1].trim();
+    currentChapter=Number(m[2]);
+    const vm=m[3].match(/^(\d+)(?:\s*-\s*(\d+))?$/);
+    if(vm)out.push({sourceBook:currentBook,book:arabicReadingBooks[currentBook]||currentBook,chapter:currentChapter,start:Number(vm[1]),end:vm[2]?Number(vm[2]):null,continuation:false});
+    return;
+   }
+   m=token.match(/^(\d+)(?:\s*-\s*(\d+))?$/);
+   if(m&&currentBook&&currentChapter!=null){
+    out.push({sourceBook:currentBook,book:arabicReadingBooks[currentBook]||currentBook,chapter:currentChapter,start:Number(m[1]),end:m[2]?Number(m[2]):null,continuation:true});
+    return;
+   }
+   m=token.match(/^(.+?)\s+(\d+)$/);
+   if(m){
+    currentBook=m[1].trim();
+    currentChapter=Number(m[2]);
+    out.push({sourceBook:currentBook,book:arabicReadingBooks[currentBook]||currentBook,chapter:currentChapter,start:null,end:null,continuation:false});
+   }
+  });
  });
  return out;
 }
@@ -604,7 +606,7 @@ function readerVerseNumbers(){const rows=corpusCache[readerSelection.translation
 async function ensureReaderCorpus(){const id=readerSelection.translation;if(corpusCache[id])return;document.getElementById("readerStatus").textContent="جاري تجهيز نص الترجمة...";await loadTranslationCorpus(id)}
 async function openReaderPicker(field){const modal=document.getElementById("readerPickerModal"),optionsEl=document.getElementById("readerPickerOptions"),searchWrap=document.getElementById("readerPickerSearchWrap"),search=document.getElementById("readerPickerSearch");document.getElementById("readerPickerTitle").textContent="اختيار "+readerFieldLabel(field);document.getElementById("readerPickerHint").textContent=field==="verse"?"يمكنك اختيار كل الآيات أو آية محددة.":"اختر عنصرًا واحدًا.";optionsEl.innerHTML="<p class='note'>جاري تجهيز الاختيارات...</p>";modal.classList.remove("hidden");modal.setAttribute("aria-hidden","false");try{if(field==="chapter"||field==="verse")await ensureReaderCorpus();const options=readerOptionsFor(field),current=currentReaderFieldValue(field);searchWrap.classList.toggle("hidden",options.length<=12);const paint=query=>{const q=String(query||"").trim().toLowerCase();const filtered=options.filter(o=>!q||o.label.toLowerCase().includes(q)||String(o.sub||"").toLowerCase().includes(q));optionsEl.innerHTML=filtered.length?filtered.map(o=>"<button class='reader-option "+(o.id===current?"selected":"")+"' type='button' data-reader-option='"+escapeHtml(o.id)+"'><strong>"+escapeHtml(o.label)+"</strong><small>"+escapeHtml(o.sub||"")+"</small></button>").join(""):"<p class='note'>لا توجد نتيجة.</p>";optionsEl.querySelectorAll("[data-reader-option]").forEach(b=>b.addEventListener("click",()=>{readerSelection[field]=field==="chapter"?Number(b.dataset.readerOption):b.dataset.readerOption;resetReaderFrom(field);closeReaderPicker()}))};paint("");search.value="";search.oninput=()=>paint(search.value)}catch(e){optionsEl.innerHTML="<p class='note'>تعذر تجهيز الاختيارات الآن.</p>"}}
 function closeReaderPicker(){const modal=document.getElementById("readerPickerModal");modal.classList.add("hidden");modal.setAttribute("aria-hidden","true")}
-async function openSelectedReader(){try{await ensureReaderCorpus();const verses=await loadTranslationChapter(readerSelection.translation,readerSourceBookId(),Number(readerSelection.chapter));const visible=readerSelection.verse==="all"?verses:verses.filter(v=>Number(v.verse)===Number(readerSelection.verse));const lang=readerSelection.translation==="HE-WLC-2017"?"he":(readerSelection.translation==="GRC-LXX-BRENTON-1851"||readerSelection.translation==="GRC-KOINE-RP-2018")?"grc":"ar";currentReaderVerses=visible;currentReaderLanguage=lang;document.getElementById("chapterStatus").textContent=readerFieldValue("translation");renderCurrentReader();document.getElementById("readerStatus").textContent=readerSelection.verse==="all"?"تم فتح الإصحاح كاملًا.":"تم فتح الآية "+readerSelection.verse+".";saveReaderSelection()}catch(e){document.getElementById("readerStatus").textContent="تعذر فتح النص الآن. حاول مرة أخرى."}}
+async function openSelectedReader(){try{await ensureReaderCorpus();const verses=await loadTranslationChapter(readerSelection.translation,readerSourceBookId(),Number(readerSelection.chapter));await refreshReaderSectionHeadings(readerSelection.book,Number(readerSelection.chapter));const visible=readerSelection.verse==="all"?verses:verses.filter(v=>Number(v.verse)===Number(readerSelection.verse));const lang=readerSelection.translation==="HE-WLC-2017"?"he":(readerSelection.translation==="GRC-LXX-BRENTON-1851"||readerSelection.translation==="GRC-KOINE-RP-2018")?"grc":"ar";currentReaderVerses=visible;currentReaderLanguage=lang;document.getElementById("chapterStatus").textContent=readerFieldValue("translation");renderCurrentReader();document.getElementById("readerStatus").textContent=readerSelection.verse==="all"?"تم فتح الإصحاح كاملًا.":"تم فتح الآية "+readerSelection.verse+".";saveReaderSelection()}catch(e){document.getElementById("readerStatus").textContent="تعذر فتح النص الآن. حاول مرة أخرى."}}
 const sampleTexts={
  "AR-SVD-1865":"النص الفعلي متاح داخل التطبيق.",
  "AR-KEH-2012":"Biblica Open New Arabic Version 2012 · CC BY-SA 4.0.",
@@ -729,6 +731,10 @@ async function loadTranslationChapter(id,bookId,chapter){
  return verses;
 }
 function readerVerseKey(v){return [readerSelection.translation,readerSelection.book,readerSelection.chapter,v.verse].join("|")}
+async function refreshReaderSectionHeadings(bookCode,chapter){
+ if(readerSelection.mode!=="paragraphs"){currentReaderSectionHeadings=[];return}
+ currentReaderSectionHeadings=normalizeReaderSectionHeadings(await loadReaderSectionHeadings(bookCode,chapter));
+}
 function getReaderMarks(){try{const v=JSON.parse(localStorage.getItem("rehla.readerMarks.v1")||"{}");return v&&typeof v==="object"?v:{}}catch(e){return {}}}
 function saveReaderMarks(marks){localStorage.setItem("rehla.readerMarks.v1",JSON.stringify(marks))}
 function getVerseMark(key){return getReaderMarks()[key]||{}}
@@ -841,7 +847,7 @@ async function loadSvdChapter(){
    if(edition==="HE-WLC-2017")attribution="<p class='note'>Westminster Leningrad Codex · Public Domain · <a href='https://ebible.org/find/details.php?id=hboWLC' target='_blank' rel='noopener'>المصدر والترخيص</a></p>";
    if(edition==="GRC-LXX-BRENTON-1851")attribution="<p class='note'>Brenton Greek Septuagint 1851 · Public Domain · <a href='https://ebible.org/find/details.php?id=grcbrent' target='_blank' rel='noopener'>المصدر والترخيص</a></p>";
     if(edition==="GRC-KOINE-RP-2018")attribution="<p class='note'>Robinson-Pierpont 2018 · Byzantine / Majority Text · Public Domain · <a href='https://ebible.org/bible/details.php?id=grcmt' target='_blank' rel='noopener'>المصدر والترخيص</a></p>";
-   content.innerHTML="<div class='verse-card'><div class='eyebrow'>"+escapeHtml(editionName)+" · "+escapeHtml(p.book)+" "+p.chapter+"</div>"+renderVerseMarkup(verses,edition==="HE-WLC-2017"?"he":(edition==="GRC-LXX-BRENTON-1851"||edition==="GRC-KOINE-RP-2018")?"grc":"ar")+attribution+"</div>";
+   content.innerHTML="<div class='verse-card'><div class='eyebrow'>"+escapeHtml(editionName)+" · "+escapeHtml(p.book)+" "+p.chapter+"</div>"+renderVerseMarkup(verses,edition==="HE-WLC-2017"?"he":(edition==="GRC-LXX-BRENTON-1851"||edition==="GRC-KOINE-RP-2018")?"grc":"ar",readerSelection.mode)+attribution+"</div>";
    status.textContent=edition==="HE-WLC-2017"
     ?"تم تحميل النص العبري من مخطوطة لينينغراد داخل التطبيق. النص ضمن الملكية العامة."
     :edition==="AR-KEH-2012"
@@ -881,8 +887,8 @@ function searchBible(){const q=document.getElementById("searchInput").value.trim
 document.getElementById("openReadingsButton").addEventListener("click",()=>{showView("copticReadings",document.querySelector('[data-view="copticReadings"]'));loadCopticReadings()});
 document.getElementById("readerOpenButton").addEventListener("click",()=>openSelectedReader());
 document.getElementById("readerResetButton").addEventListener("click",()=>{readerSelection=Object.assign({},readerSelectionDefaults);normalizeReaderState()});
-document.getElementById("readerModeVerses").addEventListener("click",()=>{readerSelection.mode="verses";saveReaderSelection();renderReaderPath();renderCurrentReader()});
-document.getElementById("readerModeParagraphs").addEventListener("click",()=>{readerSelection.mode="paragraphs";saveReaderSelection();renderReaderPath();renderCurrentReader()});
+document.getElementById("readerModeVerses").addEventListener("click",()=>{readerSelection.mode="verses";saveReaderSelection();renderReaderPath();currentReaderSectionHeadings=[];renderCurrentReader()});
+document.getElementById("readerModeParagraphs").addEventListener("click",async()=>{readerSelection.mode="paragraphs";saveReaderSelection();renderReaderPath();try{if(readerSelection.book&&readerSelection.chapter)await refreshReaderSectionHeadings(readerSelection.book,Number(readerSelection.chapter))}catch(e){currentReaderSectionHeadings=[]}renderCurrentReader()});
 document.getElementById("readerFontNaskh").addEventListener("click",()=>{readerSelection.font="naskh";saveReaderSelection();renderReaderPath();renderCurrentReader()});
 document.getElementById("readerFontRuqaa").addEventListener("click",()=>{readerSelection.font="ruqaa";saveReaderSelection();renderReaderPath();renderCurrentReader()});
 document.getElementById("readerFontThuluth").addEventListener("click",()=>{readerSelection.font="thuluth";saveReaderSelection();renderReaderPath();renderCurrentReader()});
