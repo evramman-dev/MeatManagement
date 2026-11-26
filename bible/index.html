@@ -296,7 +296,9 @@ async function renderParallel(){
  }).join("");
  if(selectedTranslations.includes("AR-SVD-1865")){
    try{
-     const parallelRef=parseChapterReference(ref);\n     if(!parallelRef)throw new Error("مرجع غير صالح");\n     const res=await fetch(SVD_API_BASE+"/"+parallelRef.bookNumber+"/"+parallelRef.chapter+".json");
+     const parallelRef=parseChapterReference(ref);
+     if(!parallelRef)throw new Error("مرجع غير صالح");
+     const res=await fetch(SVD_API_BASE+"/"+parallelRef.bookNumber+"/"+parallelRef.chapter+".json");
      if(res.ok){
        const data=await res.json();
        const verses=Array.isArray(data.verses)?data.verses:[];
