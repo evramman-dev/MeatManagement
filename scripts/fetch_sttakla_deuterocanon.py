@@ -142,9 +142,10 @@ def parse_full_page_chapters(html, book_id, wanted):
     return rows
 
 def parse_showchapter_url(book_id, chapter):
-    book_num={"esther_additions":20,"daniel_additions":32}.get(book_id)
+    book_num={"esther_additions":20,"daniel_additions":35}.get(book_id)
     if not book_num: return None
-    return f"https://st-takla.org/Bibles/BibleSearch/showChapter.php?book={book_num}&chapter={chapter}"
+    domain="relay.st-takla.org" if book_id=="daniel_additions" else "st-takla.org"
+    return f"https://{domain}/Bibles/BibleSearch/showChapter.php?book={book_num}&chapter={chapter}"
 
 def parse_showchapter_page(path, book_id, chapter):
     lines=strip_html(read_html(path))
