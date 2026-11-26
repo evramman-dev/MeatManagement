@@ -16,6 +16,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - name: Install parser dependency
+        run: python3 -m pip install --disable-pip-version-check beautifulsoup4
       - name: Acquire and parse St-Takla Deuterocanon
         run: python3 scripts/fetch_sttakla_deuterocanon.py
       - name: Upload source QA artifact
