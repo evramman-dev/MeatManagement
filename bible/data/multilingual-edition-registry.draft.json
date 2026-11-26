@@ -56,7 +56,7 @@
       "scope": "OT_NT",
       "edition_ids": [
         "ar_vandyke",
-        "ar_jesuit_deuterocanon"
+        "ar_keh_2012"
       ]
     }
   ],
@@ -71,9 +71,14 @@
       "source_url": "https://ebible.org/find/details.php?id=hboWLC",
       "license": "Public Domain",
       "license_status": "verified_text_public_domain_morphology_separate_license",
-      "coverage_status": "candidate_full_39_book_hebrew_canon_only",
-      "corpus_status": "not_imported",
-      "notes": "eBible details page identifies Biblical/Ancient Hebrew, WLC, downloadable USFM and says the WLC text is Public Domain. OSHB lemma/morphology data is separately CC BY-SA 3.0 and must not be treated as part of the PD text."
+      "coverage_status": "39_masoretic_old_testament_books_only_not_coptic_full_canon",
+      "corpus_status": "imported_and_full_source_match_passed",
+      "notes": "Imported 23,213 verse records across all 39 Masoretic books. Full exact-key and text comparison against the downloaded eBible USFM source archive passed: zero missing, extra, or mismatched records. WLC text only; separate morphology/lemma data excluded. Not the full Coptic Orthodox OT canon and does not contain Deuterocanonical books.",
+      "corpus_file": "bible/data/he-wlc-2017.jsonl.gz",
+      "audit_file": "bible/data/he-wlc-2017_audit.json",
+      "record_count": 23213,
+      "source_archive_sha256": "464225e119973cb7e12a30777c2d5e7f543f083529b00b909d620c617dbd1df7",
+      "last_verified": "2026-11-26"
     },
     {
       "edition_id": "ot_grc_lxx_rahlfs",
@@ -187,30 +192,30 @@
       "notes": "eBible identifies the edition as Public Domain, provides USFM/USFX downloads, and explicitly says it includes Apocrypha/Deuterocanon. Preserve its actual book set and naming; do not claim its canon exactly matches Coptic Orthodox until compared book-by-book."
     },
     {
+      "edition_id": "ar_keh_2012",
+      "name": "Biblica Open New Arabic Version 2012",
+      "display_name_ar": "كتاب الحياة 2012",
+      "language_id": "ar",
+      "scope": "OT_NT",
+      "source_url": "https://ebible.org/find/details.php?id=arbnav",
+      "license": "CC BY-SA 4.0",
+      "license_status": "verified_open_license",
+      "coverage_status": "66_book_canon_only_not_full_coptic_orthodox_canon",
+      "corpus_status": "imported_and_full_source_match_passed",
+      "notes": "Biblica Open New Arabic Version 2012. Keep attribution and share-alike license; does not include the Deuterocanonical books."
+    },
+    {
       "edition_id": "ar_vandyke",
-      "name": "Smith–Van Dyck Arabic Bible",
-      "display_name_ar": "فان دايك العربية",
+      "name": "Smith–Van Dyck Arabic Bible 1865",
+      "display_name_ar": "فان دايك 1865",
       "language_id": "ar",
       "scope": "OT_NT",
       "source_url": "https://ebible.org/find/details.php?id=arb-vd",
       "license": "Public Domain",
       "license_status": "declared_by_source",
       "coverage_status": "66_book_canon_only_not_full_coptic_orthodox_canon",
-      "corpus_status": "not_imported",
-      "notes": "تُعرض كترجمة مستقلة، ولا تُسمى وحدها الكتاب القبطي الأرثوذكسي الكامل."
-    },
-    {
-      "edition_id": "ar_jesuit_deuterocanon",
-      "name": "Arabic Jesuit Deuterocanonical Books, historical edition 1876–1880",
-      "display_name_ar": "الأسفار القانونية الثانية بالعربية — اليسوعية التاريخية",
-      "language_id": "ar",
-      "scope": "OT_deuterocanon",
-      "source_url": "https://adfonteslibrary.org/bible",
-      "license": "Historical print edition reported public domain; digital transcription rights not established",
-      "license_status": "source_scan_and_transcription_provenance_required",
-      "coverage_status": "not_verified",
-      "corpus_status": "not_imported",
-      "notes": "لا تستخدم نسخة رقمية منقحة تحمل حقوق 2018. يلزم العثور على نسخة مطبوعة تاريخية موثوقة والتحقق من بياناتها قبل إنشاء تفريغ جديد."
+      "corpus_status": "imported_and_full_source_match_passed",
+      "notes": "The currently imported Smith–Van Dyck 1865 corpus is stored independently. It does not include the Deuterocanonical books."
     }
   ],
   "alignment_policy": {
