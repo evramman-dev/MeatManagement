@@ -53,7 +53,7 @@ def strip_html(html):
     return [re.sub(r"\s+"," ",unicodedata.normalize("NFC",x)).strip()
             for x in html.splitlines() if re.sub(r"\s+"," ",x).strip()]
 def chapter_number(line):
-    m=re.search(r"(?:الإصحاح|الأصحاح)\s+(.+)$",line)
+    m=re.search(r"(?:الإصحاح|الأصحاح|الاصحاح)\s+(.+)$",line)
     if not m: return None
     v=m.group(1).strip()
     return int(v) if v.isdigit() else WORD_NUMBERS.get(v)
@@ -72,9 +72,6 @@ def parse_page(path, book_id, expected_chapters):
     _,html,encoding=max(candidates,key=lambda x:x[0])
     lines=strip_html(html)
     records=[]; current=None
-    if book_id == "tobit":
-        print("DEBUG encoding:", encoding, flush=True)
-        print("DEBUG chapter-like lines:", [x for x in lines if "الأصحاح" in x or "الإصحاح" in x][:20], flush=True)
     for line in lines:
         ch=chapter_number(line)
         if ch is not None: current=ch; continue
