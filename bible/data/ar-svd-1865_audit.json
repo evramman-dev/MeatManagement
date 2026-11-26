@@ -275,7 +275,7 @@
     }
   },
   "output_file": "ar-svd-1865.jsonl",
-  "status": "TEXTUAL_SAMPLE_QA_PASSED_FULL_REVIEW_PENDING",
+  "status": "FULL_SOURCE_CORPUS_EXACT_MATCH_MANUAL_EDITION_REVIEW_PENDING",
   "structural_qa": {
     "checked_on": "2026-11-26",
     "workflow_run_id": 45794242665,
@@ -295,6 +295,19 @@
       "ROM 8:28"
     ],
     "textual_samples_passed": 5,
-    "full_book_textual_review": "pending"
+    "full_book_textual_review": "pending",
+    "full_source_corpus_comparison": {
+      "result": "PASSED",
+      "checked_on": "2026-11-26",
+      "comparison": "Every parsed source verse key and text compared with committed compressed corpus",
+      "source_records": 31104,
+      "matched_records": 31104,
+      "missing_records": 0,
+      "extra_records": 0,
+      "text_mismatches": 0,
+      "source_archive_sha256": "fd420ac7b224d42be23997fef298c2193d12788d95d2db7103904184cdda766a",
+      "workflow_run": "https://github.com/evramman-dev/MeatManagement/actions/runs/45799191796"
+    },
+    "manual_print_edition_review": "pending"
   }
 }
