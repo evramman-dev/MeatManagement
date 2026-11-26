@@ -1,0 +1,182 @@
+{
+  "translation_id": "HE-WLC-2017",
+  "edition": "Westminster Leningrad Codex — Biblical Hebrew (hboWLC)",
+  "language": "hbo",
+  "source_url": "https://ebible.org/Scriptures/hboWLC_usfm.zip",
+  "source_repository": "https://github.com/openscriptures/morphhb",
+  "source_license": "Public Domain — WLC biblical text only; morphology/lemma layers are excluded.",
+  "source_archive_sha256": "464225e119973cb7e12a30777c2d5e7f543f083529b00b909d620c617dbd1df7",
+  "record_count": 23213,
+  "book_count": 39,
+  "book_coverage": {
+    "1ch": {
+      "chapter_count": 29,
+      "verse_record_count": 943
+    },
+    "1ki": {
+      "chapter_count": 22,
+      "verse_record_count": 817
+    },
+    "1sa": {
+      "chapter_count": 31,
+      "verse_record_count": 811
+    },
+    "2ch": {
+      "chapter_count": 36,
+      "verse_record_count": 822
+    },
+    "2ki": {
+      "chapter_count": 25,
+      "verse_record_count": 719
+    },
+    "2sa": {
+      "chapter_count": 24,
+      "verse_record_count": 695
+    },
+    "amo": {
+      "chapter_count": 9,
+      "verse_record_count": 146
+    },
+    "dan": {
+      "chapter_count": 12,
+      "verse_record_count": 357
+    },
+    "deu": {
+      "chapter_count": 34,
+      "verse_record_count": 959
+    },
+    "ecc": {
+      "chapter_count": 12,
+      "verse_record_count": 222
+    },
+    "est": {
+      "chapter_count": 10,
+      "verse_record_count": 167
+    },
+    "exo": {
+      "chapter_count": 40,
+      "verse_record_count": 1213
+    },
+    "ezk": {
+      "chapter_count": 48,
+      "verse_record_count": 1273
+    },
+    "ezr": {
+      "chapter_count": 10,
+      "verse_record_count": 280
+    },
+    "gen": {
+      "chapter_count": 50,
+      "verse_record_count": 1533
+    },
+    "hab": {
+      "chapter_count": 3,
+      "verse_record_count": 56
+    },
+    "hag": {
+      "chapter_count": 2,
+      "verse_record_count": 38
+    },
+    "hos": {
+      "chapter_count": 14,
+      "verse_record_count": 197
+    },
+    "isa": {
+      "chapter_count": 66,
+      "verse_record_count": 1291
+    },
+    "jdg": {
+      "chapter_count": 21,
+      "verse_record_count": 618
+    },
+    "jer": {
+      "chapter_count": 52,
+      "verse_record_count": 1364
+    },
+    "job": {
+      "chapter_count": 42,
+      "verse_record_count": 1070
+    },
+    "jol": {
+      "chapter_count": 4,
+      "verse_record_count": 73
+    },
+    "jon": {
+      "chapter_count": 4,
+      "verse_record_count": 48
+    },
+    "jos": {
+      "chapter_count": 24,
+      "verse_record_count": 658
+    },
+    "lam": {
+      "chapter_count": 5,
+      "verse_record_count": 154
+    },
+    "lev": {
+      "chapter_count": 27,
+      "verse_record_count": 859
+    },
+    "mal": {
+      "chapter_count": 3,
+      "verse_record_count": 55
+    },
+    "mic": {
+      "chapter_count": 7,
+      "verse_record_count": 105
+    },
+    "nam": {
+      "chapter_count": 3,
+      "verse_record_count": 47
+    },
+    "neh": {
+      "chapter_count": 13,
+      "verse_record_count": 405
+    },
+    "num": {
+      "chapter_count": 36,
+      "verse_record_count": 1289
+    },
+    "oba": {
+      "chapter_count": 1,
+      "verse_record_count": 21
+    },
+    "pro": {
+      "chapter_count": 31,
+      "verse_record_count": 915
+    },
+    "psa": {
+      "chapter_count": 150,
+      "verse_record_count": 2527
+    },
+    "rut": {
+      "chapter_count": 4,
+      "verse_record_count": 85
+    },
+    "sng": {
+      "chapter_count": 8,
+      "verse_record_count": 117
+    },
+    "zec": {
+      "chapter_count": 14,
+      "verse_record_count": 211
+    },
+    "zep": {
+      "chapter_count": 3,
+      "verse_record_count": 53
+    }
+  },
+  "books_missing_from_wlc": [],
+  "books_not_in_wlc_including_deuterocanon": true,
+  "output_file": "he-wlc-2017.jsonl.gz",
+  "status": "FULL_SOURCE_MATCH_PASSED",
+  "text_processing": "USFM structural markers and footnotes/cross-references removed; Hebrew text, vowel points and cantillation retained; no lemma or morphology fields imported.",
+  "qa": {
+    "comparison": "FULL_CORPUS_EXACT_KEY_AND_TEXT",
+    "matched_records": 23213,
+    "missing_records": 0,
+    "extra_records": 0,
+    "text_mismatches": 0,
+    "source_archive_sha256_verified": "464225e119973cb7e12a30777c2d5e7f543f083529b00b909d620c617dbd1df7"
+  }
+}
