@@ -548,7 +548,9 @@ async function renderCopticReadingText(readings){
   const season=readings&&readings.season?readings.season:"",seasonEl=document.getElementById("copticSeason");
   if(season){seasonEl.textContent="الموسم: "+formatCopticSeason(season);seasonEl.classList.remove("hidden")}else seasonEl.classList.add("hidden");
   document.getElementById("copticReadingRows").innerHTML=readingRowsHtml(readings);
-  renderCopticReadingText(readings);
+  const readingsView=document.getElementById("copticReadings");
+  if(readingsView&&readingsView.classList.contains("active")) renderCopticReadingText(readings);
+  else document.getElementById("copticReadingTextSections").innerHTML="<p class=\"note\">افتح صفحة القراءات لعرض نصوص القراءات كاملة.</p>";
   document.querySelectorAll("[data-reading-target]").forEach(button=>button.onclick=()=>document.getElementById(button.dataset.readingTarget)?.scrollIntoView({behavior:"smooth",block:"start"}));
   document.getElementById("homeReadingsSummary").textContent=readings?getReadingReferences(readings).slice(0,2).map(x=>x.label+": "+x.text).join(" · "):"تعذر تحميل المراجع الآن";
   document.querySelectorAll("[data-reading-ref]").forEach(b=>b.addEventListener("click",()=>openReadingReference(b.dataset.readingRef,b.querySelector(".reading-item-title")?.textContent||"القراءة")));
