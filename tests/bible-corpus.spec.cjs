@@ -44,6 +44,25 @@ test('Bible reader loads both local Arabic editions and preserves missing-book b
   await page.locator('#loadChapterButton').click();
   await expect(page.locator('#chapterStatus')).toContainText('هذا الإصحاح غير متوفر في هذه الطبعة');
 
+
+  await page.locator('#chapterTranslation').selectOption('GRC-LXX-BRENTON-1851');
+  await page.locator('#chapterReference').fill('تكوين 1');
+  await page.locator('#loadChapterButton').click();
+  await expect(page.locator('#chapterStatus')).toContainText('تم تحميل النص اليوناني السبعيني');
+  await expect(page.locator('#chapterContent .verse-text').first()).toHaveAttribute('lang', 'grc');
+  await expect(page.locator('#chapterContent .verse-text').first()).toHaveAttribute('dir', 'ltr');
+  await expect(page.locator('#chapterContent')).toContainText('Brenton Greek Septuagint 1851');
+
+  await page.locator('#chapterReference').fill('طوبيا 1');
+  await page.locator('#loadChapterButton').click();
+  await expect(page.locator('#chapterStatus')).toContainText('تم تحميل النص اليوناني السبعيني');
+  await expect(page.locator('#chapterContent')).toContainText('Brenton Greek Septuagint 1851');
+
+  await page.locator('#chapterReference').fill('المكابيين الثالث 1');
+  await page.locator('#loadChapterButton').click();
+  await expect(page.locator('#chapterStatus')).toContainText('تم تحميل النص اليوناني السبعيني');
+  await expect(page.locator('#chapterContent')).toContainText('Brenton Greek Septuagint 1851');
+
   await page.locator('#chapterReference').fill('يوحنا 1');
   await page.locator('#loadChapterButton').click();
   await expect(page.locator('#chapterStatus')).toContainText('هذا السفر غير متوفر');
