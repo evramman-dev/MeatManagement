@@ -274,7 +274,7 @@ function translationHasBook(id,bookId){
 }
 function renderTranslationChoices(){
  const el=document.getElementById("translationChoices"); if(!el)return;
- el.innerHTML=translationCatalog.map(t=>"<button class='choice' type='button' onclick='toggleTranslation(""+t.id+"")'><strong>"+escapeHtml(t.name)+"</strong><small>"+escapeHtml(t.tradition)+" · "+escapeHtml(t.year)+"</small></button>").join("");
+ el.innerHTML=translationCatalog.map(t=>"<button class='choice' type='button' onclick='toggleTranslation(\""+t.id+"\")'><strong>"+escapeHtml(t.name)+"</strong><small>"+escapeHtml(t.tradition)+" · "+escapeHtml(t.year)+"</small></button>").join("");
 }
 function toggleTranslation(id){
  const i=selectedTranslations.indexOf(id);
