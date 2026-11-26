@@ -451,3 +451,26 @@ https://alta3b.com/wp-content/uploads/2019/03/%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%
 - https://www.smh101.com/coptic-reader/sources.html
 - https://ccdl.claremont.edu/digital/api/collection/cce/id/2188/download
 - https://ebible.org/copbhc/copyright.htm
+
+
+## استيراد النص العبري WLC — 2026-11-26
+
+تم استيراد Westminster Leningrad Codex (hboWLC) من ملف USFM الذي توفره eBible، مع الاقتصار على نص الكتاب المقدس واستبعاد بيانات lemma وmorphology المنفصلة.
+
+- المعرّف: `HE-WLC-2017`
+- ملف النص: `bible/data/he-wlc-2017.jsonl.gz`
+- تقرير التدقيق: `bible/data/he-wlc-2017_audit.json`
+- المصدر: https://ebible.org/find/details.php?id=hboWLC
+- ملف التنزيل: https://ebible.org/Scriptures/hboWLC_usfm.zip
+- الترخيص: نص WLC في الملكية العامة. بيانات التحليل الصرفي خارج corpus المستورد.
+- التغطية: 39 سفرًا ماسوريًا، 23,213 سجل آية.
+- المطابقة الكاملة مع أرشيف المصدر: 23,213 مطابقة، صفر ناقص، صفر زائد، وصفر اختلاف نصي.
+
+### فروق التغطية والترقيم التي يجب إبقاؤها ظاهرة
+
+- أستير في WLC: 10 إصحاحات، بينما فهرس القانون القبطي يعرض 16 إصحاحًا.
+- دانيال في WLC: 12 إصحاحًا، ولا يشمل الإضافات اليونانية.
+- المزامير في WLC: 150 مزمورًا، ولا يشمل المزمور 151.
+- الأسفار القانونية الثانية غير موجودة في هذا الشاهد العبري الماسوري.
+
+لا نغيّر ترقيم WLC ولا نضيف نصوصًا من السبعينية إليه. عند طلب إصحاح أو إضافة غير موجودة، يعرض القارئ أنها غير متوفرة في هذه الطبعة.
