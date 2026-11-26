@@ -38,7 +38,8 @@
       "scope": "NT",
       "edition_ids": [
         "nt_grc_sbl",
-        "nt_grc_patriarchal_1904"
+        "nt_grc_patriarchal_1904",
+        "nt_grc_rp_2018"
       ]
     },
     {
@@ -153,6 +154,26 @@
       "coverage_status": "candidate_full_nt_requires_verse_audit",
       "corpus_status": "not_imported",
       "notes": "إضافة اختيارية للمقارنة النصية، ولا يحل محل النص النقدي SBLGNT."
+    },
+    {
+      "edition_id": "nt_grc_rp_2018",
+      "name": "Greek New Testament — Robinson-Pierpont 2018",
+      "display_name_ar": "العهد الجديد اليوناني الكويني — Robinson-Pierpont 2018",
+      "language_id": "grc",
+      "dialect": "Koine",
+      "scope": "NT",
+      "textual_tradition": "Byzantine / Majority Text",
+      "source_url": "https://ebible.org/bible/details.php?id=grcmt",
+      "license": "Public Domain",
+      "license_status": "verified_public_domain_by_ebible_source_catalog",
+      "coverage_status": "27_book_nt_full_source_match_passed",
+      "corpus_status": "imported_and_full_source_match_passed",
+      "notes": "Robinson-Pierpont 2018 Greek Majority Text NT. eBible declares dialect Koine and license Public Domain. Verified 27 books and 260 chapters with 7953 verse records. Full exact-key and text comparison against the downloaded USFM archive passed: zero missing, extra, or mismatched records. Preserves the Byzantine / Majority Text witness independently from SBLGNT and Brenton LXX.",
+      "corpus_file": "bible/data/grc-koine-rp-2018.jsonl.gz",
+      "audit_file": "bible/data/grc-koine-rp-2018_audit.json",
+      "record_count": 7953,
+      "source_archive_sha256": "33b208ee58a1862696689dcd5db69ed0ae891cd08aea3c7c68a5055501874048",
+      "last_verified": "2026-11-26"
     },
     {
       "edition_id": "en_webbe_deuterocanon",
