@@ -49,6 +49,18 @@ def curl(url, path):
     r=subprocess.run(["curl","--fail","--location","--retry","3","--retry-delay","2",
                       "--connect-timeout","30","--max-time","120",url,"--output",str(path)],check=False)
     if r.returncode: raise RuntimeError(f"curl failed ({r.returncode}) for {url}")
+def read_html(path):
+    raw=path.read_bytes()
+    candidates=[]
+    for enc in ("utf-8","cp1256","iso-8859-6","windows-1252"):
+        try:
+            decoded=raw.decode(enc)
+            score=sum(1 for ch in decoded if "\u0600" <= ch <= "\u06ff")
+            candidates.append((score,decoded,enc))
+        except UnicodeDecodeError:
+            pass
+    return max(candidates,key=lambda x:x[0])[1]
+
 def sha256(path):
     h=hashlib.sha256()
     with path.open("rb") as f:
@@ -100,16 +112,7 @@ def discover_chapter_urls(index_html):
     return found
 
 def parse_chapter_page(path, book_id, chapter):
-    raw=path.read_bytes()
-    candidates=[]
-    for enc in ("utf-8","cp1256","iso-8859-6","windows-1252"):
-        try:
-            decoded=raw.decode(enc)
-            score=sum(1 for ch in decoded if "\u0600" <= ch <= "\u06ff")
-            candidates.append((score,decoded,enc))
-        except UnicodeDecodeError:
-            pass
-    _,html,_=max(candidates,key=lambda x:x[0])
+    html=read_html(path)
     lines=strip_html(html)
     rows=[]
     for line in lines:
@@ -135,7 +138,7 @@ def parse_page(path, book_id, expected_chapters):
         return [],[],None
     idx_path=OUT/f"{book_id}-chapters.html"
     curl(idx_url,idx_path)
-    chapter_urls=discover_chapter_urls(idx_path.read_text(encoding="utf-8",errors="replace"))
+    chapter_urls=discover_chapter_urls(read_html(idx_path))
     expected=list(range(1,expected_chapters+1)) if isinstance(expected_chapters,int) else list(expected_chapters)
     records=[]; qa=[]
     for ch in expected:
