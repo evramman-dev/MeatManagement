@@ -1,0 +1,57 @@
+name: Prepare and publish Robinson-Pierpont 2018 Greek NT corpus
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "feature/rehla-koine-nt-rp-2018"
+    paths:
+      - "bible/tools/prepare_grc_koine_rp2018.py"
+      - "bible/tools/qa_grc_koine_rp2018.py"
+      - "bible/tools/test_prepare_grc_koine_rp2018.py"
+      - ".github/workflows/prepare-grc-koine-rp2018.yml"
+permissions:
+  contents: write
+concurrency:
+  group: prepare-grc-koine-rp2018
+  cancel-in-progress: true
+jobs:
+  prepare-qa-publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Test USFM parser and 27-book mapping
+        run: python -m unittest bible/tools/test_prepare_grc_koine_rp2018.py -v
+      - name: Download and prepare Robinson-Pierpont Greek NT
+        run: python bible/tools/prepare_grc_koine_rp2018.py --output-dir bible/data
+      - name: Compare every verse with source and verify book/chapter coverage
+        run: python bible/tools/qa_grc_koine_rp2018.py
+      - name: Record edition, license, and source
+        run: |
+          cat > bible/data/GRC_KOINE_RP_2018_SOURCE.md <<'EOF'
+          # Greek New Testament — Robinson-Pierpont 2018
+          Translation ID: GRC-KOINE-RP-2018
+          eBible ID: GRCMTK / grcmt
+          Editors: Maurice A. Robinson and William G. Pierpont
+          Edition: 2018, Byzantine / Majority Text
+          Language and dialect: Ancient Greek, Koine
+          Source information: https://ebible.org/bible/details.php?id=grcmt
+          Source USFM: https://ebible.org/Scriptures/grcmt_usfm.zip
+          License: Public Domain, as declared by eBible for this edition.
+          This corpus preserves the 27 New Testament source books and the source chapter/verse labels. It is independent from the Brenton Septuagint and from the SBL Greek New Testament.
+          Processing: USFM structural markers and footnotes/cross-references were removed for reader display. Greek source text and source verse labels are retained. No missing verse or book is filled from another edition.
+          The edition represents the Byzantine / Majority Text form. It is not presented as the SBLGNT or as a Nestle-Aland edition.
+          EOF
+      - name: Commit verified corpus to this feature branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add bible/data/grc-koine-rp-2018.jsonl.gz bible/data/grc-koine-rp-2018_audit.json bible/data/GRC_KOINE_RP_2018_SOURCE.md
+          git diff --cached --quiet && exit 0
+          git commit -m "Bible: publish verified Robinson-Pierpont Greek NT corpus"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
