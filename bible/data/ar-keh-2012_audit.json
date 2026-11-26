@@ -275,5 +275,15 @@
     }
   },
   "output_file": "ar-keh-2012.jsonl",
-  "status": "PREPARED_NOT_YET_QA_APPROVED"
+  "status": "STRUCTURAL_QA_PASSED_TEXTUAL_SPOT_CHECK_PENDING",
+  "structural_qa": {
+    "checked_on": "2026-11-26",
+    "workflow_run_id": 45794242665,
+    "record_count_matches": true,
+    "unique_verse_keys": true,
+    "all_verse_text_nonempty": true,
+    "all_66_source_books_present": true,
+    "source_zip_sha256_verified": true,
+    "textual_spot_check": "pending"
+  }
 }
