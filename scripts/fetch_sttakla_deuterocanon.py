@@ -56,7 +56,12 @@ def chapter_number(line):
     m=re.search(r"(?:الإصحاح|الأصحاح|الاصحاح)\s+(.+)$",line)
     if not m: return None
     v=m.group(1).strip()
-    return int(v) if v.isdigit() else WORD_NUMBERS.get(v)
+    if v.isdigit(): return int(v)
+    norm=lambda s:s.replace("أ","ا").replace("إ","ا").replace("آ","ا")
+    nv=norm(v)
+    for key,value in WORD_NUMBERS.items():
+        if norm(key)==nv: return value
+    return None
 def parse_page(path, book_id, expected_chapters):
     raw=path.read_bytes()
     candidates=[]
