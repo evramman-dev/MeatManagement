@@ -25,8 +25,8 @@ def lexical_tokens(text):
     # The previous eBible USFM conversion accidentally retained inline Strong's
     # and morphology annotations (for example "25 V-PAI-3S"). Remove those
     # annotations only for the comparison; never alter the saved display text.
-    text = re.sub(r"(?i)\\b\\d+\\s+[A-Z]-[A-Z0-9-]+\\b", " ", text)
-    text = re.sub(r"\\b\\d+\\b", " ", text)
+    text = re.sub(r"(?i)\b\d+\s+[A-Z]-[A-Z0-9-]+\b", " ", text)
+    text = re.sub(r"\b\d+\b", " ", text)
     normalized = unicodedata.normalize("NFD", text)
     chars = []
     for char in normalized:
