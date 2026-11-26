@@ -1,9 +1,9 @@
-name: Prepare and publish Robinson-Pierpont 2018 Greek NT corpus
+name: Prepare and publish accented Robinson-Pierpont 2018 Greek NT corpus
 on:
   workflow_dispatch:
   push:
     branches:
-      - "feature/rehla-koine-nt-rp-2018"
+      - "feature/rehla-rp2018-accented-nt-main"
     paths:
       - "bible/tools/prepare_grc_koine_rp2018.py"
       - "bible/tools/qa_grc_koine_rp2018.py"
@@ -25,33 +25,35 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Test USFM parser and 27-book mapping
+      - name: Test CSV parser, Unicode preservation and book mapping
         run: python -m unittest bible/tools/test_prepare_grc_koine_rp2018.py -v
-      - name: Download and prepare Robinson-Pierpont Greek NT
+      - name: Preserve the current corpus for word-sequence comparison
+        run: cp bible/data/grc-koine-rp-2018.jsonl.gz /tmp/grc-koine-rp-2018-previous.jsonl.gz
+      - name: Download pinned official ByzTxt RP2018 Unicode CSV files
         run: python bible/tools/prepare_grc_koine_rp2018.py --output-dir bible/data
-      - name: Compare every verse with source and verify book/chapter coverage
-        run: python bible/tools/qa_grc_koine_rp2018.py
-      - name: Record edition, license, and source
+      - name: Verify exact source records and compare every verse with the previous corpus
+        run: python bible/tools/qa_grc_koine_rp2018.py --previous-corpus /tmp/grc-koine-rp-2018-previous.jsonl.gz
+      - name: Record exact edition, source and display policy
         run: |
           cat > bible/data/GRC_KOINE_RP_2018_SOURCE.md <<'EOF'
           # Greek New Testament — Robinson-Pierpont 2018
           Translation ID: GRC-KOINE-RP-2018
-          eBible ID: GRCMTK / grcmt
           Editors: Maurice A. Robinson and William G. Pierpont
           Edition: 2018, Byzantine / Majority Text
           Language and dialect: Ancient Greek, Koine
-          Source information: https://ebible.org/bible/details.php?id=grcmt
-          Source USFM: https://ebible.org/Scriptures/grcmt_usfm.zip
-          License: Public Domain, as declared by eBible for this edition.
-          This corpus preserves the 27 New Testament source books and the source chapter/verse labels. It is independent from the Brenton Septuagint and from the SBL Greek New Testament.
-          Processing: USFM structural markers and footnotes/cross-references were removed for reader display. Greek source text and source verse labels are retained. No missing verse or book is filled from another edition.
-          The edition represents the Byzantine / Majority Text form. It is not presented as the SBLGNT or as a Nestle-Aland edition.
+          Official source repository: https://github.com/byztxt/byzantine-majority-text
+          Pinned source commit: 3b2b0806cc8af4144313ea70ec9cf654141e5996
+          Main text: csv-unicode/ccat/no-variants (27 canonical NT books)
+          License: Public Domain / Unlicense, as declared by the source repository.
+          The corpus preserves the Unicode polytonic accents, breathings, punctuation, capitalization, source chapter/verse labels and paragraph markers from the RP2018 main text.
+          Separate source alternatives PA.csv (John 7:53–8:11) and ACT24.csv (Acts 24:6–8) are not merged into the main text.
+          QA: all 27 books, 260 chapters and source verse records matched exactly. Normalized Greek word sequences were compared against the previous 7,953-verse eBible RP2018 corpus with zero differences. Display text itself is not normalized.
           EOF
-      - name: Commit verified corpus to this feature branch
+      - name: Commit only after all QA checks pass
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add bible/data/grc-koine-rp-2018.jsonl.gz bible/data/grc-koine-rp-2018_audit.json bible/data/GRC_KOINE_RP_2018_SOURCE.md bible/data/multilingual-edition-registry.draft.json
           git diff --cached --quiet && exit 0
-          git commit -m "Bible: publish verified Robinson-Pierpont Greek NT corpus"
+          git commit -m "Bible: import accented Robinson-Pierpont 2018 Greek NT"
           git push origin "HEAD:${GITHUB_REF_NAME}"
