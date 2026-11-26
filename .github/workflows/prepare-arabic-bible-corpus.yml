@@ -1,0 +1,43 @@
+name: Prepare Arabic Bible corpora
+
+on:
+  workflow_dispatch:
+    inputs:
+      translation:
+        description: Translation to prepare
+        required: true
+        type: choice
+        options:
+          - all
+          - AR-SVD-1865
+          - AR-KEH-2012
+        default: all
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get project files
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Download and prepare source corpora
+        run: |
+          python bible/tools/prepare_ebible_usfm.py \
+            --translation "${{ inputs.translation }}" \
+            --output-dir bible-import-output
+
+      - name: Publish prepared corpus and audit reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: arabic-bible-corpus-${{ inputs.translation }}
+          path: bible-import-output/
+          if-no-files-found: error
+          retention-days: 14
