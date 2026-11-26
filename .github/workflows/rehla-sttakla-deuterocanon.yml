@@ -1,0 +1,26 @@
+name: Rehla St-Takla Deuterocanon source QA
+
+on:
+  pull_request:
+    paths:
+      - "scripts/fetch_sttakla_deuterocanon.py"
+      - ".github/workflows/rehla-sttakla-deuterocanon.yml"
+      - "bible/DATA_SOURCE_AUDIT.md"
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-and-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Acquire and parse St-Takla Deuterocanon
+        run: python3 scripts/fetch_sttakla_deuterocanon.py
+      - name: Upload source QA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rehla-sttakla-deuterocanon-qa
+          path: build/sttakla-deuterocanon/
+          retention-days: 7
