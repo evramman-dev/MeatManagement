@@ -457,6 +457,7 @@ async function openReadingReference(raw,label){
    try{
      let verses=await loadTranslationChapter(edition,sourceBookId,part.chapter);
      if(part.startVerse!=null)verses=verses.filter(v=>Number(v.verse)>=part.startVerse&&(part.endVerse==null||Number(v.verse)<=part.endVerse));
+     if(readerSelection.mode==="paragraphs")await refreshReaderSectionHeadings(part.bookCode,part.chapter);
      blocks.push("<div class='card'><div class='eyebrow'>"+escapeHtml(part.book)+" "+part.chapter+(part.startVerse!=null?":"+part.startVerse+(part.endVerse!=null?"-"+part.endVerse:""):"")+"</div>"+(verses.length?renderVerseMarkup(verses,edition==="HE-WLC-2017"?"he":(edition==="GRC-LXX-BRENTON-1851"||edition==="GRC-KOINE-RP-2018")?"grc":"ar",readerSelection.mode):"<p class='note'>لا توجد آيات مطابقة لهذا المرجع في هذه الطبعة.</p>")+"</div>");
    }catch(e){blocks.push("<p class='note'>تعذر تحميل هذا الجزء من القراءة.</p>")}
  }
