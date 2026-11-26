@@ -35,6 +35,15 @@ test('Bible reader loads both local Arabic editions and preserves missing-book b
   await expect(page.locator('#chapterContent')).toContainText('בְּרֵאשִׁ֖ית');
   await expect(page.locator('#chapterContent')).toContainText('Westminster Leningrad Codex');
 
+  await page.locator('#chapterReference').fill('בראשית 1');
+  await page.locator('#loadChapterButton').click();
+  await expect(page.locator('#chapterStatus')).toContainText('تم تحميل النص العبري');
+  await expect(page.locator('#chapterContent')).toContainText('בְּרֵאשִׁ֖ית');
+
+  await page.locator('#chapterReference').fill('أستير 11');
+  await page.locator('#loadChapterButton').click();
+  await expect(page.locator('#chapterStatus')).toContainText('هذا الإصحاح غير متوفر في هذه الطبعة');
+
   await page.locator('#chapterReference').fill('يوحنا 1');
   await page.locator('#loadChapterButton').click();
   await expect(page.locator('#chapterStatus')).toContainText('هذا السفر غير متوفر');
