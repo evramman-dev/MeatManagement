@@ -256,12 +256,12 @@ const translationCatalog=[
  {id:"AR-GNA-1993-DC",name:"الترجمة العربية المشتركة 1993",tradition:"مشتركة",year:"1993",canon:"full-with-deuterocanon",books:"all"},
  {id:"AR-GNA-2025",name:"الترجمة العربية المشتركة 2025",tradition:"مشتركة",year:"2025",canon:"edition-dependent",books:"edition"},
  {id:"AR-KEH-2012",name:"كتاب الحياة 2012",tradition:"إنجيلية",year:"2012",canon:"protestant",books:"66"},
- {id:"AR-ERV",name:"العربية المبسطة",tradition:"حديثة",year:"edition-dependent",canon:"edition-dependent",books:"edition"}
+
 ];
 const demoBookAvailability={
- "AR-JESUIT-OLD":"all","AR-SVD-1865":"protestant","AR-GNA-1993-DC":"all","AR-GNA-2025":"edition","AR-KEH-2012":"protestant","AR-ERV":"edition"
+ "AR-JESUIT-OLD":"all","AR-SVD-1865":"protestant","AR-GNA-1993-DC":"all","AR-GNA-2025":"edition","AR-KEH-2012":"protestant"
 };
-const selectedTranslations=["AR-JESUIT-OLD","AR-SVD-1865"];
+const selectedTranslations=["AR-SVD-1865","AR-KEH-2012","AR-GNA-1993-DC","AR-JESUIT-OLD"];
 const sampleTexts={
  "AR-JESUIT-OLD":"النص الكامل لهذه الترجمة لم يُعتمد رقميًا بعد.",
  "AR-SVD-1865":"النص الفعلي متاح من مصدر فان دايك المعتمد للقراءة عند فتح الإصحاح."
@@ -302,8 +302,7 @@ async function renderParallel(){
  }
 }
 const SVD_API_BASE="https://api.getbible.net/v3/arabicsv";
-const SVD_BOOKS={"تكوين":1,"خروج":2,"لاويين":3,"عدد":4,"تثنية":5,"يشوع":6,"قضاة":7,"راعوث":8,"صموئيل الأول":9,"صموئيل الثاني":10,"ملوك الأول":11,"ملوك الثاني":12,"أخبار الأيام الأول":13,"أخبار الأيام الثاني":14,"عزرا":15,"نحميا":16,"أستير":17,"أيوب":18,"مزامير":19,"مزمور":19,"أمثال":20,"الأمثال":20,"جامعة":21,"نشيد الأنشاد":22,"إشعياء":23,"إرميا":24,"مراثي إرميا":25,"حزقيال":26,"دانيال":27,"هوشع":28,"يوئيل":29,"عاموس":30,"عوبديا":31,"يونان":32,"ميخا":33,"ناحوم":34,"حبقوق":35,"صفنيا":36,"حجي":37,"زكريا":38,"ملاخي":39,"متى":40,"مرقس":41,"لوقا":42,"يوحنا":43,"أعمال":44,"أعمال الرسل":44,"رومية":45,"رؤيا":66};
-function parseChapterReference(value){const m=String(value||"").trim().match(/^(.+?)\s+(\d+)$/);if(!m)return null;let book=m[1].trim();const n=SVD_BOOKS[book];return n?{book,bookNumber:n,chapter:Number(m[2])}:null}
+const SVD_BOOKS={"تكوين":1,"خروج":2,"لاويين":3,"عدد":4,"تثنية":5,"يشوع":6,"قضاة":7,"راعوث":8,"صموئيل الأول":9,"صموئيل الثاني":10,"ملوك الأول":11,"ملوك الثاني":12,"أخبار الأيام الأول":13,"أخبار الأيام الثاني":14,"عزرا":15,"نحميا":16,"أستير":17,"أيوب":18,"مزامير":19,"مزمور":19,"أمثال":20,"الأمثال":20,"جامعة":21,"نشيد الأنشاد":22,"إشعياء":23,"إرميا":24,"مراثي إرميا":25,"مراثي":25,"حزقيال":26,"دانيال":27,"هوشع":28,"يوئيل":29,"عاموس":30,"عوبديا":31,"يونان":32,"ميخا":33,"ناحوم":34,"حبقوق":35,"صفنيا":36,"حجي":37,"زكريا":38,"ملاخي":39,"متى":40,"مرقس":41,"لوقا":42,"يوحنا":43,"أعمال":44,"أعمال الرسل":44,"رومية":45,"كورنثوس الأولى":46,"كورنثوس الثانية":47,"غلاطية":48,"أفسس":49,"فيلبي":50,"كولوسي":51,"تسالونيكي الأولى":52,"تسالونيكي الثانية":53,"تيموثاوس الأولى":54,"تيموثاوس الثانية":55,"تيطس":56,"فليمون":57,"عبرانيين":58,"يعقوب":59,"بطرس الأولى":60,"بطرس الثانية":61,"يوحنا الأولى":62,"يوحنا الثانية":63,"يوحنا الثالثة":64,"يهوذا":65,"رؤيا":66};function parseChapterReference(value){const m=String(value||"").trim().match(/^(.+?)\s+(\d+)$/);if(!m)return null;let book=m[1].trim();const n=SVD_BOOKS[book];return n?{book,bookNumber:n,chapter:Number(m[2])}:null}
 async function loadSvdChapter(){const input=document.getElementById("chapterReference"),status=document.getElementById("chapterStatus"),content=document.getElementById("chapterContent");const p=parseChapterReference(input.value);if(!p){status.textContent="اكتب اسم السفر ورقم الإصحاح مثل: يوحنا 1";content.innerHTML="";return}status.textContent="جاري تحميل النص...";content.innerHTML="";try{const res=await fetch(SVD_API_BASE+"/"+p.bookNumber+"/"+p.chapter+".json");if(!res.ok)throw new Error();const data=await res.json(),verses=Array.isArray(data.verses)?data.verses:[];if(!verses.length)throw new Error();content.innerHTML="<div class='verse-card'><div class='eyebrow'>فان دايك 1865 · "+escapeHtml(p.book)+" "+p.chapter+"</div>"+verses.map(v=>"<div class='verse-card'><strong>"+escapeHtml(v.verse||"")+"</strong><p class='verse-text'>"+escapeHtml(v.text||"")+"</p></div>").join("")+"</div>";status.textContent="تم تحميل النص من المصدر."}catch(e){status.textContent="تعذر تحميل الإصحاح الآن. تحقق من الاتصال ثم حاول مرة أخرى."}}
 const demoIndex=[
  {ref:"مزمور 46",words:["الله","خوف","قلق","ملجأ","قوة"]},
