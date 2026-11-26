@@ -18,7 +18,8 @@ def main():
 
     assert len(books) == 73, f"expected 73 books, got {len(books)}"
     assert len(set(ids)) == 73, "duplicate book_id"
-    assert orders == list(range(1, 74)), "canonical_order must be sequential 1..73"
+    assert [book["canonical_order"] for book in old] == list(range(1, 47)), "OT canonical_order must be sequential 1..46"
+    assert [book["canonical_order"] for book in new] == list(range(1, 28)), "NT canonical_order must be sequential 1..27"
     assert len(old) == 46, f"expected 46 OT books, got {len(old)}"
     assert len(new) == 27, f"expected 27 NT books, got {len(new)}"
     assert all(isinstance(book["chapter_count"], int) and book["chapter_count"] > 0 for book in books), "missing/invalid chapter_count"
