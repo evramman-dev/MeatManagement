@@ -13,7 +13,7 @@ class HebrewWlcTests(unittest.TestCase):
         data=io.BytesIO()
         with zipfile.ZipFile(data,"w") as z:
             for code in OT_BOOKS:
-                z.writestr(code+".SFM",f"\\id {code}\\n\\c 1\\n\\v 1 בְּרֵאשִׁית בָּרָא אֱלֹהִים\\n\\v 2 וְהָאָרֶץ\\n")
+                z.writestr(code+".SFM",f"\\id {code}\n\\c 1\n\\v 1 בְּרֵאשִׁית בָּרָא אֱלֹהִים\n\\v 2 וְהָאָרֶץ\n")
         rows,coverage=parse_archive(data.getvalue())
         self.assertEqual(TRANSLATION_ID,"HE-WLC-2017")
         self.assertEqual(len(rows),78)
