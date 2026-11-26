@@ -51,7 +51,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add bible/data/grc-koine-rp-2018.jsonl.gz bible/data/grc-koine-rp-2018_audit.json bible/data/GRC_KOINE_RP_2018_SOURCE.md
+          git add bible/data/grc-koine-rp-2018.jsonl.gz bible/data/grc-koine-rp-2018_audit.json bible/data/GRC_KOINE_RP_2018_SOURCE.md bible/data/multilingual-edition-registry.draft.json
           git diff --cached --quiet && exit 0
           git commit -m "Bible: publish verified Robinson-Pierpont Greek NT corpus"
           git push origin "HEAD:${GITHUB_REF_NAME}"
