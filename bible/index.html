@@ -390,7 +390,7 @@ async function loadSvdChapter(){
  try{
    const verses=await loadTranslationChapter(edition,p.bookCode,p.chapter);
    if(!verses.length)throw new Error("Chapter not found");
-   content.innerHTML="<div class='verse-card'><div class='eyebrow'>"+escapeHtml(edition==="AR-KEH-2012"?"كتاب الحياة 2012":"فان دايك 1865")+" · "+escapeHtml(p.book)+" "+p.chapter+"</div>"+renderVerseMarkup(verses)+"</div>";
+   content.innerHTML="<div class='verse-card'><div class='eyebrow'>"+escapeHtml(edition==="AR-KEH-2012"?"كتاب الحياة 2012":"فان دايك 1865")+" · "+escapeHtml(p.book)+" "+p.chapter+"</div>"+renderVerseMarkup(verses)+(edition==="AR-KEH-2012"?"<p class='note'>© Biblica · Open New Arabic Version 2012 · CC BY-SA 4.0 · <a href='https://ebible.org/arbnav/' target='_blank' rel='noopener'>المصدر والترخيص</a></p>":"")+"</div>";
    status.textContent=edition==="AR-KEH-2012"
     ?"تم تحميل كتاب الحياة 2012 داخل التطبيق. النص من Biblica بترخيص CC BY-SA 4.0."
     :"تم تحميل فان دايك 1865 داخل التطبيق. النص ضمن الملكية العامة.";
