@@ -157,7 +157,7 @@ def parse_page(path, book_id, expected_chapters):
         rows=[]
         for line in strip_html(html):
             m=re.match(r"^(?:([0-9]+)[-.:]?\s+)?(.+)$",line)
-            if m and re.search(r"\b[أ-ي]\b",m.group(2)):
+            if m and re.search(r"[أ-ي]",m.group(2)) and len(m.group(2).strip())>20:
                 rows.append({"book_id":book_id,"chapter":1,"verse":len(rows)+1,
                              "text":m.group(2).strip(),"source":"St-Takla.org"})
         if len(rows)>=10:
