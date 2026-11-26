@@ -2,6 +2,7 @@
 """Acquire and parse the Arabic Deuterocanon pages published by St-Takla.org."""
 from __future__ import annotations
 import hashlib, json, pathlib, re, subprocess, sys, unicodedata
+from bs4 import BeautifulSoup
 
 INDEX_URL = "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya__0-index_.html"
 OUT = pathlib.Path("build/sttakla-deuterocanon")
@@ -41,17 +42,10 @@ def sha256(path):
         for c in iter(lambda:f.read(1024*1024),b""): h.update(c)
     return h.hexdigest()
 def strip_html(html):
-    html=re.sub(r"<script\b[^>]*>.*?</script>"," ",html,flags=re.I|re.S)
-    html=re.sub(r"<style\b[^>]*>.*?</style>"," ",html,flags=re.I|re.S)
-    html=re.sub(r"<br\s*/?>","\n",html,flags=re.I)
-    html=re.sub(r"</(?:p|div|li|h[1-6]|tr)>","\n",html,flags=re.I)
-    html=re.sub(r"<[^>]+>"," ",html)
-    html=re.sub(r"&nbsp;"," ",html,flags=re.I)
-    html=re.sub(r"&#160;"," ",html)
-    html=re.sub(r"&#x([0-9a-f]+);",lambda m:chr(int(m.group(1),16)),html,flags=re.I)
-    html=re.sub(r"&#(\d+);",lambda m:chr(int(m.group(1))),html)
+    soup=BeautifulSoup(html,"html.parser")
+    text=soup.get_text("\n",strip=True)
     return [re.sub(r"\s+"," ",unicodedata.normalize("NFC",x)).strip()
-            for x in html.splitlines() if re.sub(r"\s+"," ",x).strip()]
+            for x in text.splitlines() if re.sub(r"\s+"," ",x).strip()]
 def chapter_number(line):
     m=re.search(r"(?:الإصحاح|الأصحاح|الاصحاح)\s+(.+)$",line)
     if not m: return None
