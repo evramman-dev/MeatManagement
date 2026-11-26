@@ -103,11 +103,14 @@
       "source_url": "https://ebible.org/find/details.php?id=grcbrent",
       "license": "Public Domain",
       "license_status": "verified_by_ebible_source_catalog",
-      "coverage_status": "52_source_books_including_deuterocanonical_and_additional_texts",
-      "corpus_status": "pending_github_actions_full_source_qa",
-      "notes": "Brenton Greek Septuagint 1851 (GRCBRE), eBible source package. The edition contains 52 source books/texts. It preserves 1 Esdras, 3 and 4 Maccabees, Prayer of Manasseh, Letter of Jeremiah, Susanna, and Bel and the Dragon as separate source books. Esther (ESG) and Greek Daniel (DAG) are mapped to the stable Coptic catalog book IDs while retaining source chapter/verse numbering. This edition's actual book set is not asserted to be identical to the 73-book Coptic canon. Arabic editions remain independent and may not contain these books.",
+      "coverage_status": "52_source_books_and_texts_imported_full_source_match_passed",
+      "corpus_status": "imported_and_full_source_match_passed",
+      "notes": "Brenton Greek Septuagint 1851 (GRCBRE), eBible source package. Imported 28,597 verse records across all 52 source books/texts. Full exact-key and verse-text comparison against the downloaded eBible USFM archive passed: zero missing, extra, or mismatched records. It preserves 1 Esdras, 3 and 4 Maccabees, Prayer of Manasseh, Letter of Jeremiah, Susanna, and Bel and the Dragon as separate source books. Esther (ESG) and Greek Daniel (DAG) map to stable Coptic catalog book IDs while retaining source chapter/verse numbering. The edition's actual book set is not asserted to be identical to the 73-book Coptic canon. Arabic editions remain independent and may not contain these books.",
       "corpus_file": "bible/data/grc-lxx-brenton-1851.jsonl.gz",
-      "audit_file": "bible/data/grc-lxx-brenton-1851_audit.json"
+      "audit_file": "bible/data/grc-lxx-brenton-1851_audit.json",
+      "record_count": 28597,
+      "source_archive_sha256": "9de434f4922f85a475276e4754f6d114dee0f3bf5323d90dcd559a1f8286e9a4",
+      "last_verified": "2026-11-26"
     },
     {
       "edition_id": "nt_cop_bohairic",
