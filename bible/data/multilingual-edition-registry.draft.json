@@ -25,11 +25,10 @@
     },
     {
       "language_id": "cop",
-      "language_name_ar": "القبطية",
+      "language_name_ar": "القبطية البحيرية",
       "scope": "OT_NT",
       "edition_ids": [
-        "ot_cop_sahidic",
-        "nt_cop_sahidic",
+        "ot_cop_bohairic",
         "nt_cop_bohairic"
       ]
     },
@@ -107,34 +106,6 @@
       "coverage_status": "candidate_lxx_book_set_requires_coptic_canon_mapping",
       "corpus_status": "not_imported",
       "notes": "طبعة تاريخية متاحة رقميًا. تُعرض كطبعة مستقلة ولا تُخلط مع رالفز."
-    },
-    {
-      "edition_id": "ot_cop_sahidic",
-      "name": "Digital Edition of the Coptic Old Testament",
-      "display_name_ar": "العهد القديم القبطي — اللهجة الصعيدية",
-      "language_id": "cop",
-      "dialect": "Sahidic",
-      "scope": "OT",
-      "source_url": "https://coptot.manuscriptroom.com/~malte/edition/",
-      "license": "Per-document license must be checked",
-      "license_status": "not_yet_cleared_for_redistribution",
-      "coverage_status": "scholarly_manuscript_edition_in_progress_not_verified_complete_coptic_orthodox_canon",
-      "corpus_status": "not_imported",
-      "notes": "مشروع أكاديمي لتوثيق الشواهد وإعداد طبعات دبلوماسية ونقدية. لا يوصف بأنه نص كامل جاهز قبل تدقيق كل سفر وملف وترخيصه."
-    },
-    {
-      "edition_id": "nt_cop_sahidic",
-      "name": "Coptic New Testament",
-      "display_name_ar": "العهد الجديد القبطي — الصعيدية",
-      "language_id": "cop",
-      "dialect": "Sahidic",
-      "scope": "NT",
-      "source_url": "https://ebible.org/find/details.php?id=copcnt",
-      "license": "Public Domain as listed by source catalog; verify edition notice",
-      "license_status": "source_claims_public_domain_but_transcription_provenance_requires_scholarly_review",
-      "coverage_status": "new_testament_downloads_available_source_lineage_uncertain",
-      "corpus_status": "not_imported",
-      "notes": "eBible labels the text Public Domain and provides USFM/USFX downloads. Its own description says the text was imported from internet-forum resources citing Deir Anba Bishoi. Treat as a candidate for comparison, not a critical edition or an authoritative church text, until provenance and completeness are checked."
     },
     {
       "edition_id": "nt_cop_bohairic",
@@ -216,6 +187,20 @@
       "coverage_status": "66_book_canon_only_not_full_coptic_orthodox_canon",
       "corpus_status": "imported_and_full_source_match_passed",
       "notes": "The currently imported Smith–Van Dyck 1865 corpus is stored independently. It does not include the Deuterocanonical books."
+    },
+    {
+      "edition_id": "ot_cop_bohairic",
+      "name": "Bohairic Old Testament corpus — Coptic SCRIPTORIUM",
+      "display_name_ar": "العهد القديم القبطي — البحيرية",
+      "language_id": "cop",
+      "dialect": "Bohairic",
+      "scope": "OT",
+      "source_url": "https://data.copticscriptorium.org/texts/bohairicot/",
+      "license": "CC BY-SA 4.0 per Coptic Reader source listing",
+      "license_status": "candidate_license_requires_document_level_and_corpus_file_verification",
+      "coverage_status": "surviving_bohairic_witnesses_partial_not_full_coptic_old_testament",
+      "corpus_status": "not_imported",
+      "notes": "Research corpus with TEI and corpus downloads. Preserve manuscript/text witness identity and source references. The surviving Bohairic evidence does not cover every Old Testament book; do not infer missing books or additions."
     }
   ],
   "alignment_policy": {
