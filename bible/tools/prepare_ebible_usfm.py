@@ -45,6 +45,7 @@ SPACE = re.compile(r"\s+")
 
 
 def clean_verse(value: str) -> str:
+    value = WORD_SPAN.sub(lambda match: match.group(1), value)
     value = FOOTNOTE.sub(" ", value)
     value = re.sub(r"\|[^\s]+", "", value)
     value = MARKER.sub(" ", value)
