@@ -58,11 +58,23 @@ def chapter_number(line):
     v=m.group(1).strip()
     return int(v) if v.isdigit() else WORD_NUMBERS.get(v)
 def parse_page(path, book_id, expected_chapters):
-    lines=strip_html(path.read_text(encoding="utf-8",errors="replace"))
+    raw=path.read_bytes()
+    candidates=[]
+    for enc in ("utf-8","cp1256","iso-8859-6","windows-1252"):
+        try:
+            decoded=raw.decode(enc)
+            score=sum(1 for ch in decoded if "\u0600" <= ch <= "\u06ff")
+            candidates.append((score,decoded,enc))
+        except UnicodeDecodeError:
+            pass
+    if not candidates:
+        raise UnicodeDecodeError("unknown","",0,1,"no supported encoding")
+    _,html,encoding=max(candidates,key=lambda x:x[0])
+    lines=strip_html(html)
     records=[]; current=None
     if book_id == "tobit":
+        print("DEBUG encoding:", encoding, flush=True)
         print("DEBUG chapter-like lines:", [x for x in lines if "الأصحاح" in x or "الإصحاح" in x][:20], flush=True)
-        print("DEBUG first lines:", lines[40:80], flush=True)
     for line in lines:
         ch=chapter_number(line)
         if ch is not None: current=ch; continue
