@@ -63,6 +63,7 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 .coptic-reference-link{display:block;width:100%;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;text-align:right;padding:9px 2px;color:var(--ink);font-size:13px;line-height:1.8}
 .coptic-reference-link:last-child{border-bottom:0}
 .coptic-reference-link strong{color:var(--accent)}
+.coptic-reading-group-heading{font-size:20px;font-weight:800;color:var(--accent);margin:24px 2px 10px;padding-top:6px}
 .liturgical-reading{padding:18px 2px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
 .liturgical-reading h3{font-size:19px;color:var(--accent);margin:0 0 10px}
 .liturgical-reading .reading-rubric{font-size:14px;line-height:2.1;text-align:center;margin:12px 4px;color:var(--muted)}
@@ -76,7 +77,7 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 .reader-font-ruqaa,.reader-font-ruqaa .verse-text,.reader-font-ruqaa .reader-verse-text,.reader-font-ruqaa .reader-paragraph{font-family:"Aref Ruqaa","Amiri",serif;font-weight:400}
 .reader-font-thuluth,.reader-font-thuluth .verse-text,.reader-font-thuluth .reader-verse-text,.reader-font-thuluth .reader-paragraph{font-family:"Katibeh","Amiri",serif;font-weight:400}
 .reader-font-ruqaa .reader-verse-text{font-size:1.04em}.reader-font-thuluth .reader-verse-text{font-size:1.08em;letter-spacing:.01em}
- .liturgical-reading-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.reading-back-button{margin:0;padding:7px 10px;font-size:11px;white-space:nowrap}.reading-preamble{margin:18px 0 8px;padding:14px;background:#f7f8f4;border:1px solid var(--line);border-radius:16px}.reading-preamble h3{margin:0 0 8px;color:var(--accent);font-size:16px}.reading-preamble p{margin:0;line-height:2;text-align:justify}</style>
+ .liturgical-reading-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.reading-back-button{margin:0;padding:7px 10px;font-size:11px;white-space:nowrap}.reading-preamble{margin:14px 4px 8px!important;padding:0!important;background:transparent!important;border:0!important;border-radius:0!important;font-size:14px!important;line-height:2.1!important;color:var(--muted)!important;text-align:center}.reading-preamble div{font-size:inherit;line-height:inherit;color:inherit;margin:0}.reading-preamble div+div{margin-top:3px}</style>
 </head>
 <body>
 <div class="app">
@@ -358,8 +359,36 @@ const COPTIC_READINGS_API="https://api.coptic.io/api/readings";
 const COPTIC_CALENDAR_API="https://api.coptic.io/api/calendar";
 const COPTIC_CACHE_PREFIX="rehla.copticReadings.";
 const arabicReadingBooks={"1 Thessalonians":"تسالونيكي الأولى","2 Thessalonians":"تسالونيكي الثانية","1 Corinthians":"كورنثوس الأولى","2 Corinthians":"كورنثوس الثانية","1 Timothy":"تيموثاوس الأولى","2 Timothy":"تيموثاوس الثانية","1 Peter":"بطرس الأولى","2 Peter":"بطرس الثانية","1 John":"يوحنا الأولى","2 John":"يوحنا الثانية","3 John":"يوحنا الثالثة","1 Samuel":"صموئيل الأول","2 Samuel":"صموئيل الثاني","1 Kings":"الملوك الأول","2 Kings":"الملوك الثاني","1 Chronicles":"أخبار الأيام الأول","2 Chronicles":"أخبار الأيام الثاني","Psalms":"مزمور","Proverbs":"الأمثال","Ecclesiastes":"الجامعة","Song of Solomon":"نشيد الأنشاد","Matthew":"متى","Mark":"مرقس","Luke":"لوقا","John":"يوحنا","Acts":"أعمال الرسل","Romans":"رومية","Galatians":"غلاطية","Ephesians":"أفسس","Philippians":"فيلبي","Colossians":"كولوسي","Hebrews":"العبرانيين","James":"يعقوب","Jude":"يهوذا","Isaiah":"إشعياء","Jeremiah":"إرميا","Ezekiel":"حزقيال","Daniel":"دانيال","Genesis":"التكوين","Exodus":"الخروج","Leviticus":"اللاويين","Numbers":"العدد","Deuteronomy":"التثنية","Joshua":"يشوع","Judges":"القضاة","Ruth":"راعوث","Ezra":"عزرا","Nehemiah":"نحميا","Esther":"أستير","Job":"أيوب"};
-function readingReferenceParts(reference){return String(reference||"").split(/\s*(?:[;&]|\s+&\s+)\s*/).map(raw=>{const m=raw.trim().replace(/[–—]/g,"-").match(/^(.+?)\s+(\d+)(?:\s*[:.]\s*(\d+)(?:\s*-\s*(\d+))?)?$/);if(!m)return null;const sourceBook=m[1].trim();return {sourceBook,book:arabicReadingBooks[sourceBook]||sourceBook,chapter:Number(m[2]),start:m[3]?Number(m[3]):null,end:m[4]?Number(m[4]):null}}).filter(Boolean)}
-function formatReadingReference(reference){const parts=readingReferenceParts(reference);if(!parts.length)return String(reference||"").replace(/;/g,"؛");let last=null;return parts.map((p,i)=>{const range=p.start==null?String(p.chapter):p.chapter+": "+p.start+(p.end!=null?"-"+p.end:"");let value;if(i&&last&&last.book===p.book)value=p.chapter===last.chapter?(p.start==null?String(p.chapter):p.start+(p.end!=null?"-"+p.end:"")):range;else value=p.book+" "+range;last=p;return value}).join("؛ ")}
+function readingReferenceParts(reference){
+ const raw=String(reference||"").replace(/[–—]/g,"-").trim();
+ const chunks=raw.split(/\s*(?:&|\band\b)\s*/i).map(x=>x.trim()).filter(Boolean);
+ const out=[];
+ chunks.forEach(chunk=>{
+  const m=chunk.match(/^(.+?)\s+(\d+)(?:\s*[:.]\s*(\d+(?:\s*-\s*\d+)?(?:\s*[;،]\s*\d+(?:\s*-\s*\d+)?)*)?)?$/);
+  if(!m)return;
+  const sourceBook=m[1].trim(),chapter=Number(m[2]),versePart=m[3];
+  if(!versePart){out.push({sourceBook,book:arabicReadingBooks[sourceBook]||sourceBook,chapter,start:null,end:null});return}
+  versePart.split(/\s*[;،]\s*/).forEach((token,index)=>{
+   const vm=token.trim().match(/^(\d+)(?:\s*-\s*(\d+))?$/);
+   if(!vm)return;
+   out.push({sourceBook,book:arabicReadingBooks[sourceBook]||sourceBook,chapter,start:Number(vm[1]),end:vm[2]?Number(vm[2]):null,continuation:index>0});
+  });
+ });
+ return out;
+}
+function formatReadingReference(reference){
+ const parts=readingReferenceParts(reference);
+ if(!parts.length)return String(reference||"").replace(/;/g,"؛");
+ let last=null;
+ return parts.map((p,i)=>{
+  const range=p.start==null?String(p.chapter):p.start+(p.end!=null?"-"+p.end:"");
+  let value;
+  if(i&&last&&last.book===p.book&&last.chapter===p.chapter)value=range;
+  else value=p.book+" "+p.chapter+(p.start!=null?": "+range:"");
+  last=p;
+  return value;
+ }).join("؛ ");
+}
 function readingBookForParser(book){return book==="مزمور"?"مزامير":book}
 const readingGroups=[
  {title:"عشية",keys:[["VPsalm","مزمور"],["VGospel","إنجيل"]],icon:"ع"},
@@ -459,9 +488,10 @@ async function renderCopticReadingText(readings){
   if(!groupItems.length)continue;
   const gospelItem=groupItems.find(x=>x.key.endsWith("Gospel"));
   const psalmItem=groupItems.find(x=>x.key.endsWith("Psalm"));
+  sections.push("<div class='coptic-reading-group-heading'>قراءات "+escapeHtml(group.title)+"</div>");
   if(gospelItem){
    const gospelPart=splitReadingReferences(gospelItem.raw).map(parseReadingReferencePart).filter(Boolean)[0];
-   sections.push("<div class='reading-preamble'><h3>مقدمة إنجيل "+escapeHtml(group.title)+"</h3><p>"+escapeHtml(copticReadingIntro(gospelItem.key,gospelPart))+"</p></div>");
+   sections.push("<div class='reading-rubric reading-preamble'><div>مقدمة إنجيل "+escapeHtml(group.title)+"</div><div>"+escapeHtml(copticReadingIntro(gospelItem.key,gospelPart))+"</div></div>");
   }
   for(const item of groupItems){
    const parts=splitReadingReferences(item.raw).map(parseReadingReferencePart).filter(Boolean);
