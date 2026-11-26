@@ -184,15 +184,17 @@ def parse_page(path, book_id, expected_chapters):
     _,html,_=max(candidates,key=lambda x:x[0])
     idx_url=discover_chapter_index_url(html)
     if book_id == "psalm_151":
+        url="https://st-takla.org/Bibles/BibleSearch/showChapters.php?book=23&from=1&to=1"
+        cp=OUT/"psalm_151-chapter.html"; curl(url,cp)
         rows=[]
-        for line in strip_html(html):
-            m=re.match(r"^(?:([0-9]+)[-.:]?\s+)?(.+)$",line)
-            if m and re.search(r"[أ-ي]",m.group(2)) and len(m.group(2).strip())>20:
-                rows.append({"book_id":book_id,"chapter":1,"verse":len(rows)+1,
-                             "text":m.group(2).strip(),"source":"St-Takla.org"})
-        if len(rows)>=10:
-            return rows,[{"chapter":1,"verses":len(rows),"first_verse":1,
-                          "last_verse":len(rows),"duplicates":[]}],None
+        for line in strip_html(read_html(cp)):
+            m=re.match(r"^(\d+)\s+(.+)$",line)
+            if m and len(m.group(2).strip())>20:
+                rows.append({"book_id":book_id,"chapter":1,"verse":int(m.group(1)),
+                             "text":m.group(2).strip(),"source":"St-Takla.org","source_url":url})
+        return rows,[{"chapter":1,"verses":len(rows),"first_verse":min([r["verse"] for r in rows]) if rows else None,
+                      "last_verse":max([r["verse"] for r in rows]) if rows else None,
+                      "duplicates":sorted({n for n in [r["verse"] for r in rows] if [r["verse"] for r in rows].count(n)>1})}],url
     if not idx_url:
         return [],[],None
     idx_path=OUT/f"{book_id}-chapters.html"
