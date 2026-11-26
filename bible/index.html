@@ -411,7 +411,15 @@ function readingRowsHtml(readings){
    "</div>";
  }).join("")||"<p class='note'>لا توجد مراجع متاحة لهذا اليوم.</p>";
 }
-function splitReadingReferences(raw){return String(raw||"").split(/\s*(?:&|\band\b)\s*/i).map(x=>x.trim()).filter(Boolean)}
+function splitReadingReferences(raw){
+ return String(raw||"").replace(/[–—]/g,"-").split(/\s*(?:&|\band\b)\s*/i).flatMap(x=>{
+  const s=x.trim();
+  if(!s)return [];
+  const m=s.match(/^(.+?\s+\d+)\s*:\s*(.+)$/);
+  if(!m)return [s];
+  return m[2].split(/\s*;\s*/).map(v=>m[1]+": "+v.trim()).filter(Boolean);
+ }).filter(Boolean);
+}
 function parseReadingReferencePart(raw){
  const part=readingReferenceParts(raw)[0];
  if(!part)return null;
@@ -727,19 +735,19 @@ function renderVerseMarkup(verses,language,mode){
  const lang=language==="he"?"he":language==="grc"?"grc":"ar",dir=(language==="grc"||language==="en")?"ltr":"rtl";
  if(mode==="paragraphs"){
   const paragraphs=[],heads=currentReaderSectionHeadings||[];
-  let current="",verseKeys=[],paragraphIndex=0,currentTitle=heads[0]?.title||"";
+  let current="",verseKeys=[],paragraphIndex=0,currentTitle="";
   const pushParagraph=()=>{
    if(!current)return;
    paragraphIndex++;
    const key=verseKeys[0]||"";
-   const safeTitle=currentTitle||("مقطع "+paragraphIndex);
-   paragraphs.push("<section class='reader-paragraph-block'><h4 class='reader-paragraph-title'>"+escapeHtml(safeTitle)+"</h4><p class='reader-paragraph' tabindex='0' role='button' data-reader-verse='"+escapeHtml(key)+"'>"+current+"</p></section>");
+   const title=currentTitle||"";
+   paragraphs.push("<section class='reader-paragraph-block'>"+(title?"<h4 class='reader-paragraph-title'>"+escapeHtml(title)+"</h4>":"")+"<p class='reader-paragraph' tabindex='0' role='button' data-reader-verse='"+escapeHtml(key)+"'>"+current+"</p></section>");
    current="";verseKeys=[];
   };
   const appendVerse=(v,clean)=>{
    const mark=getVerseMark(readerVerseKey(v)),key=readerVerseKey(v);
-   const number="<span class='reader-verse-number' dir='"+dir+"' data-reader-verse='"+escapeHtml(key)+"'>"+escapeHtml(v.verse)+"</span>";
-   const text="<span class='reader-verse-text"+(mark.highlight?" reader-highlight-"+mark.highlight:"")+"' lang='"+lang+"' dir='"+dir+"' data-reader-verse='"+escapeHtml(key)+"'>"+escapeHtml(clean)+"</span>";
+   const number="<span class='reader-verse-number' dir='"+dir+"'>"+escapeHtml(v.verse)+"</span>";
+   const text="<span class='reader-verse-text"+(mark.highlight?" reader-highlight-"+mark.highlight:"")+"' lang='"+lang+"' dir='"+dir+"'>"+escapeHtml(clean)+"</span>";
    current+=number+text;verseKeys.push(key);
   };
   verses.forEach(v=>{
@@ -752,6 +760,7 @@ function renderVerseMarkup(verses,language,mode){
      currentTitle=boundary.title;
     }
     appendVerse(v,clean);
+    if(i<chunks.length-1)pushParagraph();
    });
   });
   pushParagraph();
