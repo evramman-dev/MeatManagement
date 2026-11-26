@@ -160,7 +160,7 @@ def parse_page(path, book_id, expected_chapters):
                 m=re.match(r"^(\d+)-\s+(.+)$",line)
                 if m:
                     rows.append({"book_id":book_id,"chapter":1,"verse":int(m.group(1)),
-                                 "text":m.group(2).strip(),"source":"St-Takla.org","source_url":urls.get(book_id)})
+                                 "text":m.group(2).strip(),"source":"St-Takla.org","source_url":str(path)})
             return rows,[{"chapter":1,"verses":len(rows),"first_verse":min([r["verse"] for r in rows]) if rows else None,
                           "last_verse":max([r["verse"] for r in rows]) if rows else None,"duplicates":[]}],None
         return [],[],None
