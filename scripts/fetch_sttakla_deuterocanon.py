@@ -2,6 +2,7 @@
 """Acquire and parse the Arabic Deuterocanon pages published by St-Takla.org."""
 from __future__ import annotations
 import hashlib, json, pathlib, re, subprocess, sys, unicodedata
+from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 
 INDEX_URL = "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya__0-index_.html"
@@ -9,11 +10,11 @@ OUT = pathlib.Path("build/sttakla-deuterocanon")
 BOOKS = [
     ("tobit", "سفر طوبيا", 14),
     ("judith", "سفر يهوديت", 16),
-    ("esther_additions", "تتمه سفر استير", 16),
+    ("esther_additions", "تتمه سفر استير", [10,11,12,13,14,15,16]),
     ("wisdom", "سفر الحكمة", 19),
     ("sirach", "سفر حكمة يشوع ابن سيراخ", 51),
     ("baruch", "سفر نبوة باروخ", 6),
-    ("daniel_additions", "تتمة سفر دانيال", 14),
+    ("daniel_additions", "تتمة سفر دانيال", [3,13,14]),
     ("1_maccabees", "سفر المكابيين الأول", 16),
     ("2_maccabees", "سفر المكابيين الثاني", 15),
     ("psalm_151", "المزمور 151", 1),
@@ -68,6 +69,44 @@ def split_chapter_line(line):
                 return value,line.strip()[len(heading+" "+key):].strip()
     return None,line
 
+def discover_chapter_index_url(html):
+    soup=BeautifulSoup(html,"html.parser")
+    for a in soup.find_all("a",href=True):
+        label=re.sub(r"\s+"," ",a.get_text(" ",strip=True))
+        if "مقسم بالأصحاحات" in label:
+            return urljoin(INDEX_URL,a["href"])
+    return None
+
+def discover_chapter_urls(index_html):
+    soup=BeautifulSoup(index_html,"html.parser")
+    found={}
+    for a in soup.find_all("a",href=True):
+        label=re.sub(r"\s+"," ",a.get_text(" ",strip=True))
+        m=re.search(r"(?:أصحاح|اصحاح)\s+(\d+)$",label)
+        if not m: continue
+        found[int(m.group(1))]=urljoin(INDEX_URL,a["href"])
+    return found
+
+def parse_chapter_page(path, book_id, chapter):
+    raw=path.read_bytes()
+    candidates=[]
+    for enc in ("utf-8","cp1256","iso-8859-6","windows-1252"):
+        try:
+            decoded=raw.decode(enc)
+            score=sum(1 for ch in decoded if "\u0600" <= ch <= "\u06ff")
+            candidates.append((score,decoded,enc))
+        except UnicodeDecodeError:
+            pass
+    _,html,_=max(candidates,key=lambda x:x[0])
+    lines=strip_html(html)
+    rows=[]
+    for line in lines:
+        m=re.match(r"^(\d+)\s+(.+)$",line)
+        if m and len(m.group(2).strip())>1:
+            rows.append({"book_id":book_id,"chapter":chapter,"verse":int(m.group(1)),
+                         "text":m.group(2).strip(),"source":"St-Takla.org"})
+    return rows
+
 def parse_page(path, book_id, expected_chapters):
     raw=path.read_bytes()
     candidates=[]
@@ -78,58 +117,32 @@ def parse_page(path, book_id, expected_chapters):
             candidates.append((score,decoded,enc))
         except UnicodeDecodeError:
             pass
-    if not candidates:
-        raise UnicodeDecodeError("unknown","",0,1,"no supported encoding")
-    _,html,encoding=max(candidates,key=lambda x:x[0])
-    lines=strip_html(html)
-    merged=[]; i=0
-    while i < len(lines):
-        if re.fullmatch(r"\d+\.", lines[i]) and i+1 < len(lines):
-            merged.append(lines[i] + " " + lines[i+1]); i += 2
-        elif re.fullmatch(r"\d+", lines[i]) and i+1 < len(lines) and len(lines[i+1]) > 1:
-            merged.append(lines[i] + ". " + lines[i+1]); i += 2
-        else:
-            merged.append(lines[i]); i += 1
-    lines=merged
-    records=[]; current=None
-    for line in lines:
-        ch,remainder=split_chapter_line(line)
-        if ch is not None:
-            current=ch
-            line=remainder
-            if not line: continue
-        if current is None: continue
-        m=re.match(r"^([^\d]{0,20}?)(\d+)\s*:\s*(\d+)\s+(.+)$",line)
-        if m:
-            records.append({"book_id":book_id,"chapter":current,"verse":int(m.group(3)),
-                            "text":m.group(4).strip(),"source":"St-Takla.org"})
+    _,html,_=max(candidates,key=lambda x:x[0])
+    idx_url=discover_chapter_index_url(html)
+    if not idx_url:
+        return [],[],None
+    idx_path=OUT/f"{book_id}-chapters.html"
+    curl(idx_url,idx_path)
+    chapter_urls=discover_chapter_urls(idx_path.read_text(encoding="utf-8",errors="replace"))
+    expected=list(range(1,expected_chapters+1)) if isinstance(expected_chapters,int) else list(expected_chapters)
+    records=[]; qa=[]
+    for ch in expected:
+        url=chapter_urls.get(ch)
+        if not url:
+            qa.append({"chapter":ch,"verses":0,"first_verse":None,"last_verse":None,"duplicates":[]})
             continue
-        m=re.match(r"^(\d+)\.\s+(.+)$",line)
-        if m and len(m.group(2).strip())>1:
-            records.append({"book_id":book_id,"chapter":current,"verse":int(m.group(1)),
-                            "text":m.group(2).strip(),"source":"St-Takla.org"})
-    by={}
-    for r in records: by.setdefault(r["chapter"],[]).append(r)
-    qa=[]
-    for ch in range(1,expected_chapters+1):
-        rows=by.get(ch,[]); nums=[r["verse"] for r in rows]
+        cp=OUT/f"{book_id}-chapter-{ch}.html"
+        curl(url,cp)
+        rows=parse_chapter_page(cp,book_id,ch)
+        for r in rows: r["source_url"]=url
+        records.extend(rows)
+        nums=[r["verse"] for r in rows]
         qa.append({"chapter":ch,"verses":len(rows),
                    "first_verse":min(nums) if nums else None,
                    "last_verse":max(nums) if nums else None,
                    "duplicates":sorted({n for n in nums if nums.count(n)>1})})
-    return records,qa
-BOOK_URLS = {
-    "tobit": "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya__1-Tobit_.html",
-    "judith": "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya__2-Judith_.html",
-    "esther_additions": "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya__3-Esther_.html",
-    "wisdom": "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya__4-Wisdon-of-Solomon_.html",
-    "sirach": "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya__5-Wisdon-of-Joshua-Son-of-Sirach_.html",
-    "baruch": "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya__6-Baruch_.html",
-    "daniel_additions": "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya__7-Daniel_.html",
-    "1_maccabees": "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya__8-First-of-Maccabees_.html",
-    "2_maccabees": "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya__9-Second-of-Maccabees_.html",
-    "psalm_151": "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya_10-Psalm151-El-Mazmoor-151_.html",
-}
+    return records,qa,idx_url
+
 def discover_book_urls(index_html):
     found={}
     for m in re.finditer(r'href=["\']([^"\']+)["\'][^>]*>(.*?)</a>',index_html,flags=re.I|re.S):
@@ -146,11 +159,11 @@ def main():
     all_records=[]; reports=[]
     for book_id,title,expected in BOOKS:
         path=OUT/f"{book_id}.html"; curl(urls[book_id],path)
-        rows,qa=parse_page(path,book_id,expected)
-        for r in rows: r["source_url"]=urls[book_id]
+        rows,qa,index_url=parse_page(path,book_id,expected)
         all_records.extend(rows)
         reports.append({"book_id":book_id,"title":title,"url":urls[book_id],
-                        "expected_chapters":expected,
+                        "chapter_index_url":index_url,
+                        "expected_chapters":list(range(1,expected+1)) if isinstance(expected,int) else list(expected),
                         "chapters_found":sorted({x["chapter"] for x in qa if x["verses"]}),
                         "record_count":len(rows),
                         "chapters_with_no_verses":[x["chapter"] for x in qa if not x["verses"]],
@@ -162,7 +175,7 @@ def main():
             "source_statement":"The St-Takla Deuterocanon page states that this text is from the old Jesuit translation published in 1877.",
             "not_yet_app_corpus":True,"books":reports,"total_records":len(all_records),
             "total_books":len(reports),
-            "total_chapters_expected":sum(x[2] for x in BOOKS),
+            "total_chapters_expected":sum(x[2] if isinstance(x[2],int) else len(x[2]) for x in BOOKS),
             "total_chapters_with_verses":sum(len(x["chapters_found"]) for x in reports)}
     (OUT/"qa-report.json").write_text(json.dumps(report,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
     print(json.dumps(report,ensure_ascii=False,indent=2))
