@@ -310,3 +310,20 @@
 المصادر:
 - https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=LXX
 - https://septuaginta.uni-goettingen.de/static/ioscs/pdf/volumes/jscs44.pdf
+
+
+## 2026-11-26 — تنفيذ استخراج الأسفار القانونية الثانية من الأنبا تكلا
+
+تم تحويل قرار التنفيذ إلى مسار عملي على موقع الأنبا تكلا هيمانوت.
+
+المصدر:
+- صفحة الأسفار القانونية الثانية: https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya__0-index_.html
+- صفحة التنزيل الكاملة: https://st-takla.org/Bibles/Download-Arabic-Bible-Doc.html
+
+المصدر يصرح أن نص الأسفار القانونية الثانية المعروض هو من الترجمة اليسوعية القديمة الصادرة سنة 1877. كما يعرض عشرة أقسام: طوبيا، يهوديت، تتمة أستير، الحكمة، يشوع بن سيراخ، باروخ، تتمة دانيال، المكابيين الأول، المكابيين الثاني، والمزمور 151.
+
+أضيف سكربت scripts/fetch_sttakla_deuterocanon.py لاكتشاف صفحات الأسفار من فهرس الموقع، تنزيل الصفحات الأصلية إلى artifact مؤقت، واستخراج الآيات إلى JSONL مع حفظ رابط المصدر وبصمة HTML لكل سفر.
+
+أضيف workflow باسم Rehla St-Takla Deuterocanon source QA لتشغيل الاستخراج والفحص آليًا ورفع الناتج لمدة 7 أيام. لا يكتب النص إلى bible/data ولا يغير واجهة التطبيق أو Service Worker أو Supabase.
+
+بوابة الإدخال إلى التطبيق تبقى منفصلة إلى أن نراجع نتيجة الاستخراج وعدد الأسفار والإصحاحات والآيات والعينات.
