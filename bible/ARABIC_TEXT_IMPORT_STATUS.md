@@ -380,3 +380,23 @@ https://alta3b.com/wp-content/uploads/2019/03/%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%
 - https://www.smh101.com/coptic-reader/sources.html
 - https://ccdl.claremont.edu/digital/api/collection/cce/id/2188/download
 - https://ebible.org/copbhc/copyright.htm
+
+
+
+## استيراد النص العبري — HE-WLC-2017 — 2026-11-26
+
+تم استيراد النص العبري Westminster Leningrad Codex (hboWLC) من أرشيف eBible USFM المعلن Public Domain. المصدر: https://ebible.org/find/details.php?id=hboWLC
+
+- ملف النص: `bible/data/he-wlc-2017.jsonl.gz`
+- تقرير التدقيق: `bible/data/he-wlc-2017_audit.json`
+- ملف المصدر والترخيص: `bible/data/HEBREW_WLC_SOURCE.md`
+- عدد الأسفار: 39 سفرًا ماسوريًا من العهد القديم.
+- عدد سجلات الآيات: 23,213.
+- بصمة أرشيف المصدر SHA256: `464225e119973cb7e12a30777c2d5e7f543f083529b00b909d620c617dbd1df7`.
+- نتيجة المقارنة الكاملة: 23,213/23,213 مطابقة، صفر ناقص، صفر زائد، وصفر اختلاف نصي.
+- احتفظنا بالنص العبري والنقاط والحركات وعلامات الترتيل، واستبعدنا بيانات lemma وmorphology المنفصلة.
+- هذه النسخة لا تحتوي الأسفار القانونية الثانية ولا تمثل وحدها العهد القديم القبطي الكامل.
+
+تم ربط HE-WLC-2017 بالقارئ الداخلي، وإضافة الاختيار العبري إلى قائمة القراءة، مع إظهار عدم توفر السفر في هذه الطبعة عند طلب سفر غير موجود. كما أزلنا خيارات اليسوعية والعربية المشتركة غير المستوردة من قائمة الترجمات المعروضة. بقيت طبقتا فان دايك وكتاب الحياة كما هما.
+
+لم يحدث أي تغيير على Supabase.
