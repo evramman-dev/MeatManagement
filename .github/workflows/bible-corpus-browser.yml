@@ -35,6 +35,9 @@ jobs:
           npm install --no-save @playwright/test
           npx playwright install chromium
 
+      - name: Verify committed verses against exact source archives
+        run: python3 bible/tools/qa_corpus_samples.py
+
       - name: Serve repository locally
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 --directory . >/tmp/rehla-bible-http.log 2>&1 &
