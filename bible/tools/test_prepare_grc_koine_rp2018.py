@@ -24,6 +24,9 @@ class RobinsonPierpontUnicodeTests(unittest.TestCase):
         unaccented = "εν αρχη ην ο λογοσ"
         self.assertEqual(lexical_tokens(accented), lexical_tokens(unaccented))
         self.assertNotEqual(accented, unaccented)
+        legacy = "πᾶς ὁ ἀγαπῶν 25 V-PAI-3S καὶ τὸν"
+        clean = "πᾶς ὁ ἀγαπῶν καὶ τὸν"
+        self.assertEqual(lexical_tokens(legacy), lexical_tokens(clean))
 
 if __name__ == "__main__":
     unittest.main()
