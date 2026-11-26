@@ -245,3 +245,67 @@ https://github.com/eliranwong/LXX-Rahlfs-1935/blob/master/08_versification/ccat/
 `bible/LXX_NONINITIAL_VERSE_AUDIT.md`
 
 لم يتم تعديل واجهة التطبيق أو Service Worker أو Supabase.
+
+
+## فحص مصادر إعادة الاستخدام والترخيص
+
+تم فحص مصادر Rahlfs الرقمية المتاحة حاليًا بهدف العثور على مصدر يمكن استخدامه لاستعادة الوحدات الأربع دون نسخ نص من مصدر ترخيصه غير مناسب.
+
+### OpenScriptorium
+
+OpenScriptorium يعلن أن Rahlfs Septuagint (1935) ضمن corpus الخاص به مصنف Public Domain، ويوفر تصديرًا باسم `rahlfs-lxx.csv`. كما يوضح أن لكل عمل ترخيصًا مستقلًا وأن بيانات الترخيص مرتبطة بالعمل نفسه.
+
+المصدر:
+https://openscriptorium.org/downloads
+
+المشروع:
+https://github.com/openscriptorium/openscriptorium
+
+النتيجة:
+يصبح OpenScriptorium أقوى مرشح لمصدر إعادة الاستخدام من ناحية الترخيص المعلن حاليًا.
+
+لكننا لن نعتبر هذا وحده إثباتًا نهائيًا لأصل الحقوق في النسخة الرقمية قبل مطابقة النص والمصدر وتسجيل provenance الخاص بالبيانات التي سنستخدمها.
+
+### CrossWire CATSS/SWORD
+
+وحدة LXX في CrossWire تستخدم مصدر CATSS وتعلن حاليًا:
+`Copyrighted; Free non-commercial distribution`.
+
+لذلك لا تصلح كمصدر مباشر لتطبيق نريد أن يبقى قابلًا لإعادة الاستخدام دون قيد تجاري.
+
+المصدر:
+https://www.crosswire.org/sword/copyright/ModInfoCopyright.jsp?modName=LXX
+
+### CenterBLC
+
+مستودع CenterBLC يصف البيانات بأنها Rahlfs 1935 ويذكر أن المصدر المباشر لنسخته هو عمل Eliran Wong، كما أن المستودع نفسه يحمل MIT License.
+
+المصدر:
+https://github.com/CenterBLC/LXX
+
+القرار:
+ترخيص المستودع لا يكفي وحده لإثبات أن النص الموروث من Wong يمكن إعادة توزيعه تحت MIT. لذلك لن نستخدم هذه النسخة كمصدر حقوق مستقل.
+
+### Eliran Wong
+
+المستودع الذي استخدمناه في E-verse هو مصدر رقمي مشتق من Rahlfs ومرتبط ببيانات CATSS. وجود ترخيص للبيانات المشتقة لا يكفي وحده لإثبات حقوق إعادة توزيع النص الأصلي في كل سياق.
+
+المصدر:
+https://github.com/eliranwong/LXX-Rahlfs-1935
+
+## قرار المصدر بعد الفحص
+
+المصدر المرشح لاستعادة الوحدات الأربع هو Rahlfs LXX المنشور ضمن OpenScriptorium بسبب تصنيفه الحالي Public Domain وتوفير التصدير الكامل.
+
+لن نستعمل CrossWire LXX بسبب قيد Free non-commercial distribution.
+
+لن نستعمل CenterBLC أو Eliran Wong كمرجع ترخيص مستقل للنص.
+
+الخطوة التالية هي الحصول على الوحدات الأربع من المصدر المرشح نفسه، ثم مطابقة النص اليوناني حرفيًا مع مواضع:
+
+1. Jeremiah 7:27/28
+2. Daniel 5:26-28
+3. Tobit 9:3-4
+4. Tobit 14:8-9
+
+لن نضيف أي وحدة إلى corpus التطبيق قبل نجاح المطابقة وتسجيل المصدر والترخيص مع كل وحدة.
