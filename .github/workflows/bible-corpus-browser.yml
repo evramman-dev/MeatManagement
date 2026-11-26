@@ -35,6 +35,9 @@ jobs:
           npm install --no-save @playwright/test
           npx playwright install chromium
 
+      - name: Validate Coptic canon catalog counts and order
+        run: python3 bible/tools/qa_coptic_catalog.py
+
       - name: Verify committed verses against exact source archives
         run: python3 bible/tools/qa_corpus_samples.py
 
