@@ -278,9 +278,9 @@ const HEBREW_SOURCE_CODE_TO_ID={
  "MIC":"mic","NAM":"nam","HAB":"hab","ZEP":"zep","HAG":"hag","ZEC":"zec","MAL":"mal"
 };
 const WLC_BOOK_IDS=new Set(Object.values(HEBREW_SOURCE_CODE_TO_ID));
-const LXX_SOURCE_BOOK_IDS=new Set(["GEN","EXO","LEV","NUM","DEU","JOS","JDG","RUT","1SA","2SA","1KI","2KI","1CH","2CH","EZR","JOB","PSA","PRO","ECC","SNG","ISA","JER","LAM","EZK","HOS","JOL","AMO","OBA","JON","MIC","NAM","HAB","ZEP","HAG","ZEC","MAL","TOB","JDT","ESG","WIS","SIR","BAR","LJE","SUS","BEL","1MA","2MA","3MA","4MA","1ES","MAN","DAG"]);
-const LXX_BOOK_ID_MAP={"ESG":"est","DAG":"dan","TOB":"tob","JDT":"jdt","WIS":"wis","SIR":"sir","BAR":"bar","1MA":"1ma","2MA":"2ma"};
-function translationHasBook(id,bookId){if(id==="HE-WLC-2017")return WLC_BOOK_IDS.has(HEBREW_SOURCE_CODE_TO_ID[bookId]||bookId);if(id==="GRC-LXX-BRENTON-1851")return LXX_SOURCE_BOOK_IDS.has(bookId);return !Object.values(DEUTEROCANON_BOOKS).includes(bookId);}
+const LXX_SOURCE_BOOK_IDS=new Set(["GEN","EXO","LEV","NUM","DEU","JOS","JDG","RUT","1SA","2SA","1KI","2KI","1CH","2CH","EZR","JOB","PSA","PRO","ECC","SNG","ISA","JER","LAM","EZK","HOS","JOL","AMO","OBA","JON","MIC","NAM","HAB","ZEP","HAG","ZEC","MAL","EST","DAN","TOB","JDT","ESG","WIS","SIR","BAR","LJE","SUS","BEL","1MA","2MA","3MA","4MA","1ES","MAN","DAG"]);
+const LXX_BOOK_ID_MAP={"ESG":"est","DAG":"dan","EST":"est","DAN":"dan","TOB":"tob","JDT":"jdt","WIS":"wis","SIR":"sir","BAR":"bar","1MA":"1ma","2MA":"2ma"};
+function translationHasBook(id,bookId){if(id==="HE-WLC-2017")return WLC_BOOK_IDS.has(HEBREW_SOURCE_CODE_TO_ID[bookId]||bookId);if(id==="GRC-LXX-BRENTON-1851")return LXX_SOURCE_BOOK_IDS.has(String(bookId).toUpperCase());return !Object.values(DEUTEROCANON_BOOKS).includes(bookId);}
 function renderTranslationChoices(){
  const el=document.getElementById("translationChoices"); if(!el)return;
  el.innerHTML=translationCatalog.map(t=>"<button class='choice' type='button' onclick='toggleTranslation(\""+t.id+"\")'><strong>"+escapeHtml(t.name)+"</strong><small>"+escapeHtml(t.tradition)+" · "+escapeHtml(t.year)+" · "+escapeHtml(t.canon)+"</small></button>").join("");
@@ -413,6 +413,8 @@ async function loadSvdChapter(){
     ?"تم تحميل النص العبري من مخطوطة لينينغراد داخل التطبيق. النص ضمن الملكية العامة."
     :edition==="AR-KEH-2012"
     ?"تم تحميل كتاب الحياة 2012 داخل التطبيق. النص من Biblica بترخيص CC BY-SA 4.0."
+    :edition==="GRC-LXX-BRENTON-1851"
+    ?"تم تحميل النص اليوناني السبعيني من إصدار برنتون 1851. النص ضمن الملكية العامة."
     :"تم تحميل فان دايك 1865 داخل التطبيق. النص ضمن الملكية العامة.";
  }catch(e){
    status.textContent="تعذر تحميل الإصحاح الآن. تحقق من الاتصال ثم حاول مرة أخرى.";
