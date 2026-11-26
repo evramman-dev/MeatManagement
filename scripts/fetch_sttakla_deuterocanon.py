@@ -156,6 +156,7 @@ def parse_showchapter_page(path, book_id, chapter):
                          "text":m.group(2).strip(),"source":"St-Takla.org"})
     return rows
 
+def parse_page(path, book_id, expected_chapters):
     if book_id in ("esther_additions","daniel_additions"):
         expected=list(range(1,expected_chapters+1)) if isinstance(expected_chapters,int) else list(expected_chapters)
         records=[]; qa=[]
@@ -171,7 +172,6 @@ def parse_showchapter_page(path, book_id, chapter):
             qa.append({"chapter":ch,"verses":len(nums),"first_verse":min(nums) if nums else None,
                        "last_verse":max(nums) if nums else None,"duplicates":sorted({n for n in nums if nums.count(n)>1})})
         return records,qa,None
-def parse_page(path, book_id, expected_chapters):
     raw=path.read_bytes()
     candidates=[]
     for enc in ("utf-8","cp1256","iso-8859-6","windows-1252"):
