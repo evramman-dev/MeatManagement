@@ -94,14 +94,26 @@ def main():
         new_text = committed[key]
         if old_text != new_text:
             formatting_changed += 1
-        if lexical_tokens(old_text) != lexical_tokens(new_text):
-            lexical_mismatches.append(key)
-            if len(lexical_mismatches) >= 20:
+        old_tokens = lexical_tokens(old_text)
+        new_tokens = lexical_tokens(new_text)
+        if old_tokens != new_tokens:
+            lexical_mismatches.append({
+                "key": key,
+                "previous_text": old_text,
+                "official_byztxt_text": new_text,
+                "previous_tokens": old_tokens,
+                "official_tokens": new_tokens,
+            })
+            if len(lexical_mismatches) >= 30:
                 break
     if lexical_mismatches:
+        print(json.dumps({
+            "lexical_mismatch_count_sample": len(lexical_mismatches),
+            "first_mismatches": lexical_mismatches,
+            "records_with_typographic_changes": formatting_changed,
+        }, ensure_ascii=False, indent=2))
         raise AssertionError(
-            "Greek word-sequence differences versus the existing eBible RP2018 corpus; first keys: "
-            + repr(lexical_mismatches)
+            "Greek word-sequence differences versus the existing eBible RP2018 corpus require manual review"
         )
 
     audit_path = DATA / "grc-koine-rp-2018_audit.json"
