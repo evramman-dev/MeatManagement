@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Prepare the public-domain Hebrew text of the Westminster Leningrad Codex."""
 from __future__ import annotations
-import argparse, gzip, hashlib, json, urllib.request, zipfile, io
+import argparse, gzip, hashlib, json, re, urllib.request, zipfile, io
 from collections import defaultdict
 from pathlib import Path
 import sys
@@ -60,7 +60,7 @@ def parse_archive(data):
     missing=sorted(set(OT_BOOKS.values())-{r["book_id"] for r in rows})
     if missing:
         raise RuntimeError("WLC source is missing expected Masoretic books: "+", ".join(missing))
-    rows.sort(key=lambda r:(list(OT_BOOKS.values()).index(r["book_id"]),r["chapter"],r["verse"]))
+    rows.sort(key=lambda r:(list(OT_BOOKS.values()).index(r["book_id"]),r["chapter"],int(re.match(r"\\d+",r["verse"]).group()) if re.match(r"\\d+",r["verse"]) else 0,r["verse"]))
     return rows,coverage
 
 def main():
