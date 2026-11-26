@@ -41,6 +41,7 @@ PROTESTANT_BOOKS = {
 BOUNDARY = re.compile(r"\\(id|c|v)\s+([^\s]+)")
 FOOTNOTE = re.compile(r"\\(?:f|x)\s.*?\\(?:f|x)\*", re.S)
 MARKER = re.compile(r"\\\+?[A-Za-z][A-Za-z0-9]*\*?")
+WORD_SPAN = re.compile(r"\\\+?w\s+([^|\\]+)(?:\|[^\\]*)?\\\+?w\*")
 SPACE = re.compile(r"\s+")
 
 
