@@ -82,7 +82,7 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 <body>
 <div class="app">
 <header>
-  <div class="brand">رِحلة</div><div class="version">الإصدار v18 · القطمارس</div>
+  <div class="brand">رِحلة</div><div class="version">الإصدار v19 · القطمارس</div>
   <h1 id="title" class="home-title">أنت داخل التطبيق النهارده ليه؟</h1>
   <p id="subtitle" class="home-title">ابدأ من حالتك، ثم اترك للكلمة مساحة.</p>
 </header>
@@ -359,32 +359,50 @@ const COPTIC_READINGS_API="https://api.coptic.io/api/readings";
 const COPTIC_CALENDAR_API="https://api.coptic.io/api/calendar";
 const COPTIC_CACHE_PREFIX="rehla.copticReadings.";
 const arabicReadingBooks={"1 Thessalonians":"تسالونيكي الأولى","2 Thessalonians":"تسالونيكي الثانية","1 Corinthians":"كورنثوس الأولى","2 Corinthians":"كورنثوس الثانية","1 Timothy":"تيموثاوس الأولى","2 Timothy":"تيموثاوس الثانية","1 Peter":"بطرس الأولى","2 Peter":"بطرس الثانية","1 John":"يوحنا الأولى","2 John":"يوحنا الثانية","3 John":"يوحنا الثالثة","1 Samuel":"صموئيل الأول","2 Samuel":"صموئيل الثاني","1 Kings":"الملوك الأول","2 Kings":"الملوك الثاني","1 Chronicles":"أخبار الأيام الأول","2 Chronicles":"أخبار الأيام الثاني","Psalms":"مزمور","Proverbs":"الأمثال","Ecclesiastes":"الجامعة","Song of Solomon":"نشيد الأنشاد","Matthew":"متى","Mark":"مرقس","Luke":"لوقا","John":"يوحنا","Acts":"أعمال الرسل","Romans":"رومية","Galatians":"غلاطية","Ephesians":"أفسس","Philippians":"فيلبي","Colossians":"كولوسي","Hebrews":"العبرانيين","James":"يعقوب","Jude":"يهوذا","Isaiah":"إشعياء","Jeremiah":"إرميا","Ezekiel":"حزقيال","Daniel":"دانيال","Genesis":"التكوين","Exodus":"الخروج","Leviticus":"اللاويين","Numbers":"العدد","Deuteronomy":"التثنية","Joshua":"يشوع","Judges":"القضاة","Ruth":"راعوث","Ezra":"عزرا","Nehemiah":"نحميا","Esther":"أستير","Job":"أيوب"};
+function normalizeReadingDigits(value){
+ return String(value||"").replace(/[٠-٩]/g,d=>String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace(/[۰-۹]/g,d=>String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)));
+}
 function readingReferenceParts(reference){
- const raw=String(reference||"").replace(/[–—]/g,"-").replace(/[؛]/g,";").trim();
+ const raw=normalizeReadingDigits(String(reference||"")).replace(/[–—−]/g,"-").replace(/[؛]/g,";").replace(/\s+/g," ").trim();
  const chunks=raw.split(/\s*(?:&|\band\b)\s*/i).map(x=>x.trim()).filter(Boolean);
  const out=[];
+ const pushSpec=(book,chapter,spec,continuation)=>{
+  const value=String(spec||"").trim().replace(/\s+/g,"");
+  if(!value)return;
+  const cross=value.match(/^(\d+)\s*-\s*(\d+)\s*:\s*(\d+)$/);
+  if(cross){
+   out.push({sourceBook:book,book:arabicReadingBooks[book]||book,chapter:Number(chapter),start:Number(cross[1]),end:null,endChapter:Number(cross[2]),endVerse:Number(cross[3]),continuation:!!continuation});
+   return;
+  }
+  const range=value.match(/^(\d+)(?:\s*-\s*(\d+))?$/);
+  if(range)out.push({sourceBook:book,book:arabicReadingBooks[book]||book,chapter:Number(chapter),start:Number(range[1]),end:range[2]?Number(range[2]):null,endChapter:null,endVerse:null,continuation:!!continuation});
+ };
  chunks.forEach(chunk=>{
   let currentBook="",currentChapter=null;
-  const tokens=chunk.split(/\s*;\s*/).map(x=>x.trim()).filter(Boolean);
+  const tokens=chunk.split(/\s*[;]\s*/).map(x=>x.trim()).filter(Boolean);
   tokens.forEach(token=>{
-   let m=token.match(/^(.+?)\s+(\d+)\s*[:.]\s*(\d+(?:\s*-\s*\d+)?)$/);
+   let m=token.match(/^(.+?)\s+(\d+)\s*[:.]\s*(\d+)\s*-\s*(\d+)\s*[:.]\s*(\d+)$/);
    if(m){
-    currentBook=m[1].trim();
-    currentChapter=Number(m[2]);
-    const vm=m[3].match(/^(\d+)(?:\s*-\s*(\d+))?$/);
-    if(vm)out.push({sourceBook:currentBook,book:arabicReadingBooks[currentBook]||currentBook,chapter:currentChapter,start:Number(vm[1]),end:vm[2]?Number(vm[2]):null,continuation:false});
+    currentBook=m[1].trim();currentChapter=Number(m[2]);
+    pushSpec(currentBook,currentChapter,m[3]+"-"+m[4]+":"+m[5],false);
     return;
    }
-   m=token.match(/^(\d+)(?:\s*-\s*(\d+))?$/);
-   if(m&&currentBook&&currentChapter!=null){
-    out.push({sourceBook:currentBook,book:arabicReadingBooks[currentBook]||currentBook,chapter:currentChapter,start:Number(m[1]),end:m[2]?Number(m[2]):null,continuation:true});
+   m=token.match(/^(.+?)\s+(\d+)\s*[:.]\s*(.+)$/);
+   if(m){
+    currentBook=m[1].trim();currentChapter=Number(m[2]);
+    const specs=m[3].split(/\s*[،,]\s*/).map(x=>x.trim()).filter(Boolean);
+    specs.forEach(spec=>pushSpec(currentBook,currentChapter,spec,false));
     return;
    }
    m=token.match(/^(.+?)\s+(\d+)$/);
    if(m){
-    currentBook=m[1].trim();
-    currentChapter=Number(m[2]);
-    out.push({sourceBook:currentBook,book:arabicReadingBooks[currentBook]||currentBook,chapter:currentChapter,start:null,end:null,continuation:false});
+    currentBook=m[1].trim();currentChapter=Number(m[2]);
+    out.push({sourceBook:currentBook,book:arabicReadingBooks[currentBook]||currentBook,chapter:currentChapter,start:null,end:null,endChapter:null,endVerse:null,continuation:false});
+    return;
+   }
+   if(currentBook&&currentChapter!=null){
+    const specs=token.split(/\s*[،,]\s*/).map(x=>x.trim()).filter(Boolean);
+    specs.forEach(spec=>pushSpec(currentBook,currentChapter,spec,true));
    }
   });
  });
@@ -392,18 +410,28 @@ function readingReferenceParts(reference){
 }
 function formatReadingReference(reference){
  const parts=readingReferenceParts(reference);
- if(!parts.length)return String(reference||"").replace(/;/g,"؛");
- let last=null;
- return parts.map((p,i)=>{
-  const range=p.start==null?String(p.chapter):p.start+(p.end!=null?"-"+p.end:"");
-  let value;
-  if(i&&last&&last.book===p.book&&last.chapter===p.chapter)value=range;
-  else value=p.book+" "+p.chapter+(p.start!=null?": "+range:"");
-  last=p;
-  return value;
+ if(!parts.length)return normalizeReadingDigits(String(reference||"")).replace(/;/g,"؛");
+ const groups=[];
+ parts.forEach(p=>{
+  const last=groups[groups.length-1];
+  if(last&&last.book===p.book&&last.chapter===p.chapter&&!p.endChapter&&last.items.every(x=>!x.endChapter)){
+   last.items.push(p);
+  }else groups.push({book:p.book,chapter:p.chapter,items:[p]});
+ });
+ return groups.map(group=>{
+  const items=group.items;
+  const renderPart=p=>p.start==null
+   ?String(p.chapter)
+   :(p.endChapter?String(p.start)+"-"+String(p.endChapter)+":"+String(p.endVerse):(String(p.start)+(p.end!=null?"-"+String(p.end):"")));
+  const allSingles=items.length>1&&items.every(p=>p.start!=null&&p.end==null&&!p.endChapter);
+  const body=allSingles?items.map(renderPart).join("، "):items.map(renderPart).join("؛ ");
+  return group.book+" "+group.chapter+(items[0].start!=null?": "+body:"");
  }).join("؛ ");
 }
-function readingBookForParser(book){return book==="مزمور"?"مزامير":book}
+function readingBookForParser(book){
+ const value=String(book||"").trim();
+ return value==="مزمور"||value==="مزامير"?"مزامير":value;
+}
 const readingGroups=[
  {title:"عشية",keys:[["VPsalm","مزمور"],["VGospel","إنجيل"]],icon:"ع"},
  {title:"باكر",keys:[["MPsalm","مزمور"],["MGospel","إنجيل"]],icon:"ب"},
@@ -426,18 +454,36 @@ function readingRowsHtml(readings){
  }).join("")||"<p class='note'>لا توجد مراجع متاحة لهذا اليوم.</p>";
 }
 function splitReadingReferences(raw){
- const parts=readingReferenceParts(raw);
- return parts.map(p=>{
-  const ref=p.sourceBook+" "+p.chapter+(p.start!=null?": "+p.start+(p.end!=null?"-"+p.end:""):"");
-  return ref;
- }).filter(Boolean);
+ return readingReferenceParts(raw);
 }
 function parseReadingReferencePart(raw){
- const part=readingReferenceParts(raw)[0];
+ const part=raw&&typeof raw==="object"?raw:readingReferenceParts(raw)[0];
  if(!part)return null;
- const p=parseChapterReference(readingBookForParser(part.book)+" "+part.chapter);
+ const p=parseChapterReference(readingBookForParser(part.sourceBook||part.book)+" "+part.chapter);
  if(!p)return null;
- return {book:part.book,bookCode:p.bookCode,chapter:part.chapter,startVerse:part.start,endVerse:part.end,display:formatReadingReference(raw)};
+ return {
+  book:part.book,
+  bookCode:p.bookCode,
+  chapter:Number(part.chapter),
+  startVerse:part.start==null?null:Number(part.start),
+  endVerse:part.end==null?null:Number(part.end),
+  endChapter:part.endChapter==null?null:Number(part.endChapter),
+  endChapterVerse:part.endVerse==null?null:Number(part.endVerse),
+  display:formatReadingReference(part.sourceBook+" "+part.chapter+(part.start!=null?": "+part.start+(part.end!=null?"-"+part.end:"")+(part.endChapter? "-" + part.endChapter+":"+part.endVerse:""):""))
+ };
+}
+async function loadReadingPartVerses(edition,part){
+ const chapters=[];
+ const first=Number(part.chapter),last=part.endChapter?Number(part.endChapter):first;
+ for(let chapter=first;chapter<=last;chapter++){
+  const sourceBookId=edition==="HE-WLC-2017"?(HEBREW_SOURCE_CODE_TO_ID[part.bookCode]||part.bookCode):edition==="GRC-LXX-BRENTON-1851"?(LXX_BOOK_ID_MAP[part.bookCode]||part.bookCode.toLowerCase()):edition==="GRC-KOINE-RP-2018"?part.bookCode.toLowerCase():part.bookCode;
+  let verses=await loadTranslationChapter(edition,sourceBookId,chapter);
+  if(chapter===first&&part.startVerse!=null)verses=verses.filter(v=>Number(v.verse)>=part.startVerse);
+  if(chapter===last&&part.endChapter)verses=verses.filter(v=>Number(v.verse)<=part.endChapterVerse);
+  else if(chapter===last&&part.endVerse!=null)verses=verses.filter(v=>Number(v.verse)<=part.endVerse);
+  chapters.push({chapter,verses});
+ }
+ return chapters;
 }
 async function openReadingReference(raw,label){
  const modal=document.getElementById("readingTextModal"),content=document.getElementById("readingTextContent");
@@ -452,14 +498,12 @@ async function openReadingReference(raw,label){
  document.getElementById("readingTextContent").className="reading-text reader-font-"+readerSelection.font;
  try{await ensureReaderCorpus()}catch(e){content.innerHTML="<p class='note'>تعذر تحميل الترجمة الآن.</p>";return}
  for(const part of parts){
-   if(!translationHasBook(edition,part.bookCode)){blocks.push("<div class='card'><div class='eyebrow'>"+escapeHtml(part.book)+" "+part.chapter+"</div><p class='note'>السفر غير متوفر في "+escapeHtml(editionInfo?editionInfo.name:edition)+" ولن نستبدل النص بترجمة أخرى.</p></div>");continue}
-   const sourceBookId=edition==="HE-WLC-2017"?(HEBREW_SOURCE_CODE_TO_ID[part.bookCode]||part.bookCode):edition==="GRC-LXX-BRENTON-1851"?(LXX_BOOK_ID_MAP[part.bookCode]||part.bookCode.toLowerCase()):edition==="GRC-KOINE-RP-2018"?part.bookCode.toLowerCase():part.bookCode;
-   try{
-     let verses=await loadTranslationChapter(edition,sourceBookId,part.chapter);
-     if(part.startVerse!=null)verses=verses.filter(v=>Number(v.verse)>=part.startVerse&&(part.endVerse==null||Number(v.verse)<=part.endVerse));
-     if(readerSelection.mode==="paragraphs")await refreshReaderSectionHeadings(part.bookCode,part.chapter);
-     blocks.push("<div class='card'><div class='eyebrow'>"+escapeHtml(part.book)+" "+part.chapter+(part.startVerse!=null?":"+part.startVerse+(part.endVerse!=null?"-"+part.endVerse:""):"")+"</div>"+(verses.length?renderVerseMarkup(verses,edition==="HE-WLC-2017"?"he":(edition==="GRC-LXX-BRENTON-1851"||edition==="GRC-KOINE-RP-2018")?"grc":"ar",readerSelection.mode):"<p class='note'>لا توجد آيات مطابقة لهذا المرجع في هذه الطبعة.</p>")+"</div>");
-   }catch(e){blocks.push("<p class='note'>تعذر تحميل هذا الجزء من القراءة.</p>")}
+  if(!translationHasBook(edition,part.bookCode)){blocks.push("<div class='card'><div class='eyebrow'>"+escapeHtml(part.book)+"</div><p class='note'>السفر غير متوفر في "+escapeHtml(editionInfo?editionInfo.name:edition)+" ولن نستبدل النص بترجمة أخرى.</p></div>");continue}
+  try{
+   const chapterBlocks=await loadReadingPartVerses(edition,part);
+   const textBlocks=chapterBlocks.map(x=>"<div class='reading-chapter-label'>الفصل "+x.chapter+"</div>"+x.verses.map(v=>"<p class='reading-verse' lang='ar' dir='rtl'><span class='reading-verse-number'>"+escapeHtml(v.verse)+"</span>"+escapeHtml(v.text).replace(/¶/g," ")+"</p>").join("")).join("");
+   blocks.push("<div class='card'><div class='eyebrow'>"+escapeHtml(formatReadingReference(part.display||part.book+" "+part.chapter))+"</div>"+(textBlocks||"<p class='note'>لا توجد آيات مطابقة لهذا المرجع في هذه الطبعة.</p>")+"</div>");
+  }catch(e){blocks.push("<p class='note'>تعذر تحميل هذا الجزء من القراءة.</p>")}
  }
  content.innerHTML=blocks.join("")||"<p class='note'>لا يوجد نص متاح.</p>";
 }
@@ -514,23 +558,24 @@ async function renderCopticReadingText(readings){
    let verseHtml="";
    for(const part of parts){
     if(!translationHasBook(edition,part.bookCode)){verseHtml+="<p class='note'>السفر "+escapeHtml(part.book)+" غير متوفر في "+escapeHtml(editionInfo?editionInfo.name:edition)+".</p>";continue}
-    const sourceBookId=edition==="HE-WLC-2017"?(HEBREW_SOURCE_CODE_TO_ID[part.bookCode]||part.bookCode):edition==="GRC-LXX-BRENTON-1851"?(LXX_BOOK_ID_MAP[part.bookCode]||part.bookCode.toLowerCase()):edition==="GRC-KOINE-RP-2018"?part.bookCode.toLowerCase():part.bookCode;
     try{
-     let verses=await loadTranslationChapter(edition,sourceBookId,part.chapter);
-     if(part.startVerse!=null)verses=verses.filter(v=>Number(v.verse)>=part.startVerse&&(part.endVerse==null||Number(v.verse)<=part.endVerse));
-     verseHtml+=verses.map(v=>"<p class='reading-verse' lang='ar' dir='rtl'><span class='reading-verse-number'>"+escapeHtml(v.verse)+"</span>"+escapeHtml(v.text).replace(/¶/g," ")+"</p>").join("");
+     const chapterBlocks=await loadReadingPartVerses(edition,part);
+     verseHtml+=chapterBlocks.map(block=>"<div class='reading-chapter-label'>الفصل "+block.chapter+"</div>"+block.verses.map(v=>"<p class='reading-verse' lang='ar' dir='rtl'><span class='reading-verse-number'>"+escapeHtml(v.verse)+"</span>"+escapeHtml(v.text).replace(/¶/g," ")+"</p>").join("")).join("");
     }catch(e){verseHtml+="<p class='note'>تعذر تحميل هذا الجزء من القراءة.</p>"}
    }
    const firstPart=parts[0];
-   const intro=item.key.endsWith("Gospel")?copticReadingIntro(item.key,firstPart):copticReadingIntro(item.key,firstPart);
-   sections.push("<article class='liturgical-reading' id='lit-"+escapeHtml(item.key)+"'><div class='liturgical-reading-head'><h3>"+escapeHtml(title)+"</h3><button class='secondary reading-back-button' type='button' data-reading-back='copticReadingRows'>العودة إلى كارت القراءات</button></div><div class='reading-ref-line'>"+escapeHtml(item.text)+"</div><div class='reading-rubric'>"+escapeHtml(intro)+"</div>"+(verseHtml||"<p class='note'>لا يوجد نص متاح لهذا الشاهد.</p>")+(item.key.endsWith("Gospel")?"<div class='reading-rubric'>"+escapeHtml(copticGospelTextIntro())+"</div>":"")+"<div class='reading-ending'>"+escapeHtml(copticReadingEnding(item.key))+"</div></article>");
+   const intro=copticReadingIntro(item.key,firstPart);
+   const gospelOpening=item.key.endsWith("Gospel")?"<div class='reading-preamble'>"+escapeHtml(copticReadingIntro(item.key,firstPart))+"</div>":"";
+   const firstRubric=item.key.endsWith("Gospel")?gospelOpening:"<div class='reading-rubric'>"+escapeHtml(intro)+"</div>";
+   sections.push("<article class='liturgical-reading' id='lit-"+escapeHtml(item.key)+"'><div class='liturgical-reading-head'><h3>"+escapeHtml(title)+"</h3><button class='secondary reading-back-button' type='button' data-reading-back='copticReadingRows'>العودة إلى كارت القراءات</button></div><div class='reading-ref-line'>"+escapeHtml(item.text)+"</div>"+firstRubric+(verseHtml||"<p class='note'>لا يوجد نص متاح لهذا الشاهد.</p>")+(item.key.endsWith("Gospel")?"<div class='reading-rubric'>"+escapeHtml(copticGospelTextIntro())+"</div>":"")+"<div class='reading-ending'>"+escapeHtml(copticReadingEnding(item.key))+"</div></article>");
   }
  }
  host.innerHTML=sections.join("");
  host.querySelectorAll(".liturgical-reading").forEach(el=>el.classList.add("reader-font-"+readerSelection.font));
  document.querySelectorAll("[data-reading-target]").forEach(button=>button.onclick=()=>document.getElementById(button.dataset.readingTarget)?.scrollIntoView({behavior:"smooth",block:"start"}));
  document.querySelectorAll("[data-reading-back]").forEach(button=>button.onclick=()=>document.getElementById(button.dataset.readingBack)?.scrollIntoView({behavior:"smooth",block:"start"}));
-}async function loadCopticReadings(){
+}
+async function loadCopticReadings(){
  const now=new Date(),isNextLiturgicalDay=now.getHours()>=17,targetDate=new Date(now.getFullYear(),now.getMonth(),now.getDate()+(isNextLiturgicalDay?1:0),12,0,0),dateKey=localDateKey(targetDate),readingCacheKey=COPTIC_CACHE_PREFIX+dateKey,calendarCacheKey=COPTIC_CACHE_PREFIX+"calendar."+dateKey,dateText=new Intl.DateTimeFormat("ar-EG",{weekday:"long",day:"numeric",month:"long"}).format(targetDate);
  const dayTitle=isNextLiturgicalDay?"قراءات الغد":"قراءات اليوم";
  const dayNotice=isNextLiturgicalDay?"بعد الساعة الخامسة مساءً يبدأ عرض قراءات اليوم الكنسي التالي، وترتيبها: عشية ثم باكر ثم القداس الإلهي.":"ترتيب قراءات اليوم الكنسي: عشية ثم باكر ثم القداس الإلهي.";
@@ -748,30 +793,24 @@ function renderVerseMarkup(verses,language,mode){
  const lang=language==="he"?"he":language==="grc"?"grc":"ar",dir=(language==="grc"||language==="en")?"ltr":"rtl";
  if(mode==="paragraphs"){
   const paragraphs=[],heads=currentReaderSectionHeadings||[];
-  let current="",verseKeys=[],paragraphIndex=0,currentTitle="";
+  let current="",currentTitle="";
   const pushParagraph=()=>{
    if(!current)return;
-   paragraphIndex++;
-   const key=verseKeys[0]||"";
-   const title=currentTitle||"";
-   paragraphs.push("<section class='reader-paragraph-block'>"+(title?"<h4 class='reader-paragraph-title'>"+escapeHtml(title)+"</h4>":"")+"<p class='reader-paragraph' tabindex='0' role='button' data-reader-verse='"+escapeHtml(key)+"'>"+current+"</p></section>");
-   current="";verseKeys=[];
+   paragraphs.push("<section class='reader-paragraph-block'>"+(currentTitle?"<h4 class='reader-paragraph-title'>"+escapeHtml(currentTitle)+"</h4>":"")+"<div class='reader-paragraph'>"+current+"</div></section>");
+   current="";
   };
   const appendVerse=(v,clean)=>{
    const mark=getVerseMark(readerVerseKey(v)),key=readerVerseKey(v);
    const number="<span class='reader-verse-number' dir='"+dir+"'>"+escapeHtml(v.verse)+"</span>";
    const text="<span class='reader-verse-text"+(mark.highlight?" reader-highlight-"+mark.highlight:"")+"' lang='"+lang+"' dir='"+dir+"'>"+escapeHtml(clean)+"</span>";
-   current+=number+text;verseKeys.push(key);
+   current+="<span class='reader-verse-unit' tabindex='0' role='button' data-reader-verse='"+escapeHtml(key)+"' aria-label='الآية "+escapeHtml(v.verse)+"'>"+number+text+"</span> ";
   };
   verses.forEach(v=>{
    const chunks=String(v.text||"").split("¶");
    chunks.forEach((chunk,i)=>{
     const clean=String(chunk||"").trim();if(!clean)return;
     const boundary=heads.find(h=>Number(h.verse)===Number(v.verse)&&i===0);
-    if(boundary){
-     if(current)pushParagraph();
-     currentTitle=boundary.title;
-    }
+    if(boundary){pushParagraph();currentTitle=boundary.title}
     appendVerse(v,clean);
     if(i<chunks.length-1)pushParagraph();
    });
@@ -781,8 +820,20 @@ function renderVerseMarkup(verses,language,mode){
  }
  return verses.map(v=>{const mark=getVerseMark(readerVerseKey(v)),number="<span class='reader-verse-number' dir='"+dir+"'>"+escapeHtml(v.verse)+"</span>",text="<span class='reader-verse-text"+(mark.highlight?" reader-highlight-"+mark.highlight:"")+"' lang='"+lang+"' dir='"+dir+"'>"+escapeHtml(v.text).replace(/¶/g,"<br>")+"</span>",controls=readerVerseControls(v);return "<div class='reader-verse' data-reader-verse='"+escapeHtml(readerVerseKey(v))+"'>"+number+text+controls+"</div>"}).join("")
 }
-function bindReaderVerseActions(){const root=document.getElementById("chapterContent");if(!root)return;root.querySelectorAll("[data-reader-bookmark]").forEach(b=>b.addEventListener("click",()=>toggleReaderBookmark(b.dataset.readerBookmark)));root.querySelectorAll("[data-reader-highlight]").forEach(b=>b.addEventListener("click",()=>setReaderHighlight(b.dataset.readerHighlight,b.dataset.color)));root.querySelectorAll("[data-reader-highlight-clear]").forEach(b=>b.addEventListener("click",()=>setReaderHighlight(b.dataset.readerHighlightClear,null)));root.querySelectorAll("[data-reader-highlight-toggle]").forEach(b=>b.addEventListener("click",()=>{const p=b.closest("[data-reader-verse]"),palette=p?.querySelector(".reader-highlight-palette");if(palette)palette.style.display=palette.style.display==="none"?"flex":"none"}));root.querySelectorAll(".reader-paragraph[data-reader-verse]").forEach(p=>{p.addEventListener("click",()=>{const t=p.querySelector(".reader-verse-text");openVerseActionModal(p.dataset.readerVerse,t?.textContent||"")});p.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();const t=p.querySelector(".reader-verse-text");openVerseActionModal(p.dataset.readerVerse,t?.textContent||"")}})});root.querySelectorAll(".reader-paragraph .reader-verse-text[data-reader-verse]").forEach(v=>{v.addEventListener("click",e=>{e.stopPropagation();openVerseActionModal(v.dataset.readerVerse,v.textContent||"")})})}
-function renderCurrentReader(){const content=document.getElementById("chapterContent");if(!content||!currentReaderVerses.length)return;content.className="reader-font-"+readerSelection.font;content.innerHTML=renderVerseMarkup(currentReaderVerses,currentReaderLanguage,readerSelection.mode);bindReaderVerseActions()}let readerResumeScrollY=0;let activeVerseActionKey=null;
+function bindReaderVerseActions(){
+ const root=document.getElementById("chapterContent");if(!root)return;
+ root.querySelectorAll("[data-reader-bookmark]").forEach(b=>b.addEventListener("click",e=>{e.stopPropagation();toggleReaderBookmark(b.dataset.readerBookmark)}));
+ root.querySelectorAll("[data-reader-highlight]").forEach(b=>b.addEventListener("click",e=>{e.stopPropagation();setReaderHighlight(b.dataset.readerHighlight,b.dataset.color)}));
+ root.querySelectorAll("[data-reader-highlight-clear]").forEach(b=>b.addEventListener("click",e=>{e.stopPropagation();setReaderHighlight(b.dataset.readerHighlightClear,null)}));
+ root.querySelectorAll("[data-reader-highlight-toggle]").forEach(b=>b.addEventListener("click",e=>{e.stopPropagation();const p=b.closest("[data-reader-verse]"),palette=p?.querySelector(".reader-highlight-palette");if(palette)palette.style.display=palette.style.display==="none"?"flex":"none"}));
+ root.querySelectorAll(".reader-verse-unit[data-reader-verse]").forEach(v=>{
+  const open=()=>openVerseActionModal(v.dataset.readerVerse,v.querySelector(".reader-verse-text")?.textContent||"");
+  v.addEventListener("click",e=>{e.stopPropagation();open()});
+  v.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();e.stopPropagation();open()}});
+ });
+}
+function renderCurrentReader(){const content=document.getElementById("chapterContent");if(!content||!currentReaderVerses.length)return;content.className="reader-font-"+readerSelection.font;content.innerHTML=renderVerseMarkup(currentReaderVerses,currentReaderLanguage,readerSelection.mode);bindReaderVerseActions()}
+let readerResumeScrollY=0;let activeVerseActionKey=null;
 function openVerseActionModal(key,text){const modal=document.getElementById("verseActionModal"),mark=getVerseMark(key);activeVerseActionKey=key;readerResumeScrollY=window.scrollY||document.documentElement.scrollTop||0;document.getElementById("verseActionTitle").textContent="الآية "+String(key).split("|").pop();document.getElementById("verseActionText").textContent=text;document.getElementById("verseActionMeta").textContent="العلامة المرجعية والتلوين يحفظان على هذا الجهاز.";document.getElementById("verseActionButtons").innerHTML="<button type='button' class='secondary "+(mark.bookmark?"reader-bookmark-on":"")+"' id='verseModalBookmark'>"+(mark.bookmark?"★ علامة محفوظة":"☆ إضافة إشارة")+"</button><button type='button' class='secondary' id='verseModalHighlight'>"+(mark.highlight?"تغيير التحديد":"تلوين النص")+"</button>";document.getElementById("verseActionPalette").classList.toggle("hidden",!mark.highlight&&false);document.getElementById("verseActionPalette").style.display=mark.highlight?"flex":"none";document.getElementById("verseActionCancelHighlight").classList.toggle("hidden",!mark.highlight);document.getElementById("verseActionModal").classList.remove("hidden");document.getElementById("verseActionModal").setAttribute("aria-hidden","false");document.getElementById("verseActionText").className="verse-action-text reader-font-"+readerSelection.font;document.getElementById("verseActionText").innerHTML=escapeHtml(text).replace(/¶/g,"<br>");document.getElementById("verseActionText").classList.toggle("reader-highlight-"+mark.highlight,!!mark.highlight);document.getElementById("verseModalBookmark").onclick=()=>{toggleReaderBookmark(key);openVerseActionModal(key,text)};document.getElementById("verseModalHighlight").onclick=()=>{const p=document.getElementById("verseActionPalette");p.style.display=p.style.display==="none"?"flex":"none"};document.getElementById("verseActionCancelHighlight").onclick=()=>{setReaderHighlight(key,null);openVerseActionModal(key,text)}}
 function closeVerseActionModal(){const modal=document.getElementById("verseActionModal");modal.classList.add("hidden");modal.setAttribute("aria-hidden","true");activeVerseActionKey=null;requestAnimationFrame(()=>window.scrollTo({top:readerResumeScrollY,behavior:"instant"}))}
 function bindVerseActionModal(){document.getElementById("verseActionDone").addEventListener("click",closeVerseActionModal);document.getElementById("verseActionClose").addEventListener("click",closeVerseActionModal);document.getElementById("verseActionModal").addEventListener("click",e=>{if(e.target.id==="verseActionModal")closeVerseActionModal()});document.querySelectorAll("[data-modal-highlight]").forEach(b=>b.addEventListener("click",()=>{if(!activeVerseActionKey)return;const text=document.getElementById("verseActionText").textContent;setReaderHighlight(activeVerseActionKey,b.dataset.modalHighlight);openVerseActionModal(activeVerseActionKey,text)}))}
@@ -799,8 +850,18 @@ const STTAKLA_BOOK_MAP={
  "2TI":65,TIT:66,PHM:67,HEB:68,JAS:69,"1PE":70,"2PE":71,
  "1JN":72,"2JN":73,"3JN":74,JUD:75,REV:76
 };
+const VERIFIED_SVD_SECTION_HEADINGS={
+ GEN:{
+  2:[
+   {verse:1,title:"تابع: البدء"},
+   {verse:4,title:"آدم وحواء"}
+  ]
+ }
+};
 async function loadReaderSectionHeadings(bookCode,chapter){
  if(readerSelection.translation!=="AR-SVD-1865")return [];
+ const verified=VERIFIED_SVD_SECTION_HEADINGS[bookCode]?.[Number(chapter)];
+ if(verified)return verified.map(x=>Object.assign({},x));
  const st=STTAKLA_BOOK_MAP[bookCode];if(!st)return [];
  try{
   const res=await fetch("https://st-takla.org/Bibles/BibleSearch/showChapter.php?book="+st+"&chapter="+chapter);
@@ -808,17 +869,18 @@ async function loadReaderSectionHeadings(bookCode,chapter){
   const html=await res.text();
   const doc=new DOMParser().parseFromString(html,"text/html");
   const result=[];
-  Array.from(doc.querySelectorAll("h2")).forEach(h=>{
+  Array.from(doc.querySelectorAll("h2,h3,h4,h5,h6")).forEach(h=>{
    const title=(h.textContent||"").replace(/\s+/g," ").trim();
-   if(!title||/Gospel of|إنجيل|رسالة|سفر/.test(title))return;
+   if(!title||/Gospel of|إنجيل|رسالة|^سفر\s/.test(title))return;
    let el=h.nextElementSibling,verse=null;
-   for(let j=0;el&&j<40;j++,el=el.nextElementSibling){
-    const n=(el.textContent||"").trim().match(/^([0-9]{1,3})$/);
+   for(let j=0;el&&j<60;j++,el=el.nextElementSibling){
+    const text=(el.textContent||"").replace(/\s+/g," ").trim();
+    const n=text.match(/^(\d{1,3})$/);
     if(n){verse=Number(n[1]);break}
    }
    if(verse!=null)result.push({verse,title});
   });
-  return result;
+  return normalizeReaderSectionHeadings(result);
  }catch(e){return []}
 }
 function normalizeReaderSectionHeadings(headings){
