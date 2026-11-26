@@ -150,7 +150,7 @@ def parse_showchapter_page(path, book_id, chapter):
     lines=strip_html(read_html(path))
     rows=[]
     for line in lines:
-        m=re.match(r"^(\d+)\\s+(.+)$",line)
+        m=re.match(r"^(\d+)\s+(.+)$",line)
         if m and len(m.group(2).strip())>1:
             rows.append({"book_id":book_id,"chapter":chapter,"verse":int(m.group(1)),
                          "text":m.group(2).strip(),"source":"St-Takla.org"})
