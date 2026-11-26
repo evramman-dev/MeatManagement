@@ -41,7 +41,7 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 .reader-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 .reader-modal{position:fixed;inset:0;background:#17251f66;z-index:20;display:flex;align-items:flex-end;justify-content:center}
 .reader-modal.hidden{display:none!important}
-.reader-sheet{width:min(620px,100%);max-height:88vh;background:var(--card);border-radius:24px 24px 0 0;padding:18px 16px 24px;box-shadow:0 -18px 40px #17251f22}
+.reader-sheet{width:min(620px,100%);max-height:88vh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;background:var(--card);border-radius:24px 24px 0 0;padding:18px 16px 24px;box-shadow:0 -18px 40px #17251f22}
 .reader-sheet-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .reader-sheet-head h2{margin:0}.reader-close{background:transparent;color:var(--muted);font-size:24px;padding:2px 8px}
 .reader-options{overscroll-behavior:contain}
@@ -54,6 +54,24 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 .reading-text{line-height:2.05;font-size:18px}.reading-text .verse-card{padding:13px 0}
 .reading-text .verse-card strong{color:var(--gold)}
 .reading-meta{background:var(--soft);border-radius:15px;padding:10px 12px;margin:10px 0;font-size:12px;color:var(--muted)}
+.coptic-reading-page{padding-bottom:30px}
+.coptic-reading-page .reading-date-main{font-size:15px;font-weight:700;margin-top:8px}
+.coptic-reading-page .reading-date-sub{margin-top:4px}
+.coptic-reading-page .reading-heading{font-size:27px;font-weight:900;color:var(--accent);margin:22px 0 10px}
+.coptic-reference-card{background:#f7f8f4;border:1px solid var(--line);border-radius:16px;padding:13px;margin:12px 0}
+.coptic-reference-group{font-weight:800;color:var(--accent);margin-bottom:8px}
+.coptic-reference-link{display:block;width:100%;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;text-align:right;padding:9px 2px;color:var(--ink);font-size:13px;line-height:1.8}
+.coptic-reference-link:last-child{border-bottom:0}
+.coptic-reference-link strong{color:var(--accent)}
+.liturgical-reading{padding:18px 2px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+.liturgical-reading h3{font-size:19px;color:var(--accent);margin:0 0 10px}
+.liturgical-reading .reading-rubric{font-size:14px;line-height:2.1;text-align:center;margin:12px 4px;color:var(--muted)}
+.liturgical-reading .reading-verse{font-size:18px;line-height:2.15;margin:8px 0;text-align:justify}
+.liturgical-reading .reading-verse-number{color:var(--gold);font-size:12px;font-weight:800;margin-inline-end:6px}
+.liturgical-reading .reading-ending{font-weight:700;text-align:center;line-height:2.1;margin:14px 4px}
+.liturgical-reading .reading-ref-line{font-size:12px;color:var(--muted);text-align:center;margin-bottom:8px}
+.coptic-reading-loading{padding:16px;text-align:center;color:var(--muted)}
+
 .reader-font-naskh,.reader-font-naskh .verse-text,.reader-font-naskh .reader-verse-text,.reader-font-naskh .reader-paragraph{font-family:"Noto Naskh Arabic","Amiri",serif;font-weight:500}
 .reader-font-ruqaa,.reader-font-ruqaa .verse-text,.reader-font-ruqaa .reader-verse-text,.reader-font-ruqaa .reader-paragraph{font-family:"Aref Ruqaa","Amiri",serif;font-weight:400}
 .reader-font-thuluth,.reader-font-thuluth .verse-text,.reader-font-thuluth .reader-verse-text,.reader-font-thuluth .reader-paragraph{font-family:"Katibeh","Amiri",serif;font-weight:400}
@@ -64,7 +82,7 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 <div class="app">
 <header>
   <button id="backToMeat" class="secondary" type="button" style="margin-bottom:12px">العودة إلى MeatManagement</button>
-  <div class="brand">رِحلة</div><div class="version">الإصدار v13 · قراءات اليوم</div>
+  <div class="brand">رِحلة</div><div class="version">الإصدار v14 · القطمارس</div>
   <h1 id="title">أنت داخل التطبيق النهارده ليه؟</h1>
   <p id="subtitle">ابدأ من حالتك، ثم اترك للكلمة مساحة.</p>
 </header>
@@ -103,7 +121,25 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
   </div>
 </section>
 
-<section id="copticReadings" class="view"><div class="card"><button id="backToTodayFromReadings" class="secondary" type="button">العودة إلى اليوم</button><div class="reading-top"><div class="reading-date-icon">✦</div><div><div class="eyebrow">الكنيسة القبطية الأرثوذكسية</div><h2 id="copticReadingsTitle">قراءات اليوم</h2><div id="copticGregorianDate" class="reading-date-main">جاري تحميل التاريخ...</div><div id="copticDateText" class="reading-date-sub"></div></div></div><div id="copticSeason" class="reading-season hidden"></div><div class="eyebrow reading-heading" id="copticReadingHeading">قراءات اليوم</div><div id="copticReadingDayNotice" class="reading-meta hidden"></div><div id="copticReadingRows"></div><div class="reading-source"><strong id="copticReadingsStatus">جاري تحميل مراجع اليوم...</strong><span>المراجع تأتي من Coptic.IO. التطبيق يستخدم المرجع لتحديد النص، ثم يفتح النص من Corpus المحلي المتاح.</span></div></div></section>
+<section id="copticReadings" class="view">
+ <div class="card coptic-reading-page">
+  <button id="backToTodayFromReadings" class="secondary" type="button">العودة إلى اليوم</button>
+  <div class="reading-top" style="margin-top:14px"><div class="reading-date-icon">✦</div><div>
+   <div class="eyebrow">الكنيسة القبطية الأرثوذكسية</div>
+   <h2 style="font-size:30px;margin:2px 0">القطمارس</h2>
+   <div id="copticGregorianDate" class="reading-date-main">جاري تحميل التاريخ...</div>
+   <div id="copticDateText" class="reading-date-sub"></div>
+  </div></div>
+  <div id="copticSeason" class="reading-season hidden"></div>
+  <div id="copticReadingDayNotice" class="reading-meta hidden"></div>
+  <div class="reading-source"><strong id="copticReadingsStatus">جاري تحميل مراجع اليوم...</strong></div>
+  <h2 class="coptic-reading-heading">قراءات اليوم</h2>
+  <div id="copticReadingRows"><div class="coptic-reading-loading">جاري تجهيز شواهد القراءات...</div></div>
+  <div class="reading-source"><span>المراجع تأتي من Coptic.IO، والنصوص تُقرأ من Corpus المحلي.</span></div>
+  <h2 class="coptic-reading-heading">نص قراءات اليوم</h2>
+  <div id="copticReadingTextSections"><div class="coptic-reading-loading">جاري تحميل نصوص القراءات...</div></div>
+ </div>
+</section>
 
 <section id="read" class="view">
   <div class="card">
@@ -330,7 +366,7 @@ function readingBookForParser(book){return book==="مزمور"?"مزامير":bo
 const readingGroups=[
  {title:"عشية",keys:[["VPsalm","مزمور"],["VGospel","إنجيل"]],icon:"ع"},
  {title:"باكر",keys:[["MPsalm","مزمور"],["MGospel","إنجيل"]],icon:"ب"},
- {title:"القداس الإلهي",keys:[["Pauline","البولس"],["Acts","الإبركسيس"],["Catholic","الكاثوليكون"],["Synaxarium","السنكسار"],["Synaxarion","السنكسار"],["LPsalm","المزمور"],["LGospel","الإنجيل"]],icon:"ق"}
+ {title:"القداس الإلهي",keys:[["Pauline","البولس"],["Catholic","الكاثوليكون"],["Acts","الإبركسيس"],["LPsalm","المزمور"],["LGospel","الإنجيل"]],icon:"ق"}
 ];
 function getReadingReferences(readings){
  const refs=readings&&readings.reference&&typeof readings.reference==="object"?readings.reference:{};
@@ -341,10 +377,10 @@ function getReadingReferences(readings){
 function readingRowsHtml(readings){
  const refs=getReadingReferences(readings);
  return readingGroups.map(group=>{
-   const items=refs.filter(x=>x.group===group.title);
-   if(!items.length)return "";
-   return "<div class='reading-group'><div class='reading-group-title'>"+group.title+"</div>"+
-     items.map(x=>"<button class='reading-item' type='button' data-reading-key='"+escapeHtml(x.key)+"' data-reading-ref='"+escapeHtml(x.raw)+"'><span class='reading-item-icon'>"+x.icon+"</span><span class='reading-item-body'><span class='reading-item-title'>"+escapeHtml(x.label)+"</span><span class='reading-item-ref'>"+escapeHtml(x.text)+"</span></span><span class='reading-item-arrow'>‹</span></button>").join("")+
+  const items=refs.filter(x=>x.group===group.title);
+  if(!items.length)return "";
+  return "<div class='coptic-reference-card'><div class='coptic-reference-group'>"+group.title+"</div>"+
+   items.map(x=>"<button class='coptic-reference-link' type='button' data-reading-target='lit-"+escapeHtml(x.key)+"'><strong>"+escapeHtml(x.label)+":</strong> "+escapeHtml(x.text)+"</button>").join("")+
    "</div>";
  }).join("")||"<p class='note'>لا توجد مراجع متاحة لهذا اليوم.</p>";
 }
@@ -381,6 +417,62 @@ async function openReadingReference(raw,label){
 }
 function formatCopticSeason(season){const names={"Nativity Fast":"صوم الميلاد","Great Lent":"الصوم الكبير","Jonah's Fast":"صوم يونان","Apostles' Fast":"صوم الرسل","St. Mary Fast":"صوم السيدة العذراء","No Fast":"لا يوجد صوم","Advent Fast":"صوم الميلاد"};return names[season]||season}
 function copticDateFallback(date){const y=date.getUTCFullYear(),m=date.getUTCMonth(),day=date.getUTCDate();let cy=m>8||(m===8&&day>=11)?y-283:y-284;let sy=cy+283,sd=(cy-1)%4===3?12:11,start=Date.UTC(sy,8,sd);if(Date.UTC(y,m,day)<start){cy--;sy=cy+283;sd=(cy-1)%4===3?12:11;start=Date.UTC(sy,8,sd)}const doy=Math.floor((Date.UTC(y,m,day)-start)/86400000);return {year:cy,month:copticMonths[Math.floor(doy/30)]||"النسيء",day:doy%30+1}}
+
+function copticReadingIntro(key,part){
+ const book=part?part.book:"";
+ if(key.endsWith("Psalm"))return "من مزامير أبينا داود النبي والملك، بركته علينا. آمين.";
+ if(key.endsWith("Gospel"))return "قفوا بخوف أمام الله، وأنصتوا لسماع الإنجيل المقدس. فصل من بشارة معلمنا مار "+book+" البشير والتلميذ الطاهر. بركاته على جميعنا. آمين.";
+ if(key==="Pauline")return "البولس فصل من رسالة معلمنا بولس الرسول إلى "+(book.includes("رومية")?"أهل رومية":"«"+book+"»")+"، بركته تكون معنا. آمين.";
+ if(key==="Catholic")return "الكاثوليكون فصل من رسالة معلمنا "+book.replace(" الأولى"," الرسول الأولى").replace(" الثانية"," الرسول الثانية").replace(" الثالثة"," الرسول الثالثة")+"، بركته علينا. آمين.";
+ if(key==="Acts")return "الإبركسيس فصل من أعمال آبائنا الرسل الأطهار المشمولين بنعمة الروح القدس. بركتهم المقدسة فلتكن معنا. آمين.";
+ return "";
+}
+function copticReadingEnding(key){
+ if(key.endsWith("Psalm"))return "هللويا.";
+ if(key.endsWith("Gospel"))return "وَالْمَجْدُ لِلَّهِ دَائِمًا.";
+ if(key==="Pauline")return "نِعْمَةُ اللَّهِ الآبِ فَلْتَحْلَّ عَلَى أَرْوَاحِنَا يَا آبَائِي وَإِخْوَتِي. آمِينَ.";
+ if(key==="Catholic")return "لَا تُحِبُّوا الْعَالَمَ وَلَا الأَشْيَاءَ الَّتِي فِي الْعَالَمِ، لِأَنَّ الْعَالَمَ يَمْضِي وَشَهْوَتُهُ مَعَهُ، وَأَمَّا مَنْ يَعْمَلُ مَشِيئَةَ اللَّهِ فَإِنَّهُ يَثْبُتُ إِلَى الْأَبَدِ. آمِينَ.";
+ if(key==="Acts")return "لَمْ تَزَلْ كَلِمَةُ الرَّبِّ تَنْمُو وَتَكْثُرُ وَتَعْتَزُّ وَتَثْبُتُ فِي بِيعَةِ اللَّهِ الْمُقَدَّسَةِ. آمِينَ.";
+ return "";
+}
+function copticReadingHeading(group,key,label){
+ if(key==="Pauline")return "البولس";
+ if(key==="Catholic")return "الكاثوليكون";
+ if(key==="Acts")return "الإبركسيس";
+ if(key.endsWith("Psalm"))return "مزمور "+group;
+ if(key.endsWith("Gospel"))return "إنجيل "+group;
+ return label;
+}
+async function renderCopticReadingText(readings){
+ const host=document.getElementById("copticReadingTextSections");
+ const refs=getReadingReferences(readings);
+ const ordered=[];
+ readingGroups.forEach(group=>group.keys.forEach(([key,label])=>{const item=refs.find(x=>x.key===key);if(item)ordered.push({group:group.title,...item})}));
+ if(!ordered.length){host.innerHTML="<p class='note'>لا توجد نصوص قراءات متاحة.</p>";return}
+ host.innerHTML="<div class='coptic-reading-loading'>جاري تحميل نصوص القراءات...</div>";
+ const edition=readerSelection.translation,editionInfo=translationCatalog.find(t=>t.id===edition);
+ try{await ensureReaderCorpus()}catch(e){host.innerHTML="<p class='note'>تعذر تحميل Corpus المحلي. تحقق من الاتصال ثم أعد فتح القراءات.</p>";return}
+ const sections=[];
+ for(const item of ordered){
+  const parts=splitReadingReferences(item.raw).map(parseReadingReferencePart).filter(Boolean);
+  const title=copticReadingHeading(item.group,item.key,item.label);
+  let verseHtml="";
+  for(const part of parts){
+   if(!translationHasBook(edition,part.bookCode)){verseHtml+="<p class='note'>السفر "+escapeHtml(part.book)+" غير متوفر في "+escapeHtml(editionInfo?editionInfo.name:edition)+".</p>";continue}
+   const sourceBookId=edition==="HE-WLC-2017"?(HEBREW_SOURCE_CODE_TO_ID[part.bookCode]||part.bookCode):edition==="GRC-LXX-BRENTON-1851"?(LXX_BOOK_ID_MAP[part.bookCode]||part.bookCode.toLowerCase()):edition==="GRC-KOINE-RP-2018"?part.bookCode.toLowerCase():part.bookCode;
+   try{
+    let verses=await loadTranslationChapter(edition,sourceBookId,part.chapter);
+    if(part.startVerse!=null)verses=verses.filter(v=>Number(v.verse)>=part.startVerse&&(part.endVerse==null||Number(v.verse)<=part.endVerse));
+    verseHtml+=verses.map(v=>"<p class='reading-verse' lang='ar' dir='rtl'><span class='reading-verse-number'>"+escapeHtml(v.verse)+"</span>"+escapeHtml(v.text).replace(/¶/g," ")+"</p>").join("");
+   }catch(e){verseHtml+="<p class='note'>تعذر تحميل هذا الجزء من القراءة.</p>"}
+  }
+  const firstPart=parts[0];
+  sections.push("<article class='liturgical-reading' id='lit-"+escapeHtml(item.key)+"'><h3>"+escapeHtml(title)+"</h3><div class='reading-ref-line'>"+escapeHtml(item.text)+"</div><div class='reading-rubric'>"+escapeHtml(copticReadingIntro(item.key,firstPart))+"</div>"+(verseHtml||"<p class='note'>لا يوجد نص متاح لهذا الشاهد.</p>")+"<div class='reading-ending'>"+escapeHtml(copticReadingEnding(item.key))+"</div></article>");
+ }
+ host.innerHTML=sections.join("");
+ host.querySelectorAll(".liturgical-reading").forEach(el=>el.classList.add("reader-font-"+readerSelection.font));
+ document.querySelectorAll("[data-reading-target]").forEach(button=>button.onclick=()=>document.getElementById(button.dataset.readingTarget)?.scrollIntoView({behavior:"smooth",block:"start"}));
+}
 async function loadCopticReadings(){
  const now=new Date(),isNextLiturgicalDay=now.getHours()>=17,targetDate=new Date(now.getFullYear(),now.getMonth(),now.getDate()+(isNextLiturgicalDay?1:0),12,0,0),dateKey=localDateKey(targetDate),readingCacheKey=COPTIC_CACHE_PREFIX+dateKey,calendarCacheKey=COPTIC_CACHE_PREFIX+"calendar."+dateKey,dateText=new Intl.DateTimeFormat("ar-EG",{weekday:"long",day:"numeric",month:"long"}).format(targetDate);
  const dayTitle=isNextLiturgicalDay?"قراءات الغد":"قراءات اليوم";
@@ -401,6 +493,8 @@ async function loadCopticReadings(){
   const season=readings&&readings.season?readings.season:"",seasonEl=document.getElementById("copticSeason");
   if(season){seasonEl.textContent="الموسم: "+formatCopticSeason(season);seasonEl.classList.remove("hidden")}else seasonEl.classList.add("hidden");
   document.getElementById("copticReadingRows").innerHTML=readingRowsHtml(readings);
+  renderCopticReadingText(readings);
+  document.querySelectorAll("[data-reading-target]").forEach(button=>button.onclick=()=>document.getElementById(button.dataset.readingTarget)?.scrollIntoView({behavior:"smooth",block:"start"}));
   document.getElementById("homeReadingsSummary").textContent=readings?getReadingReferences(readings).slice(0,2).map(x=>x.label+": "+x.text).join(" · "):"تعذر تحميل المراجع الآن";
   document.querySelectorAll("[data-reading-ref]").forEach(b=>b.addEventListener("click",()=>openReadingReference(b.dataset.readingRef,b.querySelector(".reading-item-title")?.textContent||"القراءة")));
  };
