@@ -30,6 +30,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Confirm source plan
+        run: echo "Preparing the public-domain WLC text only"
       - name: Test corpus parsers
         run: python -m unittest discover -s bible/tools -p "test_*.py" -v
       - name: Download and convert WLC source
