@@ -360,19 +360,31 @@ const COPTIC_CALENDAR_API="https://api.coptic.io/api/calendar";
 const COPTIC_CACHE_PREFIX="rehla.copticReadings.";
 const arabicReadingBooks={"1 Thessalonians":"تسالونيكي الأولى","2 Thessalonians":"تسالونيكي الثانية","1 Corinthians":"كورنثوس الأولى","2 Corinthians":"كورنثوس الثانية","1 Timothy":"تيموثاوس الأولى","2 Timothy":"تيموثاوس الثانية","1 Peter":"بطرس الأولى","2 Peter":"بطرس الثانية","1 John":"يوحنا الأولى","2 John":"يوحنا الثانية","3 John":"يوحنا الثالثة","1 Samuel":"صموئيل الأول","2 Samuel":"صموئيل الثاني","1 Kings":"الملوك الأول","2 Kings":"الملوك الثاني","1 Chronicles":"أخبار الأيام الأول","2 Chronicles":"أخبار الأيام الثاني","Psalms":"مزمور","Proverbs":"الأمثال","Ecclesiastes":"الجامعة","Song of Solomon":"نشيد الأنشاد","Matthew":"متى","Mark":"مرقس","Luke":"لوقا","John":"يوحنا","Acts":"أعمال الرسل","Romans":"رومية","Galatians":"غلاطية","Ephesians":"أفسس","Philippians":"فيلبي","Colossians":"كولوسي","Hebrews":"العبرانيين","James":"يعقوب","Jude":"يهوذا","Isaiah":"إشعياء","Jeremiah":"إرميا","Ezekiel":"حزقيال","Daniel":"دانيال","Genesis":"التكوين","Exodus":"الخروج","Leviticus":"اللاويين","Numbers":"العدد","Deuteronomy":"التثنية","Joshua":"يشوع","Judges":"القضاة","Ruth":"راعوث","Ezra":"عزرا","Nehemiah":"نحميا","Esther":"أستير","Job":"أيوب"};
 function readingReferenceParts(reference){
- const raw=String(reference||"").replace(/[–—]/g,"-").trim();
+ const raw=String(reference||"").replace(/[–—]/g,"-").replace(/[؛]/g,";").trim();
  const chunks=raw.split(/\s*(?:&|\band\b)\s*/i).map(x=>x.trim()).filter(Boolean);
  const out=[];
  chunks.forEach(chunk=>{
-  const m=chunk.match(/^(.+?)\s+(\d+)(?:\s*[:.]\s*(\d+(?:\s*-\s*\d+)?(?:\s*[;،]\s*\d+(?:\s*-\s*\d+)?)*)?)?$/);
-  if(!m)return;
-  const sourceBook=m[1].trim(),chapter=Number(m[2]),versePart=m[3];
-  if(!versePart){out.push({sourceBook,book:arabicReadingBooks[sourceBook]||sourceBook,chapter,start:null,end:null});return}
-  versePart.split(/\s*[;،]\s*/).forEach((token,index)=>{
-   const vm=token.trim().match(/^(\d+)(?:\s*-\s*(\d+))?$/);
-   if(!vm)return;
-   out.push({sourceBook,book:arabicReadingBooks[sourceBook]||sourceBook,chapter,start:Number(vm[1]),end:vm[2]?Number(vm[2]):null,continuation:index>0});
-  });
+  const m=chunk.match(/^(.+?)\s+(\d+)\s*[:.]\s*(.+)$/);
+  if(m){
+   const sourceBook=m[1].trim(),chapter=Number(m[2]),tail=m[3].trim();
+   const tokens=tail.split(/\s*;\s*/).filter(Boolean);
+   tokens.forEach((token,index)=>{
+    const repeated=token.match(/^(.+?)\s+(\d+)\s*[:.]\s*(\d+(?:\s*-\s*\d+)?)$/);
+    if(repeated){
+     const repeatedBook=repeated[1].trim(),repeatedChapter=Number(repeated[2]),vm=repeated[3].match(/^(\d+)(?:\s*-\s*(\d+))?$/);
+     if(vm)out.push({sourceBook:repeatedBook,book:arabicReadingBooks[repeatedBook]||repeatedBook,chapter:repeatedChapter,start:Number(vm[1]),end:vm[2]?Number(vm[2]):null,continuation:index>0});
+     return;
+    }
+    const vm=token.match(/^(\d+)(?:\s*-\s*(\d+))?$/);
+    if(vm)out.push({sourceBook,book:arabicReadingBooks[sourceBook]||sourceBook,chapter,start:Number(vm[1]),end:vm[2]?Number(vm[2]):null,continuation:index>0});
+   });
+   return;
+  }
+  const chapterOnly=chunk.match(/^(.+?)\s+(\d+)$/);
+  if(chapterOnly){
+   const sourceBook=chapterOnly[1].trim(),chapter=Number(chapterOnly[2]);
+   out.push({sourceBook,book:arabicReadingBooks[sourceBook]||sourceBook,chapter,start:null,end:null});
+  }
  });
  return out;
 }
@@ -412,12 +424,10 @@ function readingRowsHtml(readings){
  }).join("")||"<p class='note'>لا توجد مراجع متاحة لهذا اليوم.</p>";
 }
 function splitReadingReferences(raw){
- return String(raw||"").replace(/[–—]/g,"-").split(/\s*(?:&|\band\b)\s*/i).flatMap(x=>{
-  const s=x.trim();
-  if(!s)return [];
-  const m=s.match(/^(.+?\s+\d+)\s*:\s*(.+)$/);
-  if(!m)return [s];
-  return m[2].split(/\s*;\s*/).map(v=>m[1]+": "+v.trim()).filter(Boolean);
+ const parts=readingReferenceParts(raw);
+ return parts.map(p=>{
+  const ref=p.sourceBook+" "+p.chapter+(p.start!=null?": "+p.start+(p.end!=null?"-"+p.end:""):"");
+  return ref;
  }).filter(Boolean);
 }
 function parseReadingReferencePart(raw){
@@ -494,13 +504,7 @@ async function renderCopticReadingText(readings){
  for(const group of readingGroups){
   const groupItems=ordered.filter(x=>x.group===group.title);
   if(!groupItems.length)continue;
-  const gospelItem=groupItems.find(x=>x.key.endsWith("Gospel"));
-  const psalmItem=groupItems.find(x=>x.key.endsWith("Psalm"));
   sections.push("<div class='coptic-reading-group-heading'>قراءات "+escapeHtml(group.title)+"</div>");
-  if(gospelItem){
-   const gospelPart=splitReadingReferences(gospelItem.raw).map(parseReadingReferencePart).filter(Boolean)[0];
-   sections.push("<div class='reading-rubric reading-preamble'><div>مقدمة إنجيل "+escapeHtml(group.title)+"</div><div>"+escapeHtml(copticReadingIntro(gospelItem.key,gospelPart))+"</div></div>");
-  }
   for(const item of groupItems){
    const parts=splitReadingReferences(item.raw).map(parseReadingReferencePart).filter(Boolean);
    const title=copticReadingHeading(item.group,item.key,item.label);
@@ -515,8 +519,8 @@ async function renderCopticReadingText(readings){
     }catch(e){verseHtml+="<p class='note'>تعذر تحميل هذا الجزء من القراءة.</p>"}
    }
    const firstPart=parts[0];
-   const intro=item.key.endsWith("Gospel")?copticGospelTextIntro():copticReadingIntro(item.key,firstPart);
-   sections.push("<article class='liturgical-reading' id='lit-"+escapeHtml(item.key)+"'><div class='liturgical-reading-head'><h3>"+escapeHtml(title)+"</h3><button class='secondary reading-back-button' type='button' data-reading-back='copticReadingRows'>العودة إلى كارت القراءات</button></div><div class='reading-ref-line'>"+escapeHtml(item.text)+"</div><div class='reading-rubric'>"+escapeHtml(intro)+"</div>"+(verseHtml||"<p class='note'>لا يوجد نص متاح لهذا الشاهد.</p>")+"<div class='reading-ending'>"+escapeHtml(copticReadingEnding(item.key))+"</div></article>");
+   const intro=item.key.endsWith("Gospel")?copticReadingIntro(item.key,firstPart):copticReadingIntro(item.key,firstPart);
+   sections.push("<article class='liturgical-reading' id='lit-"+escapeHtml(item.key)+"'><div class='liturgical-reading-head'><h3>"+escapeHtml(title)+"</h3><button class='secondary reading-back-button' type='button' data-reading-back='copticReadingRows'>العودة إلى كارت القراءات</button></div><div class='reading-ref-line'>"+escapeHtml(item.text)+"</div><div class='reading-rubric'>"+escapeHtml(intro)+"</div>"+(verseHtml||"<p class='note'>لا يوجد نص متاح لهذا الشاهد.</p>")+(item.key.endsWith("Gospel")?"<div class='reading-rubric'>"+escapeHtml(copticGospelTextIntro())+"</div>":"")+"<div class='reading-ending'>"+escapeHtml(copticReadingEnding(item.key))+"</div></article>");
   }
  }
  host.innerHTML=sections.join("");
