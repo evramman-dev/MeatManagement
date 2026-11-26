@@ -89,6 +89,11 @@ jobs:
           --grep-invert "MeatManagement read-only navigation, permissions and session smoke test|MeatManagement Android-sized layout and horizontal overflow check"
           --trace retain-on-failure --reporter=list,html
 
+      - name: Run local Bible corpus browser checks
+        env:
+          BASE_URL: http://127.0.0.1:4173/
+        run: npx playwright test tests/bible-corpus.spec.cjs --trace retain-on-failure --reporter=list
+
       - name: Run full browser checks only after explicit approval
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.QA_LIVE_SMOKE_APPROVED == 'true'
         env:
