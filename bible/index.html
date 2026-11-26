@@ -85,7 +85,7 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
   <div class="card">
     <div class="eyebrow">النص الفعلي</div>
     <h2>اقرأ إصحاحًا</h2>
-    <p class="note">اختر فان دايك لعرض النص داخل التطبيق، أو كتاب الحياة لفتح الإصحاح من مصدره. لا يستبدل التطبيق نص ترجمة بأخرى.</p>
+    <p class="note">اختر فان دايك أو كتاب الحياة لعرض نص الإصحاح داخل التطبيق. يحتفظ كل إصدار بنصه وترقيمه المستقل.</p>
     <select id="chapterTranslation" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;margin-bottom:9px"><option value="AR-SVD-1865">فان دايك 1865</option><option value="AR-KEH-2012">كتاب الحياة 2012</option></select>
     <div class="search"><input id="chapterReference" value="يوحنا 1" placeholder="مثال: يوحنا 1"><button id="loadChapterButton" class="primary" type="button">فتح الإصحاح</button></div>
     <div id="chapterStatus" class="note" style="margin-top:10px"></div>
@@ -285,27 +285,42 @@ function toggleTranslation(id){
 async function renderParallel(){
  const el=document.getElementById("parallelTranslations"); if(!el)return;
  const ref=document.getElementById("parallelReference").textContent;
+ const p=parseChapterReference(ref);
  el.innerHTML=selectedTranslations.map(id=>{
    const t=translationCatalog.find(x=>x.id===id);
-   const missing=!translationHasBook(id,"JHN");
-   let body=missing
-    ? "<p class='note'>هذا السفر غير متوفر في هذه الترجمة</p><button class='secondary' type='button' onclick='showView(\"translations\",document.querySelector(\"[data-view=translations]\"))'>عرض ترجمة أخرى</button>"
-    : "<p class='verse-text'>"+escapeHtml(sampleTexts[id]||"النص متاح بعد تثبيت مصدره.")+"</p>";
-   if(id==="AR-KEH-2012") body+="<button class='secondary' type='button' style='margin-top:8px;width:100%' onclick='openKehSource(document.getElementById(\"parallelReference\").textContent)'>فتح الإصحاح في كتاب الحياة</button><p class='note'>Biblica Open New Arabic Version 2012 · CC BY-SA 4.0</p>";
+   const missing=p&&p.deuterocanonical&&!translationHasBook(id,p.bookCode);
+   const body=missing
+    ? "<p class='note'>هذا السفر غير متوفر في هذه الترجمة</p>"
+    : "<div class='parallel-body'><p class='verse-text'>"+escapeHtml(sampleTexts[id]||"النص غير متاح بعد في هذه الترجمة.")+"</p></div>";
    return "<div class='card' style='margin:0 0 10px' id='parallel-"+escapeHtml(id)+"'><div class='eyebrow'>"+escapeHtml(t.name)+" · "+escapeHtml(t.year)+"</div>"+body+"<p class='note'>"+escapeHtml(ref)+"</p></div>";
  }).join("");
- if(selectedTranslations.includes("AR-SVD-1865")){
+ if(!p){
+   el.insertAdjacentHTML("afterbegin","<p class='note'>تعذر قراءة المرجع. اكتب اسم السفر ورقم الإصحاح.</p>");
+   return;
+ }
+ for(const id of selectedTranslations){
+   const box=document.getElementById("parallel-"+id);
+   if(!box)continue;
+   if(p.deuterocanonical){
+     if(!translationHasBook(id,p.bookCode))continue;
+     if(id==="AR-SVD-1865"||id==="AR-KEH-2012")continue;
+   }
+   if(id!=="AR-SVD-1865"&&id!=="AR-KEH-2012")continue;
+   const body=box.querySelector(".parallel-body");
+   if(!body)continue;
    try{
-     const parallelRef=parseChapterReference(ref);
-     if(!parallelRef)throw new Error("مرجع غير صالح");
-     const res=await fetch(SVD_API_BASE+"/"+parallelRef.bookNumber+"/"+parallelRef.chapter+".json");
-     if(res.ok){
-       const data=await res.json();
-       const verses=Array.isArray(data.verses)?data.verses:[];
-       const box=document.getElementById("parallel-AR-SVD-1865");
-       if(box&&verses.length)box.querySelector(".verse-text").outerHTML="<div class='verse-text'>"+verses.map(v=>"<div class='verse-card'><strong>"+escapeHtml(v.verse||"")+"</strong><p class='verse-text'>"+escapeHtml(v.text||"")+"</p></div>").join("")+"</div>";
+     const verses=await loadTranslationChapter(id,p.bookCode,p.chapter);
+     if(!verses.length){
+       body.innerHTML="<p class='note'>لا توجد بيانات لهذا الإصحاح في هذه الطبعة.</p>";
+       continue;
      }
-   }catch(e){}
+     body.innerHTML=renderVerseMarkup(verses);
+     if(id==="AR-KEH-2012"){
+       body.insertAdjacentHTML("beforeend","<p class='note'>Biblica Open New Arabic Version 2012 · CC BY-SA 4.0 · <a href='https://ebible.org/arbnav/' target='_blank' rel='noopener'>المصدر والترخيص</a></p>");
+     }
+   }catch(e){
+     body.innerHTML="<p class='note'>تعذر تحميل النص الآن. تحقق من الاتصال ثم حاول مرة أخرى.</p>";
+   }
  }
 }
 const EBIBLE_BOOK_CODES=["GEN","EXO","LEV","NUM","DEU","JOS","JDG","RUT","1SA","2SA","1KI","2KI","1CH","2CH","EZR","NEH","EST","JOB","PSA","PRO","ECC","SNG","ISA","JER","LAM","EZK","DAN","HOS","JOL","AMO","OBA","JON","MIC","NAM","HAB","ZEP","HAG","ZEC","MAL","MAT","MRK","LUK","JHN","ACT","ROM","1CO","2CO","GAL","EPH","PHP","COL","1TH","2TH","1TI","2TI","TIT","PHM","HEB","JAS","1PE","2PE","1JN","2JN","3JN","JUD","REV"];
@@ -321,7 +336,43 @@ function openKehSource(reference){
 }
 
 const SVD_API_BASE="https://api.getbible.net/v3/arabicsv";
-const SVD_BOOKS={"تكوين":1,"خروج":2,"لاويين":3,"عدد":4,"تثنية":5,"يشوع":6,"قضاة":7,"راعوث":8,"صموئيل الأول":9,"صموئيل الثاني":10,"ملوك الأول":11,"ملوك الثاني":12,"أخبار الأيام الأول":13,"أخبار الأيام الثاني":14,"عزرا":15,"نحميا":16,"أستير":17,"أيوب":18,"مزامير":19,"مزمور":19,"أمثال":20,"الأمثال":20,"جامعة":21,"نشيد الأنشاد":22,"إشعياء":23,"إرميا":24,"مراثي إرميا":25,"مراثي":25,"حزقيال":26,"دانيال":27,"هوشع":28,"يوئيل":29,"عاموس":30,"عوبديا":31,"يونان":32,"ميخا":33,"ناحوم":34,"حبقوق":35,"صفنيا":36,"حجي":37,"زكريا":38,"ملاخي":39,"متى":40,"مرقس":41,"لوقا":42,"يوحنا":43,"أعمال":44,"أعمال الرسل":44,"رومية":45,"كورنثوس الأولى":46,"كورنثوس الثانية":47,"غلاطية":48,"أفسس":49,"فيلبي":50,"كولوسي":51,"تسالونيكي الأولى":52,"تسالونيكي الثانية":53,"تيموثاوس الأولى":54,"تيموثاوس الثانية":55,"تيطس":56,"فليمون":57,"عبرانيين":58,"يعقوب":59,"بطرس الأولى":60,"بطرس الثانية":61,"يوحنا الأولى":62,"يوحنا الثانية":63,"يوحنا الثالثة":64,"يهوذا":65,"رؤيا":66};function parseChapterReference(value){const m=String(value||"").trim().match(/^(.+?)\s+(\d+)(?:[:.]\d+)?$/);if(!m)return null;let book=m[1].trim();const n=SVD_BOOKS[book];return n?{book,bookNumber:n,chapter:Number(m[2])}:null}
+const SVD_BOOKS={"تكوين":1,"خروج":2,"لاويين":3,"عدد":4,"تثنية":5,"يشوع":6,"قضاة":7,"راعوث":8,"صموئيل الأول":9,"صموئيل الثاني":10,"ملوك الأول":11,"ملوك الثاني":12,"أخبار الأيام الأول":13,"أخبار الأيام الثاني":14,"عزرا":15,"نحميا":16,"أستير":17,"أيوب":18,"مزامير":19,"مزمور":19,"أمثال":20,"الأمثال":20,"جامعة":21,"نشيد الأنشاد":22,"إشعياء":23,"إرميا":24,"مراثي إرميا":25,"مراثي":25,"حزقيال":26,"دانيال":27,"هوشع":28,"يوئيل":29,"عاموس":30,"عوبديا":31,"يونان":32,"ميخا":33,"ناحوم":34,"حبقوق":35,"صفنيا":36,"حجي":37,"زكريا":38,"ملاخي":39,"متى":40,"مرقس":41,"لوقا":42,"يوحنا":43,"أعمال":44,"أعمال الرسل":44,"رومية":45,"كورنثوس الأولى":46,"كورنثوس الثانية":47,"غلاطية":48,"أفسس":49,"فيلبي":50,"كولوسي":51,"تسالونيكي الأولى":52,"تسالونيكي الثانية":53,"تيموثاوس الأولى":54,"تيموثاوس الثانية":55,"تيطس":56,"فليمون":57,"عبرانيين":58,"يعقوب":59,"بطرس الأولى":60,"بطرس الثانية":61,"يوحنا الأولى":62,"يوحنا الثانية":63,"يوحنا الثالثة":64,"يهوذا":65,"رؤيا":66};const DEUTEROCANON_BOOKS={"طوبيا":"TOBIT","يهوديت":"JDT","الحكمة":"WIS","حكمة سليمان":"WIS","يشوع بن سيراخ":"SIR","سيراخ":"SIR","باروخ":"BAR","المكابيين الأول":"1MAC","المكابيين الثاني":"2MAC"};
+function parseChapterReference(value){
+ const m=String(value||"").trim().match(/^(.+?)\s+(\d+)(?:[:.]\d+)?$/);
+ if(!m)return null;
+ const book=m[1].trim();
+ const chapter=Number(m[2]);
+ if(DEUTEROCANON_BOOKS[book])return {book,bookNumber:null,bookCode:DEUTEROCANON_BOOKS[book],deuterocanonical:true,chapter};
+ const n=SVD_BOOKS[book];
+ return n?{book,bookNumber:n,bookCode:EBIBLE_BOOK_CODES[n-1],deuterocanonical:false,chapter}:null;
+}
+const corpusCache={};
+const chapterCache={};
+const CORPUS_PATHS={"AR-SVD-1865":"./data/ar-svd-1865.jsonl.gz","AR-KEH-2012":"./data/ar-keh-2012.jsonl.gz"};
+async function loadTranslationCorpus(id){
+ if(corpusCache[id])return corpusCache[id];
+ const path=CORPUS_PATHS[id];
+ if(!path)throw new Error("Translation corpus is not available");
+ if(typeof DecompressionStream==="undefined")throw new Error("Gzip decompression is not supported by this browser");
+ const response=await fetch(path);
+ if(!response.ok)throw new Error("Corpus download failed");
+ const stream=response.body.pipeThrough(new DecompressionStream("gzip"));
+ const text=await new Response(stream).text();
+ const rows=text.trim().split(/\r?\n/).filter(Boolean).map(line=>JSON.parse(line));
+ corpusCache[id]=rows;
+ return rows;
+}
+async function loadTranslationChapter(id,bookId,chapter){
+ const key=id+"|"+bookId+"|"+chapter;
+ if(chapterCache[key])return chapterCache[key];
+ const rows=await loadTranslationCorpus(id);
+ const verses=rows.filter(row=>row.book_id===bookId&&row.chapter===chapter);
+ chapterCache[key]=verses;
+ return verses;
+}
+function renderVerseMarkup(verses){
+ return verses.map(v=>"<div class='verse-card'><strong>"+escapeHtml(v.verse)+"</strong><p class='verse-text'>"+escapeHtml(v.text)+"</p></div>").join("");
+}
 async function loadSvdChapter(){
  const input=document.getElementById("chapterReference");
  const status=document.getElementById("chapterStatus");
@@ -330,21 +381,22 @@ async function loadSvdChapter(){
  const p=parseChapterReference(input.value);
  if(!p){status.textContent="اكتب اسم السفر ورقم الإصحاح مثل: يوحنا 1";content.innerHTML="";return}
  content.innerHTML="";
- if(edition==="AR-KEH-2012"){
-   const url=openKehSource(input.value);
-   status.textContent=url?"فتحنا الإصحاح في مصدر كتاب الحياة 2012. حقوق النص لـ Biblica، والترخيص CC BY-SA 4.0.":"تعذر تحديد هذا السفر. اكتب اسم السفر ورقم الإصحاح.";
+ if(p.deuterocanonical){
+   status.textContent="هذا السفر غير متوفر في "+(edition==="AR-SVD-1865"?"فان دايك 1865":"كتاب الحياة 2012")+".";
+   content.innerHTML="<p class='note'>هذا السفر غير متوفر في هذه الترجمة. لن نستبدل نصه بترجمة أخرى.</p>";
    return;
  }
- status.textContent="جاري تحميل نص فان دايك 1865...";
+ status.textContent="جاري تحميل النص...";
  try{
-   const res=await fetch(SVD_API_BASE+"/"+p.bookNumber+"/"+p.chapter+".json");
-   if(!res.ok)throw new Error();
-   const data=await res.json();
-   const verses=Array.isArray(data.verses)?data.verses:[];
-   if(!verses.length)throw new Error();
-   content.innerHTML="<div class='verse-card'><div class='eyebrow'>فان دايك 1865 · "+escapeHtml(p.book)+" "+p.chapter+"</div>"+verses.map(v=>"<div class='verse-card'><strong>"+escapeHtml(v.verse||"")+"</strong><p class='verse-text'>"+escapeHtml(v.text||"")+"</p></div>").join("")+"</div>";
-   status.textContent="تم تحميل النص من المصدر. فان دايك 1865 ضمن الملكية العامة.";
- }catch(e){status.textContent="تعذر تحميل الإصحاح الآن. تحقق من الاتصال ثم حاول مرة أخرى."}
+   const verses=await loadTranslationChapter(edition,p.bookCode,p.chapter);
+   if(!verses.length)throw new Error("Chapter not found");
+   content.innerHTML="<div class='verse-card'><div class='eyebrow'>"+escapeHtml(edition==="AR-KEH-2012"?"كتاب الحياة 2012":"فان دايك 1865")+" · "+escapeHtml(p.book)+" "+p.chapter+"</div>"+renderVerseMarkup(verses)+"</div>";
+   status.textContent=edition==="AR-KEH-2012"
+    ?"تم تحميل كتاب الحياة 2012 داخل التطبيق. النص من Biblica بترخيص CC BY-SA 4.0."
+    :"تم تحميل فان دايك 1865 داخل التطبيق. النص ضمن الملكية العامة.";
+ }catch(e){
+   status.textContent="تعذر تحميل الإصحاح الآن. تحقق من الاتصال ثم حاول مرة أخرى.";
+ }
 }
 const demoIndex=[
  {ref:"مزمور 46",words:["الله","خوف","قلق","ملجأ","قوة"]},
