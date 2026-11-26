@@ -6,6 +6,7 @@ const baseURL = process.env.BASE_URL || 'http://127.0.0.1:4173/';
 
 test('Bible reader loads both local Arabic editions and preserves missing-book behavior', async ({ page }) => {
   await page.goto(new URL('bible/', baseURL).toString());
+  await page.getByRole('button', { name: 'الكتاب' }).click();
 
   await page.locator('#chapterTranslation').selectOption('AR-SVD-1865');
   await page.locator('#chapterReference').fill('يوحنا 1');
