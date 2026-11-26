@@ -60,7 +60,7 @@ def parse_archive(data):
     missing=sorted(set(OT_BOOKS.values())-{r["book_id"] for r in rows})
     if missing:
         raise RuntimeError("WLC source is missing expected Masoretic books: "+", ".join(missing))
-    rows.sort(key=lambda r:(list(OT_BOOKS.values()).index(r["book_id"]),r["chapter"],int(re.match(r"\\d+",r["verse"]).group()) if re.match(r"\\d+",r["verse"]) else 0,r["verse"]))
+    rows.sort(key=lambda r:(list(OT_BOOKS.values()).index(r["book_id"]),r["chapter"],int(re.match(r"\d+",r["verse"]).group()) if re.match(r"\d+",r["verse"]) else 0,r["verse"]))
     return rows,coverage
 
 def main():
