@@ -225,3 +225,16 @@ https://github.com/evramman-dev/MeatManagement/actions/runs/45799191796
 - https://translation.bible/wp-content/uploads/2024/05/thompson-1955-the-origin-and-nature-of-the-chief-printed-arabic-bibles-3.pdf
 
 هذا يدعم نطاق الطبعة التاريخية، لكنه لا يحسم هوية ملف PDF المرشح أو حقوق المسح الرقمي أو دقة OCR. تبقى تلك النقاط قيد الفحص.
+
+
+### مرشح أرشيفي إضافي للفحص — Princeton / Arabic Collections Online
+
+ظهر سجل رقمي لدى Arabic Collections Online مقدم من مكتبات جامعة Princeton لكتاب بعنوان *al-Kitāb al-Muqaddas, ay kutub al-ʻAhd al-Qadīm wa-al-ʻAhd al-Jadīd*، مكان النشر بيروت، سنة 1875، رقم النداء BS315 .A6 1875. يتيح السجل نسخة منخفضة الدقة بحجم 309.70 MB، ويذكر أن المواد المعروضة في المجموعة ضمن الملكية العامة بحسب بيان NYU.
+
+لكن الناشر مسجل بصيغة [s.n.] ولا يذكر السجل أنه إصدار اليسوعيين. لذلك لا نصنفه حاليًا على أنه اليسوعية القديمة، رغم قرب التاريخ والمكان ووصفه الترجمة عن اللغات الأصلية. يجب فحص صفحة العنوان والمقدمة والفهرس أولًا لتحديد هويته قبل استخدامه.
+
+الرابط الدائم:
+- https://hdl.handle.net/2333.1/7m0cg74t
+- https://sites.dlib.nyu.edu/viewer/books/princeton_aco003628/display?lang=en
+
+هذا المرشح منفصل عن ملف ChristianLib البالغ 964.72 MB، ولا يوجد استيراد أو OCR لأي منهما.
