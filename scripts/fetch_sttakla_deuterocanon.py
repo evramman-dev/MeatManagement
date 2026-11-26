@@ -60,6 +60,9 @@ def chapter_number(line):
 def parse_page(path, book_id, expected_chapters):
     lines=strip_html(path.read_text(encoding="utf-8",errors="replace"))
     records=[]; current=None
+    if book_id == "tobit":
+        print("DEBUG chapter-like lines:", [x for x in lines if "الأصحاح" in x or "الإصحاح" in x][:20], flush=True)
+        print("DEBUG first lines:", lines[40:80], flush=True)
     for line in lines:
         ch=chapter_number(line)
         if ch is not None: current=ch; continue
