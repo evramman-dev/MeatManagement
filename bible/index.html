@@ -85,8 +85,8 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
   <div class="card">
     <div class="eyebrow">النص الفعلي</div>
     <h2>اقرأ إصحاحًا</h2>
-    <p class="note">اختر فان دايك أو كتاب الحياة لعرض نص الإصحاح داخل التطبيق. يحتفظ كل إصدار بنصه وترقيمه المستقل.</p>
-    <select id="chapterTranslation" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;margin-bottom:9px"><option value="AR-SVD-1865">فان دايك 1865</option><option value="AR-KEH-2012">كتاب الحياة 2012</option></select>
+    <p class="note">اختر فان دايك أو كتاب الحياة أو النص العبري WLC. يحتفظ كل إصدار بنصه وترقيمه المستقل.</p>
+    <select id="chapterTranslation" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;margin-bottom:9px"><option value="AR-SVD-1865">فان دايك 1865</option><option value="AR-KEH-2012">كتاب الحياة 2012</option><option value="HE-WLC-2017">النص العبري الماسوري WLC</option></select>
     <div class="search"><input id="chapterReference" value="يوحنا 1" placeholder="مثال: يوحنا 1"><button id="loadChapterButton" class="primary" type="button">فتح الإصحاح</button></div>
     <div id="chapterStatus" class="note" style="margin-top:10px"></div>
     <div id="chapterContent" style="margin-top:12px"></div>
@@ -252,29 +252,39 @@ function deleteSavedVerse(id){const verses=getSavedVerses().filter(v=>v.id!==id)
 function renderVerses(){const verses=getSavedVerses();const today=localDateKey();const due=verses.filter(v=>!v.nextReview||v.nextReview<=today);const visible=verseFilter==="due"?due:verses;document.getElementById("savedVerseCount").textContent=String(verses.length);document.getElementById("dueVerseCount").textContent=String(due.length);document.getElementById("filterDueVerses").classList.toggle("filter-active",verseFilter==="due");document.getElementById("filterAllVerses").classList.toggle("filter-active",verseFilter==="all");const list=document.getElementById("savedVersesList");if(!visible.length){list.innerHTML=verseFilter==="due"?"<p class='note'>لا توجد آيات مستحقة اليوم. يمكنك عرض كل الآيات أو إضافة آية جديدة.</p>":"<p class='note'>لم تحفظ آيات بعد. أضف أول مرجع لتبدأ.</p>";return}list.innerHTML=visible.map(v=>{const isDue=!v.nextReview||v.nextReview<=today;return "<div class='verse-card'><div class='row' style='display:flex;justify-content:space-between;gap:8px;align-items:center'><strong>"+escapeHtml(v.reference)+"</strong><span class='pill'>"+(isDue?"مستحقة اليوم":"المراجعة "+formatVerseDate(v.nextReview))+"</span></div><p class='verse-text'>"+(v.text?escapeHtml(v.text):"<span class='note'>لم تضف نص الآية. يمكنك الاحتفاظ بالمرجع فقط.</span>")+"</p><p class='note'>المستوى: "+escapeHtml(v.level||"جديدة")+" · مرات المراجعة: "+(Number(v.reviewCount)||0)+"</p><div class='verse-actions'><button class='secondary' data-verse-grade='hard' data-verse-id='"+escapeHtml(v.id)+"' type='button'>صعبة · غدًا</button><button class='secondary' data-verse-grade='good' data-verse-id='"+escapeHtml(v.id)+"' type='button'>جيدة · 3 أيام</button><button class='secondary' data-verse-grade='easy' data-verse-id='"+escapeHtml(v.id)+"' type='button'>سهلة · 7 أيام</button><button class='secondary' data-verse-grade='mastered' data-verse-id='"+escapeHtml(v.id)+"' type='button'>متقنة · 14 يومًا</button></div><button class='secondary' data-verse-delete='"+escapeHtml(v.id)+"' type='button' style='margin-top:9px;width:100%'>حذف من آياتي</button></div>"}).join("");list.querySelectorAll("[data-verse-grade]").forEach(button=>button.addEventListener("click",()=>updateVerseReview(button.dataset.verseId,button.dataset.verseGrade)));list.querySelectorAll("[data-verse-delete]").forEach(button=>button.addEventListener("click",()=>{if(confirm("هل تريد حذف هذه الآية من قائمتك؟"))deleteSavedVerse(button.dataset.verseDelete)}))}
 function escapeHtml(s){return String(s).replace(/[&<>"\']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]})}
 const translationCatalog=[
- {id:"AR-JESUIT-OLD",name:"الترجمة العربية اليسوعية القديمة",tradition:"كاثوليكية تاريخية",year:"1876–1880",canon:"full-with-deuterocanon",books:"all"},
- {id:"AR-SVD-1865",name:"فان دايك 1865",tradition:"Smith-Van Dyck",year:"1865",canon:"protestant",books:"66"},
- {id:"AR-GNA-1993-DC",name:"العربية المشتركة 1993",tradition:"العربية المشتركة مع الأسفار القانونية الثانية",year:"1993",canon:"full-with-deuterocanon",books:"all"},
- {id:"AR-KEH-2012",name:"كتاب الحياة 2012",tradition:"Biblica Open New Arabic Version",year:"2012",canon:"protestant",books:"66"}
+ {id:"AR-SVD-1865",name:"فان دايك 1865",tradition:"Smith-Van Dyck",year:"1865",canon:"66 سفرًا"},
+ {id:"AR-KEH-2012",name:"كتاب الحياة 2012",tradition:"Biblica Open New Arabic Version",year:"2012",canon:"66 سفرًا"},
+ {id:"HE-WLC-2017",name:"النص العبري الماسوري — WLC",tradition:"Westminster Leningrad Codex",year:"النص العبري",canon:"39 سفرًا من العهد القديم"}
 ];
-const demoBookAvailability={
- "AR-JESUIT-OLD":"all","AR-SVD-1865":"protestant","AR-GNA-1993-DC":"all","AR-KEH-2012":"protestant"
-};
-const selectedTranslations=["AR-SVD-1865","AR-KEH-2012","AR-GNA-1993-DC","AR-JESUIT-OLD"];
+const selectedTranslations=["AR-SVD-1865","AR-KEH-2012","HE-WLC-2017"];
 const sampleTexts={
- "AR-JESUIT-OLD":"النص الرقمي الكامل لم يُعتمد بعد. ستظهر الأسفار القانونية الثانية من هذه الطبقة فقط بعد تثبيت corpus وترخيص النسخة الرقمية.",
- "AR-SVD-1865":"النص الفعلي متاح من مصدر فان دايك المعتمد للقراءة عند فتح الإصحاح.",
- "AR-GNA-1993-DC":"النص الكامل يحتاج تثبيت حقوق الاستخدام والنسخة الرقمية قبل إدخاله داخل التطبيق.",
- "AR-KEH-2012":"نسخة كتاب الحياة المفتوحة متاحة للقراءة من المصدر. يمكن ربطها بالإصحاح المطلوب مع حفظ بيانات الترخيص والنسبة."
+ "AR-SVD-1865":"النص الفعلي متاح داخل التطبيق.",
+ "AR-KEH-2012":"Biblica Open New Arabic Version 2012 · CC BY-SA 4.0.",
+ "HE-WLC-2017":"النص العبري من مخطوطة لينينغراد · الملكية العامة."
 };
+const HEBREW_BOOKS={
+ "בראשית":"gen","שמות":"exo","ויקרא":"lev","במדבר":"num","דברים":"deu","יהושע":"jos","שופטים":"jdg","רות":"rut",
+ "שמואל א":"1sa","שמואל ב":"2sa","מלכים א":"1ki","מלכים ב":"2ki","דברי הימים א":"1ch","דברי הימים ב":"2ch",
+ "עזרא":"ezr","נחמיה":"neh","אסתר":"est","איוב":"job","תהילים":"psa","תהלים":"psa","משלי":"pro","קהלת":"ecc",
+ "שיר השירים":"sng","ישעיהו":"isa","ירמיהו":"jer","איכה":"lam","יחזקאל":"ezk","דניאל":"dan","הושע":"hos",
+ "יואל":"jol","עמוס":"amo","עובדיה":"oba","יונה":"jon","מיכה":"mic","נחום":"nam","חבקוק":"hab","צפניה":"zep",
+ "חגי":"hag","זכריה":"zec","מלאכי":"mal"
+};
+const HEBREW_SOURCE_CODE_TO_ID={
+ "GEN":"gen","EXO":"exo","LEV":"lev","NUM":"num","DEU":"deu","JOS":"jos","JDG":"jdg","RUT":"rut",
+ "1SA":"1sa","2SA":"2sa","1KI":"1ki","2KI":"2ki","1CH":"1ch","2CH":"2ch","EZR":"ezr","NEH":"neh",
+ "EST":"est","JOB":"job","PSA":"psa","PRO":"pro","ECC":"ecc","SNG":"sng","ISA":"isa","JER":"jer",
+ "LAM":"lam","EZK":"ezk","DAN":"dan","HOS":"hos","JOL":"jol","AMO":"amo","OBA":"oba","JON":"jon",
+ "MIC":"mic","NAM":"nam","HAB":"hab","ZEP":"zep","HAG":"hag","ZEC":"zec","MAL":"mal"
+};
+const WLC_BOOK_IDS=new Set(Object.values(HEBREW_SOURCE_CODE_TO_ID));
 function translationHasBook(id,bookId){
- const mode=demoBookAvailability[id];
- if(bookId==="TOBIT"||bookId==="JDT"||bookId==="WIS"||bookId==="SIR"||bookId==="BAR"||bookId==="1MAC"||bookId==="2MAC") return mode==="all";
- return true;
+ if(id==="HE-WLC-2017")return WLC_BOOK_IDS.has(HEBREW_SOURCE_CODE_TO_ID[bookId]||bookId);
+ return !Object.values(DEUTEROCANON_BOOKS).includes(bookId);
 }
 function renderTranslationChoices(){
  const el=document.getElementById("translationChoices"); if(!el)return;
- el.innerHTML=translationCatalog.map(t=>"<button class='choice' type='button' onclick='toggleTranslation(\""+t.id+"\")'><strong>"+escapeHtml(t.name)+"</strong><small>"+escapeHtml(t.tradition)+" · "+escapeHtml(t.year)+"</small></button>").join("");
+ el.innerHTML=translationCatalog.map(t=>"<button class='choice' type='button' onclick='toggleTranslation(\""+t.id+"\")'><strong>"+escapeHtml(t.name)+"</strong><small>"+escapeHtml(t.tradition)+" · "+escapeHtml(t.year)+" · "+escapeHtml(t.canon)+"</small></button>").join("");
 }
 function toggleTranslation(id){
  const i=selectedTranslations.indexOf(id);
@@ -288,10 +298,10 @@ async function renderParallel(){
  const p=parseChapterReference(ref);
  el.innerHTML=selectedTranslations.map(id=>{
    const t=translationCatalog.find(x=>x.id===id);
-   const missing=p&&p.deuterocanonical&&!translationHasBook(id,p.bookCode);
+   const missing=p&&!translationHasBook(id,p.bookCode);
    const body=missing
-    ? "<p class='note'>هذا السفر غير متوفر في هذه الترجمة</p>"
-    : "<div class='parallel-body'><p class='verse-text'>"+escapeHtml(sampleTexts[id]||"النص غير متاح بعد في هذه الترجمة.")+"</p></div>";
+    ? "<p class='note'>هذا السفر غير متوفر في هذه الترجمة. لن نستبدل نصه بترجمة أخرى.</p>"
+    : "<div class='parallel-body'><p class='verse-text'>"+escapeHtml(sampleTexts[id]||"جاري تحميل النص...")+"</p></div>";
    return "<div class='card' style='margin:0 0 10px' id='parallel-"+escapeHtml(id)+"'><div class='eyebrow'>"+escapeHtml(t.name)+" · "+escapeHtml(t.year)+"</div>"+body+"<p class='note'>"+escapeHtml(ref)+"</p></div>";
  }).join("");
  if(!p){
@@ -300,23 +310,21 @@ async function renderParallel(){
  }
  for(const id of selectedTranslations){
    const box=document.getElementById("parallel-"+id);
-   if(!box)continue;
-   if(p.deuterocanonical){
-     if(!translationHasBook(id,p.bookCode))continue;
-     if(id==="AR-SVD-1865"||id==="AR-KEH-2012")continue;
-   }
-   if(id!=="AR-SVD-1865"&&id!=="AR-KEH-2012")continue;
+   if(!box||!translationHasBook(id,p.bookCode)||!CORPUS_PATHS[id])continue;
    const body=box.querySelector(".parallel-body");
    if(!body)continue;
+   const sourceBookId=id==="HE-WLC-2017"?(HEBREW_SOURCE_CODE_TO_ID[p.bookCode]||p.bookCode):p.bookCode;
    try{
-     const verses=await loadTranslationChapter(id,p.bookCode,p.chapter);
+     const verses=await loadTranslationChapter(id,sourceBookId,p.chapter);
      if(!verses.length){
        body.innerHTML="<p class='note'>لا توجد بيانات لهذا الإصحاح في هذه الطبعة.</p>";
        continue;
      }
-     body.innerHTML=renderVerseMarkup(verses);
+     body.innerHTML=renderVerseMarkup(verses,id==="HE-WLC-2017"?"he":"ar");
      if(id==="AR-KEH-2012"){
        body.insertAdjacentHTML("beforeend","<p class='note'>Biblica Open New Arabic Version 2012 · CC BY-SA 4.0 · <a href='https://ebible.org/arbnav/' target='_blank' rel='noopener'>المصدر والترخيص</a></p>");
+     }else if(id==="HE-WLC-2017"){
+       body.insertAdjacentHTML("beforeend","<p class='note'>Westminster Leningrad Codex · Public Domain · <a href='https://ebible.org/find/details.php?id=hboWLC' target='_blank' rel='noopener'>المصدر والترخيص</a></p>");
      }
    }catch(e){
      body.innerHTML="<p class='note'>تعذر تحميل النص الآن. تحقق من الاتصال ثم حاول مرة أخرى.</p>";
@@ -344,11 +352,13 @@ function parseChapterReference(value){
  const chapter=Number(m[2]);
  if(DEUTEROCANON_BOOKS[book])return {book,bookNumber:null,bookCode:DEUTEROCANON_BOOKS[book],deuterocanonical:true,chapter};
  const n=SVD_BOOKS[book];
- return n?{book,bookNumber:n,bookCode:EBIBLE_BOOK_CODES[n-1],deuterocanonical:false,chapter}:null;
+ if(n)return {book,bookNumber:n,bookCode:EBIBLE_BOOK_CODES[n-1],deuterocanonical:false,chapter};
+ const hebrewBook=HEBREW_BOOKS[book];
+ return hebrewBook?{book,bookNumber:null,bookCode:hebrewBook,deuterocanonical:false,language:"he",chapter}:null;
 }
 const corpusCache={};
 const chapterCache={};
-const CORPUS_PATHS={"AR-SVD-1865":"./data/ar-svd-1865.jsonl.gz","AR-KEH-2012":"./data/ar-keh-2012.jsonl.gz"};
+const CORPUS_PATHS={"AR-SVD-1865":"./data/ar-svd-1865.jsonl.gz","AR-KEH-2012":"./data/ar-keh-2012.jsonl.gz","HE-WLC-2017":"./data/he-wlc-2017.jsonl.gz"};
 async function loadTranslationCorpus(id){
  if(corpusCache[id])return corpusCache[id];
  const path=CORPUS_PATHS[id];
@@ -370,8 +380,9 @@ async function loadTranslationChapter(id,bookId,chapter){
  chapterCache[key]=verses;
  return verses;
 }
-function renderVerseMarkup(verses){
- return verses.map(v=>"<div class='verse-card'><strong>"+escapeHtml(v.verse)+"</strong><p class='verse-text'>"+escapeHtml(v.text)+"</p></div>").join("");
+function renderVerseMarkup(verses,language){
+ const lang=language==="he"?"he":"ar";
+ return verses.map(v=>"<div class='verse-card'><strong>"+escapeHtml(v.verse)+"</strong><p class='verse-text' lang='"+lang+"' dir='rtl'>"+escapeHtml(v.text)+"</p></div>").join("");
 }
 async function loadSvdChapter(){
  const input=document.getElementById("chapterReference");
@@ -379,19 +390,27 @@ async function loadSvdChapter(){
  const content=document.getElementById("chapterContent");
  const edition=document.getElementById("chapterTranslation").value;
  const p=parseChapterReference(input.value);
- if(!p){status.textContent="اكتب اسم السفر ورقم الإصحاح مثل: يوحنا 1";content.innerHTML="";return}
+ if(!p){status.textContent="اكتب اسم السفر ورقم الإصحاح مثل: يوحنا 1 أو בראשית 1";content.innerHTML="";return}
  content.innerHTML="";
- if(p.deuterocanonical){
-   status.textContent="هذا السفر غير متوفر في "+(edition==="AR-SVD-1865"?"فان دايك 1865":"كتاب الحياة 2012")+".";
+ const editionInfo=translationCatalog.find(t=>t.id===edition);
+ if(!translationHasBook(edition,p.bookCode)){
+   status.textContent="هذا السفر غير متوفر في "+(editionInfo?editionInfo.name:"هذه الترجمة")+".";
    content.innerHTML="<p class='note'>هذا السفر غير متوفر في هذه الترجمة. لن نستبدل نصه بترجمة أخرى.</p>";
    return;
  }
  status.textContent="جاري تحميل النص...";
+ const sourceBookId=edition==="HE-WLC-2017"?(HEBREW_SOURCE_CODE_TO_ID[p.bookCode]||p.bookCode):p.bookCode;
  try{
-   const verses=await loadTranslationChapter(edition,p.bookCode,p.chapter);
+   const verses=await loadTranslationChapter(edition,sourceBookId,p.chapter);
    if(!verses.length)throw new Error("Chapter not found");
-   content.innerHTML="<div class='verse-card'><div class='eyebrow'>"+escapeHtml(edition==="AR-KEH-2012"?"كتاب الحياة 2012":"فان دايك 1865")+" · "+escapeHtml(p.book)+" "+p.chapter+"</div>"+renderVerseMarkup(verses)+(edition==="AR-KEH-2012"?"<p class='note'>© Biblica · Open New Arabic Version 2012 · CC BY-SA 4.0 · <a href='https://ebible.org/arbnav/' target='_blank' rel='noopener'>المصدر والترخيص</a></p>":"")+"</div>";
-   status.textContent=edition==="AR-KEH-2012"
+   const editionName=editionInfo?editionInfo.name:edition;
+   let attribution="";
+   if(edition==="AR-KEH-2012")attribution="<p class='note'>© Biblica · Open New Arabic Version 2012 · CC BY-SA 4.0 · <a href='https://ebible.org/arbnav/' target='_blank' rel='noopener'>المصدر والترخيص</a></p>";
+   if(edition==="HE-WLC-2017")attribution="<p class='note'>Westminster Leningrad Codex · Public Domain · <a href='https://ebible.org/find/details.php?id=hboWLC' target='_blank' rel='noopener'>المصدر والترخيص</a></p>";
+   content.innerHTML="<div class='verse-card'><div class='eyebrow'>"+escapeHtml(editionName)+" · "+escapeHtml(p.book)+" "+p.chapter+"</div>"+renderVerseMarkup(verses,edition==="HE-WLC-2017"?"he":"ar")+attribution+"</div>";
+   status.textContent=edition==="HE-WLC-2017"
+    ?"تم تحميل النص العبري من مخطوطة لينينغراد داخل التطبيق. النص ضمن الملكية العامة."
+    :edition==="AR-KEH-2012"
     ?"تم تحميل كتاب الحياة 2012 داخل التطبيق. النص من Biblica بترخيص CC BY-SA 4.0."
     :"تم تحميل فان دايك 1865 داخل التطبيق. النص ضمن الملكية العامة.";
  }catch(e){
