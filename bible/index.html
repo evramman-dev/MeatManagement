@@ -87,7 +87,7 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
     <div class="eyebrow">النص الفعلي</div>
     <h2>اقرأ إصحاحًا</h2>
     <p class="note">اختر فان دايك أو كتاب الحياة أو النص العبري WLC أو السبعينية اليونانية. يحتفظ كل إصدار بنصه وترقيمه المستقل.</p>
-    <select id="chapterTranslation" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;margin-bottom:9px"><option value="AR-SVD-1865">فان دايك 1865</option><option value="AR-KEH-2012">كتاب الحياة 2012</option><option value="HE-WLC-2017">النص العبري الماسوري WLC</option><option value="GRC-LXX-BRENTON-1851">السبعينية اليونانية — برنتون 1851</option></select>
+    <select id="chapterTranslation" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;margin-bottom:9px"><option value="AR-SVD-1865">فان دايك 1865</option><option value="AR-KEH-2012">كتاب الحياة 2012</option><option value="HE-WLC-2017">النص العبري الماسوري WLC</option><option value="GRC-LXX-BRENTON-1851">السبعينية اليونانية — برنتون 1851</option><option value="GRC-KOINE-RP-2018">العهد الجديد اليوناني الكويني — Robinson-Pierpont 2018</option></select>
     <div class="search"><input id="chapterReference" value="يوحنا 1" placeholder="مثال: يوحنا 1"><button id="loadChapterButton" class="primary" type="button">فتح الإصحاح</button></div>
     <div id="chapterStatus" class="note" style="margin-top:10px"></div>
     <div id="chapterContent" style="margin-top:12px"></div>
@@ -255,13 +255,13 @@ function escapeHtml(s){return String(s).replace(/[&<>"\']/g,function(c){return {
 const translationCatalog=[
  {id:"AR-SVD-1865",name:"فان دايك 1865",tradition:"Smith-Van Dyck",year:"1865",canon:"66 سفرًا"},
  {id:"AR-KEH-2012",name:"كتاب الحياة 2012",tradition:"Biblica Open New Arabic Version",year:"2012",canon:"66 سفرًا"},
- {id:"HE-WLC-2017",name:"النص العبري الماسوري — WLC",tradition:"Westminster Leningrad Codex",year:"النص العبري",canon:"39 سفرًا من العهد القديم"},{id:"GRC-LXX-BRENTON-1851",name:"السبعينية اليونانية — برنتون 1851",tradition:"Brenton Greek Septuagint (GRCBRE)",year:"1851",canon:"52 سفرًا ونصًا من إصدار برنتون"}
+ {id:"HE-WLC-2017",name:"النص العبري الماسوري — WLC",tradition:"Westminster Leningrad Codex",year:"النص العبري",canon:"39 سفرًا من العهد القديم"},{id:"GRC-LXX-BRENTON-1851",name:"السبعينية اليونانية — برنتون 1851",tradition:"Brenton Greek Septuagint (GRCBRE)",year:"1851",canon:"52 سفرًا ونصًا من إصدار برنتون"},{id:"GRC-KOINE-RP-2018",name:"العهد الجديد اليوناني الكويني — Robinson-Pierpont 2018",tradition:"Byzantine / Majority Text",year:"2018",canon:"27 سفرًا من العهد الجديد"}
 ];
-const selectedTranslations=["AR-SVD-1865","AR-KEH-2012","HE-WLC-2017","GRC-LXX-BRENTON-1851"];
+const selectedTranslations=["AR-SVD-1865","AR-KEH-2012","HE-WLC-2017","GRC-LXX-BRENTON-1851","GRC-KOINE-RP-2018"];
 const sampleTexts={
  "AR-SVD-1865":"النص الفعلي متاح داخل التطبيق.",
  "AR-KEH-2012":"Biblica Open New Arabic Version 2012 · CC BY-SA 4.0.",
- "HE-WLC-2017":"النص العبري من مخطوطة لينينغراد · الملكية العامة.","GRC-LXX-BRENTON-1851":"النص اليوناني السبعيني من إصدار برنتون 1851 · الملكية العامة."
+ "HE-WLC-2017":"النص العبري من مخطوطة لينينغراد · الملكية العامة.","GRC-LXX-BRENTON-1851":"النص اليوناني السبعيني من إصدار برنتون 1851 · الملكية العامة.","GRC-KOINE-RP-2018":"العهد الجديد اليوناني بحسب النص البيزنطي — Robinson-Pierpont 2018 · الملكية العامة."
 };
 const HEBREW_BOOKS={
  "בראשית":"gen","שמות":"exo","ויקרא":"lev","במדבר":"num","דברים":"deu","יהושע":"jos","שופטים":"jdg","רות":"rut",
@@ -281,7 +281,8 @@ const HEBREW_SOURCE_CODE_TO_ID={
 const WLC_BOOK_IDS=new Set(Object.values(HEBREW_SOURCE_CODE_TO_ID));
 const LXX_SOURCE_BOOK_IDS=new Set(["GEN","EXO","LEV","NUM","DEU","JOS","JDG","RUT","1SA","2SA","1KI","2KI","1CH","2CH","EZR","JOB","PSA","PRO","ECC","SNG","ISA","JER","LAM","EZK","HOS","JOL","AMO","OBA","JON","MIC","NAM","HAB","ZEP","HAG","ZEC","MAL","EST","DAN","TOB","JDT","ESG","WIS","SIR","BAR","LJE","SUS","BEL","1MA","2MA","3MA","4MA","1ES","MAN","DAG"]);
 const LXX_BOOK_ID_MAP={"ESG":"est","DAG":"dan","EST":"est","DAN":"dan","TOB":"tob","JDT":"jdt","WIS":"wis","SIR":"sir","BAR":"bar","1MA":"1ma","2MA":"2ma"};
-function translationHasBook(id,bookId){if(id==="HE-WLC-2017")return WLC_BOOK_IDS.has(HEBREW_SOURCE_CODE_TO_ID[bookId]||bookId);if(id==="GRC-LXX-BRENTON-1851")return LXX_SOURCE_BOOK_IDS.has(String(bookId).toUpperCase());return !Object.values(DEUTEROCANON_BOOKS).includes(bookId);}
+const GRC_KOINE_NT_BOOK_IDS=new Set(["MAT","MRK","LUK","JHN","ACT","ROM","1CO","2CO","GAL","EPH","PHP","COL","1TH","2TH","1TI","2TI","TIT","PHM","HEB","JAS","1PE","2PE","1JN","2JN","3JN","JUD","REV"]);
+function translationHasBook(id,bookId){if(id==="HE-WLC-2017")return WLC_BOOK_IDS.has(HEBREW_SOURCE_CODE_TO_ID[bookId]||bookId);if(id==="GRC-LXX-BRENTON-1851")return LXX_SOURCE_BOOK_IDS.has(String(bookId).toUpperCase());if(id==="GRC-KOINE-RP-2018")return GRC_KOINE_NT_BOOK_IDS.has(String(bookId).toUpperCase());return !Object.values(DEUTEROCANON_BOOKS).includes(bookId);}
 function renderTranslationChoices(){
  const el=document.getElementById("translationChoices"); if(!el)return;
  el.innerHTML=translationCatalog.map(t=>"<button class='choice' type='button' onclick='toggleTranslation(\""+t.id+"\")'><strong>"+escapeHtml(t.name)+"</strong><small>"+escapeHtml(t.tradition)+" · "+escapeHtml(t.year)+" · "+escapeHtml(t.canon)+"</small></button>").join("");
@@ -313,19 +314,19 @@ async function renderParallel(){
    if(!box||!translationHasBook(id,p.bookCode)||!CORPUS_PATHS[id])continue;
    const body=box.querySelector(".parallel-body");
    if(!body)continue;
-   const sourceBookId=id==="HE-WLC-2017"?(HEBREW_SOURCE_CODE_TO_ID[p.bookCode]||p.bookCode):id==="GRC-LXX-BRENTON-1851"?(LXX_BOOK_ID_MAP[p.bookCode]||p.bookCode.toLowerCase()):p.bookCode;
+   const sourceBookId=id==="HE-WLC-2017"?(HEBREW_SOURCE_CODE_TO_ID[p.bookCode]||p.bookCode):id==="GRC-LXX-BRENTON-1851"?(LXX_BOOK_ID_MAP[p.bookCode]||p.bookCode.toLowerCase()):id==="GRC-KOINE-RP-2018"?p.bookCode.toLowerCase():p.bookCode;
    try{
      const verses=await loadTranslationChapter(id,sourceBookId,p.chapter);
      if(!verses.length){
        body.innerHTML="<p class='note'>لا توجد بيانات لهذا الإصحاح في هذه الطبعة.</p>";
        continue;
      }
-     body.innerHTML=renderVerseMarkup(verses,id==="HE-WLC-2017"?"he":id==="GRC-LXX-BRENTON-1851"?"grc":"ar");
+     body.innerHTML=renderVerseMarkup(verses,id==="HE-WLC-2017"?"he":(id==="GRC-LXX-BRENTON-1851"||id==="GRC-KOINE-RP-2018")?"grc":"ar");
      if(id==="AR-KEH-2012"){
        body.insertAdjacentHTML("beforeend","<p class='note'>Biblica Open New Arabic Version 2012 · CC BY-SA 4.0 · <a href='https://ebible.org/arbnav/' target='_blank' rel='noopener'>المصدر والترخيص</a></p>");
      }else if(id==="HE-WLC-2017"){
        body.insertAdjacentHTML("beforeend","<p class='note'>Westminster Leningrad Codex · Public Domain · <a href='https://ebible.org/find/details.php?id=hboWLC' target='_blank' rel='noopener'>المصدر والترخيص</a></p>");
-     }else if(id==="GRC-LXX-BRENTON-1851"){body.insertAdjacentHTML("beforeend","<p class='note'>Brenton Greek Septuagint 1851 · Public Domain · <a href='https://ebible.org/find/details.php?id=grcbrent' target='_blank' rel='noopener'>المصدر والترخيص</a></p>");}
+     }else if(id==="GRC-LXX-BRENTON-1851"){body.insertAdjacentHTML("beforeend","<p class='note'>Brenton Greek Septuagint 1851 · Public Domain · <a href='https://ebible.org/find/details.php?id=grcbrent' target='_blank' rel='noopener'>المصدر والترخيص</a></p>");}else if(id==="GRC-KOINE-RP-2018"){body.insertAdjacentHTML("beforeend","<p class='note'>Robinson-Pierpont 2018 · Byzantine / Majority Text · Public Domain · <a href='https://ebible.org/bible/details.php?id=grcmt' target='_blank' rel='noopener'>المصدر والترخيص</a></p>");}
    }catch(e){
      body.innerHTML="<p class='note'>تعذر تحميل النص الآن. تحقق من الاتصال ثم حاول مرة أخرى.</p>";
    }
@@ -358,7 +359,7 @@ function parseChapterReference(value){
 }
 const corpusCache={};
 const chapterCache={};
-const CORPUS_PATHS={"AR-SVD-1865":"./data/ar-svd-1865.jsonl.gz","AR-KEH-2012":"./data/ar-keh-2012.jsonl.gz","HE-WLC-2017":"./data/he-wlc-2017.jsonl.gz","GRC-LXX-BRENTON-1851":"./data/grc-lxx-brenton-1851.jsonl.gz"};
+const CORPUS_PATHS={"AR-SVD-1865":"./data/ar-svd-1865.jsonl.gz","AR-KEH-2012":"./data/ar-keh-2012.jsonl.gz","HE-WLC-2017":"./data/he-wlc-2017.jsonl.gz","GRC-LXX-BRENTON-1851":"./data/grc-lxx-brenton-1851.jsonl.gz","GRC-KOINE-RP-2018":"./data/grc-koine-rp-2018.jsonl.gz"};
 async function loadTranslationCorpus(id){
  if(corpusCache[id])return corpusCache[id];
  const path=CORPUS_PATHS[id];
@@ -400,7 +401,7 @@ async function loadSvdChapter(){
    return;
  }
  status.textContent="جاري تحميل النص...";
- const sourceBookId=edition==="HE-WLC-2017"?(HEBREW_SOURCE_CODE_TO_ID[p.bookCode]||p.bookCode):edition==="GRC-LXX-BRENTON-1851"?(LXX_BOOK_ID_MAP[p.bookCode]||p.bookCode.toLowerCase()):p.bookCode;
+ const sourceBookId=edition==="HE-WLC-2017"?(HEBREW_SOURCE_CODE_TO_ID[p.bookCode]||p.bookCode):edition==="GRC-LXX-BRENTON-1851"?(LXX_BOOK_ID_MAP[p.bookCode]||p.bookCode.toLowerCase()):edition==="GRC-KOINE-RP-2018"?p.bookCode.toLowerCase():p.bookCode;
  try{
    const verses=await loadTranslationChapter(edition,sourceBookId,p.chapter);
    if(!verses.length){status.textContent="هذا الإصحاح غير متوفر في هذه الطبعة أو يختلف ترقيمه عن الفهرس القبطي.";content.innerHTML="<p class='note'>لا توجد بيانات لهذا الإصحاح في هذه الطبعة. لن نستبدل النص من طبعة أخرى.</p>";return;}
@@ -409,13 +410,16 @@ async function loadSvdChapter(){
    if(edition==="AR-KEH-2012")attribution="<p class='note'>© Biblica · Open New Arabic Version 2012 · CC BY-SA 4.0 · <a href='https://ebible.org/arbnav/' target='_blank' rel='noopener'>المصدر والترخيص</a></p>";
    if(edition==="HE-WLC-2017")attribution="<p class='note'>Westminster Leningrad Codex · Public Domain · <a href='https://ebible.org/find/details.php?id=hboWLC' target='_blank' rel='noopener'>المصدر والترخيص</a></p>";
    if(edition==="GRC-LXX-BRENTON-1851")attribution="<p class='note'>Brenton Greek Septuagint 1851 · Public Domain · <a href='https://ebible.org/find/details.php?id=grcbrent' target='_blank' rel='noopener'>المصدر والترخيص</a></p>";
-   content.innerHTML="<div class='verse-card'><div class='eyebrow'>"+escapeHtml(editionName)+" · "+escapeHtml(p.book)+" "+p.chapter+"</div>"+renderVerseMarkup(verses,edition==="HE-WLC-2017"?"he":edition==="GRC-LXX-BRENTON-1851"?"grc":"ar")+attribution+"</div>";
+    if(edition==="GRC-KOINE-RP-2018")attribution="<p class='note'>Robinson-Pierpont 2018 · Byzantine / Majority Text · Public Domain · <a href='https://ebible.org/bible/details.php?id=grcmt' target='_blank' rel='noopener'>المصدر والترخيص</a></p>";
+   content.innerHTML="<div class='verse-card'><div class='eyebrow'>"+escapeHtml(editionName)+" · "+escapeHtml(p.book)+" "+p.chapter+"</div>"+renderVerseMarkup(verses,edition==="HE-WLC-2017"?"he":(edition==="GRC-LXX-BRENTON-1851"||edition==="GRC-KOINE-RP-2018")?"grc":"ar")+attribution+"</div>";
    status.textContent=edition==="HE-WLC-2017"
     ?"تم تحميل النص العبري من مخطوطة لينينغراد داخل التطبيق. النص ضمن الملكية العامة."
     :edition==="AR-KEH-2012"
     ?"تم تحميل كتاب الحياة 2012 داخل التطبيق. النص من Biblica بترخيص CC BY-SA 4.0."
     :edition==="GRC-LXX-BRENTON-1851"
     ?"تم تحميل النص اليوناني السبعيني من إصدار برنتون 1851. النص ضمن الملكية العامة."
+    :edition==="GRC-KOINE-RP-2018"
+    ?"تم تحميل العهد الجديد اليوناني الكويني بحسب Robinson-Pierpont 2018 داخل التطبيق. النص البيزنطي ضمن الملكية العامة."
     :"تم تحميل فان دايك 1865 داخل التطبيق. النص ضمن الملكية العامة.";
  }catch(e){
    status.textContent="تعذر تحميل الإصحاح الآن. تحقق من الاتصال ثم حاول مرة أخرى.";
