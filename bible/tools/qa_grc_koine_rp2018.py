@@ -34,6 +34,17 @@ def main():
   "missing_records":0,"extra_records":0,"text_mismatches":0,"source_archive_sha256_verified":sha,
   "verified_books":len(coverage),"verified_chapters":chapter_total}
  (DATA/"grc-koine-rp-2018_audit.json").write_text(json.dumps(audit,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+ registry_path=DATA/"multilingual-edition-registry.draft.json"
+ registry=json.loads(registry_path.read_text(encoding="utf-8"))
+ edition=next((item for item in registry["editions"] if item["edition_id"]=="nt_grc_rp_2018"),None)
+ if edition is None: raise AssertionError("Robinson-Pierpont edition is missing from multilingual registry")
+ edition.update({"coverage_status":"27_book_nt_full_source_match_passed",
+  "corpus_status":"imported_and_full_source_match_passed",
+  "notes":f"Robinson-Pierpont 2018 Greek Majority Text NT. eBible declares dialect Koine and license Public Domain. Verified {len(coverage)} books and {chapter_total} chapters with {len(committed)} verse records. Full exact-key and text comparison against the downloaded USFM archive passed: zero missing, extra, or mismatched records. Preserves the Byzantine / Majority Text witness independently from SBLGNT and Brenton LXX.",
+  "corpus_file":"bible/data/grc-koine-rp-2018.jsonl.gz",
+  "audit_file":"bible/data/grc-koine-rp-2018_audit.json",
+  "record_count":len(committed),"source_archive_sha256":sha,"last_verified":__import__("datetime").date.today().isoformat()})
+ registry_path.write_text(json.dumps(registry,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
  print(json.dumps({"status":"PASSED","books":len(coverage),"chapters":chapter_total,
   "matched_records":len(committed),"source_sha256":sha},ensure_ascii=False,indent=2))
 if __name__=="__main__": main()
