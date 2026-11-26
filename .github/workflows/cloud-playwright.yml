@@ -90,6 +90,7 @@ jobs:
           --trace retain-on-failure --reporter=list,html
 
       - name: Run local Bible corpus browser checks
+        if: always()
         env:
           BASE_URL: http://127.0.0.1:4173/
         run: npx playwright test tests/bible-corpus.spec.cjs --trace retain-on-failure --reporter=list
