@@ -22,7 +22,14 @@ WORD_NUMBERS = {
     "السابع":7,"الثامن":8,"التاسع":9,"العاشر":10,"الحادي عشر":11,
     "الثاني عشر":12,"الثالث عشر":13,"الرابع عشر":14,"الخامس عشر":15,
     "السادس عشر":16,"السابع عشر":17,"الثامن عشر":18,"التاسع عشر":19,
-    "الخمسون":50,"الحادي والخمسون":51,
+    "العشرون":20,"الحادي والعشرون":21,"الثاني والعشرون":22,"الثالث والعشرون":23,
+    "الرابع والعشرون":24,"الخامس والعشرون":25,"السادس والعشرون":26,"السابع والعشرون":27,
+    "الثامن والعشرون":28,"التاسع والعشرون":29,"الثلاثون":30,"الحادي والثلاثون":31,
+    "الثاني والثلاثون":32,"الثالث والثلاثون":33,"الرابع والثلاثون":34,"الخامس والثلاثون":35,
+    "السادس والثلاثون":36,"السابع والثلاثون":37,"الثامن والثلاثون":38,"التاسع والثلاثون":39,
+    "الأربعون":40,"الحادي والأربعون":41,"الثاني والأربعون":42,"الثالث والأربعون":43,
+    "الرابع والأربعون":44,"الخامس والأربعون":45,"السادس والأربعون":46,"السابع والأربعون":47,
+    "الثامن والأربعون":48,"التاسع والأربعون":49,"الخمسون":50,"الحادي والخمسون":51,
 }
 def curl(url, path):
     r=subprocess.run(["curl","--fail","--location","--retry","3","--retry-delay","2",
@@ -76,6 +83,18 @@ def parse_page(path, book_id, expected_chapters):
                    "last_verse":max(nums) if nums else None,
                    "duplicates":sorted({n for n in nums if nums.count(n)>1})})
     return records,qa
+BOOK_URLS = {
+    "tobit": "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya__1-Tobit_.html",
+    "judith": "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya__2-Judith_.html",
+    "esther_additions": "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya__3-Esther_.html",
+    "wisdom": "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya__4-Wisdon-of-Solomon_.html",
+    "sirach": "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya__5-Wisdon-of-Joshua-Son-of-Sirach_.html",
+    "baruch": "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya__6-Baruch_.html",
+    "daniel_additions": "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya__7-Daniel_.html",
+    "1_maccabees": "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya__8-First-of-Maccabees_.html",
+    "2_maccabees": "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya__9-Second-of-Maccabees_.html",
+    "psalm_151": "https://st-takla.org/pub_Deuterocanon/Deuterocanon-Apocrypha_El-Asfar_El-Kanoneya_El-Tanya_10-Psalm151-El-Mazmoor-151_.html",
+}
 def discover_book_urls(index_html):
     found={}
     for m in re.finditer(r'href=["\']([^"\']+)["\'][^>]*>(.*?)</a>',index_html,flags=re.I|re.S):
@@ -88,9 +107,7 @@ def discover_book_urls(index_html):
 def main():
     OUT.mkdir(parents=True,exist_ok=True)
     index_path=OUT/"index.html"; curl(INDEX_URL,index_path)
-    urls=discover_book_urls(index_path.read_text(encoding="utf-8",errors="replace"))
-    missing=[b for b,_,_ in BOOKS if b not in urls]
-    if missing: raise RuntimeError(f"Missing discovered book URLs: {missing}")
+    urls=BOOK_URLS
     all_records=[]; reports=[]
     for book_id,title,expected in BOOKS:
         path=OUT/f"{book_id}.html"; curl(urls[book_id],path)
