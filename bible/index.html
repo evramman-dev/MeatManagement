@@ -70,7 +70,7 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
   </div>
   <div class="card">
     <div class="eyebrow">قراءة متوازية</div>
-    <h2 id="parallelReference">يوحنا 1:1</h2>
+    <h2 id="parallelReference">تكوين 1:1</h2>
     <div id="parallelTranslations"></div>
   </div>
 </section>
@@ -402,7 +402,7 @@ async function loadSvdChapter(){
  const sourceBookId=edition==="HE-WLC-2017"?(HEBREW_SOURCE_CODE_TO_ID[p.bookCode]||p.bookCode):p.bookCode;
  try{
    const verses=await loadTranslationChapter(edition,sourceBookId,p.chapter);
-   if(!verses.length)throw new Error("Chapter not found");
+   if(!verses.length){status.textContent="هذا الإصحاح غير متوفر في هذه الطبعة أو يختلف ترقيمه عن الفهرس القبطي.";content.innerHTML="<p class='note'>لا توجد بيانات لهذا الإصحاح في هذه الطبعة. لن نستبدل النص من طبعة أخرى.</p>";return;}
    const editionName=editionInfo?editionInfo.name:edition;
    let attribution="";
    if(edition==="AR-KEH-2012")attribution="<p class='note'>© Biblica · Open New Arabic Version 2012 · CC BY-SA 4.0 · <a href='https://ebible.org/arbnav/' target='_blank' rel='noopener'>المصدر والترخيص</a></p>";
