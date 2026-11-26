@@ -122,6 +122,25 @@ def parse_chapter_page(path, book_id, chapter):
                          "text":m.group(2).strip(),"source":"St-Takla.org"})
     return rows
 
+def parse_full_page_chapters(html, book_id, wanted):
+    lines=strip_html(html)
+    wanted=set(wanted)
+    current=None
+    rows=[]
+    for line in lines:
+        ch,remainder=split_chapter_line(line)
+        if ch is not None:
+            current=ch
+            line=remainder
+            if not line: continue
+        if current not in wanted: continue
+        m=re.match(r"^(?:\d+\.|\d+)\s+(.+)$",line)
+        if m and len(m.group(1).strip())>1:
+            token=re.match(r"^(\d+)",line).group(1)
+            rows.append({"book_id":book_id,"chapter":current,"verse":int(token),
+                         "text":m.group(1).strip(),"source":"St-Takla.org"})
+    return rows
+
 def parse_page(path, book_id, expected_chapters):
     raw=path.read_bytes()
     candidates=[]
@@ -135,12 +154,22 @@ def parse_page(path, book_id, expected_chapters):
     _,html,_=max(candidates,key=lambda x:x[0])
     idx_url=discover_chapter_index_url(html)
     if not idx_url:
+        if book_id == "psalm_151":
+            rows=[]
+            for line in strip_html(html):
+                m=re.match(r"^(\d+)-\s+(.+)$",line)
+                if m:
+                    rows.append({"book_id":book_id,"chapter":1,"verse":int(m.group(1)),
+                                 "text":m.group(2).strip(),"source":"St-Takla.org","source_url":urls.get(book_id)})
+            return rows,[{"chapter":1,"verses":len(rows),"first_verse":min([r["verse"] for r in rows]) if rows else None,
+                          "last_verse":max([r["verse"] for r in rows]) if rows else None,"duplicates":[]}],None
         return [],[],None
     idx_path=OUT/f"{book_id}-chapters.html"
     curl(idx_url,idx_path)
     chapter_urls=discover_chapter_urls(read_html(idx_path),idx_url)
     expected=list(range(1,expected_chapters+1)) if isinstance(expected_chapters,int) else list(expected_chapters)
     records=[]; qa=[]
+    found_from_index=set()
     for ch in expected:
         url=chapter_urls.get(ch)
         if not url:
@@ -151,11 +180,25 @@ def parse_page(path, book_id, expected_chapters):
         rows=parse_chapter_page(cp,book_id,ch)
         for r in rows: r["source_url"]=url
         records.extend(rows)
+        if rows: found_from_index.add(ch)
         nums=[r["verse"] for r in rows]
         qa.append({"chapter":ch,"verses":len(rows),
                    "first_verse":min(nums) if nums else None,
                    "last_verse":max(nums) if nums else None,
                    "duplicates":sorted({n for n in nums if nums.count(n)>1})})
+    missing=[ch for ch in expected if ch not in found_from_index]
+    if missing:
+        fallback=parse_full_page_chapters(html,book_id,missing)
+        records.extend(fallback)
+        by={ch:[] for ch in expected}
+        for r in records: by.setdefault(r["chapter"],[]).append(r)
+        qa=[]
+        for ch in expected:
+            nums=[r["verse"] for r in by.get(ch,[])]
+            qa.append({"chapter":ch,"verses":len(nums),
+                       "first_verse":min(nums) if nums else None,
+                       "last_verse":max(nums) if nums else None,
+                       "duplicates":sorted({n for n in nums if nums.count(n)>1})})
     return records,qa,idx_url
 
 def discover_book_urls(index_html):
