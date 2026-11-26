@@ -281,7 +281,7 @@ function toggleTranslation(id){
  else if(selectedTranslations.length<4)selectedTranslations.push(id);
  renderParallel();
 }
-async async function renderParallel(){
+async function renderParallel(){
  const el=document.getElementById("parallelTranslations"); if(!el)return;
  const ref=document.getElementById("parallelReference").textContent;
  el.innerHTML=selectedTranslations.map(id=>{
