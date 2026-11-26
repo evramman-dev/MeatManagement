@@ -1542,8 +1542,11 @@
     "sus",
     "bel"
   ],
-  "coptic_catalog_books_without_brenton_source": [
+  "coptic_catalog_books_without_independent_source_book_code": [
     "neh"
+  ],
+  "coptic_catalog_coverage_notes": [
+    "The source book EZR is the combined Ezra-Nehemiah (2 Esdras) witness and has 23 chapters. NEH has no separate source-book code in this edition. Keep the combined source book intact and do not split it into canonical books without a reviewed alignment."
   ],
   "output_file": "grc-lxx-brenton-1851.jsonl.gz",
   "status": "FULL_SOURCE_MATCH_PASSED",
