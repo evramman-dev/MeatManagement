@@ -11,13 +11,13 @@ test('Bible reader loads both local Arabic editions and preserves missing-book b
   await page.locator('#chapterReference').fill('يوحنا 1');
   await page.locator('#loadChapterButton').click();
   await expect(page.locator('#chapterStatus')).toContainText('تم تحميل فان دايك 1865 داخل التطبيق');
-  await expect(page.locator('#chapterContent .verse-card')).toHaveCount(1);
+  await expect(page.locator('#chapterContent > .verse-card')).toHaveCount(1);
   await expect(page.locator('#chapterContent')).toContainText('فان دايك 1865');
 
   await page.locator('#chapterTranslation').selectOption('AR-KEH-2012');
   await page.locator('#loadChapterButton').click();
   await expect(page.locator('#chapterStatus')).toContainText('تم تحميل كتاب الحياة 2012 داخل التطبيق');
-  await expect(page.locator('#chapterContent .verse-card')).toHaveCount(1);
+  await expect(page.locator('#chapterContent > .verse-card')).toHaveCount(1);
   await expect(page.locator('#chapterContent')).toContainText('كتاب الحياة 2012');
 
   await page.locator('#chapterTranslation').selectOption('AR-SVD-1865');
