@@ -75,7 +75,7 @@ test('Bible reader loads both local Arabic editions and preserves missing-book b
   await expect(page.locator('#chapterContent .verse-text').first()).toHaveAttribute('lang', 'grc');
   await expect(page.locator('#chapterContent .verse-text').first()).toHaveAttribute('dir', 'ltr');
   await expect(page.locator('#chapterContent')).toContainText('Robinson-Pierpont 2018');
-  await expect(page.locator('#chapterContent')).toContainText('λόγος');
+  await expect(page.locator('#chapterContent')).toContainText('ο λογοσ');
 
   await page.locator('#chapterReference').fill('رؤيا 22');
   await page.locator('#loadChapterButton').click();
