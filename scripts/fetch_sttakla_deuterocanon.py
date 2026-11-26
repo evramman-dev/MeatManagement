@@ -101,14 +101,14 @@ def discover_chapter_index_url(html):
             return urljoin(INDEX_URL,a["href"])
     return None
 
-def discover_chapter_urls(index_html):
+def discover_chapter_urls(index_html, base_url):
     soup=BeautifulSoup(index_html,"html.parser")
     found={}
     for a in soup.find_all("a",href=True):
         label=re.sub(r"\s+"," ",a.get_text(" ",strip=True))
         m=re.search(r"(?:أصحاح|اصحاح)\s+(\d+)$",label)
         if not m: continue
-        found[int(m.group(1))]=urljoin(INDEX_URL,a["href"])
+        found[int(m.group(1))]=urljoin(base_url,a["href"])
     return found
 
 def parse_chapter_page(path, book_id, chapter):
@@ -138,7 +138,7 @@ def parse_page(path, book_id, expected_chapters):
         return [],[],None
     idx_path=OUT/f"{book_id}-chapters.html"
     curl(idx_url,idx_path)
-    chapter_urls=discover_chapter_urls(read_html(idx_path))
+    chapter_urls=discover_chapter_urls(read_html(idx_path),idx_url)
     expected=list(range(1,expected_chapters+1)) if isinstance(expected_chapters,int) else list(expected_chapters)
     records=[]; qa=[]
     for ch in expected:
