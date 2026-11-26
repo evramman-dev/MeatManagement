@@ -42,4 +42,4 @@ The edition's source book set is retained independently, including its Deuteroca
 28,597 verse records across all 52 source books/texts. Full exact-key and text comparison against the downloaded source archive passed: zero missing, extra, or mismatched records. Source archive SHA256: `9de434f4922f85a475276e4754f6d114dee0f3bf5323d90dcd559a1f8286e9a4`. See `grc-lxx-brenton-1851_audit.json` for book-by-book coverage.
 
 
-The Brenton corpus import and full source comparison passed in workflow run 45810436651. The corpus is now committed to the public repository. Reader browser QA and Pages deployment are being rerun against the committed corpus.
+The Brenton corpus import and full source comparison passed in workflow run 45810436651. The corpus is now committed to the public repository. Reader browser QA passed, including Greek LTR rendering and Deuterocanonical book checks. GitHub Pages build and deployment also passed.
