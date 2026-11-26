@@ -301,6 +301,10 @@ async function renderParallel(){
    }catch(e){}
  }
 }
+const SVD_API_BASE="https://api.getbible.net/v3/arabicsv";
+const SVD_BOOKS={"تكوين":1,"خروج":2,"لاويين":3,"عدد":4,"تثنية":5,"يشوع":6,"قضاة":7,"راعوث":8,"صموئيل الأول":9,"صموئيل الثاني":10,"ملوك الأول":11,"ملوك الثاني":12,"أخبار الأيام الأول":13,"أخبار الأيام الثاني":14,"عزرا":15,"نحميا":16,"أستير":17,"أيوب":18,"مزامير":19,"مزمور":19,"أمثال":20,"الأمثال":20,"جامعة":21,"نشيد الأنشاد":22,"إشعياء":23,"إرميا":24,"مراثي إرميا":25,"حزقيال":26,"دانيال":27,"هوشع":28,"يوئيل":29,"عاموس":30,"عوبديا":31,"يونان":32,"ميخا":33,"ناحوم":34,"حبقوق":35,"صفنيا":36,"حجي":37,"زكريا":38,"ملاخي":39,"متى":40,"مرقس":41,"لوقا":42,"يوحنا":43,"أعمال":44,"أعمال الرسل":44,"رومية":45,"رؤيا":66};
+function parseChapterReference(value){const m=String(value||"").trim().match(/^(.+?)\s+(\d+)$/);if(!m)return null;let book=m[1].trim();const n=SVD_BOOKS[book];return n?{book,bookNumber:n,chapter:Number(m[2])}:null}
+async function loadSvdChapter(){const input=document.getElementById("chapterReference"),status=document.getElementById("chapterStatus"),content=document.getElementById("chapterContent");const p=parseChapterReference(input.value);if(!p){status.textContent="اكتب اسم السفر ورقم الإصحاح مثل: يوحنا 1";content.innerHTML="";return}status.textContent="جاري تحميل النص...";content.innerHTML="";try{const res=await fetch(SVD_API_BASE+"/"+p.bookNumber+"/"+p.chapter+".json");if(!res.ok)throw new Error();const data=await res.json(),verses=Array.isArray(data.verses)?data.verses:[];if(!verses.length)throw new Error();content.innerHTML="<div class='verse-card'><div class='eyebrow'>فان دايك 1865 · "+escapeHtml(p.book)+" "+p.chapter+"</div>"+verses.map(v=>"<div class='verse-card'><strong>"+escapeHtml(v.verse||"")+"</strong><p class='verse-text'>"+escapeHtml(v.text||"")+"</p></div>").join("")+"</div>";status.textContent="تم تحميل النص من المصدر."}catch(e){status.textContent="تعذر تحميل الإصحاح الآن. تحقق من الاتصال ثم حاول مرة أخرى."}}
 const demoIndex=[
  {ref:"مزمور 46",words:["الله","خوف","قلق","ملجأ","قوة"]},
  {ref:"فيلبي 4",words:["الله","سلام","صلاة","قلق","فرح"]},
