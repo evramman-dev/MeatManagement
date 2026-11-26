@@ -8,7 +8,7 @@
   "declared_new_testament_books": 27,
   "declared_old_testament_chapters": 1075,
   "declared_new_testament_chapters": 270,
-  "status": "catalog_draft_only_not_textual_corpus",
+  "status": "catalog_draft_with_chapter_counts_official_nt_total_discrepancy_open",
   "important_notice": "This is a draft navigation catalog for the current official Coptic Orthodox 73-book reference (46 Old Testament and 27 New Testament books). It is not an approved final canonical ordering and not Bible text. Chapter counts and versification remain unverified against the selected edition. Historical/appendix writings are tracked separately and are not silently inserted into the 73-book list.",
   "sources": [
     {
@@ -43,584 +43,584 @@
       "canonical_order": 1,
       "testament": "OT",
       "name_ar": "التكوين",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 50,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "exo",
       "canonical_order": 2,
       "testament": "OT",
       "name_ar": "الخروج",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 40,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "lev",
       "canonical_order": 3,
       "testament": "OT",
       "name_ar": "اللاويين",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 27,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "num",
       "canonical_order": 4,
       "testament": "OT",
       "name_ar": "العدد",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 36,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "deu",
       "canonical_order": 5,
       "testament": "OT",
       "name_ar": "التثنية",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 34,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "jos",
       "canonical_order": 6,
       "testament": "OT",
       "name_ar": "يشوع",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 24,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "jdg",
       "canonical_order": 7,
       "testament": "OT",
       "name_ar": "القضاة",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 21,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "rut",
       "canonical_order": 8,
       "testament": "OT",
       "name_ar": "راعوث",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 4,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "1sa",
       "canonical_order": 9,
       "testament": "OT",
       "name_ar": "صموئيل الأول",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 31,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "2sa",
       "canonical_order": 10,
       "testament": "OT",
       "name_ar": "صموئيل الثاني",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 24,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "1ki",
       "canonical_order": 11,
       "testament": "OT",
       "name_ar": "الملوك الأول",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 22,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "2ki",
       "canonical_order": 12,
       "testament": "OT",
       "name_ar": "الملوك الثاني",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 25,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "1ch",
       "canonical_order": 13,
       "testament": "OT",
       "name_ar": "أخبار الأيام الأول",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 29,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "2ch",
       "canonical_order": 14,
       "testament": "OT",
       "name_ar": "أخبار الأيام الثاني",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 36,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "ezr",
       "canonical_order": 15,
       "testament": "OT",
       "name_ar": "عزرا",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 10,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "neh",
       "canonical_order": 16,
       "testament": "OT",
       "name_ar": "نحميا",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 13,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "tob",
       "canonical_order": 17,
       "testament": "OT",
       "name_ar": "طوبيا",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 14,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "jdt",
       "canonical_order": 18,
       "testament": "OT",
       "name_ar": "يهوديت",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 16,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "est",
       "canonical_order": 19,
       "testament": "OT",
       "name_ar": "أستير",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 16,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "job",
       "canonical_order": 20,
       "testament": "OT",
       "name_ar": "أيوب",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 42,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "psa",
       "canonical_order": 21,
       "testament": "OT",
       "name_ar": "المزامير",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 151,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "pro",
       "canonical_order": 22,
       "testament": "OT",
       "name_ar": "الأمثال",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 31,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "ecc",
       "canonical_order": 23,
       "testament": "OT",
       "name_ar": "الجامعة",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 12,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "sng",
       "canonical_order": 24,
       "testament": "OT",
       "name_ar": "نشيد الأنشاد",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 8,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "wis",
       "canonical_order": 25,
       "testament": "OT",
       "name_ar": "الحكمة",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 19,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "sir",
       "canonical_order": 26,
       "testament": "OT",
       "name_ar": "يشوع بن سيراخ",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 51,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "isa",
       "canonical_order": 27,
       "testament": "OT",
       "name_ar": "إشعياء",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 66,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "jer",
       "canonical_order": 28,
       "testament": "OT",
       "name_ar": "إرميا",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 52,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "lam",
       "canonical_order": 29,
       "testament": "OT",
       "name_ar": "مراثي إرميا",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 5,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "bar",
       "canonical_order": 30,
       "testament": "OT",
       "name_ar": "باروخ",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 6,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "ezk",
       "canonical_order": 31,
       "testament": "OT",
       "name_ar": "حزقيال",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 48,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "dan",
       "canonical_order": 32,
       "testament": "OT",
       "name_ar": "دانيال",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 14,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "hos",
       "canonical_order": 33,
       "testament": "OT",
       "name_ar": "هوشع",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 14,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "jol",
       "canonical_order": 34,
       "testament": "OT",
       "name_ar": "يوئيل",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 3,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "amo",
       "canonical_order": 35,
       "testament": "OT",
       "name_ar": "عاموس",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 9,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "oba",
       "canonical_order": 36,
       "testament": "OT",
       "name_ar": "عوبديا",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 1,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "jon",
       "canonical_order": 37,
       "testament": "OT",
       "name_ar": "يونان",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 4,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "mic",
       "canonical_order": 38,
       "testament": "OT",
       "name_ar": "ميخا",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 7,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "nam",
       "canonical_order": 39,
       "testament": "OT",
       "name_ar": "ناحوم",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 3,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "hab",
       "canonical_order": 40,
       "testament": "OT",
       "name_ar": "حبقوق",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 3,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "zep",
       "canonical_order": 41,
       "testament": "OT",
       "name_ar": "صفنيا",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 3,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "hag",
       "canonical_order": 42,
       "testament": "OT",
       "name_ar": "حجي",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 2,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "zec",
       "canonical_order": 43,
       "testament": "OT",
       "name_ar": "زكريا",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 14,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "mal",
       "canonical_order": 44,
       "testament": "OT",
       "name_ar": "ملاخي",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 4,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "1ma",
       "canonical_order": 45,
       "testament": "OT",
       "name_ar": "المكابيين الأول",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 16,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "2ma",
       "canonical_order": 46,
       "testament": "OT",
       "name_ar": "المكابيين الثاني",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 15,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "mat",
       "canonical_order": 1,
       "testament": "NT",
       "name_ar": "متى",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 28,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "mrk",
       "canonical_order": 2,
       "testament": "NT",
       "name_ar": "مرقس",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 16,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "luk",
       "canonical_order": 3,
       "testament": "NT",
       "name_ar": "لوقا",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 24,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "jhn",
       "canonical_order": 4,
       "testament": "NT",
       "name_ar": "يوحنا",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 21,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "act",
       "canonical_order": 5,
       "testament": "NT",
       "name_ar": "أعمال الرسل",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 28,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "rom",
       "canonical_order": 6,
       "testament": "NT",
       "name_ar": "رومية",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 16,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "1co",
       "canonical_order": 7,
       "testament": "NT",
       "name_ar": "كورنثوس الأولى",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 16,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "2co",
       "canonical_order": 8,
       "testament": "NT",
       "name_ar": "كورنثوس الثانية",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 13,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "gal",
       "canonical_order": 9,
       "testament": "NT",
       "name_ar": "غلاطية",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 6,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "eph",
       "canonical_order": 10,
       "testament": "NT",
       "name_ar": "أفسس",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 6,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "php",
       "canonical_order": 11,
       "testament": "NT",
       "name_ar": "فيلبي",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 4,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "col",
       "canonical_order": 12,
       "testament": "NT",
       "name_ar": "كولوسي",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 4,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "1th",
       "canonical_order": 13,
       "testament": "NT",
       "name_ar": "تسالونيكي الأولى",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 5,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "2th",
       "canonical_order": 14,
       "testament": "NT",
       "name_ar": "تسالونيكي الثانية",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 3,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "1ti",
       "canonical_order": 15,
       "testament": "NT",
       "name_ar": "تيموثاوس الأولى",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 6,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "2ti",
       "canonical_order": 16,
       "testament": "NT",
       "name_ar": "تيموثاوس الثانية",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 4,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "tit",
       "canonical_order": 17,
       "testament": "NT",
       "name_ar": "تيطس",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 3,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "phm",
       "canonical_order": 18,
       "testament": "NT",
       "name_ar": "فليمون",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 1,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "heb",
       "canonical_order": 19,
       "testament": "NT",
       "name_ar": "العبرانيين",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 13,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "jas",
       "canonical_order": 20,
       "testament": "NT",
       "name_ar": "يعقوب",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 5,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "1pe",
       "canonical_order": 21,
       "testament": "NT",
       "name_ar": "بطرس الأولى",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 5,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "2pe",
       "canonical_order": 22,
       "testament": "NT",
       "name_ar": "بطرس الثانية",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 3,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "1jn",
       "canonical_order": 23,
       "testament": "NT",
       "name_ar": "يوحنا الأولى",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 5,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "2jn",
       "canonical_order": 24,
       "testament": "NT",
       "name_ar": "يوحنا الثانية",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 1,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "3jn",
       "canonical_order": 25,
       "testament": "NT",
       "name_ar": "يوحنا الثالثة",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 1,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "jud",
       "canonical_order": 26,
       "testament": "NT",
       "name_ar": "يهوذا",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 1,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     },
     {
       "book_id": "rev",
       "canonical_order": 27,
       "testament": "NT",
       "name_ar": "رؤيا يوحنا اللاهوتي",
-      "chapter_count": null,
-      "chapter_count_status": "needs_source_verification"
+      "chapter_count": 22,
+      "chapter_count_status": "cross_checked_coptic_media_book_index"
     }
   ],
   "embedded_textual_units": [
@@ -685,5 +685,27 @@
       "name_ar": "إضافات دانيال اليونانية",
       "status": "textual_additions_require_edition_specific_mapping"
     }
-  ]
+  ],
+  "chapter_count_audit": {
+    "checked_on": "2026-11-26",
+    "old_testament": {
+      "books": 46,
+      "chapter_total": 1075,
+      "source": "https://copticmedia.org/holy-bible/old-testament/",
+      "status": "per_book_counts_recorded_and_sum_matches_official_coptic_church_total_1075"
+    },
+    "new_testament": {
+      "books": 27,
+      "chapter_total": 260,
+      "source": "https://copticmedia.org/holy-bible/commentary/fr-tadros-malaty/new-testament/",
+      "status": "per_book_counts_recorded_cross_checked",
+      "discrepancy": {
+        "official_coptic_church_page_claims": 270,
+        "per_book_count_sum": 260,
+        "note": "The Coptic Orthodox Church official overview states 270 New Testament chapters, while the chapter-by-chapter Coptic Media index lists standard counts for all 27 books summing to 260. Keep the per-book counts and flag the official aggregate discrepancy for source clarification."
+      }
+    },
+    "total_books": 73,
+    "status": "DRAFT_COUNTS_FILLED_OFFICIAL_NT_AGGREGATE_DISCREPANCY_OPEN"
+  }
 }
