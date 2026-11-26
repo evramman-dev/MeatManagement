@@ -81,7 +81,7 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 <body>
 <div class="app">
 <header>
-  <div class="brand">رِحلة</div><div class="version">الإصدار v17 · القطمارس</div>
+  <div class="brand">رِحلة</div><div class="version">الإصدار v18 · القطمارس</div>
   <h1 id="title" class="home-title">أنت داخل التطبيق النهارده ليه؟</h1>
   <p id="subtitle" class="home-title">ابدأ من حالتك، ثم اترك للكلمة مساحة.</p>
 </header>
@@ -679,7 +679,42 @@ function getVerseMark(key){return getReaderMarks()[key]||{}}
 function toggleReaderBookmark(key){const marks=getReaderMarks(),item=marks[key]||{};if(item.bookmark){delete item.bookmark}else item.bookmark=true;if(!item.bookmark&&!item.highlight)delete marks[key];else marks[key]=item;saveReaderMarks(marks);renderCurrentReader();renderBookmarks()}
 function setReaderHighlight(key,color){const marks=getReaderMarks(),item=marks[key]||{};item.highlight=color||null;if(!item.bookmark&&!item.highlight)delete marks[key];else marks[key]=item;saveReaderMarks(marks);renderCurrentReader();renderBookmarks()}
 function readerVerseControls(v){const key=readerVerseKey(v),mark=getVerseMark(key);return "<div class='reader-verse-actions'><button type='button' class='"+(mark.bookmark?"reader-bookmark-on":"")+"' data-reader-bookmark='"+escapeHtml(key)+"'>"+(mark.bookmark?"★ علامة محفوظة":"☆ علامة مرجعية")+"</button><button type='button' data-reader-highlight-toggle='"+escapeHtml(key)+"'>"+(mark.highlight?"تغيير التحديد":"تحديد لون")+"</button></div><div class='reader-highlight-palette' style='display:"+(mark.highlight?"flex":"none")+"'><button class='reader-highlight-color yellow' title='أصفر' data-reader-highlight='"+escapeHtml(key)+"' data-color='yellow'></button><button class='reader-highlight-color green' title='أخضر' data-reader-highlight='"+escapeHtml(key)+"' data-color='green'></button><button class='reader-highlight-color blue' title='أزرق' data-reader-highlight='"+escapeHtml(key)+"' data-color='blue'></button><button class='reader-highlight-color burgundy' title='نبيتي' data-reader-highlight='"+escapeHtml(key)+"' data-color='burgundy'></button></div>"+(mark.highlight?"<button type='button' class='secondary' style='margin-top:7px;width:100%;font-size:11px;padding:6px' data-reader-highlight-clear='"+escapeHtml(key)+"'>إلغاء التلوين</button>":"")}
-function renderVerseMarkup(verses,language,mode){const lang=language==="he"?"he":language==="grc"?"grc":"ar",dir=(language==="grc"||language==="en")?"ltr":"rtl";if(mode==="paragraphs"){const paragraphs=[];let current="";let verseKeys=[];let paragraphIndex=0;const ordinal=n=>{const a=["الأولى","الثانية","الثالثة","الرابعة","الخامسة","السادسة","السابعة","الثامنة","التاسعة","العاشرة"];return a[n-1]||String(n)};const pushParagraph=()=>{if(!current)return;paragraphIndex++;const key=verseKeys[0]||"";paragraphs.push("<section class='reader-paragraph-block'><h4 class='reader-paragraph-title'>الفقرة "+ordinal(paragraphIndex)+"</h4><p class='reader-paragraph' tabindex='0' role='button' data-reader-verse='"+escapeHtml(key)+"'>"+current+"</p></section>");current="";verseKeys=[]};verses.forEach(v=>{const mark=getVerseMark(readerVerseKey(v));const key=readerVerseKey(v);const chunks=String(v.text||"").split("¶");chunks.forEach((chunk,i)=>{const clean=String(chunk||"").trim();if(!clean)return;if(i>0)pushParagraph();const number="<span class='reader-verse-number' dir='"+dir+"'>"+escapeHtml(v.verse)+"</span>";const text="<span class='reader-verse-text"+(mark.highlight?" reader-highlight-"+mark.highlight:"")+"' lang='"+lang+"' dir='"+dir+"' data-reader-verse='"+escapeHtml(key)+"'>"+escapeHtml(clean)+"</span>";current+=number+text;verseKeys.push(key)});});pushParagraph();return paragraphs.join("")}return verses.map(v=>{const mark=getVerseMark(readerVerseKey(v)),number="<span class='reader-verse-number' dir='"+dir+"'>"+escapeHtml(v.verse)+"</span>",text="<span class='reader-verse-text"+(mark.highlight?" reader-highlight-"+mark.highlight:"")+"' lang='"+lang+"' dir='"+dir+"'>"+escapeHtml(v.text).replace(/¶/g,"<br>")+"</span>",controls=readerVerseControls(v);return "<div class='reader-verse' data-reader-verse='"+escapeHtml(readerVerseKey(v))+"'>"+number+text+controls+"</div>"}).join("")}
+function renderVerseMarkup(verses,language,mode){
+ const lang=language==="he"?"he":language==="grc"?"grc":"ar",dir=(language==="grc"||language==="en")?"ltr":"rtl";
+ if(mode==="paragraphs"){
+  const paragraphs=[],heads=currentReaderSectionHeadings||[];
+  let current="",verseKeys=[],paragraphIndex=0,currentTitle=heads[0]?.title||"";
+  const pushParagraph=()=>{
+   if(!current)return;
+   paragraphIndex++;
+   const key=verseKeys[0]||"";
+   const safeTitle=currentTitle||("مقطع "+paragraphIndex);
+   paragraphs.push("<section class='reader-paragraph-block'><h4 class='reader-paragraph-title'>"+escapeHtml(safeTitle)+"</h4><p class='reader-paragraph' tabindex='0' role='button' data-reader-verse='"+escapeHtml(key)+"'>"+current+"</p></section>");
+   current="";verseKeys=[];
+  };
+  const appendVerse=(v,clean)=>{
+   const mark=getVerseMark(readerVerseKey(v)),key=readerVerseKey(v);
+   const number="<span class='reader-verse-number' dir='"+dir+"' data-reader-verse='"+escapeHtml(key)+"'>"+escapeHtml(v.verse)+"</span>";
+   const text="<span class='reader-verse-text"+(mark.highlight?" reader-highlight-"+mark.highlight:"")+"' lang='"+lang+"' dir='"+dir+"' data-reader-verse='"+escapeHtml(key)+"'>"+escapeHtml(clean)+"</span>";
+   current+=number+text;verseKeys.push(key);
+  };
+  verses.forEach(v=>{
+   const chunks=String(v.text||"").split("¶");
+   chunks.forEach((chunk,i)=>{
+    const clean=String(chunk||"").trim();if(!clean)return;
+    const boundary=heads.find(h=>Number(h.verse)===Number(v.verse)&&i===0);
+    if(boundary){
+     if(current)pushParagraph();
+     currentTitle=boundary.title;
+    }
+    appendVerse(v,clean);
+   });
+  });
+  pushParagraph();
+  return paragraphs.join("");
+ }
+ return verses.map(v=>{const mark=getVerseMark(readerVerseKey(v)),number="<span class='reader-verse-number' dir='"+dir+"'>"+escapeHtml(v.verse)+"</span>",text="<span class='reader-verse-text"+(mark.highlight?" reader-highlight-"+mark.highlight:"")+"' lang='"+lang+"' dir='"+dir+"'>"+escapeHtml(v.text).replace(/¶/g,"<br>")+"</span>",controls=readerVerseControls(v);return "<div class='reader-verse' data-reader-verse='"+escapeHtml(readerVerseKey(v))+"'>"+number+text+controls+"</div>"}).join("")
+}
 function bindReaderVerseActions(){const root=document.getElementById("chapterContent");if(!root)return;root.querySelectorAll("[data-reader-bookmark]").forEach(b=>b.addEventListener("click",()=>toggleReaderBookmark(b.dataset.readerBookmark)));root.querySelectorAll("[data-reader-highlight]").forEach(b=>b.addEventListener("click",()=>setReaderHighlight(b.dataset.readerHighlight,b.dataset.color)));root.querySelectorAll("[data-reader-highlight-clear]").forEach(b=>b.addEventListener("click",()=>setReaderHighlight(b.dataset.readerHighlightClear,null)));root.querySelectorAll("[data-reader-highlight-toggle]").forEach(b=>b.addEventListener("click",()=>{const p=b.closest("[data-reader-verse]"),palette=p?.querySelector(".reader-highlight-palette");if(palette)palette.style.display=palette.style.display==="none"?"flex":"none"}));root.querySelectorAll(".reader-paragraph[data-reader-verse]").forEach(p=>{p.addEventListener("click",()=>{const t=p.querySelector(".reader-verse-text");openVerseActionModal(p.dataset.readerVerse,t?.textContent||"")});p.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();const t=p.querySelector(".reader-verse-text");openVerseActionModal(p.dataset.readerVerse,t?.textContent||"")}})});root.querySelectorAll(".reader-paragraph .reader-verse-text[data-reader-verse]").forEach(v=>{v.addEventListener("click",e=>{e.stopPropagation();openVerseActionModal(v.dataset.readerVerse,v.textContent||"")})})}
 function renderCurrentReader(){const content=document.getElementById("chapterContent");if(!content||!currentReaderVerses.length)return;content.className="reader-font-"+readerSelection.font;content.innerHTML=renderVerseMarkup(currentReaderVerses,currentReaderLanguage,readerSelection.mode);bindReaderVerseActions()}let readerResumeScrollY=0;let activeVerseActionKey=null;
 function openVerseActionModal(key,text){const modal=document.getElementById("verseActionModal"),mark=getVerseMark(key);activeVerseActionKey=key;readerResumeScrollY=window.scrollY||document.documentElement.scrollTop||0;document.getElementById("verseActionTitle").textContent="الآية "+String(key).split("|").pop();document.getElementById("verseActionText").textContent=text;document.getElementById("verseActionMeta").textContent="العلامة المرجعية والتلوين يحفظان على هذا الجهاز.";document.getElementById("verseActionButtons").innerHTML="<button type='button' class='secondary "+(mark.bookmark?"reader-bookmark-on":"")+"' id='verseModalBookmark'>"+(mark.bookmark?"★ علامة محفوظة":"☆ إضافة إشارة")+"</button><button type='button' class='secondary' id='verseModalHighlight'>"+(mark.highlight?"تغيير التحديد":"تلوين النص")+"</button>";document.getElementById("verseActionPalette").classList.toggle("hidden",!mark.highlight&&false);document.getElementById("verseActionPalette").style.display=mark.highlight?"flex":"none";document.getElementById("verseActionCancelHighlight").classList.toggle("hidden",!mark.highlight);document.getElementById("verseActionModal").classList.remove("hidden");document.getElementById("verseActionModal").setAttribute("aria-hidden","false");document.getElementById("verseActionText").className="verse-action-text reader-font-"+readerSelection.font;document.getElementById("verseActionText").innerHTML=escapeHtml(text).replace(/¶/g,"<br>");document.getElementById("verseActionText").classList.toggle("reader-highlight-"+mark.highlight,!!mark.highlight);document.getElementById("verseModalBookmark").onclick=()=>{toggleReaderBookmark(key);openVerseActionModal(key,text)};document.getElementById("verseModalHighlight").onclick=()=>{const p=document.getElementById("verseActionPalette");p.style.display=p.style.display==="none"?"flex":"none"};document.getElementById("verseActionCancelHighlight").onclick=()=>{setReaderHighlight(key,null);openVerseActionModal(key,text)}}
@@ -703,7 +738,7 @@ async function loadSvdChapter(){
  status.textContent="جاري تحميل النص...";
  const sourceBookId=edition==="HE-WLC-2017"?(HEBREW_SOURCE_CODE_TO_ID[p.bookCode]||p.bookCode):edition==="GRC-LXX-BRENTON-1851"?(LXX_BOOK_ID_MAP[p.bookCode]||p.bookCode.toLowerCase()):edition==="GRC-KOINE-RP-2018"?p.bookCode.toLowerCase():p.bookCode;
  try{
-   const verses=await loadTranslationChapter(edition,sourceBookId,p.chapter);
+   const verses=await loadTranslationChapter(edition,sourceBookId,p.chapter);\n   currentReaderSectionHeadings=readerSelection.mode==="paragraphs"?normalizeReaderSectionHeadings(await loadReaderSectionHeadings(p.bookCode,p.chapter)):[];
    if(!verses.length){status.textContent="هذا الإصحاح غير متوفر في هذه الطبعة أو يختلف ترقيمه عن الفهرس القبطي.";content.innerHTML="<p class='note'>لا توجد بيانات لهذا الإصحاح في هذه الطبعة. لن نستبدل النص من طبعة أخرى.</p>";return;}
    const editionName=editionInfo?editionInfo.name:edition;
    let attribution="";
@@ -784,4 +819,26 @@ loadCopticReadings();
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}
 </script>
 </body>
-</html>
+</htmlasync function loadReaderSectionHeadings(bookCode,chapter){
+ if(readerSelection.translation!=="AR-SVD-1865")return [];
+ const st=STTAKLA_BOOK_MAP[bookCode];if(!st)return [];
+ try{
+  const res=await fetch("https://st-takla.org/Bibles/BibleSearch/showChapter.php?book="+st+"&chapter="+chapter);
+  if(!res.ok)return [];
+  const html=await res.text();
+  const doc=new DOMParser().parseFromString(html,"text/html");
+  const result=[];
+  Array.from(doc.querySelectorAll("h2")).forEach(h=>{
+   const title=(h.textContent||"").replace(/\s+/g," ").trim();
+   if(!title||/Gospel of|إنجيل|رسالة|سفر/.test(title))return;
+   let el=h.nextElementSibling,verse=null;
+   for(let i=0;el&&i<40;i++,el=el.nextElementSibling){
+    const n=(el.textContent||"").trim().match(/^([0-9]{1,3})$/);
+    if(n){verse=Number(n[1]);break}
+   }
+   if(verse!=null)result.push({verse,title});
+  });
+  return result;
+ }catch(e){return []}
+}
+>
