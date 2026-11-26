@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-"""Compare selected committed corpus verses with the exact eBible USFM source."""
+"""Compare every committed verse with the exact eBible USFM source archive."""
 from __future__ import annotations
 
 import gzip
 import hashlib
 import json
 import sys
-import tempfile
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -16,13 +15,6 @@ from prepare_ebible_usfm import PROTESTANT_BOOKS, SOURCES, parse_usfm
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
-SAMPLES = [
-    ("GEN", 1, "1"),
-    ("PSA", 23, "1"),
-    ("MAT", 6, "33"),
-    ("JHN", 3, "16"),
-    ("ROM", 8, "28"),
-]
 
 
 def load_source_rows(translation_id: str, expected_sha: str):
@@ -53,6 +45,8 @@ def load_source_rows(translation_id: str, expected_sha: str):
             if book in PROTESTANT_BOOKS:
                 for row in parsed:
                     key = (row["book_id"], row["chapter"], row["verse"])
+                    if key in rows:
+                        raise AssertionError(f"{translation_id}: duplicate source key {key}")
                     rows[key] = row["text"]
     return rows, actual_sha
 
@@ -71,7 +65,11 @@ def load_committed_rows(translation_id: str):
 
 
 def main():
-    report = {"status": "PASSED", "samples_per_translation": len(SAMPLES), "translations": {}}
+    report = {
+        "status": "PASSED",
+        "comparison_mode": "FULL_CORPUS_EXACT_KEY_AND_TEXT",
+        "translations": {},
+    }
     for translation_id in SOURCES:
         audit_path = DATA / f"{translation_id.lower()}_audit.json"
         audit = json.loads(audit_path.read_text(encoding="utf-8"))
@@ -85,21 +83,32 @@ def main():
                 f"does not match audit {audit['record_count']}"
             )
 
-        checks = []
-        for book, chapter, verse in SAMPLES:
-            key = (book, chapter, verse)
-            if key not in source_rows:
-                raise AssertionError(f"{translation_id}: sample missing from source: {key}")
-            if key not in committed_rows:
-                raise AssertionError(f"{translation_id}: sample missing from corpus: {key}")
-            if source_rows[key] != committed_rows[key]:
-                raise AssertionError(f"{translation_id}: source text mismatch: {key}")
-            checks.append(f"{book}.{chapter}.{verse}")
+        source_keys = set(source_rows)
+        committed_keys = set(committed_rows)
+        missing_keys = sorted(source_keys - committed_keys)
+        extra_keys = sorted(committed_keys - source_keys)
+        mismatched_keys = sorted(
+            key for key in source_keys & committed_keys
+            if source_rows[key] != committed_rows[key]
+        )
+        if missing_keys or extra_keys or mismatched_keys:
+            raise AssertionError(
+                f"{translation_id}: full corpus mismatch: "
+                f"missing={len(missing_keys)}, extra={len(extra_keys)}, "
+                f"text_mismatch={len(mismatched_keys)}; "
+                f"first_missing={missing_keys[:10]}, "
+                f"first_extra={extra_keys[:10]}, "
+                f"first_text_mismatch={mismatched_keys[:10]}"
+            )
 
         report["translations"][translation_id] = {
             "source_zip_sha256": source_sha,
+            "source_record_count": len(source_rows),
             "committed_record_count": len(committed_rows),
-            "sample_checks": checks,
+            "matched_records": len(committed_rows),
+            "missing_records": 0,
+            "extra_records": 0,
+            "text_mismatches": 0,
             "result": "PASSED",
         }
 
