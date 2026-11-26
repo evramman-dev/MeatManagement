@@ -735,6 +735,43 @@ function openVerseActionModal(key,text){const modal=document.getElementById("ver
 function closeVerseActionModal(){const modal=document.getElementById("verseActionModal");modal.classList.add("hidden");modal.setAttribute("aria-hidden","true");activeVerseActionKey=null;requestAnimationFrame(()=>window.scrollTo({top:readerResumeScrollY,behavior:"instant"}))}
 function bindVerseActionModal(){document.getElementById("verseActionDone").addEventListener("click",closeVerseActionModal);document.getElementById("verseActionClose").addEventListener("click",closeVerseActionModal);document.getElementById("verseActionModal").addEventListener("click",e=>{if(e.target.id==="verseActionModal")closeVerseActionModal()});document.querySelectorAll("[data-modal-highlight]").forEach(b=>b.addEventListener("click",()=>{if(!activeVerseActionKey)return;const text=document.getElementById("verseActionText").textContent;setReaderHighlight(activeVerseActionKey,b.dataset.modalHighlight);openVerseActionModal(activeVerseActionKey,text)}))}
 
+const STTAKLA_BOOK_MAP={
+ GEN:1,EXO:2,LEV:3,NUM:4,DEU:5,JOS:6,JDG:7,RUT:8,
+ "1SA":9,"2SA":10,"1KI":11,"2KI":12,"1CH":13,"2CH":14,
+ EZR:15,NEH:16,TOB:17,JDT:18,EST:19,JOB:20,PSA:21,PRO:22,
+ ECC:23,SNG:24,WIS:25,SIR:26,ISA:27,JER:28,LAM:29,BAR:30,
+ EZK:31,DAN:32,HOS:33,JOL:34,AMO:35,OBA:36,JON:37,MIC:38,
+ NAM:39,HAB:40,ZEP:41,HAG:42,ZEC:43,MAL:44,"1MA":45,"2MA":46,
+ MAT:50,MRK:51,LUK:52,JHN:53,ACT:54,ROM:55,"1CO":56,"2CO":57,
+ GAL:58,EPH:59,PHP:60,COL:61,"1TH":62,"2TH":63,"1TI":64,
+ "2TI":65,TIT:66,PHM:67,HEB:68,JAS:69,"1PE":70,"2PE":71,
+ "1JN":72,"2JN":73,"3JN":74,JUD:75,REV:76
+};
+async function loadReaderSectionHeadings(bookCode,chapter){
+ if(readerSelection.translation!=="AR-SVD-1865")return [];
+ const st=STTAKLA_BOOK_MAP[bookCode];if(!st)return [];
+ try{
+  const res=await fetch("https://st-takla.org/Bibles/BibleSearch/showChapter.php?book="+st+"&chapter="+chapter);
+  if(!res.ok)return [];
+  const html=await res.text();
+  const doc=new DOMParser().parseFromString(html,"text/html");
+  const result=[];
+  Array.from(doc.querySelectorAll("h2")).forEach(h=>{
+   const title=(h.textContent||"").replace(/\s+/g," ").trim();
+   if(!title||/Gospel of|إنجيل|رسالة|سفر/.test(title))return;
+   let el=h.nextElementSibling,verse=null;
+   for(let j=0;el&&j<40;j++,el=el.nextElementSibling){
+    const n=(el.textContent||"").trim().match(/^([0-9]{1,3})$/);
+    if(n){verse=Number(n[1]);break}
+   }
+   if(verse!=null)result.push({verse,title});
+  });
+  return result;
+ }catch(e){return []}
+}
+function normalizeReaderSectionHeadings(headings){
+ return Array.isArray(headings)?headings.filter(x=>x&&x.title&&Number.isFinite(Number(x.verse))).sort((a,b)=>Number(a.verse)-Number(b.verse)):[];
+}
 async function loadSvdChapter(){
  const input=document.getElementById("chapterReference");
  const status=document.getElementById("chapterStatus");
