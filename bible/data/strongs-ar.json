@@ -2,9 +2,14 @@
   "_meta": {
     "version": 1,
     "language": "ar",
-    "description": "قاموس محلي لمعاني Strong's داخل تطبيق رِحلة",
+    "description": "قاموس محلي لمعاني Strong's العبرية والآرامية واليونانية داخل تطبيق رِحلة",
     "license": "Strong's Exhaustive Concordance definitions are public domain. Numbered senses from OpenScriptures Strong's dictionary are CC BY-SA 3.0. Arabic wording here is an original concise Arabic rendering for the listed senses.",
-    "attribution": "Strong's Exhaustive Concordance of the Bible (1890)؛ OpenScriptures Strong's dictionary"
+    "attribution": "Strong's Exhaustive Concordance of the Bible (1890)؛ OpenScriptures Strong's dictionary",
+    "languages": [
+      "hebrew",
+      "aramaic",
+      "greek"
+    ]
   },
   "H7225": {
     "arabic": [
@@ -14,6 +19,288 @@
       "الجزء المختار"
     ],
     "meaning": "البداية أو الأول أو الرئيس أو الجزء المختار",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G26": {
+    "language": "greek",
+    "arabic": [
+      "المحبة",
+      "المحبة الإلهية"
+    ],
+    "meaning": "المحبة، ولا سيما المحبة التي تختار الخير للآخر",
+    "pronunciation": "أغابي",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G2316": {
+    "language": "greek",
+    "arabic": [
+      "الله",
+      "الإله"
+    ],
+    "meaning": "الله أو الإله",
+    "pronunciation": "ثيوس",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G2962": {
+    "language": "greek",
+    "arabic": [
+      "الرب",
+      "السيد",
+      "صاحب السلطان"
+    ],
+    "meaning": "الرب أو السيد أو صاحب السلطان",
+    "pronunciation": "كيريوس",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G2424": {
+    "language": "greek",
+    "arabic": [
+      "يسوع"
+    ],
+    "meaning": "يسوع",
+    "pronunciation": "إيسوس",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G5547": {
+    "language": "greek",
+    "arabic": [
+      "المسيح",
+      "الممسوح"
+    ],
+    "meaning": "المسيح، أي الممسوح",
+    "pronunciation": "خريستوس",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G4151": {
+    "language": "greek",
+    "arabic": [
+      "الروح",
+      "الريح",
+      "النفَس"
+    ],
+    "meaning": "الروح أو الريح أو النفَس بحسب السياق",
+    "pronunciation": "بنيُوما",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G40": {
+    "language": "greek",
+    "arabic": [
+      "قديس",
+      "مقدس"
+    ],
+    "meaning": "قديس أو مقدس",
+    "pronunciation": "هاجيوس",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G3588": {
+    "language": "greek",
+    "arabic": [
+      "أداة التعريف"
+    ],
+    "meaning": "أداة التعريف في اليونانية",
+    "pronunciation": "هو، هِه، تو",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G3956": {
+    "language": "greek",
+    "arabic": [
+      "كل",
+      "الجميع"
+    ],
+    "meaning": "كل أو الجميع",
+    "pronunciation": "باس",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G1096": {
+    "language": "greek",
+    "arabic": [
+      "يصير",
+      "يصبح",
+      "يحدث"
+    ],
+    "meaning": "يصير أو يصبح أو يحدث",
+    "pronunciation": "جينومَاي",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G3004": {
+    "language": "greek",
+    "arabic": [
+      "يقول",
+      "يتكلم",
+      "يخبر"
+    ],
+    "meaning": "يقول أو يتكلم أو يخبر",
+    "pronunciation": "ليغو",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G1519": {
+    "language": "greek",
+    "arabic": [
+      "إلى",
+      "نحو",
+      "في"
+    ],
+    "meaning": "إلى أو نحو أو في بحسب السياق",
+    "pronunciation": "إيس",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G1722": {
+    "language": "greek",
+    "arabic": [
+      "في",
+      "بـ",
+      "بين"
+    ],
+    "meaning": "في أو بـ أو بين بحسب السياق",
+    "pronunciation": "إن",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G2532": {
+    "language": "greek",
+    "arabic": [
+      "و",
+      "أيضًا"
+    ],
+    "meaning": "و أو أيضًا",
+    "pronunciation": "كاي",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G3754": {
+    "language": "greek",
+    "arabic": [
+      "أن",
+      "لأن"
+    ],
+    "meaning": "أن أو لأن بحسب السياق",
+    "pronunciation": "هوتي",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G3772": {
+    "language": "greek",
+    "arabic": [
+      "السماء",
+      "السماءات"
+    ],
+    "meaning": "السماء أو السماءات",
+    "pronunciation": "أورانوس",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G4991": {
+    "language": "greek",
+    "arabic": [
+      "الخلاص"
+    ],
+    "meaning": "الخلاص والنجاة",
+    "pronunciation": "سوتيريا",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G5207": {
+    "language": "greek",
+    "arabic": [
+      "ابن"
+    ],
+    "meaning": "ابن",
+    "pronunciation": "هُيوس",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G4183": {
+    "language": "greek",
+    "arabic": [
+      "كثير",
+      "عظيم",
+      "عديد"
+    ],
+    "meaning": "كثير أو عظيم أو عديد",
+    "pronunciation": "بولوس",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G743": {
+    "language": "greek",
+    "arabic": [
+      "رئيس الملائكة"
+    ],
+    "meaning": "رئيس الملائكة",
+    "pronunciation": "أرخانغيلوس",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G4536": {
+    "language": "greek",
+    "arabic": [
+      "بوق",
+      "بوق موسيقي"
+    ],
+    "meaning": "بوق أو آلة نفخ موسيقية",
+    "pronunciation": "سالبيكس",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G450": {
+    "language": "greek",
+    "arabic": [
+      "يقوم",
+      "ينهض"
+    ],
+    "meaning": "يقوم أو ينهض",
+    "pronunciation": "أنيستيمي",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G4412": {
+    "language": "greek",
+    "arabic": [
+      "أولًا",
+      "أولاً"
+    ],
+    "meaning": "أولًا أو في المقام الأول",
+    "pronunciation": "بروتون",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G932": {
+    "language": "greek",
+    "arabic": [
+      "ملكوت",
+      "مملكة",
+      "حكم"
+    ],
+    "meaning": "ملكوت أو مملكة أو حكم",
+    "pronunciation": "باسيليا",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G42": {
+    "language": "greek",
+    "arabic": [
+      "قداسة"
+    ],
+    "meaning": "قداسة",
+    "pronunciation": "هاغيُوسونِه",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G3952": {
+    "language": "greek",
+    "arabic": [
+      "مجيء",
+      "حضور"
+    ],
+    "meaning": "مجيء أو حضور",
+    "pronunciation": "باروسيا",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G2588": {
+    "language": "greek",
+    "arabic": [
+      "قلب"
+    ],
+    "meaning": "القلب، موضع الفكر والمشاعر والإرادة",
+    "pronunciation": "كارديا",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G3708": {
+    "language": "greek",
+    "arabic": [
+      "يرى",
+      "يبصر",
+      "يعرف"
+    ],
+    "meaning": "يرى أو يبصر، وقد يدل على المعرفة بحسب السياق",
+    "pronunciation": "هُوراو",
     "source": "قاموس رِحلة المحلي"
   }
 }
