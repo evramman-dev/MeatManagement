@@ -451,8 +451,7 @@ function formatReadingReference(reference){
  }).join("، ");
 }
 function readingBookForParser(book){
- const value=String(book||"").trim();
- return value==="مزمور"||value==="مزامير"?"مزامير":value;
+ return normalizeBibleBookName(book);
 }
 const readingGroups=[
  {title:"عشية",keys:[["VPsalm","مزمور"],["VGospel","إنجيل"]],icon:"ع"},
@@ -819,10 +818,16 @@ function openKehSource(reference){
 }
 const SVD_API_BASE="https://api.getbible.net/v3/arabicsv";
 const SVD_BOOKS={"تكوين":1,"خروج":2,"لاويين":3,"عدد":4,"تثنية":5,"يشوع":6,"قضاة":7,"راعوث":8,"صموئيل الأول":9,"صموئيل الثاني":10,"ملوك الأول":11,"ملوك الثاني":12,"أخبار الأيام الأول":13,"أخبار الأيام الثاني":14,"عزرا":15,"نحميا":16,"أستير":17,"أيوب":18,"مزامير":19,"مزمور":19,"أمثال":20,"الأمثال":20,"جامعة":21,"نشيد الأنشاد":22,"إشعياء":23,"إرميا":24,"مراثي إرميا":25,"مراثي":25,"حزقيال":26,"دانيال":27,"هوشع":28,"يوئيل":29,"عاموس":30,"عوبديا":31,"يونان":32,"ميخا":33,"ناحوم":34,"حبقوق":35,"صفنيا":36,"حجي":37,"زكريا":38,"ملاخي":39,"متى":40,"مرقس":41,"لوقا":42,"يوحنا":43,"أعمال":44,"أعمال الرسل":44,"رومية":45,"كورنثوس الأولى":46,"كورنثوس الثانية":47,"غلاطية":48,"أفسس":49,"فيلبي":50,"كولوسي":51,"تسالونيكي الأولى":52,"تسالونيكي الثانية":53,"تيموثاوس الأولى":54,"تيموثاوس الثانية":55,"تيطس":56,"فليمون":57,"عبرانيين":58,"يعقوب":59,"بطرس الأولى":60,"بطرس الثانية":61,"يوحنا الأولى":62,"يوحنا الثانية":63,"يوحنا الثالثة":64,"يهوذا":65,"رؤيا":66};const DEUTEROCANON_BOOKS={"طوبيا":"TOB","يهوديت":"JDT","الحكمة":"WIS","حكمة سليمان":"WIS","يشوع بن سيراخ":"SIR","سيراخ":"SIR","باروخ":"BAR","رسالة إرميا":"LJE","المكابيين الأول":"1MA","المكابيين الثاني":"2MA","المكابيين الثالث":"3MA","المكابيين الرابع":"4MA","عزرا الأول":"1ES","صلاة منسى":"MAN","سوسنة":"SUS","بل والتنين":"BEL"};
+function normalizeBibleBookName(value){
+ const raw=String(value||"").replace(/[ًٌٍَُِّْـٰ]/g,"").replace(/\s+/g," ").trim();
+ const key=raw.toLowerCase();
+ const aliases={"مزامير":"مزامير","المزامير":"مزامير","مزمور":"مزامير","المزمور":"مزامير","psalm":"مزامير","psalms":"مزامير"};
+ return aliases[key]||raw;
+}
 function parseChapterReference(value){
  const m=String(value||"").trim().match(/^(.+?)\s+(\d+)(?:[:.]\d+)?$/);
  if(!m)return null;
- const book=m[1].trim();
+ const book=normalizeBibleBookName(m[1].trim());
  const chapter=Number(m[2]);
  if(DEUTEROCANON_BOOKS[book])return {book,bookNumber:null,bookCode:DEUTEROCANON_BOOKS[book],deuterocanonical:true,chapter};
  const n=SVD_BOOKS[book];
@@ -1142,7 +1147,7 @@ const READER_STUDY_ATTRIBUTION="الشواهد: OpenBible.info عبر Free Use B
 function getVerseStudyData(key){const item=READER_STUDY_DATA[key];return item&&typeof item==="object"?item:{}}
 function readerStudyLabel(type){return type==="crossReferences"?"الشواهد":type==="wordMeanings"?"معاني الكلمات":"شرح"}
 function readerStudyTargetLabel(ref){
- const name=READER_STUDY_BOOK_NAMES[ref.book]||ref.book;
+ const name=ref.book==="PSA"?"المزمور":(READER_STUDY_BOOK_NAMES[ref.book]||ref.book);
  const start=toArabicDigits(ref.chapter)+":"+toArabicDigits(ref.verse);
  const end=ref.endVerse!=null?"-"+toArabicDigits(ref.endVerse):"";
  return name+" "+start+end;
