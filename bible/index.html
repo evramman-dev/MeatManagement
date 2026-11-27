@@ -1207,35 +1207,43 @@ async function loadLocalOriginalLanguageVerse(language,bookCode,chapter,verse){
  }));
  return [{verse:Number(verse),words}];
 }
-async function loadPatriarchal1904VerseWordStudy(bookCode,chapter,verse){
- const slug=READER_GREEK_BOOK_SLUGS[String(bookCode||"").toUpperCase()];
- if(!slug)throw new Error("PATRIARCHAL_BOOK_SLUG_MISSING");
- const url="https://openscriptorium.org/api/v1/works/patriarchal-1904/"+encodeURIComponent(slug)+"/"+Number(chapter)+"/"+Number(verse)+"?words=true";
- const response=await fetch(url,{cache:"force-cache"});
- if(!response.ok)throw new Error("PATRIARCHAL_API_HTTP_"+response.status);
- const data=await response.json();
- const rawVerses=Array.isArray(data)?data:(Array.isArray(data?.verses)?data.verses:(Array.isArray(data?.data)?data.data:[data]));
- const target=rawVerses.find(row=>Number(row?.verse??row?.verse_number??row?.number)===Number(verse))||rawVerses[0];
- const sourceWords=Array.isArray(target?.words)?target.words:(Array.isArray(data?.words)?data.words:[]);
- const words=sourceWords.map(sourceWord=>{
-  const lemma=sourceWord?.lemma&&typeof sourceWord.lemma==="object"?sourceWord.lemma:{};
-  const rawStrong=sourceWord?.strongs_number||sourceWord?.strongs||sourceWord?.strong||lemma?.strongs_number||lemma?.strongs||"";
-  const strongs=normalizeStrongNumber(rawStrong);
-  const morph=String(sourceWord?.morph_code||sourceWord?.parsing||sourceWord?.morphology||"");
-  return {
-   text:String(sourceWord?.surface||sourceWord?.text||""),
+async function loadLocalRp2018VerseWordStudy(bookCode,chapter,verse){
+ const code=String(bookCode||"").toUpperCase();
+ const path="./data/word-study/rp2018/"+encodeURIComponent(code)+".csv";
+ const response=await fetch(path,{cache:"force-cache"});
+ if(!response.ok)throw new Error("RP2018_LOCAL_HTTP_"+response.status);
+ const csv=await response.text();
+ const lines=csv.split(/\r?\n/);
+ const target=lines.find(line=>{
+  const m=line.match(/^(\\d+),(\\d+),/);
+  return m&&Number(m[1])===Number(chapter)&&Number(m[2])===Number(verse);
+ });
+ if(!target)throw new Error("RP2018_LOCAL_VERSE_NOT_FOUND");
+ const firstComma=target.indexOf(",");
+ const secondComma=target.indexOf(",",firstComma+1);
+ const text=target.slice(secondComma+1);
+ const words=[];
+ const tokenPattern=/([^\\s,]+)\\s+(\\d+)\\s+\\{([^}]+)\\}/g;
+ let match;
+ while((match=tokenPattern.exec(text))){
+  const surface=String(match[1]||"");
+  const strongs=normalizeStrongNumber("G"+String(match[2]||""));
+  const parsing=String(match[3]||"");
+  const lex=await loadLocalGreekStrongEntry(strongs);
+  words.push({
+   text:surface,
    strongs,
-   gloss:String(sourceWord?.gloss||lemma?.gloss||""),
-   transliteration:String(sourceWord?.transliteration||lemma?.transliteration||""),
-   lemma:String(lemma?.lemma||sourceWord?.lemma||""),
-   parsing:morph,
-   morphology:morph,
-   partOfSpeech:String(sourceWord?.pos||lemma?.part_of_speech||""),
-   source:"Open Scriptorium · Patriarchal Greek New Testament 1904 · Public Domain",
+   gloss:String(lex?.gloss||""),
+   transliteration:String(lex?.transliteration||""),
+   lemma:String(lex?.lemma||""),
+   parsing,
+   morphology:parsing,
+   partOfSpeech:String(parsing.split("-")[0]||""),
+   source:"Robinson-Pierpont 2018 · byztxt/byzantine-majority-text · Public Domain (Unlicense)",
    confidence:""
-  };
- }).filter(word=>word.text);
- if(!words.length)throw new Error("PATRIARCHAL_API_NO_WORDS");
+  });
+ }
+ if(!words.length)throw new Error("RP2018_LOCAL_NO_WORDS");
  return [{verse:Number(verse),words}];
 }
 async function loadVerseWordStudy(key){
@@ -1255,7 +1263,7 @@ async function loadVerseWordStudy(key){
  READER_WORD_STUDY_PENDING[pendingKey]=(async()=>{
   if(translation==="HE-WLC-2017")return await loadLocalOriginalLanguageVerse("wlc",bookCode,chapter,verse);
   if(useLxx)return await loadLocalOriginalLanguageVerse("lxx",bookCode,chapter,verse);
-  if(["MAT","MRK","LUK","JHN","ACT","ROM","1CO","2CO","GAL","EPH","PHP","COL","1TH","2TH","1TI","2TI","TIT","PHM","HEB","JAS","1PE","2PE","1JN","2JN","3JN","JUD","REV"].includes(bookCode))return await loadPatriarchal1904VerseWordStudy(bookCode,chapter,verse);
+  if(translation==="GRC-KOINE-RP-2018")return await loadLocalRp2018VerseWordStudy(bookCode,chapter,verse);
   throw new Error("LOCAL_WORD_STUDY_NOT_AVAILABLE_FOR_THIS_EDITION");
  })();
  try{
