@@ -617,6 +617,18 @@ async function loadCopticReadings(){
 }
 const readerStateKey="rehla.readerSelection.v13";
 const readerSelectionDefaults={translation:"AR-SVD-1865",covenant:"OT",section:"الشريعة",book:"GEN",chapter:1,verse:"all",mode:"verses",font:"naskh"};
+const readerDisplayKey="rehla.readerDisplay.v1";
+const readerDisplayDefaults={lineSpacing:"normal",wordSpacing:"normal",fontSize:"normal",paper:"cream",numerals:"arabic"};
+let readerDisplay=loadReaderDisplay();
+function loadReaderDisplay(){try{const saved=JSON.parse(localStorage.getItem(readerDisplayKey)||"null");return Object.assign({},readerDisplayDefaults,saved||{})}catch(e){return Object.assign({},readerDisplayDefaults)}}
+function saveReaderDisplay(){localStorage.setItem(readerDisplayKey,JSON.stringify(readerDisplay))}
+function resetReaderDisplay(){readerDisplay=Object.assign({},readerDisplayDefaults);saveReaderDisplay();renderCurrentReader();updateReaderOptionState()}
+function toArabicDigits(value){return String(value).replace(/[0-9]/g,d=>"٠١٢٣٤٥٦٧٨٩"[Number(d)])}
+function readerVerseNumberText(value){return readerDisplay.numerals==="latin"?String(value):toArabicDigits(value)}
+function updateReaderOptionState(){
+ const toggles={readerModeVerses:readerSelection.mode==="verses",readerModeParagraphs:readerSelection.mode==="paragraphs",readerFontNaskh:readerSelection.font==="naskh",readerFontAmiri:readerSelection.font==="amiri",readerFontScheherazade:readerSelection.font==="scheherazade",readerFontMarkazi:readerSelection.font==="markazi",readerFontLateef:readerSelection.font==="lateef",readerFontRuqaa:readerSelection.font==="ruqaa",readerFontAmoshrefNaskh:readerSelection.font==="amoshref-naskh",readerFontThuluth:readerSelection.font==="thuluth",readerFontAmoshrefThulth:readerSelection.font==="amoshref-thulth",readerLineNormal:readerDisplay.lineSpacing==="normal",readerLineWide:readerDisplay.lineSpacing==="wide",readerLineExtra:readerDisplay.lineSpacing==="extra",readerWordNormal:readerDisplay.wordSpacing==="normal",readerWordWide:readerDisplay.wordSpacing==="wide",readerWordExtra:readerDisplay.wordSpacing==="extra",readerSizeNormal:readerDisplay.fontSize==="normal",readerSizeLarge:readerDisplay.fontSize==="large",readerSizeXL:readerDisplay.fontSize==="xl",readerPaperCream:readerDisplay.paper==="cream",readerPaperWhite:readerDisplay.paper==="white",readerPaperOld:readerDisplay.paper==="old",readerPaperIvory:readerDisplay.paper==="ivory",readerNumeralsArabic:readerDisplay.numerals==="arabic",readerNumeralsLatin:readerDisplay.numerals==="latin"};
+ Object.keys(toggles).forEach(id=>{const el=document.getElementById(id);if(el)el.classList.toggle("filter-active",toggles[id])});
+}
 let readerSelection=loadReaderSelection();
 let currentReaderVerses=[];let currentReaderLanguage="ar";
 function loadReaderSelection(){try{const saved=JSON.parse(localStorage.getItem(readerStateKey)||"null");return Object.assign({},readerSelectionDefaults,saved||{})}catch(e){return Object.assign({},readerSelectionDefaults)}}
