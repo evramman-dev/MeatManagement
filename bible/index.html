@@ -45,6 +45,11 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 .reader-sheet-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .reader-sheet-head h2{margin:0}.reader-close{background:transparent;color:var(--muted);font-size:24px;padding:2px 8px}
 .reader-options{overscroll-behavior:contain}
+.reader-picker-path{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;padding-bottom:4px;border-bottom:1px solid var(--line)}
+.reader-picker-field{background:#fff;border:1px solid var(--line);border-radius:13px;padding:9px 10px;text-align:right;color:var(--ink)}
+.reader-picker-field.selected{border-color:#8eaa9d;background:var(--soft)}
+.reader-picker-field small{display:block;color:var(--muted);font-size:10px;margin-bottom:2px}
+.reader-picker-field strong{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .reader-search{margin-top:10px}.reader-search input{width:100%;border:1px solid var(--line);background:#fff;border-radius:14px;padding:12px;outline:none}
 .reading-group{margin-top:16px}.reading-group-title{font-size:15px;font-weight:800;color:var(--accent);padding:3px 2px 7px}
 .reading-item{display:flex;gap:11px;align-items:center;width:100%;background:#fff;border:1px solid var(--line);border-radius:17px;padding:12px;text-align:right;margin:8px 0}
@@ -82,7 +87,7 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 <body>
 <div class="app">
 <header>
-  <div class="brand">رِحلة</div><div class="version">الإصدار v22 · القطمارس</div>
+  <div class="brand">رِحلة</div><div class="version">الإصدار v23 · القطمارس</div>
   <h1 id="title" class="home-title">أنت داخل التطبيق النهارده ليه؟</h1>
   <p id="subtitle" class="home-title">ابدأ من حالتك، ثم اترك للكلمة مساحة.</p>
 </header>
@@ -224,7 +229,7 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
   </div>
 </section>
 
-<div id="readerPickerModal" class="reader-modal hidden" aria-hidden="true"><div class="reader-sheet"><div class="reader-sheet-head"><h2 id="readerPickerTitle">اختيار</h2><button id="readerPickerClose" class="reader-close" type="button" aria-label="إغلاق">×</button></div><div id="readerPickerHint" class="note" style="margin-top:5px"></div><div id="readerPickerSearchWrap" class="reader-search hidden"><input id="readerPickerSearch" type="text" placeholder="ابحث في الاختيارات"></div><div id="readerPickerOptions" class="reader-options"></div></div></div>
+<div id="readerPickerModal" class="reader-modal hidden" aria-hidden="true"><div class="reader-sheet"><div class="reader-sheet-head"><h2 id="readerPickerTitle">اختيار موضع القراءة</h2><button id="readerPickerClose" class="reader-close" type="button" aria-label="إغلاق">×</button></div><div id="readerPickerHint" class="note" style="margin-top:5px"></div><div id="readerPickerPath" class="reader-picker-path"></div><div id="readerPickerSearchWrap" class="reader-search hidden"><input id="readerPickerSearch" type="text" placeholder="ابحث في الاختيارات"></div><div id="readerPickerOptions" class="reader-options"></div></div></div>
 <div id="readerOptionsModal" class="reader-modal hidden" aria-hidden="true"><div class="reader-sheet"><div class="reader-sheet-head"><h2>خيارات القراءة</h2><button id="readerOptionsClose" class="reader-close" type="button" aria-label="إغلاق">×</button></div><p class="note" style="margin-top:5px">اختر طريقة عرض النص. الإعداد يحفظ على جهازك.</p><h3>شكل القراءة</h3><div class="reader-actions"><button id="readerModeVerses" class="secondary filter-active" type="button">آيات</button><button id="readerModeParagraphs" class="secondary" type="button">فقرات</button></div><h3 style="margin-top:18px">الخط</h3><div class="reader-actions"><button id="readerFontNaskh" class="secondary filter-active" type="button">نسخ</button><button id="readerFontRuqaa" class="secondary" type="button">رقعة</button></div><button id="readerFontThuluth" class="secondary" type="button" style="width:100%;margin-top:8px">ثلث</button></div></div>
 <div id="readingTextModal" class="reader-modal hidden" aria-hidden="true"><div class="reader-sheet"><div class="reader-sheet-head"><h2 id="readingTextTitle">القراءة</h2><button id="readingTextClose" class="reader-close" type="button" aria-label="إغلاق">×</button></div><div id="readingTextMeta" class="reading-meta"></div><div id="readingTextContent" class="reading-text"></div></div></div>
 <div id="verseActionModal" class="reader-modal hidden" aria-hidden="true"><div class="reader-sheet verse-action-sheet"><div class="reader-sheet-head"><h2 id="verseActionTitle">الآية</h2><button id="verseActionClose" class="reader-close" type="button" aria-label="إغلاق">×</button></div><div id="verseActionText" class="verse-action-text"></div><div id="verseActionMeta" class="reading-meta"></div><div id="verseActionButtons" class="reader-actions"></div><div id="verseActionPalette" class="reader-highlight-palette verse-action-palette hidden"><button class="reader-highlight-color yellow" title="أصفر" data-modal-highlight="yellow"></button><button class="reader-highlight-color green" title="أخضر" data-modal-highlight="green"></button><button class="reader-highlight-color blue" title="أزرق" data-modal-highlight="blue"></button><button class="reader-highlight-color burgundy" title="نبيتي" data-modal-highlight="burgundy"></button></div><button id="verseActionCancelHighlight" class="secondary hidden" type="button" style="width:100%;margin-top:8px">إلغاء التلوين</button><button id="verseActionDone" class="primary" type="button">موافق</button></div></div>
@@ -451,7 +456,7 @@ async function loadReadingPartVerses(edition,part){
  for(let chapter=first;chapter<=last;chapter++){
   const sourceBookId=edition==="HE-WLC-2017"?(HEBREW_SOURCE_CODE_TO_ID[part.bookCode]||part.bookCode):edition==="GRC-LXX-BRENTON-1851"?(LXX_BOOK_ID_MAP[part.bookCode]||part.bookCode.toLowerCase()):edition==="GRC-KOINE-RP-2018"?part.bookCode.toLowerCase():part.bookCode;
   let verses=await loadTranslationChapter(edition,sourceBookId,chapter);
-  if(chapter===first&&part.startVerse!=null)verses=verses.filter(v=>Number(v.verse)>=part.startVerse);
+  if(chapter===first&&part.startVerse!=null)verses=part.endVerse==null&&part.endChapter==null?verses.filter(v=>Number(v.verse)===part.startVerse):verses.filter(v=>Number(v.verse)>=part.startVerse);
   if(chapter===last&&part.endChapter)verses=verses.filter(v=>Number(v.verse)<=part.endChapterVerse);
   else if(chapter===last&&part.endVerse!=null)verses=verses.filter(v=>Number(v.verse)<=part.endVerse);
   chapters.push({chapter,verses});
@@ -594,7 +599,7 @@ async function loadCopticReadings(){
   document.getElementById("homeReadingsCard").classList.remove("hidden");
  }
 }
-const readerStateKey="rehla.readerSelection.v12";
+const readerStateKey="rehla.readerSelection.v13";
 const readerSelectionDefaults={translation:"AR-SVD-1865",covenant:"OT",section:"الشريعة",book:"GEN",chapter:1,verse:"all",mode:"verses",font:"naskh"};
 let readerSelection=loadReaderSelection();
 let currentReaderVerses=[];let currentReaderLanguage="ar";
@@ -631,7 +636,33 @@ function readerSourceBookId(){const id=readerSelection.translation,b=readerSelec
 function readerChapterNumbers(){const rows=corpusCache[readerSelection.translation];if(!rows)return [];const b=readerSourceBookId();return [...new Set(rows.filter(r=>r.book_id===b).map(r=>Number(r.chapter)).filter(Boolean))].sort((a,b)=>a-b)}
 function readerVerseNumbers(){const rows=corpusCache[readerSelection.translation];if(!rows)return [];const b=readerSourceBookId(),c=Number(readerSelection.chapter);return [...new Set(rows.filter(r=>r.book_id===b&&Number(r.chapter)===c).map(r=>Number(r.verse)).filter(Boolean))].sort((a,b)=>a-b)}
 async function ensureReaderCorpus(){const id=readerSelection.translation;if(corpusCache[id])return;document.getElementById("readerStatus").textContent="جاري تجهيز نص الترجمة...";await loadTranslationCorpus(id)}
-async function openReaderPicker(field){const modal=document.getElementById("readerPickerModal"),optionsEl=document.getElementById("readerPickerOptions"),searchWrap=document.getElementById("readerPickerSearchWrap"),search=document.getElementById("readerPickerSearch");document.getElementById("readerPickerTitle").textContent="اختيار "+readerFieldLabel(field);document.getElementById("readerPickerHint").textContent=field==="verse"?"يمكنك اختيار كل الآيات أو آية محددة.":"اختر عنصرًا واحدًا.";optionsEl.innerHTML="<p class='note'>جاري تجهيز الاختيارات...</p>";modal.classList.remove("hidden");modal.setAttribute("aria-hidden","false");try{if(field==="chapter"||field==="verse")await ensureReaderCorpus();const options=readerOptionsFor(field),current=currentReaderFieldValue(field);searchWrap.classList.toggle("hidden",options.length<=12);const paint=query=>{const q=String(query||"").trim().toLowerCase();const filtered=options.filter(o=>!q||o.label.toLowerCase().includes(q)||String(o.sub||"").toLowerCase().includes(q));optionsEl.innerHTML=filtered.length?filtered.map(o=>"<button class='reader-option "+(o.id===current?"selected":"")+"' type='button' data-reader-option='"+escapeHtml(o.id)+"'><strong>"+escapeHtml(o.label)+"</strong><small>"+escapeHtml(o.sub||"")+"</small></button>").join(""):"<p class='note'>لا توجد نتيجة.</p>";optionsEl.querySelectorAll("[data-reader-option]").forEach(b=>b.addEventListener("click",()=>{readerSelection[field]=field==="chapter"?Number(b.dataset.readerOption):b.dataset.readerOption;resetReaderFrom(field);closeReaderPicker()}))};paint("");search.value="";search.oninput=()=>paint(search.value)}catch(e){optionsEl.innerHTML="<p class='note'>تعذر تجهيز الاختيارات الآن.</p>"}}
+async function openReaderPicker(field){
+ const modal=document.getElementById("readerPickerModal"),optionsEl=document.getElementById("readerPickerOptions"),searchWrap=document.getElementById("readerPickerSearchWrap"),search=document.getElementById("readerPickerSearch"),pathEl=document.getElementById("readerPickerPath");
+ document.getElementById("readerPickerTitle").textContent="اختيار موضع القراءة";
+ document.getElementById("readerPickerHint").textContent=field==="verse"?"اختر كل الآيات أو آية محددة.":"اختر من الخيارات ثم انتقل للخطوة التالية.";
+ modal.classList.remove("hidden");modal.setAttribute("aria-hidden","false");
+ const fields=["translation","covenant","section","book","chapter","verse"];
+ pathEl.innerHTML=fields.map(name=>"<button type='button' class='reader-picker-field "+(name===field?"selected":"")+"' data-reader-picker-field='"+name+"'><small>"+readerFieldLabel(name)+"</small><strong>"+escapeHtml(readerFieldValue(name))+"</strong></button>").join("");
+ pathEl.querySelectorAll("[data-reader-picker-field]").forEach(b=>b.addEventListener("click",()=>openReaderPicker(b.dataset.readerPickerField)));
+ optionsEl.innerHTML="<p class='note'>جاري تجهيز الاختيارات...</p>";
+ try{
+  if(field==="chapter"||field==="verse")await ensureReaderCorpus();
+  const options=readerOptionsFor(field),current=currentReaderFieldValue(field);
+  searchWrap.classList.toggle("hidden",options.length<=12);
+  const paint=query=>{
+   const q=String(query||"").trim().toLowerCase();
+   const filtered=options.filter(o=>!q||o.label.toLowerCase().includes(q)||String(o.sub||"").toLowerCase().includes(q));
+   optionsEl.innerHTML=filtered.length?filtered.map(o=>"<button class='reader-option "+(o.id===current?"selected":"")+"' type='button' data-reader-option='"+escapeHtml(o.id)+"'><strong>"+escapeHtml(o.label)+"</strong><small>"+escapeHtml(o.sub||"")+"</small></button>").join(""):"<p class='note'>لا توجد نتيجة.</p>";
+   optionsEl.querySelectorAll("[data-reader-option]").forEach(b=>b.addEventListener("click",async()=>{
+    readerSelection[field]=field==="chapter"?Number(b.dataset.readerOption):b.dataset.readerOption;
+    resetReaderFrom(field);
+    if(field!=="verse"){await openReaderPicker(field==="translation"?"covenant":field==="covenant"?"section":field==="section"?"book":field==="book"?"chapter":"verse");}
+    else{closeReaderPicker();await openSelectedReader();}
+   }));
+  };
+  paint("");search.value="";search.oninput=()=>paint(search.value);
+ }catch(e){optionsEl.innerHTML="<p class='note'>تعذر تجهيز الاختيارات الآن.</p>"}
+}
 function closeReaderPicker(){const modal=document.getElementById("readerPickerModal");modal.classList.add("hidden");modal.setAttribute("aria-hidden","true")}
 async function openSelectedReader(){try{await ensureReaderCorpus();const verses=await loadTranslationChapter(readerSelection.translation,readerSourceBookId(),Number(readerSelection.chapter));await refreshReaderSectionHeadings(readerSelection.book,Number(readerSelection.chapter));const visible=readerSelection.verse==="all"?verses:verses.filter(v=>Number(v.verse)===Number(readerSelection.verse));const lang=readerSelection.translation==="HE-WLC-2017"?"he":(readerSelection.translation==="GRC-LXX-BRENTON-1851"||readerSelection.translation==="GRC-KOINE-RP-2018")?"grc":"ar";currentReaderVerses=visible;currentReaderLanguage=lang;document.getElementById("chapterStatus").textContent=readerFieldValue("translation");renderCurrentReader();document.getElementById("readerStatus").textContent=readerSelection.verse==="all"?"تم فتح الإصحاح كاملًا.":"تم فتح الآية "+readerSelection.verse+".";saveReaderSelection()}catch(e){document.getElementById("readerStatus").textContent="تعذر فتح النص الآن. حاول مرة أخرى."}}
 const sampleTexts={
