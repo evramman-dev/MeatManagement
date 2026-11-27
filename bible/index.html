@@ -1126,7 +1126,7 @@ const READER_GREEK_BOOK_SLUGS={
 };
 const READER_LXX_STUDY_API="https://openscriptorium.org/api/v1/works/rahlfs-lxx";
 const READER_NT_STUDY_API="https://openscriptorium.org/api/v1/works/patriarchal-1904";
-async function loadOpenScriptoriumWordStudy(bookCode,chapter,verse,work){
+async function loadOpenScriptoriumChapterWordStudy(bookCode,chapter,work){
  const slug=READER_GREEK_BOOK_SLUGS[bookCode];
  if(!slug)return [];
  const url=work+"/"+slug+"/"+chapter+"?words=true";
@@ -1136,8 +1136,7 @@ async function loadOpenScriptoriumWordStudy(bookCode,chapter,verse,work){
   if(!response){response=await fetch(url,{mode:"cors"});if(!response.ok)return [];try{await cache.put(url,response.clone())}catch(e){}}
   const data=await response.json();
   const rows=Array.isArray(data?.verses)?data.verses:(Array.isArray(data?.chapter?.verses)?data.chapter.verses:[]);
-  const row=rows.find(v=>Number(v.verse||v.number)===Number(verse));
-  return Array.isArray(row?.words)?row.words:[];
+  return rows.map(v=>({verse:Number(v.verse||v.number),words:Array.isArray(v.words)?v.words:[]})).filter(v=>v.verse&&v.words.length);
  }catch(e){return []}
 }
 async function loadVerseWordStudy(key){
@@ -1153,16 +1152,7 @@ async function loadVerseWordStudy(key){
   let response=await cache.match(url);
   if(!response){response=await fetch(url,{mode:"cors"});if(!response.ok)response=null;else{try{await cache.put(url,response.clone())}catch(e){}}}
   if(response){try{const data=await response.json();const rows=Array.isArray(data?.chapter?.content)?data.chapter.content:[];if(rows.length)return rows}catch(e){}}
-  const work=useLxx?READER_LXX_STUDY_API:READER_NT_STUDY_API;
-  const rows=[];
-  const maxVerse=chapter>0?999:0;
-  for(let v=1;v<=maxVerse;v++){
-   const words=await loadOpenScriptoriumWordStudy(bookCode,chapter,v,work);
-   if(words.length)rows.push({verse:v,words});
-   if(v>=verse&&words.length&&useLxx===false)break;
-   if(v>=verse&&words.length&&useLxx)break;
-  }
-  return rows;
+  return await loadOpenScriptoriumChapterWordStudy(bookCode,chapter,useLxx?READER_LXX_STUDY_API:READER_NT_STUDY_API);
  })().finally(()=>delete READER_WORD_STUDY_PENDING[pendingKey]);
  try{
   const rows=await READER_WORD_STUDY_PENDING[pendingKey];
