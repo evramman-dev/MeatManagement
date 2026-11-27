@@ -1293,7 +1293,8 @@ async function loadArabicLexiconGloss(strongs){
    if(!response.ok)return null;
    READER_LOCAL_STRONGS_AR=await response.json();
   }
-  const entry=READER_LOCAL_STRONGS_AR?.[id];
+  const compactId=id.replace(/^([HG])0+(?=\d)/,"$1");
+  const entry=READER_LOCAL_STRONGS_AR?.[id]||READER_LOCAL_STRONGS_AR?.[compactId];
   if(!entry)return null;
   const result={
    values:Array.isArray(entry.arabic)?entry.arabic.filter(Boolean):[],
@@ -1394,7 +1395,7 @@ async function openVerseStudy(type){
     const parsing=w.parsing||w.morphology||"";
     const details=[
       "<span class='verse-word-arabic'><b class='verse-word-label'>المعنى بالعربية:</b> جاري التحميل عند فتح الكلمة</span>",
-      transliteration?"<span class='verse-word-pronunciation'><b class='verse-word-label'>النطق بحروف عربية:</b> "+escapeHtml(lex?.arabicPronunciation||arabicPronunciationFromTransliteration(transliteration,w.strongs))+"</span>":"",
+      (lex?.arabicPronunciation||transliteration)?"<span class='verse-word-pronunciation'><b class='verse-word-label'>النطق بحروف عربية:</b> "+escapeHtml(lex?.arabicPronunciation||arabicPronunciationFromTransliteration(transliteration,w.strongs))+"</span>":"",
       gloss?"<span><b class='verse-word-label'>المعنى المختصر:</b> "+escapeHtml(gloss)+"</span>":"",
       transliteration?"<span><b class='verse-word-label'>النطق:</b> "+escapeHtml(transliteration)+"</span>":"",
       lemma?"<span><b class='verse-word-label'>الجذر أو المدخل:</b> "+escapeHtml(lemma)+"</span>":"",
