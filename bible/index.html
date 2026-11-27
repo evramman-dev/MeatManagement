@@ -523,7 +523,7 @@ async function openReadingReference(raw,label){
   if(!translationHasBook(edition,part.bookCode)){blocks.push("<div class='card'><div class='eyebrow'>"+escapeHtml(part.book)+"</div><p class='note'>السفر غير متوفر في "+escapeHtml(editionInfo?editionInfo.name:edition)+" ولن نستبدل النص بترجمة أخرى.</p></div>");continue}
   try{
    const chapterBlocks=await loadReadingPartVerses(edition,part);
-   const textBlocks=chapterBlocks.map(x=>"<div class='reading-chapter-label'>الفصل "+x.chapter+"</div>"+x.verses.map(v=>"<p class='reading-verse' lang='ar' dir='rtl'><span class='reading-verse-number'>"+escapeHtml(readerVerseNumberText(v.verse))+"</span>"+escapeHtml(v.text).replace(/؛/g,"،").replace(/¶/g," ")+"</p>").join("")).join("");
+   const textBlocks=chapterBlocks.map(x=>"<div class='reading-chapter-label'>"+(part.bookCode==="PSA"?"المزمور ":"الفصل ")+x.chapter+"</div>"+x.verses.map(v=>"<p class='reading-verse' lang='ar' dir='rtl'><span class='reading-verse-number'>"+escapeHtml(readerVerseNumberText(v.verse))+"</span>"+escapeHtml(v.text).replace(/؛/g,"،").replace(/¶/g," ")+"</p>").join("")).join("");
    blocks.push("<div class='card'><div class='eyebrow'>"+escapeHtml(formatReadingReference(part.display||part.book+" "+part.chapter))+"</div>"+(textBlocks||"<p class='note'>لا توجد آيات مطابقة لهذا المرجع في هذه الطبعة.</p>")+"</div>");
   }catch(e){blocks.push("<p class='note'>تعذر تحميل هذا الجزء من القراءة.</p>")}
  }
