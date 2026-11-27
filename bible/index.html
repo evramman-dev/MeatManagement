@@ -1260,7 +1260,7 @@ async function loadLexiconEntry(strongs){
  if(READER_WORD_STUDY_CACHE["lex:"+id])return READER_WORD_STUDY_CACHE["lex:"+id];
  const local=await loadArabicLexiconGloss(id);
  if(local){
-  const entry={strongs:id,gloss:local.values?.[0]||"",definition:local.meaning||"",transliteration:local.pronunciation||"",source:local.source||"قاموس رِحلة المحلي"};
+  const entry={strongs:id,gloss:local.values?.[0]||"",definition:local.meaning||"",arabicPronunciation:local.pronunciation||"",source:local.source||"قاموس رِحلة المحلي"};
   READER_WORD_STUDY_CACHE["lex:"+id]=entry;
   return entry;
  }
@@ -1298,6 +1298,7 @@ async function loadArabicLexiconGloss(strongs){
   const result={
    values:Array.isArray(entry.arabic)?entry.arabic.filter(Boolean):[],
    meaning:String(entry.meaning||"").trim(),
+   pronunciation:String(entry.pronunciation||"").trim(),
    source:String(entry.source||"قاموس رِحلة المحلي")
   };
   if(!result.values.length&&!result.meaning)return null;
@@ -1393,7 +1394,7 @@ async function openVerseStudy(type){
     const parsing=w.parsing||w.morphology||"";
     const details=[
       "<span class='verse-word-arabic'><b class='verse-word-label'>المعنى بالعربية:</b> جاري التحميل عند فتح الكلمة</span>",
-      transliteration?"<span class='verse-word-pronunciation'><b class='verse-word-label'>النطق بحروف عربية:</b> "+escapeHtml(arabicPronunciationFromTransliteration(transliteration,w.strongs))+"</span>":"",
+      transliteration?"<span class='verse-word-pronunciation'><b class='verse-word-label'>النطق بحروف عربية:</b> "+escapeHtml(lex?.arabicPronunciation||arabicPronunciationFromTransliteration(transliteration,w.strongs))+"</span>":"",
       gloss?"<span><b class='verse-word-label'>المعنى المختصر:</b> "+escapeHtml(gloss)+"</span>":"",
       transliteration?"<span><b class='verse-word-label'>النطق:</b> "+escapeHtml(transliteration)+"</span>":"",
       lemma?"<span><b class='verse-word-label'>الجذر أو المدخل:</b> "+escapeHtml(lemma)+"</span>":"",
