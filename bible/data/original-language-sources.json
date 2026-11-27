@@ -52,8 +52,8 @@
     ],
     "note": "Greek glosses and definitions are supplied in their source language. Arabic meanings are shown only when an Arabic entry exists in Rehla's curated local dictionary.",
     "arabicCoverage": {
-      "entries": 37,
-      "policy": "قاموس رِحلة المحلي يضم مداخل عربية منتقاة ومراجعة. تُعرض المعاني العربية فقط للمداخل التي لها سجل عربي محلي، ولا تُحوّل التعريفات الإنجليزية آليًا إلى معانٍ عربية.",
+      "entries": 31,
+      "policy": "تُعرض المعاني العربية اليونانية فقط للمداخل التي لها سجل عربي محلي تمت مراجعته. لا تُحوّل التعريفات الإنجليزية آليًا إلى معانٍ عربية.",
       "note": "تمت إضافة وتوثيق مداخل تكوين 1:1 في اليونانية والعبرية، مع النطق العربي المنقول يدويًا للمداخل التي تمت مراجعتها. التغطية ليست ترجمة آلية شاملة لجميع مداخل Strong's."
     }
   },
@@ -86,5 +86,15 @@
       "purpose": "Resolve exact normalized Greek lemma matches to local Strong's, transliteration and source gloss"
     },
     "runtime": "The reader loads the local manifest and only the selected book's compressed file. Word study does not call OpenScriptorium or the remote STEP Bible lexicon API."
+  },
+  "arabicLocalLexicon": {
+    "source": "قاموس رِحلة المحلي، صياغات عربية مراجعة بالاستناد إلى Strong's وSTEPBible TBESG",
+    "license": "Arabic wording is original editorial content. Source lexicon data retains the licenses recorded above.",
+    "entries": 37,
+    "hebrewEntries": 6,
+    "greekEntries": 31,
+    "scope": "مداخل منتقاة، تشمل جميع مداخل Strong's الظاهرة في تكوين 1:1 في بيانات WLC وLXX الحالية",
+    "pronunciation": "نطق عربي مُراجع ومخزن محليًا لكل مدخل من المداخل التي تحتوي على حقل pronunciation",
+    "policy": "لا تُعرض ترجمة عربية آلية للتعريف الإنجليزي. عند غياب المدخل العربي يظهر تنبيه عدم توفره."
   }
 }
