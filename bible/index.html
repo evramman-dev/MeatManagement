@@ -1207,6 +1207,37 @@ async function loadLocalOriginalLanguageVerse(language,bookCode,chapter,verse){
  }));
  return [{verse:Number(verse),words}];
 }
+async function loadPatriarchal1904VerseWordStudy(bookCode,chapter,verse){
+ const slug=READER_GREEK_BOOK_SLUGS[String(bookCode||"").toUpperCase()];
+ if(!slug)throw new Error("PATRIARCHAL_BOOK_SLUG_MISSING");
+ const url="https://openscriptorium.org/api/v1/works/patriarchal-1904/"+encodeURIComponent(slug)+"/"+Number(chapter)+"/"+Number(verse)+"?words=true";
+ const response=await fetch(url,{cache:"force-cache"});
+ if(!response.ok)throw new Error("PATRIARCHAL_API_HTTP_"+response.status);
+ const data=await response.json();
+ const rawVerses=Array.isArray(data)?data:(Array.isArray(data?.verses)?data.verses:(Array.isArray(data?.data)?data.data:[data]));
+ const target=rawVerses.find(row=>Number(row?.verse??row?.verse_number??row?.number)===Number(verse))||rawVerses[0];
+ const sourceWords=Array.isArray(target?.words)?target.words:(Array.isArray(data?.words)?data.words:[]);
+ const words=sourceWords.map(sourceWord=>{
+  const lemma=sourceWord?.lemma&&typeof sourceWord.lemma==="object"?sourceWord.lemma:{};
+  const rawStrong=sourceWord?.strongs_number||sourceWord?.strongs||sourceWord?.strong||lemma?.strongs_number||lemma?.strongs||"";
+  const strongs=normalizeStrongNumber(rawStrong);
+  const morph=String(sourceWord?.morph_code||sourceWord?.parsing||sourceWord?.morphology||"");
+  return {
+   text:String(sourceWord?.surface||sourceWord?.text||""),
+   strongs,
+   gloss:String(sourceWord?.gloss||lemma?.gloss||""),
+   transliteration:String(sourceWord?.transliteration||lemma?.transliteration||""),
+   lemma:String(lemma?.lemma||sourceWord?.lemma||""),
+   parsing:morph,
+   morphology:morph,
+   partOfSpeech:String(sourceWord?.pos||lemma?.part_of_speech||""),
+   source:"Open Scriptorium · Patriarchal Greek New Testament 1904 · Public Domain",
+   confidence:""
+  };
+ }).filter(word=>word.text);
+ if(!words.length)throw new Error("PATRIARCHAL_API_NO_WORDS");
+ return [{verse:Number(verse),words}];
+}
 async function loadVerseWordStudy(key){
  const parts=String(key).split("|"),translation=parts[0],bookCode=parts[1],chapter=Number(parts[2]),verse=Number(parts[3]);
  if(!translation||!bookCode||!chapter||!verse)throw new Error("INVALID_VERSE_KEY");
@@ -1224,6 +1255,7 @@ async function loadVerseWordStudy(key){
  READER_WORD_STUDY_PENDING[pendingKey]=(async()=>{
   if(translation==="HE-WLC-2017")return await loadLocalOriginalLanguageVerse("wlc",bookCode,chapter,verse);
   if(useLxx)return await loadLocalOriginalLanguageVerse("lxx",bookCode,chapter,verse);
+  if(["MAT","MRK","LUK","JHN","ACT","ROM","1CO","2CO","GAL","EPH","PHP","COL","1TH","2TH","1TI","2TI","TIT","PHM","HEB","JAS","1PE","2PE","1JN","2JN","3JN","JUD","REV"].includes(bookCode))return await loadPatriarchal1904VerseWordStudy(bookCode,chapter,verse);
   throw new Error("LOCAL_WORD_STUDY_NOT_AVAILABLE_FOR_THIS_EDITION");
  })();
  try{
