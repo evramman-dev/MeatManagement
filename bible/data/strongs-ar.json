@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "version": 2,
+    "version": 3,
     "language": "ar",
     "description": "قاموس محلي لمعاني Strong's العبرية والآرامية واليونانية داخل تطبيق رِحلة",
     "license": "Strong's Exhaustive Concordance definitions are public domain. Numbered senses from OpenScriptures Strong's dictionary are CC BY-SA 3.0. Arabic wording here is an original concise Arabic rendering for the listed senses.",
@@ -965,5 +965,44 @@
     "meaning": "يرفرف أو يحوم بحركة فوق شيء، ويُستخدم لوصف حركة الطائر أو التحليق",
     "pronunciation": "راخاف",
     "source": "قاموس رِحلة المحلي، صياغة عربية من Strong's وOpenScriptures"
+  },
+  "G11": {
+    "language": "greek",
+    "arabic": [
+      "إبراهيم"
+    ],
+    "meaning": "إبراهيم، اسم أبي الآباء إبراهيم",
+    "pronunciation": "أبرام",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G976": {
+    "language": "greek",
+    "arabic": [
+      "كتاب",
+      "سجل"
+    ],
+    "meaning": "كتاب أو سجل، وفي متى 1:1 سجل النسب",
+    "pronunciation": "بِبلُس",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G1078": {
+    "language": "greek",
+    "arabic": [
+      "ميلاد",
+      "أصل",
+      "سلسلة نسب"
+    ],
+    "meaning": "ميلاد أو أصل أو سلسلة نسب، ويأتي في متى 1:1 لسجل نسب يسوع",
+    "pronunciation": "جِنِسِس",
+    "source": "قاموس رِحلة المحلي"
+  },
+  "G1138": {
+    "language": "greek",
+    "arabic": [
+      "داود"
+    ],
+    "meaning": "داود، ملك إسرائيل وأحد أسلاف المسيح",
+    "pronunciation": "داويد",
+    "source": "قاموس رِحلة المحلي"
   }
 }
