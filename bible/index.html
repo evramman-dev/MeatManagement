@@ -873,113 +873,23 @@ const VERIFIED_SVD_SECTION_HEADINGS={
   ]
  }
 };
-const READER_SECTION_HEADINGS_CACHE_KEY="rehla.readerSectionHeadings.v2";
-const AYAKOLYOUM_BOOK_MAX=66;
-function getReaderSectionHeadingsCache(){
- try{
-  const value=JSON.parse(localStorage.getItem(READER_SECTION_HEADINGS_CACHE_KEY)||"{}");
-  return value&&typeof value==="object"?value:{};
- }catch(e){return {}}
-}
-function saveReaderSectionHeadingsCache(cache){localStorage.setItem(READER_SECTION_HEADINGS_CACHE_KEY,JSON.stringify(cache))}
-const AYAKOLYOUM_BOOK_NUMBERS={
- GEN:1,EXO:2,LEV:3,NUM:4,DEU:5,JOS:6,JDG:7,RUT:8,"1SA":9,"2SA":10,
- "1KI":11,"2KI":12,"1CH":13,"2CH":14,EZR:15,NEH:16,TOB:17,JDT:18,EST:19,
- JOB:20,PSA:21,PRO:22,ECC:23,SNG:24,WIS:25,SIR:26,ISA:27,JER:28,LAM:29,
- BAR:30,EZK:31,DAN:32,HOS:33,JOL:34,AMO:35,OBA:36,JON:37,MIC:38,NAM:39,
- HAB:40,ZEP:41,HAG:42,ZEC:43,MAL:44,"1MA":45,"2MA":46,
- MAT:47,MRK:48,LUK:49,JHN:50,ACT:51,ROM:52,"1CO":53,"2CO":54,GAL:55,
- EPH:56,PHP:57,COL:58,"1TH":59,"2TH":60,"1TI":61,"2TI":62,TIT:63,PHM:64,
- HEB:65,JAS:66,"1PE":67,"2PE":68,"1JN":69,"2JN":70,"3JN":71,JUD:72,REV:73
-};
-function canonicalBookNumberForHeadings(bookCode){
- const n=AYAKOLYOUM_BOOK_NUMBERS[bookCode];
- return n>=1&&n<=73?n:null;
-}
-function extractSectionHeadingsFromDocument(doc){
- const result=[],seen=new Set();
- const skip=/^(سفر|الكتاب المقدس|العهد القديم|العهد الجديد|الإصحاح|تفسير|المصدر|الإصحاحات|كتب|حجم الخط|التالي|السابق|بحث|القراءات|الأجبية|الطقس|عقيدة|تاريخ)$/;
- const nodes=Array.from(doc.querySelectorAll("h1,h2,h3,h4,h5,h6"));
- const findVerseAfter=node=>{
-  let el=node.nextElementSibling;
-  for(let j=0;el&&j<80;j++,el=el.nextElementSibling){
-   const direct=(el.textContent||"").replace(/\s+/g," ").trim();
-   const directMatch=direct.match(/^(\d{1,3})$/);
-   if(directMatch)return Number(directMatch[1]);
-   const candidates=el.querySelectorAll?Array.from(el.querySelectorAll("a,button,span,div,p")):[];
-   for(const child of candidates){
-    const t=(child.textContent||"").replace(/\s+/g," ").trim();
-    const m=t.match(/^(\d{1,3})$/);
-    if(m)return Number(m[1]);
-   }
-  }
-  return null;
- };
- nodes.forEach(node=>{
-  const title=(node.textContent||"").replace(/\s+/g," ").trim();
-  if(!title||title.length>120||skip.test(title))return;
-  const verse=findVerseAfter(node);
-  if(verse==null)return;
-  const key=verse+"|"+title;
-  if(seen.has(key))return;
-  seen.add(key);
-  result.push({verse,title});
- });
- return normalizeReaderSectionHeadings(result);
-}
-async function fetchAyakolyoumSectionHeadings(bookCode,chapter){
- const bookNumber=canonicalBookNumberForHeadings(bookCode);
- if(!bookNumber)return [];
- const urls=[
-  "https://www.ayakolyoum.com/public/bible/"+bookNumber+"/"+Number(chapter),
-  "https://r.jina.ai/https://www.ayakolyoum.com/public/bible/"+bookNumber+"/"+Number(chapter)
- ];
- let lastError=null;
- for(const url of urls){
-  try{
-   const res=await fetch(url,{headers:{Accept:"text/html,text/plain"}});
-   if(!res.ok)throw new Error("ayakolyoum_"+res.status);
-   const text=await res.text();
-   const doc=new DOMParser().parseFromString(text,"text/html");
-   const result=extractSectionHeadingsFromDocument(doc);
-   if(result.length)return result;
-   const lines=text.split(/\r?\n/).map(x=>x.replace(/^#+\s*/,"").replace(/\[Button:\s*\d+\]/g,"").trim()).filter(Boolean);
-   const fromMarkdown=[];
-   for(let i=0;i<lines.length;i++){
-    const title=lines[i];
-    if(title.length<3||title.length>120||/^إنجيل |^سفر |^الرسالة |^الإصحاح|^الكتاب المقدس|^تفسير|^المصدر|^كلمة منفعة|^قراءة كاملة|^التالي|^تنقل سريع/.test(title))continue;
-    const next=lines[i+1]||"";
-    const vm=next.match(/^(\d{1,3})$/);
-    if(vm)fromMarkdown.push({verse:Number(vm[1]),title});
-   }
-   if(fromMarkdown.length)return normalizeReaderSectionHeadings(fromMarkdown);
-  }catch(e){lastError=e}
- }
- throw lastError||new Error("ayakolyoum_headings_unavailable");
-}
-async function fetchStTaklaSectionHeadings(bookCode,chapter){
- const st=STTAKLA_BOOK_MAP[bookCode];if(!st)return [];
- const res=await fetch("https://st-takla.org/Bibles/BibleSearch/showChapter.php?book="+st+"&chapter="+chapter,{headers:{Accept:"text/html"}});
- if(!res.ok)throw new Error("sttakla_"+res.status);
- const doc=new DOMParser().parseFromString(await res.text(),"text/html");
- return extractSectionHeadingsFromDocument(doc);
+let SVD_SECTION_HEADINGS_DATA=null;
+async function loadLocalSvdSectionHeadings(){
+ if(SVD_SECTION_HEADINGS_DATA)return SVD_SECTION_HEADINGS_DATA;
+ const res=await fetch("./data/svd-section-headings.json",{cache:"no-cache"});
+ if(!res.ok)throw new Error("svd_section_headings_"+res.status);
+ SVD_SECTION_HEADINGS_DATA=await res.json();
+ return SVD_SECTION_HEADINGS_DATA;
 }
 async function loadReaderSectionHeadings(bookCode,chapter){
  if(readerSelection.translation!=="AR-SVD-1865")return [];
- const chapterNumber=Number(chapter),cacheKey=bookCode+"|"+chapterNumber,cache=getReaderSectionHeadingsCache();
+ const chapterNumber=Number(chapter);
  const verified=VERIFIED_SVD_SECTION_HEADINGS[bookCode]?.[chapterNumber];
  if(verified)return verified.map(x=>Object.assign({},x));
- if(Array.isArray(cache[cacheKey]))return cache[cacheKey].map(x=>Object.assign({},x));
- let result=[];
- try{result=await fetchAyakolyoumSectionHeadings(bookCode,chapterNumber)}catch(e){}
- if(!result.length){
-  try{result=await fetchStTaklaSectionHeadings(bookCode,chapterNumber)}catch(e){}
- }
- if(result.length){
-  cache[cacheKey]=result;
-  saveReaderSectionHeadingsCache(cache);
- }
- return result;
+ try{
+  const data=await loadLocalSvdSectionHeadings();
+  return normalizeReaderSectionHeadings(data[bookCode]?.[chapterNumber]||[]).map(x=>Object.assign({},x));
+ }catch(e){return []}
 }
 function normalizeReaderSectionHeadings(headings){
  return Array.isArray(headings)?headings.filter(x=>x&&x.title&&Number.isFinite(Number(x.verse))).sort((a,b)=>Number(a.verse)-Number(b.verse)):[];
