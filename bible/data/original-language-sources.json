@@ -90,9 +90,9 @@
   "arabicLocalLexicon": {
     "source": "قاموس رِحلة المحلي، صياغات عربية مراجعة بالاستناد إلى Strong's وSTEPBible TBESG",
     "license": "Arabic wording is original editorial content. Source lexicon data retains the licenses recorded above.",
-    "entries": 79,
-    "hebrewEntries": 29,
-    "greekEntries": 50,
+    "entries": 90,
+    "hebrewEntries": 31,
+    "greekEntries": 59,
     "scope": "مداخل عربية منتقاة ومراجعة تشمل الكلمات الأساسية في العهدين القديم والجديد، وتتوسع تدريجيًا. لا تمثل ترجمة عربية شاملة لجميع أرقام Strong's.",
     "pronunciation": "نطق عربي مُراجع ومخزن محليًا للمداخل التي تمت مراجعتها، بالاستناد إلى النقل الصوتي في STEPBible TBESH/TBESG.",
     "policy": "المعنى العربي صياغة تحريرية عربية بالاستناد إلى المدخل المعجمي وتعريفاته. لا تُعرض ترجمة آلية للتعريف الإنجليزي، ولا يُضاف مدخل دون التحقق من رقم Strong's واللغة والمدخل الأصلي.",
@@ -103,21 +103,20 @@
         "H0430 ← H430",
         "H0853 ← H853",
         "H0776 ← H776"
-      ]
+      ],
+      "note": "عند تحميل دراسة النص العبري WLC، تُحوّل أرقام Strong's المجردة إلى مفاتيح H ذات أربعة أرقام قبل البحث في القاموس المحلي. أما اليونانية فتحتفظ ببادئة G وصيغتها ذات أربعة أرقام."
     },
     "pronunciationDisplay": "يظهر النطق العربي المحلي حتى إذا لم يوفر سجل الكلمة تحليلًا صوتيًا لاتينيًا.",
-    "note": "أضيفت مداخل عبرية من تكوين 1:2: الروح، الغمر، المياه، الظلام، الخواء والفراغ. الصياغة العربية والنطق من إعداد قاموس رِحلة بالاستناد إلى Strong's وOpenScriptures.",
+    "note": "قاموس عربي منتقى يتوسع على دفعات حسب تكرار الكلمات في الأسفار، وليس ترجمة شاملة لكل أرقام Strong's. تُضاف المداخل المتكررة مرة واحدة ويُعاد استخدامها في جميع مواضع الكتاب.",
     "latestBatch": {
       "date": "2026-11-28",
-      "authoredEntries": 38,
-      "netNewEntries": 36,
-      "hebrewAuthored": 19,
-      "greekAuthored": 19,
-      "source": "BSB-publishing/bsb-data-output base/lexicon/hebrew.jsonl and base/lexicon/greek.jsonl",
-      "license": "CC BY 4.0 (STEPBible TBESH/TBESG)",
-      "hebrewBlob": "1a289f7e67d2363b018fcc1ef6dee302d3749585",
-      "greekBlob": "b729792e760395b0d3f821117b4e855c3b3497ac",
-      "note": "تمت مراجعة أرقام Strong's واللممات والنقل الصوتي من المصدر. تم الاحتفاظ بالمداخل التي أضيفت إلى main بالتزامن مع هذه الدفعة، لذلك قد يقل عدد المداخل الجديدة الصافي عن عدد المداخل التي أُعدت."
+      "authoredEntries": 11,
+      "netNewEntries": 11,
+      "hebrewAuthored": 2,
+      "greekAuthored": 9,
+      "source": "STEPBible TBESH/TBESG via BSB-publishing/bsb-data-output; Strong's Exhaustive Concordance; OpenScriptures Hebrew Bible",
+      "license": "CC BY 4.0 for STEPBible TBESH/TBESG; source-specific licenses retained in source records",
+      "note": "دفعة أولى مجمعة لمعالجة الكلمات التي ظهرت ناقصة في تكوين 1:2. تمت مراجعة أرقام Strong's واللممات والنقل الصوتي من بيانات المصدر، وصيغت المعاني بالعربية دون ترجمة آلية للتعريف الإنجليزي."
     }
   }
 }

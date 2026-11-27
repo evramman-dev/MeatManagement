@@ -1189,7 +1189,8 @@ async function loadLocalOriginalLanguageVerse(language,bookCode,chapter,verse){
  selected.forEach(row=>(row.words||[]).forEach(sourceWord=>{
   const lemma=String(sourceWord.lemma||"");
   const lex=language==="lxx"&&greekIndex?greekIndex[normalizeGreekLemmaForIndex(lemma)]||null:null;
-  const strongs=sourceWord.strongs||lex?.strongs||"";
+  const rawStrongs=sourceWord.strongs||lex?.strongs||"";
+  const strongs=language==="wlc"&&/^\d+$/.test(String(rawStrongs))?"H"+String(rawStrongs).padStart(4,"0"):rawStrongs;
   const morph=String(sourceWord.parsing||"");
   words.push({
    text:String(sourceWord.surface||""),
