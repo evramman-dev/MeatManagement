@@ -106,7 +106,10 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 .reader-turn-sheet:before{background:linear-gradient(90deg,rgba(44,31,17,.25),rgba(255,255,255,.05) 18%,rgba(255,255,255,.7) 48%,rgba(63,43,22,.1) 62%,rgba(255,255,255,.08) 82%,rgba(44,31,17,.18));opacity:var(--curl-light,.18);mix-blend-mode:multiply}
 .reader-turn-sheet:after{background:radial-gradient(ellipse at var(--curl-x,50%) var(--curl-y,50%),rgba(255,255,255,.78),rgba(255,255,255,.14) 25%,rgba(55,40,20,.25) 66%,transparent 82%);opacity:var(--curl-shadow,.22)}
 @media(max-width:420px){.reader-book-page,.reader-turn-face,.reader-turn-back{padding:64px 16px 28px}.reader-running-head{left:12px;right:12px;font-size:9px}}
- .reader-screen:not(.reader-fullscreen) .reader-book-pages{position:relative;inset:auto;overflow:visible;contain:none}.reader-screen:not(.reader-fullscreen) .reader-book-page{position:relative;inset:auto;height:auto;min-height:0;overflow:visible;padding:22px 20px 32px;display:block}.reader-screen:not(.reader-fullscreen) .reader-book-page.is-hidden,.reader-screen:not(.reader-fullscreen) .reader-book-page.is-under{display:none}.reader-screen:not(.reader-fullscreen) .reader-page-source{display:block}.reader-screen:not(.reader-fullscreen) .reader-book-pages{height:auto}.reader-screen:not(.reader-fullscreen) .reader-book-page .reader-running-head{position:relative;top:auto;left:auto;right:auto;margin-bottom:10px}.reader-screen:not(.reader-fullscreen) .reader-chapter-nav{display:grid}.reader-screen.reader-fullscreen .reader-chapter-nav,.reader-screen:fullscreen .reader-chapter-nav{display:none}
+ .reader-screen:not(.reader-fullscreen) .reader-book-pages{position:relative;inset:auto;overflow:visible;contain:none}.reader-screen:not(.reader-fullscreen) .reader-book-page{position:relative;inset:auto;height:auto;min-height:0;overflow:visible;padding:22px 20px 32px;display:block}.reader-screen:not(.reader-fullscreen) .reader-book-page.is-hidden,.reader-screen:not(.reader-fullscreen) .reader-book-page.is-under{display:none}.reader-screen:not(.reader-fullscreen) .reader-page-source{display:block}.reader-screen:not(.reader-fullscreen) .reader-book-pages{height:auto}.reader-screen:not(.reader-fullscreen) .reader-book-page .reader-running-head{position:relative;top:auto;left:auto;right:auto;margin-bottom:10px}.reader-screen:not(.reader-fullscreen) .reader-chapter-nav{display:grid}.reader-screen:not(.reader-fullscreen) .reader-chapter-nav{display:grid;position:relative;z-index:8;margin:0 2px 28px;padding:0 2px}
+.reader-screen:not(.reader-fullscreen) #chapterContent{margin-bottom:0}
+.reader-screen:not(.reader-fullscreen) .reader-chapter-button{visibility:visible;opacity:1;display:flex}
+.reader-screen.reader-fullscreen .reader-chapter-nav,.reader-screen:fullscreen .reader-chapter-nav{display:none}
 .reader-screen:not(.reader-fullscreen) #chapterContent{position:relative;overflow:visible;contain:none}
 .reader-screen:not(.reader-fullscreen) #chapterContent.reader-page{height:auto;min-height:0;max-height:none}
 .reader-screen:not(.reader-fullscreen) .reader-book-pages,.reader-screen:not(.reader-fullscreen) .reader-turn-sheet{display:none!important}
@@ -189,6 +192,10 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
     </div>
     <div id="readerStatus" class="reader-screen-status"></div>
     <div id="chapterContent" class="reader-page"></div>
+    <div id="readerChapterNav" class="reader-chapter-nav">
+      <button id="readerPrevChapter" class="reader-chapter-button" type="button"><span>‹</span><strong>الإصحاح السابق</strong></button>
+      <button id="readerNextChapter" class="reader-chapter-button" type="button"><strong>الإصحاح التالي</strong><span>›</span></button>
+    </div>
     <button id="readerExitViewButton" class="reader-exit-view-button hidden" type="button" aria-label="الخروج من عرض القراءة">×</button>
     <div id="chapterStatus" class="hidden"></div>
   </div>
@@ -917,7 +924,24 @@ function readerBookHeading(book,code){
  return code==="PSA"||book==="مزامير"||book==="مزمور"?"سفر المزامير":"سفر "+book;
 }
 function updateReaderChapterNav(){const nums=readerChapterNumbers(),current=Number(readerSelection.chapter)||1,idx=nums.indexOf(current);const prev=document.getElementById("readerPrevChapter"),next=document.getElementById("readerNextChapter");if(prev)prev.disabled=idx<=0;if(next)next.disabled=idx<0||idx>=nums.length-1}
-let readerPageTarget="first";async function navigateReaderChapter(delta){try{await ensureReaderCorpus();const nums=readerChapterNumbers(),current=Number(readerSelection.chapter)||1;let idx=nums.indexOf(current);if(idx<0)idx=0;const target=nums[idx+delta];if(!target)return;readerPageTarget=delta<0?"last":"first";readerSelection.chapter=target;readerSelection.verse="all";saveReaderSelection();const verses=await loadTranslationChapter(readerSelection.translation,readerSourceBookId(),target);await refreshReaderSectionHeadings(readerSelection.book,target);currentReaderVerses=verses;renderCurrentReader();document.getElementById("readerStatus").textContent="تم فتح "+readerChapterHeading(target)+"."}catch(e){readerPageTarget="first";document.getElementById("readerStatus").textContent="تعذر الانتقال إلى الإصحاح."}}
+const readerChapterPrefetch={};
+function readerChapterCacheKey(chapter){return [readerSelection.translation,readerSourceBookId(),Number(chapter)].join("|")}
+async function prefetchReaderChapter(chapter){
+ const n=Number(chapter);
+ if(!n)return null;
+ const key=readerChapterCacheKey(n);
+ if(chapterCache[key])return chapterCache[key];
+ if(readerChapterPrefetch[key])return readerChapterPrefetch[key];
+ readerChapterPrefetch[key]=loadTranslationChapter(readerSelection.translation,readerSourceBookId(),n).catch(()=>null);
+ return readerChapterPrefetch[key]
+}
+function prefetchReaderAdjacentChapters(){
+ const nums=readerChapterNumbers(),current=Number(readerSelection.chapter)||1,idx=nums.indexOf(current);
+ if(idx<0)return;
+ if(nums[idx+1])prefetchReaderChapter(nums[idx+1]);
+ if(nums[idx-1])prefetchReaderChapter(nums[idx-1])
+}
+let readerPageTarget="first";async function navigateReaderChapter(delta){try{await ensureReaderCorpus();const nums=readerChapterNumbers(),current=Number(readerSelection.chapter)||1;let idx=nums.indexOf(current);if(idx<0)idx=0;const target=nums[idx+delta];if(!target)return;readerPageTarget=delta<0?"last":"first";readerSelection.chapter=target;readerSelection.verse="all";saveReaderSelection();const verses=await prefetchReaderChapter(target)||await loadTranslationChapter(readerSelection.translation,readerSourceBookId(),target);await refreshReaderSectionHeadings(readerSelection.book,target);currentReaderVerses=verses;requestAnimationFrame(()=>renderCurrentReader());prefetchReaderAdjacentChapters();document.getElementById("readerStatus").textContent="تم فتح "+readerChapterHeading(target)+"."}catch(e){readerPageTarget="first";document.getElementById("readerStatus").textContent="تعذر الانتقال إلى الإصحاح."}}
 let readerPageIndex=0;let readerPageCount=1;
 function readerPageGeometry(){const el=document.getElementById("chapterContent");return el?{w:el.clientWidth,h:el.clientHeight}:{w:1,h:1}}
 function readerPageCleanup(){const root=document.querySelector("#chapterContent .reader-book-pages");if(root){root.querySelectorAll(".reader-book-page").forEach((p,i)=>p.className="reader-book-page "+(i===readerPageIndex?"is-current":i===readerPageIndex+1||i===readerPageIndex-1?"is-under":"is-hidden"));root.querySelectorAll(".reader-book-page").forEach((p,i)=>p.style.zIndex=i===readerPageIndex?"3":i===readerPageIndex+1||i===readerPageIndex-1?"2":"1")}}
@@ -995,7 +1019,7 @@ function bindReaderSwipe(){
   const canTurn=target>=0&&target<readerPageCount;
   const go=ok&&canTurn;
   const direction=d>0?-1:1;
-  sheet.style.transition="transform .56s cubic-bezier(.22,.82,.22,1)";
+  sheet.style.transition="transform .42s cubic-bezier(.2,.78,.2,1)";
   sheet.style.transformOrigin=d>0?"100% "+(sy/Math.max(g.h,1)*100)+"%":"0% "+(sy/Math.max(g.h,1)*100)+"%";
   sheet.style.transform=go
    ?"translate3d("+(d>0?g.w*.045:-g.w*.045)+"px,-3px,0) scale(.992) rotateY("+(direction*176)+"deg)"
@@ -1009,7 +1033,7 @@ function bindReaderSwipe(){
     reset();
     navigateReaderChapter(d>0?1:-1)
    }else reset()
-  },575)
+  },435)
  };
  el.addEventListener("touchstart",e=>{
   if(!document.querySelector("#read .reader-screen")?.classList.contains("reader-fullscreen"))return;
@@ -1048,7 +1072,7 @@ function bindReaderSwipe(){
  },{passive:true})
 }
 
-function renderCurrentReader(){const content=document.getElementById("chapterContent");if(!content||!currentReaderVerses.length)return;const screen=document.querySelector("#read .reader-screen"),isFull=!!screen?.classList.contains("reader-fullscreen");readerTurnCleanup();readerPageIndex=0;const bookHeading=readerBookHeading(readerSelection.bookName||"",readerSelection.book),chapterHeading=readerChapterHeading(readerSelection.chapter),lineMap={normal:2.2,wide:2.65,extra:3.05},wordMap={normal:"0px",wide:"3px",extra:"6px"},sizeMap={normal:"20px",large:"23px",xl:"26px"};content.className="reader-page reader-font-"+readerSelection.font+" paper-"+(readerDisplay.paper||"cream");content.style.setProperty("--reader-line",lineMap[readerDisplay.lineSpacing]||2.2);content.style.setProperty("--reader-word",wordMap[readerDisplay.wordSpacing]||"0px");content.style.setProperty("--reader-size",sizeMap[readerDisplay.fontSize]||"20px");const markup="<div class='reader-book-title'>"+escapeHtml(bookHeading)+"</div><div class='reader-chapter-heading'>"+escapeHtml(chapterHeading)+"</div>"+renderVerseMarkup(currentReaderVerses,currentReaderLanguage,readerSelection.mode);content.innerHTML="";if(isFull){const pages=readerBuildPages(content,markup);requestAnimationFrame(()=>{readerPaginatePages(content,pages);if(readerPageTarget==="last")readerPageIndex=Math.max(0,readerPageCount-1);readerPageTarget="first";readerSetPageState();bindReaderVerseActions()})}else{content.innerHTML=markup;readerPageCount=1;readerPageIndex=0;bindReaderVerseActions()}updateReaderChapterNav();updateReaderOptionState();updateReaderDisplayPreview();bindReaderSwipe()}
+function renderCurrentReader(){const content=document.getElementById("chapterContent");if(!content||!currentReaderVerses.length)return;const screen=document.querySelector("#read .reader-screen"),isFull=!!screen?.classList.contains("reader-fullscreen");readerTurnCleanup();readerPageIndex=0;const bookHeading=readerBookHeading(readerSelection.bookName||"",readerSelection.book),chapterHeading=readerChapterHeading(readerSelection.chapter),lineMap={normal:2.2,wide:2.65,extra:3.05},wordMap={normal:"0px",wide:"3px",extra:"6px"},sizeMap={normal:"20px",large:"23px",xl:"26px"};content.className="reader-page reader-font-"+readerSelection.font+" paper-"+(readerDisplay.paper||"cream");content.style.setProperty("--reader-line",lineMap[readerDisplay.lineSpacing]||2.2);content.style.setProperty("--reader-word",wordMap[readerDisplay.wordSpacing]||"0px");content.style.setProperty("--reader-size",sizeMap[readerDisplay.fontSize]||"20px");const markup="<div class='reader-book-title'>"+escapeHtml(bookHeading)+"</div><div class='reader-chapter-heading'>"+escapeHtml(chapterHeading)+"</div>"+renderVerseMarkup(currentReaderVerses,currentReaderLanguage,readerSelection.mode);content.innerHTML="";if(isFull){const pages=readerBuildPages(content,markup);requestAnimationFrame(()=>{readerPaginatePages(content,pages);if(readerPageTarget==="last")readerPageIndex=Math.max(0,readerPageCount-1);readerPageTarget="first";readerSetPageState();bindReaderVerseActions();prefetchReaderAdjacentChapters()})}else{content.innerHTML=markup;readerPageCount=1;readerPageIndex=0;bindReaderVerseActions();prefetchReaderAdjacentChapters()}updateReaderChapterNav();updateReaderOptionState();updateReaderDisplayPreview();bindReaderSwipe()}
 let readerResumeScrollY=0;let activeVerseActionKey=null;
 function openVerseActionModal(key,text){const modal=document.getElementById("verseActionModal"),mark=getVerseMark(key);activeVerseActionKey=key;readerResumeScrollY=window.scrollY||document.documentElement.scrollTop||0;const parts=String(key).split("|"),verseNo=parts[3]||String(key).split("|").pop(),ref=readerBookHeading(readerSelection.bookName||"",readerSelection.book)+" · "+readerChapterHeading(readerSelection.chapter)+" · الآية "+readerVerseNumberText(verseNo);document.getElementById("verseActionTitle").textContent="الآية "+readerVerseNumberText(verseNo);document.getElementById("verseActionText").textContent=text;document.getElementById("verseActionMeta").textContent=ref+"\nالعلامة المرجعية والتلوين يحفظان على هذا الجهاز.";document.getElementById("verseActionButtons").innerHTML="<button type='button' class='secondary "+(mark.bookmark?"reader-bookmark-on":"")+"' id='verseModalBookmark'>"+(mark.bookmark?"★ علامة محفوظة":"☆ إضافة إشارة")+"</button><button type='button' class='secondary' id='verseModalHighlight'>"+(mark.highlight?"تغيير التحديد":"تلوين النص")+"</button>";document.getElementById("verseActionPalette").classList.toggle("hidden",!mark.highlight&&false);document.getElementById("verseActionPalette").style.display=mark.highlight?"flex":"none";document.getElementById("verseActionCancelHighlight").classList.toggle("hidden",!mark.highlight);const verseModal=document.getElementById("verseActionModal");const readerScreen=document.querySelector("#read .reader-screen");if(readerScreen?.classList.contains("reader-fullscreen")&&verseModal.parentElement!==readerScreen)readerScreen.appendChild(verseModal);verseModal.classList.remove("hidden");verseModal.setAttribute("aria-hidden","false");document.getElementById("verseActionText").className="verse-action-text reader-font-"+readerSelection.font;document.getElementById("verseActionText").innerHTML=escapeHtml(text).replace(/¶/g,"<br>");document.getElementById("verseActionText").classList.toggle("reader-highlight-"+mark.highlight,!!mark.highlight);document.getElementById("verseModalBookmark").onclick=()=>{toggleReaderBookmark(key);openVerseActionModal(key,text)};document.getElementById("verseModalHighlight").onclick=()=>{const p=document.getElementById("verseActionPalette");p.style.display=p.style.display==="none"?"flex":"none"};document.getElementById("verseActionCancelHighlight").onclick=()=>{setReaderHighlight(key,null);openVerseActionModal(key,text)}}
 function closeVerseActionModal(){const modal=document.getElementById("verseActionModal");if(modal.parentElement!==document.body)document.body.appendChild(modal);modal.classList.add("hidden");modal.setAttribute("aria-hidden","true");activeVerseActionKey=null;requestAnimationFrame(()=>window.scrollTo({top:readerResumeScrollY,behavior:"instant"}))}
@@ -1197,6 +1221,8 @@ async function exitReaderView(){
  try{if(document.fullscreenElement&&document.exitFullscreen)await document.exitFullscreen()}catch(e){}
  setReaderViewMode(false);
 }
+document.getElementById("readerPrevChapter")?.addEventListener("click",()=>navigateReaderChapter(-1));
+document.getElementById("readerNextChapter")?.addEventListener("click",()=>navigateReaderChapter(1));
 document.getElementById("readerViewButton").addEventListener("click",enterReaderView);
 document.getElementById("readerExitViewButton").addEventListener("click",exitReaderView);
 document.addEventListener("fullscreenchange",()=>{
