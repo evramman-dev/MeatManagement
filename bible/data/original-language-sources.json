@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "version": 7,
+    "version": 8,
     "description": "مصادر دراسة النص الأصلي في تطبيق رِحلة",
     "purpose": "تسجيل مصادر النص اليوناني والمعاجم والمورفولوجيا وترخيص كل مصدر قبل إدخال بيانات محلية موسعة"
   },
@@ -90,12 +90,12 @@
   "arabicLocalLexicon": {
     "source": "قاموس رِحلة المحلي، صياغات عربية مراجعة بالاستناد إلى Strong's وSTEPBible TBESG",
     "license": "Arabic wording is original editorial content. Source lexicon data retains the licenses recorded above.",
-    "entries": 37,
-    "hebrewEntries": 6,
-    "greekEntries": 31,
-    "scope": "مداخل منتقاة، تشمل جميع مداخل Strong's الظاهرة في تكوين 1:1 في بيانات WLC وLXX الحالية",
-    "pronunciation": "نطق عربي مُراجع ومخزن محليًا لكل مدخل من المداخل التي تحتوي على حقل pronunciation",
-    "policy": "لا تُعرض ترجمة عربية آلية للتعريف الإنجليزي. عند غياب المدخل العربي يظهر تنبيه عدم توفره.",
+    "entries": 75,
+    "hebrewEntries": 25,
+    "greekEntries": 50,
+    "scope": "مداخل عربية منتقاة ومراجعة، تشمل المداخل السابقة ودفعة جديدة من الكلمات الأساسية في العهدين القديم والجديد. لا تمثل ترجمة عربية شاملة لجميع أرقام Strong's.",
+    "pronunciation": "نطق عربي مُراجع ومخزن محليًا لكل مدخل جديد، بالاستناد إلى النقل الصوتي في STEPBible TBESH/TBESG.",
+    "policy": "المعنى العربي صياغة تحريرية عربية بالاستناد إلى المدخل المعجمي وتعريفاته. لا تُعرض ترجمة آلية للتعريف الإنجليزي، ولا يُضاف مدخل دون التحقق من رقم Strong's واللغة والمدخل الأصلي.",
     "lookupNormalization": {
       "rule": "يحتفظ Strong's اليوناني بصيغته ذات أربعة أرقام عند تحميل ملفات STEPBible، ويجرب القاموس العربي أيضًا الرقم بعد إزالة الأصفار البادئة. ينطبق ذلك على المفاتيح اليونانية والعبرية.",
       "examples": [
@@ -105,6 +105,17 @@
         "H0776 ← H776"
       ]
     },
-    "pronunciationDisplay": "يظهر النطق العربي المحلي حتى إذا لم يوفر سجل الكلمة تحليلًا صوتيًا لاتينيًا."
+    "pronunciationDisplay": "يظهر النطق العربي المحلي حتى إذا لم يوفر سجل الكلمة تحليلًا صوتيًا لاتينيًا.",
+    "latestBatch": {
+      "date": "2026-11-28",
+      "addedEntries": 38,
+      "hebrewEntries": 19,
+      "greekEntries": 19,
+      "source": "BSB-publishing/bsb-data-output base/lexicon/hebrew.jsonl and base/lexicon/greek.jsonl",
+      "license": "CC BY 4.0 (STEPBible TBESH/TBESG)",
+      "hebrewBlob": "1a289f7e67d2363b018fcc1ef6dee302d3749585",
+      "greekBlob": "b729792e760395b0d3f821117b4e855c3b3497ac",
+      "note": "تمت مراجعة كل رقم Strong's واللمّة والنقل الصوتي في المصدر قبل صياغة المعنى العربي. المعاني العربية والنطق إضافات تحريرية محلية."
+    }
   }
 }
