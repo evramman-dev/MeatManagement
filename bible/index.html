@@ -73,7 +73,10 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 .liturgical-reading h3{font-size:19px;color:var(--accent);margin:0 0 10px}
 .liturgical-reading .reading-rubric{font-size:14px;line-height:2.1;text-align:center;margin:12px 4px;color:var(--muted)}
 .liturgical-reading .reading-verse{font-size:18px;line-height:2.15;margin:8px 0;text-align:justify}
-.liturgical-reading .reading-verse-number{color:var(--gold);font-size:12px;font-weight:800;margin-inline-end:6px}
+.liturgical-reading .reading-verse-number{color:var(--gold);font-size:12px;font-weight:800;margin-inline-end:5px}
+.liturgical-reading .reading-verse-flow{font-size:18px;line-height:2.15;text-align:justify;margin:12px 0}
+.liturgical-reading .reading-verse-inline{display:inline}
+.liturgical-reading .reading-verse-inline+.reading-verse-inline{margin-inline-start:7px}
 .liturgical-reading .reading-ending{font-weight:700;text-align:center;line-height:2.1;margin:14px 4px}
 .liturgical-reading .reading-ref-line{font-size:12px;color:var(--muted);text-align:center;margin-bottom:8px}
 .coptic-reading-loading{padding:16px;text-align:center;color:var(--muted)}
@@ -82,12 +85,12 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 .reader-font-ruqaa,.reader-font-ruqaa .verse-text,.reader-font-ruqaa .reader-verse-text,.reader-font-ruqaa .reader-paragraph{font-family:"Aref Ruqaa","Amiri",serif;font-weight:400}
 .reader-font-thuluth,.reader-font-thuluth .verse-text,.reader-font-thuluth .reader-verse-text,.reader-font-thuluth .reader-paragraph{font-family:"Katibeh","Amiri",serif;font-weight:400}
 .reader-font-ruqaa .reader-verse-text{font-size:1.04em}.reader-font-thuluth .reader-verse-text{font-size:1.08em;letter-spacing:.01em}
- .liturgical-reading-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.reading-back-button{margin:0;padding:7px 10px;font-size:11px;white-space:nowrap}.reading-preamble{margin:14px 4px 8px!important;padding:0!important;background:transparent!important;border:0!important;border-radius:0!important;font-size:14px!important;line-height:2.1!important;color:var(--muted)!important;text-align:center}.reading-preamble div{font-size:inherit;line-height:inherit;color:inherit;margin:0}.reading-preamble div+div{margin-top:3px}.reader-screen{max-width:620px;margin:0 auto;padding:8px 10px 70px}.reader-screen-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 16px}.reader-screen-button{background:#fffdf8;border:1px solid #d8d0c2;border-radius:16px;padding:14px 12px;text-align:right;color:var(--ink);box-shadow:0 4px 12px #263b3508}.reader-screen-button strong{display:block;font-size:15px;color:var(--accent)}.reader-screen-button span{display:block;font-size:12px;color:var(--muted);margin-top:4px}.reader-screen-status{text-align:center;color:var(--muted);font-size:12px;min-height:18px;margin-bottom:8px}.reader-page{background:#fffdf8;min-height:70vh;padding:28px 22px 50px;border:1px solid #e2dacc;box-shadow:0 2px 14px #263b3508;font-family:"Amiri","Noto Naskh Arabic",serif}.reader-page .reader-book-title{text-align:center;font-size:29px;line-height:1.45;font-weight:700;color:#283a32;margin:0}.reader-page .reader-chapter-heading{text-align:center;font-size:19px;line-height:1.5;font-weight:700;color:#68766f;margin:7px 0 30px}.reader-page .reader-chapter-title{font-size:20px}.reader-page .reader-paragraph-title{font-size:17px}.reader-page .reader-paragraph{font-size:20px;line-height:2.25;text-align:justify;padding:0 2px 16px;text-indent:1.25em}.reader-page .reader-verse-text{font-size:20px;line-height:2.2}.reader-page .reader-verse-number{font-size:.7em;color:#8a6b35}.reader-page .reader-verse{border:0;padding:8px 0}.reader-page .eyebrow,.reader-page .note{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}.reader-page .reader-paragraph-block{margin-bottom:20px}.reader-page .reader-paragraph-title{text-align:right;color:#52665f;margin-top:20px;margin-bottom:6px}.reader-page .reader-paragraph-title:first-child{margin-top:0}@media(max-width:420px){.reader-screen{padding-inline:6px}.reader-page{padding:24px 16px 45px}.reader-page .reader-book-title{font-size:27px}.reader-page .reader-paragraph,.reader-page .reader-verse-text{font-size:19px}}</style>
+ .liturgical-reading-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.reading-back-button{margin:0;padding:7px 10px;font-size:11px;white-space:nowrap}.reading-preamble{margin:14px 4px 8px!important;padding:0!important;background:transparent!important;border:0!important;border-radius:0!important;font-size:14px!important;line-height:2.1!important;color:var(--muted)!important;text-align:center}.reading-preamble div{font-size:inherit;line-height:inherit;color:inherit;margin:0}.reading-preamble div+div{margin-top:3px}.reader-screen{max-width:620px;margin:0 auto;padding:8px 10px 70px}.reader-screen-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 16px}.reader-screen-button{background:#fffdf8;border:1px solid #d8d0c2;border-radius:16px;padding:14px 12px;text-align:right;color:var(--ink);box-shadow:0 4px 12px #263b3508}.reader-screen-button strong{display:block;font-size:15px;color:var(--accent)}.reader-screen-button span{display:block;font-size:12px;color:var(--muted);margin-top:4px}.reader-screen-status{text-align:right;color:var(--muted);font-size:10px;min-height:15px;margin:0 4px 7px}.reader-page{background:#fffdf8;min-height:70vh;padding:28px 22px 50px;border:1px solid #e2dacc;box-shadow:0 2px 14px #263b3508;font-family:"Amiri","Noto Naskh Arabic",serif}.reader-page .reader-book-title{text-align:center;font-size:29px;line-height:1.45;font-weight:700;color:#283a32;margin:0}.reader-page .reader-chapter-heading{text-align:center;font-size:19px;line-height:1.5;font-weight:700;color:#68766f;margin:7px 0 30px}.reader-page .reader-chapter-title{font-size:20px}.reader-page .reader-paragraph-title{font-size:17px}.reader-page .reader-paragraph{font-size:20px;line-height:2.25;text-align:justify;padding:0 2px 16px;text-indent:1.25em}.reader-page .reader-verse-text{font-size:20px;line-height:2.2}.reader-page .reader-verse-number{font-size:.7em;color:#8a6b35}.reader-page .reader-verse{border:0;padding:8px 0}.reader-page .eyebrow,.reader-page .note{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}.reader-page .reader-paragraph-block{margin-bottom:20px}.reader-page .reader-paragraph-title{text-align:right;color:#52665f;margin-top:20px;margin-bottom:6px}.reader-page .reader-paragraph-title:first-child{margin-top:0}@media(max-width:420px){.reader-screen{padding-inline:6px}.reader-page{padding:24px 16px 45px}.reader-page .reader-book-title{font-size:27px}.reader-page .reader-paragraph,.reader-page .reader-verse-text{font-size:19px}}</style>
 </head>
 <body>
 <div class="app">
 <header>
-  <div class="brand">رِحلة</div><div class="version">الإصدار v23 · القطمارس</div>
+  <div class="brand">رِحلة</div><div class="version">الإصدار v24 · القطمارس</div>
   <h1 id="title" class="home-title">أنت داخل التطبيق النهارده ليه؟</h1>
   <p id="subtitle" class="home-title">ابدأ من حالتك، ثم اترك للكلمة مساحة.</p>
 </header>
@@ -535,7 +538,10 @@ async function renderCopticReadingText(readings){
  for(const group of readingGroups){
   const groupItems=ordered.filter(x=>x.group===group.title);
   if(!groupItems.length)continue;
-  sections.push("<div class='coptic-reading-group-heading'>قراءات "+escapeHtml(group.title)+"</div>");
+  const hasGospel=groupItems.some(x=>x.key.endsWith("Gospel"));
+  const groupTitle=group.title==="عشية"||group.title==="باكر" ? "مزمور وإنجيل "+group.title : "قراءات "+group.title;
+  sections.push("<div class='coptic-reading-group-heading'>"+escapeHtml(groupTitle)+"</div>");
+  if(hasGospel)sections.push("<div class='reading-preamble reading-preamble-top'>"+escapeHtml(copticReadingIntro(groupItems.find(x=>x.key.endsWith("Gospel"))?.key,splitReadingReferences(groupItems.find(x=>x.key.endsWith("Gospel"))?.raw||"").map(parseReadingReferencePart).filter(Boolean)[0]))+"</div>");
   for(const item of groupItems){
    const parts=splitReadingReferences(item.raw).map(parseReadingReferencePart).filter(Boolean);
    const title=copticReadingHeading(item.group,item.key,item.label);
@@ -544,15 +550,13 @@ async function renderCopticReadingText(readings){
     if(!translationHasBook(edition,part.bookCode)){verseHtml+="<p class='note'>السفر "+escapeHtml(part.book)+" غير متوفر في "+escapeHtml(editionInfo?editionInfo.name:edition)+".</p>";continue}
     try{
      const chapterBlocks=await loadReadingPartVerses(edition,part);
-     verseHtml+=chapterBlocks.map(block=>"<div class='reading-chapter-label'>الفصل "+block.chapter+"</div>"+block.verses.map(v=>"<p class='reading-verse' lang='ar' dir='rtl'><span class='reading-verse-number'>"+escapeHtml(v.verse)+"</span>"+escapeHtml(v.text).replace(/؛/g,"،").replace(/¶/g," ")+"</p>").join("")).join("");
+     verseHtml+=chapterBlocks.map(block=>"<div class='reading-verse-flow' lang='ar' dir='rtl'>"+block.verses.map(v=>"<span class='reading-verse-inline'><span class='reading-verse-number'>"+escapeHtml(v.verse)+"</span>"+escapeHtml(v.text).replace(/؛/g,"،").replace(/¶/g," ")+"</span>").join(" ")+"</div>").join("");
     }catch(e){verseHtml+="<p class='note'>تعذر تحميل هذا الجزء من القراءة.</p>"}
    }
    const firstPart=parts[0];
-   const intro=copticReadingIntro(item.key,firstPart);
    const isGospel=item.key.endsWith("Gospel");
-   const beforeTitle=isGospel?"<div class='reading-preamble reading-preamble-top'>"+escapeHtml(copticReadingIntro(item.key,firstPart))+"</div>":"";
-   const middleIntro=isGospel?"<div class='reading-rubric reading-gospel-opening'>"+escapeHtml(copticGospelTextIntro())+"</div>":"<div class='reading-rubric'>"+escapeHtml(intro)+"</div>";
-   sections.push("<article class='liturgical-reading' id='lit-"+escapeHtml(item.key)+"'>"+beforeTitle+"<div class='liturgical-reading-head'><h3>"+escapeHtml(title)+"</h3><button class='secondary reading-back-button' type='button' data-reading-back='copticReadingRows'>العودة إلى كارت القراءات</button></div><div class='reading-ref-line'>"+escapeHtml(item.text)+"</div>"+middleIntro+(verseHtml||"<p class='note'>لا يوجد نص متاح لهذا الشاهد.</p>")+"<div class='reading-ending'>"+escapeHtml(copticReadingEnding(item.key))+"</div></article>");
+   const middleIntro=isGospel?"<div class='reading-rubric reading-gospel-opening'>"+escapeHtml(copticGospelTextIntro())+"</div>":"<div class='reading-rubric'>"+escapeHtml(copticReadingIntro(item.key,firstPart))+"</div>";
+   sections.push("<article class='liturgical-reading' id='lit-"+escapeHtml(item.key)+"'><div class='liturgical-reading-head'><h3>"+escapeHtml(title)+"</h3><button class='secondary reading-back-button' type='button' data-reading-back='copticReadingRows'>العودة إلى كارت القراءات</button></div><div class='reading-ref-line'>"+escapeHtml(item.text)+"</div>"+middleIntro+(verseHtml||"<p class='note'>لا يوجد نص متاح لهذا الشاهد.</p>")+"<div class='reading-ending'>"+escapeHtml(copticReadingEnding(item.key))+"</div></article>");
   }
  }
  host.innerHTML=sections.join("");
@@ -852,7 +856,7 @@ function readerBookHeading(book,code){
  if(gospels[code])return "إنجيل "+gospels[code];
  if(code==="ACT")return "سفر أعمال الرسل";
  if(code==="REV")return "سفر رؤيا يوحنا اللاهوتي";
- const paul={ROM:"أهل رومية","1CO":"أهل كورنثوس الأولى","2CO":"أهل كورنثوس الثانية",GAL:"أهل غلاطية",EPH:"أهل أفسس",PHP:"أهل فيلبي",COL:"أهل كولوسي","1TH":"أهل تسالونيكي الأولى","2TH":"أهل تسالونيكي الثانية","1TI":"تيموثاوس الأولى","2TI":"تيموثاوس الثانية",TIT:"تيطس",PHM:"فليمون",HEB:"العبرانيين"};
+ const paul={ROM:"أهل رومية","1CO":"أهل كورنثوس الأولى","2CO":"أهل كورنثوس الثانية",GAL:"أهل غلاطية",EPH:"أهل أفسس",PHP:"أهل فيلبي",COL:"أهل كولوسي","1TH":"أهل تسالونيكي الأولى","2TH":"أهل تسالونيكي الثانية","1TI":"أهل تيموثاوس الأولى","2TI":"أهل تيموثاوس الثانية",TIT:"تيطس",PHM:"فليمون",HEB:"العبرانيين"};
  if(paul[code])return "رسالة بولس الرسول إلى "+paul[code];
  const other={JAS:"رسالة يعقوب الرسول","1PE":"رسالة بطرس الرسول الأولى","2PE":"رسالة بطرس الرسول الثانية","1JN":"رسالة يوحنا الرسول الأولى","2JN":"رسالة يوحنا الرسول الثانية","3JN":"رسالة يوحنا الرسول الثالثة",JUD:"رسالة يهوذا الرسول"};
  if(other[code])return other[code];
