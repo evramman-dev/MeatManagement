@@ -1127,82 +1127,116 @@ const READER_GREEK_BOOK_SLUGS={
 const READER_HEBREW_STUDY_API="https://openscriptorium.org/api/v1/works/wlc";
 const READER_LXX_STUDY_API="https://openscriptorium.org/api/v1/works/rahlfs-lxx";
 const READER_NT_STUDY_API="https://openscriptorium.org/api/v1/works/patriarchal-1904";
+let READER_WORD_STUDY_LAST_ERROR=null;
 async function loadOpenScriptoriumChapterWordStudy(bookCode,chapter,work,verse){
  const slug=READER_GREEK_BOOK_SLUGS[String(bookCode||"").toUpperCase()];
- if(!slug)return [];
+ if(!slug)throw new Error("BOOK_NOT_MAPPED");
  const url=work+"/"+slug+"/"+chapter+(verse?"/"+verse:"")+"?words=true";
- try{
-  const cache=await caches.open("rehla-study-words-v3");
-  let response=await cache.match(url);
-  if(!response){
-   response=await fetch(url,{mode:"cors"});
-   if(!response.ok)return [];
-   try{await cache.put(url,response.clone())}catch(e){}
-  }
-  const data=await response.json();
-  let rows=Array.isArray(data?.verses)?data.verses:
-   Array.isArray(data?.chapter?.verses)?data.chapter.verses:
-   Array.isArray(data?.data?.verses)?data.data.verses:
-   Array.isArray(data?.data)?data.data:
-   Array.isArray(data?.chapter?.content)?data.chapter.content:
-   (Array.isArray(data?.words)||Array.isArray(data?.tokens)?[data]:[]);
-  return rows.map(v=>{
-   const idParts=String(v?.id||v?.osis_id||"").split(".");
-   const hierarchy=Array.isArray(v?.hierarchy)?v.hierarchy:[];
-   const verseNumber=Number(hierarchy.length>1?hierarchy[hierarchy.length-1]:
-    (v?.verse||v?.verse_number||v?.number||idParts[idParts.length-1]||verse||0));
-   const sourceWords=Array.isArray(v?.words)?v.words:(Array.isArray(v?.tokens)?v.tokens:[]);
-   const words=sourceWords.map(w=>{
-    const lemma=w?.lemma&&typeof w.lemma==="object"?w.lemma:{};
-    const rawLemma=typeof w?.lemma==="string"?w.lemma:"";
-    const morph=String(w?.morph_code||w?.morphology||w?.morph||w?.parsing||"");
-    const rawStrongs=String(w?.strongs_number??w?.strongs??w?.strong??"");
-    return {
-     text:String(w?.surface||w?.text||w?.word||""),
-     strongs:(()=>{const prefix=work===READER_HEBREW_STUDY_API?"H":"G";return /^\d+$/.test(rawStrongs)?prefix+rawStrongs:rawStrongs})(),
-     gloss:String(lemma?.gloss||w?.gloss||""),
-     transliteration:String(lemma?.transliteration||w?.transliteration||""),
-     lemma:String(lemma?.lemma||w?.lemma_text||rawLemma||""),
-     parsing:morph,
-     morphology:morph,
-     partOfSpeech:String(lemma?.part_of_speech||lemma?.pos||w?.part_of_speech||"")
-    };
-   }).filter(w=>w.text);
-   return {verse:verseNumber,words};
-  }).filter(v=>v.words.length&&(verse?Number(v.verse)===Number(verse):Number(v.verse)>0));
- }catch(e){console.warn("Open Scriptorium word study failed",e);return []}
+ const cache=await caches.open("rehla-study-words-v4");
+ let response=await cache.match(url);
+ if(!response){
+  response=await fetch(url,{mode:"cors",cache:"no-store"});
+  if(!response.ok)throw new Error("SOURCE_HTTP_"+response.status);
+  try{await cache.put(url,response.clone())}catch(e){}
+ }
+ let data;
+ try{data=await response.json()}catch(e){throw new Error("SOURCE_INVALID_JSON")}
+ let rows=Array.isArray(data?.verses)?data.verses:
+  Array.isArray(data?.chapter?.verses)?data.chapter.verses:
+  Array.isArray(data?.data?.verses)?data.data.verses:
+  Array.isArray(data?.data?.chapter?.verses)?data.data.chapter.verses:
+  Array.isArray(data?.data)?data.data:
+  Array.isArray(data?.chapter?.content)?data.chapter.content:
+  (Array.isArray(data?.words)||Array.isArray(data?.tokens)?[data]:[]);
+ if(!rows.length)throw new Error("SOURCE_NO_VERSE_ROWS");
+ const prefix=String(work).includes("/wlc")?"H":"G";
+ const parsed=rows.map(v=>{
+  const hierarchy=Array.isArray(v?.hierarchy)?v.hierarchy:[];
+  const idParts=String(v?.id||v?.osis_id||"").split(".");
+  const rawVerse=hierarchy.length?hierarchy[hierarchy.length-1]:
+   (v?.verse??v?.verse_number??v?.number??idParts[idParts.length-1]??verse??0);
+  const verseNumber=Number(rawVerse)||Number(verse)||0;
+  const sourceWords=Array.isArray(v?.words)?v.words:
+   Array.isArray(v?.tokens)?v.tokens:
+   Array.isArray(v?.content?.words)?v.content.words:[];
+  const words=sourceWords.map(w=>{
+   const lemma=w?.lemma&&typeof w.lemma==="object"?w.lemma:{};
+   const rawLemma=typeof w?.lemma==="string"?w.lemma:"";
+   const rawStrongs=String(w?.strongs_number??w?.strongs??w?.strong??"").trim();
+   const strongs=/^\d+$/.test(rawStrongs)?prefix+rawStrongs:
+    (/^[HG]\d+$/i.test(rawStrongs)?rawStrongs.toUpperCase():rawStrongs);
+   const textValue=w?.surface??w?.text??w?.word??w?.token??"";
+   const morph=String(w?.morph_code??w?.morphology??w?.morph??w?.parsing??"");
+   return {
+    text:String(textValue),strongs,
+    gloss:String(lemma?.gloss??w?.gloss??""),
+    transliteration:String(lemma?.transliteration??w?.transliteration??""),
+    lemma:String(lemma?.lemma??w?.lemma_text??rawLemma??""),
+    parsing:morph,morphology:morph,
+    partOfSpeech:String(lemma?.part_of_speech??lemma?.pos??w?.part_of_speech??"")
+   };
+  }).filter(w=>w.text.trim());
+  return {verse:verseNumber,words};
+ }).filter(row=>row.words.length);
+ let selected=verse?parsed.filter(row=>Number(row.verse)===Number(verse)):parsed;
+ if(!selected.length&&verse&&parsed.length===1)selected=[{...parsed[0],verse:Number(verse)}];
+ if(!selected.length)throw new Error("SOURCE_VERSE_NOT_FOUND");
+ return selected;
 }
 async function loadVerseWordStudy(key){
  const parts=String(key).split("|"),translation=parts[0],bookCode=parts[1],chapter=Number(parts[2]),verse=Number(parts[3]);
- if(!translation||!bookCode||!chapter||!verse)return [];
- const pendingKey=translation==="HE-WLC-2017"?translation+"|"+bookCode+"|"+chapter+"|"+verse:translation+"|"+bookCode+"|"+chapter;
- if(READER_WORD_STUDY_CACHE[pendingKey])return READER_WORD_STUDY_CACHE[pendingKey].filter(v=>Number(v.verse)===verse)[0]?.words||[];
- if(READER_WORD_STUDY_PENDING[pendingKey]){const rows=await READER_WORD_STUDY_PENDING[pendingKey];return rows.filter(v=>Number(v.verse)===verse)[0]?.words||[]}
- const useLxx=["TOB","JDT","WIS","SIR","BAR","LJE","1MA","2MA","3MA","4MA","SUS","BEL","DAG","1ES"].includes(bookCode)||["GEN","EXO","LEV","NUM","DEU","JOS","JDG","RUT","1SA","2SA","1KI","2KI","1CH","2CH","EZR","NEH","EST","JOB","PSA","PRO","ECC","SNG","ISA","JER","LAM","EZK","HOS","JOL","AMO","OBA","JON","MIC","NAM","HAB","ZEP","HAG","ZEC","MAL"].includes(bookCode);
+ if(!translation||!bookCode||!chapter||!verse)throw new Error("INVALID_VERSE_KEY");
+ const pendingKey=[translation,bookCode,chapter,verse].join("|");
+ if(Object.prototype.hasOwnProperty.call(READER_WORD_STUDY_CACHE,pendingKey)){
+  const rows=READER_WORD_STUDY_CACHE[pendingKey]||[];
+  return rows.find(v=>Number(v.verse)===verse)?.words||[];
+ }
+ if(READER_WORD_STUDY_PENDING[pendingKey]){
+  const rows=await READER_WORD_STUDY_PENDING[pendingKey];
+  return rows.find(v=>Number(v.verse)===verse)?.words||[];
+ }
+ const useLxx=["TOB","JDT","WIS","SIR","BAR","LJE","1MA","2MA","3MA","4MA","SUS","BEL","DAG","1ES"].includes(bookCode)||
+  ["GEN","EXO","LEV","NUM","DEU","JOS","JDG","RUT","1SA","2SA","1KI","2KI","1CH","2CH","EZR","NEH","EST","JOB","PSA","PRO","ECC","SNG","ISA","JER","LAM","EZK","HOS","JOL","AMO","OBA","JON","MIC","NAM","HAB","ZEP","HAG","ZEC","MAL"].includes(bookCode);
  READER_WORD_STUDY_PENDING[pendingKey]=(async()=>{
   if(translation==="HE-WLC-2017"){
    return await loadOpenScriptoriumChapterWordStudy(bookCode,chapter,READER_HEBREW_STUDY_API,verse);
   }
   if(useLxx){
-   return await loadOpenScriptoriumChapterWordStudy(bookCode,chapter,READER_LXX_STUDY_API);
+   return await loadOpenScriptoriumChapterWordStudy(bookCode,chapter,READER_LXX_STUDY_API,verse);
   }
-  const originalGreek=await loadOpenScriptoriumChapterWordStudy(bookCode,chapter,READER_NT_STUDY_API);
-  if(originalGreek.length)return originalGreek;
-  const url="https://bible.helloao.org/api/d/bsb-interlinear/"+bookCode+"/"+chapter+".json";
   try{
-   const cache=await caches.open("rehla-study-words-v3");
-   let response=await cache.match(url);
-   if(!response){response=await fetch(url,{mode:"cors"});if(!response.ok)return [];try{await cache.put(url,response.clone())}catch(e){}}
-   const data=await response.json();
-   const rows=Array.isArray(data?.chapter?.content)?data.chapter.content:[];
-   return rows;
-  }catch(e){return []}
- })().finally(()=>delete READER_WORD_STUDY_PENDING[pendingKey]);
+   const greek=await loadOpenScriptoriumChapterWordStudy(bookCode,chapter,READER_NT_STUDY_API,verse);
+   if(greek.length)return greek;
+  }catch(sourceError){
+   console.warn("Original Greek source unavailable; trying interlinear fallback",sourceError);
+  }
+  const url="https://bible.helloao.org/api/d/bsb-interlinear/"+bookCode+"/"+chapter+".json";
+  const cache=await caches.open("rehla-study-words-v4");
+  let response=await cache.match(url);
+  if(!response){
+   response=await fetch(url,{mode:"cors"});
+   if(!response.ok)throw new Error("INTERLINEAR_HTTP_"+response.status);
+   try{await cache.put(url,response.clone())}catch(e){}
+  }
+  const data=await response.json();
+  const rows=Array.isArray(data?.chapter?.content)?data.chapter.content:[];
+  const selected=rows.filter(row=>Number(row?.verse)===verse);
+  if(!selected.length)throw new Error("INTERLINEAR_VERSE_NOT_FOUND");
+  return selected;
+ })();
  try{
   const rows=await READER_WORD_STUDY_PENDING[pendingKey];
+  if(!Array.isArray(rows)||!rows.length)throw new Error("NO_WORDS_RETURNED");
   READER_WORD_STUDY_CACHE[pendingKey]=rows;
-  return rows.filter(v=>Number(v.verse)===verse)[0]?.words||[];
- }catch(e){return []}
+  READER_WORD_STUDY_LAST_ERROR=null;
+  return rows.find(v=>Number(v.verse)===verse)?.words||[];
+ }catch(e){
+  READER_WORD_STUDY_LAST_ERROR=String(e?.message||e||"UNKNOWN");
+  console.warn("Verse word study failed",pendingKey,e);
+  throw e;
+ }finally{
+  delete READER_WORD_STUDY_PENDING[pendingKey];
+ }
 }
 const READER_GREEK_LEXICON_CHUNKS={};
 async function loadLocalGreekStrongEntry(strongs){
@@ -1396,7 +1430,13 @@ async function openVerseStudy(type){
  d.dataset.arabicLoaded="1";
 }));
   }catch(e){
-   panel.innerHTML="<div class='verse-study-tabs'>"+["crossReferences","wordMeanings","commentary"].map(t=>"<button type='button' class='verse-study-tab "+(t===type?"active":"")+"' data-study-type='"+t+"'>"+readerStudyLabel(t)+"</button>").join("")+"</div><div class='verse-study-content'><div class='verse-study-title'>معاني الكلمات</div><p class='verse-study-empty'>تعذر تحميل دراسة الكلمات الآن. يمكنك المحاولة مرة أخرى.</p></div>";
+   console.warn("Word study panel failed",e);
+   const message=String(e?.message||"");
+   const userMessage=message.startsWith("SOURCE_HTTP_")?"تعذر الوصول إلى مصدر النص الأصلي الآن.":
+    message==="SOURCE_INVALID_JSON"?"أرسل مصدر النص الأصلي بيانات غير مكتملة.":
+    message==="SOURCE_NO_VERSE_ROWS"||message==="SOURCE_VERSE_NOT_FOUND"||message==="NO_WORDS_RETURNED"?"لم يعثر المصدر على كلمات لهذه الآية.":
+    "تعذر تحميل دراسة الكلمات. حاول فتح التبويب مرة أخرى.";
+   panel.innerHTML="<div class='verse-study-tabs'>"+["crossReferences","wordMeanings","commentary"].map(t=>"<button type='button' class='verse-study-tab "+(t===type?"active":"")+"' data-study-type='"+t+"'>"+readerStudyLabel(t)+"</button>").join("")+"</div><div class='verse-study-content'><div class='verse-study-title'>معاني الكلمات</div><p class='verse-study-empty'>"+userMessage+"</p></div>";
    panel.querySelectorAll("[data-study-type]").forEach(b=>b.addEventListener("click",()=>openVerseStudy(b.dataset.studyType)));
   }
  }
