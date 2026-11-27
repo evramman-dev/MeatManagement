@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "version": 7,
+    "version": 8,
     "description": "مصادر دراسة النص الأصلي في تطبيق رِحلة",
     "purpose": "تسجيل مصادر النص اليوناني والمعاجم والمورفولوجيا وترخيص كل مصدر قبل إدخال بيانات محلية موسعة"
   },
@@ -90,10 +90,10 @@
   "arabicLocalLexicon": {
     "source": "قاموس رِحلة المحلي، صياغات عربية مراجعة بالاستناد إلى Strong's وSTEPBible TBESG",
     "license": "Arabic wording is original editorial content. Source lexicon data retains the licenses recorded above.",
-    "entries": 37,
-    "hebrewEntries": 6,
+    "entries": 43,
+    "hebrewEntries": 12,
     "greekEntries": 31,
-    "scope": "مداخل منتقاة، تشمل جميع مداخل Strong's الظاهرة في تكوين 1:1 في بيانات WLC وLXX الحالية",
+    "scope": "مداخل منتقاة، تشمل جميع مداخل Strong's الظاهرة في تكوين 1:1-2 في بيانات WLC وLXX الحالية، مع توسع تدريجي لمداخل أسفار أخرى",
     "pronunciation": "نطق عربي مُراجع ومخزن محليًا لكل مدخل من المداخل التي تحتوي على حقل pronunciation",
     "policy": "لا تُعرض ترجمة عربية آلية للتعريف الإنجليزي. عند غياب المدخل العربي يظهر تنبيه عدم توفره.",
     "lookupNormalization": {
@@ -105,6 +105,7 @@
         "H0776 ← H776"
       ]
     },
-    "pronunciationDisplay": "يظهر النطق العربي المحلي حتى إذا لم يوفر سجل الكلمة تحليلًا صوتيًا لاتينيًا."
+    "pronunciationDisplay": "يظهر النطق العربي المحلي حتى إذا لم يوفر سجل الكلمة تحليلًا صوتيًا لاتينيًا.",
+    "note": "أضيفت مداخل عبرية من تكوين 1:2: الروح، الغمر، المياه، الظلام، الخواء والفراغ. الصياغة العربية والنطق من إعداد قاموس رِحلة بالاستناد إلى Strong's وOpenScriptures."
   }
 }
