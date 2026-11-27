@@ -41,7 +41,7 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 .reader-option.selected{border-color:#8eaa9d;background:var(--soft)}
 .reader-option small{display:block;color:var(--muted);margin-top:4px}
 .reader-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
-.reader-modal{position:fixed;inset:0;background:#17251f66;z-index:1000;display:flex;align-items:flex-end;justify-content:center}
+.reader-modal{position:fixed;inset:0;background:#17251f66;z-index:1000;display:flex;align-items:flex-end;justify-content:center}.reader-modal#readingTextModal{z-index:1100}.reader-modal#readingTextModal .reader-sheet{max-height:92vh}
 .reader-modal.hidden{display:none!important}
 .reader-sheet{width:min(620px,100%);max-height:88vh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;background:var(--card);border-radius:24px 24px 0 0;padding:18px 16px 24px;box-shadow:0 -18px 40px #17251f22}
 .reader-sheet-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -1100,6 +1100,42 @@ function renderCurrentReader(){
 let readerResumeScrollY=0;let activeVerseActionKey=null;
 const READER_STUDY_DATA=Object.create(null);
 const READER_STUDY_PENDING=Object.create(null);
+const READER_WORD_STUDY_PENDING=Object.create(null);
+const READER_WORD_STUDY_CACHE=Object.create(null);
+function normalizeStrongNumber(value){
+ const m=String(value||"").match(/^([HG])0*(\\d+)$/i);
+ return m?(m[1].toUpperCase()+m[2].padStart(4,"0")):String(value||"");
+}
+async function loadVerseWordStudy(key){
+ const parts=String(key).split("|"),bookCode=parts[1],chapter=Number(parts[2]),verse=Number(parts[3]);
+ if(!bookCode||!chapter||!verse||!EBIBLE_BOOK_CODES.includes(bookCode))return [];
+ const pendingKey=bookCode+"|"+chapter;
+ if(READER_WORD_STUDY_CACHE[pendingKey])return READER_WORD_STUDY_CACHE[pendingKey].filter(v=>Number(v.verse)===verse)[0]?.words||[];
+ if(READER_WORD_STUDY_PENDING[pendingKey]){const rows=await READER_WORD_STUDY_PENDING[pendingKey];return rows.filter(v=>Number(v.verse)===verse)[0]?.words||[]}
+ const url="https://bible.helloao.org/api/d/bsb-interlinear/"+bookCode+"/"+chapter+".json";
+ READER_WORD_STUDY_PENDING[pendingKey]=(async()=>{
+  const cache=await caches.open("rehla-study-words-v1");
+  let response=await cache.match(url);
+  if(!response){response=await fetch(url,{mode:"cors"});if(!response.ok)throw new Error("word study fetch failed");try{await cache.put(url,response.clone())}catch(e){}}
+  const data=await response.json();
+  return Array.isArray(data?.chapter?.content)?data.chapter.content:[];
+ })().finally(()=>delete READER_WORD_STUDY_PENDING[pendingKey]);
+ try{
+  const rows=await READER_WORD_STUDY_PENDING[pendingKey];
+  READER_WORD_STUDY_CACHE[pendingKey]=rows;
+  return rows.filter(v=>Number(v.verse)===verse)[0]?.words||[];
+ }catch(e){return []}
+}
+async function loadLexiconEntry(strongs){
+ const id=normalizeStrongNumber(strongs);if(!id)return null;
+ if(READER_WORD_STUDY_CACHE["lex:"+id])return READER_WORD_STUDY_CACHE["lex:"+id];
+ const url="https://bible.helloao.org/api/d/stepbible-lexicon/lexicon/"+id+".json";
+ try{
+  const cache=await caches.open("rehla-study-words-v1");let response=await cache.match(url);
+  if(!response){response=await fetch(url,{mode:"cors"});if(!response.ok)return null;try{await cache.put(url,response.clone())}catch(e){}}
+  const data=await response.json();READER_WORD_STUDY_CACHE["lex:"+id]=data?.entry||null;return data?.entry||null;
+ }catch(e){return null}
+}
 const READER_STUDY_API_BASE="https://bible.helloao.org/api/d/open-cross-ref";
 const READER_STUDY_BOOK_NAMES=Object.fromEntries(EBIBLE_BOOK_CODES.map((code,i)=>[code,readerBookNames[code]||""]));
 const READER_STUDY_ATTRIBUTION="الشواهد: OpenBible.info عبر Free Use Bible API، بترخيص CC BY 4.0.";
@@ -1168,6 +1204,25 @@ async function openVerseStudy(type){
    panel.querySelectorAll("[data-study-ref]").forEach(b=>b.addEventListener("click",()=>openReadingReference(b.dataset.studyRef,"الشاهد "+b.dataset.studyRef)));
   }catch(e){
    panel.innerHTML="<div class='verse-study-tabs'>"+["crossReferences","wordMeanings","commentary"].map(t=>"<button type='button' class='verse-study-tab "+(t===type?"active":"")+"' data-study-type='"+t+"'>"+readerStudyLabel(t)+"</button>").join("")+"</div><div class='verse-study-content'><div class='verse-study-title'>الشواهد</div><p class='verse-study-empty'>تعذر تحميل الشواهد الآن. يمكنك المحاولة مرة أخرى.</p></div>";
+   panel.querySelectorAll("[data-study-type]").forEach(b=>b.addEventListener("click",()=>openVerseStudy(b.dataset.studyType)));
+  }
+ }else if(type==="wordMeanings"){
+  try{
+   panel.innerHTML="<div class='verse-study-tabs'>"+["crossReferences","wordMeanings","commentary"].map(t=>"<button type='button' class='verse-study-tab "+(t===type?"active":"")+"' data-study-type='"+t+"'>"+readerStudyLabel(t)+"</button>").join("")+"</div><div class='verse-study-content'><p class='verse-study-empty'>جاري تحميل دراسة الكلمات...</p></div>";
+   const words=await loadVerseWordStudy(activeVerseActionKey);
+   if(!activeVerseActionKey)return;
+   const meaningful=words.filter(w=>w&&w.text).slice(0,30);
+   const rendered=[];
+   for(const w of meaningful){
+    const lex=await loadLexiconEntry(w.strongs);
+    const sense=lex?.senses?.[0];
+    rendered.push("<div class='verse-study-item'><strong>"+escapeHtml(w.text)+"</strong><small>"+escapeHtml((w.gloss||"")+(w.transliteration?" · "+w.transliteration:""))+"</small>"+(w.strongs?"<small>Strong's "+escapeHtml(w.strongs)+"</small>":"")+(sense?.definition?"<small>"+escapeHtml(sense.definition.split("\n")[0])+"</small>":"")+"</div>");
+   }
+   const body=rendered.length?rendered.join(""):"<p class='verse-study-empty'>لا تتوفر بيانات دراسة الكلمات لهذه الآية من المصدر الحالي.</p>";
+   panel.innerHTML="<div class='verse-study-tabs'>"+["crossReferences","wordMeanings","commentary"].map(t=>"<button type='button' class='verse-study-tab "+(t===type?"active":"")+"' data-study-type='"+t+"'>"+readerStudyLabel(t)+"</button>").join("")+"</div><div class='verse-study-content'><div class='verse-study-title'>دراسة كلمات النص الأصلي</div><p class='verse-study-empty'>البيانات هنا تعرض الكلمة الأصلية ومعناها الإنجليزي المختصر من المصدر، ولن نعتبرها ترجمة عربية للكلمة حتى نربط مصدرًا عربيًا موثوقًا.</p><div class='verse-study-list'>"+body+"</div></div><p class='verse-study-source'>المصدر: STEPBible / Tyndale House, Cambridge عبر Free Use Bible API، بترخيص CC BY 4.0.</p>";
+   panel.querySelectorAll("[data-study-type]").forEach(b=>b.addEventListener("click",()=>openVerseStudy(b.dataset.studyType)));
+  }catch(e){
+   panel.innerHTML="<div class='verse-study-tabs'>"+["crossReferences","wordMeanings","commentary"].map(t=>"<button type='button' class='verse-study-tab "+(t===type?"active":"")+"' data-study-type='"+t+"'>"+readerStudyLabel(t)+"</button>").join("")+"</div><div class='verse-study-content'><div class='verse-study-title'>معاني الكلمات</div><p class='verse-study-empty'>تعذر تحميل دراسة الكلمات الآن. يمكنك المحاولة مرة أخرى.</p></div>";
    panel.querySelectorAll("[data-study-type]").forEach(b=>b.addEventListener("click",()=>openVerseStudy(b.dataset.studyType)));
   }
  }
