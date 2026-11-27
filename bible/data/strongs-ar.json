@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "version": 4,
+    "version": 5,
     "language": "ar",
     "description": "قاموس محلي لمعاني Strong's العبرية والآرامية واليونانية داخل تطبيق رِحلة",
     "license": "Strong's Exhaustive Concordance definitions are public domain. Numbered senses from OpenScriptures Strong's dictionary are CC BY-SA 3.0. Arabic wording here is an original concise Arabic rendering for the listed senses.",
@@ -127,12 +127,11 @@
     "language": "greek",
     "arabic": [
       "يقول",
-      "يتكلم",
-      "يخبر"
+      "يتكلم"
     ],
     "meaning": "يقول أو يتكلم أو يخبر",
     "pronunciation": "ليغو",
-    "source": "قاموس رِحلة المحلي"
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
   },
   "G1519": {
     "language": "greek",
@@ -1302,6 +1301,296 @@
     ],
     "meaning": "يوصي أو يأمر أو يعطي وصية",
     "pronunciation": "إنتِلّوماي",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G846": {
+    "language": "greek",
+    "arabic": [
+      "هو",
+      "هي",
+      "هم",
+      "إياه"
+    ],
+    "meaning": "ضمير يعود على شخص أو شيء بحسب الجنس والعدد والحالة",
+    "pronunciation": "أوتوس",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G3326": {
+    "language": "greek",
+    "arabic": [
+      "مع",
+      "بعد",
+      "بين"
+    ],
+    "meaning": "مع أو بعد أو بين بحسب السياق",
+    "pronunciation": "ميتا",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G2400": {
+    "language": "greek",
+    "arabic": [
+      "هوذا",
+      "انظر"
+    ],
+    "meaning": "هوذا أو انظر، أداة للفت الانتباه",
+    "pronunciation": "إيدو",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G395": {
+    "language": "greek",
+    "arabic": [
+      "المشرق",
+      "طلوع"
+    ],
+    "meaning": "المشرق أو طلوع الشمس",
+    "pronunciation": "أناتولي",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G575": {
+    "language": "greek",
+    "arabic": [
+      "من",
+      "عن",
+      "بعيدًا عن"
+    ],
+    "meaning": "من أو عن أو بعيدًا عن بحسب السياق",
+    "pronunciation": "أبو",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G935": {
+    "language": "greek",
+    "arabic": [
+      "ملك"
+    ],
+    "meaning": "ملك أو صاحب سلطة ملكية",
+    "pronunciation": "باسيليوس",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G965": {
+    "language": "greek",
+    "arabic": [
+      "بيت لحم"
+    ],
+    "meaning": "بيت لحم، موضع في فلسطين ومعناه بيت الخبز",
+    "pronunciation": "بيثليئِم",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G2250": {
+    "language": "greek",
+    "arabic": [
+      "يوم",
+      "نهار",
+      "مدة"
+    ],
+    "meaning": "يوم أو نهار أو مدة يحددها السياق",
+    "pronunciation": "هيميرا",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G2264": {
+    "language": "greek",
+    "arabic": [
+      "هيرودس"
+    ],
+    "meaning": "هيرودس، اسم ملوك يهود",
+    "pronunciation": "هيروديس",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G2414": {
+    "language": "greek",
+    "arabic": [
+      "أورشليم"
+    ],
+    "meaning": "أورشليم، عاصمة فلسطين القديمة",
+    "pronunciation": "هيروسولِيما",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G2449": {
+    "language": "greek",
+    "arabic": [
+      "اليهودية"
+    ],
+    "meaning": "اليهودية، أرض يهوذا",
+    "pronunciation": "يودايا",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G3097": {
+    "language": "greek",
+    "arabic": [
+      "مجوسي",
+      "مجوس"
+    ],
+    "meaning": "مجوسي أو عالم من المشرق، وقد يدل على ساحر بحسب السياق",
+    "pronunciation": "ماجوس",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G3854": {
+    "language": "greek",
+    "arabic": [
+      "يأتي",
+      "يحضر",
+      "يصل"
+    ],
+    "meaning": "يأتي أو يحضر أو يصل",
+    "pronunciation": "باراجينوماي",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G2064": {
+    "language": "greek",
+    "arabic": [
+      "يأتي",
+      "يذهب"
+    ],
+    "meaning": "يأتي أو يذهب بحسب السياق",
+    "pronunciation": "إرخوماي",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G2453": {
+    "language": "greek",
+    "arabic": [
+      "يهودي"
+    ],
+    "meaning": "يهودي أو منتمي إلى يهوذا",
+    "pronunciation": "يودايوس",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G4226": {
+    "language": "greek",
+    "arabic": [
+      "أين"
+    ],
+    "meaning": "أين أو في أي موضع",
+    "pronunciation": "بو",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G4352": {
+    "language": "greek",
+    "arabic": [
+      "يسجد",
+      "يعبد"
+    ],
+    "meaning": "يسجد تكريمًا أو يعبد",
+    "pronunciation": "بروسكينيو",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G3677": {
+    "language": "greek",
+    "arabic": [
+      "حلم"
+    ],
+    "meaning": "حلم أو رؤيا أثناء النوم",
+    "pronunciation": "أونار",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G3813": {
+    "language": "greek",
+    "arabic": [
+      "طفل",
+      "صبي"
+    ],
+    "meaning": "طفل أو رضيع أو صبي صغير",
+    "pronunciation": "بايديون",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G3880": {
+    "language": "greek",
+    "arabic": [
+      "يأخذ",
+      "يقبل",
+      "يتسلم"
+    ],
+    "meaning": "يأخذ إلى جانبه أو يقبل أو يتسلم",
+    "pronunciation": "بارالامبانو",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G4771": {
+    "language": "greek",
+    "arabic": [
+      "أنت"
+    ],
+    "meaning": "ضمير المخاطب المفرد أنت",
+    "pronunciation": "سو",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G5316": {
+    "language": "greek",
+    "arabic": [
+      "يظهر",
+      "يضيء",
+      "يشرق"
+    ],
+    "meaning": "يظهر أو يضيء أو يشرق",
+    "pronunciation": "فاينو",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G2193": {
+    "language": "greek",
+    "arabic": [
+      "حتى",
+      "إلى أن"
+    ],
+    "meaning": "حتى أو إلى أن، للدلالة على الحد الزمني أو الغاية",
+    "pronunciation": "هيوس",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G302": {
+    "language": "greek",
+    "arabic": [
+      "إن",
+      "أداة شرط"
+    ],
+    "meaning": "أداة تُستخدم مع صيغ الفعل للدلالة على احتمال أو شرط",
+    "pronunciation": "أن",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G2036": {
+    "language": "greek",
+    "arabic": [
+      "قال",
+      "يقول"
+    ],
+    "meaning": "قال أو يقول، صيغة فعل كلام",
+    "pronunciation": "إيبو",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G4671": {
+    "language": "greek",
+    "arabic": [
+      "لك",
+      "إليك"
+    ],
+    "meaning": "ضمير المخاطب المفرد في حالة المفعول غير المباشر، لك أو إليك",
+    "pronunciation": "سوي",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G3195": {
+    "language": "greek",
+    "arabic": [
+      "مزمع",
+      "على وشك"
+    ],
+    "meaning": "مزمع أو على وشك أن يفعل شيئًا",
+    "pronunciation": "ميلّو",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G2212": {
+    "language": "greek",
+    "arabic": [
+      "يطلب",
+      "يبحث عن"
+    ],
+    "meaning": "يطلب أو يبحث عن أو يسعى إلى",
+    "pronunciation": "زيتيو",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G622": {
+    "language": "greek",
+    "arabic": [
+      "يهلك",
+      "يبيد",
+      "يهلك"
+    ],
+    "meaning": "يهلك أو يفني أو يضيع",
+    "pronunciation": "أبولّومي",
     "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
   }
 }
