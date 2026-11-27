@@ -77,7 +77,7 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 .reader-font-ruqaa,.reader-font-ruqaa .verse-text,.reader-font-ruqaa .reader-verse-text,.reader-font-ruqaa .reader-paragraph{font-family:"Aref Ruqaa","Amiri",serif;font-weight:400}
 .reader-font-thuluth,.reader-font-thuluth .verse-text,.reader-font-thuluth .reader-verse-text,.reader-font-thuluth .reader-paragraph{font-family:"Katibeh","Amiri",serif;font-weight:400}
 .reader-font-ruqaa .reader-verse-text{font-size:1.04em}.reader-font-thuluth .reader-verse-text{font-size:1.08em;letter-spacing:.01em}
- .liturgical-reading-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.reading-back-button{margin:0;padding:7px 10px;font-size:11px;white-space:nowrap}.reading-preamble{margin:14px 4px 8px!important;padding:0!important;background:transparent!important;border:0!important;border-radius:0!important;font-size:14px!important;line-height:2.1!important;color:var(--muted)!important;text-align:center}.reading-preamble div{font-size:inherit;line-height:inherit;color:inherit;margin:0}.reading-preamble div+div{margin-top:3px}</style>
+ .liturgical-reading-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.reading-back-button{margin:0;padding:7px 10px;font-size:11px;white-space:nowrap}.reading-preamble{margin:14px 4px 8px!important;padding:0!important;background:transparent!important;border:0!important;border-radius:0!important;font-size:14px!important;line-height:2.1!important;color:var(--muted)!important;text-align:center}.reading-preamble div{font-size:inherit;line-height:inherit;color:inherit;margin:0}.reading-preamble div+div{margin-top:3px}.reader-screen{max-width:620px;margin:0 auto;padding:8px 10px 70px}.reader-screen-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 16px}.reader-screen-button{background:#fffdf8;border:1px solid #d8d0c2;border-radius:16px;padding:14px 12px;text-align:right;color:var(--ink);box-shadow:0 4px 12px #263b3508}.reader-screen-button strong{display:block;font-size:15px;color:var(--accent)}.reader-screen-button span{display:block;font-size:12px;color:var(--muted);margin-top:4px}.reader-screen-status{text-align:center;color:var(--muted);font-size:12px;min-height:18px;margin-bottom:8px}.reader-page{background:#fffdf8;min-height:70vh;padding:28px 22px 50px;border:1px solid #e2dacc;box-shadow:0 2px 14px #263b3508;font-family:"Amiri","Noto Naskh Arabic",serif}.reader-page .reader-book-title{text-align:center;font-size:29px;line-height:1.45;font-weight:700;color:#283a32;margin:0}.reader-page .reader-chapter-heading{text-align:center;font-size:19px;line-height:1.5;font-weight:700;color:#68766f;margin:7px 0 30px}.reader-page .reader-chapter-title{font-size:20px}.reader-page .reader-paragraph-title{font-size:17px}.reader-page .reader-paragraph{font-size:20px;line-height:2.25;text-align:justify;padding:0 2px 16px;text-indent:1.25em}.reader-page .reader-verse-text{font-size:20px;line-height:2.2}.reader-page .reader-verse-number{font-size:.7em;color:#8a6b35}.reader-page .reader-verse{border:0;padding:8px 0}.reader-page .eyebrow,.reader-page .note{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}.reader-page .reader-paragraph-block{margin-bottom:20px}.reader-page .reader-paragraph-title{text-align:right;color:#52665f;margin-top:20px;margin-bottom:6px}.reader-page .reader-paragraph-title:first-child{margin-top:0}@media(max-width:420px){.reader-screen{padding-inline:6px}.reader-page{padding:24px 16px 45px}.reader-page .reader-book-title{font-size:27px}.reader-page .reader-paragraph,.reader-page .reader-verse-text{font-size:19px}}</style>
 </head>
 <body>
 <div class="app">
@@ -141,40 +141,14 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 </section>
 
 <section id="read" class="view">
-  <div class="card">
-    <div class="eyebrow">الكتاب المقدس</div>
-    <h2>اختر موضع القراءة</h2>
-    <p class="note">حدد الترجمة ثم العهد ثم القسم ثم السفر ثم الإصحاح. يمكنك اختيار الآية في الخطوة الأخيرة أو فتح الإصحاح كاملًا.</p>
-    <div id="readerPath" class="reader-path"></div>
-    <div class="reader-actions">
-      <button id="readerOpenButton" class="primary" type="button">فتح القراءة</button>      <button id="readerResetButton" class="secondary" type="button">بدء اختيار جديد</button>
+  <div class="reader-screen">
+    <div class="reader-screen-actions">
+      <button id="readerChooseButton" class="reader-screen-button" type="button"><strong>الكتاب المقدس</strong><span>اختر موضع القراءة</span></button>
+      <button id="readerOptionsButton" class="reader-screen-button" type="button"><strong>خيارات القراءة</strong><span>شكل النص</span></button>
     </div>
-    <div id="readerStatus" class="note" style="margin-top:10px"></div>
-  </div>
-  <div class="card">
-    <div class="eyebrow">خيارات القراءة</div>
-    <h2>شكل النص</h2>
-    <div class="reader-actions">
-      <button id="readerModeVerses" class="secondary filter-active" type="button">آيات</button>
-      <button id="readerModeParagraphs" class="secondary" type="button">فقرات</button>
-    </div>
-    <div class="reader-actions">
-      <button id="readerFontNaskh" class="secondary filter-active" type="button">نسخ</button>
-      <button id="readerFontRuqaa" class="secondary" type="button">رقعة</button>
-    </div>
-    <button id="readerFontThuluth" class="secondary" type="button" style="width:100%;margin-top:8px">ثلث</button>
-    <p class="note" style="margin-top:10px">الشكل المختار يطبق على قارئ الكتاب وقراءات اليوم.</p>
-  </div>
-  <div class="card">
-    <div class="eyebrow">بحث</div>
-    <h2>ابحث في فهرس التطبيق</h2>
-    <div class="search"><input id="searchInput" placeholder="ابحث عن سفر أو إصحاح أو كلمة"><button id="searchButton" class="secondary" type="button">بحث</button></div>
-    <div id="searchResults" class="result"></div>
-  </div>
-  <div class="card">
-    <div class="eyebrow">النص</div>
-    <div id="chapterStatus" class="note"></div>
-    <div id="chapterContent" style="margin-top:12px"></div>
+    <div id="readerStatus" class="reader-screen-status"></div>
+    <div id="chapterContent" class="reader-page"></div>
+    <div id="chapterStatus" class="hidden"></div>
   </div>
 </section>
 
@@ -251,6 +225,7 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 </section>
 
 <div id="readerPickerModal" class="reader-modal hidden" aria-hidden="true"><div class="reader-sheet"><div class="reader-sheet-head"><h2 id="readerPickerTitle">اختيار</h2><button id="readerPickerClose" class="reader-close" type="button" aria-label="إغلاق">×</button></div><div id="readerPickerHint" class="note" style="margin-top:5px"></div><div id="readerPickerSearchWrap" class="reader-search hidden"><input id="readerPickerSearch" type="text" placeholder="ابحث في الاختيارات"></div><div id="readerPickerOptions" class="reader-options"></div></div></div>
+<div id="readerOptionsModal" class="reader-modal hidden" aria-hidden="true"><div class="reader-sheet"><div class="reader-sheet-head"><h2>خيارات القراءة</h2><button id="readerOptionsClose" class="reader-close" type="button" aria-label="إغلاق">×</button></div><p class="note" style="margin-top:5px">اختر طريقة عرض النص. الإعداد يحفظ على جهازك.</p><h3>شكل القراءة</h3><div class="reader-actions"><button id="readerModeVerses" class="secondary filter-active" type="button">آيات</button><button id="readerModeParagraphs" class="secondary" type="button">فقرات</button></div><h3 style="margin-top:18px">الخط</h3><div class="reader-actions"><button id="readerFontNaskh" class="secondary filter-active" type="button">نسخ</button><button id="readerFontRuqaa" class="secondary" type="button">رقعة</button></div><button id="readerFontThuluth" class="secondary" type="button" style="width:100%;margin-top:8px">ثلث</button></div></div>
 <div id="readingTextModal" class="reader-modal hidden" aria-hidden="true"><div class="reader-sheet"><div class="reader-sheet-head"><h2 id="readingTextTitle">القراءة</h2><button id="readingTextClose" class="reader-close" type="button" aria-label="إغلاق">×</button></div><div id="readingTextMeta" class="reading-meta"></div><div id="readingTextContent" class="reading-text"></div></div></div>
 <div id="verseActionModal" class="reader-modal hidden" aria-hidden="true"><div class="reader-sheet verse-action-sheet"><div class="reader-sheet-head"><h2 id="verseActionTitle">الآية</h2><button id="verseActionClose" class="reader-close" type="button" aria-label="إغلاق">×</button></div><div id="verseActionText" class="verse-action-text"></div><div id="verseActionMeta" class="reading-meta"></div><div id="verseActionButtons" class="reader-actions"></div><div id="verseActionPalette" class="reader-highlight-palette verse-action-palette hidden"><button class="reader-highlight-color yellow" title="أصفر" data-modal-highlight="yellow"></button><button class="reader-highlight-color green" title="أخضر" data-modal-highlight="green"></button><button class="reader-highlight-color blue" title="أزرق" data-modal-highlight="blue"></button><button class="reader-highlight-color burgundy" title="نبيتي" data-modal-highlight="burgundy"></button></div><button id="verseActionCancelHighlight" class="secondary hidden" type="button" style="width:100%;margin-top:8px">إلغاء التلوين</button><button id="verseActionDone" class="primary" type="button">موافق</button></div></div>
 <nav class="nav"><div class="nav-inner">
@@ -408,7 +383,7 @@ function readingReferenceParts(reference){
 }
 function formatReadingReference(reference){
  const parts=readingReferenceParts(reference);
- if(!parts.length)return normalizeReadingDigits(String(reference||"")).replace(/;/g,"؛");
+ if(!parts.length)return normalizeReadingDigits(String(reference||"")).replace(/;/g,"،");
  const groups=[];
  parts.forEach(p=>{
   const last=groups[groups.length-1];
@@ -421,10 +396,9 @@ function formatReadingReference(reference){
   const renderPart=p=>p.start==null
    ?String(p.chapter)
    :(p.endChapter?String(p.start)+"-"+String(p.endChapter)+":"+String(p.endVerse):(String(p.start)+(p.end!=null?"-"+String(p.end):"")));
-  const allSingles=items.length>1&&items.every(p=>p.start!=null&&p.end==null&&!p.endChapter);
-  const body=allSingles?items.map(renderPart).join("، "):items.map(renderPart).join("؛ ");
+  const body=items.map(renderPart).join("، ");
   return group.book+" "+group.chapter+(items[0].start!=null?": "+body:"");
- }).join("؛ ");
+ }).join("، ");
 }
 function readingBookForParser(book){
  const value=String(book||"").trim();
@@ -570,9 +544,10 @@ async function renderCopticReadingText(readings){
    }
    const firstPart=parts[0];
    const intro=copticReadingIntro(item.key,firstPart);
-   const gospelOpening=item.key.endsWith("Gospel")?"<div class='reading-preamble'>"+escapeHtml(copticReadingIntro(item.key,firstPart))+"</div>":"";
-   const firstRubric=item.key.endsWith("Gospel")?gospelOpening:"<div class='reading-rubric'>"+escapeHtml(intro)+"</div>";
-   sections.push("<article class='liturgical-reading' id='lit-"+escapeHtml(item.key)+"'><div class='liturgical-reading-head'><h3>"+escapeHtml(title)+"</h3><button class='secondary reading-back-button' type='button' data-reading-back='copticReadingRows'>العودة إلى كارت القراءات</button></div><div class='reading-ref-line'>"+escapeHtml(item.text)+"</div>"+firstRubric+(verseHtml||"<p class='note'>لا يوجد نص متاح لهذا الشاهد.</p>")+(item.key.endsWith("Gospel")?"<div class='reading-rubric'>"+escapeHtml(copticGospelTextIntro())+"</div>":"")+"<div class='reading-ending'>"+escapeHtml(copticReadingEnding(item.key))+"</div></article>");
+   const isGospel=item.key.endsWith("Gospel");
+   const beforeTitle=isGospel?"<div class='reading-preamble reading-preamble-top'>"+escapeHtml(copticReadingIntro(item.key,firstPart))+"</div>":"";
+   const middleIntro=isGospel?"<div class='reading-rubric reading-gospel-opening'>"+escapeHtml(copticGospelTextIntro())+"</div>":"<div class='reading-rubric'>"+escapeHtml(intro)+"</div>";
+   sections.push("<article class='liturgical-reading' id='lit-"+escapeHtml(item.key)+"'>"+beforeTitle+"<div class='liturgical-reading-head'><h3>"+escapeHtml(title)+"</h3><button class='secondary reading-back-button' type='button' data-reading-back='copticReadingRows'>العودة إلى كارت القراءات</button></div><div class='reading-ref-line'>"+escapeHtml(item.text)+"</div>"+middleIntro+(verseHtml||"<p class='note'>لا يوجد نص متاح لهذا الشاهد.</p>")+"<div class='reading-ending'>"+escapeHtml(copticReadingEnding(item.key))+"</div></article>");
   }
  }
  host.innerHTML=sections.join("");
@@ -837,6 +812,21 @@ function bindReaderVerseActions(){
   v.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();e.stopPropagation();open()}});
  });
 }
+function readerChapterHeading(chapter){
+ const n=Number(chapter),names={1:"الأول",2:"الثاني",3:"الثالث",4:"الرابع",5:"الخامس",6:"السادس",7:"السابع",8:"الثامن",9:"التاسع",10:"العاشر",11:"الحادي عشر",12:"الثاني عشر",13:"الثالث عشر",14:"الرابع عشر",15:"الخامس عشر",16:"السادس عشر",17:"السابع عشر",18:"الثامن عشر",19:"التاسع عشر",20:"العشرون"};
+ return "الأصحاح "+(names[n]||String(n));
+}
+function readerBookHeading(book,code){
+ const gospels={MAT:"متى",MRK:"مرقس",LUK:"لوقا",JHN:"يوحنا"};
+ if(gospels[code])return "إنجيل "+gospels[code];
+ if(code==="ACT")return "سفر أعمال الرسل";
+ if(code==="REV")return "سفر رؤيا يوحنا اللاهوتي";
+ const paul={ROM:"أهل رومية","1CO":"أهل كورنثوس الأولى","2CO":"أهل كورنثوس الثانية",GAL:"أهل غلاطية",EPH:"أهل أفسس",PHP:"أهل فيلبي",COL:"أهل كولوسي","1TH":"أهل تسالونيكي الأولى","2TH":"أهل تسالونيكي الثانية","1TI":"تيموثاوس الأولى","2TI":"تيموثاوس الثانية",TIT:"تيطس",PHM:"فليمون",HEB:"العبرانيين"};
+ if(paul[code])return "رسالة بولس الرسول إلى "+paul[code];
+ const other={JAS:"رسالة يعقوب الرسول","1PE":"رسالة بطرس الرسول الأولى","2PE":"رسالة بطرس الرسول الثانية","1JN":"رسالة يوحنا الرسول الأولى","2JN":"رسالة يوحنا الرسول الثانية","3JN":"رسالة يوحنا الرسول الثالثة",JUD:"رسالة يهوذا الرسول"};
+ if(other[code])return other[code];
+ return code==="PSA"||book==="مزامير"||book==="مزمور"?"سفر المزامير":"سفر "+book;
+}
 function renderCurrentReader(){const content=document.getElementById("chapterContent");if(!content||!currentReaderVerses.length)return;content.className="reader-font-"+readerSelection.font;content.innerHTML=renderVerseMarkup(currentReaderVerses,currentReaderLanguage,readerSelection.mode);bindReaderVerseActions()}
 let readerResumeScrollY=0;let activeVerseActionKey=null;
 function openVerseActionModal(key,text){const modal=document.getElementById("verseActionModal"),mark=getVerseMark(key);activeVerseActionKey=key;readerResumeScrollY=window.scrollY||document.documentElement.scrollTop||0;document.getElementById("verseActionTitle").textContent="الآية "+String(key).split("|").pop();document.getElementById("verseActionText").textContent=text;document.getElementById("verseActionMeta").textContent="العلامة المرجعية والتلوين يحفظان على هذا الجهاز.";document.getElementById("verseActionButtons").innerHTML="<button type='button' class='secondary "+(mark.bookmark?"reader-bookmark-on":"")+"' id='verseModalBookmark'>"+(mark.bookmark?"★ علامة محفوظة":"☆ إضافة إشارة")+"</button><button type='button' class='secondary' id='verseModalHighlight'>"+(mark.highlight?"تغيير التحديد":"تلوين النص")+"</button>";document.getElementById("verseActionPalette").classList.toggle("hidden",!mark.highlight&&false);document.getElementById("verseActionPalette").style.display=mark.highlight?"flex":"none";document.getElementById("verseActionCancelHighlight").classList.toggle("hidden",!mark.highlight);document.getElementById("verseActionModal").classList.remove("hidden");document.getElementById("verseActionModal").setAttribute("aria-hidden","false");document.getElementById("verseActionText").className="verse-action-text reader-font-"+readerSelection.font;document.getElementById("verseActionText").innerHTML=escapeHtml(text).replace(/¶/g,"<br>");document.getElementById("verseActionText").classList.toggle("reader-highlight-"+mark.highlight,!!mark.highlight);document.getElementById("verseModalBookmark").onclick=()=>{toggleReaderBookmark(key);openVerseActionModal(key,text)};document.getElementById("verseModalHighlight").onclick=()=>{const p=document.getElementById("verseActionPalette");p.style.display=p.style.display==="none"?"flex":"none"};document.getElementById("verseActionCancelHighlight").onclick=()=>{setReaderHighlight(key,null);openVerseActionModal(key,text)}}
@@ -920,7 +910,9 @@ async function loadSvdChapter(){
    if(edition==="HE-WLC-2017")attribution="<p class='note'>Westminster Leningrad Codex · Public Domain · <a href='https://ebible.org/find/details.php?id=hboWLC' target='_blank' rel='noopener'>المصدر والترخيص</a></p>";
    if(edition==="GRC-LXX-BRENTON-1851")attribution="<p class='note'>Brenton Greek Septuagint 1851 · Public Domain · <a href='https://ebible.org/find/details.php?id=grcbrent' target='_blank' rel='noopener'>المصدر والترخيص</a></p>";
     if(edition==="GRC-KOINE-RP-2018")attribution="<p class='note'>Robinson-Pierpont 2018 · Byzantine / Majority Text · Public Domain · <a href='https://ebible.org/bible/details.php?id=grcmt' target='_blank' rel='noopener'>المصدر والترخيص</a></p>";
-   content.innerHTML="<div class='verse-card'><div class='eyebrow'>"+escapeHtml(editionName)+" · "+escapeHtml(p.book)+" "+p.chapter+"</div>"+renderVerseMarkup(verses,edition==="HE-WLC-2017"?"he":(edition==="GRC-LXX-BRENTON-1851"||edition==="GRC-KOINE-RP-2018")?"grc":"ar",readerSelection.mode)+attribution+"</div>";
+   const bookHeading=readerBookHeading(p.book,p.bookCode);
+   const chapterHeading=readerChapterHeading(p.chapter);
+   content.innerHTML="<div class='reader-book-title'>"+escapeHtml(bookHeading)+"</div><div class='reader-chapter-heading'>"+escapeHtml(chapterHeading)+"</div>"+renderVerseMarkup(verses,edition==="HE-WLC-2017"?"he":(edition==="GRC-LXX-BRENTON-1851"||edition==="GRC-KOINE-RP-2018")?"grc":"ar",readerSelection.mode)+attribution;
    status.textContent=edition==="HE-WLC-2017"
     ?"تم تحميل النص العبري من مخطوطة لينينغراد داخل التطبيق. النص ضمن الملكية العامة."
     :edition==="AR-KEH-2012"
@@ -958,8 +950,9 @@ const demoIndex=[
 ];
 function searchBible(){const q=document.getElementById("searchInput").value.trim();const el=document.getElementById("searchResults");if(!q){el.innerHTML="<p class='note'>اكتب كلمة أو مرجعًا للبحث.</p>";return}const normalize=s=>String(s).toLowerCase().replace(/[ًٌٍَُِّْـٰ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/[\u200e\u200f\u202a-\u202e]/g,'').trim();const nq=normalize(q);const hits=demoIndex.filter(x=>normalize(x.ref).includes(nq)||x.words.some(w=>normalize(w).includes(nq)||nq.includes(normalize(w))));el.innerHTML=hits.length?hits.map(x=>"<div class='result'><strong>"+x.ref+"</strong><p class='note'>كلمة مرتبطة بهذا المرجع في فهرس رحلة التجريبي. هذا ليس بحثًا في نص الآيات.</p><div>"+x.words.map(w=>"<span class='pill'>"+escapeHtml(w)+"</span>").join("")+"</div></div>").join(""):"<p class='note'>لا توجد نتيجة لهذه الكلمة في الفهرس التجريبي الحالي.</p>"}
 document.getElementById("openReadingsButton").addEventListener("click",()=>{showView("copticReadings",document.querySelector('[data-view="copticReadings"]'));loadCopticReadings()});
-document.getElementById("readerOpenButton").addEventListener("click",()=>openSelectedReader());
-document.getElementById("readerResetButton").addEventListener("click",()=>{readerSelection=Object.assign({},readerSelectionDefaults);normalizeReaderState()});
+document.getElementById("readerChooseButton").addEventListener("click",()=>openReaderPicker("book"));
+document.getElementById("readerOptionsButton").addEventListener("click",()=>{document.getElementById("readerOptionsModal").classList.remove("hidden");document.getElementById("readerOptionsModal").setAttribute("aria-hidden","false")});
+document.getElementById("readerOptionsClose").addEventListener("click",()=>{document.getElementById("readerOptionsModal").classList.add("hidden");document.getElementById("readerOptionsModal").setAttribute("aria-hidden","true")});
 document.getElementById("readerModeVerses").addEventListener("click",()=>{readerSelection.mode="verses";saveReaderSelection();renderReaderPath();currentReaderSectionHeadings=[];renderCurrentReader()});
 document.getElementById("readerModeParagraphs").addEventListener("click",async()=>{readerSelection.mode="paragraphs";saveReaderSelection();renderReaderPath();try{if(readerSelection.book&&readerSelection.chapter)await refreshReaderSectionHeadings(readerSelection.book,Number(readerSelection.chapter))}catch(e){currentReaderSectionHeadings=[]}renderCurrentReader()});
 document.getElementById("readerFontNaskh").addEventListener("click",()=>{readerSelection.font="naskh";saveReaderSelection();renderReaderPath();renderCurrentReader()});
@@ -969,6 +962,7 @@ document.getElementById("readerPickerClose").addEventListener("click",closeReade
 document.getElementById("readingTextClose").addEventListener("click",()=>{const m=document.getElementById("readingTextModal");m.classList.add("hidden");m.setAttribute("aria-hidden","true")});
 bindVerseActionModal();
 document.getElementById("readerPickerModal").addEventListener("click",e=>{if(e.target.id==="readerPickerModal")closeReaderPicker()});
+document.getElementById("readerOptionsModal").addEventListener("click",e=>{if(e.target.id==="readerOptionsModal"){e.target.classList.add("hidden");e.target.setAttribute("aria-hidden","true")}});
 document.getElementById("readingTextModal").addEventListener("click",e=>{if(e.target.id==="readingTextModal"){e.target.classList.add("hidden");e.target.setAttribute("aria-hidden","true")}});
 document.getElementById("startJourneyButton").addEventListener("click",startJourney);
 renderBookmarks();
