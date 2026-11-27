@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "version": 5,
+    "version": 6,
     "description": "مصادر دراسة النص الأصلي في تطبيق رِحلة",
     "purpose": "تسجيل مصادر النص اليوناني والمعاجم والمورفولوجيا وترخيص كل مصدر قبل إدخال بيانات محلية موسعة"
   },
@@ -52,8 +52,9 @@
     ],
     "note": "Greek glosses and definitions are supplied in their source language. Arabic meanings are shown only when an Arabic entry exists in Rehla's curated local dictionary.",
     "arabicCoverage": {
-      "entries": 29,
-      "policy": "Arabic meanings are provided only for reviewed entries in strongs-ar.json; other Greek entries retain source-language gloss and definition without pretending they are Arabic translations."
+      "entries": 37,
+      "policy": "قاموس رِحلة المحلي يضم مداخل عربية منتقاة ومراجعة. تُعرض المعاني العربية فقط للمداخل التي لها سجل عربي محلي، ولا تُحوّل التعريفات الإنجليزية آليًا إلى معانٍ عربية.",
+      "note": "تمت إضافة وتوثيق مداخل تكوين 1:1 في اليونانية والعبرية، مع النطق العربي المنقول يدويًا للمداخل التي تمت مراجعتها. التغطية ليست ترجمة آلية شاملة لجميع مداخل Strong's."
     }
   },
   "localWordStudy": {
