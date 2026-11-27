@@ -60,6 +60,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
           git add bible/data/word-study
           git diff --cached --quiet && exit 0
           git commit -m "Bible: publish offline Hebrew and Greek word study data"
