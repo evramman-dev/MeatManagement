@@ -1149,50 +1149,28 @@ function arabicPronunciationFromTransliteration(value,strongs){
  for(const [from,to] of pairs)s=s.split(from).join(to);
  return s.replace(/[َُِ]+/g,m=>m[0]).trim();
 }
+let READER_LOCAL_STRONGS_AR=null;
 async function loadArabicLexiconGloss(strongs){
  const id=normalizeStrongNumber(strongs);if(!id)return null;
  const key="arabic:"+id;
  if(READER_WORD_STUDY_CACHE[key])return READER_WORD_STUDY_CACHE[key];
- const urls=[
-  "https://bible.4disciples.com/ar/Strongs/H"+id,
-  "https://lexicon-chirho.bible.systems/lemma-chirho/"+id+"?lang=ara"
- ];
- for(const url of urls){
-  try{
-   const cache=await caches.open("rehla-study-words-v1");
-   let response=await cache.match(url);
-   if(!response){
-    response=await fetch(url,{mode:"cors"});
-    if(!response.ok)continue;
-    try{await cache.put(url,response.clone())}catch(e){}
-   }
-   const html=await response.text();
-   const doc=new DOMParser().parseFromString(html,"text/html");
-   const text=doc.body?.innerText||doc.documentElement?.innerText||"";
-   const values=[];
-   const arabicBlocks=[...text.matchAll(/المعاني([\\s\\S]*?)(?:شواهد مرجعية|Cross References|المصادر|Sources)/i)];
-   for(const block of arabicBlocks){
-    const lines=block[1].split(/\\n+/).map(x=>x.trim()).filter(Boolean);
-    for(const line of lines){
-     const clean=line.replace(/^\\d+\\s*[.)-]?\\s*/,"").replace(/^[-•]+\\s*/,"").trim();
-     if(/[\\u0600-\\u06ff]/.test(clean)&&clean.length>1)values.push(clean);
-    }
-   }
-   const arText=[...text.matchAll(/[\\u0600-\\u06ff][\\u0600-\\u06ff\\s،؛,:.()\\-]{1,100}/g)].map(m=>m[0].replace(/\\s+/g," ").trim());
-   for(const x of arText){
-    if(values.length>=6)break;
-    if(x.length>1&&!values.includes(x)&&!/^الكتاب المقدس|^سترونغ|^العبرية|^النطق|^الصرف|^التعريف|^مقابلات|^المصادر/.test(x))values.push(x);
-   }
-   const unique=[...new Set(values)].filter(x=>x.length>1).slice(0,6);
-   if(unique.length){
-    const source=url.includes("4disciples.com")?"4Disciples / OpenScriptures Strong's":"Biblical Lexicon";
-    const result={values:unique,url,source};
-    READER_WORD_STUDY_CACHE[key]=result;
-    return result;
-   }
-  }catch(e){}
- }
- return null;
+ try{
+  if(!READER_LOCAL_STRONGS_AR){
+   const response=await fetch("./data/strongs-ar.json",{cache:"force-cache"});
+   if(!response.ok)return null;
+   READER_LOCAL_STRONGS_AR=await response.json();
+  }
+  const entry=READER_LOCAL_STRONGS_AR?.[id];
+  if(!entry)return null;
+  const result={
+   values:Array.isArray(entry.arabic)?entry.arabic.filter(Boolean):[],
+   meaning:String(entry.meaning||"").trim(),
+   source:String(entry.source||"قاموس رِحلة المحلي")
+  };
+  if(!result.values.length&&!result.meaning)return null;
+  READER_WORD_STUDY_CACHE[key]=result;
+  return result;
+ }catch(e){return null}
 }
 const READER_STUDY_API_BASE="https://bible.helloao.org/api/d/open-cross-ref";
 const READER_STUDY_BOOK_NAMES=Object.fromEntries(EBIBLE_BOOK_CODES.map((code,i)=>[code,readerBookNames[code]||""]));
