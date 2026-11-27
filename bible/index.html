@@ -1132,7 +1132,7 @@ async function loadOpenScriptoriumChapterWordStudy(bookCode,chapter,work,verse){
  if(!slug)return [];
  const url=work+"/"+slug+"/"+chapter+(verse?"/"+verse:"")+"?words=true";
  try{
-  const cache=await caches.open("rehla-study-words-v2");
+  const cache=await caches.open("rehla-study-words-v3");
   let response=await cache.match(url);
   if(!response){
    response=await fetch(url,{mode:"cors"});
@@ -1140,17 +1140,26 @@ async function loadOpenScriptoriumChapterWordStudy(bookCode,chapter,work,verse){
    try{await cache.put(url,response.clone())}catch(e){}
   }
   const data=await response.json();
-  const rows=Array.isArray(data?.verses)?data.verses:(Array.isArray(data?.chapter?.verses)?data.chapter.verses:(Array.isArray(data?.data?.verses)?data.data.verses:[]));
+  let rows=Array.isArray(data?.verses)?data.verses:
+   Array.isArray(data?.chapter?.verses)?data.chapter.verses:
+   Array.isArray(data?.data?.verses)?data.data.verses:
+   Array.isArray(data?.data)?data.data:
+   Array.isArray(data?.chapter?.content)?data.chapter.content:
+   (Array.isArray(data?.words)||Array.isArray(data?.tokens)?[data]:[]);
   return rows.map(v=>{
    const idParts=String(v?.id||v?.osis_id||"").split(".");
-   const verse=Number(v?.hierarchy?.[1]||v?.verse||v?.verse_number||v?.number||idParts[idParts.length-1]||0);
-   const words=(Array.isArray(v?.words)?v.words:[]).map(w=>{
+   const hierarchy=Array.isArray(v?.hierarchy)?v.hierarchy:[];
+   const verseNumber=Number(hierarchy.length>1?hierarchy[hierarchy.length-1]:
+    (v?.verse||v?.verse_number||v?.number||idParts[idParts.length-1]||verse||0));
+   const sourceWords=Array.isArray(v?.words)?v.words:(Array.isArray(v?.tokens)?v.tokens:[]);
+   const words=sourceWords.map(w=>{
     const lemma=w?.lemma&&typeof w.lemma==="object"?w.lemma:{};
     const rawLemma=typeof w?.lemma==="string"?w.lemma:"";
     const morph=String(w?.morph_code||w?.morphology||w?.morph||w?.parsing||"");
+    const rawStrongs=String(w?.strongs_number??w?.strongs??w?.strong??"");
     return {
      text:String(w?.surface||w?.text||w?.word||""),
-     strongs:(()=>{const raw=String(w?.strongs_number||w?.strongs||w?.strong||"");const prefix=work===READER_HEBREW_STUDY_API?"H":"G";return /^\d+$/.test(raw)?prefix+raw:raw})(),
+     strongs:(()=>{const prefix=work===READER_HEBREW_STUDY_API?"H":"G";return /^\d+$/.test(rawStrongs)?prefix+rawStrongs:rawStrongs})(),
      gloss:String(lemma?.gloss||w?.gloss||""),
      transliteration:String(lemma?.transliteration||w?.transliteration||""),
      lemma:String(lemma?.lemma||w?.lemma_text||rawLemma||""),
@@ -1159,9 +1168,9 @@ async function loadOpenScriptoriumChapterWordStudy(bookCode,chapter,work,verse){
      partOfSpeech:String(lemma?.part_of_speech||lemma?.pos||w?.part_of_speech||"")
     };
    }).filter(w=>w.text);
-   return {verse,words};
-  }).filter(v=>v.verse&&v.words.length);
- }catch(e){return []}
+   return {verse:verseNumber,words};
+  }).filter(v=>v.words.length&&(verse?Number(v.verse)===Number(verse):Number(v.verse)>0));
+ }catch(e){console.warn("Open Scriptorium word study failed",e);return []}
 }
 async function loadVerseWordStudy(key){
  const parts=String(key).split("|"),translation=parts[0],bookCode=parts[1],chapter=Number(parts[2]),verse=Number(parts[3]);
@@ -1181,7 +1190,7 @@ async function loadVerseWordStudy(key){
   if(originalGreek.length)return originalGreek;
   const url="https://bible.helloao.org/api/d/bsb-interlinear/"+bookCode+"/"+chapter+".json";
   try{
-   const cache=await caches.open("rehla-study-words-v2");
+   const cache=await caches.open("rehla-study-words-v3");
    let response=await cache.match(url);
    if(!response){response=await fetch(url,{mode:"cors"});if(!response.ok)return [];try{await cache.put(url,response.clone())}catch(e){}}
    const data=await response.json();
@@ -1230,7 +1239,7 @@ async function loadLexiconEntry(strongs){
  }
  const url="https://bible.helloao.org/api/d/stepbible-lexicon/lexicon/"+id+".json";
  try{
-  const cache=await caches.open("rehla-study-words-v2");let response=await cache.match(url);
+  const cache=await caches.open("rehla-study-words-v3");let response=await cache.match(url);
   if(!response){response=await fetch(url,{mode:"cors"});if(!response.ok)return null;try{await cache.put(url,response.clone())}catch(e){}}
   const data=await response.json();READER_WORD_STUDY_CACHE["lex:"+id]=data?.entry||null;return data?.entry||null;
  }catch(e){return null}
