@@ -147,8 +147,7 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
     <p class="note">حدد الترجمة ثم العهد ثم القسم ثم السفر ثم الإصحاح. يمكنك اختيار الآية في الخطوة الأخيرة أو فتح الإصحاح كاملًا.</p>
     <div id="readerPath" class="reader-path"></div>
     <div class="reader-actions">
-      <button id="readerOpenButton" class="primary" type="button">فتح القراءة</button>
-      <button id="readerResetButton" class="secondary" type="button">بدء اختيار جديد</button>
+      <button id="readerOpenButton" class="primary" type="button">فتح القراءة</button>      <button id="readerResetButton" class="secondary" type="button">بدء اختيار جديد</button>
     </div>
     <div id="readerStatus" class="note" style="margin-top:10px"></div>
   </div>
@@ -297,8 +296,7 @@ const journeyDays=[
 {title:"لا تحمل كل شيء وحدك",refs:["غلاطية 6","متى 11"],question:"ما الحمل الذي تحتاج أن تطلب المساعدة فيه؟",prayer:"اطلب القوة لقبول المساندة المناسبة.",step:"تحدث مع شخص تثق به عن أمر واحد."},
 {title:"قلب يتعلم الرجاء",refs:["رومية 15","مزمور 27"],question:"ما الذي يساعدك أن تتمسك بالرجاء؟",prayer:"اطلب رجاءً لا يعتمد على ظروف اليوم.",step:"تذكر موقفًا سابقًا وجدت فيه عونًا."},
 {title:"الراحة والأمان",refs:["مزمور 23","يوحنا 10"],question:"ما الذي يجعلك تشعر أنك تحتاج إلى الأمان؟",prayer:"اطلب أن يقودك الله في خطواتك.",step:"امنح نفسك وقتًا للراحة."},
-{title:"التعامل مع الحزن",refs:["مزمور 34","يوحنا 11"],question:"ما الشعور الذي تحتاج أن تعترف به؟",prayer:"تحدث عن حزنك كما هو.",step:"اكتب ما تشعر به في مذكراتك."},
-{title:"الغفران",refs:["لوقا 15","أفسس 4"],question:"ما معنى الغفران في الموقف الذي تفكر فيه؟",prayer:"اطلب قلبًا يتعلم الرحمة والحكمة.",step:"حدد خطوة آمنة وصادقة نحو السلام."},
+{title:"التعامل مع الحزن",refs:["مزمور 34","يوحنا 11"],question:"ما الشعور الذي تحتاج أن تعترف به؟",prayer:"تحدث عن حزنك كما هو.",step:"اكتب ما تشعر به في مذكراتك."},{title:"الغفران",refs:["لوقا 15","أفسس 4"],question:"ما معنى الغفران في الموقف الذي تفكر فيه؟",prayer:"اطلب قلبًا يتعلم الرحمة والحكمة.",step:"حدد خطوة آمنة وصادقة نحو السلام."},
 {title:"بداية جديدة",refs:["مرقس 1","2 كورنثوس 5"],question:"ما البداية الصغيرة التي تستطيع اتخاذها؟",prayer:"اطلب عونًا لتبدأ دون انتظار الكمال.",step:"نفذ خطوة واحدة أجلتها."},
 {title:"الصلاة ببساطة",refs:["متى 6","لوقا 11"],question:"ما الذي تريد أن تقوله لله بكلماتك؟",prayer:"صلِّ بجملة صادقة من قلبك.",step:"خصص وقتًا قصيرًا للصلاة اليوم."},
 {title:"الشكر",refs:["مزمور 103","1 تسالونيكي 5"],question:"ما النعمة التي لم تنتبه إليها؟",prayer:"اشكر الله على أمر محدد.",step:"اكتب ثلاثة أمور تشكر عليها."},
@@ -447,8 +445,7 @@ function readingRowsHtml(readings){
  const refs=getReadingReferences(readings);
  return readingGroups.map(group=>{
   const items=refs.filter(x=>x.group===group.title);
-  if(!items.length)return "";
-  return "<div class='coptic-reference-card'><div class='coptic-reference-group'>"+group.title+"</div>"+
+  if(!items.length)return "";  return "<div class='coptic-reference-card'><div class='coptic-reference-group'>"+group.title+"</div>"+
    items.map(x=>"<button class='coptic-reference-link' type='button' data-reading-target='lit-"+escapeHtml(x.key)+"'><strong>"+escapeHtml(x.label)+":</strong> "+escapeHtml(x.text)+"</button>").join("")+
    "</div>";
  }).join("")||"<p class='note'>لا توجد مراجع متاحة لهذا اليوم.</p>";
@@ -597,8 +594,7 @@ async function loadCopticReadings(){
   document.getElementById("homeReadingsCard").classList.remove("hidden");
   const c=calendar&&calendar.coptic?calendar.coptic:copticDateFallback(targetDate);
   document.getElementById("copticGregorianDate").textContent=dateText;
-  document.getElementById("copticDateText").textContent=(c.month||"")+" "+(c.day||"")+" · السنة القبطية "+(c.year||"");
-  const season=readings&&readings.season?readings.season:"",seasonEl=document.getElementById("copticSeason");
+  document.getElementById("copticDateText").textContent=(c.month||"")+" "+(c.day||"")+" · السنة القبطية "+(c.year||"");  const season=readings&&readings.season?readings.season:"",seasonEl=document.getElementById("copticSeason");
   if(season){seasonEl.textContent="الموسم: "+formatCopticSeason(season);seasonEl.classList.remove("hidden")}else seasonEl.classList.add("hidden");
   document.getElementById("copticReadingRows").innerHTML=readingRowsHtml(readings);
   const readingsView=document.getElementById("copticReadings");
@@ -748,7 +744,6 @@ function openKehSource(reference){
  if(url)window.open(url,"_blank","noopener");
  return url;
 }
-
 const SVD_API_BASE="https://api.getbible.net/v3/arabicsv";
 const SVD_BOOKS={"تكوين":1,"خروج":2,"لاويين":3,"عدد":4,"تثنية":5,"يشوع":6,"قضاة":7,"راعوث":8,"صموئيل الأول":9,"صموئيل الثاني":10,"ملوك الأول":11,"ملوك الثاني":12,"أخبار الأيام الأول":13,"أخبار الأيام الثاني":14,"عزرا":15,"نحميا":16,"أستير":17,"أيوب":18,"مزامير":19,"مزمور":19,"أمثال":20,"الأمثال":20,"جامعة":21,"نشيد الأنشاد":22,"إشعياء":23,"إرميا":24,"مراثي إرميا":25,"مراثي":25,"حزقيال":26,"دانيال":27,"هوشع":28,"يوئيل":29,"عاموس":30,"عوبديا":31,"يونان":32,"ميخا":33,"ناحوم":34,"حبقوق":35,"صفنيا":36,"حجي":37,"زكريا":38,"ملاخي":39,"متى":40,"مرقس":41,"لوقا":42,"يوحنا":43,"أعمال":44,"أعمال الرسل":44,"رومية":45,"كورنثوس الأولى":46,"كورنثوس الثانية":47,"غلاطية":48,"أفسس":49,"فيلبي":50,"كولوسي":51,"تسالونيكي الأولى":52,"تسالونيكي الثانية":53,"تيموثاوس الأولى":54,"تيموثاوس الثانية":55,"تيطس":56,"فليمون":57,"عبرانيين":58,"يعقوب":59,"بطرس الأولى":60,"بطرس الثانية":61,"يوحنا الأولى":62,"يوحنا الثانية":63,"يوحنا الثالثة":64,"يهوذا":65,"رؤيا":66};const DEUTEROCANON_BOOKS={"طوبيا":"TOB","يهوديت":"JDT","الحكمة":"WIS","حكمة سليمان":"WIS","يشوع بن سيراخ":"SIR","سيراخ":"SIR","باروخ":"BAR","رسالة إرميا":"LJE","المكابيين الأول":"1MA","المكابيين الثاني":"2MA","المكابيين الثالث":"3MA","المكابيين الرابع":"4MA","عزرا الأول":"1ES","صلاة منسى":"MAN","سوسنة":"SUS","بل والتنين":"BEL"};
 function parseChapterReference(value){
@@ -868,7 +863,7 @@ const VERIFIED_SVD_SECTION_HEADINGS={
    {verse:3,title:"اليوم الأول: النور"},
    {verse:6,title:"اليوم الثاني: الجلد"},
    {verse:9,title:"اليوم الثالث: الأرض الجافة والخضروات"},
-   {verse:14,title:"اليوم الرابع: الأنوار"},
+   {verse:14,title:"اليوم الرابع: القمر والنجوم"},
    {verse:20,title:"اليوم الخامس: الطيور والأسماك"},
    {verse:24,title:"اليوم السادس: الحيوانات والإنسان"}
   ],
@@ -878,30 +873,82 @@ const VERIFIED_SVD_SECTION_HEADINGS={
   ]
  }
 };
+const READER_SECTION_HEADINGS_CACHE_KEY="rehla.readerSectionHeadings.v2";
+const AYAKOLYOUM_BOOK_MAX=66;
+function getReaderSectionHeadingsCache(){
+ try{
+  const value=JSON.parse(localStorage.getItem(READER_SECTION_HEADINGS_CACHE_KEY)||"{}");
+  return value&&typeof value==="object"?value:{};
+ }catch(e){return {}}
+}
+function saveReaderSectionHeadingsCache(cache){localStorage.setItem(READER_SECTION_HEADINGS_CACHE_KEY,JSON.stringify(cache))}
+function canonicalBookNumberForHeadings(bookCode){
+ const n=EBIBLE_BOOK_CODES.indexOf(bookCode)+1;
+ return n>=1&&n<=AYAKOLYOUM_BOOK_MAX?n:null;
+}
+function extractSectionHeadingsFromDocument(doc){
+ const result=[],seen=new Set();
+ const skip=/^(سفر|الكتاب المقدس|العهد القديم|العهد الجديد|الإصحاح|تفسير|المصدر|الإصحاحات|كتب|حجم الخط|التالي|السابق|بحث|القراءات|الأجبية|الطقس|عقيدة|تاريخ|مقدمة)$/;
+ const nodes=Array.from(doc.querySelectorAll("h1,h2,h3,h4,h5,h6"));
+ const findVerseAfter=node=>{
+  let el=node.nextElementSibling;
+  for(let j=0;el&&j<80;j++,el=el.nextElementSibling){
+   const direct=(el.textContent||"").replace(/\s+/g," ").trim();
+   const directMatch=direct.match(/^(\d{1,3})$/);
+   if(directMatch)return Number(directMatch[1]);
+   const candidates=el.querySelectorAll?Array.from(el.querySelectorAll("a,button,span,div,p")):[];
+   for(const child of candidates){
+    const t=(child.textContent||"").replace(/\s+/g," ").trim();
+    const m=t.match(/^(\d{1,3})$/);
+    if(m)return Number(m[1]);
+   }
+  }
+  return null;
+ };
+ nodes.forEach(node=>{
+  const title=(node.textContent||"").replace(/\s+/g," ").trim();
+  if(!title||title.length>120||skip.test(title))return;
+  const verse=findVerseAfter(node);
+  if(verse==null)return;
+  const key=verse+"|"+title;
+  if(seen.has(key))return;
+  seen.add(key);
+  result.push({verse,title});
+ });
+ return normalizeReaderSectionHeadings(result);
+}
+async function fetchAyakolyoumSectionHeadings(bookCode,chapter){
+ const bookNumber=canonicalBookNumberForHeadings(bookCode);
+ if(!bookNumber)return [];
+ const url="https://www.ayakolyoum.com/public/bible/"+bookNumber+"/"+Number(chapter);
+ const res=await fetch(url,{headers:{Accept:"text/html"}});
+ if(!res.ok)throw new Error("ayakolyoum_"+res.status);
+ const doc=new DOMParser().parseFromString(await res.text(),"text/html");
+ return extractSectionHeadingsFromDocument(doc);
+}
+async function fetchStTaklaSectionHeadings(bookCode,chapter){
+ const st=STTAKLA_BOOK_MAP[bookCode];if(!st)return [];
+ const res=await fetch("https://st-takla.org/Bibles/BibleSearch/showChapter.php?book="+st+"&chapter="+chapter,{headers:{Accept:"text/html"}});
+ if(!res.ok)throw new Error("sttakla_"+res.status);
+ const doc=new DOMParser().parseFromString(await res.text(),"text/html");
+ return extractSectionHeadingsFromDocument(doc);
+}
 async function loadReaderSectionHeadings(bookCode,chapter){
  if(readerSelection.translation!=="AR-SVD-1865")return [];
- const verified=VERIFIED_SVD_SECTION_HEADINGS[bookCode]?.[Number(chapter)];
+ const chapterNumber=Number(chapter),cacheKey=bookCode+"|"+chapterNumber,cache=getReaderSectionHeadingsCache();
+ const verified=VERIFIED_SVD_SECTION_HEADINGS[bookCode]?.[chapterNumber];
  if(verified)return verified.map(x=>Object.assign({},x));
- const st=STTAKLA_BOOK_MAP[bookCode];if(!st)return [];
- try{
-  const res=await fetch("https://st-takla.org/Bibles/BibleSearch/showChapter.php?book="+st+"&chapter="+chapter);
-  if(!res.ok)return [];
-  const html=await res.text();
-  const doc=new DOMParser().parseFromString(html,"text/html");
-  const result=[];
-  Array.from(doc.querySelectorAll("h2,h3,h4,h5,h6")).forEach(h=>{
-   const title=(h.textContent||"").replace(/\s+/g," ").trim();
-   if(!title||/Gospel of|إنجيل|رسالة|^سفر\s/.test(title))return;
-   let el=h.nextElementSibling,verse=null;
-   for(let j=0;el&&j<60;j++,el=el.nextElementSibling){
-    const text=(el.textContent||"").replace(/\s+/g," ").trim();
-    const n=text.match(/^(\d{1,3})$/);
-    if(n){verse=Number(n[1]);break}
-   }
-   if(verse!=null)result.push({verse,title});
-  });
-  return normalizeReaderSectionHeadings(result);
- }catch(e){return []}
+ if(Array.isArray(cache[cacheKey]))return cache[cacheKey].map(x=>Object.assign({},x));
+ let result=[];
+ try{result=await fetchAyakolyoumSectionHeadings(bookCode,chapterNumber)}catch(e){}
+ if(!result.length){
+  try{result=await fetchStTaklaSectionHeadings(bookCode,chapterNumber)}catch(e){}
+ }
+ if(result.length){
+  cache[cacheKey]=result;
+  saveReaderSectionHeadingsCache(cache);
+ }
+ return result;
 }
 function normalizeReaderSectionHeadings(headings){
  return Array.isArray(headings)?headings.filter(x=>x&&x.title&&Number.isFinite(Number(x.verse))).sort((a,b)=>Number(a.verse)-Number(b.verse)):[];
