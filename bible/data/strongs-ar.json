@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "version": 5,
+    "version": 6,
     "language": "ar",
     "description": "قاموس محلي لمعاني Strong's العبرية والآرامية واليونانية داخل تطبيق رِحلة",
     "license": "Strong's Exhaustive Concordance definitions are public domain. Numbered senses from OpenScriptures Strong's dictionary are CC BY-SA 3.0. Arabic wording here is an original concise Arabic rendering for the listed senses.",
@@ -296,12 +296,12 @@
     "language": "greek",
     "arabic": [
       "يرى",
-      "يبصر",
+      "ينظر",
       "يعرف"
     ],
-    "meaning": "يرى أو يبصر، وقد يدل على المعرفة بحسب السياق",
-    "pronunciation": "هُوراو",
-    "source": "قاموس رِحلة المحلي"
+    "meaning": "يرى أو ينظر، وقد يدل بحسب السياق على الإدراك والمعرفة",
+    "pronunciation": "هُوراَو",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
   },
   "H1254": {
     "language": "hebrew",
@@ -1303,18 +1303,6 @@
     "pronunciation": "إنتِلّوماي",
     "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
   },
-  "G846": {
-    "language": "greek",
-    "arabic": [
-      "هو",
-      "هي",
-      "هم",
-      "إياه"
-    ],
-    "meaning": "ضمير يعود على شخص أو شيء بحسب الجنس والعدد والحالة",
-    "pronunciation": "أوتوس",
-    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
-  },
   "G3326": {
     "language": "greek",
     "arabic": [
@@ -1591,6 +1579,166 @@
     ],
     "meaning": "يهلك أو يفني أو يضيع",
     "pronunciation": "أبولّومي",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G0846": {
+    "language": "greek",
+    "arabic": [
+      "هو",
+      "هي",
+      "هم",
+      "إياه"
+    ],
+    "meaning": "ضمير يعود على شخص أو شيء بحسب الجنس والعدد والحالة",
+    "pronunciation": "أوتوس",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G3756": {
+    "language": "greek",
+    "arabic": [
+      "لا",
+      "ليس"
+    ],
+    "meaning": "أداة نفي مطلق، لا أو ليس",
+    "pronunciation": "أو",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G3361": {
+    "language": "greek",
+    "arabic": [
+      "لا",
+      "لئلا"
+    ],
+    "meaning": "أداة نفي مقيد، لا أو لئلا بحسب السياق",
+    "pronunciation": "مي",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G3778": {
+    "language": "greek",
+    "arabic": [
+      "هذا",
+      "هذه",
+      "ذلك"
+    ],
+    "meaning": "اسم إشارة لهذا الشخص أو الشيء، ويترجم هذا أو هذه أو ذلك بحسب السياق",
+    "pronunciation": "هوتوس",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G1909": {
+    "language": "greek",
+    "arabic": [
+      "على",
+      "إلى",
+      "عند"
+    ],
+    "meaning": "حرف جر يدل على المكان أو الاتجاه أو العلاقة بحسب الحالة والسياق",
+    "pronunciation": "إيبي",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G444": {
+    "language": "greek",
+    "arabic": [
+      "إنسان",
+      "رجل"
+    ],
+    "meaning": "إنسان أو رجل",
+    "pronunciation": "أنثروبوس",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G5101": {
+    "language": "greek",
+    "arabic": [
+      "من",
+      "ما",
+      "ماذا"
+    ],
+    "meaning": "اسم استفهام أو موصول بمعنى من أو ما أو ماذا بحسب السياق",
+    "pronunciation": "تيس",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G5119": {
+    "language": "greek",
+    "arabic": [
+      "حينئذ",
+      "في ذلك الوقت"
+    ],
+    "meaning": "حينئذ أو في ذلك الوقت",
+    "pronunciation": "توتِه",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G2983": {
+    "language": "greek",
+    "arabic": [
+      "يأخذ",
+      "يقبل",
+      "ينال"
+    ],
+    "meaning": "يأخذ أو يقبل أو ينال بحسب السياق",
+    "pronunciation": "لامبانو",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G1223": {
+    "language": "greek",
+    "arabic": [
+      "بواسطة",
+      "من خلال",
+      "بسبب"
+    ],
+    "meaning": "بواسطة أو من خلال أو بسبب بحسب السياق",
+    "pronunciation": "ديا",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G0932": {
+    "language": "greek",
+    "arabic": [
+      "ملكوت",
+      "حكم ملكي"
+    ],
+    "meaning": "ملكوت أو حكم ملكي",
+    "pronunciation": "باسيليا",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G1325": {
+    "language": "greek",
+    "arabic": [
+      "يعطي",
+      "يمنح"
+    ],
+    "meaning": "يعطي أو يمنح أو يسلّم بحسب السياق",
+    "pronunciation": "ديدومي",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G1565": {
+    "language": "greek",
+    "arabic": [
+      "ذلك",
+      "تلك",
+      "ذاك"
+    ],
+    "meaning": "اسم إشارة بمعنى ذلك أو تلك أو ذاك",
+    "pronunciation": "إيكينوس",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G3767": {
+    "language": "greek",
+    "arabic": [
+      "إذن",
+      "لذلك",
+      "وعليه"
+    ],
+    "meaning": "أداة ربط تدل على النتيجة أو الاستنتاج، إذن أو لذلك",
+    "pronunciation": "أون",
+    "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
+  },
+  "G4198": {
+    "language": "greek",
+    "arabic": [
+      "يسير",
+      "يمضي",
+      "يسافر"
+    ],
+    "meaning": "يسير أو يمضي أو يسافر",
+    "pronunciation": "بوريُوماي",
     "source": "قاموس رِحلة المحلي، مراجعة بمعجم Strong's و4Disciples"
   }
 }
