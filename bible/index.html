@@ -1188,6 +1188,22 @@ async function loadVerseWordStudy(key){
   return rows.filter(v=>Number(v.verse)===verse)[0]?.words||[];
  }catch(e){return []}
 }
+const READER_GREEK_LEXICON_CHUNKS={};
+async function loadLocalGreekStrongEntry(strongs){
+ const id=normalizeStrongNumber(strongs);
+ if(!/^G\\d{4,5}$/i.test(id))return null;
+ const number=Number(id.slice(1));
+ const chunk=number<=1400?1:number<=2801?2:number<=4301?3:number<=6092?4:number<=7498?5:number<=8898?6:number<=20444?7:8;
+ if(!READER_GREEK_LEXICON_CHUNKS[chunk]){
+  READER_GREEK_LEXICON_CHUNKS[chunk]=(async()=>{
+   const response=await fetch("./data/greek-strongs-"+chunk+".json",{cache:"force-cache"});
+   if(!response.ok)throw new Error("Greek lexicon chunk unavailable");
+   return await response.json();
+  })().catch(()=>null);
+ }
+ const data=await READER_GREEK_LEXICON_CHUNKS[chunk];
+ return data?.[id]||null;
+}
 async function loadLexiconEntry(strongs){
  const id=normalizeStrongNumber(strongs);if(!id)return null;
  if(READER_WORD_STUDY_CACHE["lex:"+id])return READER_WORD_STUDY_CACHE["lex:"+id];
@@ -1196,6 +1212,14 @@ async function loadLexiconEntry(strongs){
   const entry={strongs:id,gloss:local.values?.[0]||"",definition:local.meaning||"",transliteration:local.pronunciation||"",source:local.source||"قاموس رِحلة المحلي"};
   READER_WORD_STUDY_CACHE["lex:"+id]=entry;
   return entry;
+ }
+ if(/^G/i.test(id)){
+  const greek=await loadLocalGreekStrongEntry(id);
+  if(greek){
+   const entry={strongs:id,lemma:greek.lemma||"",gloss:greek.gloss||"",definition:greek.definition||"",transliteration:greek.transliteration||"",partOfSpeech:greek.morphology||"",senses:greek.definition?[{definition:greek.definition}]:[],source:"STEPBible TBESG عبر BSB data، CC BY 4.0"};
+   READER_WORD_STUDY_CACHE["lex:"+id]=entry;
+   return entry;
+  }
  }
  const url="https://bible.helloao.org/api/d/stepbible-lexicon/lexicon/"+id+".json";
  try{
