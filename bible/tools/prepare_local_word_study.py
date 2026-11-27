@@ -44,7 +44,7 @@ def write_gzip_jsonl(path, rows):
 def norm_greek(value):
     value = unicodedata.normalize("NFD", str(value or "").lower())
     value = "".join(ch for ch in value if unicodedata.category(ch) != "Mn")
-    return re.sub(r"[^\\w\\u0370-\\u03ff\\u1f00-\\u1fff]", "", value)
+    return re.sub(r"[^\w\u0370-\u03ff\u1f00-\u1fff]", "", value)
 
 def build_greek_lemma_index(repo_root, output_dir):
     index = {}
@@ -90,12 +90,12 @@ def build_lxx(source_root, output_dir):
         rows = []
         for verse in data:
             ref = str(verse.get("ref") or verse.get("reference") or "")
-            match = re.search(r"(\\d+)[.:](\\d+[a-z]?)$", ref, re.I)
+            match = re.search(r"(\d+)[.:](\d+[a-z]?)$", ref, re.I)
             if not match:
                 raise ValueError(f"Cannot parse LXX verse reference {ref!r} in {path.name}")
             chapter = int(match.group(1))
             verse_label = match.group(2)
-            verse_number = int(re.match(r"\\d+", verse_label).group(0))
+            verse_number = int(re.match(r"\d+", verse_label).group(0))
             words = []
             for word in verse.get("words", []):
                 surface = str(word.get("surface") or "").strip()
@@ -156,7 +156,7 @@ def visible_words(verse):
 
 def strongs_from_oshb_lemma(lemma):
     raw = str(lemma or "").split("/")[-1].strip()
-    match = re.search(r"(\\d+)", raw)
+    match = re.search(r"(\d+)", raw)
     return "H" + match.group(1) if match else None
 
 def build_wlc(source_root, output_dir):
