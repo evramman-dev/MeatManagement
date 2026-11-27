@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "version": 9,
+    "version": 10,
     "description": "مصادر دراسة النص الأصلي في تطبيق رِحلة",
     "purpose": "تسجيل مصادر النص اليوناني والمعاجم والمورفولوجيا وترخيص كل مصدر قبل إدخال بيانات محلية موسعة"
   },
@@ -118,5 +118,14 @@
       "license": "CC BY 4.0 for STEPBible TBESH/TBESG; source-specific licenses retained in source records",
       "note": "دفعة أولى مجمعة لمعالجة الكلمات التي ظهرت ناقصة في تكوين 1:2. تمت مراجعة أرقام Strong's واللممات والنقل الصوتي من بيانات المصدر، وصيغت المعاني بالعربية دون ترجمة آلية للتعريف الإنجليزي."
     }
+  },
+  "patriarchal1904": {
+    "source": "Patriarchal Greek New Testament 1904 (Antoniades)",
+    "repository": "byztxt/greektext-antoniades",
+    "license": "Public Domain",
+    "scope": "Greek New Testament word study with Strong's numbers and morphology",
+    "access": "Open Scriptorium API",
+    "endpoint": "https://openscriptorium.org/api/v1/works/patriarchal-1904/:book/:chapter/:verse?words=true",
+    "note": "Used for New Testament original-language word study. The displayed reader edition remains unchanged."
   }
 }
