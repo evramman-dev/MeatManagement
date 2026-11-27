@@ -882,9 +882,19 @@ function getReaderSectionHeadingsCache(){
  }catch(e){return {}}
 }
 function saveReaderSectionHeadingsCache(cache){localStorage.setItem(READER_SECTION_HEADINGS_CACHE_KEY,JSON.stringify(cache))}
+const AYAKOLYOUM_BOOK_NUMBERS={
+ GEN:1,EXO:2,LEV:3,NUM:4,DEU:5,JOS:6,JDG:7,RUT:8,"1SA":9,"2SA":10,
+ "1KI":11,"2KI":12,"1CH":13,"2CH":14,EZR:15,NEH:16,TOB:17,JDT:18,EST:19,
+ JOB:20,PSA:21,PRO:22,ECC:23,SNG:24,WIS:25,SIR:26,ISA:27,JER:28,LAM:29,
+ BAR:30,EZK:31,DAN:32,HOS:33,JOL:34,AMO:35,OBA:36,JON:37,MIC:38,NAM:39,
+ HAB:40,ZEP:41,HAG:42,ZEC:43,MAL:44,"1MA":45,"2MA":46,
+ MAT:47,MRK:48,LUK:49,JHN:50,ACT:51,ROM:52,"1CO":53,"2CO":54,GAL:55,
+ EPH:56,PHP:57,COL:58,"1TH":59,"2TH":60,"1TI":61,"2TI":62,TIT:63,PHM:64,
+ HEB:65,JAS:66,"1PE":67,"2PE":68,"1JN":69,"2JN":70,"3JN":71,JUD:72,REV:73
+};
 function canonicalBookNumberForHeadings(bookCode){
- const n=EBIBLE_BOOK_CODES.indexOf(bookCode)+1;
- return n>=1&&n<=AYAKOLYOUM_BOOK_MAX?n:null;
+ const n=AYAKOLYOUM_BOOK_NUMBERS[bookCode];
+ return n>=1&&n<=73?n:null;
 }
 function extractSectionHeadingsFromDocument(doc){
  const result=[],seen=new Set();
@@ -920,11 +930,32 @@ function extractSectionHeadingsFromDocument(doc){
 async function fetchAyakolyoumSectionHeadings(bookCode,chapter){
  const bookNumber=canonicalBookNumberForHeadings(bookCode);
  if(!bookNumber)return [];
- const url="https://www.ayakolyoum.com/public/bible/"+bookNumber+"/"+Number(chapter);
- const res=await fetch(url,{headers:{Accept:"text/html"}});
- if(!res.ok)throw new Error("ayakolyoum_"+res.status);
- const doc=new DOMParser().parseFromString(await res.text(),"text/html");
- return extractSectionHeadingsFromDocument(doc);
+ const urls=[
+  "https://www.ayakolyoum.com/public/bible/"+bookNumber+"/"+Number(chapter),
+  "https://r.jina.ai/https://www.ayakolyoum.com/public/bible/"+bookNumber+"/"+Number(chapter)
+ ];
+ let lastError=null;
+ for(const url of urls){
+  try{
+   const res=await fetch(url,{headers:{Accept:"text/html,text/plain"}});
+   if(!res.ok)throw new Error("ayakolyoum_"+res.status);
+   const text=await res.text();
+   const doc=new DOMParser().parseFromString(text,"text/html");
+   const result=extractSectionHeadingsFromDocument(doc);
+   if(result.length)return result;
+   const lines=text.split(/\r?\n/).map(x=>x.replace(/^#+\s*/,"").replace(/\[Button:\s*\d+\]/g,"").trim()).filter(Boolean);
+   const fromMarkdown=[];
+   for(let i=0;i<lines.length;i++){
+    const title=lines[i];
+    if(title.length<3||title.length>120||/^إنجيل |^سفر |^الرسالة |^الإصحاح|^الكتاب المقدس|^تفسير|^المصدر|^كلمة منفعة|^قراءة كاملة|^التالي|^تنقل سريع/.test(title))continue;
+    const next=lines[i+1]||"";
+    const vm=next.match(/^(\d{1,3})$/);
+    if(vm)fromMarkdown.push({verse:Number(vm[1]),title});
+   }
+   if(fromMarkdown.length)return normalizeReaderSectionHeadings(fromMarkdown);
+  }catch(e){lastError=e}
+ }
+ throw lastError||new Error("ayakolyoum_headings_unavailable");
 }
 async function fetchStTaklaSectionHeadings(bookCode,chapter){
  const st=STTAKLA_BOOK_MAP[bookCode];if(!st)return [];
