@@ -1272,7 +1272,7 @@ async function openVerseStudy(type){
     rendered.push("<button type='button' class='verse-study-item verse-word-item' data-word-index='"+index+"' data-strongs='"+escapeHtml(w.strongs||"")+"'><strong>"+escapeHtml(w.text)+"</strong><small>"+escapeHtml([gloss,transliteration].filter(Boolean).join(" · "))+"</small><span class='verse-word-details hidden'>"+details+"</span></button>");
    }
    const body=rendered.length?rendered.join(""):"<p class='verse-study-empty'>لا تتوفر بيانات دراسة الكلمات لهذه الآية من المصدر الحالي.</p>";
-   panel.innerHTML="<div class='verse-study-tabs'>"+["crossReferences","wordMeanings","commentary"].map(t=>"<button type='button' class='verse-study-tab "+(t===type?"active":"")+"' data-study-type='"+t+"'>"+readerStudyLabel(t)+"</button>").join("")+"</div><div class='verse-study-content'><div class='verse-study-title'>دراسة كلمات النص الأصلي</div><p class='verse-study-empty'>اضغط على أي كلمة لعرض بياناتها. المعاني هنا مأخوذة من مصادر دراسة النص الأصلي، ولا نعرضها كترجمة عربية للكلمة.</p><div class='verse-study-list'>"+body+"</div></div><p class='verse-study-source'>المصادر: STEPBible / Tyndale House, Cambridge عبر Free Use Bible API، بترخيص CC BY 4.0. المعنى العربي من المصدر العربي المرتبط بمدخل الكلمة.</p>";
+   panel.innerHTML="<div class='verse-study-tabs'>"+["crossReferences","wordMeanings","commentary"].map(t=>"<button type='button' class='verse-study-tab "+(t===type?"active":"")+"' data-study-type='"+t+"'>"+readerStudyLabel(t)+"</button>").join("")+"</div><div class='verse-study-content'><div class='verse-study-title'>دراسة كلمات النص الأصلي</div><p class='verse-study-empty'>اضغط على أي كلمة لعرض بياناتها. المعنى العربي والنطق بحروف عربية محفوظان داخل قاموس رِحلة المحلي.</p><div class='verse-study-list'>"+body+"</div></div><p class='verse-study-source'>بيانات الكلمة الأصلية: STEPBible / Tyndale House, Cambridge عبر Free Use Bible API، بترخيص CC BY 4.0. المعنى العربي والنطق العربي: قاموس رِحلة المحلي.</p>";
    panel.querySelectorAll("[data-study-type]").forEach(b=>b.addEventListener("click",()=>openVerseStudy(b.dataset.studyType)));
    panel.querySelectorAll("[data-word-index]").forEach(b=>b.addEventListener("click",async()=>{
  const d=b.querySelector(".verse-word-details");if(!d)return;
@@ -1282,8 +1282,12 @@ async function openVerseStudy(type){
  const target=d.querySelector(".verse-word-arabic");
  if(target){
   target.innerHTML=arabic&&arabic.values.length
-   ?"<b class='verse-word-label'>المعنى بالعربية:</b> "+arabic.values.map(escapeHtml).join(" · ")+"<span class='verse-word-source'>المصدر: "+escapeHtml(arabic.source||"مصدر الدراسة")+"</span>"
-   :"<b class='verse-word-label'>المعنى بالعربية:</b> لا تتوفر بيانات عربية لهذا المدخل في المصدر الحالي.";
+   ?"<b class='verse-word-label'>المعنى بالعربية:</b> "+arabic.values.map(escapeHtml).join(" · ")+"<span class='verse-word-source'>المصدر: "+escapeHtml(arabic.source||"قاموس رِحلة المحلي")+"</span>"
+   :"<b class='verse-word-label'>المعنى بالعربية:</b> لا تتوفر بيانات عربية لهذا المدخل في القاموس المحلي.";
+ }
+ const localPronunciation=d.querySelector(".verse-word-pronunciation");
+ if(localPronunciation&&arabic?.pronunciation){
+  localPronunciation.innerHTML="<b class='verse-word-label'>النطق بحروف عربية:</b> "+escapeHtml(arabic.pronunciation);
  }
  d.dataset.arabicLoaded="1";
 }));
