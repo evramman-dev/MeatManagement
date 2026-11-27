@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "version": 1,
+    "version": 2,
     "description": "مصادر دراسة النص الأصلي في تطبيق رِحلة",
     "purpose": "تسجيل مصادر النص اليوناني والمعاجم والمورفولوجيا وترخيص كل مصدر قبل إدخال بيانات محلية موسعة"
   },
@@ -33,5 +33,29 @@
     "api": "https://openscriptorium.org/api/v1/",
     "scope": "Greek word-level study fallback for LXX and Greek NT",
     "note": "Used as a fallback while the complete local word-level corpus is prepared"
+  },
+  "openScriptoriumApi": {
+    "base": "https://openscriptorium.org/api/v1/",
+    "chapterEndpoint": "GET /works/{work}/{book}/{chapter}?words=true",
+    "wordFields": [
+      "surface",
+      "morph_code",
+      "strongs_number",
+      "lemma.lemma",
+      "lemma.gloss",
+      "lemma.transliteration"
+    ],
+    "responseVerseNumber": "hierarchy[1]",
+    "works": {
+      "lxx": "rahlfs-lxx",
+      "greekNewTestament": "patriarchal-1904"
+    },
+    "licenses": {
+      "lxxText": "Public Domain",
+      "greekNewTestamentText": "Public Domain",
+      "lxxMorphology": "CC BY 4.0",
+      "apiAndCode": "ISC"
+    },
+    "attribution": "Open Scriptorium; Rahlfs Septuagint (1935); Patriarchal Greek New Testament (1904); LXX morphology CC BY 4.0."
   }
 }
