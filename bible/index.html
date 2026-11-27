@@ -1141,27 +1141,19 @@ async function loadLexiconEntry(strongs){
   const data=await response.json();READER_WORD_STUDY_CACHE["lex:"+id]=data?.entry||null;return data?.entry||null;
  }catch(e){return null}
 }
-function arabicPronunciationFromTransliteration(value){
- let s=String(value||"").toLowerCase().replace(/[·•]/g," ").replace(/[ʼ’']/g,"").replace(/\s+/g," ").trim();
+function arabicPronunciationFromTransliteration(value,strongs){
+ let s=String(value||"").toLowerCase().replace(/[·•]/g,"").replace(/[ʼ’']/g,"").replace(/\s+/g," ").trim();
  if(!s)return "";
- const map=[
-  [/th/g,"ث"],[/sh/g,"ش"],[/ch/g,"تش"],[/kh/g,"خ"],[/ph/g,"ف"],[/gh/g,"غ"],
-  [/ts/g,"تس"],[/tz/g,"تز"],[/dh/g,"ذ"],[/zh/g,"ژ"],
-  [/ā/g,"ا"],[/ē/g,"ي"],[/ī/g,"ي"],[/ō/g,"و"],[/ū/g,"و"],
-  [/a/g,"َ"],[/e/g,"ِ"],[/i/g,"ِ"],[/o/g,"ُ"],[/u/g,"ُ"],
-  [/b/g,"ب"],[/p/g,"پ"],[/g/g,"ج"],[/d/g,"د"],[/t/g,"ت"],[/k/g,"ك"],[/q/g,"ق"],
-  [/f/g,"ف"],[/v/g,"ڤ"],[/h/g,"ه"],[/j/g,"ي"],[/r/g,"ر"],[/s/g,"س"],[/z/g,"ز"],
-  [/m/g,"م"],[/n/g,"ن"],[/l/g,"ل"],[/w/g,"و"],[/y/g,"ي"],[/x/g,"كس"],
-  [/c/g,"ك"]
- ];
- for(const [rx,re] of map)s=s.replace(rx,re);
- return s.replace(/َِ|َُ|َِ|ُِ|َُ|ُِ/g,"").replace(/\s+/g," ").trim();
+ const isHebrew=/^H\d+$/i.test(String(strongs||""));
+ const pairs=isHebrew ? [["ts","تس"],["sh","ش"],["kh","خ"],["th","ث"],["ṯ","ت"],["ḥ","ح"],["ʿ","ع"],["š","ش"],["ā","ا"],["ē","ي"],["ī","ي"],["ō","و"],["ū","و"],["ê","ي"],["î","ي"],["ə","ِ"],["a","َ"],["e","ِ"],["i","ِ"],["o","ُ"],["u","ُ"],["b","ب"],["g","ج"],["d","د"],["t","ت"],["k","ك"],["q","ق"],["f","ف"],["h","ه"],["j","ي"],["r","ر"],["s","س"],["z","ز"],["m","م"],["n","ن"],["l","ل"],["w","و"],["y","ي"],["x","كس"],["c","ك"]] : [["ph","ف"],["th","ث"],["ch","تش"],["kh","خ"],["ps","بس"],["ou","و"],["au","او"],["eu","يو"],["ei","ي"],["oi","وي"],["ē","ي"],["ī","ي"],["ō","و"],["ū","و"],["ā","ا"],["ê","ي"],["î","ي"],["ô","و"],["û","و"],["a","َ"],["e","ِ"],["i","ِ"],["o","ُ"],["u","ُ"],["b","ب"],["g","ج"],["d","د"],["t","ت"],["k","ك"],["q","ق"],["f","ف"],["h","ه"],["j","ي"],["r","ر"],["s","س"],["z","ز"],["m","م"],["n","ن"],["l","ل"],["w","و"],["y","ي"],["x","كس"],["c","ك"],["p","پ"]];
+ for(const [from,to] of pairs)s=s.split(from).join(to);
+ return s.replace(/[َُِ]+/g,m=>m[0]).trim();
 }
 async function loadArabicLexiconGloss(strongs){
  const id=normalizeStrongNumber(strongs);if(!id)return null;
  const key="arabic:"+id;
  if(READER_WORD_STUDY_CACHE[key])return READER_WORD_STUDY_CACHE[key];
- const url="https://lexicon-chirho.bible.systems/lemma-chirho/"+id;
+ const url="https://lexicon-chirho.bible.systems/lemma-chirho/"+id+"?lang=ara";
  try{
   const cache=await caches.open("rehla-study-words-v1");let response=await cache.match(url);
   if(!response){response=await fetch(url,{mode:"cors"});if(!response.ok)return null;try{await cache.put(url,response.clone())}catch(e){}}
@@ -1264,7 +1256,7 @@ async function openVerseStudy(type){
     const parsing=w.parsing||w.morphology||"";
     const details=[
       "<span class='verse-word-arabic'><b class='verse-word-label'>المعنى بالعربية:</b> جاري التحميل عند فتح الكلمة</span>",
-      transliteration?"<span class='verse-word-pronunciation'><b class='verse-word-label'>النطق بحروف عربية:</b> "+escapeHtml(arabicPronunciationFromTransliteration(transliteration))+"</span>":"",
+      transliteration?"<span class='verse-word-pronunciation'><b class='verse-word-label'>النطق بحروف عربية:</b> "+escapeHtml(arabicPronunciationFromTransliteration(transliteration,w.strongs))+"</span>":"",
       gloss?"<span><b class='verse-word-label'>المعنى المختصر:</b> "+escapeHtml(gloss)+"</span>":"",
       transliteration?"<span><b class='verse-word-label'>النطق:</b> "+escapeHtml(transliteration)+"</span>":"",
       lemma?"<span><b class='verse-word-label'>الجذر أو المدخل:</b> "+escapeHtml(lemma)+"</span>":"",
