@@ -942,7 +942,27 @@ function prefetchReaderAdjacentChapters(){
  if(nums[idx+1])prefetchReaderChapter(nums[idx+1]);
  if(nums[idx-1])prefetchReaderChapter(nums[idx-1])
 }
-let readerPageTarget="first";async function navigateReaderChapter(delta){try{const nums=readerChapterNumbers(),current=Number(readerSelection.chapter)||1;let idx=nums.indexOf(current);if(idx<0)idx=0;const target=nums[idx+delta];if(!target)return;readerPageTarget=delta<0?"last":"first";readerSelection.chapter=target;readerSelection.verse="all";saveReaderSelection();const verses=await prefetchReaderChapter(target)||await loadTranslationChapter(readerSelection.translation,readerSourceBookId(),target);await refreshReaderSectionHeadings(readerSelection.book,target);currentReaderVerses=verses;requestAnimationFrame(()=>renderCurrentReader());prefetchReaderAdjacentChapters();document.getElementById("readerStatus").textContent="تم فتح "+readerChapterHeading(target)+"."}catch(e){readerPageTarget="first";document.getElementById("readerStatus").textContent="تعذر الانتقال إلى الإصحاح."}}
+let readerPageTarget="first",readerChapterNavigationBusy=false;
+async function navigateReaderChapter(delta){
+ if(readerChapterNavigationBusy)return;
+ const nums=readerChapterNumbers(),current=Number(readerSelection.chapter)||1;
+ let idx=nums.indexOf(current);if(idx<0)idx=0;
+ const target=nums[idx+delta];if(!target)return;
+ readerChapterNavigationBusy=true;
+ try{
+  readerPageTarget=delta<0?"last":"first";
+  readerSelection.chapter=target;readerSelection.verse="all";saveReaderSelection();
+  const verses=await prefetchReaderChapter(target)||await loadTranslationChapter(readerSelection.translation,readerSourceBookId(),target);
+  await refreshReaderSectionHeadings(readerSelection.book,target);
+  currentReaderVerses=verses;
+  requestAnimationFrame(()=>renderCurrentReader());
+  prefetchReaderAdjacentChapters();
+  document.getElementById("readerStatus").textContent="تم فتح "+readerChapterHeading(target)+".";
+ }catch(e){
+  readerPageTarget="first";
+  document.getElementById("readerStatus").textContent="تعذر الانتقال إلى الإصحاح.";
+ }finally{readerChapterNavigationBusy=false}
+}
 let readerPageFlip=null;let readerPageIndex=0;let readerPageCount=1;
 function readerPageGeometry(){const el=document.getElementById("chapterContent");return el?{w:el.clientWidth,h:el.clientHeight}:{w:1,h:1}}
 function readerPageCleanup(){const root=document.querySelector("#chapterContent .reader-book-pages");if(root){root.querySelectorAll(".reader-book-page").forEach((p,i)=>p.className="reader-book-page "+(i===readerPageIndex?"is-current":i===readerPageIndex+1||i===readerPageIndex-1?"is-under":"is-hidden"));root.querySelectorAll(".reader-book-page").forEach((p,i)=>p.style.zIndex=i===readerPageIndex?"3":i===readerPageIndex+1||i===readerPageIndex-1?"2":"1")}}
@@ -1004,8 +1024,32 @@ function readerSetTurn(sheet,dx,dy,sx,sy){
  el.style.setProperty("--grab-x",(sx/Math.max(w,1)*100)+"%");
  el.style.setProperty("--grab-y",originY+"%")
 }
-let readerBoundarySwipeBound=false,readerBoundaryStartX=0,readerBoundaryStartY=0;
-function bindReaderSwipe(){const el=document.getElementById("chapterContent");if(!el||readerBoundarySwipeBound)return;readerBoundarySwipeBound=true;el.addEventListener("touchstart",e=>{if(!document.querySelector("#read .reader-screen")?.classList.contains("reader-fullscreen")||e.touches.length!==1)return;readerBoundaryStartX=e.touches[0].clientX;readerBoundaryStartY=e.touches[0].clientY},{passive:true,capture:true});el.addEventListener("touchend",e=>{if(!document.querySelector("#read .reader-screen")?.classList.contains("reader-fullscreen")||e.changedTouches.length!==1||!readerPageFlip)return;const dx=e.changedTouches[0].clientX-readerBoundaryStartX,dy=e.changedTouches[0].clientY-readerBoundaryStartY;if(Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy)*1.15)return;const idx=readerPageFlip.getCurrentPageIndex(),count=readerPageFlip.getPageCount();if(dx<0&&idx>=count-1){setTimeout(()=>{if(readerPageFlip&&readerPageFlip.getCurrentPageIndex()>=readerPageFlip.getPageCount()-1)navigateReaderChapter(1)},90)}else if(dx>0&&idx<=0){setTimeout(()=>{if(readerPageFlip&&readerPageFlip.getCurrentPageIndex()<=0)navigateReaderChapter(-1)},90)}},{passive:true,capture:true})}
+let readerBoundarySwipeBound=false,readerBoundaryStartX=0,readerBoundaryStartY=0,readerBoundaryTimer=null;
+function bindReaderSwipe(){
+ const el=document.getElementById("chapterContent");if(!el||readerBoundarySwipeBound)return;readerBoundarySwipeBound=true;
+ el.addEventListener("touchstart",e=>{
+  if(!document.querySelector("#read .reader-screen")?.classList.contains("reader-fullscreen")||e.touches.length!==1)return;
+  readerBoundaryStartX=e.touches[0].clientX;readerBoundaryStartY=e.touches[0].clientY;
+ },{passive:true,capture:true});
+ el.addEventListener("touchend",e=>{
+  if(!document.querySelector("#read .reader-screen")?.classList.contains("reader-fullscreen")||e.changedTouches.length!==1||!readerPageFlip||readerChapterNavigationBusy)return;
+  const dx=e.changedTouches[0].clientX-readerBoundaryStartX,dy=e.changedTouches[0].clientY-readerBoundaryStartY;
+  if(Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy)*1.15)return;
+  const flip=readerPageFlip,idx=flip.getCurrentPageIndex(),count=flip.getPageCount();
+  let direction=0;
+  if(dx<0&&idx>=count-1)direction=1;
+  else if(dx>0&&idx<=0)direction=-1;
+  if(!direction)return;
+  if(readerBoundaryTimer)clearTimeout(readerBoundaryTimer);
+  const chapterAtSwipe=Number(readerSelection.chapter)||1;
+  readerBoundaryTimer=setTimeout(()=>{
+   readerBoundaryTimer=null;
+   if(readerPageFlip!==flip||Number(readerSelection.chapter)!==chapterAtSwipe||readerChapterNavigationBusy)return;
+   const current=flip.getCurrentPageIndex(),total=flip.getPageCount();
+   if((direction>0&&current>=total-1)||(direction<0&&current<=0))navigateReaderChapter(direction);
+  },700);
+ },{passive:true,capture:true});
+}
 
 function readerStagePages(content,markup){const stage=document.createElement("div");stage.className="reader-book-pages reader-pageflip-stage";stage.setAttribute("dir","rtl");stage.style.position="fixed";stage.style.left="-10000px";stage.style.top="0";stage.style.width=Math.max(280,content.clientWidth||window.innerWidth||360)+"px";stage.style.height=Math.max(450,content.clientHeight||window.innerHeight||640)+"px";stage.style.visibility="hidden";stage.style.pointerEvents="none";const source=document.createElement("div");source.className="reader-page-source";source.innerHTML=markup;stage.appendChild(source);document.body.appendChild(stage);readerPaginatePages(content,stage);return stage}
 function readerRenderCurrentFlip(content,markup){readerTurnCleanup();requestAnimationFrame(()=>{renderCurrentReaderFresh(content,markup)})}
