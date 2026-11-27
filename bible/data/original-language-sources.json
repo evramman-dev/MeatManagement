@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "version": 2,
+    "version": 3,
     "description": "مصادر دراسة النص الأصلي في تطبيق رِحلة",
     "purpose": "تسجيل مصادر النص اليوناني والمعاجم والمورفولوجيا وترخيص كل مصدر قبل إدخال بيانات محلية موسعة"
   },
@@ -57,5 +57,29 @@
       "apiAndCode": "ISC"
     },
     "attribution": "Open Scriptorium; Rahlfs Septuagint (1935); Patriarchal Greek New Testament (1904); LXX morphology CC BY 4.0."
+  },
+  "greekLocalLexicon": {
+    "source": "BSB-publishing/bsb-data-output base/lexicon/greek.jsonl; STEPBible TBESG / Tyndale House, Cambridge",
+    "license": "CC BY 4.0",
+    "entries": 10847,
+    "files": [
+      "./data/greek-strongs-1.json",
+      "./data/greek-strongs-2.json",
+      "./data/greek-strongs-3.json",
+      "./data/greek-strongs-4.json",
+      "./data/greek-strongs-5.json",
+      "./data/greek-strongs-6.json",
+      "./data/greek-strongs-7.json",
+      "./data/greek-strongs-8.json"
+    ],
+    "fields": [
+      "lemma",
+      "transliteration",
+      "gloss",
+      "definition",
+      "morphology",
+      "disambiguation"
+    ],
+    "note": "Greek glosses and definitions are supplied in their source language. Arabic meanings are shown only when an Arabic entry exists in Rehla's curated local dictionary."
   }
 }
