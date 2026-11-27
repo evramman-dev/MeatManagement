@@ -1,0 +1,37 @@
+{
+  "_meta": {
+    "version": 1,
+    "description": "مصادر دراسة النص الأصلي في تطبيق رِحلة",
+    "purpose": "تسجيل مصادر النص اليوناني والمعاجم والمورفولوجيا وترخيص كل مصدر قبل إدخال بيانات محلية موسعة"
+  },
+  "strongs": {
+    "source": "OpenScriptures Strong's",
+    "repository": "openscriptures/strongs",
+    "license": "CC BY-SA",
+    "scope": "Hebrew and Greek Strong's dictionaries"
+  },
+  "extendedLexicon": {
+    "source": "STEPBible TBESH/TBESG",
+    "repository": "BSB-publishing/bsb-data",
+    "license": "CC BY 4.0",
+    "scope": "Hebrew and Greek extended lexicon"
+  },
+  "lxxText": {
+    "source": "Rahlfs Septuagint 1935",
+    "repository": "OpenScriptorium/lxx-morph",
+    "license": "Public Domain",
+    "scope": "Greek Septuagint text including deuterocanonical books covered by the source"
+  },
+  "lxxMorphology": {
+    "source": "OpenScriptorium lxx-morph",
+    "repository": "OpenScriptorium/lxx-morph",
+    "license": "CC BY 4.0",
+    "scope": "Word-level LXX morphology, lemma, POS and provenance"
+  },
+  "liveStudyFallback": {
+    "source": "Open Scriptorium API",
+    "api": "https://openscriptorium.org/api/v1/",
+    "scope": "Greek word-level study fallback for LXX and Greek NT",
+    "note": "Used as a fallback while the complete local word-level corpus is prepared"
+  }
+}
