@@ -1431,11 +1431,19 @@ async function openVerseStudy(type){
 }));
   }catch(e){
    console.warn("Word study panel failed",e);
-   const message=String(e?.message||"");
-   const userMessage=message.startsWith("SOURCE_HTTP_")?"تعذر الوصول إلى مصدر النص الأصلي الآن.":
-    message==="SOURCE_INVALID_JSON"?"أرسل مصدر النص الأصلي بيانات غير مكتملة.":
-    message==="SOURCE_NO_VERSE_ROWS"||message==="SOURCE_VERSE_NOT_FOUND"||message==="NO_WORDS_RETURNED"?"لم يعثر المصدر على كلمات لهذه الآية.":
-    "تعذر تحميل دراسة الكلمات. حاول فتح التبويب مرة أخرى.";
+   const message=String(e?.message||e||"UNKNOWN_ERROR");
+   const lastError=String(READER_WORD_STUDY_LAST_ERROR||"");
+   const diagnostic=message!=="UNKNOWN_ERROR"?message:lastError||"UNKNOWN_ERROR";
+   console.error("Word study diagnostic",{
+    key:activeVerseActionKey,
+    translation:String(activeVerseActionKey||"").split("|")[0],
+    book:String(activeVerseActionKey||"").split("|")[1],
+    chapter:String(activeVerseActionKey||"").split("|")[2],
+    verse:String(activeVerseActionKey||"").split("|")[3],
+    message:diagnostic,
+    error:e
+   });
+   const userMessage="تعذر تحميل دراسة الكلمات. رمز الخطأ: "+diagnostic;
    panel.innerHTML="<div class='verse-study-tabs'>"+["crossReferences","wordMeanings","commentary"].map(t=>"<button type='button' class='verse-study-tab "+(t===type?"active":"")+"' data-study-type='"+t+"'>"+readerStudyLabel(t)+"</button>").join("")+"</div><div class='verse-study-content'><div class='verse-study-title'>معاني الكلمات</div><p class='verse-study-empty'>"+userMessage+"</p></div>";
    panel.querySelectorAll("[data-study-type]").forEach(b=>b.addEventListener("click",()=>openVerseStudy(b.dataset.studyType)));
   }
