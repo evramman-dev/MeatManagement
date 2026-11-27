@@ -1168,7 +1168,7 @@ async function loadArabicLexiconGloss(strongs){
   const html=await response.text();
   const doc=new DOMParser().parseFromString(html,"text/html");
   const text=doc.body?.innerText||doc.documentElement?.innerText||"";
-  const match=text.match(/AR\\[([^\\]]+)\\]/);
+  const match=text.match(/AR\[([^\]]+)\]/);
   if(!match)return null;
   const values=[...match[1].matchAll(/"([^"]+)"/g)].map(m=>m[1]).filter(Boolean);
   const unique=[...new Set(values)].slice(0,4);
