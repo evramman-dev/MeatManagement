@@ -1215,7 +1215,7 @@ async function loadLocalRp2018VerseWordStudy(bookCode,chapter,verse){
  const csv=await response.text();
  const lines=csv.split(/\r?\n/);
  const target=lines.find(line=>{
-  const m=line.match(/^(\\d+),(\\d+),/);
+  const m=line.match(/^(\d+),(\d+),/);
   return m&&Number(m[1])===Number(chapter)&&Number(m[2])===Number(verse);
  });
  if(!target)throw new Error("RP2018_LOCAL_VERSE_NOT_FOUND");
@@ -1223,7 +1223,7 @@ async function loadLocalRp2018VerseWordStudy(bookCode,chapter,verse){
  const secondComma=target.indexOf(",",firstComma+1);
  const text=target.slice(secondComma+1);
  const words=[];
- const tokenPattern=/([^\\s,]+)\\s+(\\d+)\\s+\\{([^}]+)\\}/g;
+ const tokenPattern=/([^\s,]+)\s+(\d+)\s+\{([^}]+)\}/g;
  let match;
  while((match=tokenPattern.exec(text))){
   const surface=String(match[1]||"");
