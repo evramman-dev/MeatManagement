@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "version": 4,
+    "version": 5,
     "description": "مصادر دراسة النص الأصلي في تطبيق رِحلة",
     "purpose": "تسجيل مصادر النص اليوناني والمعاجم والمورفولوجيا وترخيص كل مصدر قبل إدخال بيانات محلية موسعة"
   },
@@ -27,36 +27,6 @@
     "repository": "OpenScriptorium/lxx-morph",
     "license": "CC BY 4.0",
     "scope": "Word-level LXX morphology, lemma, POS and provenance"
-  },
-  "liveStudyFallback": {
-    "source": "Open Scriptorium API",
-    "api": "https://openscriptorium.org/api/v1/",
-    "scope": "Greek word-level study fallback for LXX and Greek NT",
-    "note": "Used as a fallback while the complete local word-level corpus is prepared"
-  },
-  "openScriptoriumApi": {
-    "base": "https://openscriptorium.org/api/v1/",
-    "chapterEndpoint": "GET /works/{work}/{book}/{chapter}?words=true",
-    "wordFields": [
-      "surface",
-      "morph_code",
-      "strongs_number",
-      "lemma.lemma",
-      "lemma.gloss",
-      "lemma.transliteration"
-    ],
-    "responseVerseNumber": "hierarchy[1]",
-    "works": {
-      "lxx": "rahlfs-lxx",
-      "greekNewTestament": "patriarchal-1904"
-    },
-    "licenses": {
-      "lxxText": "Public Domain",
-      "greekNewTestamentText": "Public Domain",
-      "lxxMorphology": "CC BY 4.0",
-      "apiAndCode": "ISC"
-    },
-    "attribution": "Open Scriptorium; Rahlfs Septuagint (1935); Patriarchal Greek New Testament (1904); LXX morphology CC BY 4.0."
   },
   "greekLocalLexicon": {
     "source": "BSB-publishing/bsb-data-output base/lexicon/greek.jsonl; STEPBible TBESG / Tyndale House, Cambridge",
@@ -85,5 +55,35 @@
       "entries": 29,
       "policy": "Arabic meanings are provided only for reviewed entries in strongs-ar.json; other Greek entries retain source-language gloss and definition without pretending they are Arabic translations."
     }
+  },
+  "localWordStudy": {
+    "generatedBy": "../tools/prepare_local_word_study.py",
+    "offlineOnly": true,
+    "wlc": {
+      "source": "Open Scriptures Hebrew Bible (OSHB), based on Westminster Leningrad Codex",
+      "repository": "https://github.com/openscriptures/morphhb",
+      "commit": "db6c5c9b46b8f39346f10915ddb1a70dcd429901",
+      "textLicense": "Public Domain",
+      "lemmaAndMorphologyLicense": "CC BY 4.0",
+      "coverage": "39 Masoretic Old Testament books",
+      "format": "Per-book gzip JSONL under ./word-study/wlc/"
+    },
+    "lxx": {
+      "source": "OpenScriptorium LXX Morphology for Rahlfs Septuagint 1935",
+      "repository": "https://github.com/OpenScriptorium/lxx-morph",
+      "commit": "c91f6b1e8fb3ba37df701e6ae31f675ace71a2b2",
+      "textLicense": "Public Domain",
+      "morphologyLicense": "CC BY 4.0",
+      "coverage": "All finalized per-book datasets supplied by the pinned source repository",
+      "format": "Per-book gzip JSONL under ./word-study/lxx/",
+      "note": "Source records, verse labels, lemmas, parsing, POS, confidence and provenance are preserved. No Strong's number is fabricated; exact lemma matches may be enriched from the local STEPBible Greek lexicon."
+    },
+    "greekLemmaIndex": {
+      "source": "Existing local STEPBible TBESG Greek Strong's dictionaries",
+      "license": "CC BY 4.0",
+      "path": "./word-study/greek-lemma-index.json.gz",
+      "purpose": "Resolve exact normalized Greek lemma matches to local Strong's, transliteration and source gloss"
+    },
+    "runtime": "The reader loads the local manifest and only the selected book's compressed file. Word study does not call OpenScriptorium or the remote STEP Bible lexicon API."
   }
 }
