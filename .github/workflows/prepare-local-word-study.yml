@@ -1,0 +1,66 @@
+name: Build offline original-language word study
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - feature/rehla-local-word-study
+    paths:
+      - "bible/tools/prepare_local_word_study.py"
+      - ".github/workflows/prepare-local-word-study.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rehla-local-word-study-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Check out current branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build pinned WLC and LXX word-level corpora
+        run: python bible/tools/prepare_local_word_study.py --output-dir bible/data/word-study --repo-root .
+      - name: Validate generated manifest and compressed files
+        run: |
+          python - <<'PY'
+          import gzip, json
+          from pathlib import Path
+          root = Path("bible/data/word-study")
+          manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
+          assert len(manifest["wlc"]) == 39, len(manifest["wlc"])
+          assert len(manifest["lxx"]) >= 50, len(manifest["lxx"])
+          for section in ("wlc", "lxx"):
+              for book, item in manifest[section].items():
+                  path = root / item["path"].replace("./data/word-study/", "")
+                  with gzip.open(path, "rt", encoding="utf-8") as stream:
+                      first = json.loads(next(stream))
+                  assert first.get("words"), (section, book)
+          with gzip.open(root / "greek-lemma-index.json.gz", "rt", encoding="utf-8") as stream:
+              index = json.load(stream)
+          assert index, "Greek lemma index is empty"
+          print("WLC books:", len(manifest["wlc"]))
+          print("LXX books:", len(manifest["lxx"]))
+          print("Greek lemma entries:", len(index))
+          print("LXX verses:", manifest["totals"]["lxx"]["verses"])
+          print("WLC verses:", manifest["totals"]["wlc"]["verses"])
+          PY
+      - name: Commit generated offline data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add bible/data/word-study
+          git diff --cached --quiet && exit 0
+          git commit -m "Bible: publish offline Hebrew and Greek word study data"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
