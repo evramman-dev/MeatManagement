@@ -90,7 +90,7 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 <body>
 <div class="app">
 <header>
-  <div class="brand">رِحلة</div><div class="version">الإصدار v24 · القطمارس</div>
+  <div class="brand">رِحلة</div><div class="version">الإصدار v25 · القطمارس</div>
   <h1 id="title" class="home-title">أنت داخل التطبيق النهارده ليه؟</h1>
   <p id="subtitle" class="home-title">ابدأ من حالتك، ثم اترك للكلمة مساحة.</p>
 </header>
@@ -539,10 +539,14 @@ async function renderCopticReadingText(readings){
   const groupItems=ordered.filter(x=>x.group===group.title);
   if(!groupItems.length)continue;
   const hasGospel=groupItems.some(x=>x.key.endsWith("Gospel"));
-  const groupTitle=group.title==="عشية"||group.title==="باكر" ? "مزمور وإنجيل "+group.title : "قراءات "+group.title;
+  const groupTitle=group.title==="عشية"||group.title==="باكر"||group.title==="القداس الإلهي" ? "مزمور وإنجيل "+group.title : "قراءات "+group.title;
   sections.push("<div class='coptic-reading-group-heading'>"+escapeHtml(groupTitle)+"</div>");
-  if(hasGospel)sections.push("<div class='reading-preamble reading-preamble-top'>"+escapeHtml(copticReadingIntro(groupItems.find(x=>x.key.endsWith("Gospel"))?.key,splitReadingReferences(groupItems.find(x=>x.key.endsWith("Gospel"))?.raw||"").map(parseReadingReferencePart).filter(Boolean)[0]))+"</div>");
+  const gospelItem=groupItems.find(x=>x.key.endsWith("Gospel"));
+  const gospelPart=gospelItem?splitReadingReferences(gospelItem.raw||"").map(parseReadingReferencePart).filter(Boolean)[0]:null;
+  const groupPreamble=hasGospel?"<div class='reading-preamble reading-preamble-top'>"+escapeHtml(copticReadingIntro(gospelItem?.key,gospelPart))+"</div>":"";
+  if(group.title==="عشية"||group.title==="باكر")sections.push(groupPreamble);
   for(const item of groupItems){
+   if(group.title==="القداس الإلهي"&&item.key==="LPsalm"&&groupPreamble)sections.push(groupPreamble);
    const parts=splitReadingReferences(item.raw).map(parseReadingReferencePart).filter(Boolean);
    const title=copticReadingHeading(item.group,item.key,item.label);
    let verseHtml="";
