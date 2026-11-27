@@ -82,7 +82,7 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 <body>
 <div class="app">
 <header>
-  <div class="brand">رِحلة</div><div class="version">الإصدار v21 · القطمارس</div>
+  <div class="brand">رِحلة</div><div class="version">الإصدار v22 · القطمارس</div>
   <h1 id="title" class="home-title">أنت داخل التطبيق النهارده ليه؟</h1>
   <p id="subtitle" class="home-title">ابدأ من حالتك، ثم اترك للكلمة مساحة.</p>
 </header>
@@ -474,7 +474,7 @@ async function openReadingReference(raw,label){
   if(!translationHasBook(edition,part.bookCode)){blocks.push("<div class='card'><div class='eyebrow'>"+escapeHtml(part.book)+"</div><p class='note'>السفر غير متوفر في "+escapeHtml(editionInfo?editionInfo.name:edition)+" ولن نستبدل النص بترجمة أخرى.</p></div>");continue}
   try{
    const chapterBlocks=await loadReadingPartVerses(edition,part);
-   const textBlocks=chapterBlocks.map(x=>"<div class='reading-chapter-label'>الفصل "+x.chapter+"</div>"+x.verses.map(v=>"<p class='reading-verse' lang='ar' dir='rtl'><span class='reading-verse-number'>"+escapeHtml(v.verse)+"</span>"+escapeHtml(v.text).replace(/¶/g," ")+"</p>").join("")).join("");
+   const textBlocks=chapterBlocks.map(x=>"<div class='reading-chapter-label'>الفصل "+x.chapter+"</div>"+x.verses.map(v=>"<p class='reading-verse' lang='ar' dir='rtl'><span class='reading-verse-number'>"+escapeHtml(v.verse)+"</span>"+escapeHtml(v.text).replace(/؛/g,"،").replace(/¶/g," ")+"</p>").join("")).join("");
    blocks.push("<div class='card'><div class='eyebrow'>"+escapeHtml(formatReadingReference(part.display||part.book+" "+part.chapter))+"</div>"+(textBlocks||"<p class='note'>لا توجد آيات مطابقة لهذا المرجع في هذه الطبعة.</p>")+"</div>");
   }catch(e){blocks.push("<p class='note'>تعذر تحميل هذا الجزء من القراءة.</p>")}
  }
@@ -539,7 +539,7 @@ async function renderCopticReadingText(readings){
     if(!translationHasBook(edition,part.bookCode)){verseHtml+="<p class='note'>السفر "+escapeHtml(part.book)+" غير متوفر في "+escapeHtml(editionInfo?editionInfo.name:edition)+".</p>";continue}
     try{
      const chapterBlocks=await loadReadingPartVerses(edition,part);
-     verseHtml+=chapterBlocks.map(block=>"<div class='reading-chapter-label'>الفصل "+block.chapter+"</div>"+block.verses.map(v=>"<p class='reading-verse' lang='ar' dir='rtl'><span class='reading-verse-number'>"+escapeHtml(v.verse)+"</span>"+escapeHtml(v.text).replace(/¶/g," ")+"</p>").join("")).join("");
+     verseHtml+=chapterBlocks.map(block=>"<div class='reading-chapter-label'>الفصل "+block.chapter+"</div>"+block.verses.map(v=>"<p class='reading-verse' lang='ar' dir='rtl'><span class='reading-verse-number'>"+escapeHtml(v.verse)+"</span>"+escapeHtml(v.text).replace(/؛/g,"،").replace(/¶/g," ")+"</p>").join("")).join("");
     }catch(e){verseHtml+="<p class='note'>تعذر تحميل هذا الجزء من القراءة.</p>"}
    }
    const firstPart=parts[0];
@@ -798,7 +798,7 @@ function renderVerseMarkup(verses,language,mode){
   pushParagraph();
   return paragraphs.join("");
  }
- return verses.map(v=>{const mark=getVerseMark(readerVerseKey(v)),number="<span class='reader-verse-number' dir='"+dir+"'>"+escapeHtml(v.verse)+"</span>",text="<span class='reader-verse-text"+(mark.highlight?" reader-highlight-"+mark.highlight:"")+"' lang='"+lang+"' dir='"+dir+"'>"+escapeHtml(v.text).replace(/¶/g,"<br>")+"</span>",controls=readerVerseControls(v);return "<div class='reader-verse' data-reader-verse='"+escapeHtml(readerVerseKey(v))+"'>"+number+text+controls+"</div>"}).join("")
+ return verses.map(v=>{const mark=getVerseMark(readerVerseKey(v)),number="<span class='reader-verse-number' dir='"+dir+"'>"+escapeHtml(v.verse)+"</span>",text="<span class='reader-verse-text"+(mark.highlight?" reader-highlight-"+mark.highlight:"")+"' lang='"+lang+"' dir='"+dir+"'>"+escapeHtml(v.text).replace(/؛/g,"،").replace(/¶/g,"<br>")+"</span>",controls=readerVerseControls(v);return "<div class='reader-verse' data-reader-verse='"+escapeHtml(readerVerseKey(v))+"'>"+number+text+controls+"</div>"}).join("")
 }
 function bindReaderVerseActions(){
  const root=document.getElementById("chapterContent");if(!root)return;
