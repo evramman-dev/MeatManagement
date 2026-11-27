@@ -106,7 +106,18 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 .reader-turn-sheet:before{background:linear-gradient(90deg,rgba(44,31,17,.25),rgba(255,255,255,.05) 18%,rgba(255,255,255,.7) 48%,rgba(63,43,22,.1) 62%,rgba(255,255,255,.08) 82%,rgba(44,31,17,.18));opacity:var(--curl-light,.18);mix-blend-mode:multiply}
 .reader-turn-sheet:after{background:radial-gradient(ellipse at var(--curl-x,50%) var(--curl-y,50%),rgba(255,255,255,.78),rgba(255,255,255,.14) 25%,rgba(55,40,20,.25) 66%,transparent 82%);opacity:var(--curl-shadow,.22)}
 @media(max-width:420px){.reader-book-page,.reader-turn-face,.reader-turn-back{padding:64px 16px 28px}.reader-running-head{left:12px;right:12px;font-size:9px}}
- .reader-screen:not(.reader-fullscreen) .reader-book-pages{position:relative;inset:auto;overflow:visible;contain:none}.reader-screen:not(.reader-fullscreen) .reader-book-page{position:relative;inset:auto;height:auto;min-height:0;overflow:visible;padding:22px 20px 32px;display:block}.reader-screen:not(.reader-fullscreen) .reader-book-page.is-hidden,.reader-screen:not(.reader-fullscreen) .reader-book-page.is-under{display:none}.reader-screen:not(.reader-fullscreen) .reader-page-source{display:block}.reader-screen:not(.reader-fullscreen) .reader-book-pages{height:auto}.reader-screen:not(.reader-fullscreen) .reader-book-page .reader-running-head{position:relative;top:auto;left:auto;right:auto;margin-bottom:10px}.reader-screen:not(.reader-fullscreen) .reader-chapter-nav{display:grid}.reader-screen.reader-fullscreen .reader-chapter-nav,.reader-screen:fullscreen .reader-chapter-nav{display:none}</style>
+ .reader-screen:not(.reader-fullscreen) .reader-book-pages{position:relative;inset:auto;overflow:visible;contain:none}.reader-screen:not(.reader-fullscreen) .reader-book-page{position:relative;inset:auto;height:auto;min-height:0;overflow:visible;padding:22px 20px 32px;display:block}.reader-screen:not(.reader-fullscreen) .reader-book-page.is-hidden,.reader-screen:not(.reader-fullscreen) .reader-book-page.is-under{display:none}.reader-screen:not(.reader-fullscreen) .reader-page-source{display:block}.reader-screen:not(.reader-fullscreen) .reader-book-pages{height:auto}.reader-screen:not(.reader-fullscreen) .reader-book-page .reader-running-head{position:relative;top:auto;left:auto;right:auto;margin-bottom:10px}.reader-screen:not(.reader-fullscreen) .reader-chapter-nav{display:grid}.reader-screen.reader-fullscreen .reader-chapter-nav,.reader-screen:fullscreen .reader-chapter-nav{display:none}
+.reader-screen:not(.reader-fullscreen) #chapterContent{position:relative;overflow:visible;contain:none}
+.reader-screen:not(.reader-fullscreen) #chapterContent.reader-page{height:auto;min-height:0;max-height:none}
+.reader-screen:not(.reader-fullscreen) .reader-book-pages,.reader-screen:not(.reader-fullscreen) .reader-turn-sheet{display:none!important}
+.reader-screen.reader-fullscreen #chapterContent{position:relative;overflow:hidden;contain:layout paint}
+.reader-screen.reader-fullscreen .reader-book-pages{touch-action:pan-y}
+.reader-turn-sheet{perspective:2200px;transform-style:preserve-3d;will-change:transform;filter:drop-shadow(0 16px 22px rgba(45,32,18,.22))}
+.reader-turn-face,.reader-turn-back{transform-style:preserve-3d;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.reader-turn-back{background:inherit;box-shadow:inset 0 0 26px rgba(58,42,24,.10)}
+.reader-turn-sheet:before{background:linear-gradient(90deg,rgba(45,30,15,.08),transparent 15%,rgba(255,255,255,.18) 42%,rgba(255,255,255,.82) 50%,rgba(55,38,18,.14) 58%,transparent 86%,rgba(45,30,15,.10));mix-blend-mode:soft-light}
+.reader-turn-sheet:after{background:radial-gradient(ellipse at var(--curl-x,50%) var(--curl-y,50%),rgba(255,255,255,.92),rgba(255,255,255,.18) 22%,rgba(55,40,20,.24) 58%,transparent 80%);mix-blend-mode:multiply}
+</style>
 </head>
 <body>
 <div class="app">
@@ -916,9 +927,126 @@ function readerMakePage(content,root){const p=document.createElement("article");
 function readerPageOverflow(page){return page.scrollHeight>page.clientHeight+1}
 function readerPaginatePages(content,root){const source=root.querySelector(".reader-page-source");if(!source)return;root.querySelectorAll(".reader-book-page").forEach(p=>p.remove());const nodes=Array.from(source.children);source.remove();let page=readerMakePage(content,root),flow=null;const newFlow=()=>{flow=document.createElement("div");flow.className="reader-page-flow";page.appendChild(flow);return flow};const moveToNextPage=()=>{page=readerMakePage(content,root);flow=null;return page};const addBlock=node=>{const clone=node.cloneNode(true);page.appendChild(clone);if(readerPageOverflow(page)){page.removeChild(clone);moveToNextPage();page.appendChild(clone)}};nodes.forEach(node=>{if(node.classList.contains("reader-paragraph-block")){const title=node.querySelector(".reader-paragraph-title"),para=node.querySelector(".reader-paragraph");if(title){const heading=title.cloneNode(true);page.appendChild(heading);if(readerPageOverflow(page)){page.removeChild(heading);moveToNextPage();page.appendChild(heading)}}const units=para?Array.from(para.querySelectorAll(".reader-verse-unit")):[];if(!units.length&&para){addBlock(para.cloneNode(true));return}flow=null;units.forEach(unit=>{if(!flow)flow=newFlow();const clone=unit.cloneNode(true);flow.appendChild(clone);if(readerPageOverflow(page)){flow.removeChild(clone);if(!flow.children.length)page.removeChild(flow);moveToNextPage();flow=newFlow();flow.appendChild(clone)}});if(flow&&flow.children.length)flow.classList.add("reader-page-flow-end")}else addBlock(node)});if(!root.querySelector(".reader-book-page"))readerMakePage(content,root);readerSetPageState()}
 function readerSetPageState(){const pages=document.querySelectorAll("#chapterContent .reader-book-page");readerPageCount=pages.length||1;pages.forEach((p,i)=>{p.classList.remove("is-current","is-under","is-hidden","turn-base-hidden","turn-under-visible");const active=i===readerPageIndex,adjacent=i===readerPageIndex+1||i===readerPageIndex-1;p.classList.add(active?"is-current":adjacent?"is-under":"is-hidden");p.style.zIndex=active?"3":adjacent?"2":"1"})}
-function readerTurnSheet(delta){const root=document.querySelector("#chapterContent .reader-book-pages");const pages=root?.querySelectorAll(".reader-book-page");const current=pages?.[readerPageIndex];const targetIndex=readerPageIndex+(delta>0?1:-1);const target=pages?.[targetIndex];if(!root||!current)return null;const sheet=document.createElement("div");sheet.className="reader-turn-sheet";const back=document.createElement("div");back.className="reader-turn-back";if(target)back.appendChild(target.cloneNode(true));else back.appendChild(document.createElement("div"));sheet.appendChild(back);const front=current.cloneNode(true);front.className="reader-turn-face";sheet.appendChild(front);if(target){target.classList.add("turn-under-visible");target.style.zIndex="2"}current.classList.add("turn-base-hidden");current.style.zIndex="1";root.appendChild(sheet);return sheet}
-function readerSetTurn(sheet,dx,dy,sx,sy){const el=document.getElementById("chapterContent");if(!el||!sheet)return;const g=readerPageGeometry(),w=g.w,h=g.h,progress=Math.min(1,Math.abs(dx)/Math.max(w,1)),y=Math.max(0,Math.min(h,sy)),curve=Math.sin(progress*Math.PI),angle=(dx>0?-1:1)*(progress*178),lift=curve*(8+Math.min(12,Math.abs(dy)*.08)),scale=1-progress*.012;sheet.style.transformOrigin=dx>0?"100% 50%":"0% 50%";sheet.style.transform="translate3d("+(dx*.035)+"px,"+(-lift)+"px,0) scale("+scale+") rotateY("+angle+"deg)";sheet.style.setProperty("--curl-light",String(.16+progress*.62));sheet.style.setProperty("--curl-shadow",String(.18+progress*.58));sheet.style.setProperty("--curl-x",(sx/w*100)+"%");sheet.style.setProperty("--curl-y",(y/h*100)+"%");el.style.setProperty("--grab-x",(sx/w*100)+"%");el.style.setProperty("--grab-y",(y/h*100)+"%")}
-function bindReaderSwipe(){const el=document.getElementById("chapterContent");if(!el||el.dataset.swipeBound)return;el.dataset.swipeBound="1";let sx=0,sy=0,dragging=false,locked=false,sheet=null,delta=0;const reset=()=>{readerTurnCleanup();dragging=false;locked=false;sheet=null;delta=0};const finish=(ok,d)=>{if(!sheet)return;const g=readerPageGeometry(),target=readerPageIndex+(d>0?1:-1),canTurn=target>=0&&target<readerPageCount,go=ok&&canTurn;sheet.style.transition="transform .68s cubic-bezier(.16,.78,.2,1)";sheet.style.transformOrigin=d>0?"100% 50%":"0% 50%";sheet.style.transform=go?"translate3d("+(d>0?g.w*.035:-g.w*.035)+"px,-7px,0) scale(.988) rotateY("+((d>0?-1:1)*178)+"deg)":"translate3d(0,0,0) scale(1) rotateY(0deg)";setTimeout(()=>{if(go){readerPageIndex=target;reset();readerSetPageState()}else if(ok&&!canTurn){reset();navigateReaderChapter(d>0?1:-1)}else reset()},690)};el.addEventListener("touchstart",e=>{if(!document.querySelector("#read .reader-screen")?.classList.contains("reader-fullscreen"))return;if(e.touches.length!==1)return;sx=e.touches[0].clientX;sy=e.touches[0].clientY;dragging=false;locked=false;sheet=null;delta=0},{passive:true});el.addEventListener("touchmove",e=>{if(e.touches.length!==1)return;const dx=e.touches[0].clientX-sx,dy=e.touches[0].clientY-sy;if(!locked){if(Math.abs(dx)<8&&Math.abs(dy)<8)return;if(Math.abs(dy)>Math.abs(dx)*1.15)return;locked=true;dragging=true;delta=dx>0?1:-1;sheet=readerTurnSheet(delta);if(sheet){el.classList.add("is-turning");const hint=document.createElement("div");hint.className="reader-page-turn-hint";el.appendChild(hint)}}if(!dragging||!sheet)return;e.preventDefault();readerSetTurn(sheet,dx,dy,sx,sy)},{passive:false});el.addEventListener("touchend",e=>{if(!dragging||!sheet)return;const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy,threshold=Math.max(55,readerPageGeometry().w*.14);finish(Math.abs(dx)>=threshold&&Math.abs(dx)>=Math.abs(dy)*1.15,delta)},{passive:true});el.addEventListener("touchcancel",()=>{if(dragging&&sheet)finish(false,delta||1)},{passive:true})}
+function readerTurnSheet(delta){
+ const root=document.querySelector("#chapterContent .reader-book-pages");
+ const pages=root?.querySelectorAll(".reader-book-page");
+ const current=pages?.[readerPageIndex];
+ const targetIndex=readerPageIndex+(delta>0?1:-1);
+ const target=pages?.[targetIndex];
+ if(!root||!current)return null;
+ const sheet=document.createElement("div");
+ sheet.className="reader-turn-sheet";
+ sheet.setAttribute("aria-hidden","true");
+ const back=document.createElement("div");
+ back.className="reader-turn-back";
+ if(target)back.appendChild(target.cloneNode(true));
+ else back.appendChild(document.createElement("div"));
+ sheet.appendChild(back);
+ const front=current.cloneNode(true);
+ front.className="reader-turn-face";
+ sheet.appendChild(front);
+ if(target){
+  target.classList.add("turn-under-visible");
+  target.style.zIndex="2"
+ }
+ current.classList.add("turn-base-hidden");
+ current.style.zIndex="1";
+ root.appendChild(sheet);
+ return sheet
+}
+function readerSetTurn(sheet,dx,dy,sx,sy){
+ const el=document.getElementById("chapterContent");
+ if(!el||!sheet)return;
+ const g=readerPageGeometry(),w=g.w,h=g.h;
+ const progress=Math.min(1,Math.abs(dx)/Math.max(w,1));
+ const eased=1-Math.pow(1-progress,1.45);
+ const fingerY=Math.max(0,Math.min(h,sy));
+ const originY=Math.max(8,Math.min(92,(fingerY/Math.max(h,1))*100));
+ const side=dx>0?"100%":"0%";
+ const direction=dx>0?-1:1;
+ const angle=direction*(eased*176);
+ const lift=Math.sin(eased*Math.PI)*Math.min(16,6+Math.abs(dy)*.12);
+ const drift=dx*.045;
+ const scale=1-eased*.008;
+ sheet.style.transformOrigin=side+" "+originY+"%";
+ sheet.style.transform="translate3d("+drift+"px,"+(-lift)+"px,0) scale("+scale+") rotateY("+angle+"deg)";
+ sheet.style.setProperty("--curl-light",String(.12+eased*.72));
+ sheet.style.setProperty("--curl-shadow",String(.12+eased*.72));
+ sheet.style.setProperty("--curl-x",(sx/Math.max(w,1)*100)+"%");
+ sheet.style.setProperty("--curl-y",originY+"%");
+ el.style.setProperty("--grab-x",(sx/Math.max(w,1)*100)+"%");
+ el.style.setProperty("--grab-y",originY+"%")
+}
+function bindReaderSwipe(){
+ const el=document.getElementById("chapterContent");
+ if(!el||el.dataset.swipeBound)return;
+ el.dataset.swipeBound="1";
+ let sx=0,sy=0,dragging=false,locked=false,sheet=null,delta=0;
+ const reset=()=>{
+  readerTurnCleanup();
+  dragging=false;
+  locked=false;
+  sheet=null;
+  delta=0
+ };
+ const finish=(ok,d)=>{
+  if(!sheet)return;
+  const g=readerPageGeometry(),target=readerPageIndex+(d>0?1:-1);
+  const canTurn=target>=0&&target<readerPageCount;
+  const go=ok&&canTurn;
+  const direction=d>0?-1:1;
+  sheet.style.transition="transform .56s cubic-bezier(.22,.82,.22,1)";
+  sheet.style.transformOrigin=d>0?"100% "+(sy/Math.max(g.h,1)*100)+"%":"0% "+(sy/Math.max(g.h,1)*100)+"%";
+  sheet.style.transform=go
+   ?"translate3d("+(d>0?g.w*.045:-g.w*.045)+"px,-3px,0) scale(.992) rotateY("+(direction*176)+"deg)"
+   :"translate3d(0,0,0) scale(1) rotateY(0deg)";
+  setTimeout(()=>{
+   if(go){
+    readerPageIndex=target;
+    reset();
+    readerSetPageState()
+   }else if(ok&&!canTurn){
+    reset();
+    navigateReaderChapter(d>0?1:-1)
+   }else reset()
+  },575)
+ };
+ el.addEventListener("touchstart",e=>{
+  if(!document.querySelector("#read .reader-screen")?.classList.contains("reader-fullscreen"))return;
+  if(e.touches.length!==1)return;
+  sx=e.touches[0].clientX;
+  sy=e.touches[0].clientY;
+  dragging=false;
+  locked=false;
+  sheet=null;
+  delta=0
+ },{passive:true});
+ el.addEventListener("touchmove",e=>{
+  if(e.touches.length!==1)return;
+  const dx=e.touches[0].clientX-sx,dy=e.touches[0].clientY-sy;
+  if(!locked){
+   if(Math.abs(dx)<6&&Math.abs(dy)<6)return;
+   if(Math.abs(dy)>Math.abs(dx)*1.2)return;
+   locked=true;
+   dragging=true;
+   delta=dx>0?1:-1;
+   sheet=readerTurnSheet(delta);
+   if(sheet)el.classList.add("is-turning")
+  }
+  if(!dragging||!sheet)return;
+  e.preventDefault();
+  readerSetTurn(sheet,dx,dy,sx,sy)
+ },{passive:false});
+ el.addEventListener("touchend",e=>{
+  if(!dragging||!sheet)return;
+  const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
+  const threshold=Math.max(48,readerPageGeometry().w*.16);
+  finish(Math.abs(dx)>=threshold&&Math.abs(dx)>=Math.abs(dy)*1.1,delta)
+ },{passive:true});
+ el.addEventListener("touchcancel",()=>{
+  if(dragging&&sheet)finish(false,delta||1)
+ },{passive:true})
+}
 
 function renderCurrentReader(){const content=document.getElementById("chapterContent");if(!content||!currentReaderVerses.length)return;const screen=document.querySelector("#read .reader-screen"),isFull=!!screen?.classList.contains("reader-fullscreen");readerTurnCleanup();readerPageIndex=0;const bookHeading=readerBookHeading(readerSelection.bookName||"",readerSelection.book),chapterHeading=readerChapterHeading(readerSelection.chapter),lineMap={normal:2.2,wide:2.65,extra:3.05},wordMap={normal:"0px",wide:"3px",extra:"6px"},sizeMap={normal:"20px",large:"23px",xl:"26px"};content.className="reader-page reader-font-"+readerSelection.font+" paper-"+(readerDisplay.paper||"cream");content.style.setProperty("--reader-line",lineMap[readerDisplay.lineSpacing]||2.2);content.style.setProperty("--reader-word",wordMap[readerDisplay.wordSpacing]||"0px");content.style.setProperty("--reader-size",sizeMap[readerDisplay.fontSize]||"20px");const markup="<div class='reader-book-title'>"+escapeHtml(bookHeading)+"</div><div class='reader-chapter-heading'>"+escapeHtml(chapterHeading)+"</div>"+renderVerseMarkup(currentReaderVerses,currentReaderLanguage,readerSelection.mode);content.innerHTML="";if(isFull){const pages=readerBuildPages(content,markup);requestAnimationFrame(()=>{readerPaginatePages(content,pages);if(readerPageTarget==="last")readerPageIndex=Math.max(0,readerPageCount-1);readerPageTarget="first";readerSetPageState();bindReaderVerseActions()})}else{content.innerHTML=markup;readerPageCount=1;readerPageIndex=0;bindReaderVerseActions()}updateReaderChapterNav();updateReaderOptionState();updateReaderDisplayPreview();bindReaderSwipe()}
 let readerResumeScrollY=0;let activeVerseActionKey=null;
@@ -1071,7 +1199,18 @@ async function exitReaderView(){
 }
 document.getElementById("readerViewButton").addEventListener("click",enterReaderView);
 document.getElementById("readerExitViewButton").addEventListener("click",exitReaderView);
-document.addEventListener("fullscreenchange",()=>{if(!document.fullscreenElement)setReaderViewMode(false)});
+document.addEventListener("fullscreenchange",()=>{
+ if(!document.fullscreenElement){
+  setReaderViewMode(false);
+  readerTurnCleanup();
+  readerPageIndex=0;
+  readerPageCount=1;
+  renderCurrentReader()
+ }else{
+  setReaderViewMode(true);
+  renderCurrentReader()
+ }
+});
 
 document.getElementById("readerOptionsApply").addEventListener("click",()=>{saveReaderSelection();saveReaderDisplay();document.getElementById("readerOptionsModal").classList.add("hidden");document.getElementById("readerOptionsModal").setAttribute("aria-hidden","true");renderCurrentReader()});
 document.getElementById("readerResetDefaults").addEventListener("click",()=>{readerDisplay=Object.assign({},readerDisplayDefaults);saveReaderDisplay();renderCurrentReader();updateReaderOptionState();updateReaderDisplayPreview()});
