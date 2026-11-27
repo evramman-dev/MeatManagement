@@ -1124,6 +1124,12 @@ const READER_GREEK_BOOK_SLUGS={
  TOB:"tobit",JDT:"judith",WIS:"wisdom-of-solomon",SIR:"sirach",BAR:"baruch",LJE:"letter-of-jeremiah","1MA":"1-maccabees",
  "2MA":"2-maccabees","3MA":"3-maccabees","4MA":"4-maccabees",SUS:"susanna",BEL:"bel-and-the-dragon",DAG:"daniel-greek","1ES":"1-esdras"
 };
+const READER_LXX_LOCAL_BOOKS={
+ PSA:{slug:"psalms-lxx"},JER:{slug:"jeremiah-lxx"},JOB:{slug:"job-lxx"},EST:{slug:"esther-greek"},
+ WIS:{slug:"wisdom"},EZR:{slug:"2-esdras",chapterOffset:0},NEH:{slug:"2-esdras",chapterOffset:10},
+ DAG:{slug:"daniel-theodotion"},SUS:{slug:"susanna"},BEL:{slug:"bel-and-the-dragon"},
+ "1ES":{slug:"1-esdras"}
+};
 let READER_WORD_STUDY_LAST_ERROR=null;
 let READER_WORD_STUDY_LOCAL_MANIFEST=null;
 const READER_WORD_STUDY_LOCAL_BOOKS={};
@@ -1159,7 +1165,8 @@ async function loadLocalGreekLemmaIndex(){
 }
 async function loadLocalWordStudyBook(language,bookCode){
  const manifest=await loadLocalWordStudyManifest();
- const slug=READER_GREEK_BOOK_SLUGS[String(bookCode||"").toUpperCase()];
+ const localBook=READER_LXX_LOCAL_BOOKS[String(bookCode||"").toUpperCase()]||{};
+ const slug=language==="wlc"?null:(localBook.slug||READER_GREEK_BOOK_SLUGS[String(bookCode||"").toUpperCase()]);
  const item=language==="wlc"?manifest?.wlc?.[bookCode]:manifest?.lxx?.[slug];
  if(!item?.path)throw new Error(language==="wlc"?"LOCAL_WLC_BOOK_MISSING":"LOCAL_LXX_BOOK_MISSING");
  const cacheKey=language+"|"+(language==="wlc"?bookCode:slug);
@@ -1172,7 +1179,9 @@ async function loadLocalWordStudyBook(language,bookCode){
 }
 async function loadLocalOriginalLanguageVerse(language,bookCode,chapter,verse){
  const rows=await loadLocalWordStudyBook(language,bookCode);
- const selected=rows.filter(row=>Number(row.chapter)===Number(chapter)&&Number(row.verse)===Number(verse));
+ const chapterOffset=language==="lxx"?(READER_LXX_LOCAL_BOOKS[String(bookCode||"").toUpperCase()]?.chapterOffset||0):0;
+ const sourceChapter=Number(chapter)+chapterOffset;
+ const selected=rows.filter(row=>Number(row.chapter)===sourceChapter&&Number(row.verse)===Number(verse));
  if(!selected.length)throw new Error("LOCAL_WORD_STUDY_VERSE_MISSING");
  let greekIndex=null;
  if(language==="lxx")greekIndex=await loadLocalGreekLemmaIndex();
