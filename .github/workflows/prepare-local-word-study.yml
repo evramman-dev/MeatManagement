@@ -50,6 +50,18 @@ jobs:
           with gzip.open(root / "greek-lemma-index.json.gz", "rt", encoding="utf-8") as stream:
               index = json.load(stream)
           assert index, "Greek lemma index is empty"
+          with gzip.open(root / "lxx" / "genesis.jsonl.gz", "rt", encoding="utf-8") as stream:
+              lxx_genesis = [json.loads(line) for line in stream]
+          with gzip.open(root / "wlc" / "GEN.jsonl.gz", "rt", encoding="utf-8") as stream:
+              wlc_genesis = [json.loads(line) for line in stream]
+          lxx_1_1 = next((row for row in lxx_genesis if row["chapter"] == 1 and row["verse"] == 1), None)
+          wlc_1_1 = next((row for row in wlc_genesis if row["chapter"] == 1 and row["verse"] == 1), None)
+          assert lxx_1_1 and len(lxx_1_1["words"]) >= 7, "LXX Genesis 1:1 word data missing"
+          assert wlc_1_1 and len(wlc_1_1["words"]) >= 7, "WLC Genesis 1:1 word data missing"
+          assert any(word.get("lemma") for word in lxx_1_1["words"]), "LXX Genesis 1:1 lemmas missing"
+          assert any(word.get("strongs") for word in wlc_1_1["words"]), "WLC Genesis 1:1 Strong's links missing"
+          print("Genesis 1:1 LXX words:", len(lxx_1_1["words"]))
+          print("Genesis 1:1 WLC words:", len(wlc_1_1["words"]))
           print("WLC books:", len(manifest["wlc"]))
           print("LXX books:", len(manifest["lxx"]))
           print("Greek lemma entries:", len(index))
