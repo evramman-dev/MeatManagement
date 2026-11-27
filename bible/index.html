@@ -1265,10 +1265,10 @@ async function openVerseStudy(type){
     const details=[
       "<span class='verse-word-arabic'><b class='verse-word-label'>المعنى بالعربية:</b> جاري التحميل عند فتح الكلمة</span>",
       transliteration?"<span class='verse-word-pronunciation'><b class='verse-word-label'>النطق بحروف عربية:</b> "+escapeHtml(arabicPronunciationFromTransliteration(transliteration))+"</span>":"",
-      lemma?"<span><b class='verse-word-label'>الجذر أو المدخل:</b> "+escapeHtml(lemma)+"</span>":"",
-      transliteration?"<span><b class='verse-word-label'>النطق:</b> "+escapeHtml(transliteration)+"</span>":"",
-      w.strongs?"<span><b class='verse-word-label'>Strong's:</b> "+escapeHtml(w.strongs)+"</span>":"",
       gloss?"<span><b class='verse-word-label'>المعنى المختصر:</b> "+escapeHtml(gloss)+"</span>":"",
+      transliteration?"<span><b class='verse-word-label'>النطق:</b> "+escapeHtml(transliteration)+"</span>":"",
+      lemma?"<span><b class='verse-word-label'>الجذر أو المدخل:</b> "+escapeHtml(lemma)+"</span>":"",
+      w.strongs?"<span><b class='verse-word-label'>Strong's:</b> "+escapeHtml(w.strongs)+"</span>":"",
       partOfSpeech?"<span><b class='verse-word-label'>نوع الكلمة:</b> "+escapeHtml(partOfSpeech)+"</span>":"",
       parsing?"<span><b class='verse-word-label'>الصرف:</b> "+escapeHtml(parsing)+"</span>":"",
       senseList.length?"<span class='verse-word-definition'><b class='verse-word-label'>تعريف المصدر:</b> "+senseList.map(s=>escapeHtml(String(s.definition).split("\n")[0])).join(" · ")+"</span>":""
@@ -1276,7 +1276,7 @@ async function openVerseStudy(type){
     rendered.push("<button type='button' class='verse-study-item verse-word-item' data-word-index='"+index+"' data-strongs='"+escapeHtml(w.strongs||"")+"'><strong>"+escapeHtml(w.text)+"</strong><small>"+escapeHtml([gloss,transliteration].filter(Boolean).join(" · "))+"</small><span class='verse-word-details hidden'>"+details+"</span></button>");
    }
    const body=rendered.length?rendered.join(""):"<p class='verse-study-empty'>لا تتوفر بيانات دراسة الكلمات لهذه الآية من المصدر الحالي.</p>";
-   panel.innerHTML="<div class='verse-study-tabs'>"+["crossReferences","wordMeanings","commentary"].map(t=>"<button type='button' class='verse-study-tab "+(t===type?"active":"")+"' data-study-type='"+t+"'>"+readerStudyLabel(t)+"</button>").join("")+"</div><div class='verse-study-content'><div class='verse-study-title'>دراسة كلمات النص الأصلي</div><p class='verse-study-empty'>اضغط على أي كلمة لعرض بياناتها. المعاني هنا مأخوذة من مصادر دراسة النص الأصلي، ولا نعرضها كترجمة عربية للكلمة.</p><div class='verse-study-list'>"+body+"</div></div><p class='verse-study-source'>المصدر: STEPBible / Tyndale House, Cambridge عبر Free Use Bible API، بترخيص CC BY 4.0.</p>";
+   panel.innerHTML="<div class='verse-study-tabs'>"+["crossReferences","wordMeanings","commentary"].map(t=>"<button type='button' class='verse-study-tab "+(t===type?"active":"")+"' data-study-type='"+t+"'>"+readerStudyLabel(t)+"</button>").join("")+"</div><div class='verse-study-content'><div class='verse-study-title'>دراسة كلمات النص الأصلي</div><p class='verse-study-empty'>اضغط على أي كلمة لعرض بياناتها. المعاني هنا مأخوذة من مصادر دراسة النص الأصلي، ولا نعرضها كترجمة عربية للكلمة.</p><div class='verse-study-list'>"+body+"</div></div><p class='verse-study-source'>المصادر: STEPBible / Tyndale House, Cambridge عبر Free Use Bible API، بترخيص CC BY 4.0. المعنى العربي من المصدر العربي المرتبط بمدخل الكلمة.</p>";
    panel.querySelectorAll("[data-study-type]").forEach(b=>b.addEventListener("click",()=>openVerseStudy(b.dataset.studyType)));
    panel.querySelectorAll("[data-word-index]").forEach(b=>b.addEventListener("click",async()=>{
  const d=b.querySelector(".verse-word-details");if(!d)return;
