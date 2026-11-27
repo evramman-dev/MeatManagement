@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "version": 10,
+    "version": 11,
     "description": "مصادر دراسة النص الأصلي في تطبيق رِحلة",
     "purpose": "تسجيل مصادر النص اليوناني والمعاجم والمورفولوجيا وترخيص كل مصدر قبل إدخال بيانات محلية موسعة"
   },
@@ -119,13 +119,14 @@
       "note": "دفعة أولى مجمعة لمعالجة الكلمات التي ظهرت ناقصة في تكوين 1:2. تمت مراجعة أرقام Strong's واللممات والنقل الصوتي من بيانات المصدر، وصيغت المعاني بالعربية دون ترجمة آلية للتعريف الإنجليزي."
     }
   },
-  "patriarchal1904": {
-    "source": "Patriarchal Greek New Testament 1904 (Antoniades)",
-    "repository": "byztxt/greektext-antoniades",
-    "license": "Public Domain",
-    "scope": "Greek New Testament word study with Strong's numbers and morphology",
-    "access": "Open Scriptorium API",
-    "endpoint": "https://openscriptorium.org/api/v1/works/patriarchal-1904/:book/:chapter/:verse?words=true",
-    "note": "Used for New Testament original-language word study. The displayed reader edition remains unchanged."
+  "rp2018": {
+    "source": "Robinson-Pierpont Byzantine Textform 2018",
+    "repository": "byztxt/byzantine-majority-text",
+    "license": "Public Domain (Unlicense)",
+    "scope": "Greek New Testament word study with Strong's numbers and morphology for all 27 books",
+    "access": "Local files bundled in the Rehla application",
+    "sourceVersion": "v3.3.2 / commit 27a45ff1b7be6c17ccbfeac414f3f55732ae8e28",
+    "dataPath": "./data/word-study/rp2018/:book.csv",
+    "note": "The reader edition remains Robinson-Pierpont 2018. Word-study data is stored locally so study does not depend on an external API."
   }
 }
