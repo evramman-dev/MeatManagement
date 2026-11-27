@@ -540,6 +540,7 @@ async function renderCopticReadingText(readings){
   if(!groupItems.length)continue;
   const hasGospel=groupItems.some(x=>x.key.endsWith("Gospel"));
   const groupTitle=group.title==="عشية"||group.title==="باكر"||group.title==="القداس الإلهي" ? "مزمور وإنجيل "+group.title : "قراءات "+group.title;
+  if(group.title==="القداس الإلهي")sections.push("<div class='coptic-reading-group-heading'>قراءات القداس الإلهي</div>");
   if(group.title!=="القداس الإلهي")sections.push("<div class='coptic-reading-group-heading'>"+escapeHtml(groupTitle)+"</div>");
   const gospelItem=groupItems.find(x=>x.key.endsWith("Gospel"));
   const gospelPart=gospelItem?splitReadingReferences(gospelItem.raw||"").map(parseReadingReferencePart).filter(Boolean)[0]:null;
