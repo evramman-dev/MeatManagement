@@ -888,7 +888,7 @@ function canonicalBookNumberForHeadings(bookCode){
 }
 function extractSectionHeadingsFromDocument(doc){
  const result=[],seen=new Set();
- const skip=/^(سفر|الكتاب المقدس|العهد القديم|العهد الجديد|الإصحاح|تفسير|المصدر|الإصحاحات|كتب|حجم الخط|التالي|السابق|بحث|القراءات|الأجبية|الطقس|عقيدة|تاريخ|مقدمة)$/;
+ const skip=/^(سفر|الكتاب المقدس|العهد القديم|العهد الجديد|الإصحاح|تفسير|المصدر|الإصحاحات|كتب|حجم الخط|التالي|السابق|بحث|القراءات|الأجبية|الطقس|عقيدة|تاريخ)$/;
  const nodes=Array.from(doc.querySelectorAll("h1,h2,h3,h4,h5,h6"));
  const findVerseAfter=node=>{
   let el=node.nextElementSibling;
