@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "version": 1,
+    "version": 2,
     "language": "ar",
     "description": "قاموس محلي لمعاني Strong's العبرية والآرامية واليونانية داخل تطبيق رِحلة",
     "license": "Strong's Exhaustive Concordance definitions are public domain. Numbered senses from OpenScriptures Strong's dictionary are CC BY-SA 3.0. Arabic wording here is an original concise Arabic rendering for the listed senses.",
@@ -19,7 +19,8 @@
       "الجزء المختار"
     ],
     "meaning": "البداية أو الأول أو الرئيس أو الجزء المختار",
-    "source": "قاموس رِحلة المحلي"
+    "source": "قاموس رِحلة المحلي",
+    "pronunciation": "بِريشيت"
   },
   "G26": {
     "language": "greek",
@@ -38,7 +39,7 @@
       "الإله"
     ],
     "meaning": "الله أو الإله",
-    "pronunciation": "ثيوس",
+    "pronunciation": "ثِيُوس",
     "source": "قاموس رِحلة المحلي"
   },
   "G2962": {
@@ -98,7 +99,7 @@
       "أداة التعريف"
     ],
     "meaning": "أداة التعريف في اليونانية",
-    "pronunciation": "هو، هِه، تو",
+    "pronunciation": "هُ، هِه، تُو",
     "source": "قاموس رِحلة المحلي"
   },
   "G3956": {
@@ -152,7 +153,7 @@
       "بين"
     ],
     "meaning": "في أو بـ أو بين بحسب السياق",
-    "pronunciation": "إن",
+    "pronunciation": "إِن",
     "source": "قاموس رِحلة المحلي"
   },
   "G2532": {
@@ -302,5 +303,92 @@
     "meaning": "يرى أو يبصر، وقد يدل على المعرفة بحسب السياق",
     "pronunciation": "هُوراو",
     "source": "قاموس رِحلة المحلي"
+  },
+  "H1254": {
+    "language": "hebrew",
+    "arabic": [
+      "خلق",
+      "أنشأ",
+      "كوّن"
+    ],
+    "meaning": "خلق أو أنشأ أو كوّن، ويُستخدم عن فعل الخلق الإلهي",
+    "pronunciation": "بَرا",
+    "source": "قاموس رِحلة المحلي، صياغة عربية من Strong's"
+  },
+  "H430": {
+    "language": "hebrew",
+    "arabic": [
+      "الله",
+      "الإله",
+      "الآلهة"
+    ],
+    "meaning": "الله أو الإله، وقد تأتي بصيغة الجمع بحسب السياق",
+    "pronunciation": "إلوهيم",
+    "source": "قاموس رِحلة المحلي، صياغة عربية من Strong's"
+  },
+  "H853": {
+    "language": "hebrew",
+    "arabic": [
+      "علامة المفعول به المباشر"
+    ],
+    "meaning": "أداة نحوية تسبق المفعول به المباشر، ولا تُترجم عادةً بكلمة مستقلة",
+    "pronunciation": "إت",
+    "source": "قاموس رِحلة المحلي، وصف نحوي للمدخل"
+  },
+  "H8064": {
+    "language": "hebrew",
+    "arabic": [
+      "السماوات",
+      "السماء",
+      "الفضاء"
+    ],
+    "meaning": "السماوات أو السماء، ويُستخدم أيضًا للدلالة على الفضاء",
+    "pronunciation": "شَمايِم",
+    "source": "قاموس رِحلة المحلي، صياغة عربية من Strong's"
+  },
+  "H776": {
+    "language": "hebrew",
+    "arabic": [
+      "الأرض",
+      "الأرض اليابسة",
+      "البلاد"
+    ],
+    "meaning": "الأرض أو اليابسة أو البلاد بحسب السياق",
+    "pronunciation": "إيرِتس",
+    "source": "قاموس رِحلة المحلي، صياغة عربية من Strong's"
+  },
+  "G746": {
+    "language": "greek",
+    "arabic": [
+      "البداية",
+      "الأصل",
+      "المبدأ"
+    ],
+    "meaning": "البداية أو الأصل أو المبدأ، وقد يدل في سياقات أخرى على الرئاسة أو السلطان",
+    "pronunciation": "أرخِي",
+    "source": "قاموس رِحلة المحلي، صياغة عربية من STEPBible TBESG"
+  },
+  "G4160": {
+    "language": "greek",
+    "arabic": [
+      "يفعل",
+      "يصنع",
+      "يعمل",
+      "يخلق"
+    ],
+    "meaning": "يفعل أو يصنع أو يعمل، ويأتي بمعنى يخلق عند الحديث عن فعل الله",
+    "pronunciation": "بويِئو",
+    "source": "قاموس رِحلة المحلي، صياغة عربية من STEPBible TBESG"
+  },
+  "G1093": {
+    "language": "greek",
+    "arabic": [
+      "الأرض",
+      "اليابسة",
+      "الأرض ككوكب"
+    ],
+    "meaning": "الأرض أو اليابسة أو سطح الأرض، وقد تدل على البلاد بحسب السياق",
+    "pronunciation": "جِي",
+    "source": "قاموس رِحلة المحلي، صياغة عربية من STEPBible TBESG"
   }
 }
