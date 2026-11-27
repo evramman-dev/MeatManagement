@@ -1127,12 +1127,12 @@ const READER_GREEK_BOOK_SLUGS={
 const READER_HEBREW_STUDY_API="https://openscriptorium.org/api/v1/works/wlc";
 const READER_LXX_STUDY_API="https://openscriptorium.org/api/v1/works/rahlfs-lxx";
 const READER_NT_STUDY_API="https://openscriptorium.org/api/v1/works/patriarchal-1904";
-async function loadOpenScriptoriumChapterWordStudy(bookCode,chapter,work){
+async function loadOpenScriptoriumChapterWordStudy(bookCode,chapter,work,verse){
  const slug=READER_GREEK_BOOK_SLUGS[String(bookCode||"").toUpperCase()];
  if(!slug)return [];
- const url=work+"/"+slug+"/"+chapter+"?words=true";
+ const url=work+"/"+slug+"/"+chapter+(verse?"/"+verse:"")+"?words=true";
  try{
-  const cache=await caches.open("rehla-study-words-v1");
+  const cache=await caches.open("rehla-study-words-v2");
   let response=await cache.match(url);
   if(!response){
    response=await fetch(url,{mode:"cors"});
@@ -1150,7 +1150,7 @@ async function loadOpenScriptoriumChapterWordStudy(bookCode,chapter,work){
     const morph=String(w?.morph_code||w?.morphology||w?.morph||w?.parsing||"");
     return {
      text:String(w?.surface||w?.text||w?.word||""),
-     strongs:String(w?.strongs_number||w?.strongs||w?.strong||""),
+     strongs:(()=>{const raw=String(w?.strongs_number||w?.strongs||w?.strong||"");const prefix=work===READER_HEBREW_STUDY_API?"H":"G";return /^\d+$/.test(raw)?prefix+raw:raw})(),
      gloss:String(lemma?.gloss||w?.gloss||""),
      transliteration:String(lemma?.transliteration||w?.transliteration||""),
      lemma:String(lemma?.lemma||w?.lemma_text||rawLemma||""),
@@ -1172,7 +1172,7 @@ async function loadVerseWordStudy(key){
  const useLxx=["TOB","JDT","WIS","SIR","BAR","LJE","1MA","2MA","3MA","4MA","SUS","BEL","DAG","1ES"].includes(bookCode)||["GEN","EXO","LEV","NUM","DEU","JOS","JDG","RUT","1SA","2SA","1KI","2KI","1CH","2CH","EZR","NEH","EST","JOB","PSA","PRO","ECC","SNG","ISA","JER","LAM","EZK","HOS","JOL","AMO","OBA","JON","MIC","NAM","HAB","ZEP","HAG","ZEC","MAL"].includes(bookCode);
  READER_WORD_STUDY_PENDING[pendingKey]=(async()=>{
   if(translation==="HE-WLC-2017"){
-   return await loadOpenScriptoriumChapterWordStudy(bookCode,chapter,READER_HEBREW_STUDY_API);
+   return await loadOpenScriptoriumChapterWordStudy(bookCode,chapter,READER_HEBREW_STUDY_API,verse);
   }
   if(useLxx){
    return await loadOpenScriptoriumChapterWordStudy(bookCode,chapter,READER_LXX_STUDY_API);
@@ -1181,7 +1181,7 @@ async function loadVerseWordStudy(key){
   if(originalGreek.length)return originalGreek;
   const url="https://bible.helloao.org/api/d/bsb-interlinear/"+bookCode+"/"+chapter+".json";
   try{
-   const cache=await caches.open("rehla-study-words-v1");
+   const cache=await caches.open("rehla-study-words-v2");
    let response=await cache.match(url);
    if(!response){response=await fetch(url,{mode:"cors"});if(!response.ok)return [];try{await cache.put(url,response.clone())}catch(e){}}
    const data=await response.json();
@@ -1230,7 +1230,7 @@ async function loadLexiconEntry(strongs){
  }
  const url="https://bible.helloao.org/api/d/stepbible-lexicon/lexicon/"+id+".json";
  try{
-  const cache=await caches.open("rehla-study-words-v1");let response=await cache.match(url);
+  const cache=await caches.open("rehla-study-words-v2");let response=await cache.match(url);
   if(!response){response=await fetch(url,{mode:"cors"});if(!response.ok)return null;try{await cache.put(url,response.clone())}catch(e){}}
   const data=await response.json();READER_WORD_STUDY_CACHE["lex:"+id]=data?.entry||null;return data?.entry||null;
  }catch(e){return null}
