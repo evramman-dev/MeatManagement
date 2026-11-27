@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "version": 3,
+    "version": 4,
     "description": "مصادر دراسة النص الأصلي في تطبيق رِحلة",
     "purpose": "تسجيل مصادر النص اليوناني والمعاجم والمورفولوجيا وترخيص كل مصدر قبل إدخال بيانات محلية موسعة"
   },
@@ -80,6 +80,10 @@
       "morphology",
       "disambiguation"
     ],
-    "note": "Greek glosses and definitions are supplied in their source language. Arabic meanings are shown only when an Arabic entry exists in Rehla's curated local dictionary."
+    "note": "Greek glosses and definitions are supplied in their source language. Arabic meanings are shown only when an Arabic entry exists in Rehla's curated local dictionary.",
+    "arabicCoverage": {
+      "entries": 29,
+      "policy": "Arabic meanings are provided only for reviewed entries in strongs-ar.json; other Greek entries retain source-language gloss and definition without pretending they are Arabic translations."
+    }
   }
 }
