@@ -285,7 +285,7 @@ test('Bible reader loads local editions and keeps unavailable books and chapters
   await expect(copticVerse).toHaveAttribute('lang', 'cop');
   await expect(page.locator('#readerFontCopticNoto')).toBeVisible();
   await expect(page.locator('#readerFontCopticNoto')).toHaveClass(/filter-active/);
-  const unicodeSample = '̀ⲙ̀ Ⲙⲙ ⲉ︤ⲛ︥ ⲡ̅ⲛ̅ⲁ̅';
+  const unicodeSample = '̀ⲙ̀ Ⲙⲙ ⲉ︤ⲛ︦ⲧ︥ ⲡ̅ⲛ̅ⲁ̅';
   const originalVerseText = await copticVerse.textContent();
   await copticVerse.evaluate((el, value) => { el.textContent = value; }, unicodeSample);
   const unicodeRender = await copticVerse.evaluate(el => ({
