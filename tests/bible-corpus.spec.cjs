@@ -342,6 +342,26 @@ test('Bible reader loads local editions and keeps unavailable books and chapters
       await expect(page.locator('#readerOptionsModal')).toBeVisible();
     }
   }
+  // Uppercase Coptic letters and their combining marks must stay Unicode in legacy-font mode.
+  const uppercaseFallbacks = await page.evaluate(() => {
+    const ids = ['coptic-copt', 'coptic-new-athanasius', 'coptic-athanasius-plain'];
+    return ids.map(id => {
+      const host = document.createElement('span');
+      host.className = 'reader-verse-text coptic-script';
+      host.innerHTML = copticLegacyMarkup('Ⲡ̇ϫⲱⲙ', id);
+      document.body.appendChild(host);
+      const fallback = host.querySelector('.coptic-unicode-fallback');
+      const result = { id, text: host.textContent, fallbackText: fallback?.textContent || '', family: fallback ? getComputedStyle(fallback).fontFamily : '' };
+      host.remove();
+      return result;
+    });
+  });
+  for (const result of uppercaseFallbacks) {
+    expect(result.text).toBe('Ⲡ̇ϫⲱⲙ');
+    expect(result.fallbackText).toBe('Ⲡ̇');
+    expect(result.family).toContain('Noto Sans Coptic');
+  }
+
   const copyCheck = await page.evaluate(() => {
     const verse = document.querySelector('#chapterContent .reader-verse-text.coptic-script');
     const glyph = verse && verse.querySelector('.coptic-legacy-char');
