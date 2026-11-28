@@ -3,7 +3,7 @@ name: Rehla Bible corpus browser QA
 on:
   workflow_dispatch:
   push:
-    branches: [main, feature/rehla-koine-nt-rp-2018, feature/rehla-rp2018-accented-nt-main, feat/import-swete-ecclesiastes-main-20261128]
+    branches: [main, feature/rehla-koine-nt-rp-2018, feature/rehla-rp2018-accented-nt-main, feat/import-swete-ecclesiastes-main-20261128, feat/coptic-catalog-and-swete-reader-20261128]
     paths:
       - "bible/**"
       - "tests/bible-corpus.spec.cjs"
