@@ -136,7 +136,7 @@ jobs:
         continue-on-error: true
         run: node bible/tools/probe_swete_ecclesiastes_chapters.cjs
 
-      - name: Upload screenshots, traces and HTML report
+      - name: Probe exact Swete Ecclesiastes chapter openings\n        if: always()\n        continue-on-error: true\n        run: node bible/tools/probe_swete_ecclesiastes_exact_chapters.cjs\n\n      - name: Upload screenshots, traces and HTML report
         if: always()
         uses: actions/upload-artifact@v6
         with:
