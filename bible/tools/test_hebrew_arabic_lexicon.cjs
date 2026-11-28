@@ -50,8 +50,12 @@ assert.equal(
   "the local Hebrew Arabic lexicon must contain 40 explicitly tagged entries"
 );
 assert.equal(dictionary.H7225.language, "hebrew", "H7225 must be tagged as Hebrew");
+assert.ok(dictionary.H7363.arabic.includes("يضعف"), "H7363 must retain the Qal sense of growing weak");
+assert.ok(dictionary.H7363.arabic.includes("يحوم"), "H7363 must retain the Piel sense of hovering");
+assert.match(dictionary.H7363.meaning, /تكوين 1:2/, "H7363 must explain its Genesis 1:2 contextual sense");
+assert.equal(metadata._meta.version, 17, "original-language metadata version");
 
-assert.match(sw, /const CACHE="rehla-v121"/);
+assert.match(sw, /const CACHE="rehla-v122"/);
 
 const start = html.indexOf("function arabicPronunciationFromTransliteration");
 const end = html.indexOf("\nlet READER_LOCAL_STRONGS_AR", start);
