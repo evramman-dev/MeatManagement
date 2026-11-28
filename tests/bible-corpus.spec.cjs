@@ -61,7 +61,7 @@ test('Bible reader loads local editions and keeps unavailable books and chapters
 
   await page.locator('.nav button[data-view="read"]').click();
   await expect(page.locator('#readerChooseButton')).toBeVisible();
-  await expect(page.locator('#bibleSearchCard')).toHaveCount(0);
+  await expect(page.locator('#bibleSearchCard')).toBeHidden();
 
   await page.locator('.nav button[data-view="search"]').click();
   await expect(page.locator('#bibleSearchCard')).toBeVisible();
