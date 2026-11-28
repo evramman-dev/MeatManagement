@@ -7,18 +7,12 @@ on:
       - ".github/workflows/bohairic-horner-research.yml"
       - "bible/NKJV_BOHAIRIC_EDITION_AUDIT.md"
       - "bible/data/multilingual-edition-registry.draft.json"
-  pull_request:
-    paths:
-      - "bible/tools/extract_bohairic_horner_usfm.py"
-      - ".github/workflows/bohairic-horner-research.yml"
-      - "bible/NKJV_BOHAIRIC_EDITION_AUDIT.md"
-      - "bible/data/multilingual-edition-registry.draft.json"
 
 jobs:
   extract:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -34,18 +28,32 @@ jobs:
 
       - name: Extract and QA
         run: |
-          set +e
-          python3 bible/tools/extract_bohairic_horner_usfm.py             --src /tmp/copbhc             --out /tmp/copbhc.jsonl             --audit /tmp/copbhc_audit.json             --archive /tmp/copbhc_usfm.zip
-          status=$?
+          python3 bible/tools/extract_bohairic_horner_usfm.py             --src /tmp/copbhc             --out /tmp/copbhc.jsonl             --audit /tmp/copbhc_audit.json             --archive /tmp/copbhc_usfm.zip             --app-out bible/data/cop-bohairic-horner-nt.jsonl.gz
           cat /tmp/copbhc_audit.json
-          exit $status
+          cp /tmp/copbhc_audit.json bible/data/cop-bohairic-horner-nt_audit.json
 
-      - name: Upload research candidate
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: bohairic-horner-nt-research-candidate
-          path: |
-            /tmp/copbhc.jsonl
-            /tmp/copbhc_audit.json
-          retention-days: 14
+      - name: Verify app corpus
+        run: |
+          python3 - <<'PY'
+          import gzip, json
+          from pathlib import Path
+          path = Path("bible/data/cop-bohairic-horner-nt.jsonl.gz")
+          rows = [json.loads(x) for x in gzip.open(path, "rt", encoding="utf-8") if x.strip()]
+          assert len(rows) == 7956, len(rows)
+          assert len({(r["book_id"], r["chapter"], r["verse"]) for r in rows}) == 7956
+          assert len({r["book_id"] for r in rows}) == 27
+          assert all(r["text"].strip() for r in rows)
+          print("app corpus QA passed", len(rows), "verses")
+          PY
+
+      - name: Commit app corpus
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add bible/data/cop-bohairic-horner-nt.jsonl.gz bible/data/cop-bohairic-horner-nt_audit.json
+          if git diff --cached --quiet; then
+            echo "No corpus changes to commit"
+            exit 0
+          fi
+          git commit -m "Add Bohairic Horner NT research corpus"
+          git push
