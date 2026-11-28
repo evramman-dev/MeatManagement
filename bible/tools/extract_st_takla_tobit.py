@@ -13,9 +13,9 @@ import sys
 import time
 from pathlib import Path
 from urllib.parse import parse_qs, urljoin, urlparse
+from urllib.request import Request, urlopen
 
 from bs4 import BeautifulSoup
-from urllib.request import Request, urlopen
 
 BASE = "https://st-takla.org/Bibles/BibleSearch/showChapter.php"
 BOOK_NUMBER = 17
@@ -23,7 +23,6 @@ BOOK_ID = "TOB"
 TRANSLATION_ID = "ARB-JES-1877"
 EXPECTED_CHAPTERS = 14
 ARABIC_RE = re.compile(r"[\u0600-\u06FF]")
-VERSE_LINK_RE = re.compile(r"showVerses\\.php", re.I)
 
 
 def fetch(url: str) -> str:
@@ -56,8 +55,8 @@ def extract_chapter(chapter: int) -> list[dict]:
 
     for anchor in anchors:
         number = verse_number_from_link(anchor)
-        candidates = []
         parent = anchor
+        selected_text = None
         for _ in range(6):
             parent = parent.parent
             if parent is None:
@@ -66,17 +65,16 @@ def extract_chapter(chapter: int) -> list[dict]:
                 a for a in parent.select('a[href*="showVerses.php"]')
                 if verse_number_from_link(a) is not None
             ]
-            text = parent.get_text(" ", strip=True)
-            if len(verse_links) == 1 and ARABIC_RE.search(text):
-                candidates.append(text)
+            candidate = parent.get_text(" ", strip=True)
+            if len(verse_links) == 1 and ARABIC_RE.search(candidate):
+                selected_text = candidate
                 break
-        if not candidates:
+
+        if not selected_text:
             continue
 
-        text = re.sub(r"\\s+", " ", candidates[0]).strip()
-        # The number is a separate linked label on the page; remove it only
-        # when it appears at the beginning of the selected verse container.
-        text = re.sub(rf"^0*{number}[.\\s،:：-]+", "", text).strip()
+        text = re.sub(r"\s+", " ", selected_text).strip()
+        text = re.sub(rf"^0*{number}[.\s،:：-]+", "", text).strip()
         if not ARABIC_RE.search(text) or len(text) < 8:
             continue
         if number in found and found[number] != text:
@@ -128,15 +126,12 @@ def main() -> int:
     for index, chapter in enumerate(chapters):
         chapter_rows = extract_chapter(chapter)
         rows.extend(chapter_rows)
-        print(
-            f"chapter {chapter}: {len(chapter_rows)} verses",
-            file=sys.stderr,
-        )
+        print(f"chapter {chapter}: {len(chapter_rows)} verses", file=sys.stderr)
         if index + 1 < len(chapters):
             time.sleep(max(0.0, args.delay))
 
     serialized = "".join(
-        json.dumps(row, ensure_ascii=False) + "\\n" for row in rows
+        json.dumps(row, ensure_ascii=False) + "\n" for row in rows
     )
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
