@@ -256,6 +256,35 @@
       "coverage_status": "surviving_bohairic_witnesses_partial_not_full_coptic_old_testament",
       "corpus_status": "not_imported",
       "notes": "Research corpus with TEI and corpus downloads. Preserve manuscript/text witness identity and source references. The surviving Bohairic evidence does not cover every Old Testament book; do not infer missing books or additions."
+    },
+    {
+      "edition_id": "en_nkjv",
+      "name": "New King James Version",
+      "display_name_ar": "الكتاب المقدس بالإنجليزية — New King James Version",
+      "language_id": "en",
+      "scope": "OT_NT",
+      "textual_tradition": "Traditional-text based translation with critical-text notes",
+      "source_url": "https://www.thomasnelsonbibles.com/nkjv-bible/",
+      "license": "Copyrighted by Thomas Nelson, Inc.",
+      "license_status": "verified_copyrighted_license_required_for_full_corpus",
+      "coverage_status": "full_bible_edition_copyrighted",
+      "corpus_status": "blocked_pending_redistribution_license",
+      "notes": "Thomas Nelson states that NKJV is copyrighted and owned by Thomas Nelson, Inc. The publisher allows limited free use up to 500 verses or 25 percent of a work under stated conditions, but a complete Bible corpus for a free app requires a licensing review. Do not copy or import the full NKJV text until written redistribution permission or a license covering the app is obtained."
+    },
+    {
+      "edition_id": "nt_cop_bohairic_horner_pd",
+      "name": "Coptic New Testament in the Bohairic Dialect — Horner",
+      "display_name_ar": "العهد الجديد القبطي البحيري — هورنر",
+      "language_id": "cop",
+      "dialect": "Bohairic",
+      "scope": "NT",
+      "textual_tradition": "Bohairic Coptic",
+      "source_url": "https://bibles.dbs.org/COPSNT/pdf/COPSNT.pdf",
+      "license": "Public Domain",
+      "license_status": "source_catalog_public_domain",
+      "coverage_status": "27_book_new_testament",
+      "corpus_status": "research_import_candidate",
+      "notes": "Digital Bible Society identifies this Coptic New Testament as corresponding to George Horner's critical edition of the Bohairic Northern dialect, begun in 1898, and marks the edition Public Domain. Use this Horner witness as the safer corpus candidate rather than assuming the later Bohairica 1.2 standardized Wells edition is public domain."
     }
   ],
   "alignment_policy": {
