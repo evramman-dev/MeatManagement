@@ -79,10 +79,7 @@ jobs:
           print("All Word files downloaded and converted for research only.")
           PY
       - name: Parse Word text into separate research-only verse candidates
-        run: |
-          python bible/tools/extract_st_takla_word_candidates.py \\
-            --text-dir build/st-takla-word-probe/text \\
-            --output-dir build/st-takla-word-probe/candidates
+        run: python bible/tools/extract_st_takla_word_candidates.py --text-dir build/st-takla-word-probe/text --output-dir build/st-takla-word-probe/candidates
       - name: Upload Word source probe
         uses: actions/upload-artifact@v4
         with:
