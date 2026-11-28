@@ -858,68 +858,84 @@ const HEBREW_BOOKS={
  "יואל":"jol","עמוס":"amo","עובדיה":"oba","יונה":"jon","מיכה":"mic","נחום":"nam","חבקוק":"hab","צפניה":"zep",
  "חגי":"hag","זכריה":"zec","מלאכי":"mal"
 };
-const HEBREW_SOURCE_CODE_TO_ID={"GEN":"gen","EXO":"exo","LEV":"lev","NUM":"num","DEU":"deu","JOS":"jos","JDG":"jdg","RUT":"rut","1SA":"1sa","2SA":"2sa","1KI":"1ki","2KI":"2ki","1CH":"1ch","2CH":"2ch","EZR":"ezr","NEH":"neh","EST":"est","JOB":"job","PSA":"psa","PRO":"pro","ECC":"ecc","SNG":"sng","ISA":"isa","JER":"jer","LAM":"lam","EZK":"ezk","DAN":"dan","HOS":"hos","JOL":"jol","AMO":"amo","OBA":"oba","JON":"jon","MIC":"mic","NAM":"nam","HAB":"hab","ZEP":"zep","HAG":"hag","ZEC":"zec","MAL":"mal"};
+const HEBREW_SOURCE_CODE_TO_ID={
+ "GEN":"gen","EXO":"exo","LEV":"lev","NUM":"num","DEU":"deu","JOS":"jos","JDG":"jdg","RUT":"rut",
+ "1SA":"1sa","2SA":"2sa","1KI":"1ki","2KI":"2ki","1CH":"1ch","2CH":"2ch","EZR":"ezr","NEH":"neh",
+ "EST":"est","JOB":"job","PSA":"psa","PRO":"pro","ECC":"ecc","SNG":"sng","ISA":"isa","JER":"jer",
+ "LAM":"lam","EZK":"ezk","DAN":"dan","HOS":"hos","JOL":"jol","AMO":"amo","OBA":"oba","JON":"jon",
+ "MIC":"mic","NAM":"nam","HAB":"hab","ZEP":"zep","HAG":"hag","ZEC":"zec","MAL":"mal"
+};
 const WLC_BOOK_IDS=new Set(Object.values(HEBREW_SOURCE_CODE_TO_ID));
-const LXX_SOURCE_BOOK_IDS=new Set(["GEN","EXO","LEV","NUM","DEU","JOS","JDG","RUT","1SA","2SA","1KI","2KI","1CH","2CH","EZR","JOB","PSA","PRO","ECC","SNG","ISA","JER","LAM","EZK","DAN","HOS","JOL","AMO","OBA","JON","MIC","NAM","HAB","ZEP","HAG","ZEC","MAL","EST","TOB","JDT","ESG","WIS","SIR","BAR","LJE","SUS","BEL","1MA","2MA","3MA","4MA","1ES","MAN","DAG"]);
-const LXX_BOOK_ID_MAP={"ESG":"est","DAG":"dan","EST":"dan","TOB":"tob","JDT":"jdt","WIS":"wis","SIR":"sir","BAR":"bar","1MA":"1ma","2MA":"2ma"};
+const LXX_SOURCE_BOOK_IDS=new Set(["GEN","EXO","LEV","NUM","DEU","JOS","JDG","RUT","1SA","2SA","1KI","2KI","1CH","2CH","EZR","JOB","PSA","PRO","ECC","SNG","ISA","JER","LAM","EZK","DAN","HOS","JOL","AMO","OBA","JON","MIC","NAM","HAB","ZEP","HAG","ZEC","MAL","EST","DAN","TOB","JDT","ESG","WIS","SIR","BAR","LJE","SUS","BEL","1MA","2MA","3MA","4MA","1ES","MAN","DAG"]);
+const LXX_BOOK_ID_MAP={"ESG":"est","DAG":"dan","EST":"est","DAN":"dan","TOB":"tob","JDT":"jdt","WIS":"wis","SIR":"sir","BAR":"bar","1MA":"1ma","2MA":"2ma"};
 const GRC_KOINE_NT_BOOK_IDS=new Set(["MAT","MRK","LUK","JHN","ACT","ROM","1CO","2CO","GAL","EPH","PHP","COL","1TH","2TH","1TI","2TI","TIT","PHM","HEB","JAS","1PE","2PE","1JN","2JN","3JN","JUD","REV"]);
-function translationHasBook(id,bookId){const b=String(bookId||"").toUpperCase();if(id==="HE-WLC-2017")return WLC_BOOK_IDS.has(HEBREW_SOURCE_CODE_TO_ID[b]||b.toLowerCase());if(id==="HE-DELITZSCH-1885")return GRC_KOINE_NT_BOOK_IDS.has(b);if(id==="EN-WEB")return EBIBLE_BOOK_CODES.includes(b);if(id==="COP-BOHAIRIC-OT")return readerSections.OT.flatMap(s=>s.books.map(x=>x[0])).includes(b);if(id==="GRC-LXX-SWETE-1907-ECC")return b==="ECC";if(id==="GRC-LXX-BRENTON-1851")return LXX_SOURCE_BOOK_IDS.has(b);if(id==="GRC-KOINE-RP-2018"||id==="COP-BOHAIRIC-HORNER"||id==="COP-BOHAIRIC-DEIR-ANBA-BISHOI")return GRC_KOINE_NT_BOOK_IDS.has(b);return !Object.values(DEUTEROCANON_BOOKS).includes(bookId)}
-function parallelTranslationLanguage(id){if(id==="EN-WEB")return "en";if(id==="HE-WLC-2017"||id==="HE-DELITZSCH-1885")return "he";if(id==="GRC-LXX-BRENTON-1851"||id==="GRC-LXX-SWETE-1907-ECC"||id==="GRC-KOINE-RP-2018")return "grc";if(id==="COP-BOHAIRIC-HORNER"||id==="COP-BOHAIRIC-DEIR-ANBA-BISHOI"||id==="COP-BOHAIRIC-OT")return "cop";return "ar"}
-function parallelSourceBookId(id,p){if(id==="HE-WLC-2017")return HEBREW_SOURCE_CODE_TO_ID[p.bookCode]||p.bookCode.toLowerCase();if(id==="HE-DELITZSCH-1885"||id==="EN-WEB")return p.bookCode.toUpperCase();if(id==="GRC-LXX-BRENTON-1851")return LXX_BOOK_ID_MAP[p.bookCode]||p.bookCode.toLowerCase();if(id==="GRC-LXX-SWETE-1907-ECC")return "ecc";if(id==="COP-BOHAIRIC-HORNER"||id==="COP-BOHAIRIC-DEIR-ANBA-BISHOI")return COP_BOHAIRIC_BOOK_ID_MAP[p.bookCode]||p.bookCode.toLowerCase();if(id==="GRC-KOINE-RP-2018")return p.bookCode.toLowerCase();return p.bookCode}
-function parallelFontButtonOptions(id){const lang=parallelTranslationLanguage(id),sets={ar:[["naskh","نسخ"],["amiri","أميري"],["markazi","مركزي"]],en:[["noto","Noto"],["system","Serif"],["sans","Sans"]],he:[["sbl","SBL"],["noto","Noto"]],grc:[["sbl","SBL"],["noto","Noto"]],cop:[["noto","Noto"],["antinoou","Antinoou"],["avva","Avva"],["copt","Coptic"]]};return sets[lang]||sets.ar}
-function parallelLanguageMarkup(id,verse){const lang=parallelTranslationLanguage(id),font=parallelFontSelections[lang]||"noto",legacy=lang==="cop"&&font==="copt",text=legacy?copticLegacyMarkup(verse.text,"coptic-copt"):escapeHtml(verse.text),dir=(lang==="he"||lang==="ar")?"rtl":"ltr";return "<section class='parallel-language-item'><div class='parallel-language-label'>"+escapeHtml(translationCatalog.find(t=>t.id===id)?.name||id)+"</div><p class='parallel-language-text parallel-font-"+lang+"-"+font+(lang==="cop"?" coptic-script":"")+"' lang='"+lang+"' dir='"+dir+"'>"+text+"</p></section>"}
-function renderTranslationChoices(){const el=document.getElementById("translationChoices");if(!el)return;el.innerHTML=translationCatalog.map(t=>{const selected=selectedTranslations.includes(t.id),lang=parallelTranslationLanguage(t.id),current=parallelFontSelections[lang]||"noto",fonts=parallelFontButtonOptions(t.id).map(([fid,label])=>"<button type='button' class='parallel-font-button "+(current===fid?"active":"")+"' data-parallel-font='"+escapeHtml(t.id)+"' data-font='"+escapeHtml(fid)+"'>"+escapeHtml(label)+"</button>").join("");return "<label class='translation-choice-row "+(selected?"selected":"")+"'><input class='translation-choice-check' type='checkbox' "+(selected?"checked":"")+" data-translation-toggle='"+escapeHtml(t.id)+"'><span class='translation-choice-main'><strong>"+escapeHtml(t.name)+"</strong><small>"+escapeHtml(t.tradition)+" · "+escapeHtml(t.year)+" · "+escapeHtml(t.canon)+"</small></span><span class='parallel-fonts'>"+fonts+"</span></label>"}).join("");el.querySelectorAll("[data-translation-toggle]").forEach(input=>input.addEventListener("change",()=>toggleTranslation(input.dataset.translationToggle)));el.querySelectorAll("[data-parallel-font]").forEach(button=>button.addEventListener("click",e=>{e.preventDefault();const id=button.dataset.parallelFont,lang=parallelTranslationLanguage(id);parallelFontSelections[lang]=button.dataset.font;saveParallelFonts();renderTranslationChoices();renderParallel()}))}
+function translationHasBook(id,bookId){if(id==="HE-WLC-2017")return WLC_BOOK_IDS.has(HEBREW_SOURCE_CODE_TO_ID[bookId]||bookId);if(id==="GRC-LXX-SWETE-1907-ECC")return String(bookId).toUpperCase()==="ECC";if(id==="GRC-LXX-BRENTON-1851")return LXX_SOURCE_BOOK_IDS.has(String(bookId).toUpperCase());if(id==="GRC-KOINE-RP-2018"||id==="COP-BOHAIRIC-HORNER"||id==="COP-BOHAIRIC-DEIR-ANBA-BISHOI")return GRC_KOINE_NT_BOOK_IDS.has(String(bookId).toUpperCase());return !Object.values(DEUTEROCANON_BOOKS).includes(bookId);}
+function parallelTranslationLanguage(id){if(id==="HE-WLC-2017")return "he";if(id==="GRC-LXX-BRENTON-1851"||id==="GRC-LXX-SWETE-1907-ECC"||id==="GRC-KOINE-RP-2018")return "grc";if(id==="COP-BOHAIRIC-HORNER"||id==="COP-BOHAIRIC-DEIR-ANBA-BISHOI")return "cop";return "ar"}
+function parallelSourceBookId(id,p){if(id==="HE-WLC-2017")return HEBREW_SOURCE_CODE_TO_ID[p.bookCode]||p.bookCode;if(id==="GRC-LXX-BRENTON-1851")return LXX_BOOK_ID_MAP[p.bookCode]||p.bookCode.toLowerCase();if(id==="GRC-LXX-SWETE-1907-ECC")return "ecc";if(id==="COP-BOHAIRIC-HORNER"||id==="COP-BOHAIRIC-DEIR-ANBA-BISHOI")return COP_BOHAIRIC_BOOK_ID_MAP[p.bookCode]||p.bookCode.toLowerCase();if(id==="GRC-KOINE-RP-2018")return p.bookCode.toLowerCase();return p.bookCode}
+function parallelFontClass(lang){return lang==="cop"?(readerSelection.fontByScript.cop||"coptic-noto"):lang==="he"?(readerSelection.fontByScript.he||"hebrew-sbl"):lang==="grc"?(readerSelection.fontByScript.grc||"greek-sbl"):(readerSelection.fontByScript.ar||"naskh")}
+function parallelLanguageMarkup(id,verse){const lang=parallelTranslationLanguage(id),font=parallelFontClass(lang),isLegacy=lang==="cop"&&!!COPTIC_LEGACY_FONT_CONFIG[font],text=isLegacy?copticLegacyMarkup(verse.text,font):escapeHtml(verse.text),dir=(lang==="he"||lang==="ar")?"rtl":"ltr",classes="reader-verse-text parallel-language-text"+(lang==="cop"?" coptic-script":"");const data=isLegacy?" data-coptic-legacy-applied='1' data-coptic-unicode='"+escapeHtml(verse.text)+"'":"";return "<div class='reader-page reader-font-"+escapeHtml(font)+"'><section class='parallel-language-item'><div class='parallel-language-label'>"+escapeHtml(translationCatalog.find(t=>t.id===id)?.name||id)+"</div><p class='"+classes+"' lang='"+lang+"' dir='"+dir+"'"+data+">"+text+"</p></section></div>"}
+function renderTranslationChoices(){const el=document.getElementById("translationChoices");if(!el)return;el.innerHTML=translationCatalog.map(t=>{const selected=selectedTranslations.includes(t.id);return "<button class='choice"+(selected?" filter-active":"")+"' type='button' aria-pressed='"+(selected?"true":"false")+"' onclick='toggleTranslation(\""+t.id+"\")'><strong>"+escapeHtml(t.name)+"</strong><small>"+escapeHtml(t.tradition)+" · "+escapeHtml(t.year)+" · "+escapeHtml(t.canon)+(selected?" · محددة":"")+"</small></button>"}).join("")}
 function toggleTranslation(id){const i=selectedTranslations.indexOf(id);if(i>=0){if(selectedTranslations.length>1)selectedTranslations.splice(i,1)}else if(selectedTranslations.length<8)selectedTranslations.push(id);localStorage.setItem("rh_parallel_translations",JSON.stringify(selectedTranslations));renderTranslationChoices();renderParallel()}
 let parallelRenderSequence=0;
-let parallelSelection=(()=>{try{const saved=JSON.parse(localStorage.getItem("rehla.parallelSelection.v1")||"null");return Object.assign({covenant:"OT",section:"الشريعة",book:"GEN",chapter:1,verse:"all"},saved||{})}catch(e){return {covenant:"OT",section:"الشريعة",book:"GEN",chapter:1,verse:"all"}}})();
-const PARALLEL_CHAPTER_COUNTS={GEN:50,EXO:40,LEV:27,NUM:36,DEU:34,JOS:24,JDG:21,RUT:4,"1SA":31,"2SA":24,"1KI":22,"2KI":25,"1CH":29,"2CH":36,EZR:10,NEH:13,EST:10,JOB:42,PSA:150,PRO:31,ECC:12,SNG:8,ISA:66,JER:52,LAM:5,EZK:48,DAN:12,HOS:14,JOL:3,AMO:9,OBA:1,JON:4,MIC:7,NAM:3,HAB:3,ZEP:3,HAG:2,ZEC:14,MAL:4,MAT:28,MRK:16,LUK:24,JHN:21,ACT:28,ROM:16,"1CO":16,"2CO":13,GAL:6,EPH:6,PHP:4,COL:4,"1TH":5,"2TH":3,"1TI":6,"2TI":4,TIT:3,PHM:1,HEB:13,JAS:5,"1PE":5,"2PE":3,"1JN":5,"2JN":1,"3JN":1,JUD:1,REV:22};
-function fillParallelSelect(id,items,value){const el=document.getElementById(id);if(!el)return;el.innerHTML=items.map(o=>"<option value='"+escapeHtml(String(o.id))+"' "+(String(o.id)===String(value)?"selected":"")+">"+escapeHtml(o.label)+"</option>").join("")}
-function parallelSectionsAvailable(){return (readerSections[parallelSelection.covenant]||[]).map(s=>({id:s.id,name:s.name,books:s.books.slice()}))}
-function renderParallelPicker(){const sections=parallelSectionsAvailable();if(!sections.some(s=>s.id===parallelSelection.section))parallelSelection.section=sections[0]?.id||"";const section=sections.find(s=>s.id===parallelSelection.section),books=section?.books||[];if(!books.some(b=>b[0]===parallelSelection.book))parallelSelection.book=books[0]?.[0]||"";const chapterCount=PARALLEL_CHAPTER_COUNTS[parallelSelection.book]||1;if(Number(parallelSelection.chapter)<1||Number(parallelSelection.chapter)>chapterCount)parallelSelection.chapter=1;fillParallelSelect("parallelCovenant",[{id:"OT",label:"العهد القديم"},{id:"NT",label:"العهد الجديد"}],parallelSelection.covenant);fillParallelSelect("parallelSection",sections.map(s=>({id:s.id,label:s.name})),parallelSelection.section);fillParallelSelect("parallelBook",books.map(b=>({id:b[0],label:b[1]})),parallelSelection.book);fillParallelSelect("parallelChapter",Array.from({length:chapterCount},(_,i)=>({id:i+1,label:"الإصحاح "+readerVerseNumberText(i+1)})),parallelSelection.chapter);const verseEl=document.getElementById("parallelVerse");if(verseEl&&!verseEl.options.length)verseEl.innerHTML="<option value='all'>كل الآيات</option>";if(verseEl)verseEl.value=parallelSelection.verse==="all"?"all":String(parallelSelection.verse);localStorage.setItem("rehla.parallelSelection.v1",JSON.stringify(parallelSelection))}
-async function refreshParallelVerseOptions(){const el=document.getElementById("parallelVerse");if(!el)return;const first=selectedTranslations.find(id=>translationHasBook(id,parallelSelection.book));if(!first){el.innerHTML="<option value='all'>كل الآيات</option>";parallelSelection.verse="all";return}try{const verses=await loadTranslationChapter(first,parallelSourceBookId(first,{bookCode:parallelSelection.book}),parallelSelection.chapter);el.innerHTML="<option value='all'>كل الآيات</option>"+verses.map(v=>"<option value='"+Number(v.verse)+"'>الآية "+escapeHtml(readerVerseNumberText(v.verse))+"</option>").join("");el.value=parallelSelection.verse==="all"?"all":String(parallelSelection.verse)}catch(e){el.innerHTML="<option value='all'>كل الآيات</option>";parallelSelection.verse="all"}}
-function bindParallelPickers(){const map={parallelCovenant:"covenant",parallelSection:"section",parallelBook:"book",parallelChapter:"chapter",parallelVerse:"verse"};Object.entries(map).forEach(([id,field])=>document.getElementById(id)?.addEventListener("change",async e=>{if(field==="covenant"){parallelSelection.covenant=e.target.value;parallelSelection.section="";parallelSelection.book="";parallelSelection.chapter=1;parallelSelection.verse="all"}else if(field==="section"){parallelSelection.section=e.target.value;parallelSelection.book="";parallelSelection.chapter=1;parallelSelection.verse="all"}else if(field==="book"){parallelSelection.book=e.target.value;parallelSelection.chapter=1;parallelSelection.verse="all"}else if(field==="chapter"){parallelSelection.chapter=Number(e.target.value);parallelSelection.verse="all"}else parallelSelection.verse=e.target.value==="all"?"all":Number(e.target.value);renderParallelPicker();await refreshParallelVerseOptions()}));renderParallelPicker();refreshParallelVerseOptions()}
-function parallelReferenceText(){return (readerBookNames[parallelSelection.book]||parallelSelection.book)+" "+parallelSelection.chapter+(parallelSelection.verse!=="all"?":"+parallelSelection.verse:"")}
-async function renderParallel(){
- const el=document.getElementById("parallelTranslations");
- if(!el)return;
- const status=document.getElementById("parallelStatus"),heading=document.getElementById("parallelReference"),sequence=++parallelRenderSequence;
- renderParallelPicker();
- const p={bookCode:parallelSelection.book,chapter:Number(parallelSelection.chapter),book:readerBookNames[parallelSelection.book]||parallelSelection.book};
- const ref=parallelReferenceText();
- heading.textContent=ref;
- status.textContent="جاري تحميل النصوص...";
- el.innerHTML="";
- const loaded=await Promise.all(selectedTranslations.map(async id=>{
-  if(!translationHasBook(id,p.bookCode))return {id,verses:[],unavailable:true};
-  try{return {id,verses:await loadTranslationChapter(id,parallelSourceBookId(id,p),p.chapter)}}
-  catch(e){return {id,verses:[],error:true}}
- }));
- if(sequence!==parallelRenderSequence)return;
- const successful=loaded.filter(x=>x.verses.length);
- const maps=new Map(successful.map(x=>[x.id,new Map(x.verses.map(v=>[Number(v.verse),v]))]));
- const verseNumbers=[...new Set(successful.flatMap(x=>x.verses.map(v=>Number(v.verse)).filter(Number.isFinite)))]
-  .sort((a,b)=>a-b)
-  .filter(n=>parallelSelection.verse==="all"||n===Number(parallelSelection.verse));
- if(!verseNumbers.length){status.textContent="لا يوجد نص متاح لهذا الموضع في الترجمات المختارة.";return}
- el.innerHTML=verseNumbers.map(number=>{
-  const rows=selectedTranslations.map(id=>{
-   const v=maps.get(id)?.get(number);
-   if(v)return parallelLanguageMarkup(id,v);
-   return "<section class='parallel-language-item'><div class='parallel-language-label'>"+escapeHtml(translationCatalog.find(t=>t.id===id)?.name||id)+"</div><p class='parallel-language-text' style='color:var(--muted);font-size:11px'>لا يوجد نص لهذه الترجمة في هذا الموضع.</p></section>";
-  }).join("");
-  return "<article class='parallel-verse-card'><div class='parallel-verse-number'><i>"+escapeHtml(readerVerseNumberText(number))+"</i><span>"+escapeHtml(ref)+"</span></div>"+rows+"</article>";
- }).join("");
- const missing=loaded.filter(x=>x.error||x.unavailable);
- status.textContent=missing.length?"تم عرض النصوص المتاحة. بعض الترجمات لا تحتوي هذا الموضع.":"تم عرض "+verseNumbers.length+" آية.";
+async function renderParallel(){const el=document.getElementById("parallelTranslations");if(!el)return;const input=document.getElementById("parallelReferenceInput"),ref=(input?.value||"متى 1").trim(),heading=document.getElementById("parallelReference"),status=document.getElementById("parallelStatus"),sequence=++parallelRenderSequence,p=parseChapterReference(ref);el.innerHTML="";if(!p){heading.textContent=ref||"القراءة المتوازية";status.textContent="اكتب مرجعًا صحيحًا مثل متى 1 أو تكوين 1.";return}heading.textContent=(readerBookNames[p.bookCode]||p.book)+" "+p.chapter;status.textContent="جاري تحميل النصوص المتاحة...";if(!selectedTranslations.length){status.textContent="اختر ترجمة واحدة على الأقل.";return}
+ const available=selectedTranslations.filter(id=>translationHasBook(id,p.bookCode)&&CORPUS_PATHS[id]),unavailable=selectedTranslations.filter(id=>!translationHasBook(id,p.bookCode)||!CORPUS_PATHS[id]);const loaded=await Promise.all(available.map(async id=>{try{return {id,verses:await loadTranslationChapter(id,parallelSourceBookId(id,p),p.chapter)}}catch(error){return {id,verses:[],error:true}}}));if(sequence!==parallelRenderSequence)return;
+ const successful=loaded.filter(x=>!x.error&&x.verses.length),failed=loaded.filter(x=>x.error||!x.verses.length);if(!successful.length){status.textContent="لم نتمكن من تحميل نصوص هذا المرجع. تحقق من الاتصال وحاول مرة أخرى.";return}
+ const verseNumbers=[...new Set(successful.flatMap(x=>x.verses.map(v=>Number(v.verse)).filter(n=>Number.isFinite(n)&&n>0)))].sort((a,b)=>a-b);const maps=new Map(successful.map(x=>[x.id,new Map(x.verses.map(v=>[Number(v.verse),v]))]));const cards=verseNumbers.map(number=>{const items=successful.map(({id})=>{const verse=maps.get(id).get(number);return verse?parallelLanguageMarkup(id,verse):"<section class='parallel-language-item'><div class='parallel-language-label'>"+escapeHtml(translationCatalog.find(t=>t.id===id)?.name||id)+"</div><p class='note'>لا توجد آية بهذا الرقم في هذه الطبعة.</p></section>"}).join("");return "<article class='parallel-verse-card'><div class='parallel-verse-number'>الآية "+escapeHtml(readerVerseNumberText(number))+"</div>"+items+"</article>"}).join("");
+ el.innerHTML=(unavailable.length?"<div class='parallel-unavailable'>هذه الترجمات لا تحتوي هذا السفر: "+unavailable.map(id=>escapeHtml(translationCatalog.find(t=>t.id===id)?.name||id)).join("، ")+"</div>":"")+(failed.length?"<div class='parallel-unavailable'>تعذر تحميل: "+failed.map(x=>escapeHtml(translationCatalog.find(t=>t.id===x.id)?.name||x.id)).join("، ")+"</div>":"")+cards;
+ status.textContent="تم عرض "+verseNumbers.length+" آية من "+successful.length+" ترجمة متاحة.";
+}
+
+const EBIBLE_BOOK_CODES=["GEN","EXO","LEV","NUM","DEU","JOS","JDG","RUT","1SA","2SA","1KI","2KI","1CH","2CH","EZR","NEH","EST","JOB","PSA","PRO","ECC","SNG","ISA","JER","LAM","EZK","DAN","HOS","JOL","AMO","OBA","JON","MIC","NAM","HAB","ZEP","HAG","ZEC","MAL","MAT","MRK","LUK","JHN","ACT","ROM","1CO","2CO","GAL","EPH","PHP","COL","1TH","2TH","1TI","2TI","TIT","PHM","HEB","JAS","1PE","2PE","1JN","2JN","3JN","JUD","REV"];
+function getKehChapterUrl(reference){
+ const p=parseChapterReference(reference);
+ if(!p||p.bookNumber<1||p.bookNumber>66||p.chapter<1)return null;
+ return "https://ebible.org/arbnav/"+EBIBLE_BOOK_CODES[p.bookNumber-1]+String(p.chapter).padStart(2,"0")+".htm";
+}
+function openKehSource(reference){
+ const url=getKehChapterUrl(reference||document.getElementById("chapterReference").value);
+ if(url)window.open(url,"_blank","noopener");
+ return url;
+}
+const SVD_API_BASE="https://api.getbible.net/v3/arabicsv";
+const SVD_BOOKS={"تكوين":1,"خروج":2,"لاويين":3,"عدد":4,"تثنية":5,"يشوع":6,"قضاة":7,"راعوث":8,"صموئيل الأول":9,"صموئيل الثاني":10,"ملوك الأول":11,"ملوك الثاني":12,"أخبار الأيام الأول":13,"أخبار الأيام الثاني":14,"عزرا":15,"نحميا":16,"أستير":17,"أيوب":18,"مزامير":19,"مزمور":19,"أمثال":20,"الأمثال":20,"جامعة":21,"نشيد الأنشاد":22,"إشعياء":23,"إرميا":24,"مراثي إرميا":25,"مراثي":25,"حزقيال":26,"دانيال":27,"هوشع":28,"يوئيل":29,"عاموس":30,"عوبديا":31,"يونان":32,"ميخا":33,"ناحوم":34,"حبقوق":35,"صفنيا":36,"حجي":37,"زكريا":38,"ملاخي":39,"متى":40,"مرقس":41,"لوقا":42,"يوحنا":43,"أعمال":44,"أعمال الرسل":44,"رومية":45,"كورنثوس الأولى":46,"كورنثوس الثانية":47,"غلاطية":48,"أفسس":49,"فيلبي":50,"كولوسي":51,"تسالونيكي الأولى":52,"تسالونيكي الثانية":53,"تيموثاوس الأولى":54,"تيموثاوس الثانية":55,"تيطس":56,"فليمون":57,"عبرانيين":58,"يعقوب":59,"بطرس الأولى":60,"بطرس الثانية":61,"يوحنا الأولى":62,"يوحنا الثانية":63,"يوحنا الثالثة":64,"يهوذا":65,"رؤيا":66};const DEUTEROCANON_BOOKS={"طوبيا":"TOB","يهوديت":"JDT","الحكمة":"WIS","حكمة سليمان":"WIS","يشوع بن سيراخ":"SIR","سيراخ":"SIR","باروخ":"BAR","رسالة إرميا":"LJE","المكابيين الأول":"1MA","المكابيين الثاني":"2MA","المكابيين الثالث":"3MA","المكابيين الرابع":"4MA","عزرا الأول":"1ES","صلاة منسى":"MAN","سوسنة":"SUS","بل والتنين":"BEL"};
+function normalizeBibleBookName(value){
+ const raw=String(value||"").replace(/[ًٌٍَُِّْـٰ]/g,"").replace(/\s+/g," ").trim();
+ const key=raw.toLowerCase();
+ const aliases={"مزامير":"مزامير","المزامير":"مزامير","مزمور":"مزامير","المزمور":"مزامير","psalm":"مزامير","psalms":"مزامير"};
+ return aliases[key]||raw;
+}
+function parseChapterReference(value){
+ const m=String(value||"").trim().match(/^(.+?)\s+(\d+)(?:[:.]\d+)?$/);
+ if(!m)return null;
+ const book=normalizeBibleBookName(m[1].trim());
+ const chapter=Number(m[2]);
+ if(DEUTEROCANON_BOOKS[book])return {book,bookNumber:null,bookCode:DEUTEROCANON_BOOKS[book],deuterocanonical:true,chapter};
+ const n=SVD_BOOKS[book];
+ if(n)return {book,bookNumber:n,bookCode:EBIBLE_BOOK_CODES[n-1],deuterocanonical:false,chapter};
+ const hebrewBook=HEBREW_BOOKS[book];
+ return hebrewBook?{book,bookNumber:null,bookCode:hebrewBook,deuterocanonical:false,language:"he",chapter}:null;
+}
+const corpusCache={};
+const chapterCache={};
+const CORPUS_PATHS={"AR-SVD-1865":"./data/ar-svd-1865.jsonl.gz","AR-KEH-2012":"./data/ar-keh-2012.jsonl.gz","HE-WLC-2017":"./data/he-wlc-2017.jsonl.gz","GRC-LXX-BRENTON-1851":"./data/grc-lxx-brenton-1851.jsonl.gz","GRC-LXX-SWETE-1907-ECC":"./data/grc-lxx-swete-1907-ecclesiastes.jsonl.gz","GRC-KOINE-RP-2018":"./data/grc-koine-rp-2018.jsonl.gz","COP-BOHAIRIC-HORNER":"./data/cop-bohairic-horner-nt.jsonl.gz","COP-BOHAIRIC-DEIR-ANBA-BISHOI":"./data/cop-bohairic-deir-anba-bishoi-nt.jsonl.gz"};
+async function loadTranslationCorpus(id){
+ if(corpusCache[id])return corpusCache[id];
+ const path=CORPUS_PATHS[id];
+ if(!path)throw new Error("Translation corpus is not available");
+ if(typeof DecompressionStream==="undefined")throw new Error("Gzip decompression is not supported by this browser");
+ const response=await fetch(path);
+ if(!response.ok)throw new Error("Corpus download failed");
+ const stream=response.body.pipeThrough(new DecompressionStream("gzip"));
+ const text=await new Response(stream).text();
+ const rows=text.trim().split(/\r?\n/).filter(Boolean).map(line=>JSON.parse(line));
+ corpusCache[id]=rows;
+ return rows;
 }
 async function loadTranslationChapter(id,bookId,chapter){
  const key=id+"|"+bookId+"|"+chapter;
  if(chapterCache[key])return chapterCache[key];
- let verses=[];
- if(id==="EN-WEB")verses=await loadEnglishWebChapter(bookId,chapter);
- else if(id==="HE-DELITZSCH-1885")verses=await loadHebrewDelitzschChapter(bookId,chapter);
- else if(id==="COP-BOHAIRIC-OT")verses=await loadCopticOtChapter(bookId,chapter);
- else{const rows=await loadTranslationCorpus(id);verses=rows.filter(row=>row.book_id===bookId&&row.chapter===chapter)}
+ const rows=await loadTranslationCorpus(id);
+ const verses=rows.filter(row=>row.book_id===bookId&&row.chapter===chapter);
  chapterCache[key]=verses;
  return verses;
 }
