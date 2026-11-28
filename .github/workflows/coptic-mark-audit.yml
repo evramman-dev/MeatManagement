@@ -8,7 +8,7 @@ on:
       - ".github/workflows/coptic-mark-audit.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   audit:
@@ -307,3 +307,17 @@ jobs:
             bible/data/cop-bohairic-deir-anba-bishoi-nt.jsonl.gz
             bible/data/cop-bohairic-deir-anba-bishoi-nt_audit.json
           retention-days: 7
+
+      - name: Publish generated corpus to feature branch
+        run: |
+          mkdir -p /tmp/coptic-publish
+          cp bible/data/cop-bohairic-deir-anba-bishoi-nt.jsonl.gz bible/data/cop-bohairic-deir-anba-bishoi-nt_audit.json /tmp/coptic-publish/
+          git fetch origin feat/coptic-second-version
+          git checkout -B feat/coptic-second-version origin/feat/coptic-second-version
+          mkdir -p bible/data
+          cp /tmp/coptic-publish/* bible/data/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add bible/data/cop-bohairic-deir-anba-bishoi-nt.jsonl.gz bible/data/cop-bohairic-deir-anba-bishoi-nt_audit.json
+          git commit -m "Add Deir Anba Bishoi Coptic New Testament corpus"
+          git push origin feat/coptic-second-version
