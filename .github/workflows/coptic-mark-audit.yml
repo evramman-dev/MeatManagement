@@ -14,6 +14,8 @@ jobs:
   audit:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
       - name: Download the exact published corpus
         run: |
           curl -L --fail --retry 3 -o /tmp/coptic.jsonl.gz https://raw.githubusercontent.com/evramman-dev/MeatManagement/main/bible/data/cop-bohairic-horner-nt.jsonl.gz
