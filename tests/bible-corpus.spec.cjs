@@ -444,3 +444,4 @@ test('Bible reader loads local editions and keeps unavailable books and chapters
   await page.locator('#parallelLoadButton').click();
   await expect(page.locator('#parallelTranslations .parallel-verse-card').first()).toBeVisible();
   await expect(page.locator('#parallelTranslations .parallel-verse-card').first()).toContainText('القبطي البحيري — العهد القديم');
+});
