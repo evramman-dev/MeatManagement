@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import gzip
 import hashlib
 import json
 import re
@@ -59,12 +60,31 @@ def parse_file(path):
             })
     return records
 
+def write_app_corpus(records, path):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with gzip.open(path, "wt", encoding="utf-8", newline="\n", compresslevel=9) as f:
+        for r in records:
+            if r["verse_start"] != r["verse_end"]:
+                raise SystemExit(
+                    f"Unsupported verse range for app corpus: {r['canonical_book_id']} "
+                    f"{r['chapter']}:{r['verse_start']}-{r['verse_end']}"
+                )
+            row = {
+                "book_id": r["canonical_book_id"],
+                "chapter": r["chapter"],
+                "verse": r["verse_start"],
+                "text": r["text"],
+            }
+            f.write(json.dumps(row, ensure_ascii=False, separators=(",", ":")) + "\n")
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--src", required=True)
     ap.add_argument("--out", required=True)
     ap.add_argument("--audit", required=True)
     ap.add_argument("--archive", required=True)
+    ap.add_argument("--app-out")
     args = ap.parse_args()
 
     src = Path(args.src)
@@ -110,6 +130,8 @@ def main():
 
     if len(books) != 27 or missing_books or dup:
         raise SystemExit("Bohairic NT coverage QA failed")
+    if args.app_out:
+        write_app_corpus(records, args.app_out)
 
 if __name__ == "__main__":
     main()
