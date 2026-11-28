@@ -122,3 +122,22 @@ jobs:
                   print('MAT_VERSE',r.get('chapter'),r.get('verse'),'NORMALIZED',t,'MATCH',t in pdf)
               if r.get('chapter')==1 and r.get('verse')==12: break
           PY
+
+      - name: Diagnose first-verse character alignment
+        run: |
+          python3 - <<'PY'
+          import gzip,json,unicodedata,difflib
+          rows=[json.loads(x) for x in gzip.open('/tmp/coptic.jsonl.gz','rt',encoding='utf-8') if x.strip()]
+          def norm(s):
+              s=unicodedata.normalize('NFD',s).upper()
+              return ''.join(c for c in s if 0x2C80<=ord(c)<=0x2CFF and unicodedata.category(c) not in ('Mn','Mc','Me'))
+          r=next(x for x in rows if x.get('book_id')=='mat' and x.get('chapter')==1 and x.get('verse')==1)
+          app=norm(r['text'])
+          raw=open('/tmp/coptic-matthew-sample.txt',encoding='utf-8').read()
+          pdf=norm(raw)
+          print('APP_FIRST_VERSE_NORMALIZED',app)
+          print('PDF_START_NORMALIZED',pdf[:1500])
+          print('APP_FIRST_VERSE_IN_PDF_INDEX',pdf.find(app))
+          print('APP_FIRST_VERSE_LETTERS',len(app),'PDF_LETTERS',len(pdf))
+          for word in norm(r['text']).split(): print('WORD',word,'IN_PDF',word in pdf)
+          PY
