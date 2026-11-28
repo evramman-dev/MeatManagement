@@ -1,0 +1,27 @@
+name: Validate Rehla Hebrew Arabic lexicon
+
+on:
+  pull_request:
+    paths:
+      - bible/index.html
+      - bible/sw.js
+      - bible/data/strongs-ar.json
+      - bible/data/original-language-sources.json
+      - bible/tools/test_hebrew_arabic_lexicon.cjs
+      - .github/workflows/validate-rehla-hebrew-lexicon.yml
+
+permissions:
+  contents: read
+
+jobs:
+  hebrew-arabic-lexicon:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Validate Hebrew Arabic lexicon
+        run: node bible/tools/test_hebrew_arabic_lexicon.cjs
