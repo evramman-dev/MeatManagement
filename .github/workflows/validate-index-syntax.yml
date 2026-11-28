@@ -16,6 +16,7 @@ on:
   push:
     branches:
       - main
+      - feat/rehla-separate-search-screen-20261128
     paths:
       - index.html
       - scripts/check-inline-js.cjs
