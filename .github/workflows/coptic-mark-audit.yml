@@ -180,3 +180,48 @@ jobs:
                   print('USFM_MATTHEW_SAMPLE',repr(data[:7000]))
           print('USFM_COMBINING_MARKS',dict(sorted(counts.items(),key=lambda x:int(x[0],16))))
           PY
+
+      - name: Compare every USFM verse with the published app corpus
+        run: |
+          python3 - <<'PY'
+          import zipfile,re,unicodedata,gzip,json,collections,os
+          z=zipfile.ZipFile('/tmp/copbhc_usfm.zip')
+          usfm={}
+          mark_examples=collections.defaultdict(list)
+          for name in [n for n in z.namelist() if n.lower().endswith('.usfm')]:
+              data=z.read(name).decode('utf-8-sig','replace')
+              book=None; chapter=None; current=None; parts=[]
+              def save():
+                  if book and chapter and current is not None:
+                      usfm[(book,chapter,current)]=' '.join(' '.join(parts).split())
+              for line in data.splitlines():
+                  m=re.match(r'\\id\s+(\S+)',line)
+                  if m: book=m.group(1).lower(); continue
+                  m=re.match(r'\\c\s+(\d+)',line)
+                  if m: save(); chapter=int(m.group(1)); current=None; parts=[]; continue
+                  m=re.match(r'\\v\s+(\d+)(?:-\d+)?\s*(.*)',line)
+                  if m: save(); current=int(m.group(1)); parts=[m.group(2)]; continue
+                  if current is not None and line.strip() and not line.lstrip().startswith('\\'):
+                      parts.append(line.strip())
+              save()
+              for key,txt in list(usfm.items()):
+                  if key[0]==book:
+                      for ch in txt:
+                          if unicodedata.category(ch) in ('Mn','Mc','Me') and len(mark_examples[f'{ord(ch):04X}'])<6:
+                              mark_examples[f'{ord(ch):04X}'].append((key,txt))
+          app={}
+          for line in gzip.open('/tmp/coptic.jsonl.gz','rt',encoding='utf-8'):
+              if line.strip():
+                  r=json.loads(line); app[(r['book_id'],int(r['chapter']),int(r['verse']))]=r['text']
+          def norm(s):
+              s=unicodedata.normalize('NFD',s)
+              s=''.join(c for c in s if unicodedata.category(c) not in ('Mn','Mc','Me'))
+              return ' '.join(s.upper().split())
+          common=set(usfm)&set(app)
+          exact=sum(norm(usfm[k])==norm(app[k]) for k in common)
+          mismatches=[(k,usfm[k],app[k]) for k in common if norm(usfm[k])!=norm(app[k])]
+          print('USFM_VERSE_COUNT',len(usfm),'APP_VERSE_COUNT',len(app),'COMMON_KEYS',len(common))
+          print('EXACT_AFTER_MARK_REMOVAL',exact,'MISMATCHES',len(mismatches),'MISSING_FROM_APP',len(set(usfm)-set(app)),'MISSING_FROM_USFM',len(set(app)-set(usfm)))
+          print('USFM_MARK_EXAMPLES',dict(mark_examples))
+          for x in mismatches[:12]: print('MISMATCH',x)
+          PY
