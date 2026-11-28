@@ -141,3 +141,23 @@ jobs:
           print('APP_FIRST_VERSE_LETTERS',len(app),'PDF_LETTERS',len(pdf))
           for word in norm(r['text']).split(): print('WORD',word,'IN_PDF',word in pdf)
           PY
+
+      - name: Measure full-book source alignment for Matthew
+        run: |
+          pdftotext -enc UTF-8 -raw -f 5 -l 45 /tmp/copsnt.pdf /tmp/coptic-matthew-book.txt
+          python3 - <<'PY'
+          import gzip,json,unicodedata,difflib,re
+          rows=[json.loads(x) for x in gzip.open('/tmp/coptic.jsonl.gz','rt',encoding='utf-8') if x.strip()]
+          def norm(s):
+              s=unicodedata.normalize('NFD',s).upper()
+              return ''.join(c for c in s if (0x2C80<=ord(c)<=0x2CFF or 0x0370<=ord(c)<=0x03FF) and unicodedata.category(c) not in ('Mn','Mc','Me'))
+          app=''.join(norm(str(r.get('text',''))) for r in rows if r.get('book_id')=='mat')
+          raw=open('/tmp/coptic-matthew-book.txt',encoding='utf-8').read()
+          pdf=norm(raw)
+          sm=difflib.SequenceMatcher(None,app,pdf,autojunk=False)
+          print('MATTHEW_APP_LETTERS',len(app),'PDF_LETTERS',len(pdf),'SIMILARITY',round(sm.ratio(),5))
+          print('MATTHEW_APP_START',app[:350])
+          print('MATTHEW_PDF_START',pdf[:350])
+          print('LONGEST_MATCH_BLOCKS',[(x.a,x.b,x.size) for x in sorted(sm.get_matching_blocks(),key=lambda x:x.size,reverse=True)[:12]])
+          print('PDF_ABBREVIATION_MARKS',[(hex(ord(c)),unicodedata.name(c,'?')) for c in raw if unicodedata.category(c) in ('Mn','Mc','Me')][:60])
+          PY
