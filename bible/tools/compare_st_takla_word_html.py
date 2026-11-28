@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Compare St-Takla Word research candidates against chapter HTML pages."""
-import argparse,json,re,time,unicodedata
+import argparse,json,re,time,unicodedata\nfrom concurrent.futures import ThreadPoolExecutor,as_completed
 from collections import defaultdict
 from pathlib import Path
 from urllib.parse import parse_qs,urljoin,urlparse
@@ -70,8 +70,18 @@ def main():
   rows=[json.loads(x) for x in p.read_text(encoding="utf-8").splitlines() if x.strip()];grouped=defaultdict(list)
   for row in rows:grouped[row["chapter"]].append(row)
   br={"chapters":{},"candidate_groups":len(rows)}
+  def get_one(ch):
+   html,marker,url=extract_html(ch,book)
+   return ch,html,marker,url
+  fetched={}
+  with ThreadPoolExecutor(max_workers=8) as pool:
+   futures=[pool.submit(get_one,ch) for ch in chapters]
+   for future in as_completed(futures):
+    ch,html,marker,url=future.result()
+    fetched[ch]=(html,marker,url)
+    print(f"FETCHED {bid} {ch}",flush=True)
   for ci,ch in enumerate(chapters):
-   html,marker,url=extract_html(ch,book);hn={n:norm(t) for n,t in html.items()}
+   html,marker,url=fetched[ch];hn={n:norm(t) for n,t in html.items()}
    cr=sorted(grouped.get(ch,[]),key=lambda r:r["verse_start"]);comp=match=mis=hm=0;issues=[];wn=set()
    for r in cr:
     lo,hi=r["verse_start"],r["verse_end"];nums=list(range(lo,hi+1));wn.update(nums)
@@ -87,7 +97,6 @@ def main():
    br["chapters"][str(ch)]={"word_groups":len(cr),"html_verses":len(html),"compared_groups":comp,"exact_matches":match,"text_mismatches":mis,"html_verses_missing":hm,"word_verses_missing":len(absent),"translation_1877_marker":marker,"source_url":url,"issues":issues}
    for k,v in [("chapters_checked",1),("groups_compared",comp),("exact_matches",match),("text_mismatches",mis),("html_verses_missing",hm),("word_verses_missing",len(absent)),("chapters_with_1877_marker",int(marker))]:report["totals"][k]+=v
    print(f"{bid} {ch}: exact={match}/{comp}, mismatch={mis}, missing_html={hm}, missing_word={len(absent)}, marker={marker}",flush=True)
-   if ci+1<len(chapters):time.sleep(max(0,args.delay))
   report["books"][bid]=br;time.sleep(max(0,args.delay))
  report["totals"]=dict(report["totals"])
  (args.output_dir/"word-html-crosscheck.json").write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
