@@ -38,6 +38,23 @@ async function openReaderBookOptions(page, { translation, covenant, section }) {
   await chooseReaderOption(page, section);
 }
 
+test('parallel translation page uses compact selectors and one apply action', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.goto(new URL('bible/', baseURL).toString());
+  await page.locator('.nav button[data-view="translations"]').click();
+  await expect(page.locator('#translationChoices')).toBeVisible();
+  await expect(page.locator('#parallelCovenant')).toBeVisible();
+  await expect(page.locator('#parallelSection')).toBeVisible();
+  await expect(page.locator('#parallelBook')).toBeVisible();
+  await expect(page.locator('#parallelChapter')).toBeVisible();
+  await expect(page.locator('#parallelVerse')).toBeVisible();
+  await expect(page.locator('#parallelLoadButton')).toHaveText('تطبيق وعرض الترجمات');
+  const rows = await page.locator('.translation-choice-row').count();
+  expect(rows).toBeGreaterThanOrEqual(4);
+  const layout = await page.locator('.parallel-verse-card').count();
+  expect(layout).toBe(0);
+});
+
 test('long translation labels stay inside the two mobile reader picker columns', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 800 });
   await page.goto(new URL('bible/', baseURL).toString());
