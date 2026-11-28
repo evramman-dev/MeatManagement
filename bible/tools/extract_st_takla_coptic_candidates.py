@@ -30,7 +30,7 @@ BOOKS = {
     "1MA": {"name": "1 Maccabees", "book": 48, "chapters": list(range(1, 17))},
     "2MA": {"name": "2 Maccabees", "book": 49, "chapters": list(range(1, 16))},
     "PS151": {"name": "Psalm 151", "book": 23, "chapters": [1]},
-    "DAN-ADD": {"name": "Daniel additions", "book": 35, "chapters": [13, 14]},
+    "DAN-ADD": {"name": "Daniel additions", "book": 35, "chapters": [3, 13, 14]},
 }
 
 
