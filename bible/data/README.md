@@ -57,3 +57,17 @@ Audit: `grc-koine-rp-2018_audit.json`.
 The imported Unicode main text preserves polytonic accents, breathings, punctuation, capitalization, source verse labels and paragraph markers. The reader renders the paragraph marker as a line break. The source's separate alternatives `PA.csv` (John 7:53–8:11) and `ACT24.csv` (Acts 24:6–8) remain separate and are not merged into the main text.
 
 QA passed: 7,953 verse records, 27 books, 260 chapters, zero missing/extra/source-mismatched records. Verse keys match the previous corpus exactly, and normalized Greek word sequences match with zero differences after excluding legacy Strong's/morphology annotations from comparison only. See `GREEK_NT_TEXT_DISPLAY_AUDIT.md`.
+
+## Local parallel-reader corpora
+
+## EN-WEB — World English Bible
+
+The New Testament used by the parallel reader is stored locally under en-web/ as one JSONL file per book. The source text is the World English Bible and is public domain.
+
+## HE-DELITZSCH-1885 — Hebrew New Testament
+
+The Hebrew New Testament used by the parallel reader is stored locally under he-delitzsch/ as one JSONL file per book. Source: HebrewNewTestament/HebDelitzsch, based on the Delitzsch translation from 1885.
+
+## COP-BOHAIRIC-OT — Bohairic Old Testament
+
+The local import is not enabled yet. The Coptic SCRIPTORIUM source contains 637 chapter files and requires a direct source-preserving import and validation. The reader does not fall back to a remote translation source.
