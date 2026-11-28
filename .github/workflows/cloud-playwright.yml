@@ -126,6 +126,11 @@ jobs:
         continue-on-error: true
         run: node bible/tools/capture_swete_ecclesiastes_pages.cjs
 
+      - name: Probe Google Books SearchWithinVolume2 for Swete source witnesses
+        if: always()
+        continue-on-error: true
+        run: node bible/tools/probe_swete_searchwithinvolume.cjs
+
       - name: Upload screenshots, traces and HTML report
         if: always()
         uses: actions/upload-artifact@v6
