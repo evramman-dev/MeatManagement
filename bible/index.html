@@ -38,13 +38,13 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 .reader-field{display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:right;background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px;color:var(--ink)}
 .reader-field span{display:block}.reader-field small{display:block;color:var(--muted);margin-top:3px;font-size:11px}.reader-field strong{font-size:13px}.reader-field:after{content:"›";font-size:18px;color:var(--muted)}
 .reader-options{display:grid;gap:8px;max-height:none;overflow:visible;margin-top:12px}
-.reader-option{background:#fff;border:1px solid var(--line);border-radius:15px;padding:13px;text-align:right;color:var(--ink);width:100%;min-width:0;white-space:normal;overflow-wrap:anywhere;word-break:break-word}
+.reader-option{background:#fff;border:1px solid var(--line);border-radius:15px;padding:13px;text-align:right;color:var(--ink);width:100%;min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere;word-break:break-all}
 .reader-option.selected{border-color:#8eaa9d;background:var(--soft)}
 .reader-option strong,.reader-option small{display:block;max-width:100%;white-space:normal;overflow-wrap:anywhere;word-break:break-word}.reader-option small{color:var(--muted);margin-top:4px}
 .reader-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
-.reader-modal{position:fixed;inset:0;background:#17251f66;z-index:1000;display:flex;align-items:flex-end;justify-content:center}.reader-modal#readingTextModal{z-index:1100}.reader-modal#readingTextModal .reader-sheet{max-height:92vh}
+.reader-modal{position:fixed;inset:0;width:100vw;max-width:100vw;overflow-x:hidden;background:#17251f66;z-index:1000;display:flex;align-items:flex-end;justify-content:center}.reader-modal#readingTextModal{z-index:1100}.reader-modal#readingTextModal .reader-sheet{max-height:92vh}
 .reader-modal.hidden{display:none!important}
-.reader-sheet{width:min(620px,100%);max-width:100%;height:min(88vh,calc(100dvh - 8px));max-height:calc(100dvh - 8px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;background:var(--card);border-radius:24px 24px 0 0;padding:18px 16px calc(30px + env(safe-area-inset-bottom));box-shadow:0 -18px 40px #17251f22}
+.reader-sheet{width:min(620px,100%);max-width:100%;min-width:0;height:min(88vh,calc(100dvh - 8px));max-height:calc(100dvh - 8px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;background:var(--card);border-radius:24px 24px 0 0;padding:18px 16px calc(30px + env(safe-area-inset-bottom));box-shadow:0 -18px 40px #17251f22}
 .reader-sheet-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .reader-sheet-head h2{margin:0}.reader-close{background:transparent;color:var(--muted);font-size:24px;padding:2px 8px}
 .reader-options{overscroll-behavior:contain}
@@ -62,7 +62,7 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 .reading-text{line-height:2.05;font-size:18px}.reading-text .verse-card{padding:13px 0}
 .reading-text .verse-card strong{color:var(--gold)}
 .reading-meta{background:var(--soft);border-radius:15px;padding:10px 12px;margin:10px 0;font-size:12px;color:var(--muted)}
-.coptic-reading-page{padding-bottom:30px}.coptic-script{font-family:"Antinoou","Noto Sans Coptic",sans-serif;font-weight:400;font-feature-settings:"ccmp","mark","mkmk";font-variant-ligatures:normal;direction:ltr;unicode-bidi:plaintext;text-align:left;overflow-wrap:anywhere;word-break:normal}.coptic-script .reader-verse-number{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}.coptic-reading-page .coptic-script{font-size:19px;line-height:2.25}
+.coptic-reading-page{padding-bottom:30px}.reader-page .coptic-script,.reader-page .coptic-script .reader-verse-text,.reader-page .coptic-script .reader-paragraph,.coptic-reading-page .coptic-script{font-family:"Noto Sans Coptic","Antinoou",sans-serif!important;font-weight:400!important;font-style:normal!important;font-feature-settings:"ccmp","mark","mkmk","liga"!important;font-variant-ligatures:normal!important;direction:ltr!important;unicode-bidi:plaintext;text-align:left;overflow-wrap:anywhere;word-break:normal;white-space:normal}.coptic-script .reader-verse-number{font-family:system-ui,-apple-system,"Segoe UI",sans-serif!important}.coptic-reading-page .coptic-script{font-size:20px;line-height:2.35;letter-spacing:0}
 .coptic-reading-page .reading-date-main{font-size:15px;font-weight:700;margin-top:8px}
 .coptic-reading-page .reading-date-sub{margin-top:4px}
 .coptic-reading-page .reading-heading{font-size:27px;font-weight:900;color:var(--accent);margin:22px 0 10px}
