@@ -45,8 +45,7 @@ def main() -> int:
         raise RuntimeError("Could not isolate a single element containing Prayer of Manasseh verses 1 and 19")
 
     raw = min(candidates, key=lambda item: item[0])[1]
-    compact = raw.replace(" ", "")
-    matches = list(VERSE_MARKER.finditer(compact))
+    matches = list(VERSE_MARKER.finditer(raw))
     selected = []
     expected = 1
     for match in matches:
@@ -62,8 +61,8 @@ def main() -> int:
     rows = []
     for index, match in enumerate(selected):
         start = match.end()
-        end = selected[index + 1].start() if index + 1 < len(selected) else len(compact)
-        verse_text = compact[start:end].strip(" ،؛.ـ")
+        end = selected[index + 1].start() if index + 1 < len(selected) else len(raw)
+        verse_text = clean(raw[start:end]).strip(" ،؛.ـ")
         if len(verse_text) < 8 or not ARABIC_RE.search(verse_text):
             raise RuntimeError(f"Verse {index + 1} is empty or not Arabic")
         rows.append({
