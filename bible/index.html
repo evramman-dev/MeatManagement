@@ -1827,8 +1827,8 @@ document.getElementById("readingTextModal").addEventListener("click",e=>{if(e.ta
 document.getElementById("startJourneyButton").addEventListener("click",startJourney);
 renderBookmarks();
 renderTranslationChoices();
+bindParallelPickers();
 document.getElementById("parallelLoadButton").addEventListener("click",renderParallel);
-document.getElementById("parallelReferenceInput").addEventListener("keydown",event=>{if(event.key==="Enter")renderParallel()});
 document.getElementById("backToJourneys").addEventListener("click",()=>showView("journeys",document.querySelector('[data-view="journeys"]')));
 document.getElementById("saveJournalButton").addEventListener("click",saveJournal);
 document.getElementById("notesSaveButton").addEventListener("click",()=>{const el=document.getElementById("notesJournal");const v=el.value.trim();if(!v){document.getElementById("notesSaveStatus").textContent="اكتب شيئًا أولًا.";return}saveNote(v);el.value="";document.getElementById("notesSaveStatus").textContent="تم الحفظ على جهازك.";});
