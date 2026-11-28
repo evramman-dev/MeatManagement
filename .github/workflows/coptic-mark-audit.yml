@@ -225,3 +225,21 @@ jobs:
           print('USFM_MARK_EXAMPLES',dict(mark_examples))
           for x in mismatches[:12]: print('MISMATCH',x)
           PY
+
+      - name: Inspect independent Coptic New Testament source
+        run: |
+          curl -L --fail --retry 3 -o /tmp/copcnt_usfm.zip https://ebible.org/Scriptures/copcnt_usfm.zip
+          python3 - <<'PY'
+          import zipfile,unicodedata,collections
+          z=zipfile.ZipFile('/tmp/copcnt_usfm.zip')
+          names=[n for n in z.namelist() if n.lower().endswith('.usfm')]
+          print('COPCNT_FILES',len(names),names[:35])
+          marks=collections.Counter()
+          for name in names:
+              data=z.read(name).decode('utf-8-sig','replace')
+              for c in data:
+                  if unicodedata.category(c) in ('Mn','Mc','Me'): marks[f'{ord(c):04X}']+=1
+              if 'MAT' in name.upper():
+                  print('COPCNT_MAT_SAMPLE',repr(data[:8000]))
+          print('COPCNT_MARKS',dict(marks))
+          PY
