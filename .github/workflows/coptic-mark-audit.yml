@@ -154,7 +154,7 @@ jobs:
           app=''.join(norm(str(r.get('text',''))) for r in rows if r.get('book_id')=='mat')
           raw=open('/tmp/coptic-matthew-book.txt',encoding='utf-8').read()
           pdf=norm(raw)
-          sm=difflib.SequenceMatcher(None,app,pdf,autojunk=False)
+          sm=difflib.SequenceMatcher(None,app,pdf,autojunk=True)
           print('MATTHEW_APP_LETTERS',len(app),'PDF_LETTERS',len(pdf),'SIMILARITY',round(sm.ratio(),5))
           print('MATTHEW_APP_START',app[:350])
           print('MATTHEW_PDF_START',pdf[:350])
