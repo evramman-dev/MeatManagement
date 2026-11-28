@@ -1,0 +1,59 @@
+name: St-Takla Word versus HTML full cross-check
+on:
+  workflow_dispatch:
+  push:
+    branches: ["research/st-takla-word-html-full-crosscheck"]
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/st-takla-word-html-crosscheck.yml"
+      - "bible/tools/compare_st_takla_word_html.py"
+      - "bible/tools/extract_st_takla_word_candidates.py"
+permissions:
+  contents: read
+concurrency:
+  group: st-takla-word-html-crosscheck-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install parsers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y antiword
+          python -m pip install beautifulsoup4==4.12.3
+      - name: Download and convert Word files
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/st-takla-crosscheck/raw build/st-takla-crosscheck/text build/st-takla-crosscheck/candidates build/st-takla-crosscheck/report
+          declare -A urls=(
+            [tobit]="https://st-takla.org/Bibles/Arabic-Bible-with-Diacritics/17-Tobit__Deu.doc"
+            [judith]="https://st-takla.org/Bibles/Arabic-Bible-with-Diacritics/18-Judith__Deu.doc"
+            [esther-additions]="https://st-takla.org/Bibles/Arabic-Bible-with-Diacritics/19-2-Esther-the-rest__Deu.doc"
+            [psalm-151]="https://st-takla.org/Bibles/Arabic-Bible-with-Diacritics/21-2-Psalm-151__Deu.doc"
+            [wisdom]="https://st-takla.org/Bibles/Arabic-Bible-with-Diacritics/25-Wisdom__Deu.doc"
+            [sirach]="https://st-takla.org/Bibles/Arabic-Bible-with-Diacritics/26-Sirach__Deu.doc"
+            [baruch]="https://st-takla.org/Bibles/Arabic-Bible-with-Diacritics/30-Baruch__Deu.doc"
+            [daniel-additions]="https://st-takla.org/Bibles/Arabic-Bible-with-Diacritics/32-2-Daniel-the-rest__Deu.doc"
+            [1-maccabees]="https://st-takla.org/Bibles/Arabic-Bible-with-Diacritics/45-First-Maccabees__Deu.doc"
+            [2-maccabees]="https://st-takla.org/Bibles/Arabic-Bible-with-Diacritics/46-Second-Maccabees__Deu.doc"
+          )
+          for name in "${!urls[@]}"; do
+            curl --fail --location --retry 2 --connect-timeout 20 --max-time 90 "${urls[$name]}" -o "build/st-takla-crosscheck/raw/$name.doc"
+            antiword "build/st-takla-crosscheck/raw/$name.doc" > "build/st-takla-crosscheck/text/$name.txt"
+          done
+      - name: Parse Word candidates
+        run: python bible/tools/extract_st_takla_word_candidates.py --text-dir build/st-takla-crosscheck/text --output-dir build/st-takla-crosscheck/candidates
+      - name: Compare all chapters against HTML
+        run: python bible/tools/compare_st_takla_word_html.py --candidate-dir build/st-takla-crosscheck/candidates --output-dir build/st-takla-crosscheck/report --delay 0.35
+      - name: Upload comparison report and candidates
+        uses: actions/upload-artifact@v4
+        with:
+          name: st-takla-word-html-full-crosscheck
+          path: build/st-takla-crosscheck/
+          if-no-files-found: error
+          retention-days: 14
