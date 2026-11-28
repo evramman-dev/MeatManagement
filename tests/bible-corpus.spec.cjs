@@ -237,7 +237,8 @@ test('Bible reader loads local editions and keeps unavailable books and chapters
   });
   const copticVerse = page.locator('#chapterContent .reader-verse-text').first();
   await expect(copticVerse).toHaveAttribute('lang', 'cop');
-  await expect(copticVerse).toContainText(/[Ⲁ-⳿]/);
+  await expect(copticVerse).toHaveAttribute('data-coptic-legacy-applied', '1');
+  expect(await copticVerse.getAttribute('data-coptic-unicode')).toMatch(/[Ⲁ-⳿]/);
   await page.locator('#readerOptionsButton').click();
   await expect(page.locator('#readerOptionsModal')).toBeVisible();
   await expect(page.locator('#readerFontCopticGroup')).toBeVisible();
