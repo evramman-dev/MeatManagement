@@ -60,6 +60,15 @@ test('Bible reader loads local editions and keeps unavailable books and chapters
   await page.locator('.nav button[data-view="read"]').click();
   await expect(page.locator('#readerChooseButton')).toBeVisible();
 
+  await page.locator('#bibleSearchTranslation').selectOption('AR-SVD-1865');
+  await page.locator('#bibleSearchInput').fill('في البدء');
+  await page.locator('#bibleSearchButton').click();
+  await expect(page.locator('#bibleSearchStatus')).toContainText('عُثر على');
+  await expect(page.locator('#bibleSearchResults')).toContainText('في البدء');
+  await page.locator('#bibleSearchResults [data-bible-search-result="0"]').click();
+  await expect(page.locator('#readerStatus')).toContainText('تم فتح الآية');
+  await expect(page.locator('#chapterContent')).toContainText('في البدء');
+
   await openReaderChapter(page, {
     translation: 'AR-SVD-1865',
     covenant: 'NT',
