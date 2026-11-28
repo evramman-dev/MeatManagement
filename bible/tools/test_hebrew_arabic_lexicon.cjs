@@ -30,6 +30,23 @@ for (const [id, [meaning, pronunciation]] of Object.entries(expected)) {
 }
 
 assert.equal(metadata.hebrewLocalLexicon.arabicCoverage.entries, 40);
+
+const pronunciationCorrections = {
+  H0001: "آڤ",
+  H1697: "داڤار",
+  H2822: "حوشِخ",
+  H7363: "راحاف"
+};
+for (const [id, pronunciation] of Object.entries(pronunciationCorrections)) {
+  assert.equal(dictionary[id]?.pronunciation, pronunciation, id + " reviewed Arabic pronunciation");
+}
+assert.equal(
+  Object.values(dictionary).filter(entry => entry.language === "hebrew").length,
+  40,
+  "the local Hebrew Arabic lexicon must contain 40 explicitly tagged entries"
+);
+assert.equal(dictionary.H7225.language, "hebrew", "H7225 must be tagged as Hebrew");
+
 assert.match(sw, /const CACHE="rehla-v120"/);
 
 const start = html.indexOf("function arabicPronunciationFromTransliteration");
@@ -45,4 +62,4 @@ assert.equal(sandbox.convert("sh", "H0001"), "ش");
 assert.equal(sandbox.convert("av", "H0001"), "أَڤ");
 assert.ok(!sandbox.convert("ya.shar", "H3477").includes("."), "syllable separators must not appear in Arabic output");
 
-console.log("Rehla Hebrew Arabic lexicon checks passed: 9 reviewed entries, transliteration rules, metadata, and cache version.");
+console.log("Rehla Hebrew Arabic lexicon checks passed: 9 Job 1:1 entries, 4 pronunciation corrections, 40 Hebrew entries, transliteration rules, metadata, and cache version.");
