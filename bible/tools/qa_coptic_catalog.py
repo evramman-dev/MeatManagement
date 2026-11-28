@@ -54,6 +54,7 @@ def main():
     available_end = index_text.index("function readerFieldLabel(", available_start)
     available_logic = index_text[available_start:available_end]
     assert 'sections.push({id:"إضافات السبعينية"' in available_logic, "Septuagint-only texts must remain separately accessible"
+    assert '!["ESG","DAG"].includes(id)' in available_logic, "Esther/Daniel source aliases must not appear as duplicate standalone books"
 
     print(json.dumps({
         "status": "PASSED",
