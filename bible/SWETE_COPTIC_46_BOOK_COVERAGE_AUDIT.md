@@ -397,3 +397,32 @@
 أصبح لدينا مسار Google Books يعرّف نسخة 1907 الكاملة، ومسح Cornell بديلًا أقدم، ومسار API نظري لجلب صفحات Internet Archive منفردة. لكن لم ينتج أي منها صورة داخلية موثوقة للصفحات المطبوعة 479–504 حتى الآن.
 
 لا نغيّر حالة السفر: `SOURCE_FOUND_NEEDS_PAGE_IMAGE_COLLATION`. لا نعتمد OCR، ولا ننسخ النص إلى corpus، ولا نضيفه إلى التطبيق. يجب أن تكون أي صورة لاحقة مرتبطة صراحة بطبعة 1907 أو أن تُسجل كنسخة مقارنة منفصلة.
+
+
+## متابعة Google Books والوصول المباشر إلى صفحة الجامعة — 2026-11-28
+
+### ما تم فحصه في هذه الجولة
+
+- جُرّب مسار Google Books Dynamic Links المعروف باستخدام معرّف المجلد `WYZn1xHeD-IC` عبر `jscmd=viewapi` للحصول على بيانات المعاينة ورابط الصورة الموقّع. لم تُرجع أداة التصفح استجابة من نقطة النهاية، لذلك لم نحصل على `thumbnail_url` أو توقيع صالح، ولم ننشئ رابط صورة تخمينيًا.
+- جُرّب Google Books Volumes API على المعرّف نفسه، ولم يكن endpoint متاحًا من بيئة الفحص.
+- جُرّب فتح العارض عند الصفحة المطبوعة 479 عبر `https://books.google.com/books?id=WYZn1xHeD-IC&pg=PA479`، لكن أداة التصفح لم تستطع تحميل صفحة Google Books نفسها.
+- راجعنا التوثيق الرسمي لـ Google Books Embedded Viewer API. يتيح العارض تحميل مجلد Google Books باستخدام Volume ID، لكنه يتطلب تشغيل JavaScript داخل متصفح عارض فعلي؛ توثيق الواجهة وحده لا يعطينا رابط صورة صفحة مباشرًا أو رقم leaf للمسح.
+- ظهر شاهد ببليوغرافي مستقل يستشهد صراحةً بـ Swete، المجلد الثاني، طبعة 1907، الصفحة 503 عند الجامعة 11:6. هذا يدعم تحديد الصفحة المطبوعة، لكنه لا يغني عن صورة الصفحة نفسها.
+
+### روابط متابعة محددة
+
+- فتح المجلد عند صفحة الجامعة المطبوعة 479: https://books.google.com/books?id=WYZn1xHeD-IC&pg=PA479
+- سجل Google Books للمجلد: https://books.google.com/books?id=WYZn1xHeD-IC
+- التوثيق الرسمي للعارض المضمن: https://developers.google.com/books/docs/viewer/developers_guide
+- الشاهد الببليوغرافي الذي يحيل إلى الجامعة 11:6، Swete vol. II p. 503: https://www.scielo.org.za/pdf/scriptur/v117/18.pdf
+
+### فحص CI
+
+- Workflow run `46094393463` انتهى الآن بحالة `completed / success`.
+- مهمة `browser-tests` نجحت، بما فيها `Run safe browser checks without production login` و`Run local Bible corpus browser checks`.
+- خطوة `Run full browser checks only after explicit approval` بقيت `skipped`، كما هو مطلوب دون موافقة صريحة.
+- لم يحدث تسجيل دخول إلى الإنتاج.
+
+### القرار
+
+لم نحصل بعد على صورة صفحة داخلية من طبعة 1907، ولذلك تبقى حالة الجامعة `SOURCE_FOUND_NEEDS_PAGE_IMAGE_COLLATION`. لم ننسخ OCR، ولم ننشئ corpus، ولم نغيّر التطبيق أو Service Worker أو Supabase. المسار العملي التالي هو فتح رابط Google Books أعلاه في متصفح يحمّل العارض، ثم التحقق من ظهور الصفحة المطبوعة 479؛ إن ظهرت، يمكن أخذ صور الصفحات 479–504 ومراجعتها واحدة تلو الأخرى.
