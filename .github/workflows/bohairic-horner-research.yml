@@ -1,0 +1,43 @@
+name: Bohairic Horner NT research extraction
+
+on:
+  push:
+    paths:
+      - "bible/tools/extract_bohairic_horner_usfm.py"
+      - ".github/workflows/bohairic-horner-research.yml"
+      - "bible/NKJV_BOHAIRIC_EDITION_AUDIT.md"
+      - "bible/data/multilingual-edition-registry.draft.json"
+  pull_request:
+    paths:
+      - "bible/tools/extract_bohairic_horner_usfm.py"
+      - ".github/workflows/bohairic-horner-research.yml"
+      - "bible/NKJV_BOHAIRIC_EDITION_AUDIT.md"
+      - "bible/data/multilingual-edition-registry.draft.json"
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Bohairic USFM
+        run: |
+          curl -L --fail --retry 3 -o /tmp/copbhc_usfm.zip https://ebible.org/Scriptures/copbhc_usfm.zip
+          mkdir -p /tmp/copbhc
+          unzip -q /tmp/copbhc_usfm.zip -d /tmp/copbhc
+
+      - name: Extract and QA
+        run: |
+          python3 bible/tools/extract_bohairic_horner_usfm.py             --src /tmp/copbhc             --out /tmp/copbhc.jsonl             --audit /tmp/copbhc_audit.json             --archive /tmp/copbhc_usfm.zip
+          cat /tmp/copbhc_audit.json
+
+      - name: Upload research candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: bohairic-horner-nt-research-candidate
+          path: |
+            /tmp/copbhc.jsonl
+            /tmp/copbhc_audit.json
+          retention-days: 14
