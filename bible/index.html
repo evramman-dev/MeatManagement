@@ -1677,8 +1677,8 @@ function normalizeBibleSearchText(value){
 }
 function bibleSearchBookCode(bookId,translation){
  if(translation==="GRC-LXX-SWETE-1907-ECC")return bookId==="ecc"?"ECC":null;
- if(translation==="HE-WLC-2017")return Object.entries(HEBREW_SOURCE_CODE_TO_ID).find(([,id])=>id===bookId)?.[0]||null;
- if(translation==="GRC-LXX-BRENTON-1851")return Object.entries(LXX_BOOK_ID_MAP).find(([,id])=>id===bookId)?.[0]||null;
+ if(translation==="HE-WLC-2017"){const entry=Object.entries(HEBREW_SOURCE_CODE_TO_ID).find(([,id])=>id===bookId);return entry?entry[0]:null;}
+ if(translation==="GRC-LXX-BRENTON-1851"){const entry=Object.entries(LXX_BOOK_ID_MAP).find(([,id])=>id===bookId);return entry?entry[0]:null;}
  if(translation==="GRC-KOINE-RP-2018")return String(bookId||"").toUpperCase();
  return String(bookId||"").toUpperCase();
 }
