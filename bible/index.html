@@ -1673,6 +1673,7 @@ async function loadSvdChapter(){
  }
 }
 let bibleSearchResults=[];
+let bibleSearchDisplayedCount=100;
 function normalizeBibleSearchText(value){
  return Array.from(String(value||"").normalize("NFD").toLowerCase()).filter(ch=>{
   const cp=ch.codePointAt(0);
@@ -1689,6 +1690,27 @@ function bibleSearchBookCode(bookId,translation){
 function bibleSearchCovenant(bookCode){
  return ["MAT","MRK","LUK","JHN","ACT","ROM","1CO","2CO","GAL","EPH","PHP","COL","1TH","2TH","1TI","2TI","TIT","PHM","HEB","JAS","1PE","2PE","1JN","2JN","3JN","JUD","REV"].includes(bookCode)?"NT":"OT";
 }
+function renderBibleSearchResults(translation){
+ const results=document.getElementById("bibleSearchResults");
+ const status=document.getElementById("bibleSearchStatus");
+ const shown=bibleSearchResults.slice(0,bibleSearchDisplayedCount);
+ results.innerHTML=shown.map((hit,index)=>{
+  const book=readerBookNames[hit.bookCode]||hit.bookCode;
+  const ref=book+" "+hit.chapter+":"+hit.verse;
+  return "<div class='result'><button type='button' class='secondary' data-bible-search-result='"+index+"'>"+escapeHtml(ref)+"</button><p class='verse-text'>"+escapeHtml(hit.text)+"</p></div>";
+ }).join("");
+ if(shown.length<bibleSearchResults.length){
+  results.insertAdjacentHTML("beforeend","<div class='search-load-more-wrap'><button type='button' class='secondary' id='bibleSearchLoadMore'>عرض 100 نتيجة أخرى</button></div>");
+  document.getElementById("bibleSearchLoadMore").addEventListener("click",()=>{
+   bibleSearchDisplayedCount=Math.min(bibleSearchDisplayedCount+100,bibleSearchResults.length);
+   renderBibleSearchResults(translation);
+  });
+ }
+ results.querySelectorAll("[data-bible-search-result]").forEach(button=>button.addEventListener("click",()=>openBibleSearchResult(Number(button.dataset.bibleSearchResult),translation)));
+ status.textContent=bibleSearchResults.length
+  ? "عُثر على "+bibleSearchResults.length+" نتيجة · نعرض "+shown.length+" من "+bibleSearchResults.length+"."
+  : "لا توجد نتائج لهذه الكلمة أو العبارة في الترجمة المختارة.";
+}
 async function runBibleSearch(){
  const input=document.getElementById("bibleSearchInput"),status=document.getElementById("bibleSearchStatus"),results=document.getElementById("bibleSearchResults");
  const query=input.value.trim(),translation=document.getElementById("bibleSearchTranslation").value;
@@ -1697,6 +1719,8 @@ async function runBibleSearch(){
  if(normalized.length<2){status.textContent="اكتب حرفين على الأقل.";results.innerHTML="";return}
  status.textContent="جاري تحميل نص الترجمة والبحث فيه...";
  results.innerHTML="";
+ bibleSearchResults=[];
+ bibleSearchDisplayedCount=100;
  try{
   const rows=await loadTranslationCorpus(translation);
   const matches=[];
@@ -1707,16 +1731,7 @@ async function runBibleSearch(){
    }
   }
   bibleSearchResults=matches.filter(x=>x.bookCode&&x.chapter&&x.verse);
-  const shown=bibleSearchResults.slice(0,100);
-  status.textContent=bibleSearchResults.length
-   ? "عُثر على "+bibleSearchResults.length+" نتيجة"+(bibleSearchResults.length>100?" · نعرض أول 100 نتيجة":"")+"."
-   : "لا توجد نتائج لهذه الكلمة أو العبارة في الترجمة المختارة.";
-  results.innerHTML=shown.map((hit,index)=>{
-   const book=readerBookNames[hit.bookCode]||hit.bookCode;
-   const ref=book+" "+hit.chapter+":"+hit.verse;
-   return "<div class='result'><button type='button' class='secondary' data-bible-search-result='"+index+"'>"+escapeHtml(ref)+"</button><p class='verse-text'>"+escapeHtml(hit.text)+"</p></div>";
-  }).join("");
-  results.querySelectorAll("[data-bible-search-result]").forEach(button=>button.addEventListener("click",()=>openBibleSearchResult(Number(button.dataset.bibleSearchResult),translation)));
+  renderBibleSearchResults(translation);
  }catch(error){
   status.textContent="تعذر تحميل نص الترجمة أو البحث فيه. تحقق من الاتصال ثم حاول مرة أخرى.";
  }
