@@ -1137,6 +1137,7 @@ function renderCurrentReader(){
  readerPageCount=1;
  readerPageTarget="first";
  content.innerHTML=markup;
+ applyCopticLegacyDisplay(content);
  content.scrollTop=0;
  bindReaderVerseActions();
  prefetchReaderAdjacentChapters();
