@@ -185,6 +185,26 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 </section>
 
 <section id="read" class="view">
+  <div class="card" id="bibleSearchCard">
+    <div class="eyebrow">بحث في النص الكتابي</div>
+    <h2>ابحث في الكتاب المقدس</h2>
+    <label for="bibleSearchTranslation">الترجمة</label>
+    <select id="bibleSearchTranslation" class="search-translation">
+      <option value="AR-SVD-1865">فان دايك 1865</option>
+      <option value="AR-KEH-2012">كتاب الحياة 2012</option>
+      <option value="HE-WLC-2017">النص العبري WLC</option>
+      <option value="GRC-LXX-BRENTON-1851">السبعينية — برنتون 1851</option>
+      <option value="GRC-LXX-SWETE-1907-ECC">سويتي 1907 — الجامعة فقط</option>
+      <option value="GRC-KOINE-RP-2018">اليوناني الكويني RP 2018</option>
+    </select>
+    <label for="bibleSearchInput" style="display:block;margin-top:10px">كلمة أو عبارة</label>
+    <div class="search" style="margin-top:7px">
+      <input id="bibleSearchInput" type="search" placeholder="مثال: في البدء كان الكلمة">
+      <button id="bibleSearchButton" class="primary" type="button">بحث</button>
+    </div>
+    <p id="bibleSearchStatus" class="note" aria-live="polite">اختر الترجمة واكتب كلمة أو عبارة للبحث داخل نصوصها.</p>
+    <div id="bibleSearchResults" aria-live="polite"></div>
+  </div>
   <div class="reader-screen">
     <div class="reader-screen-actions">
       <button id="readerChooseButton" class="reader-screen-button" type="button"><strong>الكتاب المقدس</strong><span>اختر موضع القراءة</span></button>
@@ -1648,29 +1668,73 @@ async function loadSvdChapter(){
    status.textContent="تعذر تحميل الإصحاح الآن. تحقق من الاتصال ثم حاول مرة أخرى.";
  }
 }
-const demoIndex=[
- {ref:"مزمور 46",words:["الله","خوف","قلق","ملجأ","قوة"]},
- {ref:"فيلبي 4",words:["الله","سلام","صلاة","قلق","فرح"]},
- {ref:"متى 6",words:["الله","صلاة","قلق","أبانا","غد"]},
- {ref:"مزمور 34",words:["الله","حزن","ضيق","نجاة"]},
- {ref:"يوحنا 14",words:["المسيح","سلام","حزن","طريق"]},
- {ref:"رومية 8",words:["الله","المسيح","رجاء","محبة","خوف"]},
- {ref:"أمثال 3",words:["حكمة","طريق","قرار","ثقة"]},
- {ref:"يعقوب 1",words:["حكمة","تجربة","صلاة"]},
- {ref:"مزمور 25",words:["طريق","قرار","تعليم","الله"]},
- {ref:"رومية 15",words:["رجاء","تشجيع","فرح"]},
- {ref:"إشعياء 41",words:["خوف","تشجيع","قوة","الله"]},
- {ref:"مزمور 27",words:["خوف","رجاء","الله"]},
- {ref:"مزمور 51",words:["ذنب","توبة","قلب","الله"]},
- {ref:"لوقا 15",words:["غفران","توبة","رجوع","أب"]},
- {ref:"مزمور 103",words:["شكر","رحمة","نعمة","الله"]},
- {ref:"لوقا 17",words:["شكر","امتنان"]},
- {ref:"1 تسالونيكي 5",words:["شكر","صلاة","فرح"]},
- {ref:"مرقس 1",words:["بداية","يسوع","المسيح","قراءة"]},
- {ref:"يوحنا 1",words:["يسوع","المسيح","كلمة","بداية"]},
- {ref:"لوقا 5",words:["بداية","دعوة","يسوع"]}
-];
-function searchBible(){const q=document.getElementById("searchInput").value.trim();const el=document.getElementById("searchResults");if(!q){el.innerHTML="<p class='note'>اكتب كلمة أو مرجعًا للبحث.</p>";return}const normalize=s=>String(s).toLowerCase().replace(/[ًٌٍَُِّْـٰ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/[\u200e\u200f\u202a-\u202e]/g,'').trim();const nq=normalize(q);const hits=demoIndex.filter(x=>normalize(x.ref).includes(nq)||x.words.some(w=>normalize(w).includes(nq)||nq.includes(normalize(w))));el.innerHTML=hits.length?hits.map(x=>"<div class='result'><strong>"+x.ref+"</strong><p class='note'>كلمة مرتبطة بهذا المرجع في فهرس رحلة التجريبي. هذا ليس بحثًا في نص الآيات.</p><div>"+x.words.map(w=>"<span class='pill'>"+escapeHtml(w)+"</span>").join("")+"</div></div>").join(""):"<p class='note'>لا توجد نتيجة لهذه الكلمة في الفهرس التجريبي الحالي.</p>"}
+let bibleSearchResults=[];
+function normalizeBibleSearchText(value){
+ return Array.from(String(value||"").normalize("NFD").toLowerCase()).filter(ch=>{
+  const cp=ch.codePointAt(0);
+  return !((cp>=768&&cp<=879)||(cp>=1425&&cp<=1479)||(cp>=1552&&cp<=1562)||(cp>=1611&&cp<=1631)||cp===1648||(cp>=1750&&cp<=1773)||cp===8206||cp===8207||(cp>=8234&&cp<=8238));
+ }).join("").replace(/[أإآٱ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه").replace(/ـ/g,"").trim();
+}
+function bibleSearchBookCode(bookId,translation){
+ if(translation==="GRC-LXX-SWETE-1907-ECC")return bookId==="ecc"?"ECC":null;
+ if(translation==="HE-WLC-2017"){const entry=Object.entries(HEBREW_SOURCE_CODE_TO_ID).find(([,id])=>id===bookId);return entry?entry[0]:null;}
+ if(translation==="GRC-LXX-BRENTON-1851"){const entry=Object.entries(LXX_BOOK_ID_MAP).find(([,id])=>id===bookId);return entry?entry[0]:null;}
+ if(translation==="GRC-KOINE-RP-2018")return String(bookId||"").toUpperCase();
+ return String(bookId||"").toUpperCase();
+}
+function bibleSearchCovenant(bookCode){
+ return ["MAT","MRK","LUK","JHN","ACT","ROM","1CO","2CO","GAL","EPH","PHP","COL","1TH","2TH","1TI","2TI","TIT","PHM","HEB","JAS","1PE","2PE","1JN","2JN","3JN","JUD","REV"].includes(bookCode)?"NT":"OT";
+}
+async function runBibleSearch(){
+ const input=document.getElementById("bibleSearchInput"),status=document.getElementById("bibleSearchStatus"),results=document.getElementById("bibleSearchResults");
+ const query=input.value.trim(),translation=document.getElementById("bibleSearchTranslation").value;
+ if(!query){status.textContent="اكتب كلمة أو عبارة للبحث.";results.innerHTML="";return}
+ const normalized=normalizeBibleSearchText(query);
+ if(normalized.length<2){status.textContent="اكتب حرفين على الأقل.";results.innerHTML="";return}
+ status.textContent="جاري تحميل نص الترجمة والبحث فيه...";
+ results.innerHTML="";
+ try{
+  const rows=await loadTranslationCorpus(translation);
+  const matches=[];
+  for(const row of rows){
+   const textValue=String(row.text||"");
+   if(normalizeBibleSearchText(textValue).includes(normalized)){
+    matches.push({bookId:row.book_id,bookCode:bibleSearchBookCode(row.book_id,translation),chapter:Number(row.chapter),verse:Number(row.verse),text:textValue});
+   }
+  }
+  bibleSearchResults=matches.filter(x=>x.bookCode&&x.chapter&&x.verse);
+  const shown=bibleSearchResults.slice(0,100);
+  status.textContent=bibleSearchResults.length
+   ? "عُثر على "+bibleSearchResults.length+" نتيجة"+(bibleSearchResults.length>100?" · نعرض أول 100 نتيجة":"")+"."
+   : "لا توجد نتائج لهذه الكلمة أو العبارة في الترجمة المختارة.";
+  results.innerHTML=shown.map((hit,index)=>{
+   const book=readerBookNames[hit.bookCode]||hit.bookCode;
+   const ref=book+" "+hit.chapter+":"+hit.verse;
+   return "<div class='result'><button type='button' class='secondary' data-bible-search-result='"+index+"'>"+escapeHtml(ref)+"</button><p class='verse-text'>"+escapeHtml(hit.text)+"</p></div>";
+  }).join("");
+  results.querySelectorAll("[data-bible-search-result]").forEach(button=>button.addEventListener("click",()=>openBibleSearchResult(Number(button.dataset.bibleSearchResult),translation)));
+ }catch(error){
+  status.textContent="تعذر تحميل نص الترجمة أو البحث فيه. تحقق من الاتصال ثم حاول مرة أخرى.";
+ }
+}
+async function openBibleSearchResult(index,translation){
+ const hit=bibleSearchResults[index];if(!hit)return;
+ readerSelection.translation=translation;
+ readerSelection.covenant=bibleSearchCovenant(hit.bookCode);
+ readerSelection.section="";
+ readerSelection.book=hit.bookCode;
+ readerSelection.chapter=hit.chapter;
+ readerSelection.verse=String(hit.verse);
+ const sections=readerSectionsAvailable();
+ const section=sections.find(s=>s.books.some(([id])=>id===hit.bookCode));
+ if(section)readerSelection.section=section.id;
+ normalizeReaderState();
+ showView("read",document.querySelector('.nav button[data-view="read"]'));
+ await openSelectedReader();
+ document.getElementById("chapterContent").scrollIntoView({behavior:"smooth",block:"start"});
+}
+document.getElementById("bibleSearchButton").addEventListener("click",runBibleSearch);
+document.getElementById("bibleSearchInput").addEventListener("keydown",event=>{if(event.key==="Enter")runBibleSearch()});
 document.getElementById("openReadingsButton").addEventListener("click",()=>{showView("copticReadings",document.querySelector('[data-view="copticReadings"]'));loadCopticReadings()});
 document.getElementById("readerChooseButton").addEventListener("click",()=>openReaderPicker("book"));
 document.getElementById("readerOptionsButton").addEventListener("click",()=>{document.getElementById("readerOptionsModal").classList.remove("hidden");document.getElementById("readerOptionsModal").setAttribute("aria-hidden","false")});

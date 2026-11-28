@@ -39,7 +39,9 @@ async function openReaderBookOptions(page, { translation, covenant, section }) {
 test('Bible reader loads local editions and keeps unavailable books and chapters out of their pickers', async ({ page }) => {
   test.setTimeout(90000);
   const pageErrors = [];
-  page.on('pageerror', error => pageErrors.push(error.message));
+  await page.addInitScript(() => { window.addEventListener('error', event => { console.error('GLOBAL_SCRIPT_ERROR', event.message, event.filename, event.lineno, event.colno); }); });
+  page.on('pageerror', error => pageErrors.push(error.stack || error.message));
+  page.on('console', message => { if (message.type() === 'error') pageErrors.push(message.text() + ' ' + JSON.stringify(message.location())); });
   await page.goto(new URL('bible/', baseURL).toString());
   await page.waitForTimeout(100);
   expect(pageErrors).toEqual([]);
@@ -59,6 +61,33 @@ test('Bible reader loads local editions and keeps unavailable books and chapters
 
   await page.locator('.nav button[data-view="read"]').click();
   await expect(page.locator('#readerChooseButton')).toBeVisible();
+
+  await page.locator('#bibleSearchTranslation').selectOption('AR-SVD-1865');
+  await page.locator('#bibleSearchInput').fill('في البدء');
+  await page.locator('#bibleSearchButton').click();
+  await expect(page.locator('#bibleSearchStatus')).toContainText('عُثر على');
+  await expect(page.locator('#bibleSearchResults')).toContainText('خَلَقَ');
+  await page.locator('#bibleSearchResults [data-bible-search-result="0"]').click();
+  await expect(page.locator('#readerStatus')).toContainText('تم فتح الآية');
+  await expect(page.locator('#chapterContent')).toContainText('خَلَقَ');
+
+  await page.locator('#bibleSearchTranslation').selectOption('HE-WLC-2017');
+  await page.locator('#bibleSearchInput').fill('בראשית');
+  await page.locator('#bibleSearchButton').click();
+  await expect(page.locator('#bibleSearchStatus')).toContainText('عُثر على');
+  await expect(page.locator('#bibleSearchResults')).toContainText('בְּרֵאשִׁ֖ית');
+  await page.locator('#bibleSearchResults [data-bible-search-result="0"]').click();
+  await expect(page.locator('#readerStatus')).toContainText('تم فتح الآية');
+  await expect(page.locator('#chapterContent')).toContainText('בְּרֵאשִׁ֖ית');
+
+  await page.locator('#bibleSearchTranslation').selectOption('GRC-KOINE-RP-2018');
+  await page.locator('#bibleSearchInput').fill('λογος');
+  await page.locator('#bibleSearchButton').click();
+  await expect(page.locator('#bibleSearchStatus')).toContainText('عُثر على');
+  await expect(page.locator('#bibleSearchResults')).toContainText('λόγος');
+  await page.locator('#bibleSearchResults [data-bible-search-result="0"]').click();
+  await expect(page.locator('#readerStatus')).toContainText('تم فتح الآية');
+  await expect(page.locator('#chapterContent')).toContainText('λόγος');
 
   await openReaderChapter(page, {
     translation: 'AR-SVD-1865',
