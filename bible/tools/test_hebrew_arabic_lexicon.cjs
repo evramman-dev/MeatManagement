@@ -51,7 +51,7 @@ assert.equal(
 );
 assert.equal(dictionary.H7225.language, "hebrew", "H7225 must be tagged as Hebrew");
 
-assert.match(sw, /const CACHE="rehla-v120"/);
+assert.match(sw, /const CACHE="rehla-v121"/);
 
 const start = html.indexOf("function arabicPronunciationFromTransliteration");
 const end = html.indexOf("\nlet READER_LOCAL_STRONGS_AR", start);
