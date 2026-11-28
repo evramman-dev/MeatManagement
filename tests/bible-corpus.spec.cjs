@@ -127,6 +127,7 @@ test('Bible reader loads local editions and keeps unavailable books and chapters
   await expect(page.locator('#chapterContent .reader-verse-text').first()).toHaveAttribute('lang', 'grc');
   await expect(page.locator('#chapterContent .reader-verse-text').first()).toHaveAttribute('dir', 'ltr');
   await expect(page.locator('#chapterContent')).toContainText('τέλος');
+  await expect(page.locator('#chapterStatus')).toContainText('سويتي 1907');
 
   await openReaderChapter(page, {
     translation: 'GRC-KOINE-RP-2018',
