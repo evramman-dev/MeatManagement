@@ -112,7 +112,7 @@ test('Bible reader loads local editions and keeps unavailable books and chapters
   await openReaderChapter(page, {
     translation: 'GRC-LXX-BRENTON-1851',
     covenant: 'OT',
-    section: 'التاريخية',
+    section: 'إضافات السبعينية',
     book: '3MA',
     chapter: 1
   });
