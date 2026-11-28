@@ -32,7 +32,7 @@ jobs:
       - name: Extract selected deuterocanonical books as research candidates
         run: |
           python bible/tools/extract_st_takla_coptic_candidates.py \
-            --books JDT,WIS,BAR,1MA,2MA,PS151,DAN-ADD \
+            --books JDT,WIS,SIR,BAR,1MA,2MA,PS151,DAN-ADD --delay 0.2 \
             --output-dir build/st-takla-coptic-candidates
       - name: Validate book coverage, unique verses, and research-only status
         run: |
@@ -42,7 +42,7 @@ jobs:
           from pathlib import Path
 
           root = Path("build/st-takla-coptic-candidates")
-          expected = {"jdt": 16, "wis": 19, "bar": 6, "1ma": 16, "2ma": 15, "ps151": 1, "dan-add": 2}
+          expected = {"jdt": 16, "wis": 19, "sir": 51, "bar": 6, "1ma": 16, "2ma": 15, "ps151": 1, "dan-add": 2}
           files = sorted(root.glob("*-research-candidate.jsonl"))
           assert {p.name.split("-research")[0] for p in files} == set(expected), "Candidate file set mismatch"
           total = 0
