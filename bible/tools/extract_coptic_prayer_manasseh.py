@@ -36,15 +36,17 @@ def main() -> int:
     if ATTRIBUTION not in page_text:
         raise RuntimeError("Official Book of Holy Week attribution was not found on the page")
 
-    candidates = []
-    for tag in soup.find_all(["p", "div", "section", "blockquote"]):
-        value = clean(tag.get_text(" ", strip=True))
-        if "1أيها الرب" in value.replace(" ", "") and "19لك المجد" in value.replace(" ", ""):
-            candidates.append((len(value), value))
-    if not candidates:
-        raise RuntimeError("Could not isolate a single element containing Prayer of Manasseh verses 1 and 19")
+    attribution_start = page_text.find(ATTRIBUTION)
+    if attribution_start < 0:
+        raise RuntimeError("Book of Holy Week attribution was not found")
+    prayer_start = attribution_start + len(ATTRIBUTION)
+    next_heading = page_text.find("صلاة منسى", prayer_start)
+    if next_heading < 0:
+        raise RuntimeError("Could not find the end marker after the Prayer of Manasseh text")
+    raw = clean(page_text[prayer_start:next_heading])
+    if "1أيهاالرب" not in raw.replace(" ", "") or "19لكالمجد" not in raw.replace(" ", ""):
+        raise RuntimeError("The isolated text does not contain the first and last numbered verses")
 
-    raw = min(candidates, key=lambda item: item[0])[1]
     matches = list(VERSE_MARKER.finditer(raw))
     selected = []
     expected = 1
