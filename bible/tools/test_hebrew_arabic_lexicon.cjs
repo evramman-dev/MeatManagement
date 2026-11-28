@@ -55,7 +55,8 @@ assert.ok(dictionary.H7363.arabic.includes("يحوم"), "H7363 must retain the P
 assert.match(dictionary.H7363.meaning, /تكوين 1:2/, "H7363 must explain its Genesis 1:2 contextual sense");
 assert.equal(metadata._meta.version, 17, "original-language metadata version");
 
-assert.match(sw, /const CACHE="rehla-v122"/);
+const cacheVersion = Number(sw.match(/const CACHE="rehla-v(\\d+)"/)?.[1] || 0);
+assert.ok(cacheVersion >= 123, "Rehla service worker cache must be refreshed after reader changes");
 
 const start = html.indexOf("function arabicPronunciationFromTransliteration");
 const end = html.indexOf("\nlet READER_LOCAL_STRONGS_AR", start);
