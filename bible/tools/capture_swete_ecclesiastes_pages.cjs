@@ -3,8 +3,8 @@ const path = require('node:path');
 const { chromium } = require('playwright');
 
 const volumeId = 'WYZn1xHeD-IC';
-const firstPage = 479;
-const lastPage = 504;
+const firstPage = 480;
+const lastPage = 505;
 const outputDir = path.join(process.cwd(), 'test-results', 'swete-ecclesiastes');
 fs.mkdirSync(outputDir, { recursive: true });
 
