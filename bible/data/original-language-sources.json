@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "version": 12,
+    "version": 13,
     "description": "مصادر دراسة النص الأصلي في تطبيق رِحلة",
     "purpose": "تسجيل مصادر النص اليوناني والمعاجم والمورفولوجيا وترخيص كل مصدر قبل إدخال بيانات محلية موسعة"
   },
@@ -137,6 +137,20 @@
     "scope": "On-demand lookup for Hebrew, Aramaic, and Greek Strong's entries missing from the bundled Arabic lexicon and local Greek chunks",
     "data": "Lemma, transliteration, English gloss, definition, and part of speech when supplied by the API",
     "arabicPolicy": "The source supplies English lexical information, not a complete Arabic translation. Arabic meaning remains available only when a locally reviewed Arabic entry exists.",
-    "attribution": "STEPBible TBESH/TBESG; data licensed CC BY 4.0. API provided by Free Use Bible API."
+    "attribution": "STEPBible TBESH/TBESG; data licensed CC BY 4.0. API provided by Free Use Bible API.",
+    "responseStructure": {
+      "entry": "payload.entry",
+      "senses": "entry.senses[]",
+      "fields": [
+        "id",
+        "language",
+        "lemma",
+        "transliteration",
+        "partOfSpeech",
+        "gloss",
+        "definition"
+      ],
+      "note": "Each Strong's entry may contain multiple senses. The application now displays all available senses and retains English gloss/definition as source data, not Arabic translation."
+    }
   }
 }
