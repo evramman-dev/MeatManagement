@@ -99,5 +99,5 @@ def main():
      print("DIFF",bid,ch,issue.get("range"),"WORD=",json.dumps(issue.get("word",""),ensure_ascii=False),"HTML=",json.dumps(issue.get("html",""),ensure_ascii=False),flush=True)
     else:
      print("ISSUE",bid,ch,json.dumps(issue,ensure_ascii=False),flush=True)
-print("TOTALS",json.dumps(report["totals"],ensure_ascii=False))
+ print("TOTALS",json.dumps(report["totals"],ensure_ascii=False))
 if __name__=="__main__":main()
