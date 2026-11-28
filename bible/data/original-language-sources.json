@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "version": 11,
+    "version": 12,
     "description": "مصادر دراسة النص الأصلي في تطبيق رِحلة",
     "purpose": "تسجيل مصادر النص اليوناني والمعاجم والمورفولوجيا وترخيص كل مصدر قبل إدخال بيانات محلية موسعة"
   },
@@ -128,5 +128,15 @@
     "sourceVersion": "v3.3.2 / commit 27a45ff1b7be6c17ccbfeac414f3f55732ae8e28",
     "dataPath": "./data/word-study/rp2018/:book.csv",
     "note": "The reader edition remains Robinson-Pierpont 2018. Word-study data is stored locally so study does not depend on an external API."
+  },
+  "stepBibleApi": {
+    "source": "STEPBible TBESH/TBESG",
+    "repository": "STEPBible-Data / Free Use Bible API",
+    "license": "CC BY 4.0",
+    "endpoint": "https://bible.helloao.org/api/d/stepbible-lexicon/lexicon/{strongs}.json",
+    "scope": "On-demand lookup for Hebrew, Aramaic, and Greek Strong's entries missing from the bundled Arabic lexicon and local Greek chunks",
+    "data": "Lemma, transliteration, English gloss, definition, and part of speech when supplied by the API",
+    "arabicPolicy": "The source supplies English lexical information, not a complete Arabic translation. Arabic meaning remains available only when a locally reviewed Arabic entry exists.",
+    "attribution": "STEPBible TBESH/TBESG; data licensed CC BY 4.0. API provided by Free Use Bible API."
   }
 }
