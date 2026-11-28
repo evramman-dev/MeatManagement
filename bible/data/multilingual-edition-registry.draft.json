@@ -282,9 +282,14 @@
       "source_url": "https://bibles.dbs.org/COPSNT/pdf/COPSNT.pdf",
       "license": "Public Domain",
       "license_status": "source_catalog_public_domain",
-      "coverage_status": "27_book_new_testament",
-      "corpus_status": "research_import_candidate",
-      "notes": "Digital Bible Society identifies this Coptic New Testament as corresponding to George Horner's critical edition of the Bohairic Northern dialect, begun in 1898, and marks the edition Public Domain. Use this Horner witness as the safer corpus candidate rather than assuming the later Bohairica 1.2 standardized Wells edition is public domain."
+      "coverage_status": "27_book_new_testament_7956_records_260_chapters",
+      "corpus_status": "research_corpus_staged_and_app_reader_integrated",
+      "notes": "Horner Bohairic NT research corpus generated from the eBible COPBHC USFM package and staged into the app reader/search path. QA passed: 27 books, 260 chapters, 7,956 verse records, zero duplicate keys, no missing books. The corpus keeps canonical internal book IDs and preserves Bohairic Unicode. It remains a research candidate until edition-level source matching and rights notice are human-reviewed.",
+      "corpus_file": "bible/data/cop-bohairic-horner-nt.jsonl.gz",
+      "audit_file": "bible/data/cop-bohairic-horner-nt_audit.json",
+      "record_count": 7956,
+      "source_archive_sha256": "26c8c5d971f7612c2724ccb95aeb15fe63b307788b273d4c22cff22895dd7e9d",
+      "last_verified": "2026-11-28"
     }
   ],
   "alignment_policy": {
