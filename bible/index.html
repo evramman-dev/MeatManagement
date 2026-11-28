@@ -184,7 +184,7 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
  </div>
 </section>
 
-<section id="read" class="view">
+<section id="search" class="view">
   <div class="card" id="bibleSearchCard">
     <div class="eyebrow">بحث في النص الكتابي</div>
     <h2>ابحث في الكتاب المقدس</h2>
@@ -205,6 +205,9 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
     <p id="bibleSearchStatus" class="note" aria-live="polite">اختر الترجمة واكتب كلمة أو عبارة للبحث داخل نصوصها.</p>
     <div id="bibleSearchResults" aria-live="polite"></div>
   </div>
+</section>
+
+<section id="read" class="view">
   <div class="reader-screen">
     <div class="reader-screen-actions">
       <button id="readerChooseButton" class="reader-screen-button" type="button"><strong>الكتاب المقدس</strong><span>اختر موضع القراءة</span></button>
@@ -301,6 +304,7 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 <button data-view="home" class="active" onclick="showView('home',this)">اليوم</button>
 <button data-view="copticReadings" onclick="showView('copticReadings',this);loadCopticReadings()">القراءات</button>
 <button data-view="read" onclick="showView('read',this)">الكتاب</button>
+  <button data-view="search" onclick="showView('search',this)">بحث</button>
 <button data-view="translations" onclick="showView('translations',this)">الترجمات</button>
 <button data-view="journeys" onclick="showView('journeys',this)">الرحلات</button>
 <button data-view="verses" onclick="showView('verses',this)">آياتي</button>
@@ -331,7 +335,7 @@ const references={
 };
 const choiceBox=document.getElementById("moodChoices");
 moods.forEach(m=>{const b=document.createElement("button");b.className="choice";b.innerHTML="<strong>"+m.title+"</strong><small>"+m.sub+"</small>";b.onclick=()=>chooseMood(m);choiceBox.appendChild(b)});
-function showView(id,btn){document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));document.getElementById(id).classList.add("active");document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));if(btn)btn.classList.add("active");const headings={home:["أنت داخل التطبيق النهارده ليه؟","ابدأ من حالتك، ثم اترك للكلمة مساحة."],read:["الكتاب المقدس","اقرأ وابحث وتابع مراجع القراءة في مكان واحد."],translations:["الترجمات","اختر ترجمة أو اعرض أكثر من ترجمة في القراءة المتوازية."],journeys:["الرحلات","اختر مسارًا يساعدك على القراءة والتأمل يومًا بيوم."],myJourney:["رحلتي","تابع يومك الحالي وتأملاتك وتقدمك في برنامج الثلاثين يومًا."],verses:["آياتي المحفوظة","احفظ آياتك وراجعها في مواعيد تساعدك على تذكرها."],bookmarks:["علاماتي","علاماتك المرجعية وتحديداتك المحفوظة."],me:["مذكراتي","احتفظ بأفكارك وصلواتك وما تريد الرجوع إليه."]};const heading=headings[id]||headings.home;document.getElementById("title").textContent=heading[0];document.getElementById("subtitle").textContent=heading[1];document.querySelectorAll(".home-title").forEach(el=>el.classList.toggle("hidden",id!=="home"));if(id==="me")renderNotes();if(id==="verses")renderVerses();if(id==="bookmarks")renderBookmarks();if(id==="journeys"||id==="myJourney")renderJourney();scrollTo({top:0,behavior:"smooth"})}
+function showView(id,btn){document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));document.getElementById(id).classList.add("active");document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));if(btn)btn.classList.add("active");const headings={home:["أنت داخل التطبيق النهارده ليه؟","ابدأ من حالتك، ثم اترك للكلمة مساحة."],read:["الكتاب المقدس","اقرأ نص الكتاب المقدس واختر السفر والإصحاح."],search:["البحث","ابحث في نصوص الترجمات المتاحة وافتح نتيجة البحث في موضعها."],translations:["الترجمات","اختر ترجمة أو اعرض أكثر من ترجمة في القراءة المتوازية."],journeys:["الرحلات","اختر مسارًا يساعدك على القراءة والتأمل يومًا بيوم."],myJourney:["رحلتي","تابع يومك الحالي وتأملاتك وتقدمك في برنامج الثلاثين يومًا."],verses:["آياتي المحفوظة","احفظ آياتك وراجعها في مواعيد تساعدك على تذكرها."],bookmarks:["علاماتي","علاماتك المرجعية وتحديداتك المحفوظة."],me:["مذكراتي","احتفظ بأفكارك وصلواتك وما تريد الرجوع إليه."]};const heading=headings[id]||headings.home;document.getElementById("title").textContent=heading[0];document.getElementById("subtitle").textContent=heading[1];document.querySelectorAll(".home-title").forEach(el=>el.classList.toggle("hidden",id!=="home"));if(id==="me")renderNotes();if(id==="verses")renderVerses();if(id==="bookmarks")renderBookmarks();if(id==="journeys"||id==="myJourney")renderJourney();scrollTo({top:0,behavior:"smooth"})}
 function chooseMood(m){const refs=references[m.id]||[];const card=document.getElementById("journeyCard");card.classList.remove("hidden");card.innerHTML="<div class='eyebrow'>رحلتك المقترحة</div><h2>"+m.title+"</h2><p>سنبدأ بثلاث محطات قصيرة. كل محطة لها قراءة وتأمل وسؤال وصلاة.</p><div>"+refs.map(r=>"<span class='pill'>"+r+"</span>").join("")+"</div><button id='startSelectedJourney' class='primary' type='button'>احفظ اختياري وابدأ</button>";document.getElementById("startSelectedJourney").addEventListener("click",()=>saveMood(m.id));localStorage.setItem("rh_last_mood",m.id)}
 const journeyDays=[
 {title:"ابدأ من مكانك",refs:["مزمور 139","مرقس 1"],question:"ما الأمر الذي يشغل قلبك اليوم؟",prayer:"قل لله ببساطة ما بداخلك دون ترتيب أو تجميل.",step:"خصص خمس دقائق هادئة للقراءة."},
