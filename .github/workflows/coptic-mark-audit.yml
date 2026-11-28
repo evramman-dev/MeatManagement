@@ -17,35 +17,45 @@ jobs:
       - name: Download the exact published corpus
         run: |
           curl -L --fail --retry 3 -o /tmp/coptic.jsonl.gz https://raw.githubusercontent.com/evramman-dev/MeatManagement/main/bible/data/cop-bohairic-horner-nt.jsonl.gz
-      - name: Count Unicode marks in every verse
+      - name: Count Unicode marks in the app corpus
         run: |
           python3 - <<'PY'
           import gzip, json, unicodedata, collections
-          p='/tmp/coptic.jsonl.gz'
-          rows=[json.loads(x) for x in gzip.open(p,'rt',encoding='utf-8') if x.strip()]
+          rows=[json.loads(x) for x in gzip.open('/tmp/coptic.jsonl.gz','rt',encoding='utf-8') if x.strip()]
           targets={'0300':'combining grave / genkima','0307':'combining dot above','0305':'combining overline','FE24':'combining macron left half','FE25':'combining macron right half','FE26':'combining conjoining macron','0304':'combining macron','0308':'combining diaeresis','0323':'combining dot below','0342':'combining Greek perispomeni','0350':'combining right arrowhead above'}
           counts=collections.Counter()
-          verse_counts=collections.Counter()
-          examples=collections.defaultdict(list)
           all_marks=collections.Counter()
           for row in rows:
-              txt=str(row.get('text',''))
-              loc=f"{row.get('book_id')} {row.get('chapter')}:{row.get('verse')}"
-              for ch in txt:
+              for ch in str(row.get('text','')):
                   cp=f"{ord(ch):04X}"
-                  if unicodedata.category(ch) in ('Mn','Mc','Me'):
-                      all_marks[cp]+=1
-                  if cp in targets:
-                      counts[cp]+=1
-                      verse_counts[cp]+=1
-                      if len(examples[cp])<5:
-                          examples[cp].append({'location':loc,'text':txt})
-          print('VERSE_COUNT',len(rows))
-          print('BOOK_COUNT',len({r.get('book_id') for r in rows}))
-          print('TARGET_MARKS')
-          for cp,name in targets.items():
-              print(cp,name,'occurrences=',counts[cp],'verses=',verse_counts[cp],'examples=',json.dumps(examples[cp],ensure_ascii=False))
-          print('ALL_COMBINING_MARKS_IN_CORPUS')
-          for cp,n in sorted(all_marks.items(),key=lambda x:int(x[0],16)):
-              print(cp,unicodedata.name(chr(int(cp,16)),'UNKNOWN'),'count=',n)
+                  if unicodedata.category(ch) in ('Mn','Mc','Me'): all_marks[cp]+=1
+                  if cp in targets: counts[cp]+=1
+          print('APP_CORPUS_VERSES',len(rows))
+          for cp,name in targets.items(): print('APP',cp,name,counts[cp])
+          print('APP_ALL_COMBINING_MARKS',dict(sorted(all_marks.items(),key=lambda x:int(x[0],16))))
+          PY
+      - name: Download the published DBS Coptic PDF
+        run: |
+          curl -L --fail --retry 3 -o /tmp/copsnt.pdf https://bibles.dbs.org/COPSNT/pdf/COPSNT.pdf
+          sudo apt-get update
+          sudo apt-get install -y poppler-utils
+          pdftotext -enc UTF-8 -layout /tmp/copsnt.pdf /tmp/copsnt.txt
+      - name: Count Unicode marks in the PDF text layer
+        run: |
+          python3 - <<'PY'
+          import unicodedata, collections
+          text=open('/tmp/copsnt.txt',encoding='utf-8').read()
+          targets={'0300':'combining grave / genkima','0307':'combining dot above','0305':'combining overline','FE24':'combining macron left half','FE25':'combining macron right half','FE26':'combining conjoining macron','0304':'combining macron','0308':'combining diaeresis','0323':'combining dot below','0342':'combining Greek perispomeni','0350':'combining right arrowhead above'}
+          counts=collections.Counter()
+          all_marks=collections.Counter()
+          for ch in text:
+              cp=f"{ord(ch):04X}"
+              if unicodedata.category(ch) in ('Mn','Mc','Me'): all_marks[cp]+=1
+              if cp in targets: counts[cp]+=1
+          print('PDF_TEXT_CHARACTERS',len(text))
+          for cp,name in targets.items(): print('PDF',cp,name,counts[cp])
+          print('PDF_ALL_COMBINING_MARKS',dict(sorted(all_marks.items(),key=lambda x:int(x[0],16))))
+          for needle in ('МАРКОН','ⲘⲀⲢⲔⲞⲚ'):
+              pos=text.find(needle)
+              if pos>=0: print('PDF_MARK_SAMPLE',repr(text[pos:pos+1400]))
           PY
