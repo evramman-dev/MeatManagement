@@ -258,7 +258,7 @@ test('Accounting summary uses ledger totals and does not show an inaccurate fall
 
 test('Profit and loss report never substitutes purchase totals for cost of sales', () => {
   const start = qaHtml.indexOf('window.loadProfitLoss = async function()');
-  const end = qaHtml.indexOf('window.switchReportTab = function(tabId)', start);
+  const end = qaHtml.indexOf('async function mmLoadMovementBook()', start);
   expect(start).toBeGreaterThanOrEqual(0);
   expect(end).toBeGreaterThan(start);
   const reportSource = qaHtml.slice(start, end);
