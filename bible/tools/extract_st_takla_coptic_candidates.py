@@ -23,6 +23,7 @@ ARABIC_RE = re.compile(r"[\u0600-\u06FF]")
 # Explicit URL book IDs and chapter ranges, verified separately in the book map.
 BOOKS = {
     "JDT": {"name": "Judith", "book": 18, "chapters": list(range(1, 17))},
+    "EST-ADD": {"name": "Esther additions", "book": 20, "chapters": list(range(10, 17))},
     "WIS": {"name": "Wisdom", "book": 27, "chapters": list(range(1, 20))},
     "SIR": {"name": "Sirach", "book": 28, "chapters": list(range(1, 52))},
     "BAR": {"name": "Baruch", "book": 32, "chapters": list(range(1, 7))},
