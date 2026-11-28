@@ -34,6 +34,9 @@ def main() -> int:
     soup = BeautifulSoup(response.text, "html.parser")
     page_text = clean(soup.get_text(" ", strip=True))
     if ATTRIBUTION not in page_text:
+        title = soup.title.get_text(" ", strip=True) if soup.title else "(no title)"
+        print(f"DEBUG URL={response.url} STATUS={response.status_code} TITLE={title}")
+        print(f"DEBUG PAGE TEXT={page_text[:5000]}")
         raise RuntimeError("Official Book of Holy Week attribution was not found on the page")
 
     attribution_start = page_text.find(ATTRIBUTION)
