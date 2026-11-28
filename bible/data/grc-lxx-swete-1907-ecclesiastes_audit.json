@@ -1,0 +1,30 @@
+{
+  "translation_id": "GRC-LXX-SWETE-1907",
+  "edition": "Swete Septuagint Volume II third edition 1907",
+  "language": "grc",
+  "textual_tradition": "Septuagint",
+  "book_id": "ecc",
+  "source_page_range": "480-505",
+  "source_worksheet_commit": "b5c24f0fa38f4d012c357f718ff83900936b4b10",
+  "record_count": 224,
+  "chapter_counts": {
+    "1": 18,
+    "2": 26,
+    "3": 22,
+    "4": 17,
+    "5": 20,
+    "6": 12,
+    "7": 30,
+    "8": 17,
+    "9": 18,
+    "10": 20,
+    "11": 10,
+    "12": 14
+  },
+  "verse_7_27_note": "Verse 7:27 crosses the page break and was combined from the two worksheet fragments.",
+  "printed_versification_note": "Swete prints Ecclesiastes 7:28, 7:29, 7:30, then 8:1 on page 496.",
+  "source_priority": "page_image",
+  "status": "IMPORTED_SOURCE_TEXT_PENDING_QA",
+  "corpus_file": "grc-lxx-swete-1907-ecclesiastes.jsonl.gz",
+  "qa_trigger_note": "Dedicated corpus admission QA is required before merge."
+}
