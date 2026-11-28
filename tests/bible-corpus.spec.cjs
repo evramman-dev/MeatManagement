@@ -136,10 +136,9 @@ test('Bible reader loads local editions and keeps unavailable books and chapters
     chapter: 22
   });
 
-  await openReaderBookOptions(page, {
-    translation: 'GRC-KOINE-RP-2018',
-    covenant: 'OT',
-    section: 'الشريعة'
-  });
+  await page.locator('#readerChooseButton').click();
+  await page.locator('#readerPickerPath [data-reader-picker-field="translation"]').click();
+  await chooseReaderOption(page, 'GRC-KOINE-RP-2018');
+  await chooseReaderOption(page, 'OT');
   await expect(page.locator('#readerPickerOptions [data-reader-option="GEN"]')).toHaveCount(0);
 });
