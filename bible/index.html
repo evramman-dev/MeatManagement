@@ -1740,13 +1740,10 @@ document.getElementById("backToJourneys").addEventListener("click",()=>showView(
 document.getElementById("saveJournalButton").addEventListener("click",saveJournal);
 document.getElementById("notesSaveButton").addEventListener("click",()=>{const el=document.getElementById("notesJournal");const v=el.value.trim();if(!v){document.getElementById("notesSaveStatus").textContent="اكتب شيئًا أولًا.";return}saveNote(v);el.value="";document.getElementById("notesSaveStatus").textContent="تم الحفظ على جهازك.";});
 document.getElementById('homeStartJourney').addEventListener('click',startJourney);
-document.getElementById("searchButton").addEventListener("click",searchBible);
-document.getElementById("loadChapterButton").addEventListener("click",loadSvdChapter);
 
 document.getElementById("saveVerseButton").addEventListener("click",saveNewVerse);
 document.getElementById("filterDueVerses").addEventListener("click",()=>{verseFilter="due";renderVerses()});
 document.getElementById("filterAllVerses").addEventListener("click",()=>{verseFilter="all";renderVerses()});
-document.getElementById("searchInput").addEventListener("keydown",e=>{if(e.key==="Enter")searchBible();});
 window.addEventListener("error",e=>{const el=document.getElementById("saveStatus");if(el)el.textContent="حدث خطأ في تشغيل الصفحة. أعد فتح رحلة.";});
 renderNotes();
 renderJourney();
