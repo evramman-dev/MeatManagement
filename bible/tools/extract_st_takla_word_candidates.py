@@ -161,6 +161,7 @@ def main() -> int:
         text = source.read_text(encoding="utf-8", errors="replace")
         rows, notes = parse_book(text, filename, spec)
         counts = validate(rows, spec, filename)
+        rows.sort(key=lambda row: (row["chapter"], row["verse_start"], row["verse_end"]))
         output = args.output_dir / f"{spec['book_id'].lower()}-word-research-candidate.jsonl"
         output.write_text(
             "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows),
