@@ -25,7 +25,7 @@ BOOKS = {
     "JDT": {"name": "Judith", "book": 18, "chapters": list(range(1, 17))},
     "EST-ADD": {"name": "Esther additions", "book": 20, "chapters": list(range(10, 17))},
     "WIS": {"name": "Wisdom", "book": 27, "chapters": list(range(1, 20))},
-    "SIR": {"name": "Sirach", "book": 28, "chapters": list(range(1, 52))},
+    "SIR": {"name": "Sirach", "book": 28, "chapters": [*range(1, 29), *range(30, 52)]},
     "BAR": {"name": "Baruch", "book": 32, "chapters": list(range(1, 7))},
     "1MA": {"name": "1 Maccabees", "book": 48, "chapters": list(range(1, 17))},
     "2MA": {"name": "2 Maccabees", "book": 49, "chapters": list(range(1, 16))},
@@ -53,7 +53,63 @@ def verse_number_from_link(anchor) -> int | None:
         return None
 
 
+
+def extract_single_verse_page(book_id: str, spec: dict, chapter: int, verse: int) -> dict:
+    """Read one isolated verse page; used where chapter markup crosses verse boundaries."""
+    url = (
+        "https://st-takla.org/Bibles/BibleSearch/showVerses.php"
+        f"?book={spec['book']}&chapter={chapter}&vmin={verse}&vmax={verse}"
+    )
+    soup = BeautifulSoup(fetch(url), "html.parser")
+    page_text = soup.get_text(" ", strip=True)
+    if "الترجمة اليسوعية القديمة 1877 م" not in page_text:
+        raise RuntimeError(f"{book_id} {chapter}:{verse}: 1877 translation marker missing")
+    anchors = [
+        anchor for anchor in soup.select('a[href*="showVerses.php"]')
+        if verse_number_from_link(anchor) == verse
+    ]
+    candidates = []
+    for anchor in anchors:
+        parent = anchor
+        for _ in range(7):
+            parent = parent.parent
+            if parent is None:
+                break
+            links = [
+                item for item in parent.select('a[href*="showVerses.php"]')
+                if verse_number_from_link(item) is not None
+            ]
+            if len(links) != 1:
+                continue
+            candidate = re.sub(r"\s+", " ", parent.get_text(" ", strip=True)).strip()
+            label = anchor.get_text(" ", strip=True)
+            if label:
+                candidate = candidate.replace(label, " ", 1).strip()
+            candidate = re.sub(r"^\s*[0-9٠-٩]+[.،,:：\s-]*", "", candidate).strip()
+            if ARABIC_RE.search(candidate) and len(candidate) >= 8:
+                candidates.append(candidate)
+    if not candidates:
+        raise RuntimeError(f"{book_id} {chapter}:{verse}: no isolated verse text in {url}")
+    text = min(candidates, key=len)
+    return {
+        "translation_id": TRANSLATION_ID,
+        "book_id": book_id,
+        "chapter": chapter,
+        "verse": verse,
+        "text": text,
+        "source_url": url,
+        "source_label": "St-Takla; Jesuit Old Arabic translation, 1877 marker on page",
+        "review_status": "UNVERIFIED_RESEARCH_CANDIDATE",
+    }
+
 def extract_chapter(book_id: str, spec: dict, chapter: int) -> list[dict]:
+    if book_id == "BAR" and chapter == 6:
+        rows = []
+        for verse in range(1, 73):
+            rows.append(extract_single_verse_page(book_id, spec, chapter, verse))
+            if verse < 72:
+                time.sleep(0.12)
+        return rows
     url = f"{BASE}?book={spec['book']}&chapter={chapter}"
     soup = BeautifulSoup(fetch(url), "html.parser")
     page_text = soup.get_text(" ", strip=True)
