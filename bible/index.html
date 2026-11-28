@@ -1280,6 +1280,23 @@ async function loadVerseWordStudy(key){
   delete READER_WORD_STUDY_PENDING[pendingKey];
  }
 }
+const READER_HEBREW_LEXICON_CHUNKS={};
+async function loadLocalHebrewStrongEntry(strongs){
+ const id=normalizeStrongNumber(strongs);
+ if(id[0]!=="H"||!Number(id.slice(1)))return null;
+ const number=Number(id.slice(1));
+ const chunk=Math.floor((number-1)/1000)+1;
+ if(chunk<1||chunk>10)return null;
+ if(!READER_HEBREW_LEXICON_CHUNKS[chunk]){
+  READER_HEBREW_LEXICON_CHUNKS[chunk]=(async()=>{
+   const response=await fetch("./data/hebrew-strongs-"+chunk+".json",{cache:"force-cache"});
+   if(!response.ok)throw new Error("Hebrew lexicon chunk unavailable: "+chunk);
+   return await response.json();
+  })().catch(error=>{console.warn("Hebrew lexicon chunk load failed",chunk,error);return null});
+ }
+ const data=await READER_HEBREW_LEXICON_CHUNKS[chunk];
+ return data?.[id]||null;
+}
 const READER_GREEK_LEXICON_CHUNKS={};
 async function loadLocalGreekStrongEntry(strongs){
  const id=normalizeStrongNumber(strongs);
@@ -1299,50 +1316,52 @@ async function loadLocalGreekStrongEntry(strongs){
 async function loadLexiconEntry(strongs){
  const id=normalizeStrongNumber(strongs);if(!id)return null;
  if(READER_WORD_STUDY_CACHE["lex:"+id])return READER_WORD_STUDY_CACHE["lex:"+id];
- const local=await loadArabicLexiconGloss(id);
- if(local){
-  const entry={strongs:id,gloss:local.values?.[0]||"",definition:local.meaning||"",arabicPronunciation:local.pronunciation||"",source:local.source||"قاموس رِحلة المحلي"};
-  READER_WORD_STUDY_CACHE["lex:"+id]=entry;
-  return entry;
+ const arabic=await loadArabicLexiconGloss(id);
+ let lexical=null,source="";
+ if(/^H/i.test(id)){
+  lexical=await loadLocalHebrewStrongEntry(id);
+  if(lexical)source="STEPBible TBESH المحلي عبر BSB data، CC BY 4.0";
+ }else if(/^G/i.test(id)){
+  lexical=await loadLocalGreekStrongEntry(id);
+  if(lexical)source="STEPBible TBESG المحلي عبر BSB data، CC BY 4.0";
  }
- if(/^G/i.test(id)){
-  const greek=await loadLocalGreekStrongEntry(id);
-  if(greek){
-   const entry={strongs:id,lemma:greek.lemma||"",gloss:greek.gloss||"",definition:greek.definition||"",transliteration:greek.transliteration||"",partOfSpeech:greek.morphology||"",senses:greek.definition?[{definition:greek.definition}]:[],source:"STEPBible TBESG المحلي عبر BSB data، CC BY 4.0"};
-   READER_WORD_STUDY_CACHE["lex:"+id]=entry;
-   return entry;
-  }
- }
- // يغطي المداخل العبرية والآرامية واليونانية غير الموجودة في الملفات المحلية.
- // تُحمّل بيانات STEP Bible عند الحاجة فقط، ولا تُعامل تعريفاتها الإنجليزية كمعنى عربي.
- try{
-  const response=await fetch("https://bible.helloao.org/api/d/stepbible-lexicon/lexicon/"+encodeURIComponent(id)+".json",{cache:"force-cache"});
-  if(response.ok){
-   const payload=await response.json();
-   const data=payload?.entry||payload?.data?.entry||payload?.data||payload;
-   const rawSenses=Array.isArray(data?.senses)?data.senses:[];
-   const senses=rawSenses.map(s=>({
-    id:String(s?.id||""),
-    language:String(s?.language||data?.language||""),
-    lemma:String(s?.lemma||""),
-    transliteration:String(s?.transliteration||""),
-    partOfSpeech:String(s?.partOfSpeech||""),
-    gloss:String(s?.gloss||""),
-    definition:String(s?.definition||"")
-   })).filter(s=>s.lemma||s.transliteration||s.gloss||s.definition);
-   const first=senses[0]||{};
-   const lemma=String(first.lemma||"");
-   const transliteration=String(first.transliteration||"");
-   const gloss=senses.map(s=>s.gloss).filter(Boolean).join("؛ ");
-   const definition=senses.map(s=>s.definition).filter(Boolean).join("\\n\\n");
-   const partOfSpeech=String(first.partOfSpeech||"");
-   if(senses.length||lemma||transliteration||gloss||definition){
-    const entry={strongs:id,language:String(data?.language||first.language||""),lemma,gloss,definition,transliteration,partOfSpeech,senses,source:"STEPBible TBESH/TBESG عبر Free Use Bible API، CC BY 4.0"};
-    READER_WORD_STUDY_CACHE["lex:"+id]=entry;
-    return entry;
+ if(!lexical){
+  try{
+   const response=await fetch("https://bible.helloao.org/api/d/stepbible-lexicon/lexicon/"+encodeURIComponent(id)+".json",{cache:"force-cache"});
+   if(response.ok){
+    const payload=await response.json();
+    const data=payload?.entry||payload?.data?.entry||payload?.data||payload;
+    const rawSenses=Array.isArray(data?.senses)?data.senses:[];
+    const senses=rawSenses.map(s=>({
+     id:String(s?.id||""),language:String(s?.language||data?.language||""),
+     lemma:String(s?.lemma||""),transliteration:String(s?.transliteration||""),
+     partOfSpeech:String(s?.partOfSpeech||""),gloss:String(s?.gloss||""),
+     definition:String(s?.definition||"")
+    })).filter(s=>s.lemma||s.transliteration||s.gloss||s.definition);
+    const first=senses[0]||{};
+    if(senses.length){
+     lexical={lemma:first.lemma||"",transliteration:first.transliteration||"",
+      morphology:first.partOfSpeech||"",gloss:senses.map(s=>s.gloss).filter(Boolean).join("؛ "),
+      definition:senses.map(s=>s.definition).filter(Boolean).join("\n\n"),senses};
+     source="STEPBible TBESH/TBESG عبر Free Use Bible API، CC BY 4.0";
+    }
    }
-  }
- }catch(error){console.warn("STEPBible lexicon lookup failed for "+id,error)}
+  }catch(error){console.warn("STEPBible lexicon lookup failed for "+id,error)}
+ }
+ const senses=Array.isArray(lexical?.senses)?lexical.senses:
+  (lexical?.definition?[{lemma:lexical.lemma||"",transliteration:lexical.transliteration||"",
+   partOfSpeech:lexical.morphology||"",gloss:lexical.gloss||"",definition:lexical.definition}]:[]);
+ const entry={
+  strongs:id,lemma:lexical?.lemma||"",gloss:lexical?.gloss||"",
+  definition:lexical?.definition||"",transliteration:lexical?.transliteration||"",
+  partOfSpeech:lexical?.morphology||lexical?.partOfSpeech||"",
+  senses,arabicPronunciation:arabic?.pronunciation||"",
+  arabicValues:arabic?.values||[],arabicMeaning:arabic?.meaning||"",
+  source:source||(arabic?.source||"")
+ };
+ if(entry.lemma||entry.gloss||entry.definition||entry.arabicValues.length||entry.arabicPronunciation){
+  READER_WORD_STUDY_CACHE["lex:"+id]=entry;return entry;
+ }
  return null;
 }
 function arabicPronunciationFromTransliteration(value,strongs){
@@ -1478,8 +1497,8 @@ async function openVerseStudy(type){
     rendered.push("<button type='button' class='verse-study-item verse-word-item' data-word-index='"+index+"' data-strongs='"+escapeHtml(w.strongs||"")+"'><strong>"+escapeHtml(w.text)+"</strong><small>"+escapeHtml([gloss,transliteration].filter(Boolean).join(" · "))+"</small><span class='verse-word-details hidden'>"+details+"</span></button>");
    }
    const body=rendered.length?rendered.join(""):"<p class='verse-study-empty'>لا تتوفر بيانات دراسة الكلمات لهذه الآية من المصدر الحالي.</p>";
-   const activeStudyTranslation=String(activeVerseActionKey||"").split("|")[0];const wordStudyAttribution=activeStudyTranslation==="HE-WLC-2017"?"النص العبري WLC من الملكية العامة. التحليل الصرفي واللممات: Open Scriptures Hebrew Bible، بترخيص CC BY 4.0. المعاني العربية المتاحة: قاموس رِحلة المحلي.":"النص اليوناني المعروض في هذه الدراسة: Robinson-Pierpont 2018. بيانات Strong’s والتحليل الصرفي: Robinson-Pierpont 2018 المحلية داخل تطبيق رِحلة. بيانات المعجم: قاموس رِحلة اليوناني المحلي، مع بيانات المصدر المرخّصة وفق سجل المصادر.";
-   panel.innerHTML="<div class='verse-study-tabs'>"+["crossReferences","wordMeanings","commentary"].map(t=>"<button type='button' class='verse-study-tab "+(t===type?"active":"")+"' data-study-type='"+t+"'>"+readerStudyLabel(t)+"</button>").join("")+"</div><div class='verse-study-content'><div class='verse-study-title'>دراسة كلمات النص الأصلي</div><p class='verse-study-empty'>اضغط على أي كلمة لعرض بياناتها. يعرض المعجم الأصلي اللمّة والنطق والتعريفات المتاحة، ويعرض المعنى العربي عند توفره في قاموس رِحلة المحلي.</p><div class='verse-study-list'>"+body+"</div></div><p class='verse-study-source'>"+escapeHtml(wordStudyAttribution)+"</p>";
+   const activeStudyTranslation=String(activeVerseActionKey||"").split("|")[0];const wordStudyAttribution=activeStudyTranslation==="HE-WLC-2017"?"النص العبري WLC من الملكية العامة. التحليل الصرفي: Open Scriptures Hebrew Bible، بترخيص CC BY 4.0. المعجم العبري: STEPBible TBESH، بترخيص CC BY 4.0. المعاني العربية المتاحة: قاموس رِحلة المحلي.":"النص اليوناني المعروض في هذه الدراسة: Robinson-Pierpont 2018. بيانات Strong’s والتحليل الصرفي: Robinson-Pierpont 2018 المحلية داخل تطبيق رِحلة. بيانات المعجم: قاموس رِحلة اليوناني المحلي، مع بيانات المصدر المرخّصة وفق سجل المصادر.";
+   panel.innerHTML="<div class='verse-study-tabs'>"+["crossReferences","wordMeanings","commentary"].map(t=>"<button type='button' class='verse-study-tab "+(t===type?"active":"")+"' data-study-type='"+t+"'>"+readerStudyLabel(t)+"</button>").join("")+"</div><div class='verse-study-content'><div class='verse-study-title'>دراسة كلمات النص الأصلي</div><p class='verse-study-empty'>اضغط على أي كلمة لعرض بياناتها. يعرض المعجم الأصلي المحلي اللمّة والنطق والتعريفات المتاحة، ويعرض المعنى العربي عند توفره في قاموس رِحلة المحلي.</p><div class='verse-study-list'>"+body+"</div></div><p class='verse-study-source'>"+escapeHtml(wordStudyAttribution)+"</p>";
    panel.querySelectorAll("[data-study-type]").forEach(b=>b.addEventListener("click",()=>openVerseStudy(b.dataset.studyType)));
    panel.querySelectorAll("[data-word-index]").forEach(b=>b.addEventListener("click",async()=>{
  const d=b.querySelector(".verse-word-details");if(!d)return;
