@@ -416,14 +416,19 @@ test('Bible reader loads local editions and keeps unavailable books and chapters
     expect(result.fallbackText).toBe(result.sample);
   }
 
-  // Multilingual comparison groups each available translation under the same verse number.
+  // Compact parallel page: one translation row with its font controls, then one verse card with all texts.
   await page.locator('[data-view="translations"]').click();
-  await expect(page.locator('#translationChoices')).toContainText('القبطي — نسخة دير الأنبا بيشوي');
-  await page.locator('#parallelReferenceInput').fill('متى 1');
+  await expect(page.locator('#translationChoices')).toContainText('English — World English Bible');
+  await expect(page.locator('#translationChoices')).toContainText('עברית — דליטש');
+  await expect(page.locator('#parallelCovenant')).toBeVisible();
+  await expect(page.locator('#parallelSection')).toBeVisible();
+  await expect(page.locator('#parallelBook')).toBeVisible();
+  await expect(page.locator('#parallelChapter')).toBeVisible();
+  await expect(page.locator('#parallelVerse')).toBeVisible();
+  await expect(page.locator('#translationChoices .translation-choice-row').first()).toContainText('نسخ');
   await page.locator('#parallelLoadButton').click();
   await expect(page.locator('#parallelTranslations .parallel-verse-card').first()).toBeVisible();
   const parallelFirstVerse = page.locator('#parallelTranslations .parallel-verse-card').first();
   await expect(parallelFirstVerse).toContainText('فان دايك 1865');
-  await expect(parallelFirstVerse).toContainText('دير الأنبا بيشوي');
-  await expect(parallelFirstVerse).toContainText('Robinson-Pierpont 2018');
+  await expect(parallelFirstVerse.locator('.parallel-language-item')).toHaveCount(4);
 });
