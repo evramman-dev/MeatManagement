@@ -265,6 +265,22 @@ test('Bible reader loads local editions and keeps unavailable books and chapters
     }, font.family);
     expect(loaded).toBe(true);
   }
+  const copyCheck = await page.evaluate(() => {
+    const verse = document.querySelector('#chapterContent .reader-verse-text.coptic-script');
+    const glyph = verse && verse.querySelector('.coptic-legacy-char');
+    if (!glyph) return { copied: '', expected: 'MISSING_GLYPH', prevented: false };
+    const range = document.createRange();
+    range.selectNodeContents(glyph);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    const clipboard = new DataTransfer();
+    const event = new ClipboardEvent('copy', { clipboardData: clipboard, bubbles: true, cancelable: true });
+    document.dispatchEvent(event);
+    return { copied: clipboard.getData('text/plain'), expected: glyph.dataset.unicode, prevented: event.defaultPrevented };
+  });
+  expect(copyCheck.copied).toBe(copyCheck.expected);
+  expect(copyCheck.prevented).toBe(true);
   await page.locator('#readerOptionsClose').click();
   await expect(page.locator('#readerOptionsModal')).toBeHidden();
 });
