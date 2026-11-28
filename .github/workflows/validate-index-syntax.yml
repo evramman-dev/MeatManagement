@@ -6,6 +6,11 @@ on:
       - index.html
       - scripts/check-inline-js.cjs
       - .github/workflows/validate-index-syntax.yml
+      - bible/index.html
+      - bible/sw.js
+      - bible/data/strongs-ar.json
+      - bible/data/original-language-sources.json
+      - bible/tools/test_hebrew_arabic_lexicon.cjs
   push:
     branches:
       - main
@@ -13,6 +18,11 @@ on:
       - index.html
       - scripts/check-inline-js.cjs
       - .github/workflows/validate-index-syntax.yml
+      - bible/index.html
+      - bible/sw.js
+      - bible/data/strongs-ar.json
+      - bible/data/original-language-sources.json
+      - bible/tools/test_hebrew_arabic_lexicon.cjs
 
 permissions:
   contents: read
@@ -29,3 +39,5 @@ jobs:
           node-version: 20
       - name: Validate inline JavaScript
         run: node scripts/check-inline-js.cjs
+      - name: Validate Rehla Hebrew Arabic lexicon
+        run: node bible/tools/test_hebrew_arabic_lexicon.cjs

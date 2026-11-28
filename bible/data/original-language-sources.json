@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "version": 14,
+    "version": 15,
     "description": "مصادر دراسة النص الأصلي في تطبيق رِحلة",
     "purpose": "تسجيل مصادر النص اليوناني والمعاجم والمورفولوجيا وترخيص كل مصدر قبل إدخال بيانات محلية موسعة"
   },
@@ -179,6 +179,11 @@
     ],
     "format": "Local JSON chunks grouped by Strong's number ranges of 1000 entries",
     "arabicPolicy": "The source glosses and definitions remain in their original language. Arabic meanings and Arabic-script pronunciation are shown only when available in Rehla's locally curated Arabic dictionary or pronunciation mapping.",
-    "attribution": "STEPBible TBESH, Tyndale House Cambridge, licensed CC BY 4.0."
+    "attribution": "STEPBible TBESH, Tyndale House Cambridge, licensed CC BY 4.0.",
+    "arabicCoverage": {
+      "entries": 40,
+      "policy": "تُعرض المعاني العربية والنطق بحروف عربية فقط للمداخل التي راجعها قاموس رِحلة المحلي. لا تُحوّل التعريفات الإنجليزية آليًا إلى معانٍ عربية.",
+      "note": "أضيفت تسعة مداخل عبرية مراجعة ومختبرة في أيوب 1:1: H0347 وH5780 وH8034 وH1931 وH8535 وH3477 وH3373 وH5493 وH7451. يعالج محوّل النطق فواصل المقاطع والحروف المركبة والحروف الحلقية، مع أولوية النطق العربي المراجع محليًا."
+    }
   }
 }

@@ -1,0 +1,48 @@
+"use strict";
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const vm = require("node:vm");
+
+const root = __dirname + "/..";
+const dictionary = JSON.parse(fs.readFileSync(root + "/data/strongs-ar.json", "utf8"));
+const metadata = JSON.parse(fs.readFileSync(root + "/data/original-language-sources.json", "utf8"));
+const html = fs.readFileSync(root + "/index.html", "utf8");
+const sw = fs.readFileSync(root + "/sw.js", "utf8");
+
+const expected = {
+  H0347: ["أيوب", "أَيُّوب"],
+  H5780: ["عوص", "عُوص"],
+  H8034: ["اسم", "شِم"],
+  H1931: ["هو", "هُو"],
+  H8535: ["تام", "تَام"],
+  H3477: ["مستقيم", "يَشَر"],
+  H3373: ["يتقي", "يَارِئ"],
+  H5493: ["يحيد", "سُور"],
+  H7451: ["شر", "رَع"]
+};
+
+for (const [id, [meaning, pronunciation]] of Object.entries(expected)) {
+  const entry = dictionary[id];
+  assert.ok(entry, id + " must exist in the Arabic dictionary");
+  assert.ok(entry.arabic.includes(meaning), id + " must include reviewed Arabic meaning");
+  assert.equal(entry.pronunciation, pronunciation, id + " Arabic pronunciation");
+  assert.equal(entry.language, "hebrew", id + " language");
+}
+
+assert.equal(metadata.hebrewLocalLexicon.arabicCoverage.entries, 40);
+assert.match(sw, /const CACHE="rehla-v120"/);
+
+const start = html.indexOf("function arabicPronunciationFromTransliteration");
+const end = html.indexOf("\nlet READER_LOCAL_STRONGS_AR", start);
+assert.ok(start >= 0 && end > start, "Hebrew pronunciation converter must exist");
+const source = html.slice(start, end);
+const sandbox = {};
+vm.runInNewContext(source + "\nthis.convert = arabicPronunciationFromTransliteration;", sandbox);
+
+assert.equal(sandbox.convert("ya.shar", "H3477"), "يَشَر");
+assert.equal(sandbox.convert("uts", "H5780"), "أُتس");
+assert.equal(sandbox.convert("sh", "H0001"), "ش");
+assert.equal(sandbox.convert("av", "H0001"), "أَڤ");
+assert.ok(!sandbox.convert("ya.shar", "H3477").includes("."), "syllable separators must not appear in Arabic output");
+
+console.log("Rehla Hebrew Arabic lexicon checks passed: 9 reviewed entries, transliteration rules, metadata, and cache version.");
