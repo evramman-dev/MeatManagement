@@ -38,6 +38,52 @@ async function openReaderBookOptions(page, { translation, covenant, section }) {
   await chooseReaderOption(page, section);
 }
 
+test('long translation labels stay inside the two mobile reader picker columns', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.goto(new URL('bible/', baseURL).toString());
+  await page.locator('.nav button[data-view="read"]').click();
+  await page.locator('#readerChooseButton').click();
+  await expect(page.locator('#readerPickerModal')).toBeVisible();
+  await page.locator('#readerPickerPath [data-reader-picker-field="translation"]').click();
+  await chooseReaderOption(page, 'GRC-KOINE-RP-2018');
+
+  const layout = await page.evaluate(() => {
+    const path = document.querySelector('#readerPickerPath');
+    const fields = [...path.querySelectorAll('.reader-picker-field')];
+    const viewportWidth = document.documentElement.clientWidth;
+    return {
+      viewportWidth,
+      pathRight: path.getBoundingClientRect().right,
+      pathLeft: path.getBoundingClientRect().left,
+      fields: fields.map(field => {
+        const label = field.querySelector('strong');
+        const rect = field.getBoundingClientRect();
+        return {
+          left: rect.left,
+          right: rect.right,
+          width: rect.width,
+          clientWidth: label.clientWidth,
+          scrollWidth: label.scrollWidth,
+          whiteSpace: getComputedStyle(label).whiteSpace,
+          overflow: getComputedStyle(label).overflow,
+          textOverflow: getComputedStyle(label).textOverflow
+        };
+      })
+    };
+  });
+  expect(layout.fields).toHaveLength(6);
+  expect(layout.pathLeft).toBeGreaterThanOrEqual(0);
+  expect(layout.pathRight).toBeLessThanOrEqual(layout.viewportWidth + 1);
+  for (const field of layout.fields) {
+    expect(field.left).toBeGreaterThanOrEqual(0);
+    expect(field.right).toBeLessThanOrEqual(layout.viewportWidth + 1);
+    expect(field.width).toBeLessThanOrEqual((layout.viewportWidth - 40) / 2 + 2);
+    expect(field.whiteSpace).toBe('nowrap');
+    expect(field.overflow).toBe('hidden');
+    expect(field.textOverflow).toBe('ellipsis');
+  }
+});
+
 test('Bible reader loads local editions and keeps unavailable books and chapters out of their pickers', async ({ page }) => {
   test.setTimeout(180000);
   const pageErrors = [];
