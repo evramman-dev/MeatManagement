@@ -209,3 +209,18 @@ python bible/tools/discover_st_takla_book_ids.py --first 17 --last 50 --output /
 - حالة النص: UNVERIFIED_RESEARCH_CANDIDATE.
 - حقوق إعادة النشر الرقمي: غير محسومة. وجود النص على الموقع الرسمي لا يمنح تلقائيًا ترخيص إعادة نشره داخل التطبيق.
 - لا تغييرات على corpus التطبيق أو Supabase.
+
+
+### نتيجة استخراج صلاة منسى
+
+نجح التشغيل المنفصل بعد عزل النص بين إشارة المصدر والعنوان التالي في الصفحة. استُخرجت الآيات 1–19 بالترتيب، مع فحص عدم فقد أي رقم وعدم وجود نص فارغ.
+
+- Workflow run: https://github.com/evramman-dev/MeatManagement/actions/runs/46143754529
+- Artifact ID: 15263016400
+- Artifact name: `coptic-prayer-manasseh-research-candidate`
+- مدة الاحتفاظ: 7 أيام حتى 2026-12-05
+- Translation ID: `ARB-COPTIC-LITURGICAL-MANASSEH`
+- Rights status: `UNCONFIRMED`
+- Review status: `UNVERIFIED_RESEARCH_CANDIDATE`
+
+هذا النص منفصل عن `ARB-JES-1877`. لم يُدمج في corpus ولم يُعرض في القارئ.
