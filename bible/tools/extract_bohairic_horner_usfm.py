@@ -6,11 +6,11 @@ import re
 from pathlib import Path
 
 BOOKS = {
-    "MAT":"mat","MAR":"mar","LUK":"luk","JOH":"joh","ACT":"act","ROM":"rom",
+    "MAT":"mat","MRK":"mar","MAR":"mar","LUK":"luk","JHN":"joh","JOH":"joh","ACT":"act","ROM":"rom",
     "1CO":"1co","2CO":"2co","GAL":"gal","EPH":"eph","PHP":"php","COL":"col",
     "1TH":"1th","2TH":"2th","1TI":"1ti","2TI":"2ti","TIT":"tit","PHM":"phm",
-    "HEB":"heb","JAS":"jas","1PE":"1pe","2PE":"2pe","1JO":"1jo","2JO":"2jo",
-    "3JO":"3jo","JUD":"jud","REV":"rev",
+    "HEB":"heb","JAS":"jas","1PE":"1pe","2PE":"2pe","1JN":"1jo","1JO":"1jo",
+    "2JN":"2jo","2JO":"2jo","3JN":"3jo","3JO":"3jo","JUD":"jud","REV":"rev",
 }
 
 def clean(text):
