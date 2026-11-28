@@ -88,6 +88,51 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 .reader-font-thuluth,.reader-font-thuluth .verse-text,.reader-font-thuluth .reader-verse-text,.reader-font-thuluth .reader-paragraph{font-family:"Katibeh","Amiri",serif;font-weight:400}
 .reader-font-amoshref-naskh,.reader-font-amoshref-naskh .verse-text,.reader-font-amoshref-naskh .reader-verse-text,.reader-font-amoshref-naskh .reader-paragraph{font-family:"amoshref-naskh","Noto Naskh Arabic",serif;font-weight:400}
 .reader-font-amoshref-thulth,.reader-font-amoshref-thulth .verse-text,.reader-font-amoshref-thulth .reader-verse-text,.reader-font-amoshref-thulth .reader-paragraph{font-family:"amoshref-thulth","Amiri",serif;font-weight:400}
+.parallel-reader-card,.parallel-results-card,.translation-settings-card{padding:14px}
+.translation-choice-list{display:flex;flex-direction:column;gap:6px}
+.translation-choice-row{display:grid;grid-template-columns:24px minmax(0,1fr) auto;align-items:center;gap:8px;padding:8px 9px;border:1px solid var(--line);border-radius:12px;background:#fffdf8}
+.translation-choice-row.selected{border-color:#b9cbbf;background:#f3f7f4}
+.translation-choice-check{width:18px;height:18px;margin:0;accent-color:var(--accent)}
+.translation-choice-main{min-width:0}
+.translation-choice-main strong{display:block;font-size:12px;line-height:1.45}
+.translation-choice-main small{display:block;color:var(--muted);font-size:9px;line-height:1.35;margin-top:2px}
+.parallel-fonts{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.parallel-font-button{min-width:30px;padding:5px 7px;border:1px solid #d7d1c7;border-radius:8px;background:#fff;color:var(--muted);font-size:9px;line-height:1}
+.parallel-font-button.active{background:var(--soft);border-color:#a8c0b1;color:var(--accent);font-weight:700}
+.parallel-picker-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.parallel-picker-field{display:block;min-width:0}
+.parallel-picker-field span{display:block;font-size:9px;color:var(--muted);margin:0 0 4px}
+.parallel-picker-field select{width:100%;min-width:0;border:1px solid var(--line);border-radius:10px;background:#fffdf8;color:var(--ink);padding:8px 9px;font-size:11px}
+.parallel-picker-field:nth-child(3){grid-column:1/-1}
+.parallel-apply-button{width:100%;margin-top:10px;padding:10px}
+.parallel-results-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
+.parallel-results-head h2{margin:2px 0 0;font-size:17px}
+.parallel-results-head .note{min-height:0;text-align:left}
+.parallel-verse-card{background:#fffdf8;border:1px solid var(--line);border-radius:14px;padding:9px 10px;margin:0 0 8px;box-shadow:0 3px 10px #263b3508}
+.parallel-verse-number{display:flex;align-items:center;gap:7px;margin-bottom:5px;font-size:10px;color:var(--muted);font-weight:700}
+.parallel-verse-number i{font-style:normal;display:inline-flex;min-width:22px;height:22px;align-items:center;justify-content:center;border-radius:50%;background:var(--soft);color:var(--accent)}
+.parallel-language-item{padding:5px 0;border-top:1px solid #eee9df}
+.parallel-language-item:first-of-type{border-top:0}
+.parallel-language-label{font-size:9px;color:var(--muted);margin-bottom:2px}
+.parallel-language-text{font-size:15px;line-height:1.9;margin:0}
+.parallel-language-text[lang="cop"],.parallel-language-text[lang="he"]{font-size:16px}
+.parallel-language-text[lang="en"]{font-size:14px}
+.parallel-font-en-noto,.parallel-font-en-noto .parallel-language-text{font-family:"Noto Serif",serif!important}
+.parallel-font-en-system,.parallel-font-en-system .parallel-language-text{font-family:Georgia,"Times New Roman",serif!important}
+.parallel-font-en-sans,.parallel-font-en-sans .parallel-language-text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif!important}
+.parallel-language-text.parallel-font-ar-naskh{font-family:"Noto Naskh Arabic","Amiri",serif!important}
+.parallel-language-text.parallel-font-ar-amiri{font-family:"Amiri","Noto Naskh Arabic",serif!important}
+.parallel-language-text.parallel-font-ar-markazi{font-family:"Markazi Text","Noto Naskh Arabic",serif!important}
+.parallel-language-text.parallel-font-he-sbl{font-family:"SBL Hebrew","Noto Serif Hebrew",serif!important}
+.parallel-language-text.parallel-font-he-noto{font-family:"Noto Serif Hebrew",serif!important}
+.parallel-language-text.parallel-font-grc-sbl{font-family:"SBL Greek","Noto Serif",serif!important}
+.parallel-language-text.parallel-font-grc-noto{font-family:"Noto Serif",serif!important}
+.parallel-language-text.parallel-font-cop-noto{font-family:"Noto Sans Coptic",sans-serif!important}
+.parallel-language-text.parallel-font-cop-antinoou{font-family:"Antinoou","Noto Sans Coptic",sans-serif!important}
+.parallel-language-text.parallel-font-cop-avva{font-family:"FreeSerifAvvaShenouda","Noto Sans Coptic",serif!important}
+.parallel-language-text.parallel-font-cop-copt{font-family:"Coptic","Noto Sans Coptic",sans-serif!important}
+@media(max-width:480px){.translation-choice-row{grid-template-columns:22px minmax(0,1fr)}.parallel-fonts{grid-column:2;justify-content:flex-start}.parallel-picker-grid{grid-template-columns:1fr 1fr}.parallel-language-text{font-size:14px}}
+
 .reader-font-ruqaa .reader-verse-text{font-size:1.04em}.reader-font-thuluth .reader-verse-text{font-size:1.08em;letter-spacing:.01em}.reader-font-amoshref-thulth .reader-verse-text{font-size:1.06em;line-height:2.05}.reader-font-script-group.hidden{display:none!important}.reader-page.reader-font-coptic-copt .reader-verse-text.coptic-script,.reader-display-preview.reader-font-coptic-copt .reader-display-preview-text{font-family:"Copt Legacy","Noto Sans Coptic",sans-serif!important}.reader-page.reader-font-coptic-new-athanasius .reader-verse-text.coptic-script,.reader-display-preview.reader-font-coptic-new-athanasius .reader-display-preview-text{font-family:"New Athanasius Legacy","Noto Sans Coptic",sans-serif!important}.reader-page.reader-font-coptic-athanasius-plain .reader-verse-text.coptic-script,.reader-display-preview.reader-font-coptic-athanasius-plain .reader-display-preview-text{font-family:"Athanasius Plain Legacy","Noto Sans Coptic",sans-serif!important}.coptic-legacy-char{font-family:inherit!important}.coptic-legacy-char.coptic-unicode-fallback{font-family:"Noto Sans Coptic",sans-serif!important;font-variant:normal!important}
 /* Give the selected Coptic font priority over the generic Coptic script fallback. */
 .reader-page.reader-font-coptic-noto .reader-verse-text.coptic-script,.reader-display-preview.reader-font-coptic-noto .reader-display-preview-text{font-family:"Noto Sans Coptic",sans-serif!important}
@@ -156,23 +201,28 @@ textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:
 
 <!-- Greek LXX edition: independent Brenton GRCBRE corpus; source-only books are retained. -->
 <section id="translations" class="view">
-  <div class="card">
+  <div class="card translation-settings-card">
     <div class="eyebrow">الترجمات واللغات</div>
-    <h2>اختر اللغات والترجمات التي تريد مقارنتها</h2>
-    <p class="note">اختر أكثر من ترجمة. سيعرض التطبيق نص كل آية بلغاتها المتاحة، ولن يستبدل نصًا غير متوفر بترجمة أخرى.</p>
-    <div id="translationChoices" class="choices"></div>
-    <div class="parallel-reference-control">
-      <label for="parallelReferenceInput">مرجع القراءة</label>
-      <div class="parallel-reference-row">
-        <input id="parallelReferenceInput" type="text" value="متى 1" placeholder="مثال: متى 1 أو تكوين 1">
-        <button id="parallelLoadButton" class="primary" type="button">اعرض</button>
-      </div>
-    </div>
+    <h2>اختر الترجمات</h2>
+    <p class="note">ضع علامة على الترجمات التي تريدها. واختَر الخط من نفس السطر.</p>
+    <div id="translationChoices" class="translation-choice-list"></div>
   </div>
-  <div class="card">
-    <div class="eyebrow">عرض آية بآية</div>
-    <h2 id="parallelReference">متى 1</h2>
-    <p id="parallelStatus" class="note">اختر اللغات ثم اعرض المرجع.</p>
+  <div class="card parallel-reader-card">
+    <div class="eyebrow">موضع القراءة</div>
+    <div class="parallel-picker-grid">
+      <label class="parallel-picker-field"><span>العهد</span><select id="parallelCovenant"></select></label>
+      <label class="parallel-picker-field"><span>القسم</span><select id="parallelSection"></select></label>
+      <label class="parallel-picker-field"><span>السفر</span><select id="parallelBook"></select></label>
+      <label class="parallel-picker-field"><span>الإصحاح</span><select id="parallelChapter"></select></label>
+      <label class="parallel-picker-field"><span>الآية</span><select id="parallelVerse"></select></label>
+    </div>
+    <button id="parallelLoadButton" class="primary parallel-apply-button" type="button">تطبيق وعرض الترجمات</button>
+  </div>
+  <div class="card parallel-results-card">
+    <div class="parallel-results-head">
+      <div><div class="eyebrow">عرض آية بآية</div><h2 id="parallelReference">متى 1</h2></div>
+      <span id="parallelStatus" class="note"></span>
+    </div>
     <div id="parallelTranslations"></div>
   </div>
 </section>
@@ -408,11 +458,22 @@ function renderBookmarks(){const marks=getReaderMarks(),items=Object.entries(mar
 async function openBookmarkPosition(key){const p=formatReaderMarkKey(key);readerSelection.translation=p.translation;readerSelection.book=p.book;readerSelection.chapter=Number(p.chapter);readerSelection.verse=String(p.verse);readerSelection.covenant=["MAT","MRK","LUK","JHN","ACT","ROM","1CO","2CO","GAL","EPH","PHP","COL","1TH","2TH","1TI","2TI","TIT","PHM","HEB","JAS","1PE","2PE","1JN","2JN","3JN","JUD","REV"].includes(readerSelection.book)?"NT":"OT";normalizeReaderState();showView("read",document.querySelector('[data-view="read"]'));await openSelectedReader()}
 function escapeHtml(s){return String(s).replace(/[&<>"\']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]})}
 const translationCatalog=[
- {id:"AR-SVD-1865",name:"فان دايك 1865",tradition:"Smith-Van Dyck",year:"1865",canon:"66 سفرًا"},
- {id:"AR-KEH-2012",name:"كتاب الحياة 2012",tradition:"Biblica Open New Arabic Version",year:"2012",canon:"66 سفرًا"},
- {id:"HE-WLC-2017",name:"النص العبري الماسوري — WLC",tradition:"Westminster Leningrad Codex",year:"النص العبري",canon:"39 سفرًا من العهد القديم"},{id:"GRC-LXX-BRENTON-1851",name:"السبعينية اليونانية — برنتون 1851",tradition:"Brenton Greek Septuagint (GRCBRE)",year:"1851",canon:"52 سفرًا ونصًا من إصدار برنتون"},{id:"GRC-LXX-SWETE-1907-ECC",name:"السبعينية اليونانية — سويتي 1907 · الجامعة",tradition:"Swete Septuagint Volume II third edition",year:"1907",canon:"سفر الجامعة فقط"},{id:"GRC-KOINE-RP-2018",name:"العهد الجديد اليوناني الكويني — Robinson-Pierpont 2018",tradition:"Byzantine / Majority Text",year:"2018",canon:"27 سفرًا من العهد الجديد"},{id:"COP-BOHAIRIC-HORNER",name:"القبطي البحيري — طبعة هورنر",tradition:"George Horner · Bohairic",year:"Horner",canon:"27 سفرًا من العهد الجديد"},{id:"COP-BOHAIRIC-DEIR-ANBA-BISHOI",name:"القبطي — نسخة دير الأنبا بيشوي",tradition:"Coptic New Testament · Deir Anba Bishoi source",year:"نسخة رقمية",canon:"27 سفرًا من العهد الجديد"}
+ {id:"AR-SVD-1865",name:"فان دايك 1865",tradition:"Smith-Van Dyck",year:"1865",canon:"66 سفرًا",remote:false},
+ {id:"AR-KEH-2012",name:"كتاب الحياة 2012",tradition:"Biblica Open New Arabic Version",year:"2012",canon:"66 سفرًا",remote:false},
+ {id:"EN-WEB",name:"English — World English Bible",tradition:"WEB · Public Domain",year:"WEB",canon:"الكتاب الكامل",remote:true},
+ {id:"HE-WLC-2017",name:"النص العبري الماسوري — WLC",tradition:"Westminster Leningrad Codex",year:"النص العبري",canon:"39 سفرًا من العهد القديم",remote:false},
+ {id:"HE-DELITZSCH-1885",name:"עברית — דליטש · العهد الجديد",tradition:"Franz Delitzsch Hebrew New Testament",year:"1885",canon:"27 سفرًا من العهد الجديد",remote:true},
+ {id:"GRC-LXX-BRENTON-1851",name:"السبعينية اليونانية — برنتون 1851",tradition:"Brenton Greek Septuagint",year:"1851",canon:"52 سفرًا ونصًا من إصدار برنتون",remote:false},
+ {id:"GRC-LXX-SWETE-1907-ECC",name:"السبعينية اليونانية — سويتي 1907 · الجامعة",tradition:"Swete Septuagint",year:"1907",canon:"سفر الجامعة فقط",remote:false},
+ {id:"GRC-KOINE-RP-2018",name:"العهد الجديد اليوناني الكويني — Robinson-Pierpont 2018",tradition:"Byzantine / Majority Text",year:"2018",canon:"27 سفرًا من العهد الجديد",remote:false},
+ {id:"COP-BOHAIRIC-HORNER",name:"القبطي البحيري — طبعة هورنر",tradition:"George Horner · Bohairic",year:"Horner",canon:"27 سفرًا من العهد الجديد",remote:false},
+ {id:"COP-BOHAIRIC-DEIR-ANBA-BISHOI",name:"القبطي — نسخة دير الأنبا بيشوي",tradition:"Coptic New Testament · Deir Anba Bishoi source",year:"نسخة رقمية",canon:"27 سفرًا من العهد الجديد",remote:false},
+ {id:"COP-BOHAIRIC-OT",name:"القبطي البحيري — العهد القديم",tradition:"Coptic SCRIPTORIUM · Bohairic OT",year:"Corpus 6.x",canon:"العهد القديم بحسب التغطية المتاحة في المصدر",remote:true}
 ];
-const selectedTranslations=(()=>{const defaults=["AR-SVD-1865","HE-WLC-2017","COP-BOHAIRIC-DEIR-ANBA-BISHOI","GRC-KOINE-RP-2018"];try{const saved=JSON.parse(localStorage.getItem("rh_parallel_translations")||"null");return Array.isArray(saved)?saved.filter(id=>translationCatalog.some(t=>t.id===id)).slice(0,8):defaults}catch(e){return defaults}})();
+const selectedTranslations=(()=>{const defaults=["AR-SVD-1865","EN-WEB","HE-DELITZSCH-1885","GRC-KOINE-RP-2018"];try{const saved=JSON.parse(localStorage.getItem("rh_parallel_translations")||"null");return Array.isArray(saved)?saved.filter(id=>translationCatalog.some(t=>t.id===id)).slice(0,8):defaults}catch(e){return defaults}})();
+const parallelFontKey="rehla.parallelFonts.v1";
+let parallelFontSelections=(()=>{try{return Object.assign({ar:"naskh",en:"noto",he:"sbl",grc:"sbl",cop:"noto"},JSON.parse(localStorage.getItem(parallelFontKey)||"{}"))}catch(e){return {ar:"naskh",en:"noto",he:"sbl",grc:"sbl",cop:"noto"}}})();
+function saveParallelFonts(){localStorage.setItem(parallelFontKey,JSON.stringify(parallelFontSelections))}
 const copticMonths=["توت","بابه","هاتور","كيهك","طوبة","أمشير","برمهات","برمودة","بشنس","بؤونة","أبيب","مسرى","النسيء"];
 const COPTIC_READINGS_API="https://api.coptic.io/api/readings";
 const COPTIC_CALENDAR_API="https://api.coptic.io/api/calendar";
