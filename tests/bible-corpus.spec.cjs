@@ -359,4 +359,19 @@ test('Bible reader loads local editions and keeps unavailable books and chapters
   expect(copyCheck.copied).toBe(copyCheck.expected);
   expect(copyCheck.prevented).toBe(true);
   await expect(page.locator('#readerOptionsModal')).toBeHidden();
+
+  // The second Coptic edition is independent and preserves its own combining marks.
+  await openReaderChapter(page, {
+    translation: 'COP-BOHAIRIC-DEIR-ANBA-BISHOI',
+    covenant: 'NT',
+    section: 'الأناجيل',
+    book: 'MAT',
+    chapter: 1
+  });
+  const secondCopticVerse = page.locator('#chapterContent .reader-verse-text').first();
+  await expect(secondCopticVerse).toHaveAttribute('lang', 'cop');
+  const secondCopticText = await secondCopticVerse.textContent();
+  expect(secondCopticText).toContain('\u0307');
+  expect(secondCopticText).toContain('\u0305');
+  await expect(page.locator('#chapterStatus')).toContainText('دير الأنبا بيشوي');
 });
