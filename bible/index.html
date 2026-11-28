@@ -878,7 +878,39 @@ function renderParallelPicker(){const sections=parallelSectionsAvailable();if(!s
 async function refreshParallelVerseOptions(){const el=document.getElementById("parallelVerse");if(!el)return;const first=selectedTranslations.find(id=>translationHasBook(id,parallelSelection.book));if(!first){el.innerHTML="<option value='all'>كل الآيات</option>";parallelSelection.verse="all";return}try{const verses=await loadTranslationChapter(first,parallelSourceBookId(first,{bookCode:parallelSelection.book}),parallelSelection.chapter);el.innerHTML="<option value='all'>كل الآيات</option>"+verses.map(v=>"<option value='"+Number(v.verse)+"'>الآية "+escapeHtml(readerVerseNumberText(v.verse))+"</option>").join("");el.value=parallelSelection.verse==="all"?"all":String(parallelSelection.verse)}catch(e){el.innerHTML="<option value='all'>كل الآيات</option>";parallelSelection.verse="all"}}
 function bindParallelPickers(){const map={parallelCovenant:"covenant",parallelSection:"section",parallelBook:"book",parallelChapter:"chapter",parallelVerse:"verse"};Object.entries(map).forEach(([id,field])=>document.getElementById(id)?.addEventListener("change",async e=>{if(field==="covenant"){parallelSelection.covenant=e.target.value;parallelSelection.section="";parallelSelection.book="";parallelSelection.chapter=1;parallelSelection.verse="all"}else if(field==="section"){parallelSelection.section=e.target.value;parallelSelection.book="";parallelSelection.chapter=1;parallelSelection.verse="all"}else if(field==="book"){parallelSelection.book=e.target.value;parallelSelection.chapter=1;parallelSelection.verse="all"}else if(field==="chapter"){parallelSelection.chapter=Number(e.target.value);parallelSelection.verse="all"}else parallelSelection.verse=e.target.value==="all"?"all":Number(e.target.value);renderParallelPicker();await refreshParallelVerseOptions()}));renderParallelPicker();refreshParallelVerseOptions()}
 function parallelReferenceText(){return (readerBookNames[parallelSelection.book]||parallelSelection.book)+" "+parallelSelection.chapter+(parallelSelection.verse!=="all"?":"+parallelSelection.verse:"")}
-async function renderParallel(){const el=document.getElementById("parallelTranslations");if(!el)return;const status=document.getElementById("parallelStatus"),heading=document.getElementById("parallelReference"),sequence=++parallelRenderSequence;renderParallelPicker();const p={bookCode:parallelSelection.book,chapter:Number(parallelSelection.chapter),book:readerBookNames[parallelSelection.book]||parallelSelection.book},ref=parallelReferenceText();heading.textContent=ref;status.textContent="جاري تحميل النصوص...";el.innerHTML="";const loaded=await Promise.all(selectedTranslations.map(async id=>{if(!translationHasBook(id,p.bookCode))return {id,verses:[],unavailable:true};try{return {id,verses:await loadTranslationChapter(id,parallelSourceBookId(id,p),p.chapter)}}catch(e){return {id,verses:[],error:true}}}));if(sequence!==parallelRenderSequence)return;const successful=loaded.filter(x=>x.verses.length),maps=new Map(successful.map(x=>[x.id,new Map(x.verses.map(v=>[Number(v.verse),v]))])),verseNumbers=[...new Set(successful.flatMap(x=>x.verses.map(v=>Number(v.verse)).filter(Number.isFinite))].sort((a,b)=>a-b).filter(n=>parallelSelection.verse==="all"||n===Number(parallelSelection.verse));if(!verseNumbers.length){status.textContent="لا يوجد نص متاح لهذا الموضع في الترجمات المختارة.";return}el.innerHTML=verseNumbers.map(number=>{const rows=selectedTranslations.map(id=>{const v=maps.get(id)?.get(number);return v?parallelLanguageMarkup(id,v):"<section class='parallel-language-item'><div class='parallel-language-label'>"+escapeHtml(translationCatalog.find(t=>t.id===id)?.name||id)+"</div><p class='parallel-language-text' style='color:var(--muted);font-size:11px'>لا يوجد نص لهذه الترجمة في هذا الموضع.</p></section>"}).join("");return "<article class='parallel-verse-card'><div class='parallel-verse-number'><i>"+escapeHtml(readerVerseNumberText(number))+"</i><span>"+escapeHtml(ref)+"</span></div>"+rows+"</article>"}).join("");const missing=loaded.filter(x=>x.error||x.unavailable);status.textContent=missing.length?"تم عرض النصوص المتاحة. بعض الترجمات لا تحتوي هذا الموضع.":"تم عرض "+verseNumbers.length+" آية."}
+async function renderParallel(){
+ const el=document.getElementById("parallelTranslations");
+ if(!el)return;
+ const status=document.getElementById("parallelStatus"),heading=document.getElementById("parallelReference"),sequence=++parallelRenderSequence;
+ renderParallelPicker();
+ const p={bookCode:parallelSelection.book,chapter:Number(parallelSelection.chapter),book:readerBookNames[parallelSelection.book]||parallelSelection.book};
+ const ref=parallelReferenceText();
+ heading.textContent=ref;
+ status.textContent="جاري تحميل النصوص...";
+ el.innerHTML="";
+ const loaded=await Promise.all(selectedTranslations.map(async id=>{
+  if(!translationHasBook(id,p.bookCode))return {id,verses:[],unavailable:true};
+  try{return {id,verses:await loadTranslationChapter(id,parallelSourceBookId(id,p),p.chapter)}}
+  catch(e){return {id,verses:[],error:true}}
+ }));
+ if(sequence!==parallelRenderSequence)return;
+ const successful=loaded.filter(x=>x.verses.length);
+ const maps=new Map(successful.map(x=>[x.id,new Map(x.verses.map(v=>[Number(v.verse),v]))]));
+ const verseNumbers=[...new Set(successful.flatMap(x=>x.verses.map(v=>Number(v.verse)).filter(Number.isFinite)))]
+  .sort((a,b)=>a-b)
+  .filter(n=>parallelSelection.verse==="all"||n===Number(parallelSelection.verse));
+ if(!verseNumbers.length){status.textContent="لا يوجد نص متاح لهذا الموضع في الترجمات المختارة.";return}
+ el.innerHTML=verseNumbers.map(number=>{
+  const rows=selectedTranslations.map(id=>{
+   const v=maps.get(id)?.get(number);
+   if(v)return parallelLanguageMarkup(id,v);
+   return "<section class='parallel-language-item'><div class='parallel-language-label'>"+escapeHtml(translationCatalog.find(t=>t.id===id)?.name||id)+"</div><p class='parallel-language-text' style='color:var(--muted);font-size:11px'>لا يوجد نص لهذه الترجمة في هذا الموضع.</p></section>";
+  }).join("");
+  return "<article class='parallel-verse-card'><div class='parallel-verse-number'><i>"+escapeHtml(readerVerseNumberText(number))+"</i><span>"+escapeHtml(ref)+"</span></div>"+rows+"</article>";
+ }).join("");
+ const missing=loaded.filter(x=>x.error||x.unavailable);
+ status.textContent=missing.length?"تم عرض النصوص المتاحة. بعض الترجمات لا تحتوي هذا الموضع.":"تم عرض "+verseNumbers.length+" آية.";
+}
 async function loadTranslationChapter(id,bookId,chapter){
  const key=id+"|"+bookId+"|"+chapter;
  if(chapterCache[key])return chapterCache[key];
