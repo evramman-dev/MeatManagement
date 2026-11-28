@@ -161,3 +161,22 @@ jobs:
           print('LONGEST_MATCH_BLOCKS',[(x.a,x.b,x.size) for x in sorted(sm.get_matching_blocks(),key=lambda x:x.size,reverse=True)[:12]])
           print('PDF_ABBREVIATION_MARKS',[(hex(ord(c)),unicodedata.name(c,'?')) for c in raw if unicodedata.category(c) in ('Mn','Mc','Me')][:60])
           PY
+
+      - name: Inspect original USFM archive for preserved marks
+        run: |
+          curl -L --fail --retry 3 -o /tmp/copbhc_usfm.zip https://ebible.org/Scriptures/copbhc_usfm.zip
+          python3 - <<'PY'
+          import zipfile,unicodedata,collections
+          z=zipfile.ZipFile('/tmp/copbhc_usfm.zip')
+          names=[n for n in z.namelist() if n.lower().endswith('.usfm')]
+          counts=collections.Counter()
+          samples=collections.defaultdict(list)
+          print('USFM_FILE_COUNT',len(names))
+          for name in names:
+              data=z.read(name).decode('utf-8-sig','replace')
+              for ch in data:
+                  if unicodedata.category(ch) in ('Mn','Mc','Me'): counts[f'{ord(ch):04X}']+=1
+              if name.lower().endswith('mat.usfm'):
+                  print('USFM_MATTHEW_SAMPLE',repr(data[:7000]))
+          print('USFM_COMBINING_MARKS',dict(sorted(counts.items(),key=lambda x:int(x[0],16))))
+          PY
