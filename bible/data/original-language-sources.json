@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "version": 13,
+    "version": 14,
     "description": "مصادر دراسة النص الأصلي في تطبيق رِحلة",
     "purpose": "تسجيل مصادر النص اليوناني والمعاجم والمورفولوجيا وترخيص كل مصدر قبل إدخال بيانات محلية موسعة"
   },
@@ -134,8 +134,8 @@
     "repository": "STEPBible-Data / Free Use Bible API",
     "license": "CC BY 4.0",
     "endpoint": "https://bible.helloao.org/api/d/stepbible-lexicon/lexicon/{strongs}.json",
-    "scope": "On-demand lookup for Hebrew, Aramaic, and Greek Strong's entries missing from the bundled Arabic lexicon and local Greek chunks",
-    "data": "Lemma, transliteration, English gloss, definition, and part of speech when supplied by the API",
+    "scope": "Fallback lookup only for lexicon entries absent from bundled Hebrew and Greek local data.",
+    "data": "Lemma, transliteration, English gloss, definition, and part of speech when supplied by the API; bundled Hebrew and Greek lexicons take priority.",
     "arabicPolicy": "The source supplies English lexical information, not a complete Arabic translation. Arabic meaning remains available only when a locally reviewed Arabic entry exists.",
     "attribution": "STEPBible TBESH/TBESG; data licensed CC BY 4.0. API provided by Free Use Bible API.",
     "responseStructure": {
@@ -152,5 +152,33 @@
       ],
       "note": "Each Strong's entry may contain multiple senses. The application now displays all available senses and retains English gloss/definition as source data, not Arabic translation."
     }
+  },
+  "hebrewLocalLexicon": {
+    "source": "STEPBible TBESH / Tyndale House, Cambridge; BSB-publishing/bsb-data-output base/lexicon/hebrew.jsonl",
+    "license": "CC BY 4.0",
+    "entries": 9345,
+    "files": [
+      "./data/hebrew-strongs-1.json",
+      "./data/hebrew-strongs-2.json",
+      "./data/hebrew-strongs-3.json",
+      "./data/hebrew-strongs-4.json",
+      "./data/hebrew-strongs-5.json",
+      "./data/hebrew-strongs-6.json",
+      "./data/hebrew-strongs-7.json",
+      "./data/hebrew-strongs-8.json",
+      "./data/hebrew-strongs-9.json",
+      "./data/hebrew-strongs-10.json"
+    ],
+    "fields": [
+      "lemma",
+      "transliteration",
+      "gloss",
+      "definition",
+      "morphology",
+      "disambiguation"
+    ],
+    "format": "Local JSON chunks grouped by Strong's number ranges of 1000 entries",
+    "arabicPolicy": "The source glosses and definitions remain in their original language. Arabic meanings and Arabic-script pronunciation are shown only when available in Rehla's locally curated Arabic dictionary or pronunciation mapping.",
+    "attribution": "STEPBible TBESH, Tyndale House Cambridge, licensed CC BY 4.0."
   }
 }
