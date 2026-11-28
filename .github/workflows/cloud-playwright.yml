@@ -131,6 +131,11 @@ jobs:
         continue-on-error: true
         run: node bible/tools/probe_swete_searchwithinvolume.cjs
 
+      - name: Probe Google Books SearchWithinVolume2 for Ecclesiastes chapter starts
+        if: always()
+        continue-on-error: true
+        run: node bible/tools/probe_swete_ecclesiastes_chapters.cjs
+
       - name: Upload screenshots, traces and HTML report
         if: always()
         uses: actions/upload-artifact@v6
