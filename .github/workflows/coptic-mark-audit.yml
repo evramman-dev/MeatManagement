@@ -102,3 +102,23 @@ jobs:
                   if t in pdf: matched+=1
           print('FIRST_300_EXACT_NORMALIZED_MATCHES_IN_PDF_SAMPLE',matched,'CHECKED',checked)
           PY
+
+      - name: Locate Matthew text and test verse-level alignment
+        run: |
+          pdftotext -enc UTF-8 -raw -f 1 -l 12 /tmp/copsnt.pdf /tmp/coptic-matthew-sample.txt
+          python3 - <<'PY'
+          import gzip,json,unicodedata,re
+          rows=[json.loads(x) for x in gzip.open('/tmp/coptic.jsonl.gz','rt',encoding='utf-8') if x.strip()]
+          def norm(s):
+              s=unicodedata.normalize('NFD',s).upper()
+              return ''.join(c for c in s if 0x2C80<=ord(c)<=0x2CFF and unicodedata.category(c) not in ('Mn','Mc','Me'))
+          raw=open('/tmp/coptic-matthew-sample.txt',encoding='utf-8').read()
+          print('PDF_PAGES_1_TO_12',repr(raw[:18000]))
+          pdf=norm(raw)
+          for r in rows:
+              if r.get('book_id')!='mat': continue
+              t=norm(str(r.get('text','')))
+              if len(t)>8:
+                  print('MAT_VERSE',r.get('chapter'),r.get('verse'),'NORMALIZED',t,'MATCH',t in pdf)
+              if r.get('chapter')==1 and r.get('verse')==12: break
+          PY
