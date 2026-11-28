@@ -59,3 +59,23 @@ jobs:
               pos=text.find(needle)
               if pos>=0: print('PDF_MARK_SAMPLE',repr(text[pos:pos+1400]))
           PY
+
+      - name: Inspect extracted Coptic line structure
+        run: |
+          python3 - <<'PY'
+          import re, unicodedata
+          lines=open('/tmp/copsnt.txt',encoding='utf-8').read().splitlines()
+          coptic=lambda s:any(0x2C80<=ord(c)<=0x2CFF for c in s)
+          marked=lambda s:any(unicodedata.category(c) in ('Mn','Mc','Me') for c in s)
+          hits=[(i,line) for i,line in enumerate(lines) if coptic(line) and marked(line)]
+          print('LINES_TOTAL',len(lines),'COP_MARKED_LINES',len(hits))
+          for i,line in hits[:35]:
+              print('PDF_LINE',i,repr(line[:500]))
+          print('FIRST_COPTIC_LINES')
+          n=0
+          for i,line in enumerate(lines):
+              if coptic(line):
+                  print('PDF_COPTIC_LINE',i,repr(line[:500]))
+                  n+=1
+                  if n>=25: break
+          PY
