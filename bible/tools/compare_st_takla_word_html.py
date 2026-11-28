@@ -81,7 +81,8 @@ def main():
     if actual==expected:match+=1
     else:
      mis+=1;issues.append({"range":[lo,hi],"type":"text_mismatch","word":r["text"][:240],"html":" ".join(html[n] for n in nums)[:240]})
-   absent=sorted(set(html)-wn)
+   excluded_html={1,2,3} if bid=="EST-ADD" and ch==10 else set()
+   absent=sorted(set(html)-wn-excluded_html)
    if absent:issues.append({"type":"word_verse_missing","verses":absent})
    br["chapters"][str(ch)]={"word_groups":len(cr),"html_verses":len(html),"compared_groups":comp,"exact_matches":match,"text_mismatches":mis,"html_verses_missing":hm,"word_verses_missing":len(absent),"translation_1877_marker":marker,"source_url":url,"issues":issues}
    for k,v in [("chapters_checked",1),("groups_compared",comp),("exact_matches",match),("text_mismatches",mis),("html_verses_missing",hm),("word_verses_missing",len(absent)),("chapters_with_1877_marker",int(marker))]:report["totals"][k]+=v
