@@ -222,4 +222,45 @@ test('Bible reader loads local editions and keeps unavailable books and chapters
   await chooseReaderOption(page, 'GRC-KOINE-RP-2018');
   await chooseReaderOption(page, 'OT');
   await expect(page.locator('#readerPickerOptions [data-reader-option="GEN"]')).toHaveCount(0);
+
+
+  // Verify all three embedded legacy Coptic fonts against real Bohairic chapter text.
+  await openReaderChapter(page, {
+    translation: 'COP-BOHAIRIC-HORNER',
+    covenant: 'NT',
+    section: 'الأناجيل',
+    book: 'JHN',
+    chapter: 1
+  });
+  const copticVerse = page.locator('#chapterContent .reader-verse-text').first();
+  await expect(copticVerse).toHaveAttribute('lang', 'cop');
+  await expect(copticVerse).toContainText(/[Ⲁ-⳿]/);
+  await page.locator('#readerOptionsButton').click();
+  await expect(page.locator('#readerOptionsModal')).toBeVisible();
+  await expect(page.locator('#readerFontCopticGroup')).toBeVisible();
+
+  for (const font of [
+    { button: '#readerFontCopticCopt', className: 'reader-font-coptic-copt', family: 'Copt Legacy' },
+    { button: '#readerFontCopticNewAthanasius', className: 'reader-font-coptic-new-athanasius', family: 'New Athanasius Legacy' },
+    { button: '#readerFontCopticAthanasiusPlain', className: 'reader-font-coptic-athanasius-plain', family: 'Athanasius Plain Legacy' }
+  ]) {
+    await page.locator(font.button).click();
+    await expect(page.locator('#readerDisplayPreview')).toHaveClass(new RegExp(font.className));
+    await expect(copticVerse).toHaveAttribute('data-coptic-legacy-applied', '1');
+    const rendered = await copticVerse.evaluate(el => ({
+      original: el.dataset.copticUnicode || '',
+      displayed: el.textContent || '',
+      family: getComputedStyle(el).fontFamily
+    }));
+    expect(rendered.original).toMatch(/[Ⲁ-⳿]/);
+    expect(rendered.displayed).not.toBe(rendered.original);
+    expect(rendered.family).toContain(font.family);
+    const loaded = await page.evaluate(async family => {
+      await document.fonts.load('16px "' + family + '"');
+      return document.fonts.check('16px "' + family + '"');
+    }, font.family);
+    expect(loaded).toBe(true);
+  }
+  await page.locator('#readerOptionsClose').click();
+  await expect(page.locator('#readerOptionsModal')).toBeHidden();
 });
