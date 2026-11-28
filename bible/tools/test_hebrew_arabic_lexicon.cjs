@@ -30,6 +30,10 @@ for (const [id, [meaning, pronunciation]] of Object.entries(expected)) {
 }
 
 assert.equal(metadata.hebrewLocalLexicon.arabicCoverage.entries, 40);
+assert.equal(metadata.arabicLocalLexicon.entries, 489, "local Arabic lexicon total coverage");
+assert.equal(metadata.arabicLocalLexicon.hebrewEntries, 40, "local Arabic Hebrew coverage");
+assert.equal(metadata.arabicLocalLexicon.greekEntries, 449, "local Arabic Greek coverage");
+
 
 const pronunciationCorrections = {
   H0001: "آڤ",
