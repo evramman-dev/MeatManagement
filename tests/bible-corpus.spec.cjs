@@ -38,8 +38,54 @@ async function openReaderBookOptions(page, { translation, covenant, section }) {
   await chooseReaderOption(page, section);
 }
 
+test('long translation labels stay inside the two mobile reader picker columns', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.goto(new URL('bible/', baseURL).toString());
+  await page.locator('.nav button[data-view="read"]').click();
+  await page.locator('#readerChooseButton').click();
+  await expect(page.locator('#readerPickerModal')).toBeVisible();
+  await page.locator('#readerPickerPath [data-reader-picker-field="translation"]').click();
+  await chooseReaderOption(page, 'GRC-KOINE-RP-2018');
+
+  const layout = await page.evaluate(() => {
+    const path = document.querySelector('#readerPickerPath');
+    const fields = [...path.querySelectorAll('.reader-picker-field')];
+    const viewportWidth = document.documentElement.clientWidth;
+    return {
+      viewportWidth,
+      pathRight: path.getBoundingClientRect().right,
+      pathLeft: path.getBoundingClientRect().left,
+      fields: fields.map(field => {
+        const label = field.querySelector('strong');
+        const rect = field.getBoundingClientRect();
+        return {
+          left: rect.left,
+          right: rect.right,
+          width: rect.width,
+          clientWidth: label.clientWidth,
+          scrollWidth: label.scrollWidth,
+          whiteSpace: getComputedStyle(label).whiteSpace,
+          overflow: getComputedStyle(label).overflow,
+          textOverflow: getComputedStyle(label).textOverflow
+        };
+      })
+    };
+  });
+  expect(layout.fields).toHaveLength(6);
+  expect(layout.pathLeft).toBeGreaterThanOrEqual(0);
+  expect(layout.pathRight).toBeLessThanOrEqual(layout.viewportWidth + 1);
+  for (const field of layout.fields) {
+    expect(field.left).toBeGreaterThanOrEqual(0);
+    expect(field.right).toBeLessThanOrEqual(layout.viewportWidth + 1);
+    expect(field.width).toBeLessThanOrEqual((layout.viewportWidth - 40) / 2 + 2);
+    expect(field.whiteSpace).toBe('nowrap');
+    expect(field.overflow).toBe('hidden');
+    expect(field.textOverflow).toBe('ellipsis');
+  }
+});
+
 test('Bible reader loads local editions and keeps unavailable books and chapters out of their pickers', async ({ page }) => {
-  test.setTimeout(90000);
+  test.setTimeout(180000);
   const pageErrors = [];
   await page.addInitScript(() => { window.addEventListener('error', event => { console.error('GLOBAL_SCRIPT_ERROR', event.message, event.filename, event.lineno, event.colno); }); });
   page.on('pageerror', error => pageErrors.push(error.stack || error.message));
@@ -222,4 +268,73 @@ test('Bible reader loads local editions and keeps unavailable books and chapters
   await chooseReaderOption(page, 'GRC-KOINE-RP-2018');
   await chooseReaderOption(page, 'OT');
   await expect(page.locator('#readerPickerOptions [data-reader-option="GEN"]')).toHaveCount(0);
+
+
+  await page.locator('#readerPickerClose').click();
+  await expect(page.locator('#readerPickerModal')).toBeHidden();
+
+  // Verify all three embedded legacy Coptic fonts against real Bohairic chapter text.
+  await openReaderChapter(page, {
+    translation: 'COP-BOHAIRIC-HORNER',
+    covenant: 'NT',
+    section: 'الأناجيل',
+    book: 'JHN',
+    chapter: 1
+  });
+  const copticVerse = page.locator('#chapterContent .reader-verse-text').first();
+  await expect(copticVerse).toHaveAttribute('lang', 'cop');
+  await expect(copticVerse).toHaveAttribute('data-coptic-legacy-applied', '1');
+  expect(await copticVerse.getAttribute('data-coptic-unicode')).toMatch(/[Ⲁ-⳿]/);
+  await page.locator('#readerOptionsButton').click();
+  await expect(page.locator('#readerOptionsModal')).toBeVisible();
+  await expect(page.locator('#readerFontCopticGroup')).toBeVisible();
+
+  const copticFonts = [
+    { id: 'copt', button: '#readerFontCopticCopt', className: 'reader-font-coptic-copt', family: 'Copt Legacy' },
+    { id: 'new-athanasius', button: '#readerFontCopticNewAthanasius', className: 'reader-font-coptic-new-athanasius', family: 'New Athanasius Legacy' },
+    { id: 'athanasius-plain', button: '#readerFontCopticAthanasiusPlain', className: 'reader-font-coptic-athanasius-plain', family: 'Athanasius Plain Legacy' }
+  ];
+  for (let index = 0; index < copticFonts.length; index++) {
+    const font = copticFonts[index];
+    await page.locator(font.button).click();
+    await expect(page.locator('#readerDisplayPreview')).toHaveClass(new RegExp(font.className));
+    await expect(copticVerse).toHaveAttribute('data-coptic-legacy-applied', '1');
+    const rendered = await copticVerse.evaluate(el => ({
+      original: el.dataset.copticUnicode || '',
+      displayed: el.textContent || '',
+      family: getComputedStyle(el).fontFamily
+    }));
+    expect(rendered.original).toMatch(/[Ⲁ-⳿]/);
+    expect(rendered.displayed).not.toBe(rendered.original);
+    expect(rendered.family).toContain(font.family);
+    const loaded = await page.evaluate(async family => {
+      await document.fonts.load('16px "' + family + '"');
+      return document.fonts.check('16px "' + family + '"');
+    }, font.family);
+    expect(loaded).toBe(true);
+    await page.locator('#readerOptionsClose').click();
+    await expect(page.locator('#readerOptionsModal')).toBeHidden();
+    await copticVerse.screenshot({ path: 'test-results/coptic-font-' + font.id + '.png' });
+    if (index < copticFonts.length - 1) {
+      await page.locator('#readerOptionsButton').click();
+      await expect(page.locator('#readerOptionsModal')).toBeVisible();
+    }
+  }
+  const copyCheck = await page.evaluate(() => {
+    const verse = document.querySelector('#chapterContent .reader-verse-text.coptic-script');
+    const glyph = verse && verse.querySelector('.coptic-legacy-char');
+    if (!glyph) return { copied: '', expected: 'MISSING_GLYPH', prevented: false };
+    const range = document.createRange();
+    range.selectNodeContents(glyph);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    const clipboard = new DataTransfer();
+    const event = new ClipboardEvent('copy', { clipboardData: clipboard, bubbles: true, cancelable: true });
+    document.dispatchEvent(event);
+    return { copied: clipboard.getData('text/plain'), expected: glyph.dataset.unicode, prevented: event.defaultPrevented };
+  });
+  expect(copyCheck.copied).toBe(copyCheck.expected);
+  expect(copyCheck.prevented).toBe(true);
+  await expect(page.locator('#readerOptionsModal')).toBeHidden();
 });
