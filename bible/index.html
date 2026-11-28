@@ -1283,7 +1283,7 @@ async function loadVerseWordStudy(key){
 const READER_HEBREW_LEXICON_CHUNKS={};
 async function loadLocalHebrewStrongEntry(strongs){
  const id=normalizeStrongNumber(strongs);
- if(!/^H\\d{4,5}$/i.test(id))return null;
+ if(id[0]!=="H"||!Number(id.slice(1)))return null;
  const number=Number(id.slice(1));
  const chunk=Math.floor((number-1)/1000)+1;
  if(chunk<1||chunk>10)return null;
