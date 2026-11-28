@@ -418,12 +418,30 @@ test('Bible reader loads local editions and keeps unavailable books and chapters
 
   // Multilingual comparison groups each available translation under the same verse number.
   await page.locator('[data-view="translations"]').click();
-  await expect(page.locator('#translationChoices')).toContainText('القبطي — نسخة دير الأنبا بيشوي');
-  await page.locator('#parallelReferenceInput').fill('متى 1');
+  await expect(page.locator('#translationChoices')).toContainText('World English Bible');
+  await expect(page.locator('#translationChoices')).toContainText('דליץ');
+  await page.locator('[data-translation-toggle="EN-WEB"]').check();
+  await page.locator('[data-translation-toggle="HE-DELITZSCH-1885"]').check();
+  await page.locator('#parallelCovenant').selectOption('NT');
+  await page.locator('#parallelSection').selectOption('الأناجيل');
+  await page.locator('#parallelBook').selectOption('MAT');
+  await page.locator('#parallelChapter').selectOption('1');
+  await page.locator('#parallelVerse').selectOption('1');
   await page.locator('#parallelLoadButton').click();
   await expect(page.locator('#parallelTranslations .parallel-verse-card').first()).toBeVisible();
   const parallelFirstVerse = page.locator('#parallelTranslations .parallel-verse-card').first();
   await expect(parallelFirstVerse).toContainText('فان دايك 1865');
-  await expect(parallelFirstVerse).toContainText('دير الأنبا بيشوي');
-  await expect(parallelFirstVerse).toContainText('Robinson-Pierpont 2018');
+  await expect(parallelFirstVerse).toContainText('World English Bible');
+  await expect(parallelFirstVerse).toContainText('דליץ');
+
+  // The Bohairic Old Testament source is selectable and renders verse-by-verse.
+  await page.locator('[data-translation-toggle="COP-BOHAIRIC-OT"]').check();
+  await page.locator('#parallelCovenant').selectOption('OT');
+  await page.locator('#parallelSection').selectOption('الشريعة');
+  await page.locator('#parallelBook').selectOption('GEN');
+  await page.locator('#parallelChapter').selectOption('1');
+  await page.locator('#parallelVerse').selectOption('1');
+  await page.locator('#parallelLoadButton').click();
+  await expect(page.locator('#parallelTranslations .parallel-verse-card').first()).toBeVisible();
+  await expect(page.locator('#parallelTranslations .parallel-verse-card').first()).toContainText('القبطي البحيري — العهد القديم');
 });
