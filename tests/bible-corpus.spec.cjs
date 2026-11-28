@@ -358,7 +358,7 @@ test('Bible reader loads local editions and keeps unavailable books and chapters
   });
   for (const result of uppercaseFallbacks) {
     expect(result.text).toBe('Ⲡ̇ϫⲱⲙ');
-    expect(result.fallbackText).toBe('Ⲡ̇');
+    expect(result.fallbackText).toBe('Ⲡ̇ϫⲱⲙ');
     expect(result.family).toContain('Noto Sans Coptic');
   }
 
@@ -399,4 +399,31 @@ test('Bible reader loads local editions and keeps unavailable books and chapters
   expect(secondCopticText).toContain('\u0307');
   expect(secondCopticText).toContain('\u0305');
   await expect(page.locator('#chapterStatus')).toContainText('دير الأنبا بيشوي');
+
+  // Combining marks stay attached to their complete Coptic word in every legacy font.
+  const markedWords = await page.evaluate(() => {
+    const samples = ['Ⲡ̇ϫⲱⲙ', 'ⲙ̀ⲙⲓⲥⲓ', 'Ⲓⲏ̅ⲥ̅', 'Ⲡⲭ̅ⲥ̅'];
+    const ids = ['coptic-copt', 'coptic-new-athanasius', 'coptic-athanasius-plain'];
+    return ids.flatMap(id => samples.map(sample => {
+      const host = document.createElement('span');
+      host.innerHTML = copticLegacyMarkup(sample, id);
+      const fallback = host.querySelector('.coptic-unicode-fallback');
+      return { id, sample, text: host.textContent, fallbackText: fallback?.textContent || '' };
+    }));
+  });
+  for (const result of markedWords) {
+    expect(result.text).toBe(result.sample);
+    expect(result.fallbackText).toBe(result.sample);
+  }
+
+  // Multilingual comparison groups each available translation under the same verse number.
+  await page.locator('[data-view="translations"]').click();
+  await expect(page.locator('#translationChoices')).toContainText('القبطي — نسخة دير الأنبا بيشوي');
+  await page.locator('#parallelReferenceInput').fill('متى 1');
+  await page.locator('#parallelLoadButton').click();
+  await expect(page.locator('#parallelTranslations .parallel-verse-card').first()).toBeVisible();
+  const parallelFirstVerse = page.locator('#parallelTranslations .parallel-verse-card').first();
+  await expect(parallelFirstVerse).toContainText('فان دايك 1865');
+  await expect(parallelFirstVerse).toContainText('دير الأنبا بيشوي');
+  await expect(parallelFirstVerse).toContainText('Robinson-Pierpont 2018');
 });
