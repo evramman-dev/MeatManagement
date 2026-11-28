@@ -76,6 +76,21 @@ test('Bible reader loads local editions and keeps unavailable books and chapters
   await expect(page.locator('#readerStatus')).toContainText('تم فتح الآية');
   await expect(page.locator('#chapterContent')).toContainText('خَلَقَ');
 
+  // A broad Arabic search must expose every match in batches, not stop at 100.
+  await page.locator('.nav button[data-view="search"]').click();
+  await page.locator('#bibleSearchTranslation').selectOption('AR-SVD-1865');
+  await page.locator('#bibleSearchInput').fill('يسوع');
+  await page.locator('#bibleSearchButton').click();
+  await expect(page.locator('#bibleSearchStatus')).toContainText('عُثر على');
+  await expect(page.locator('#bibleSearchStatus')).toContainText('نعرض 100 من');
+  await expect(page.locator('#bibleSearchResults .result')).toHaveCount(100);
+  await expect(page.locator('#bibleSearchLoadMore')).toBeVisible();
+  await page.locator('#bibleSearchLoadMore').click();
+  await expect(page.locator('#bibleSearchResults .result')).toHaveCount(200);
+  await expect(page.locator('#bibleSearchStatus')).toContainText('نعرض 200 من');
+  await page.locator('#bibleSearchResults [data-bible-search-result="100"]').click();
+  await expect(page.locator('#readerStatus')).toContainText('تم فتح الآية');
+
   await page.locator('.nav button[data-view="search"]').click();
   await page.locator('#bibleSearchTranslation').selectOption('HE-WLC-2017');
   await page.locator('#bibleSearchInput').fill('בראשית');
