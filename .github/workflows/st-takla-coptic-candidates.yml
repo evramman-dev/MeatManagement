@@ -1,0 +1,76 @@
+name: St-Takla Coptic Arabic text research candidates
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "bible/tools/extract_st_takla_coptic_candidates.py"
+      - ".github/workflows/st-takla-coptic-candidates.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "bible/tools/extract_st_takla_coptic_candidates.py"
+      - ".github/workflows/st-takla-coptic-candidates.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  extract-research-candidates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install HTML parser
+        run: python -m pip install beautifulsoup4==4.12.3
+      - name: Extract selected deuterocanonical books as research candidates
+        run: |
+          python bible/tools/extract_st_takla_coptic_candidates.py \
+            --books JDT,WIS,BAR,1MA,2MA,PS151,DAN-ADD \
+            --output-dir build/st-takla-coptic-candidates
+      - name: Validate book coverage, unique verses, and research-only status
+        run: |
+          python - <<'PY'
+          import json
+          from collections import defaultdict
+          from pathlib import Path
+
+          root = Path("build/st-takla-coptic-candidates")
+          expected = {"jdt": 16, "wis": 19, "bar": 6, "1ma": 16, "2ma": 15, "ps151": 1, "dan-add": 2}
+          files = sorted(root.glob("*-research-candidate.jsonl"))
+          assert {p.name.split("-research")[0] for p in files} == set(expected), "Candidate file set mismatch"
+          total = 0
+          for path in files:
+              book = path.name.split("-research")[0]
+              rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+              assert rows, f"{book}: no rows"
+              assert all(row["review_status"] == "UNVERIFIED_RESEARCH_CANDIDATE" for row in rows)
+              assert all(row["translation_id"] == "ARB-JES-1877" for row in rows)
+              assert all(row["text"].strip() for row in rows)
+              by_chapter = defaultdict(list)
+              keys = set()
+              for row in rows:
+                  key = (row["book_id"], row["chapter"], row["verse"])
+                  assert key not in keys, f"{book}: duplicate {key}"
+                  keys.add(key)
+                  by_chapter[row["chapter"]].append(row["verse"])
+              assert len(by_chapter) == expected[book], f"{book}: chapter coverage mismatch"
+              for chapter, verses in by_chapter.items():
+                  assert sorted(verses) == list(range(1, max(verses) + 1)), f"{book} {chapter}: verse gap"
+              print(f"PASS {book}: {len(by_chapter)} chapters, {len(rows)} verses")
+              total += len(rows)
+          print(f"PASS: {len(files)} research-only book files; {total} unique verses")
+          PY
+      - name: Upload candidates for manual review
+        uses: actions/upload-artifact@v4
+        with:
+          name: st-takla-coptic-arabic-research-candidates
+          path: build/st-takla-coptic-candidates/
+          if-no-files-found: error
+          retention-days: 7
