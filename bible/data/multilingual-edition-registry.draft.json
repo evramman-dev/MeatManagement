@@ -256,6 +256,40 @@
       "coverage_status": "surviving_bohairic_witnesses_partial_not_full_coptic_old_testament",
       "corpus_status": "not_imported",
       "notes": "Research corpus with TEI and corpus downloads. Preserve manuscript/text witness identity and source references. The surviving Bohairic evidence does not cover every Old Testament book; do not infer missing books or additions."
+    },
+    {
+      "edition_id": "en_nkjv",
+      "name": "New King James Version",
+      "display_name_ar": "الكتاب المقدس بالإنجليزية — New King James Version",
+      "language_id": "en",
+      "scope": "OT_NT",
+      "textual_tradition": "Traditional-text based translation with critical-text notes",
+      "source_url": "https://www.thomasnelsonbibles.com/nkjv-bible/",
+      "license": "Copyrighted by Thomas Nelson, Inc.",
+      "license_status": "verified_copyrighted_license_required_for_full_corpus",
+      "coverage_status": "full_bible_edition_copyrighted",
+      "corpus_status": "blocked_pending_redistribution_license",
+      "notes": "Thomas Nelson states that NKJV is copyrighted and owned by Thomas Nelson, Inc. The publisher allows limited free use up to 500 verses or 25 percent of a work under stated conditions, but a complete Bible corpus for a free app requires a licensing review. Do not copy or import the full NKJV text until written redistribution permission or a license covering the app is obtained."
+    },
+    {
+      "edition_id": "nt_cop_bohairic_horner_pd",
+      "name": "Coptic New Testament in the Bohairic Dialect — Horner",
+      "display_name_ar": "العهد الجديد القبطي البحيري — هورنر",
+      "language_id": "cop",
+      "dialect": "Bohairic",
+      "scope": "NT",
+      "textual_tradition": "Bohairic Coptic",
+      "source_url": "https://bibles.dbs.org/COPSNT/pdf/COPSNT.pdf",
+      "license": "Public Domain",
+      "license_status": "source_catalog_public_domain",
+      "coverage_status": "27_book_new_testament_7956_records_260_chapters",
+      "corpus_status": "research_corpus_staged_and_app_reader_integrated",
+      "notes": "Horner Bohairic NT research corpus generated from the eBible COPBHC USFM package and staged into the app reader/search path. QA passed: 27 books, 260 chapters, 7,956 verse records, zero duplicate keys, no missing books. The corpus keeps canonical internal book IDs and preserves Bohairic Unicode. It remains a research candidate until edition-level source matching and rights notice are human-reviewed.",
+      "corpus_file": "bible/data/cop-bohairic-horner-nt.jsonl.gz",
+      "audit_file": "bible/data/cop-bohairic-horner-nt_audit.json",
+      "record_count": 7956,
+      "source_archive_sha256": "26c8c5d971f7612c2724ccb95aeb15fe63b307788b273d4c22cff22895dd7e9d",
+      "last_verified": "2026-11-28"
     }
   ],
   "alignment_policy": {
