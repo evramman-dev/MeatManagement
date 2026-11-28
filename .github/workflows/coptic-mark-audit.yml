@@ -65,7 +65,7 @@ jobs:
           python3 - <<'PY'
           import re, unicodedata
           lines=open('/tmp/copsnt.txt',encoding='utf-8').read().splitlines()
-          coptic=lambda s:any(0x2C80<=ord(c)<=0x2CFF for c in s)
+          coptic=lambda s:any((0x2C80<=ord(c)<=0x2CFF or 0x0370<=ord(c)<=0x03FF) for c in s)
           marked=lambda s:any(unicodedata.category(c) in ('Mn','Mc','Me') for c in s)
           hits=[(i,line) for i,line in enumerate(lines) if coptic(line) and marked(line)]
           print('LINES_TOTAL',len(lines),'COP_MARKED_LINES',len(hits))
@@ -91,7 +91,7 @@ jobs:
           raw=open('/tmp/coptic-raw-sample.txt',encoding='utf-8').read()
           print('PDF_RAW_SAMPLE',repr(raw[:12000]))
           def norm(s):
-              return ''.join(c for c in unicodedata.normalize('NFD',s) if 0x2C80<=ord(c)<=0x2CFF and unicodedata.category(c) not in ('Mn','Mc','Me'))
+              return ''.join(c for c in unicodedata.normalize('NFD',s) if (0x2C80<=ord(c)<=0x2CFF or 0x0370<=ord(c)<=0x03FF) and unicodedata.category(c) not in ('Mn','Mc','Me'))
           pdf=norm(raw)
           matched=0
           checked=0
@@ -111,7 +111,7 @@ jobs:
           rows=[json.loads(x) for x in gzip.open('/tmp/coptic.jsonl.gz','rt',encoding='utf-8') if x.strip()]
           def norm(s):
               s=unicodedata.normalize('NFD',s).upper()
-              return ''.join(c for c in s if 0x2C80<=ord(c)<=0x2CFF and unicodedata.category(c) not in ('Mn','Mc','Me'))
+              return ''.join(c for c in s if (0x2C80<=ord(c)<=0x2CFF or 0x0370<=ord(c)<=0x03FF) and unicodedata.category(c) not in ('Mn','Mc','Me'))
           raw=open('/tmp/coptic-matthew-sample.txt',encoding='utf-8').read()
           print('PDF_PAGES_1_TO_12',repr(raw[:18000]))
           pdf=norm(raw)
@@ -130,7 +130,7 @@ jobs:
           rows=[json.loads(x) for x in gzip.open('/tmp/coptic.jsonl.gz','rt',encoding='utf-8') if x.strip()]
           def norm(s):
               s=unicodedata.normalize('NFD',s).upper()
-              return ''.join(c for c in s if 0x2C80<=ord(c)<=0x2CFF and unicodedata.category(c) not in ('Mn','Mc','Me'))
+              return ''.join(c for c in s if (0x2C80<=ord(c)<=0x2CFF or 0x0370<=ord(c)<=0x03FF) and unicodedata.category(c) not in ('Mn','Mc','Me'))
           r=next(x for x in rows if x.get('book_id')=='mat' and x.get('chapter')==1 and x.get('verse')==1)
           app=norm(r['text'])
           raw=open('/tmp/coptic-matthew-sample.txt',encoding='utf-8').read()
