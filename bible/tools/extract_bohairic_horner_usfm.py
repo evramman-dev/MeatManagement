@@ -14,8 +14,7 @@ BOOKS = {
 }
 
 def clean(text):
-    text = re.sub(r"\\[a-zA-Z]+\*?", "", text)
-    text = re.sub(r"\\[+][a-zA-Z]+\*?", "", text)
+    text = re.sub(r"\\[+]?[-a-zA-Z]+\*?", "", text)
     text = re.sub(r"\s+", " ", text)
     return text.strip()
 
@@ -23,16 +22,20 @@ def parse_file(path):
     code = None
     chapter = None
     records = []
-    for raw in path.read_text(encoding="utf-8-sig", errors="replace").splitlines():
-        m = re.match(r"\\id\s+(\S+)", raw)
+    try:
+        raw_text = path.read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return records
+    for raw in raw_text.splitlines():
+        m = re.match(r"\s*\\id\s+(\S+)", raw)
         if m:
             code = m.group(1).upper()
             continue
-        m = re.match(r"\\c\s+(\d+)", raw)
+        m = re.match(r"\s*\\c\s+(\d+)", raw)
         if m:
             chapter = int(m.group(1))
             continue
-        m = re.match(r"\\v\s+(\d+(?:-\d+)?)\s+(.+)$", raw)
+        m = re.match(r"\s*\\v\s+(\d+(?:-\d+)?)\s+(.+)$", raw)
         if not m or code not in BOOKS or chapter is None:
             continue
         verse_raw, text = m.groups()
@@ -40,18 +43,20 @@ def parse_file(path):
             start, end = map(int, verse_raw.split("-", 1))
         else:
             start = end = int(verse_raw)
-        records.append({
-            "edition_id":"nt_cop_bohairic_horner_pd",
-            "translation_id":"COP-BOHAIRIC-HORNER",
-            "source_book_id":code,
-            "canonical_book_id":BOOKS[code],
-            "chapter":chapter,
-            "verse_start":start,
-            "verse_end":end,
-            "text":clean(text),
-            "review_status":"UNVERIFIED_RESEARCH_CANDIDATE",
-            "rights_status":"PUBLIC_DOMAIN_SOURCE_CLAIM",
-        })
+        text = clean(text)
+        if text:
+            records.append({
+                "edition_id":"nt_cop_bohairic_horner_pd",
+                "translation_id":"COP-BOHAIRIC-HORNER",
+                "source_book_id":code,
+                "canonical_book_id":BOOKS[code],
+                "chapter":chapter,
+                "verse_start":start,
+                "verse_end":end,
+                "text":text,
+                "review_status":"UNVERIFIED_RESEARCH_CANDIDATE",
+                "rights_status":"PUBLIC_DOMAIN_SOURCE_CLAIM",
+            })
     return records
 
 def main():
@@ -63,10 +68,14 @@ def main():
     args = ap.parse_args()
 
     src = Path(args.src)
-    files = sorted(src.rglob("*.usfm"))
+    files = sorted(p for p in src.rglob("*") if p.is_file() and p.suffix.lower() in {".usfm", ".sfm", ".txt"})
     records = []
+    files_with_records = []
     for path in files:
-        records.extend(parse_file(path))
+        parsed = parse_file(path)
+        if parsed:
+            files_with_records.append(path.name)
+            records.extend(parsed)
 
     keys = [(r["canonical_book_id"], r["chapter"], r["verse_start"], r["verse_end"]) for r in records]
     dup = len(keys) - len(set(keys))
@@ -84,6 +93,7 @@ def main():
         "usfm_source_url":"https://ebible.org/Scriptures/copbhc_usfm.zip",
         "source_archive_sha256":archive_sha,
         "files_seen":len(files),
+        "files_with_records":files_with_records,
         "record_count":len(records),
         "book_count":len(books),
         "chapter_count":len(chapters),
