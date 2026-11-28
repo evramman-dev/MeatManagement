@@ -1,6 +1,8 @@
 name: St-Takla Word versus HTML full cross-check
 on:
   workflow_dispatch:
+  push:
+    branches: ["research/st-takla-word-html-full-crosscheck"]
   pull_request:
     branches: [main]
     paths:
