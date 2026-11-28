@@ -423,7 +423,7 @@ const translationCatalog=[
  {id:"GRC-KOINE-RP-2018",name:"العهد الجديد اليوناني الكويني — Robinson-Pierpont 2018",tradition:"Byzantine / Majority Text",year:"2018",canon:"27 سفرًا من العهد الجديد"},
  {id:"COP-BOHAIRIC-HORNER",name:"القبطي البحيري — طبعة هورنر",tradition:"George Horner · Bohairic",year:"Horner",canon:"27 سفرًا من العهد الجديد"},
  {id:"COP-BOHAIRIC-DEIR-ANBA-BISHOI",name:"القبطي — نسخة دير الأنبا بيشوي",tradition:"Coptic New Testament · Deir Anba Bishoi source",year:"نسخة رقمية",canon:"27 سفرًا من العهد الجديد"},
- {id:"COP-BOHAIRIC-OT",name:"القبطي البحيري — العهد القديم",tradition:"Coptic SCRIPTORIUM · Bohairic OT · CC BY-SA 4.0",year:"v6.0.0",canon:"الاستيراد المحلي قيد الاستكمال"}
+ {id:"COP-BOHAIRIC-OT",name:"القبطي البحيري — العهد القديم",tradition:"Coptic SCRIPTORIUM · Bohairic OT · CC BY-SA 4.0",year:"v6.0.0",canon:"التكوين محليًا · وباقي الأسفار قيد الاستيراد"}
 ];
 const selectedTranslations=(()=>{const defaults=["AR-SVD-1865","EN-WEB","HE-DELITZSCH-1885","COP-BOHAIRIC-DEIR-ANBA-BISHOI"];try{const saved=JSON.parse(localStorage.getItem("rh_parallel_translations")||"null");return Array.isArray(saved)?saved.filter(id=>translationCatalog.some(t=>t.id===id)).slice(0,8):defaults}catch(e){return defaults}})();
 const copticMonths=["توت","بابه","هاتور","كيهك","طوبة","أمشير","برمهات","برمودة","بشنس","بؤونة","أبيب","مسرى","النسيء"];
