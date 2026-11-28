@@ -283,6 +283,9 @@ test('Bible reader loads local editions and keeps unavailable books and chapters
   });
   const copticVerse = page.locator('#chapterContent .reader-verse-text').first();
   await expect(copticVerse).toHaveAttribute('lang', 'cop');
+  await page.locator('#readerOptionsButton').click();
+  await expect(page.locator('#readerOptionsModal')).toBeVisible();
+  await expect(page.locator('#readerFontCopticGroup')).toBeVisible();
   await expect(page.locator('#readerFontCopticNoto')).toBeVisible();
   await expect(page.locator('#readerFontCopticNoto')).toHaveClass(/filter-active/);
   const unicodeSample = '̀ⲙ̀ Ⲙⲙ ⲉ︤ⲛ︦ⲧ︥ ⲡ̅ⲛ̅ⲁ̅';
@@ -307,9 +310,6 @@ test('Bible reader loads local editions and keeps unavailable books and chapters
   await page.locator('#readerFontCopticCopt').click();
   await expect(copticVerse).toHaveAttribute('data-coptic-legacy-applied', '1');
   expect(await copticVerse.getAttribute('data-coptic-unicode')).toMatch(/[Ⲁ-⳿]/);
-  await page.locator('#readerOptionsButton').click();
-  await expect(page.locator('#readerOptionsModal')).toBeVisible();
-  await expect(page.locator('#readerFontCopticGroup')).toBeVisible();
 
   const copticFonts = [
     { id: 'copt', button: '#readerFontCopticCopt', className: 'reader-font-coptic-copt', family: 'Copt Legacy' },
