@@ -68,7 +68,7 @@ def extract_chapter(book_id: str, spec: dict, chapter: int) -> list[dict]:
     for anchor in anchors:
         number = verse_number_from_link(anchor)
         parent = anchor
-        selected_text = None
+        ancestor_candidates = []
         for _ in range(6):
             parent = parent.parent
             if parent is None:
@@ -79,11 +79,13 @@ def extract_chapter(book_id: str, spec: dict, chapter: int) -> list[dict]:
             ]
             candidate = parent.get_text(" ", strip=True)
             if len(verse_links) == 1 and ARABIC_RE.search(candidate):
-                selected_text = candidate
-                break
+                normalized = re.sub(r"\s+", " ", candidate).strip()
+                if normalized not in ancestor_candidates:
+                    ancestor_candidates.append(normalized)
 
-        if not selected_text:
+        if not ancestor_candidates:
             continue
+        selected_text = max(ancestor_candidates, key=len)
         text = re.sub(r"\s+", " ", selected_text).strip()
         text = re.sub(rf"^0*{number}[.\s،:：-]+", "", text).strip()
         if not ARABIC_RE.search(text) or len(text) < 8:
@@ -100,11 +102,12 @@ def extract_chapter(book_id: str, spec: dict, chapter: int) -> list[dict]:
             found[number] = options[0]
             continue
         longest = max(options, key=len)
-        if all(option in longest for option in options):
+        second_longest = sorted((len(option) for option in options), reverse=True)[1]
+        if all(option in longest for option in options) or len(longest) >= 1.5 * second_longest:
             found[number] = longest
         else:
             raise RuntimeError(
-                f"{book_id} {chapter}:{number}: incompatible verse candidates: "
+                f"{book_id} {chapter}:{number}: ambiguous verse candidates: "
                 + " || ".join(repr(option) for option in options)
             )
 
