@@ -92,5 +92,12 @@ def main():
  report["totals"]=dict(report["totals"])
  (args.output_dir/"word-html-crosscheck.json").write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
  (args.output_dir/"word-html-crosscheck.md").write_text(render(report),encoding="utf-8")
- print("TOTALS",json.dumps(report["totals"],ensure_ascii=False))
+ for bid,b in report["books"].items():
+  for ch,d in b["chapters"].items():
+   for issue in d["issues"]:
+    if issue.get("type")=="text_mismatch":
+     print("DIFF",bid,ch,issue.get("range"),"WORD=",json.dumps(issue.get("word",""),ensure_ascii=False),"HTML=",json.dumps(issue.get("html",""),ensure_ascii=False),flush=True)
+    else:
+     print("ISSUE",bid,ch,json.dumps(issue,ensure_ascii=False),flush=True)
+print("TOTALS",json.dumps(report["totals"],ensure_ascii=False))
 if __name__=="__main__":main()
