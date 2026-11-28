@@ -2,6 +2,8 @@ const { test, expect } = require('@playwright/test');
 
 test.use({ serviceWorkers: 'block' });
 
+// Verify the dedicated search screen and its handoff back to the reader.
+
 const baseURL = process.env.BASE_URL || 'http://127.0.0.1:4173/';
 
 async function chooseReaderOption(page, value) {
