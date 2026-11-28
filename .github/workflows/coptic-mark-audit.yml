@@ -243,3 +243,67 @@ jobs:
                   print('COPCNT_MAT_SAMPLE',repr(data[:8000]))
           print('COPCNT_MARKS',dict(marks))
           PY
+
+      - name: Build separate Deir Anba Bishoi Coptic corpus
+        run: |
+          python3 - <<'PY'
+          import zipfile,re,json,gzip,hashlib,unicodedata,collections,os
+          archive='/tmp/copcnt_usfm.zip'
+          z=zipfile.ZipFile(archive)
+          mapping={'MAT':'mat','MRK':'mar','LUK':'luk','JHN':'joh','ACT':'act','ROM':'rom','1CO':'1co','2CO':'2co','GAL':'gal','EPH':'eph','PHP':'php','COL':'col','1TH':'1th','2TH':'2th','1TI':'1ti','2TI':'2ti','TIT':'tit','PHM':'phm','HEB':'heb','JAS':'jas','1PE':'1pe','2PE':'2pe','1JN':'1jo','2JN':'2jo','3JN':'3jo','JUD':'jud','REV':'rev'}
+          rows=[]; books=set(); ranges=[]; counts=collections.Counter(); marks=collections.Counter()
+          def clean(s):
+              s=re.sub(r'\\f\b.*?\\f\*',' ',s)
+              s=re.sub(r'\\x\b.*?\\x\*',' ',s)
+              s=re.sub(r'\\w\s+([^|\\]+)\|[^\\]*?\\w\*',r'\1',s)
+              s=re.sub(r'\\[A-Za-z0-9]+\*?\s*',' ',s)
+              s=re.sub(r'\|[A-Za-z0-9_=-]+(?:\s+[A-Za-z0-9_=-]+)*',' ',s)
+              return ' '.join(s.split()).strip()
+          for name in sorted(n for n in z.namelist() if n.lower().endswith('.usfm')):
+              m=re.search(r'-([A-Z0-9]+)copcnt\.usfm$',name,re.I)
+              if not m: continue
+              code=m.group(1).upper(); book=mapping.get(code)
+              if not book: continue
+              books.add(book); chapter=None; verse=None; parts=[]
+              def save():
+                  if chapter is None or verse is None: return
+                  raw=' '.join(parts)
+                  txt=clean(raw)
+                  if txt:
+                      rows.append({'book_id':book,'chapter':int(chapter),'verse':int(verse),'text':txt})
+                      counts[book]+=1
+                      for ch in txt:
+                          if unicodedata.category(ch) in ('Mn','Mc','Me'): marks[f'{ord(ch):04X}']+=1
+              for line in z.read(name).decode('utf-8-sig','replace').splitlines():
+                  m=re.match(r'\\c\s+(\d+)',line)
+                  if m:
+                      save(); chapter=int(m.group(1)); verse=None; parts=[]; continue
+                  m=re.match(r'\\v\s+(\d+)(?:-(\d+))?\s*(.*)',line)
+                  if m:
+                      save(); verse=int(m.group(1))
+                      if m.group(2): ranges.append((code,chapter,verse,int(m.group(2))))
+                      parts=[m.group(3)]; continue
+                  if verse is not None and line.strip() and not re.match(r'\\(?:id|h|toc\d|mt\d|c|p|m|q\d?|s\d?|d|sp|rem)\b',line.strip()):
+                      parts.append(line.strip())
+              save()
+          rows.sort(key=lambda r:(r['book_id'],r['chapter'],r['verse']))
+          keys=[(r['book_id'],r['chapter'],r['verse']) for r in rows]
+          duplicates=len(keys)-len(set(keys))
+          os.makedirs('bible/data',exist_ok=True)
+          out='bible/data/cop-bohairic-deir-anba-bishoi-nt.jsonl.gz'
+          with gzip.open(out,'wt',encoding='utf-8',newline='\n') as f:
+              for row in rows: f.write(json.dumps(row,ensure_ascii=False,separators=(',',':'))+'\n')
+          sha=hashlib.sha256(open(archive,'rb').read()).hexdigest()
+          audit={'translation_id':'COP-BOHAIRIC-DEIR-ANBA-BISHOI','edition_id':'nt_cop_bohairic_deir_anba_bishoi','source':'The New Testament in the Coptic Language of Egypt; Deir Anba Bishoi source as described by eBible.org','source_url':'https://ebible.org/find/details.php?id=copcnt','usfm_source_url':'https://ebible.org/Scriptures/copcnt_usfm.zip','source_archive_sha256':sha,'files_seen':len([n for n in z.namelist() if n.lower().endswith('.usfm')]),'book_count':len(books),'record_count':len(rows),'duplicate_keys':duplicates,'verse_ranges':len(ranges),'combining_marks_in_verse_text':dict(marks),'rights_status':'PUBLIC_DOMAIN_SOURCE_CLAIM','review_status':'SOURCE_EXTRACTED_REVIEW_PENDING'}
+          with open('bible/data/cop-bohairic-deir-anba-bishoi-nt_audit.json','w',encoding='utf-8') as f: json.dump(audit,f,ensure_ascii=False,indent=2)
+          print('NEW_CORPUS_AUDIT',json.dumps(audit,ensure_ascii=False))
+          print('SAMPLE_VERSES',json.dumps(rows[:3],ensure_ascii=False))
+          PY
+      - name: Upload separate Coptic corpus artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deir-anba-bishoi-coptic-corpus
+          path: |
+            bible/data/cop-bohairic-deir-anba-bishoi-nt.jsonl.gz
+            bible/data/cop-bohairic-deir-anba-bishoi-nt_audit.json
+          retention-days: 7
