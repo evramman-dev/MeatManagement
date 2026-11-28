@@ -39,7 +39,7 @@ async function openReaderBookOptions(page, { translation, covenant, section }) {
 test('Bible reader loads local editions and keeps unavailable books and chapters out of their pickers', async ({ page }) => {
   test.setTimeout(90000);
   const pageErrors = [];
-  page.on('pageerror', error => pageErrors.push(error.message));
+  page.on('pageerror', error => pageErrors.push(error.stack || error.message));
   await page.goto(new URL('bible/', baseURL).toString());
   await page.waitForTimeout(100);
   expect(pageErrors).toEqual([]);
