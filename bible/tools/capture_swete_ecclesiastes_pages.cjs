@@ -33,25 +33,41 @@ fs.mkdirSync(outputDir, { recursive: true });
 </head><body><div id="viewerCanvas"></div></body></html>`);
 
     await page.addScriptTag({ url: 'https://www.google.com/books/jsapi.js' });
+    await page.waitForFunction(
+      () => window.google && google.books &&
+        typeof google.books.load === 'function' &&
+        typeof google.books.setOnLoadCallback === 'function',
+      { timeout: 60000 }
+    );
+
     await page.evaluate((id) => {
       window.sweteLoadError = null;
       window.sweteViewer = null;
-      google.load('books', '0', {
-        callback: function () {
+      window.sweteViewerReady = false;
+
+      try {
+        google.books.load();
+        google.books.setOnLoadCallback(() => {
           try {
             window.sweteViewer = new google.books.DefaultViewer(
               document.getElementById('viewerCanvas')
             );
             window.sweteViewer.load(
               id,
-              function () { window.sweteLoadError = 'Google Books reported that the volume is unavailable for embedding'; },
-              function () { window.sweteViewerReady = true; }
+              () => {
+                window.sweteLoadError = 'Google Books reported that the volume is unavailable for embedding';
+              },
+              () => {
+                window.sweteViewerReady = true;
+              }
             );
           } catch (error) {
-            window.sweteLoadError = String(error);
+            window.sweteLoadError = String(error && error.stack || error);
           }
-        }
-      });
+        });
+      } catch (error) {
+        window.sweteLoadError = String(error && error.stack || error);
+      }
     }, volumeId);
 
     await page.waitForFunction(
@@ -72,7 +88,8 @@ fs.mkdirSync(outputDir, { recursive: true });
 
       try {
         await page.waitForFunction(
-          (n) => window.sweteViewer && String(window.sweteViewer.getPageNumber()) === String(n),
+          (n) => window.sweteViewer &&
+            String(window.sweteViewer.getPageNumber()) === String(n),
           printedPage,
           { timeout: 15000 }
         );
