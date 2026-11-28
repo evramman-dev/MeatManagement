@@ -1670,12 +1670,10 @@ async function loadSvdChapter(){
 }
 let bibleSearchResults=[];
 function normalizeBibleSearchText(value){
- return String(value||"").normalize("NFD").toLowerCase()
-  .replace(/[\\u0300-\\u036f]/g,"")
-  .replace(/[ًٌٍَُِّْـٰ]/g,"")
-  .replace(/[أإآٱ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه")
-  .replace(/[\\u200e\\u200f\\u202a-\\u202e]/g,"")
-  .replace(/\\s+/g," ").trim();
+ return Array.from(String(value||"").normalize("NFD").toLowerCase()).filter(ch=>{
+  const cp=ch.codePointAt(0);
+  return !((cp>=768&&cp<=879)||(cp>=1425&&cp<=1479)||(cp>=1552&&cp<=1562)||(cp>=1611&&cp<=1631)||cp===1648||(cp>=1750&&cp<=1773)||cp===8206||cp===8207||(cp>=8234&&cp<=8238));
+ }).join("").replace(/[أإآٱ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه").replace(/ـ/g,"").trim();
 }
 function bibleSearchBookCode(bookId,translation){
  if(translation==="GRC-LXX-SWETE-1907-ECC")return bookId==="ecc"?"ECC":null;
