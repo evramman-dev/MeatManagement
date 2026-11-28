@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
-CATALOG = Path(__file__).resolve().parents[1] / "data" / "coptic-canon-catalog.draft.json"
+ROOT = Path(__file__).resolve().parents[1]
+CATALOG = ROOT / "data" / "coptic-canon-catalog.draft.json"
+INDEX = ROOT / "index.html"
 
 
 def main():
@@ -33,6 +36,25 @@ def main():
     assert audit["new_testament"]["discrepancy"]["official_coptic_church_page_claims"] == 270
     assert audit["new_testament"]["discrepancy"]["per_book_count_sum"] == 260
     assert catalog["historical_or_appendix_texts"], "historical/appendix texts must remain explicitly separate"
+
+    # The reader's canonical navigation must stay in lockstep with this reviewed draft.
+    index_text = INDEX.read_text(encoding="utf-8")
+    reader_start = index_text.index("const readerSections={")
+    nt_start = index_text.index(" NT:[", reader_start)
+    reader_end = index_text.index("\n};\nconst readerBookNames=", nt_start)
+    ot_reader_ids = re.findall(r'\["([A-Z0-9]+)","', index_text[reader_start:nt_start])
+    nt_reader_ids = re.findall(r'\["([A-Z0-9]+)","', index_text[nt_start:reader_end])
+    assert ot_reader_ids == [book["book_id"].upper() for book in old], "reader OT order/IDs differ from Coptic canon draft"
+    assert nt_reader_ids == [book["book_id"].upper() for book in new], "reader NT order/IDs differ from Coptic canon draft"
+    lxx_start = index_text.index("const LXX_SOURCE_BOOK_IDS")
+    lxx_end = index_text.index("]);", lxx_start)
+    lxx_source_ids = set(re.findall(r'"([A-Z0-9]+)"', index_text[lxx_start:lxx_end]))
+    assert {"LJE", "3MA"}.issubset(lxx_source_ids), "Septuagint source-only books must remain in the source catalog"
+    available_start = index_text.index("function readerSectionsAvailable()")
+    available_end = index_text.index("function readerFieldLabel(", available_start)
+    available_logic = index_text[available_start:available_end]
+    assert 'sections.push({id:"إضافات السبعينية"' in available_logic, "Septuagint-only texts must remain separately accessible"
+    assert '!["ESG","DAG"].includes(id)' in available_logic, "Esther/Daniel source aliases must not appear as duplicate standalone books"
 
     print(json.dumps({
         "status": "PASSED",
