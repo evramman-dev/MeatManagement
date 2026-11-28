@@ -12,7 +12,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: st-takla-word-html-crosscheck-\${{ github.ref }}
+  group: st-takla-word-html-crosscheck-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   compare:
@@ -42,8 +42,8 @@ jobs:
             [1-maccabees]="https://st-takla.org/Bibles/Arabic-Bible-with-Diacritics/45-First-Maccabees__Deu.doc"
             [2-maccabees]="https://st-takla.org/Bibles/Arabic-Bible-with-Diacritics/46-Second-Maccabees__Deu.doc"
           )
-          for name in "\${!urls[@]}"; do
-            curl --fail --location --retry 2 --connect-timeout 20 --max-time 90 "\${urls[$name]}" -o "build/st-takla-crosscheck/raw/$name.doc"
+          for name in "${!urls[@]}"; do
+            curl --fail --location --retry 2 --connect-timeout 20 --max-time 90 "${urls[$name]}" -o "build/st-takla-crosscheck/raw/$name.doc"
             antiword "build/st-takla-crosscheck/raw/$name.doc" > "build/st-takla-crosscheck/text/$name.txt"
           done
       - name: Parse Word candidates
