@@ -28,12 +28,20 @@ jobs:
           mkdir -p /tmp/copbhc
           unzip -q /tmp/copbhc_usfm.zip -d /tmp/copbhc
 
+      - name: Inspect downloaded files
+        run: |
+          find /tmp/copbhc -maxdepth 3 -type f -printf '%p\n' | sort | head -100
+
       - name: Extract and QA
         run: |
+          set +e
           python3 bible/tools/extract_bohairic_horner_usfm.py             --src /tmp/copbhc             --out /tmp/copbhc.jsonl             --audit /tmp/copbhc_audit.json             --archive /tmp/copbhc_usfm.zip
+          status=$?
           cat /tmp/copbhc_audit.json
+          exit $status
 
       - name: Upload research candidate
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: bohairic-horner-nt-research-candidate
