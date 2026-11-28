@@ -243,11 +243,13 @@ test('Bible reader loads local editions and keeps unavailable books and chapters
   await expect(page.locator('#readerOptionsModal')).toBeVisible();
   await expect(page.locator('#readerFontCopticGroup')).toBeVisible();
 
-  for (const font of [
-    { button: '#readerFontCopticCopt', className: 'reader-font-coptic-copt', family: 'Copt Legacy' },
-    { button: '#readerFontCopticNewAthanasius', className: 'reader-font-coptic-new-athanasius', family: 'New Athanasius Legacy' },
-    { button: '#readerFontCopticAthanasiusPlain', className: 'reader-font-coptic-athanasius-plain', family: 'Athanasius Plain Legacy' }
-  ]) {
+  const copticFonts = [
+    { id: 'copt', button: '#readerFontCopticCopt', className: 'reader-font-coptic-copt', family: 'Copt Legacy' },
+    { id: 'new-athanasius', button: '#readerFontCopticNewAthanasius', className: 'reader-font-coptic-new-athanasius', family: 'New Athanasius Legacy' },
+    { id: 'athanasius-plain', button: '#readerFontCopticAthanasiusPlain', className: 'reader-font-coptic-athanasius-plain', family: 'Athanasius Plain Legacy' }
+  ];
+  for (let index = 0; index < copticFonts.length; index++) {
+    const font = copticFonts[index];
     await page.locator(font.button).click();
     await expect(page.locator('#readerDisplayPreview')).toHaveClass(new RegExp(font.className));
     await expect(copticVerse).toHaveAttribute('data-coptic-legacy-applied', '1');
@@ -264,6 +266,13 @@ test('Bible reader loads local editions and keeps unavailable books and chapters
       return document.fonts.check('16px "' + family + '"');
     }, font.family);
     expect(loaded).toBe(true);
+    await page.locator('#readerOptionsClose').click();
+    await expect(page.locator('#readerOptionsModal')).toBeHidden();
+    await copticVerse.screenshot({ path: 'test-results/coptic-font-' + font.id + '.png' });
+    if (index < copticFonts.length - 1) {
+      await page.locator('#readerOptionsButton').click();
+      await expect(page.locator('#readerOptionsModal')).toBeVisible();
+    }
   }
   const copyCheck = await page.evaluate(() => {
     const verse = document.querySelector('#chapterContent .reader-verse-text.coptic-script');
@@ -281,6 +290,5 @@ test('Bible reader loads local editions and keeps unavailable books and chapters
   });
   expect(copyCheck.copied).toBe(copyCheck.expected);
   expect(copyCheck.prevented).toBe(true);
-  await page.locator('#readerOptionsClose').click();
   await expect(page.locator('#readerOptionsModal')).toBeHidden();
 });
