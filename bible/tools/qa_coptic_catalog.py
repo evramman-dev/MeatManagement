@@ -41,8 +41,8 @@ def main():
     index_text = INDEX.read_text(encoding="utf-8")
     reader_start = index_text.index("const readerSections={")
     nt_start = index_text.index(" NT:[", reader_start)
-    reader_end = index_text.index("\\n};\\nconst readerBookNames=", nt_start)
-    ot_reader_ids = re.findall(r'\\["([A-Z0-9]+)","', index_text[reader_start:nt_start])
+    reader_end = index_text.index("\n};\nconst readerBookNames=", nt_start)
+    ot_reader_ids = re.findall(r'\["([A-Z0-9]+)","', index_text[reader_start:nt_start])
     nt_reader_ids = re.findall(r'\\["([A-Z0-9]+)","', index_text[nt_start:reader_end])
     assert ot_reader_ids == [book["book_id"].upper() for book in old], "reader OT order/IDs differ from Coptic canon draft"
     assert nt_reader_ids == [book["book_id"].upper() for book in new], "reader NT order/IDs differ from Coptic canon draft"
