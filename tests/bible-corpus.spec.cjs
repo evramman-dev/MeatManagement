@@ -2,6 +2,8 @@ const { test, expect } = require('@playwright/test');
 
 test.use({ serviceWorkers: 'block' });
 
+// Verify the dedicated search screen and its handoff back to the reader.
+
 const baseURL = process.env.BASE_URL || 'http://127.0.0.1:4173/';
 
 async function chooseReaderOption(page, value) {
@@ -61,7 +63,10 @@ test('Bible reader loads local editions and keeps unavailable books and chapters
 
   await page.locator('.nav button[data-view="read"]').click();
   await expect(page.locator('#readerChooseButton')).toBeVisible();
+  await expect(page.locator('#bibleSearchCard')).toBeHidden();
 
+  await page.locator('.nav button[data-view="search"]').click();
+  await expect(page.locator('#bibleSearchCard')).toBeVisible();
   await page.locator('#bibleSearchTranslation').selectOption('AR-SVD-1865');
   await page.locator('#bibleSearchInput').fill('في البدء');
   await page.locator('#bibleSearchButton').click();
@@ -71,6 +76,7 @@ test('Bible reader loads local editions and keeps unavailable books and chapters
   await expect(page.locator('#readerStatus')).toContainText('تم فتح الآية');
   await expect(page.locator('#chapterContent')).toContainText('خَلَقَ');
 
+  await page.locator('.nav button[data-view="search"]').click();
   await page.locator('#bibleSearchTranslation').selectOption('HE-WLC-2017');
   await page.locator('#bibleSearchInput').fill('בראשית');
   await page.locator('#bibleSearchButton').click();
@@ -80,6 +86,7 @@ test('Bible reader loads local editions and keeps unavailable books and chapters
   await expect(page.locator('#readerStatus')).toContainText('تم فتح الآية');
   await expect(page.locator('#chapterContent')).toContainText('בְּרֵאשִׁ֖ית');
 
+  await page.locator('.nav button[data-view="search"]').click();
   await page.locator('#bibleSearchTranslation').selectOption('GRC-KOINE-RP-2018');
   await page.locator('#bibleSearchInput').fill('λογος');
   await page.locator('#bibleSearchButton').click();

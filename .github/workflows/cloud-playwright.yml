@@ -19,6 +19,7 @@ on:
       - fix/cheque-management-vehicle-trip-guard
       - fix/sales-return-retry-browser-assertion
       - test/sales-invoice-idempotency-coverage
+      - feat/rehla-separate-search-screen-20261128
 
 permissions:
   contents: read
