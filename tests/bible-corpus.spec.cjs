@@ -224,6 +224,9 @@ test('Bible reader loads local editions and keeps unavailable books and chapters
   await expect(page.locator('#readerPickerOptions [data-reader-option="GEN"]')).toHaveCount(0);
 
 
+  await page.locator('#readerPickerClose').click();
+  await expect(page.locator('#readerPickerModal')).toBeHidden();
+
   // Verify all three embedded legacy Coptic fonts against real Bohairic chapter text.
   await openReaderChapter(page, {
     translation: 'COP-BOHAIRIC-HORNER',
