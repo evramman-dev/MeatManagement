@@ -16,6 +16,7 @@ on:
   push:
     branches:
       - main
+      - feat/coptic-second-version
       - feat/rehla-separate-search-screen-20261128
     paths:
       - index.html
