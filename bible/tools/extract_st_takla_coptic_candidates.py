@@ -66,6 +66,8 @@ def extract_chapter(book_id: str, spec: dict, chapter: int) -> list[dict]:
     candidates: dict[int, list[str]] = {}
 
     for anchor in anchors:
+        if anchor.find_parent(["h1", "h2", "h3", "h4", "h5", "h6"]):
+            continue
         number = verse_number_from_link(anchor)
         parent = anchor
         ancestor_candidates = []
