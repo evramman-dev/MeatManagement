@@ -283,6 +283,28 @@ test('Bible reader loads local editions and keeps unavailable books and chapters
   });
   const copticVerse = page.locator('#chapterContent .reader-verse-text').first();
   await expect(copticVerse).toHaveAttribute('lang', 'cop');
+  await expect(page.locator('#readerFontCopticNoto')).toBeVisible();
+  await expect(page.locator('#readerFontCopticNoto')).toHaveClass(/filter-active/);
+  const unicodeSample = '̀ⲙ̀ Ⲙⲙ ⲉ︤ⲛ︥ ⲡ̅ⲛ̅ⲁ̅';
+  const originalVerseText = await copticVerse.textContent();
+  await copticVerse.evaluate((el, value) => { el.textContent = value; }, unicodeSample);
+  const unicodeRender = await copticVerse.evaluate(el => ({
+    text: el.textContent,
+    family: getComputedStyle(el).fontFamily,
+    features: getComputedStyle(el).fontFeatureSettings
+  }));
+  expect(unicodeRender.text).toBe(unicodeSample);
+  expect(unicodeRender.family).toContain('Noto Sans Coptic');
+  expect(unicodeRender.features).toContain('mark');
+  expect(unicodeRender.features).toContain('mkmk');
+  const unicodeFontLoaded = await page.evaluate(async () => {
+    await document.fonts.load('20px "Noto Sans Coptic"');
+    return document.fonts.check('20px "Noto Sans Coptic"');
+  });
+  expect(unicodeFontLoaded).toBe(true);
+  await copticVerse.screenshot({ path: 'test-results/coptic-font-noto-unicode-marks.png' });
+  await copticVerse.evaluate((el, value) => { el.textContent = value; }, originalVerseText);
+  await page.locator('#readerFontCopticCopt').click();
   await expect(copticVerse).toHaveAttribute('data-coptic-legacy-applied', '1');
   expect(await copticVerse.getAttribute('data-coptic-unicode')).toMatch(/[Ⲁ-⳿]/);
   await page.locator('#readerOptionsButton').click();
