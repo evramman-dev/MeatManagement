@@ -1,0 +1,66 @@
+name: St-Takla Tobit research extraction
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "bible/tools/extract_st_takla_tobit.py"
+      - ".github/workflows/st-takla-tobit-research.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "bible/tools/extract_st_takla_tobit.py"
+      - ".github/workflows/st-takla-tobit-research.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  extract-tobit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install HTML parser
+        run: python -m pip install beautifulsoup4==4.12.3
+      - name: Extract all 14 chapters as research-only candidate
+        run: python bible/tools/extract_st_takla_tobit.py --output build/tobit-research-candidate.jsonl
+      - name: Validate complete chapter and verse sequence
+        run: |
+          python - <<'PY'
+          import json
+          from collections import defaultdict
+          from pathlib import Path
+
+          path = Path("build/tobit-research-candidate.jsonl")
+          rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+          assert rows, "No verses extracted"
+          by_chapter = defaultdict(list)
+          keys = set()
+          for row in rows:
+              key = (row["book_id"], row["chapter"], row["verse"])
+              assert key not in keys, f"Duplicate verse key: {key}"
+              keys.add(key)
+              assert row["translation_id"] == "ARB-JES-1877"
+              assert row["review_status"] == "UNVERIFIED_RESEARCH_CANDIDATE"
+              assert row["text"].strip(), f"Empty verse: {key}"
+              by_chapter[row["chapter"]].append(row["verse"])
+          assert sorted(by_chapter) == list(range(1, 15)), f"Expected 14 chapters, got {sorted(by_chapter)}"
+          for chapter, verses in sorted(by_chapter.items()):
+              assert sorted(verses) == list(range(1, max(verses) + 1)), f"Verse gap in chapter {chapter}: {verses}"
+              print(f"chapter {chapter}: {len(verses)} verses (1-{max(verses)})")
+          print(f"PASS: {len(rows)} unique research-only verses across 14 chapters")
+          PY
+      - name: Upload research candidate for manual review
+        uses: actions/upload-artifact@v4
+        with:
+          name: st-takla-tobit-research-candidate
+          path: build/tobit-research-candidate.jsonl
+          if-no-files-found: error
+          retention-days: 7
