@@ -56,11 +56,14 @@ def verse_number_from_link(anchor) -> int | None:
 def extract_chapter(book_id: str, spec: dict, chapter: int) -> list[dict]:
     url = f"{BASE}?book={spec['book']}&chapter={chapter}"
     soup = BeautifulSoup(fetch(url), "html.parser")
+    page_text = soup.get_text(" ", strip=True)
+    if "الترجمة اليسوعية القديمة 1877 م" not in page_text:
+        raise RuntimeError(f"{book_id} chapter {chapter}: 1877 translation marker missing")
     anchors = [
         anchor for anchor in soup.select('a[href*="showVerses.php"]')
         if verse_number_from_link(anchor) is not None
     ]
-    found: dict[int, str] = {}
+    candidates: dict[int, list[str]] = {}
 
     for anchor in anchors:
         number = verse_number_from_link(anchor)
@@ -85,16 +88,34 @@ def extract_chapter(book_id: str, spec: dict, chapter: int) -> list[dict]:
         text = re.sub(rf"^0*{number}[.\s،:：-]+", "", text).strip()
         if not ARABIC_RE.search(text) or len(text) < 8:
             continue
-        if number in found and found[number] != text:
-            raise RuntimeError(f"{book_id} {chapter}:{number}: conflicting verse text")
-        found[number] = text
+        candidates.setdefault(number, [])
+        if text not in candidates[number]:
+            candidates[number].append(text)
 
-    if not found:
+    if not candidates:
         raise RuntimeError(f"{book_id} chapter {chapter}: no verses extracted from {url}")
+    found: dict[int, str] = {}
+    for number, options in candidates.items():
+        if len(options) == 1:
+            found[number] = options[0]
+            continue
+        longest = max(options, key=len)
+        if all(option in longest for option in options):
+            found[number] = longest
+        else:
+            raise RuntimeError(
+                f"{book_id} {chapter}:{number}: incompatible verse candidates: "
+                + " || ".join(repr(option) for option in options)
+            )
+
     numbers = sorted(found)
+    linked_numbers = sorted({verse_number_from_link(anchor) for anchor in anchors})
     expected = list(range(1, numbers[-1] + 1))
-    if numbers != expected:
-        raise RuntimeError(f"{book_id} chapter {chapter}: missing verse numbers; found {numbers}")
+    if numbers != expected or numbers != linked_numbers:
+        raise RuntimeError(
+            f"{book_id} chapter {chapter}: extracted verse numbers {numbers} "
+            f"do not match linked numbers {linked_numbers}"
+        )
 
     return [
         {
