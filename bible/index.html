@@ -826,6 +826,7 @@ async function openReaderPicker(field){
  optionsEl.innerHTML="<p class='note'>جاري تجهيز الاختيارات...</p>";
  try{
   if(field==="chapter"||field==="verse")await ensureReaderCorpus();
+  if(field==="verse"&&REMOTE_TRANSLATION_IDS.has(readerSelection.translation))await loadTranslationChapter(readerSelection.translation,readerSourceBookId(),Number(readerSelection.chapter));
   const options=readerOptionsFor(field),current=currentReaderFieldValue(field);
   searchWrap.classList.toggle("hidden",options.length<=12);
   const paint=query=>{
