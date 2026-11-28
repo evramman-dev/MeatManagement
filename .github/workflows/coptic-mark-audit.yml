@@ -79,3 +79,26 @@ jobs:
                   n+=1
                   if n>=25: break
           PY
+
+      - name: Compare PDF reading order with app verses
+        run: |
+          pdftotext -enc UTF-8 -raw -f 93 -l 95 /tmp/copsnt.pdf /tmp/coptic-raw-sample.txt
+          python3 - <<'PY'
+          import gzip,json,re,unicodedata
+          rows=[json.loads(x) for x in gzip.open('/tmp/coptic.jsonl.gz','rt',encoding='utf-8') if x.strip()]
+          print('APP_FIRST_ROWS')
+          for r in rows[:12]: print('APP_ROW',repr(r))
+          raw=open('/tmp/coptic-raw-sample.txt',encoding='utf-8').read()
+          print('PDF_RAW_SAMPLE',repr(raw[:12000]))
+          def norm(s):
+              return ''.join(c for c in unicodedata.normalize('NFD',s) if 0x2C80<=ord(c)<=0x2CFF and unicodedata.category(c) not in ('Mn','Mc','Me'))
+          pdf=norm(raw)
+          matched=0
+          checked=0
+          for r in rows[:300]:
+              t=norm(str(r.get('text','')))
+              if len(t)>8:
+                  checked+=1
+                  if t in pdf: matched+=1
+          print('FIRST_300_EXACT_NORMALIZED_MATCHES_IN_PDF_SAMPLE',matched,'CHECKED',checked)
+          PY
