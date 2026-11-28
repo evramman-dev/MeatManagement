@@ -1157,11 +1157,11 @@ const READER_WORD_STUDY_LOCAL_BOOKS={};
 let READER_GREEK_LEMMA_INDEX=null;
 function normalizeGreekLemmaForIndex(value){
  return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^\p{L}]/gu,"");
-  .replace(/\p{M}/gu,"")
+}
 async function readLocalGzipText(path){
  if(typeof DecompressionStream==="undefined")throw new Error("LOCAL_GZIP_NOT_SUPPORTED");
-  .replace(/[\u200e\u200f\u202a-\u202e]/g,"")
-  .replace(/\s+/g," ").trim();
+ const response=await fetch(path,{cache:"force-cache"});
+ if(!response.ok)throw new Error("LOCAL_DATA_HTTP_"+response.status);
  const stream=response.body.pipeThrough(new DecompressionStream("gzip"));
  return await new Response(stream).text();
 }
