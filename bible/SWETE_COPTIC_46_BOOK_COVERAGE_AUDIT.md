@@ -359,3 +359,41 @@
 - Workflow run `46093915655` اكتمل بحالة `success`.
 - مهمة `browser-tests` اكتملت بنجاح، بما فيها اختبارات corpus المحلية. خطوة الاختبارات الكاملة التي تتطلب موافقة صريحة بقيت `skipped`، ولم يُنفذ تسجيل دخول إلى الإنتاج.
 - لم يحدث أي تغيير في corpus أو التطبيق أو Service Worker أو Supabase أو صلاحيات المستخدمين.
+
+
+## مسارات بديلة للوصول إلى صور مجلد Swete الثاني — متابعة 2026-11-28
+
+أُجريت محاولة ثانية للعثور على مسار صور لا يعتمد على تنزيل ملف Internet Archive الكبير كاملًا.
+
+### 1. Google Books — طبعة 1907 الثالثة
+
+- صفحة العمل التي تعرض قائمة الطبعات: https://books.google.com/books?id=o3HgdynRPCMC
+- رابط الطبعة الكاملة لعام 1907 التي ظهرت في قائمة الطبعات: https://books.google.com/books?cad=2&id=WYZn1xHeD-IC&printsec=frontcover&source=gbs_book_other_versions_r
+- معرّف Google Books: `WYZn1xHeD-IC`.
+- صفحة الوصول إلى الطبعة: https://books.google.com/books?id=WYZn1xHeD-IC
+- أظهرت صفحة الطبعات أن هذه النسخة مصنفة Full view — 1907، وهو ما يجعلها مسارًا بديلًا مناسبًا من حيث الطبعة.
+- رابط تنزيل PDF الذي أظهرته Google Books أعاد HTTP 403 في أداة الوصول، كما فشلت محاولة تنزيله من بيئة التنفيذ. لم نحصل على ملف أو صورة صفحة من هذه النسخة.
+
+### 2. مسح Cornell على Wikimedia Commons
+
+- صفحة الملف: https://commons.wikimedia.org/wiki/File:The_Old_Testament_in_Greek,_according_to_the_Septuagint_(IA_cu31924012092437).pdf
+- الملف الأصلي: https://upload.wikimedia.org/wikipedia/commons/e/ec/The_Old_Testament_in_Greek%2C_according_to_the_Septuagint_%28IA_cu31924012092437%29.pdf
+- حجم PDF نحو 20.37 MB وعدد صفحاته 900.
+- تمكنت أداة التصفح من عرض صورة المعاينة للصفحة الأولى فقط. محاولة الوصول المباشر إلى صفحات PDF الداخلية عبر مسار thumbnail لم تنجح.
+- صفحة Commons تسجل تاريخ النشر 1895، لذلك لا نعتبر هذا المسح نسخة 1907 الثالثة. يمكن أن يكون شاهدًا مساعدًا للمقارنة فقط بعد تحديد الطبعة والاختلافات، وليس بديلًا تلقائيًا عن النسخة المطلوبة.
+- محاولة تنزيل الملف الأصلي من بيئة التنفيذ لم تنجح.
+
+### 3. مسار API تجريبي لـ Internet Archive
+
+تم العثور على توثيق خدمة ArchiveLab التجريبية التي تعرض مسارات لجلب قائمة صفحات الكتاب وصورة صفحة مفردة:
+
+- التوثيق: https://doc-tools.readthedocs.io/en/ia-test-gsod/experimental-book-apis.html
+- المسار الموثق للصفحات: `https://api.archivelab.org/books/{itemid}/pages`
+- المسار الموثق لصورة صفحة: `https://api.archivelab.org/books/{itemid}/pages/{page}`
+- جُرّب المساران مع المعرّف `oldtestamenting02swet`، لكنهما لم يكونا متاحين من أداة التصفح في هذه الجلسة. لم نحصل على قائمة أرقام الصفحات أو صورة قابلة للفحص.
+
+### النتيجة والقرار
+
+أصبح لدينا مسار Google Books يعرّف نسخة 1907 الكاملة، ومسح Cornell بديلًا أقدم، ومسار API نظري لجلب صفحات Internet Archive منفردة. لكن لم ينتج أي منها صورة داخلية موثوقة للصفحات المطبوعة 479–504 حتى الآن.
+
+لا نغيّر حالة السفر: `SOURCE_FOUND_NEEDS_PAGE_IMAGE_COLLATION`. لا نعتمد OCR، ولا ننسخ النص إلى corpus، ولا نضيفه إلى التطبيق. يجب أن تكون أي صورة لاحقة مرتبطة صراحة بطبعة 1907 أو أن تُسجل كنسخة مقارنة منفصلة.
