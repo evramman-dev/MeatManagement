@@ -39,6 +39,7 @@ async function openReaderBookOptions(page, { translation, covenant, section }) {
 test('Bible reader loads local editions and keeps unavailable books and chapters out of their pickers', async ({ page }) => {
   test.setTimeout(90000);
   const pageErrors = [];
+  await page.addInitScript(() => { window.addEventListener('error', event => { console.error('GLOBAL_SCRIPT_ERROR', event.message, event.filename, event.lineno, event.colno); }); });
   page.on('pageerror', error => pageErrors.push(error.stack || error.message));
   page.on('console', message => { if (message.type() === 'error') pageErrors.push(message.text() + ' ' + JSON.stringify(message.location())); });
   await page.goto(new URL('bible/', baseURL).toString());
