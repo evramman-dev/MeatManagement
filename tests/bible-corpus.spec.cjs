@@ -38,7 +38,25 @@ async function openReaderBookOptions(page, { translation, covenant, section }) {
 
 test('Bible reader loads local editions and keeps unavailable books and chapters out of their pickers', async ({ page }) => {
   test.setTimeout(90000);
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
   await page.goto(new URL('bible/', baseURL).toString());
+  await page.waitForTimeout(100);
+  expect(pageErrors).toEqual([]);
+
+  await page.locator('.nav button[data-view="verses"]').click();
+  await page.locator('#verseReference').fill('يوحنا 1:1');
+  await page.locator('#verseText').fill('في البدء كان الكلمة');
+  await page.locator('#saveVerseButton').click();
+  await expect(page.locator('#verseSaveStatus')).toContainText('تم حفظ الآية');
+  await expect(page.locator('#savedVerseCount')).toHaveText('1');
+
+  await page.locator('.nav button[data-view="me"]').click();
+  await page.locator('#notesJournal').fill('اختبار حفظ المذكرات');
+  await page.locator('#notesSaveButton').click();
+  await expect(page.locator('#notesSaveStatus')).toContainText('تم الحفظ');
+  await expect(page.locator('#notesList')).toContainText('اختبار حفظ المذكرات');
+
   await page.locator('.nav button[data-view="read"]').click();
   await expect(page.locator('#readerChooseButton')).toBeVisible();
 
