@@ -40,6 +40,7 @@ test('Bible reader loads local editions and keeps unavailable books and chapters
   test.setTimeout(90000);
   const pageErrors = [];
   page.on('pageerror', error => pageErrors.push(error.stack || error.message));
+  page.on('console', message => { if (message.type() === 'error') pageErrors.push(message.text() + ' ' + JSON.stringify(message.location())); });
   await page.goto(new URL('bible/', baseURL).toString());
   await page.waitForTimeout(100);
   expect(pageErrors).toEqual([]);
